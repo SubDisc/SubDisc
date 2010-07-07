@@ -14,14 +14,14 @@ public class VisualArc extends MShape
 
 	VisualNode itsFromNode;
 	VisualNode itsToNode;
-    int x1;
+	int x1;
 	int x2;
 	int y1;
 	int y2;
 	String itsDescription;
 
-    public VisualArc(VisualNode theFromNode, VisualNode theToNode)
-  	{
+	public VisualArc(VisualNode theFromNode, VisualNode theToNode)
+	{
 		super("");
 		itsFromNode = theFromNode;
 		itsToNode = theToNode;
@@ -29,8 +29,8 @@ public class VisualArc extends MShape
 		itsDescription = new String("w =");
 	}
 
-    public Rectangle calcBounds()
-  	{
+	public Rectangle calcBounds()
+	{
 		Point p1a = itsFromNode.getConnectPoint();
 		Point p2a = itsToNode.getConnectPoint();
 		Point p1 = new Point(min(p1a.x, p2a.x), min(p1a.y, p2a.y));
@@ -43,10 +43,10 @@ public class VisualArc extends MShape
 		int h = ymax - ymin;
 		setBounds(xmin, ymin, w, h);
 		return getBounds();
-    }
+	}
 
-    public void setBounds(int x, int y, int width, int height)
-  	{
+	public void setBounds(int x, int y, int width, int height)
+	{
 		super.setBounds(x, y, width, height);
 		Rectangle r = this.getBounds();
 		Point p1a = itsFromNode.getConnectPoint();
@@ -65,7 +65,7 @@ public class VisualArc extends MShape
 		float aSlope = height/(float)width; // could by /0
 
 		if ((p1a.x > p2a.x && p1a.y > p2a.y) || (p1a.x < p2a.x && p1a.y < p2a.y)) //topleft to bottomright
-  		{
+		{
 			if (r1.height/(float)r1.width > aSlope)
 			{
 				x1 = r.x + Math.round(r1.width / 2f);
@@ -87,8 +87,8 @@ public class VisualArc extends MShape
 				y2 = r.y + r.height - Math.round(r2.height / 2f);
 			}
 		}
-  		else //topright to bottomleft
-  		{
+		else //topright to bottomleft
+		{
 			if (r1.height/(float)r1.width > aSlope)
 			{
 				x2 = r.x + Math.round(r1.width / 2f);
@@ -113,11 +113,11 @@ public class VisualArc extends MShape
 	}
 
 	public void paint(java.awt.Graphics g)
-  	{
+	{
 		super.paint(g);
-  		Graphics2D g2 = (Graphics2D) g;
-  		g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-  		g2.setStroke(new BasicStroke(1.5f));
+		Graphics2D g2 = (Graphics2D) g;
+		g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+		g2.setStroke(new BasicStroke(1.5f));
 		g2.setColor(Color.black);
 		g2.drawLine(x1, y1, x2, y2);
 //		g2.drawString(itsDescription, (x1+x2)/2 + 10, (y1+y2)/2 + 10);
@@ -171,15 +171,15 @@ public class VisualArc extends MShape
 
 // UNUSED	private int mean(double i1, double i2) { return (int) ((i1 + i2) / 2); }
 
-    public boolean containsFromShape(MShape aShape)
-  	{
+	public boolean containsFromShape(MShape aShape)
+	{
 		if (itsFromNode.equals(aShape))
 			return true;
 		return false;
 	}
 
 	public MShape getConnectedShape(MShape aShape)
-  	{
+	{
 		if (itsFromNode.equals(aShape))
 			return itsToNode;
 		else if (itsToNode.equals(aShape))

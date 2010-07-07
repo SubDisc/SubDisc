@@ -9,8 +9,8 @@ public class SelectStatement
 	private String itsOrderByClause;
 	private boolean itsDescending = false;
 
-    public SelectStatement()
-    {
+	public SelectStatement()
+	{
 	}
 
 	public void addSelectClause(String theClause)

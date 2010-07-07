@@ -131,7 +131,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 			aWindow.setVisible(true);
 			e.printStackTrace();
 		}
-    }
+	}
 
 	private void evaluateNumericRefinements(long theBeginTime, Subgroup theSubgroup, Refinement theRefinement)
 	{

@@ -36,7 +36,7 @@ public class DAGView extends JPanel implements Serializable, MouseListener
 		propertySupport = new PropertyChangeSupport(this);
 		setBackground(Color.white);
 		addMouseListener(this);
-    }
+	}
 
 	public void setDAGArea(int theWidth, int theHeight)
 	{
@@ -161,36 +161,36 @@ public class DAGView extends JPanel implements Serializable, MouseListener
 
 	public void addNodeComponent(VisualNode theNode)
 	{
-        addMouseListener(theNode);
-        addMouseMotionListener(theNode);
-        itsComponentSet.add(theNode);
-    }
+		addMouseListener(theNode);
+		addMouseMotionListener(theNode);
+		itsComponentSet.add(theNode);
+	}
 
-    public void paint(Graphics g)
-    {
-        super.paint(g);
+	public void paint(Graphics g)
+	{
+		super.paint(g);
 
-        for (int i = 0; i < itsConnectorSet.size(); i++)
-        {
-            VisualArc c = (VisualArc) itsConnectorSet.get(i);
-            c.paint(g);
-        }
-
-        for (int i = 0; i < itsComponentSet.size(); i++)
-        {
-            VisualNode c = (VisualNode)itsComponentSet.get(i);
-            c.paint(g);
-        }
-    }
-
-    public void updateConnectors()
-    {
-        for (int i = 0; i < itsConnectorSet.size(); i++)
-        {
+		for (int i = 0; i < itsConnectorSet.size(); i++)
+		{
 			VisualArc c = (VisualArc) itsConnectorSet.get(i);
-            c.calcBounds();
-        }
-    }
+			c.paint(g);
+		}
+
+		for (int i = 0; i < itsComponentSet.size(); i++)
+		{
+			VisualNode c = (VisualNode)itsComponentSet.get(i);
+			c.paint(g);
+		}
+	}
+
+	public void updateConnectors()
+	{
+		for (int i = 0; i < itsConnectorSet.size(); i++)
+		{
+			VisualArc c = (VisualArc) itsConnectorSet.get(i);
+			c.calcBounds();
+		}
+	}
 
 	public void connect(int theID1, int theID2)
 	{
@@ -200,53 +200,53 @@ public class DAGView extends JPanel implements Serializable, MouseListener
 
 		if (!itsConnectorSet.contains(anArc))
 			itsConnectorSet.add(anArc);
-    }
+	}
 
-    public Dimension getMinimumSize()
-    {
-        Rectangle r = getBounds();
-        return new Dimension(r.width, r.height);
-    }
+	public Dimension getMinimumSize()
+	{
+		Rectangle r = getBounds();
+		return new Dimension(r.width, r.height);
+	}
 
-    public Dimension getPreferredSize()
-    {
-        Rectangle r = getBounds();
-        return new Dimension(r.width, r.height);
-    }
+	public Dimension getPreferredSize()
+	{
+		Rectangle r = getBounds();
+		return new Dimension(r.width, r.height);
+	}
 
-    public String getSampleProperty()
-    {
+	public String getSampleProperty()
+	{
 		return sampleProperty;
-    }
+	}
 
-    public void setSampleProperty(String value)
-    {
-        String oldValue = sampleProperty;
-        sampleProperty = value;
-        propertySupport.firePropertyChange(PROP_SAMPLE_PROPERTY, oldValue, sampleProperty);
-    }
+	public void setSampleProperty(String value)
+	{
+		String oldValue = sampleProperty;
+		sampleProperty = value;
+		propertySupport.firePropertyChange(PROP_SAMPLE_PROPERTY, oldValue, sampleProperty);
+	}
 
-    public void addPropertyChangeListener(PropertyChangeListener listener)
-    {
-        propertySupport.addPropertyChangeListener(listener);
-    }
+	public void addPropertyChangeListener(PropertyChangeListener listener)
+	{
+		propertySupport.addPropertyChangeListener(listener);
+	}
 
-    public void removePropertyChangeListener(PropertyChangeListener listener)
-    {
-        propertySupport.removePropertyChangeListener(listener);
-    }
+	public void removePropertyChangeListener(PropertyChangeListener listener)
+	{
+		propertySupport.removePropertyChangeListener(listener);
+	}
 
-    public void mouseExited(java.awt.event.MouseEvent mouseEvent) { }
+	public void mouseExited(java.awt.event.MouseEvent mouseEvent) { }
 
-    public void mouseReleased(java.awt.event.MouseEvent mouseEvent)
-    {
-        updateConnectors();
-        repaint();
-    }
+	public void mouseReleased(java.awt.event.MouseEvent mouseEvent)
+	{
+		updateConnectors();
+		repaint();
+	}
 
-    public void mousePressed(java.awt.event.MouseEvent mouseEvent) { }
+	public void mousePressed(java.awt.event.MouseEvent mouseEvent) { }
 
-    public void mouseClicked(java.awt.event.MouseEvent mouseEvent) { }
+	public void mouseClicked(java.awt.event.MouseEvent mouseEvent) { }
 
-    public void mouseEntered(java.awt.event.MouseEvent mouseEvent) { }
+	public void mouseEntered(java.awt.event.MouseEvent mouseEvent) { }
 }

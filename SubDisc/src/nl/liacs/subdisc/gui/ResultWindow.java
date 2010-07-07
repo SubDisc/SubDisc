@@ -27,7 +27,7 @@ public class ResultWindow extends JFrame
 	private SubgroupSet itsSubgroupSet;
 	private DAGView itsDAGView; //layout of the graph on the whole database
 
-    public ResultWindow(SubgroupSet theSubgroupSet, SearchParameters theSearchParameters, DAGView theDAGView)
+	public ResultWindow(SubgroupSet theSubgroupSet, SearchParameters theSearchParameters, DAGView theDAGView)
 	{
 
 		itsSubgroupSet = theSubgroupSet;

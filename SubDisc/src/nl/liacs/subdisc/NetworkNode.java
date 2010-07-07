@@ -4,7 +4,7 @@ public class NetworkNode
 {
 	private static int id = 0;
 
-    private CrossCube nodeParameters; //node parameters
+	private CrossCube nodeParameters; //node parameters
 	private ItemSet nodeParents; //parents
 	private ItemSet nodeChildren; //children
 	private double itsQuality;
@@ -15,9 +15,9 @@ public class NetworkNode
 		nodeParameters = para;
 		nodeChildren = new ItemSet(theSize);
 		nodeParents = new ItemSet(theSize);
-        id++;
-        itsQuality = -100000;
-        itsName = theName;
+		id++;
+		itsQuality = -100000;
+		itsName = theName;
 	}
 
 	public void addChild(int theChild)

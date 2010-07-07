@@ -17,24 +17,24 @@ public class Condition
 	public static final int SECOND_NUMERIC_OPERATOR = GREATER_THAN_OR_EQUAL;
 	public static final int LAST_NUMERIC_OPERATOR   = SECOND_NUMERIC_OPERATOR;
 
-    private Attribute itsAttribute;
-    private int itsOperator;
+	private Attribute itsAttribute;
+	private int itsOperator;
 	private String itsValue = null;
 
 	public Condition(Attribute theAttribute)
 	{
-	    itsAttribute = theAttribute;
+		itsAttribute = theAttribute;
 		if (itsAttribute.isNumericType())
 			itsOperator = FIRST_NUMERIC_OPERATOR;
 		else // if (itsAttribute.isNominalType())
 			itsOperator = FIRST_NOMINAL_OPERATOR;
-    }
+	}
 
-    public Condition(Attribute theAttribute, int theOperator)
+	public Condition(Attribute theAttribute, int theOperator)
 	{
-        itsAttribute = theAttribute;
+		itsAttribute = theAttribute;
 		itsOperator = theOperator;
-    }
+	}
 
 	public Condition copy()
 	{

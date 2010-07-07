@@ -4,7 +4,7 @@ import java.util.ArrayList;
 
 public class ConditionList
 {
-    ArrayList<Condition> itsConditions;
+	ArrayList<Condition> itsConditions;
 
 	public ConditionList()
 	{
@@ -15,34 +15,34 @@ public class ConditionList
 	{
 		ConditionList aNewConditionList = new ConditionList();
 		for (int i=0; i<itsConditions.size(); i++)
-            aNewConditionList.addCondition(itsConditions.get(i).copy());
+			aNewConditionList.addCondition(itsConditions.get(i).copy());
 		return aNewConditionList;
 	}
 
-    public String toString()
+	public String toString()
 	{
-        String aResult = "";
-        for (int i=0; i<itsConditions.size(); i++)
+		String aResult = "";
+		for (int i=0; i<itsConditions.size(); i++)
 		{
-            String aCondition = itsConditions.get(i).toString();
-            if (i == 0)
-                aResult += aCondition;
-            else
-                aResult += " AND " + aCondition;
-        }
-        return aResult;
-    }
+			String aCondition = itsConditions.get(i).toString();
+			if (i == 0)
+				aResult += aCondition;
+			else
+				aResult += " AND " + aCondition;
+		}
+		return aResult;
+	}
 
-    public boolean addCondition(Condition aCondition)
+	public boolean addCondition(Condition aCondition)
 	{
-        if (itsConditions.indexOf(aCondition) == -1) //already present?
+		if (itsConditions.indexOf(aCondition) == -1) //already present?
 		{
-            itsConditions.add(aCondition);
+			itsConditions.add(aCondition);
 			return true;
-        }
+		}
 		else
 			return false;
-    }
+	}
 
 	public Condition getCondition(int theIndex) { return itsConditions.get(theIndex); }
 	public int size() { return itsConditions.size(); }

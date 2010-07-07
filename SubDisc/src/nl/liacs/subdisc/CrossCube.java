@@ -99,8 +99,8 @@ public class CrossCube extends DataCube
 		int q_i = getSize() / 2;
 		double alpha_ijk = 1 / (double) getSize();
 		double alpha_ij  = 1 / (double) q_i;
-		double LogGam_alpha_ijk = LogGamma(alpha_ijk); //uniform prior BDeu metric
-		double LogGam_alpha_ij = LogGamma(alpha_ij);
+		double LogGam_alpha_ijk = Function.logGamma(alpha_ijk); //uniform prior BDeu metric
+		double LogGam_alpha_ij = Function.logGamma(alpha_ij);
 
 		for (int j=0; j<q_i; j++)
 		{
@@ -108,30 +108,15 @@ public class CrossCube extends DataCube
 			double aPost = 0;
 
 			//child = 0;
-			aPost += LogGamma(alpha_ijk + getCount(j*2)) - LogGam_alpha_ijk;
+			aPost += Function.logGamma(alpha_ijk + getCount(j*2)) - LogGam_alpha_ijk;
 			aSum += getCount(j*2);
 			//child = 1;
-			aPost += LogGamma(alpha_ijk + getCount(j*2 + 1)) - LogGam_alpha_ijk;
+			aPost += Function.logGamma(alpha_ijk + getCount(j*2 + 1)) - LogGam_alpha_ijk;
 			aSum += getCount(j*2 + 1);
 
-			aQuality += LogGam_alpha_ij - LogGamma(alpha_ij + aSum) + aPost;
+			aQuality += LogGam_alpha_ij - Function.logGamma(alpha_ij + aSum) + aPost;
 		}
 		return aQuality;
-	}
-
-	// TODO duplicate code, same as BinaryTable.LogGamma
-	public double LogGamma(double x)
-	{
-		double stp = 2.50662827465;
-		double c1 = 76.18009173;
-		double c2 = -86.50532033;
-		double c3 = 24.01409822;
-		double c4 = -1.231739516;
-		double c5 = 1.20858003e-3;
-		double c6 = -5.36382e-6;
-
-		double ser = 1.0 + c1 / x + c2 / (x + 1.0) + c3 / (x + 2.0) + c4 / (x + 3.0) + c5 / (x + 4.0) + c6 / (x + 5.0);
-		return (x - 0.5) * Math.log(x + 4.5) - x - 4.5 + Math.log(stp * ser);
 	}
 
 	public int getIndex(BitSet theBitSet)

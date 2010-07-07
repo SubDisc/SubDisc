@@ -9,16 +9,6 @@ public class BinaryTable
 	private ArrayList<BitSet> itsColumns;
 	private int itsNrRecords; //Nr. of examples
 
-	// for LogGamma
-	private static final double GAMMA_STP = 2.50662827465;
-	private static final double GAMMA_C1 = 76.18009173;
-	private static final double GAMMA_C2 = -86.50532033;
-	private static final double GAMMA_C3 = 24.01409822;
-	private static final double GAMMA_C4 = -1.231739516;
-	private static final double GAMMA_C5 = 1.20858003e-3;
-	private static final double GAMMA_C6 = -5.36382e-6;
-
-
 	//From Table
 	public BinaryTable(Table theTable, BitSet theColumns)
 	{
@@ -142,8 +132,8 @@ public class BinaryTable
 		int q_i = aSize / 2;
 		double alpha_ijk = 1 / (double) aSize;
 		double alpha_ij  = 1 / (double) q_i;
-		double LogGam_alpha_ijk = LogGamma(alpha_ijk); //uniform prior BDeu metric
-		double LogGam_alpha_ij = LogGamma(alpha_ij);
+		double LogGam_alpha_ijk = Function.logGamma(alpha_ijk); //uniform prior BDeu metric
+		double LogGam_alpha_ij = Function.logGamma(alpha_ij);
 
 		for (int j=0; j<q_i; j++)
 		{
@@ -151,22 +141,15 @@ public class BinaryTable
 			double aPost = 0.0;
 
 			//child = 0;
-			aPost += LogGamma(alpha_ijk + aCounts[j*2]) - LogGam_alpha_ijk;
+			aPost += Function.logGamma(alpha_ijk + aCounts[j*2]) - LogGam_alpha_ijk;
 			aSum += aCounts[j*2];
 			//child = 1;
-			aPost += LogGamma(alpha_ijk + aCounts[j*2 + 1]) - LogGam_alpha_ijk;
+			aPost += Function.logGamma(alpha_ijk + aCounts[j*2 + 1]) - LogGam_alpha_ijk;
 			aSum += aCounts[j*2 + 1];
 
-			aQuality += LogGam_alpha_ij - LogGamma(alpha_ij + aSum) + aPost;
+			aQuality += LogGam_alpha_ij - Function.logGamma(alpha_ij + aSum) + aPost;
 		}
 		return aQuality;
-	}
-
-	// TODO duplicate code, same as CrossCube.LogGamma
-	public double LogGamma(double x)
-	{
-		double ser = 1.0 + GAMMA_C1 / x + GAMMA_C2 / (x + 1.0) + GAMMA_C3 / (x + 2.0) + GAMMA_C4 / (x + 3.0) + GAMMA_C5 / (x + 4.0) + GAMMA_C6 / (x + 5.0);
-		return (x - 0.5) * Math.log(x + 4.5) - x - 4.5 + Math.log(GAMMA_STP * ser);
 	}
 
 	public void print()

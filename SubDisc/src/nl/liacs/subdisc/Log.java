@@ -19,8 +19,8 @@ public class Log
 	private static String LOGPATH = new String("../log/"); // NB: this path of direcories will be created
 
 	static java.io.OutputStream debugStream = System.out;
-    static java.io.OutputStream errorStream = System.err;
-    static java.io.OutputStream logStream = System.out;
+	static java.io.OutputStream errorStream = System.err;
+	static java.io.OutputStream logStream = System.out;
 	static java.io.OutputStream sqlLogStream = System.out;
 	static java.io.OutputStream refinementLogStream = System.out;
 
@@ -28,64 +28,64 @@ public class Log
 	{
 		boolean errmade = false;
 
-        FileOutputStream debug = null;
+		FileOutputStream debug = null;
 		FileOutputStream error = null;
 		FileOutputStream log = null;
 		FileOutputStream sqlLog = null;
 		FileOutputStream refinementLog = null;
 
 		if ((SQLLOG)||((REFINEMENTLOG)||(ERROR))||((LOG)||(DEBUG))) {
-	        try
+			try
 			{
 				java.io.File aLogPath = new java.io.File(LOGPATH);
 				aLogPath.mkdirs();
 				Log.logCommandLine("creating files in directory: " + LOGPATH);
 
 				if (DEBUG) debug = new java.io.FileOutputStream(LOGPATH + "debug.wri");
-	            if (ERROR) error = new java.io.FileOutputStream(LOGPATH + "error.wri");
+				if (ERROR) error = new java.io.FileOutputStream(LOGPATH + "error.wri");
 				if (LOG) log = new java.io.FileOutputStream(LOGPATH + "log.wri");
 				if (SQLLOG) sqlLog = new java.io.FileOutputStream(LOGPATH + "sql.wri");
 				if (REFINEMENTLOG) refinementLog = new java.io.FileOutputStream(LOGPATH + "refinement.wri");
-	        } catch (Exception ex) {
-	            errmade = true;
-	            error(ex.toString()); }
+			} catch (Exception ex) {
+				errmade = true;
+				error(ex.toString()); }
 
-	        if (!errmade)
+			if (!errmade)
 			{
-	            if (DEBUG) debugStream = debug;
-	            if (ERROR) errorStream = error;
-	            if (LOG) logStream = log;
+				if (DEBUG) debugStream = debug;
+				if (ERROR) errorStream = error;
+				if (LOG) logStream = log;
 				if (SQLLOG) sqlLogStream = sqlLog;
 				if (REFINEMENTLOG) refinementLogStream = refinementLog;
-	        }
+			}
 		}
-    }
+	}
 
-    public static void closeFileOutputStreams()
+	public static void closeFileOutputStreams()
 	{
-        try
+		try
 		{
-            debugStream.flush(); debugStream.close();
-            logStream.flush(); logStream.close();
-            errorStream.flush(); errorStream.close();
+			debugStream.flush(); debugStream.close();
+			logStream.flush(); logStream.close();
+			errorStream.flush(); errorStream.close();
 			sqlLogStream.flush(); sqlLogStream.close();
 			refinementLogStream.flush(); refinementLogStream.close();
-        }
-        catch (Exception ex) { }
-    }
+		}
+		catch (Exception ex) { }
+	}
 
-    public static void error(String s)
+	public static void error(String s)
 	{
-        try { errorStream.write(charsToBytes(s.toCharArray())); errorStream.write('\n');
+		try { errorStream.write(charsToBytes(s.toCharArray())); errorStream.write('\n');
 			} catch (Exception ex) { }
-    }
+	}
 
-    public static void debug(String s)
+	public static void debug(String s)
 	{
-        try {
+		try {
 			// debugStream.write(charsToBytes(s.toCharArray())); debugStream.write('\n');
 		} catch (Exception ex) { }
-    }
+	}
 
 	public static void logSql(String s)
 	{
@@ -94,15 +94,15 @@ public class Log
 				sqlLogStream.write(charsToBytes(s.toCharArray())); sqlLogStream.write('\n');
 			} catch (Exception ex) { }
 		logCommandLine(s);
-    }
+	}
 
 	public static void logRefinement(String s)
 	{
 		if (REFINEMENTLOG)
 			try {
 				refinementLogStream.write(charsToBytes(s.toCharArray())); refinementLogStream.write('\n');
-	    	} catch (Exception ex) { log(s);}
-    }
+			} catch (Exception ex) { log(s);}
+	}
 
 	public static void logCommandLine(String s)
 	{
@@ -117,18 +117,18 @@ public class Log
 		FileOutputStream aFile = null;
 
 		try {
-            java.io.File alogPath = new java.io.File(LOGPATH);
+			java.io.File alogPath = new java.io.File(LOGPATH);
 			alogPath.mkdirs(); // create directories if not already there
 
 			String aUniqueID = "" + System.currentTimeMillis();
 			aFile = new java.io.FileOutputStream(LOGPATH + theFileName + aUniqueID + ".wri");
 		} catch (Exception ex) {
-	        errorMade = true;
-	        error(ex.toString()); }
+			errorMade = true;
+			error(ex.toString()); }
 
-	    if (!errorMade) {
+		if (!errorMade) {
 			aFileStream = aFile;
-	    	try {
+	try {
 				aFileStream.write(charsToBytes(theContent.toCharArray()));
 				aFileStream.write('\n');
 			} catch (Exception ex) { }
@@ -155,11 +155,11 @@ public class Log
     }
 
 
-    private static byte[] charsToBytes(char[] ca)
+	private static byte[] charsToBytes(char[] ca)
 	{
-        byte[] ba = new byte[ca.length];
-        for (int i = 0; i < ca.length; i++)
-            ba[i] = (byte)ca[i];
-        return ba;
-    }
+		byte[] ba = new byte[ca.length];
+		for (int i = 0; i < ca.length; i++)
+			ba[i] = (byte)ca[i];
+		return ba;
+	}
 }

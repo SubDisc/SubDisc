@@ -2,22 +2,22 @@ package nl.liacs.subdisc;
 
 public class Refinement
 {
-    protected Subgroup itsSubgroup;
-    private Condition itsCondition;
+	protected Subgroup itsSubgroup;
+	private Condition itsCondition;
 
-    public Refinement(Condition aCondition, Subgroup aSubgroup)
+	public Refinement(Condition aCondition, Subgroup aSubgroup)
 	{
-        itsCondition = aCondition;
-        itsSubgroup = aSubgroup;
-    }
+		itsCondition = aCondition;
+		itsSubgroup = aSubgroup;
+	}
 
-    public Subgroup getRefinedSubgroup(String theValue)
+	public Subgroup getRefinedSubgroup(String theValue)
 	{
-        Subgroup aRefinedSubgroup = (Subgroup) itsSubgroup.copy(); // TODO: deep copy
-        itsCondition.setValue(theValue);
-        aRefinedSubgroup.addCondition(itsCondition.copy());
+		Subgroup aRefinedSubgroup = (Subgroup) itsSubgroup.copy(); // TODO: deep copy
+		itsCondition.setValue(theValue);
+		aRefinedSubgroup.addCondition(itsCondition.copy());
 		return aRefinedSubgroup;
-    }
+	}
 
 	public Condition getCondition() { return itsCondition; }
 

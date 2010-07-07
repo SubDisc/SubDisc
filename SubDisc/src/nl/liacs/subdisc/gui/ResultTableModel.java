@@ -1,5 +1,6 @@
 package nl.liacs.subdisc.gui;
 
+import java.io.File;
 import java.io.FileOutputStream;
 import java.text.NumberFormat;
 import java.util.Iterator;
@@ -90,20 +91,20 @@ public class ResultTableModel extends AbstractTableModel
 
 			try
 			{
-	            java.io.File alogPath = new java.io.File(LOGPATH);
+				File alogPath = new File(LOGPATH);
 				alogPath.mkdirs(); // create directories if not already there
 
 				String aUniqueID = "" + System.currentTimeMillis();
 				aFile = new java.io.FileOutputStream(LOGPATH + theFileName + aUniqueID + ".wri");
 			} catch (Exception ex)
 			{
-		        errorMade = true;
-		    }
+				errorMade = true;
+			}
 
-		    if (!errorMade)
-		    {
+			if (!errorMade)
+			{
 				aFileStream = aFile;
-		    	try { // SubgroupSet ColumnHeader
+				try { // SubgroupSet ColumnHeader
 					aFileStream.write(charsToBytes(getHeaderString().toCharArray()));
 					aFileStream.write('\n');
 				} catch (Exception ex) { }
@@ -152,10 +153,10 @@ public class ResultTableModel extends AbstractTableModel
 	}
 
 	private static byte[] charsToBytes(char[] ca)
-		{
-	        byte[] ba = new byte[ca.length];
-	        for (int i = 0; i < ca.length; i++)
-	            ba[i] = (byte)ca[i];
-	        return ba;
-    }
+	{
+		byte[] ba = new byte[ca.length];
+		for (int i = 0; i < ca.length; i++)
+			ba[i] = (byte)ca[i];
+		return ba;
+	}
 }

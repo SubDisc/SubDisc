@@ -6,16 +6,16 @@ public class Histogram extends DataCube
 	private int[] itsCounts = new int[0];
 	private String itsType;
 
-/*    public Histogram(DatabaseConnection theDBC, String theQuery) throws Exception
+/*	public Histogram(DatabaseConnection theDBC, String theQuery) throws Exception
 	{
 		Log.logSql("Histogram:");
 		ArrayList<ArrayList> aResult = theDBC.doDoubleArrayQuery(theQuery);
 
 		int aNrRows = aResult.get(0).size();
 		itsValues = new String[aNrRows];
-        itsCounts = new int[aNrRows];
+		itsCounts = new int[aNrRows];
 
-        for (int i=0; i<aNrRows; i++)
+		for (int i=0; i<aNrRows; i++)
 		{
 			itsValues[i] = (String) aResult.get(0).get(i);
 			itsCounts[i] = (Integer) aResult.get(1).get(i);
@@ -32,7 +32,7 @@ public class Histogram extends DataCube
 
 	public String getType() { return itsType; }
 
-    public String getValue(int theIndex) { return itsValues[theIndex]; }
+	public String getValue(int theIndex) { return itsValues[theIndex]; }
 
 	public String[] getValues() { return itsValues; }
 
@@ -90,18 +90,18 @@ public class Histogram extends DataCube
 		String aString = new String("");
 
 		for (int i = 0; i < itsValues.length; i++)
-			aString += "\n  " + itsValues[i] + "    " + itsCounts[i];
+			aString += "\n  " + itsValues[i] + "	" + itsCounts[i];
 		if (itsValues.length > 0)
 			return aString.substring(1);
 		else
 			return "  < empty > ";
 	}
 
-    public void debug()
+	public void debug()
 	{
-        Log.debug("Histogram:\n");
-        for (int i = 0; i < itsCounts.length; i++)
-			Log.debug( "  " + itsValues[i] + "    " + itsCounts[i] );
+		Log.debug("Histogram:\n");
+		for (int i = 0; i < itsCounts.length; i++)
+			Log.debug( "  " + itsValues[i] + "	" + itsCounts[i] );
 		Log.debug("");
-    }
+	}
 }

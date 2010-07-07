@@ -26,7 +26,7 @@ public class VisualNode extends MShape
 		itsXPos = theX;
 		itsYPos = theY;
 		calcBounds();
-    }
+	}
 
 	private void calcBounds()
 	{
@@ -59,23 +59,23 @@ public class VisualNode extends MShape
 		repaint();
 	}
 
-    public void paint(java.awt.Graphics g)
-    {
-        super.paint(g);
-        Graphics2D g2 = (Graphics2D) g;
-        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        Rectangle r = getBounds();
+	public void paint(java.awt.Graphics g)
+	{
+		super.paint(g);
+		Graphics2D g2 = (Graphics2D) g;
+		g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+		Rectangle r = getBounds();
 
 		//shadow
 		g2.setColor(Color.black);
 		g2.setStroke(new BasicStroke(1.0f));
 		g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.5f));
-        g2.fillRect(r.x + 3, r.y + 3, r.width, r.height);
+		g2.fillRect(r.x + 3, r.y + 3, r.width, r.height);
 
 		//fill
 		g2.setColor(itsFillColor);
 		g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1));
-       	g2.fillRect(r.x, r.y, r.width, r.height);
+		g2.fillRect(r.x, r.y, r.width, r.height);
 
 		//outline
 		g2.setColor(Color.black);
@@ -91,7 +91,7 @@ public class VisualNode extends MShape
 		g2.drawString(itsTarget, r.x + 5, r.y + 4 + itsFontSize);
 //		g2.drawString(itsCov, r.x + 5, r.y + 4 + (2 * itsFontSize));
 //		g2.drawString("Acc.: " + itsAcc, r.x + 5, r.y + 5 + (3 * itsFontSize));
-    }
+	}
 
 	public void mouseClicked(MouseEvent e)
 	{

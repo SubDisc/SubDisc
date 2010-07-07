@@ -4,8 +4,8 @@ public class Attribute
 {
 	private int itsIndex;
 	private int itsType;
-    private String itsName;
-    private String itsShort;
+	private String itsName;
+	private String itsShort;
 
 	public static final int NUMERIC = 0;
 	public static final int NOMINAL = 1;
@@ -15,24 +15,24 @@ public class Attribute
     public Attribute(int theIndex, String theName, String theShort, int theType)
 	{
 		itsIndex = theIndex;
-        itsName = theName;
-        itsShort = theShort;
-        itsType = theType;
-    }
+		itsName = theName;
+		itsShort = theShort;
+		itsType = theType;
+	}
 
 	//MRML
 	public Attribute(String theName, String theShort, int theType)
 	{
-        itsName = theName;
-        itsShort = theShort;
-        itsType = theType;
-    }
+		itsName = theName;
+		itsShort = theShort;
+		itsType = theType;
+	}
 
-    public int getIndex() { return itsIndex; }
-    public int getType() { return itsType; }
+	public int getIndex() { return itsIndex; }
+	public int getType() { return itsType; }
 	public String getName() { return itsName; }
-    public String getShort() { return itsShort; }
-    public boolean hasShort() { return (itsShort != null); }
+	public String getShort() { return itsShort; }
+	public boolean hasShort() { return (itsShort != null); }
 	public String getNameAndShort()
 	{
 		if (hasShort())

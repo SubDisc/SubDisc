@@ -54,8 +54,8 @@ public class saveAsSQL extends JFrame
 		}
 		catch (Exception ex) { errorMade = true; }
 
-	    if (!errorMade)
-	    {
+		if (!errorMade)
+		{
 			aFileStream = aFile;
 			try
 			{
@@ -77,5 +77,5 @@ public class saveAsSQL extends JFrame
 		for (int i = 0; i < ca.length; i++)
 			ba[i] = (byte)ca[i];
 		return ba;
-    }
+	}
 }

@@ -7,17 +7,17 @@ import java.util.TreeSet;
 public class Column
 {
 	private int itsType; //types in Attribute
-    private ArrayList<Float> itsFloats;
-    private ArrayList<String> itsNominals;
-    private BitSet itsBinaries;
-    private int itsSize;
-    private float itsMin = 0.0f;
-    private float itsMax = 0.0f;
+	private ArrayList<Float> itsFloats;
+	private ArrayList<String> itsNominals;
+	private BitSet itsBinaries;
+	private int itsSize;
+	private float itsMin = 0.0f;
+	private float itsMax = 0.0f;
 
-    public Column(int theType, int theNrRows)
+	public Column(int theType, int theNrRows)
 	{
 		itsSize = 0;
-        itsType = theType;
+		itsType = theType;
 		switch (theType)
 		{
 			case Attribute.NUMERIC :
@@ -25,7 +25,7 @@ public class Column
 			case Attribute.NOMINAL : { itsNominals = new ArrayList<String>(theNrRows); break; }
 			case Attribute.BINARY : { itsBinaries = new BitSet(theNrRows); break; }
 		}
-    }
+	}
 
 	public void add(float theFloat) { itsFloats.add(new Float(theFloat)); itsSize++; }
 	public void add(boolean theBinary)
@@ -35,13 +35,13 @@ public class Column
 		itsSize++;
 	}
 	public void add(String theNominal) { itsNominals.add(theNominal); itsSize++; }
-    public int size() { return itsSize; }
-    public int getType() { return itsType; }
-    public float getFloat(int theIndex) { return itsFloats.get(theIndex).floatValue(); }
-    public String getNominal(int theIndex) { return itsNominals.get(theIndex); }
-    public boolean getBinary(int theIndex) { return itsBinaries.get(theIndex); }
-    public String getString(int theIndex)
-    {
+	public int size() { return itsSize; }
+	public int getType() { return itsType; }
+	public float getFloat(int theIndex) { return itsFloats.get(theIndex).floatValue(); }
+	public String getNominal(int theIndex) { return itsNominals.get(theIndex); }
+	public boolean getBinary(int theIndex) { return itsBinaries.get(theIndex); }
+	public String getString(int theIndex)
+	{
 		switch (itsType)
 		{
 			case Attribute.NUMERIC :
@@ -51,7 +51,7 @@ public class Column
 		}
 		return itsNominals.get(theIndex);
 	}
-    public BitSet getBinaries() { return itsBinaries; }
+	public BitSet getBinaries() { return itsBinaries; }
 
 	public boolean isNominalType() { return itsType == Attribute.NOMINAL; }
 	public boolean isNumericType() { return itsType == Attribute.NUMERIC; }

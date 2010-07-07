@@ -19,33 +19,33 @@ public class TargetConcept
 	public static final int MULTI_LABEL	   				= 5;
 	public static final int MULTI_BINARY_CLASSIFICATION = 6;
 
-    public TargetConcept()
+	public TargetConcept()
 	{
 		itsNrTargetAttributes = 1;
-        itsTargetType = SINGLE_NOMINAL;
-    }
+		itsTargetType = SINGLE_NOMINAL;
+	}
 
-    public TargetConcept(int theTargetType, int theNrTargetAttributes)
+	public TargetConcept(int theTargetType, int theNrTargetAttributes)
 	{
 		itsNrTargetAttributes = theNrTargetAttributes;
-        itsTargetType = theTargetType;
-    }
+		itsTargetType = theTargetType;
+	}
 
-    public TargetConcept(String theTargetType, int theNrTargetAttributes)
+	public TargetConcept(String theTargetType, int theNrTargetAttributes)
 	{
 		itsNrTargetAttributes = theNrTargetAttributes;
-        itsTargetType = getTypeCode(theTargetType);
-    }
+		itsTargetType = getTypeCode(theTargetType);
+	}
 
-    public Attribute getPrimaryTarget() { return itsPrimaryTarget; }
-    public void setPrimaryTarget(Attribute thePrimaryTarget) { itsPrimaryTarget = thePrimaryTarget; }
-    public String getTargetValue() { return itsTargetValue; }
-    public void setTargetValue(String theTargetValue) { itsTargetValue = theTargetValue; }
-    public Attribute getSecondaryTarget() { return itsSecondaryTarget; }
-    public void setSecondaryTarget(Attribute theSecondaryTarget) { itsSecondaryTarget = theSecondaryTarget; }
+	public Attribute getPrimaryTarget() { return itsPrimaryTarget; }
+	public void setPrimaryTarget(Attribute thePrimaryTarget) { itsPrimaryTarget = thePrimaryTarget; }
+	public String getTargetValue() { return itsTargetValue; }
+	public void setTargetValue(String theTargetValue) { itsTargetValue = theTargetValue; }
+	public Attribute getSecondaryTarget() { return itsSecondaryTarget; }
+	public void setSecondaryTarget(Attribute theSecondaryTarget) { itsSecondaryTarget = theSecondaryTarget; }
 
-    public int getNrTargetAttributes() { return itsNrTargetAttributes; }
-    public int getTargetType() { return itsTargetType; }
+	public int getNrTargetAttributes() { return itsNrTargetAttributes; }
+	public int getTargetType() { return itsTargetType; }
 
 	public boolean isSingleNominal() { return (itsTargetType == SINGLE_NOMINAL); }
 	public boolean isEMM()

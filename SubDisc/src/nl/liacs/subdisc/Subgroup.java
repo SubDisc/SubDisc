@@ -61,16 +61,16 @@ public class Subgroup implements Comparable<Object>
 		itsCoverage = theMembers.cardinality();
 	}
 
-    public int getID() { return itsID; }
-    public void setID(int theID) { itsID = theID; }
+	public int getID() { return itsID; }
+	public void setID(int theID) { itsID = theID; }
 
 	public double getMeasureValue() { return itsMeasureValue; }
 	public void setMeasureValue(double theMeasureValue) { itsMeasureValue = theMeasureValue; }
 
 	public void setDAG(DAG theDAG) { itsDAG = theDAG; }
-    public DAG getDAG() { return itsDAG; }
+	public DAG getDAG() { return itsDAG; }
 
-    public int getCoverage() { return itsCoverage; }
+	public int getCoverage() { return itsCoverage; }
 
 	public ConditionList getConditions() { return itsConditions;  }
 	public int getNrConditions() { return itsConditions.size();  }
