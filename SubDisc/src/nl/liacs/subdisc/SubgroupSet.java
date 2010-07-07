@@ -1,10 +1,7 @@
 package nl.liacs.subdisc;
 
-import java.text.NumberFormat;
 import java.util.Iterator;
 import java.util.TreeSet;
-
-import javax.swing.JOptionPane;
 
 public class SubgroupSet extends TreeSet<Subgroup>
 {

@@ -698,27 +698,6 @@ public class MiningWindow extends JFrame
 			jTextFieldSearchStrategyWidth.setEnabled(true);
 	}
 
-	private void jTextFieldSearchStrategyWidthActionPerformed(java.awt.event.ActionEvent evt) {
-	}
-
-	private void jTextFieldQualityMeasureMinimumActionPerformed(java.awt.event.ActionEvent evt) {
-	}
-
-	private void jTextFieldSearchCoverageMinimumActionPerformed(java.awt.event.ActionEvent evt) {
-	}
-
-	private void jTextFieldSearchCoverageMaximumActionPerformed(java.awt.event.ActionEvent evt) {
-	}
-
-	private void jTextFieldSubgroupsMaximumActionPerformed(java.awt.event.ActionEvent evt) {
-	}
-
-	private void jTextFieldSearchTimeMaximumActionPerformed(java.awt.event.ActionEvent evt) {
-	}
-
-	private void jTextFieldSearchDepthActionPerformed(java.awt.event.ActionEvent evt) {
-	}
-
 	private void jComboBoxQualityMeasureActionPerformed(java.awt.event.ActionEvent evt)
 	{
 		initEvaluationMinimum();
@@ -735,10 +714,6 @@ public class MiningWindow extends JFrame
 		Log.logCommandLine("exit");
 		dispose();
 		System.exit(0);
-	}
-
-	private void jMenuItemOpenDatamodelActionPerformed(java.awt.event.ActionEvent evt)
-	{
 	}
 
 	private void jComboBoxTargetAttributeActionPerformed(java.awt.event.ActionEvent evt)

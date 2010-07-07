@@ -1,6 +1,6 @@
 package nl.liacs.subdisc;
 
-import java.util.*;
+import java.util.ArrayList;
 
 
 //TODO: Make more efficient by not updating the regression function after every addObservation. only when necessary

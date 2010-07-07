@@ -1,9 +1,8 @@
 package nl.liacs.subdisc;
 
-import java.util.*;
-//import java.lang.Math;
+import java.util.BitSet;
 
-public class Subgroup implements Comparable
+public class Subgroup implements Comparable<Object>
 {
 	private ConditionList itsConditions;
 	private BitSet itsMembers;

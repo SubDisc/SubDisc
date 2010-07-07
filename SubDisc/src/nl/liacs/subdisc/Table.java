@@ -1,7 +1,13 @@
 package nl.liacs.subdisc;
 
-import java.util.*;
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.BitSet;
+import java.util.Random;
+import java.util.TreeSet;
 
 public class Table
 {
@@ -18,7 +24,7 @@ public class Table
 	public Attribute getAttribute(int i) { return itsAttributes.get(i); }
 	public Column getColumn(Attribute theAttribute) { return itsColumns.get(theAttribute.getIndex()); }
 
-	// Empty
+	// Empty TODO what's the use of this?
 	private Table() {}
 
 	// From file

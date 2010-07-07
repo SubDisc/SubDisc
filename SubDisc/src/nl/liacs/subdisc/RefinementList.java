@@ -1,9 +1,10 @@
 package nl.liacs.subdisc;
 
-import java.util.*;
+import java.util.ArrayList;
 
 public class RefinementList extends ArrayList<Refinement>
 {
+	private static final long serialVersionUID = 1L;
 	private Table itsTable;
 	private Subgroup itsSubgroup;
 

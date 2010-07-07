@@ -13,6 +13,7 @@ public class CorrelationMeasure
 	private boolean itsComplementIsOutdated = true; //flag indicating whether the latest computed correlation for its complement is outdated and whether it should be computed again
 	private double itsComplementCorrelation = Double.NaN;
 	private CorrelationMeasure itsBase = null;
+//	public static int itsType = QualityMeasure.CORRELATION_R;
 	private int itsType = QualityMeasure.CORRELATION_R;		// TODO check type
 
 	//make a base model from two columns

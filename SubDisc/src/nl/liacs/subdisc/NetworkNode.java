@@ -1,8 +1,5 @@
 package nl.liacs.subdisc;
 
-import java.util.*;
-//import java.lang.*;
-
 public class NetworkNode
 {
 	private static int id = 0;

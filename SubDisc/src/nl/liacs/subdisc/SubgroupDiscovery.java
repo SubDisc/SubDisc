@@ -186,9 +186,6 @@ public class SubgroupDiscovery extends MiningAlgorithm
 			}
 			case TargetConcept.DOUBLE_REGRESSION :
 			{
-				Attribute aPrimaryTarget = itsSearchParameters.getTargetConcept().getPrimaryTarget();
-				Attribute aSecondaryTarget = itsSearchParameters.getTargetConcept().getSecondaryTarget();
-
 				RegressionMeasure aRM = new RegressionMeasure(itsBaseRM);
 				for (int i=0; i<itsTable.getNrRows(); i++)
 					if (theSubgroup.getMembers().get(i))
@@ -199,9 +196,6 @@ public class SubgroupDiscovery extends MiningAlgorithm
 			}
 			case TargetConcept.DOUBLE_CORRELATION :
 			{
-				Attribute aPrimaryTarget = itsSearchParameters.getTargetConcept().getPrimaryTarget();
-				Attribute aSecondaryTarget = itsSearchParameters.getTargetConcept().getSecondaryTarget();
-
 				CorrelationMeasure aCM = new CorrelationMeasure(itsBaseCM);
 				for (int i=0; i<itsTable.getNrRows(); i++)
 					if (theSubgroup.getMembers().get(i))
