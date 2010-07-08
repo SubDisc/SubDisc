@@ -39,7 +39,8 @@ public class MiningWindow extends JFrame
 {
 	static final long serialVersionUID = 1L;
 
-	public static final Image ICON = Toolkit.getDefaultToolkit().getImage(MiningWindow.class.getResource("/Safarii.gif"));
+	// TODO get image
+	public static final Image ICON = Toolkit.getDefaultToolkit().getImage(MiningWindow.class.getResource("/icon.gif"));
 
 	private Table itsTable;
 	private int itsTotalCount;
@@ -61,10 +62,10 @@ public class MiningWindow extends JFrame
 		Log.openFileOutputStreams();
 
 		itsTable = theTable;
-		initSafariiComponents();
+		initGuiComponents();
 	}
 
-	private	void initSafariiComponents()
+	private	void initGuiComponents()
 	{
 		//set dataset properties
 		jLFieldTargetTable.setText("tablename");
@@ -706,7 +707,7 @@ public class MiningWindow extends JFrame
 	private void jMenuItemAboutSafariiActionPerformed(java.awt.event.ActionEvent evt)
 	{
 		//TODO
-		JOptionPane.showMessageDialog(null, "Subgroup Discovery", "About Safarii", JOptionPane.INFORMATION_MESSAGE);
+		JOptionPane.showMessageDialog(null, "Subgroup Discovery", "About SubDisc", JOptionPane.INFORMATION_MESSAGE);
 	}
 
 	private void jMenuItemExitActionPerformed(java.awt.event.ActionEvent evt)

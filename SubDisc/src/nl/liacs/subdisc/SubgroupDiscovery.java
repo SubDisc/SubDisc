@@ -96,8 +96,8 @@ public class SubgroupDiscovery extends MiningAlgorithm
 												   aRootCandidate);
 			itsCandidateCount = 0;
 
-			while (( itsCandidateQueue != null && itsCandidateQueue.size() > 0 )&&
-				   (System.currentTimeMillis() <= theBeginTime + (long)(itsSearchParameters.getMaximumTime()*60*1000)))
+			long theEndTime = theBeginTime + (long)(itsSearchParameters.getMaximumTime()*60*1000);
+			while (( itsCandidateQueue != null && itsCandidateQueue.size() > 0 )&& (System.currentTimeMillis() <= theEndTime))
 			{
 				Candidate aCandidate = itsCandidateQueue.removeFirst(); // take off first Candidate from Queue
 				Subgroup aSubgroup = aCandidate.getSubgroup();
@@ -108,7 +108,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 
 					for (int i = 0; i < aRefinementList.size(); i++)
 					{
-						if ((System.currentTimeMillis() > theBeginTime + (long)(itsSearchParameters.getMaximumTime()*60*1000)))
+						if (System.currentTimeMillis() > theEndTime)
 							break;
 
 						Refinement aRefinement = aRefinementList.get(i);

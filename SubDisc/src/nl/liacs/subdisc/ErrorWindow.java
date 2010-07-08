@@ -1,6 +1,5 @@
 package nl.liacs.subdisc;
 
-import java.awt.Toolkit;
 import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -14,7 +13,7 @@ public class ErrorWindow extends javax.swing.JFrame
 	{
 			initComponents(theException);
 			this.getToolkit();
-			setIconImage(Toolkit.getDefaultToolkit().getImage("Safarii.gif"));
+//			setIconImage(MiningWindow.ICON);
 			setTitle("Error");
 			pack();
 	}

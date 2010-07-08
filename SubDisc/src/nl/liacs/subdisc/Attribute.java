@@ -12,7 +12,7 @@ public class Attribute
 	public static final int ORDINAL = 2;
 	public static final int BINARY = 3;
 
-    public Attribute(int theIndex, String theName, String theShort, int theType)
+	public Attribute(int theIndex, String theName, String theShort, int theType)
 	{
 		itsIndex = theIndex;
 		itsName = theName;

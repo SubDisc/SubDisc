@@ -1,6 +1,5 @@
 package nl.liacs.subdisc;
 
-import java.util.Arrays;
 import java.util.BitSet;
 
 //implements an n-dimensional cube of counts.
@@ -17,7 +16,6 @@ public class CrossCube extends DataCube
 		setSize(aPower);
 		itsDimensions = theDimensions;
 		itsCounts = new int[aPower];
-		Arrays.fill(itsCounts, 0);
 	}
 
 	public void setCount(BitSet theBitSet, int theCount) { setCount(getIndex(theBitSet), theCount); }

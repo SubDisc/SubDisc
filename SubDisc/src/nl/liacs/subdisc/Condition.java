@@ -76,7 +76,7 @@ public class Condition
 
 	public String getAttributeName() { return itsAttribute.getName(); }
 
-    public Attribute getAttribute() { return itsAttribute; }
+	public Attribute getAttribute() { return itsAttribute; }
 
 	public String getAggregateString()
 	{
