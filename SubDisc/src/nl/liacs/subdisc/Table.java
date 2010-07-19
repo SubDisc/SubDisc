@@ -1,8 +1,5 @@
 package nl.liacs.subdisc;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
@@ -15,7 +12,7 @@ public class Table
 	private ArrayList<Column> itsColumns;
 	private int itsNrRows;
 	private int itsNrColumns;
-	private String itsSeparator = ",";
+	private String itsSeparator = ",";	// TODO remove
 	private Random itsRandomNumber;
 
 	public int getNrRows() { return itsNrRows; }
@@ -24,9 +21,19 @@ public class Table
 	public Attribute getAttribute(int i) { return itsAttributes.get(i); }
 	public Column getColumn(Attribute theAttribute) { return itsColumns.get(theAttribute.getIndex()); }
 
-	// Empty TODO what's the use of this?
-	private Table() {}
+	public ArrayList<Attribute> getAttributes() { return itsAttributes; };
+	public ArrayList<Column> getColumns() { return itsColumns; };
 
+	public Table(int theNrRows, int theNrColumns)
+	{
+		itsAttributes = new ArrayList<Attribute>(theNrColumns);
+		itsColumns = new ArrayList<Column>(theNrColumns);
+		itsNrRows = theNrRows;
+		itsNrColumns = theNrColumns;
+		itsRandomNumber = new Random(System.currentTimeMillis());
+	}
+
+/*
 	// From file
 	public Table(File theFile)
 	{
@@ -141,6 +148,7 @@ public class Table
 			anAttribute.print();
 		return isWellFormedFile;
 	}
+*/
 
 	public BitSet evaluate(Condition theCondition)
 	{

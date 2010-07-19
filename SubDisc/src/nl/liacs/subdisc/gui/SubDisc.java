@@ -4,11 +4,11 @@ import java.io.File;
 
 import javax.swing.JFileChooser;
 
-import nl.liacs.subdisc.Table;
+import nl.liacs.subdisc.FileLoaderTXT;
 
 public class SubDisc
 {
-	static public void main(String[] args)
+	static public void main(String[] args) throws Exception
 	{
 //		try
 //		{
@@ -17,8 +17,7 @@ public class SubDisc
 //		}
 //		catch(Exception theException) {}
 
-		JFileChooser aChooser = new JFileChooser();
-		aChooser.setCurrentDirectory(new File("."));
+		JFileChooser aChooser = new JFileChooser(new File("."));
 		aChooser.setFileFilter (new javax.swing.filechooser.FileFilter()
 		{
 			public boolean accept(File f)
@@ -30,9 +29,11 @@ public class SubDisc
 			public String getDescription() { return "Data Files"; }
 		});
 		int aResult = aChooser.showOpenDialog(null);
+		// TODO get selected file type and use appropriated loader
 		if (aResult == JFileChooser.APPROVE_OPTION)
 		{
-			MiningWindow aMiningWindow = new MiningWindow(new Table(aChooser.getSelectedFile()));
+			File aFile = aChooser.getSelectedFile(); 
+			MiningWindow aMiningWindow = new MiningWindow(new FileLoaderTXT().loadFile(aFile));
 			aMiningWindow.setVisible(true);
 		}
 	}
