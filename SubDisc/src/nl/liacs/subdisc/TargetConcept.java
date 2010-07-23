@@ -1,6 +1,6 @@
 package nl.liacs.subdisc;
 
-import java.util.*;
+import java.util.ArrayList;
 
 public class TargetConcept
 {

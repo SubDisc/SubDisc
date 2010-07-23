@@ -8,29 +8,63 @@ import java.util.TreeSet;
 
 public class Table
 {
-	private ArrayList<Attribute> itsAttributes;
-	private ArrayList<Column> itsColumns;
-	private int itsNrRows;
-	private int itsNrColumns;
-	private String itsSeparator = ",";	// TODO remove
+	// all but Random can be made final
+	public String itsName = "no tablename";
+	int itsNrRows;
+	int itsNrColumns;
+	private ArrayList<Attribute> itsAttributes = new ArrayList<Attribute>();
+	private ArrayList<Column> itsColumns = new ArrayList<Column>();
+//	private String itsSeparator = ",";	// TODO remove
 	private Random itsRandomNumber;
 
+	// NOTE itsNrColumns is not tied to itsColumns.size() 
 	public int getNrRows() { return itsNrRows; }
 	public int getNrColumns() { return itsNrColumns; } //just the descriptors
-	public String getSeparator() { return itsSeparator; }
+
+//	public String getSeparator() { return itsSeparator; }
 	public Attribute getAttribute(int i) { return itsAttributes.get(i); }
 	public Column getColumn(Attribute theAttribute) { return itsColumns.get(theAttribute.getIndex()); }
 
 	public ArrayList<Attribute> getAttributes() { return itsAttributes; };
 	public ArrayList<Column> getColumns() { return itsColumns; };
 
+	// TODO some constructors and builder functions, may change
+	public Table()
+	{
+		itsRandomNumber = new Random(System.currentTimeMillis());	// Not needed in constructor?
+	}
+
 	public Table(int theNrRows, int theNrColumns)
 	{
-		itsAttributes = new ArrayList<Attribute>(theNrColumns);
-		itsColumns = new ArrayList<Column>(theNrColumns);
 		itsNrRows = theNrRows;
 		itsNrColumns = theNrColumns;
+		itsAttributes.ensureCapacity(theNrColumns);
+		itsColumns.ensureCapacity(theNrColumns);
 		itsRandomNumber = new Random(System.currentTimeMillis());
+	}
+
+	public Table setAttributes(ArrayList<Attribute> theAttributes)
+	{
+		itsAttributes = theAttributes;
+		return this;
+	}
+
+	public Table addAttribute(Attribute theAttribute)
+	{
+		itsAttributes.add(theAttribute);
+		return this;
+	}
+
+	public Table setColumns(ArrayList<Column> theColumns)
+	{
+		itsColumns = theColumns;
+		return this;
+	}
+
+	public Table addColumn(Column theColumn)
+	{
+		itsColumns.add(theColumn);
+		return this;
 	}
 
 /*

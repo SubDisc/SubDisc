@@ -68,7 +68,7 @@ public class MiningWindow extends JFrame
 	private	void initGuiComponents()
 	{
 		//set dataset properties
-		jLFieldTargetTable.setText("tablename");
+		jLFieldTargetTable.setText(itsTable == null ? "" : itsTable.itsName);
 		itsTotalCount = itsTable.getNrRows();
 		jLFieldNrExamples.setText("" + itsTotalCount);
 		jLFieldNrColumns.setText("" + itsTable.getNrColumns());
