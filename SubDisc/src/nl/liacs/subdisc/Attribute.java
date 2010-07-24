@@ -28,7 +28,7 @@ public class Attribute
 		itsType = theType;
 	}
 
-	public int getIndex() { return itsIndex; }	// TODO check, is null for MRML
+	public int getIndex() { return itsIndex; }	// TODO check, is null for ARFF/MRML
 	public int getType() { return itsType; }
 	public String getName() { return itsName; }
 	public String getShort() { return itsShort; }

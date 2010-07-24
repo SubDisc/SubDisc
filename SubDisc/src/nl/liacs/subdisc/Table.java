@@ -23,7 +23,7 @@ public class Table
 
 //	public String getSeparator() { return itsSeparator; }
 	public Attribute getAttribute(int i) { return itsAttributes.get(i); }
-	public Column getColumn(Attribute theAttribute) { return itsColumns.get(theAttribute.getIndex()); }
+	public Column getColumn(Attribute theAttribute) { return itsColumns.get(theAttribute.getIndex()); }	// index == null for ARFF/MRML
 
 	public ArrayList<Attribute> getAttributes() { return itsAttributes; };
 	public ArrayList<Column> getColumns() { return itsColumns; };
@@ -43,6 +43,7 @@ public class Table
 		itsRandomNumber = new Random(System.currentTimeMillis());
 	}
 
+	// allows making itsAttributes unmodifiable/final
 	public Table setAttributes(ArrayList<Attribute> theAttributes)
 	{
 		itsAttributes = theAttributes;

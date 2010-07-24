@@ -12,14 +12,6 @@ public class FileLoaderARFF implements FileLoaderInterface
 {
 	private Table itsTable;
 
-//	private static final String[] keyword = { "%", "@relation", "@attribute", "@data", "@end" };
-	private final static Pattern COMMENT = Pattern.compile("^\\s*%\\s*", Pattern.CASE_INSENSITIVE);
-	private final static Pattern RELATION = Pattern.compile("^\\s*@relation\\s*", Pattern.CASE_INSENSITIVE);
-	private final static Pattern ATTRIBUTE = Pattern.compile("^\\s*@attribute\\s*", Pattern.CASE_INSENSITIVE);
-	private final static Pattern DATA = Pattern.compile("^\\s*@data\\s*", Pattern.CASE_INSENSITIVE);
-	private final static Pattern END = Pattern.compile("^\\s*@end\\s*", Pattern.CASE_INSENSITIVE);
-	private static Matcher m;
-/*	
 	private static enum Keyword
 	{
 		COMMENT("%"),
@@ -28,14 +20,16 @@ public class FileLoaderARFF implements FileLoaderInterface
 		DATA("@data"),
 		END("@end");
 
-		private final String inTxt;
+		private final Pattern text;
 
-		Keyword(String theTxt) { inTxt = theTxt; }
+		Keyword(String theKeyword) { text = Pattern.compile("^\\s*" + theKeyword + "\\s*", Pattern.CASE_INSENSITIVE); }
 
-		@Override
-		public String toString() { return inTxt; }
+		boolean occursIn(String theString)
+		{
+			return this.text.matcher(theString).find();
+		}
 	}
-*/
+
 	// TODO multiple '@relation' and '@data' declarations should throw error
 	// TODO rewrite parser, use keyword check on each line
 	@Override
@@ -47,8 +41,6 @@ public class FileLoaderARFF implements FileLoaderInterface
 		{
 			aReader = new BufferedReader(new FileReader(theFile));
 			String aLine;
-//			EnumSet<Keyword> section = EnumSet.range(Keyword.RELATION, Keyword.DATA);
-//			String sectionToFind = section.iterator().next().toString();	// @relation
 			boolean relationFound = false;
 			boolean attributeFound = false;
 			boolean dataFound = false;
@@ -56,44 +48,43 @@ public class FileLoaderARFF implements FileLoaderInterface
 			// .toLowerCase()
 			while((aLine = aReader.readLine()) != null)
 			{
-//				aLine.trim();
-				if(COMMENT.matcher(aLine).find())
+				if(Keyword.COMMENT.occursIn(aLine) || aLine.isEmpty())
 					continue;
 
-				if(END.matcher(aLine).find())
+				if(Keyword.END.occursIn(aLine))
 					break;
 
 				if(!relationFound)
 				{
-					if(RELATION.matcher(aLine).find())
+					if(Keyword.RELATION.occursIn(aLine))
 					{
 						itsTable = new Table();
-						itsTable.itsName = removeOuterQuotes(aLine.split("\\s", 2)[1]);
+						itsTable.itsName = removeOuterQuotes(aLine.split("\\s", 2)[1]);	// TODO use m.end()
 						relationFound = true;
 					}
 					else
 					{
-						// if(otherKeyWordFound) { noRelationError(); }
+						// if(otherKeyWordFound) { criticalError(noRelationError); }
 						continue;
 					}
 				}
 
 				else if(!attributeFound)
 				{
-					m = ATTRIBUTE.matcher(aLine);
-					if(m.find())
+					if(Keyword.ATTRIBUTE.occursIn(aLine))
 					{
+						Matcher m;
 						ArrayList<Attribute> al = new ArrayList<Attribute>();
 
 						do
 						{
-							if(COMMENT.matcher(aLine).find())
+							if(Keyword.COMMENT.occursIn(aLine))
 								continue;
 
-							m = ATTRIBUTE.matcher(aLine);
+							m = Keyword.ATTRIBUTE.text.matcher(aLine);
 							if(m.find())
 								al.add(parseAttribute(aLine.substring(m.end())));
-							else if(DATA.matcher(aLine).find())
+							else if(Keyword.DATA.occursIn(aLine))
 							{
 								dataFound = true;
 								break; 
@@ -101,21 +92,24 @@ public class FileLoaderARFF implements FileLoaderInterface
 						}
 						while((aLine = aReader.readLine()) != null);
 
-						itsTable.setAttributes(al);
+						itsTable.setAttributes(al);	// allows making itsAttributes unmodifiable/final
+						for (Attribute a : al)
+						{
+							itsTable.getColumns().add(new Column(a.getType(), 1000));	// TODO other default? 1000
+						}
 						attributeFound = true;
 					}
 					else
 					{
-						// if(dataKeyWordFound) { noAttributeError(); }
+						// if(dataKeyWordFound) { criticalError(noAttributeError); }
 						continue;
 					}
 				}
 
 				else if(dataFound)
 				{
-					// careful splitting using .split(",", -1), check for escaped "\," in quoted strings 'some\,text'
-					// aLine.length == itsTable.getNrAttributes()
-					//loadData(aLine);
+					++itsTable.itsNrRows;
+					loadData(aLine);
 				}
 			}
 			/*
@@ -127,15 +121,17 @@ public class FileLoaderARFF implements FileLoaderInterface
 			System.out.println("itsTable.itsName = " + itsTable.itsName);
 			for(Attribute a : itsTable.getAttributes())
 				a.print();
-			System.out.println("dataFound = " + dataFound);
-			
+			for(Column c : itsTable.getColumns())
+				c.print();
+
 		}
 		catch (IOException e)
 		{
-			// TODO Auto-generated catch block
+			// criticalError(e);
 			e.printStackTrace();
 		}
-			
+
+		itsTable.itsNrColumns = itsTable.getAttributes().size();	// needed for MiningWindow
 		return itsTable;
 	}
 /*
@@ -162,9 +158,10 @@ public class FileLoaderARFF implements FileLoaderInterface
 	 * else parse inner { }, not really needed for Attribute types, but useful for DATA checking
 	 * each nominal-class is delimited by an unescaped "\\s*,\\s*"
 	 */
+	// TODO we can not handle STRING/DATE appropriately
+	// attribute type(s), only NUMERIC/NOMINAL for now, not ORDINAL/BINARY
 	private static Attribute parseAttribute(String theLine)
 	{
-		Attribute anAttribute;
 		String aName;
 
 		// get attribute name (not so clean)
@@ -175,14 +172,7 @@ public class FileLoaderARFF implements FileLoaderInterface
 
 		theLine = theLine.replaceFirst("\\'?" + aName + "\\'?\\s*", "");
 
-		// TODO we can not handle STRING/DATE appropriately
-		// get attribute type(s), only NUMERIC/NOMINAL for now, not ORDINAL/BINARY
-		if(declaresNumericType(theLine))
-			anAttribute = new Attribute(aName, null, Attribute.NUMERIC);
-		else
-			anAttribute = new Attribute(aName, null, Attribute.NOMINAL);
-
-		return anAttribute;
+		return new Attribute(aName, null, declaredType(theLine));
 	}
 
 	// TODO do this only once for the whole line
@@ -206,9 +196,66 @@ public class FileLoaderARFF implements FileLoaderInterface
 		return theString;
 	}
 
-	private static boolean declaresNumericType(String theString)
+	private String loadData(String theString)
+	{
+		String s;
+
+		for(int i = 0, j = itsTable.getAttributes().size(); i < j; ++i)
+		{
+			int offset = 0;
+
+			if(theString.trim().startsWith("\'"))
+			{
+				s = removeOuterQuotes(theString);
+				offset = 2;
+			}
+			else
+			{
+				s = theString.split(",", 2)[0].trim();
+			}
+
+			theString = theString.substring(s.length() + offset).replaceFirst(",", "").trim();
+
+			//System.out.println(s + " " + itsTable.getAttribute(i).getName() + " " + itsTable.getColumn(itsTable.getAttribute(i)).size());
+			// TODO determine default for missing NUMERIC/ORDINAL/BINARY values
+			// itsTable.getColumn(itsTable.getAttribute(i)).add(s); break;
+			switch(itsTable.getAttribute(i).getType())
+			{
+				case(Attribute.NUMERIC) : 
+				{
+					if(s.equalsIgnoreCase("?"))
+						itsTable.getColumns().get(i).add(Float.NaN);
+					else
+						itsTable.getColumns().get(i).add(Float.valueOf(s));
+					break;
+				}
+				case(Attribute.NOMINAL) : 
+					itsTable.getColumns().get(i).add(s); break;
+			}
+		}
+
+		if(!theString.isEmpty())
+			if(!Keyword.COMMENT.occursIn(theString))
+				System.out.println("ERROR " + theString);
+				// criticalError(toManyArgumentsError);
+
+		return theString;
+	}
+
+	// determine attribute type(s), only NUMERIC/NOMINAL for now, not ORDINAL/BINARY
+	private static int declaredType(String theString)
 	{
 		String s = theString.toLowerCase();
-		return (s.startsWith("real") || s.startsWith("integer") || s.startsWith("numeric"));
+
+		if(s.startsWith("real") || s.startsWith("integer") || s.startsWith("numeric"))
+			return Attribute.NUMERIC;
+		else
+			return Attribute.NOMINAL;
+	}
+
+	// TODO create ErrorDialog class, that also logs the error
+	private static void criticalError()
+	{
+		Log.logCommandLine("ERROR");
 	}
 }
