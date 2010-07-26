@@ -4,6 +4,7 @@ import java.io.File;
 
 import javax.swing.JFileChooser;
 
+import nl.liacs.subdisc.FileLoaderARFF;
 import nl.liacs.subdisc.FileLoaderTXT;
 
 public class SubDisc
@@ -32,8 +33,13 @@ public class SubDisc
 		// TODO get selected file type and use appropriated loader
 		if (aResult == JFileChooser.APPROVE_OPTION)
 		{
-			File aFile = aChooser.getSelectedFile(); 
-			MiningWindow aMiningWindow = new MiningWindow(new FileLoaderTXT().loadFile(aFile));
+			File aFile = aChooser.getSelectedFile();
+			MiningWindow aMiningWindow;
+
+			if(aFile.getName().toLowerCase().endsWith(".txt"))
+				aMiningWindow = new MiningWindow(new FileLoaderTXT().loadFile(aFile));
+			else
+				aMiningWindow = new MiningWindow(new FileLoaderARFF().loadFile(aFile));
 			aMiningWindow.setVisible(true);
 		}
 	}
