@@ -5,12 +5,16 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class FileLoaderARFF implements FileLoaderInterface
 {
 	private Table itsTable;
+	private ArrayList<NominalAttribute> itsNominalAttributes = new ArrayList<NominalAttribute>();	// used to check data declarations
+	private static final String[] negatives = { "0", "false", "F", "no",};
+	private static final String[] positives = { "1", "true", "T", "yes",};
 
 	private static enum Keyword
 	{
@@ -27,6 +31,18 @@ public class FileLoaderARFF implements FileLoaderInterface
 		boolean occursIn(String theString)
 		{
 			return this.text.matcher(theString).find();
+		}
+	}
+
+	private class NominalAttribute
+	{
+		final Attribute itsAttribute;
+		final List<String> itsNominalClasses;
+
+		NominalAttribute(Attribute theAttribute, List<String> theNominalClasses)
+		{
+			itsAttribute = theAttribute;
+			itsNominalClasses = theNominalClasses;
 		}
 	}
 
@@ -48,6 +64,7 @@ public class FileLoaderARFF implements FileLoaderInterface
 			// .toLowerCase()
 			while((aLine = aReader.readLine()) != null)
 			{
+				aLine.trim();
 				if(Keyword.COMMENT.occursIn(aLine) || aLine.isEmpty())
 					continue;
 
@@ -121,8 +138,8 @@ public class FileLoaderARFF implements FileLoaderInterface
 			System.out.println("itsTable.itsName = " + itsTable.itsName);
 			for(Attribute a : itsTable.getAttributes())
 				a.print();
-			for(Column c : itsTable.getColumns())
-				c.print();
+//			for(Column c : itsTable.getColumns())
+//				c.print();
 
 		}
 		catch (IOException e)
@@ -160,7 +177,7 @@ public class FileLoaderARFF implements FileLoaderInterface
 	 */
 	// TODO we can not handle STRING/DATE appropriately
 	// attribute type(s), only NUMERIC/NOMINAL for now, not ORDINAL/BINARY
-	private static Attribute parseAttribute(String theLine)
+	private Attribute parseAttribute(String theLine)
 	{
 		String aName;
 
@@ -170,12 +187,13 @@ public class FileLoaderARFF implements FileLoaderInterface
 		else
 			aName = theLine.split("\\s", 2)[0];
 
-		theLine = theLine.replaceFirst("\\'?" + aName + "\\'?\\s*", "");
+		theLine = theLine.replaceFirst("\\'?" + aName + "\\'?", "").trim();
 
-		return new Attribute(aName, null, declaredType(theLine));
+		return new Attribute(aName, null, declaredType(aName, theLine));	// (aName, theLine) HACK for NominalAttribute
 	}
 
 	// TODO do this only once for the whole line
+	// TODO catch ArrayIndexOutOfBoounds if i > length (missing closing ')
 	private static String removeOuterQuotes(String theString)
 	{
 		if(theString.startsWith("\'"))
@@ -196,6 +214,7 @@ public class FileLoaderARFF implements FileLoaderInterface
 		return theString;
 	}
 
+	// TODO checking of declared nominal classes for @attributes { class1, class2, ..} declarations
 	private String loadData(String theString)
 	{
 		String s;
@@ -211,17 +230,17 @@ public class FileLoaderARFF implements FileLoaderInterface
 			}
 			else
 			{
-				s = theString.split(",", 2)[0].trim();
+				s = theString.split(",\\s*", 2)[0];
 			}
 
-			theString = theString.substring(s.length() + offset).replaceFirst(",", "").trim();
+			theString = theString.substring(s.length() + offset).replaceFirst(",\\s*", "");
 
 			//System.out.println(s + " " + itsTable.getAttribute(i).getName() + " " + itsTable.getColumn(itsTable.getAttribute(i)).size());
 			// TODO determine default for missing NUMERIC/ORDINAL/BINARY values
 			// itsTable.getColumn(itsTable.getAttribute(i)).add(s); break;
 			switch(itsTable.getAttribute(i).getType())
 			{
-				case(Attribute.NUMERIC) : 
+				case(Attribute.NUMERIC) :
 				{
 					if(s.equalsIgnoreCase("?"))
 						itsTable.getColumns().get(i).add(Float.NaN);
@@ -229,8 +248,14 @@ public class FileLoaderARFF implements FileLoaderInterface
 						itsTable.getColumns().get(i).add(Float.valueOf(s));
 					break;
 				}
-				case(Attribute.NOMINAL) : 
+				case(Attribute.NOMINAL) :
 					itsTable.getColumns().get(i).add(s); break;
+				case(Attribute.BINARY) :
+				{
+					for(String p : positives)
+						if(s.equalsIgnoreCase(p))
+							itsTable.getColumns().get(i).add(true); break;
+				}
 			}
 		}
 
@@ -243,14 +268,84 @@ public class FileLoaderARFF implements FileLoaderInterface
 	}
 
 	// determine attribute type(s), only NUMERIC/NOMINAL for now, not ORDINAL/BINARY
-	private static int declaredType(String theString)
+	private int declaredType(String theAttributeName, String theString)
 	{
 		String s = theString.toLowerCase();
+		System.out.println("declaredType: " + s);
 
 		if(s.startsWith("real") || s.startsWith("integer") || s.startsWith("numeric"))
 			return Attribute.NUMERIC;
-		else
+
+		else if(s.startsWith("{"))
+		{
+			theString = theString.substring(1);
+			ArrayList<String> nominalClasses= new ArrayList<String>(10);
+			String aNominalClass;
+
+			// duplicate code
+			while(!theString.startsWith("}"))
+			{
+				System.out.println("String: " + theString);
+				int offset = 0;
+
+				if(theString.startsWith("\'"))
+				{
+					aNominalClass = removeOuterQuotes(theString);
+					offset = 3;
+				}
+				else
+				{
+					if(theString.contains(","))
+					{
+						aNominalClass = theString.split(",\\s*", 2)[0];
+						offset = 1;
+					}
+					else
+					{
+						aNominalClass = theString.split("}", 2)[0];
+						nominalClasses.add(aNominalClass);
+						break;
+					}
+				}
+
+				nominalClasses.add(aNominalClass);
+				theString = theString.substring(aNominalClass.length() + offset).replaceFirst(",\\s*", "");
+			}
+
+			itsNominalAttributes.add(new NominalAttribute(itsTable.getAttribute(theAttributeName), nominalClasses));
+
+			// TODO use enum
+			if(nominalClasses.size() == 2)
+			{
+				String one = nominalClasses.get(0);
+				String two = nominalClasses.get(1);
+
+				for(int i = 0, j = negatives.length; i < j; ++i)
+				{
+					if(one.equalsIgnoreCase(negatives[i]))
+					{
+						if(two.equalsIgnoreCase(positives[i]))
+							return Attribute.BINARY;;
+						
+					}
+					else if(one.equalsIgnoreCase(positives[i]))
+					{
+						if(two.equalsIgnoreCase(negatives[i]))
+							return Attribute.BINARY;;
+						
+					}
+				}
+
+				// TODO present attributeType change dialog to user
+			}
 			return Attribute.NOMINAL;
+		}
+
+		// TODO parseDate using dateFormat
+		else if(s.startsWith("date"))
+			return Attribute.NOMINAL;
+		System.out.println(s);
+		return Attribute.NOMINAL;
 	}
 
 	// TODO create ErrorDialog class, that also logs the error
