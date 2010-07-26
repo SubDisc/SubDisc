@@ -28,13 +28,12 @@ public class RegressionMeasure
 	private RegressionMeasure itsBase = null;
 
 	//make a base model from two columns
-	// TODO .clone makes a shallow copy
-	// itsComplementData = new ArrayList<DataPoint>(theBase.getBase)
 	public RegressionMeasure(int theType, Column thePrimaryColumn, Column theSecondaryColumn, RegressionMeasure theBase)
 	{
 		itsBase = theBase;
 		if(itsBase!=null)
-			itsComplementData = (ArrayList<DataPoint>) theBase.getData().clone();
+			itsComplementData = new ArrayList<DataPoint>(theBase.getData());
+//			itsComplementData = (ArrayList<DataPoint>) theBase.getData().clone();
 
 		itsType = theType;
 		itsSampleSize = thePrimaryColumn.size();
@@ -70,10 +69,9 @@ public class RegressionMeasure
 		itsYSquaredSum = 0;
 
 		//Init the complement measure. For an empty measure the complement is equal to the root
-		// TODO .clone makes a shallow copy
-		// itsComplementData = new ArrayList<DataPoint>(theBase.getBase
 		if(theBase!=null)
-			itsComplementData = (ArrayList<DataPoint>) theBase.getData().clone();
+			itsComplementData = new ArrayList<DataPoint>(theBase.getData());
+//			itsComplementData = (ArrayList<DataPoint>) theBase.getData().clone();
 		//else
 		//	If theBase==null it means this measure itself is the root and thus the complement is empty
 	}
