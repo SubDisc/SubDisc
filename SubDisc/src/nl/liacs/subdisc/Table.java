@@ -17,7 +17,7 @@ public class Table
 //	private String itsSeparator = ",";	// TODO remove
 	private Random itsRandomNumber;
 
-	// NOTE itsNrColumns is not tied to itsColumns.size() 
+	// NOTE itsNrColumns is not tied to itsColumns.size()
 	public int getNrRows() { return itsNrRows; }
 	public int getNrColumns() { return itsNrColumns; } //just the descriptors
 
@@ -383,9 +383,10 @@ public class Table
 
 	public void print()
 	{
-		for (Column aColumn : itsColumns)
-			aColumn.print();
-
+		Log.logCommandLine("Types ===========================================");
+		for (Attribute anAttribute : itsAttributes)
+			anAttribute.print();
+		Log.logCommandLine("Table ===========================================");
 		for (int i=0; i<itsNrRows; i++)
 		{
 			String aRow = "Row "+(i+1)+": ";
@@ -400,5 +401,6 @@ public class Table
 			}
 			Log.logCommandLine(aRow);
 		}
+		Log.logCommandLine("=================================================");
 	}
 }

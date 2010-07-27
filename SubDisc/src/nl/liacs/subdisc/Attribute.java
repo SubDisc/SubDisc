@@ -63,7 +63,7 @@ public class Attribute
 
 	public void print()
 	{
-		Log.logCommandLine(getNameAndShort() + " " + getTypeName());
+		Log.logCommandLine("" + itsIndex + ":" + getNameAndShort() + " " + getTypeName());
 	}
 
 	public boolean isNominalType() { return itsType == NOMINAL; }

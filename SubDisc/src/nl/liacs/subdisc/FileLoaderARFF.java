@@ -92,6 +92,7 @@ public class FileLoaderARFF implements FileLoaderInterface
 					{
 						Matcher m;
 						ArrayList<Attribute> al = new ArrayList<Attribute>();
+						int aCount = 0;
 
 						do
 						{
@@ -100,11 +101,14 @@ public class FileLoaderARFF implements FileLoaderInterface
 
 							m = Keyword.ATTRIBUTE.text.matcher(aLine);
 							if(m.find())
-								al.add(parseAttribute(aLine.substring(m.end())));
+							{
+								al.add(parseAttribute(aLine.substring(m.end()), aCount));
+								aCount++;
+							}
 							else if(Keyword.DATA.occursIn(aLine))
 							{
 								dataFound = true;
-								break; 
+								break;
 							}
 						}
 						while((aLine = aReader.readLine()) != null);
@@ -163,11 +167,11 @@ public class FileLoaderARFF implements FileLoaderInterface
 	}
 */
 	/*
-	 * @attribute <name> numeric/real/integer - Numeric attributes can be real or integer numbers. 
+	 * @attribute <name> numeric/real/integer - Numeric attributes can be real or integer numbers.
 	 * @attribute <name> {<nominal-name1>, <nominal-name2>, <nominal-name3>, ...} - Nominal values are defined by providing a <nominal-specification> listing the possible values.
 	 * @attribute <name> string - String attributes allow us to create attributes containing arbitrary textual values.
 	 * @attribute <name> date [<date-format>] - where <name> is the name for the attribute and <date-format> is an optional string specifying how date values should be parsed
-	 * 
+	 *
 	 * strip "\\s*@attribute\\s*"
 	 * if firstChar == ' find next unescaped "\'", this is the attributeName (minus '')
 	 * else find next "\\s"
@@ -177,7 +181,7 @@ public class FileLoaderARFF implements FileLoaderInterface
 	 */
 	// TODO we can not handle STRING/DATE appropriately
 	// attribute type(s), only NUMERIC/NOMINAL for now, not ORDINAL/BINARY
-	private Attribute parseAttribute(String theLine)
+	private Attribute parseAttribute(String theLine, int theIndex)
 	{
 		String aName;
 
@@ -189,7 +193,7 @@ public class FileLoaderARFF implements FileLoaderInterface
 
 		theLine = theLine.replaceFirst("\\'?" + aName + "\\'?", "").trim();
 
-		return new Attribute(aName, null, declaredType(aName, theLine));	// (aName, theLine) HACK for NominalAttribute
+		return new Attribute(theIndex, aName, null, declaredType(aName, theLine));	// (aName, theLine) HACK for NominalAttribute
 	}
 
 	// TODO do this only once for the whole line
@@ -200,7 +204,7 @@ public class FileLoaderARFF implements FileLoaderInterface
 		{
 			// find first unescaped "'"
 			char[] aCharArray = theString.toCharArray();
-			
+
 			for(int i = 1, j = aCharArray.length; i < j; ++i)
 			{
 				if(aCharArray[i] == '\\')	// jump beyond escaped char
@@ -326,13 +330,13 @@ public class FileLoaderARFF implements FileLoaderInterface
 					{
 						if(two.equalsIgnoreCase(positives[i]))
 							return Attribute.BINARY;;
-						
+
 					}
 					else if(one.equalsIgnoreCase(positives[i]))
 					{
 						if(two.equalsIgnoreCase(negatives[i]))
 							return Attribute.BINARY;;
-						
+
 					}
 				}
 

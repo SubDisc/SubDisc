@@ -4,8 +4,7 @@ import java.io.File;
 
 import javax.swing.JFileChooser;
 
-import nl.liacs.subdisc.FileLoaderARFF;
-import nl.liacs.subdisc.FileLoaderTXT;
+import nl.liacs.subdisc.*;
 
 public class SubDisc
 {
@@ -34,12 +33,15 @@ public class SubDisc
 		if (aResult == JFileChooser.APPROVE_OPTION)
 		{
 			File aFile = aChooser.getSelectedFile();
-			MiningWindow aMiningWindow;
+			Table aTable;
 
 			if(aFile.getName().toLowerCase().endsWith(".txt"))
-				aMiningWindow = new MiningWindow(new FileLoaderTXT().loadFile(aFile));
+				aTable = new FileLoaderTXT().loadFile(aFile);
 			else
-				aMiningWindow = new MiningWindow(new FileLoaderARFF().loadFile(aFile));
+				aTable = new FileLoaderARFF().loadFile(aFile);
+			aTable.print();
+
+			MiningWindow aMiningWindow = new MiningWindow(aTable);
 			aMiningWindow.setVisible(true);
 		}
 	}
