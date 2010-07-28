@@ -1,10 +1,6 @@
 package nl.liacs.subdisc;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.BitSet;
-import java.util.Random;
-import java.util.TreeSet;
+import java.util.*;
 
 public class Table
 {
@@ -68,123 +64,6 @@ public class Table
 		return this;
 	}
 
-/*
-	// From file
-	public Table(File theFile)
-	{
-		itsNrRows = 0;
-		itsNrColumns = 0;
-		itsRandomNumber = new Random(System.currentTimeMillis());
-		try
-		{
-			loadFile(theFile);
-		}
-		catch(Exception e)
-		{
-			Log.logCommandLine("Loading file failed: "+e.getMessage());
-			e.printStackTrace();
-		}
-	}
-
-	//current loader guesses some of the types
-	//text -> nominal
-	//{0,1} -> binary
-	//other -> numeric
-	//TODO implement ARFF or MRML loading
-	public void loadFile(File theFile) throws Exception
-	{
-		if(checkFormatAndType(theFile))
-		{
-			itsColumns = new ArrayList<Column>(itsNrColumns);
-			for (int i=0; i<itsNrColumns; i++)
-				itsColumns.add(new Column(itsAttributes.get(i).getType(), itsNrRows));
-
-			BufferedReader aReader = new BufferedReader(new FileReader(theFile));
-			String aSeparator = getSeparator();
-			String aLine = aReader.readLine(); //skip header
-			int aRowCount = 0;
-
-			while ((aLine = aReader.readLine()) != null)
-			{
-				String[] anImportRow = aLine.split(aSeparator,-1);
-				//read fields
-				for (int i = 0; i < itsNrColumns; i++)
-				{
-					Column aColumn = itsColumns.get(i);
-					if (itsAttributes.get(i).isNominalType()) 		//NOMINAL
-						aColumn.add(anImportRow[i]);
-					else if (itsAttributes.get(i).isBinaryType()) 	//BINARY
-						aColumn.add(anImportRow[i].equals("1"));
-					else 											//NUMERIC
-						aColumn.add(Float.parseFloat(anImportRow[i]));
-				}
-				aRowCount++;
-			}
-			aReader.close();
-			Log.logCommandLine("File loaded: " + itsNrColumns + " columns, " + itsNrRows + " rows.");
-		}
-		else
-		{
-			Log.logCommandLine("File " + theFile + " is not well-formed, i.e. not all records have the same number of attributes.");
-		}
-	}
-
-	public boolean checkFormatAndType(File theFile) throws Exception
-	{
-		BufferedReader aReader = new BufferedReader(new FileReader(theFile));
-		String aSeparator = getSeparator();
-		boolean isWellFormedFile = true;
-		BitSet aNominals = new BitSet();
-		BitSet aNotZeroOne = new BitSet();
-		String aLine = aReader.readLine(); //first line is header
-		String[] aHeaders = aLine.split(aSeparator,-1);
-		itsNrColumns = aHeaders.length;
-
-		while ((aLine = aReader.readLine()) != null)
-		{
-			itsNrRows++;
-
-			String[] aRow = aLine.split(aSeparator,-1);
-			for (int i=0; i<aRow.length; i++)
-			{
-				try
-				{
-					Float.parseFloat(aRow[i]);
-					if (!aRow[i].equals("0") && !aRow[i].equals("1")) //numeric could be binary also
-						aNotZeroOne.set(i);
-				}
-				catch (NumberFormatException anException) //if not a float
-				{
-					aNominals.set(i);
-				}
-			}
-			int aLineNrColumns = aRow.length;
-
-			if( aLineNrColumns != itsNrColumns)
-			{
-				Log.logCommandLine("Line " + itsNrRows + " has " + aLineNrColumns + " columns, instead of the expected " + itsNrColumns);
-				isWellFormedFile = false; //continue checking
-			}
-		}
-		aReader.close();
-
-		//assign types
-		itsAttributes = new ArrayList<Attribute>(itsNrColumns);
-		for (int i=0; i<itsNrColumns; i++)
-		{
-			if (aNominals.get(i))
-				itsAttributes.add(new Attribute(i, aHeaders[i], null, Attribute.NOMINAL));
-			else if (aNotZeroOne.get(i))
-				itsAttributes.add(new Attribute(i, aHeaders[i], null, Attribute.NUMERIC));
-			else
-				itsAttributes.add(new Attribute(i, aHeaders[i], null, Attribute.BINARY));
-		}
-		for (Attribute anAttribute : itsAttributes)
-			anAttribute.print();
-		return isWellFormedFile;
-	}
-*/
-
 	public BitSet evaluate(Condition theCondition)
 	{
 		BitSet aSet = new BitSet(itsNrRows);
@@ -194,15 +73,22 @@ public class Table
 		Column aColumn = itsColumns.get(anIndex);
 		for (int j=0; j<itsNrRows; j++)
 		{
-			String aValue;
-			if (anAttribute.isNominalType())
-				aValue = aColumn.getNominal(j);
-			else if (anAttribute.isBinaryType())
-				aValue = aColumn.getBinary(j)?"1":"0";
+
+			if (anAttribute.isBinaryType())
+			{
+				if (theCondition.evaluate(aColumn.getBinary(j)))
+					aSet.set(j);
+			}
 			else
-				aValue = Float.toString(aColumn.getFloat(j));
-			if (theCondition.evaluate(aValue))
-				aSet.set(j);
+			{
+				String aValue;
+				if (anAttribute.isNominalType())
+					aValue = aColumn.getNominal(j);
+				else
+					aValue = Float.toString(aColumn.getFloat(j));
+				if (theCondition.evaluate(aValue))
+					aSet.set(j);
+			}
 		}
 
 		return aSet;
@@ -220,8 +106,14 @@ public class Table
 			int anIndex = anAttribute.getIndex();
 			Column aColumn = itsColumns.get(anIndex);
 			for (int j=0; j<itsNrRows; j++)
-				if (!aCondition.evaluate(Float.toString(aColumn.getFloat(j)))) //TODO implement for nominal
+			{
+				if (anAttribute.isNumericType() && !aCondition.evaluate(Float.toString(aColumn.getFloat(j))))
 					aSet.set(j, false);
+				if (anAttribute.isNominalType() && !aCondition.evaluate(aColumn.getNominal(j)))
+					aSet.set(j, false);
+				if (anAttribute.isBinaryType() && !aCondition.evaluate(aColumn.getBinary(j)))
+					aSet.set(j, false);
+			}
 		}
 		return aSet;
 	}
@@ -266,7 +158,11 @@ public class Table
 
 	public Condition getFirstCondition()
 	{
-		return new Condition(itsAttributes.get(0), Condition.FIRST_NUMERIC_OPERATOR);
+		Attribute aFirstAttribute = itsAttributes.get(0);
+		if (aFirstAttribute.isNumericType())
+			return new Condition(aFirstAttribute, Condition.FIRST_NUMERIC_OPERATOR);
+		else
+			return new Condition(aFirstAttribute, Condition.FIRST_NOMINAL_OPERATOR);
 	}
 
 	public Condition getNextCondition(Condition theCurrentCondition)
@@ -281,7 +177,13 @@ public class Table
 			if (anIndex == itsNrColumns-1) // No more attributes
 				aCondition = null;
 			else
-				aCondition = new Condition(itsAttributes.get(anIndex+1), Condition.FIRST_NUMERIC_OPERATOR);
+			{
+				Attribute anAttribute = itsAttributes.get(anIndex+1);
+				if (anAttribute.isNumericType())
+					aCondition = new Condition(anAttribute, Condition.FIRST_NUMERIC_OPERATOR);
+				else
+					aCondition = new Condition(anAttribute, Condition.FIRST_NOMINAL_OPERATOR);
+			}
 		}
 
 		return aCondition;
@@ -311,7 +213,6 @@ public class Table
 		return aResult;
 	}
 
-	//TODO implement for nominal values, fix binary
 	public TreeSet<String> getDomain(int theColumn)
 	{
 		Column aColumn = itsColumns.get(theColumn);

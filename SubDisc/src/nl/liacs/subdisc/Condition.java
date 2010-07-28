@@ -139,4 +139,18 @@ public class Condition
 		}
 		return false;
 	}
+
+	//for boolean values only
+	public boolean evaluate(boolean theValue)
+	{
+		boolean aResult;
+		if (itsOperator != EQUALS)
+			Log.error("incorrect operator for boolean attribute");
+		if (theValue) //value=1
+			aResult = itsValue.equals("1");
+		else
+			aResult = itsValue.equals("0");
+
+		return aResult;
+	}
 }

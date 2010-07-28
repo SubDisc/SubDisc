@@ -57,18 +57,18 @@ public class FileHandler
 			else if(aFileName.endsWith(".arff"))
 				itsTable = new FileLoaderARFF().loadFile(aFile);
 
-			itsTable.print();
+//			itsTable.print();
 		}
 
 	}
 
 	private static void openDatabase()
 	{
-		
+
 	}
 
 	private static void save()
 	{
-		
+
 	}
 }

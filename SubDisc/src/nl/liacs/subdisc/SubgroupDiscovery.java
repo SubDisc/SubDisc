@@ -1,6 +1,6 @@
 package nl.liacs.subdisc;
 
-import java.util.BitSet;
+import java.util.*;
 
 public class SubgroupDiscovery extends MiningAlgorithm
 {
@@ -115,9 +115,8 @@ public class SubgroupDiscovery extends MiningAlgorithm
 						Attribute anAttribute = aRefinement.getCondition().getAttribute();
 						if (anAttribute.isNumericType())
 							evaluateNumericRefinements(theBeginTime, aSubgroup, aRefinement);
-						//TODO
-//						else
-//							evaluateNominalRefinements(theBeginTime, aSubgroup, aRefinement);
+						else
+							evaluateNominalBinaryRefinements(theBeginTime, aSubgroup, aRefinement);
 					}
 				}
 			}
@@ -155,9 +154,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 					double aQuality = evaluateCandidate(aNewSubgroup);
 					aNewSubgroup.setMeasureValue(aQuality);
 					if (aQuality > itsSearchParameters.getQualityMeasureMinimum())
-					{
 						itsResult.add(aNewSubgroup);
-					}
 					itsCandidateQueue.add(new Candidate(aNewSubgroup, aQuality));
 				}
 				itsCandidateCount++;
@@ -165,6 +162,34 @@ public class SubgroupDiscovery extends MiningAlgorithm
 				Log.logCommandLine("================================================================================");
 			}
 			first = false;
+		}
+	}
+
+	private void evaluateNominalBinaryRefinements(long theBeginTime, Subgroup theSubgroup, Refinement theRefinement)
+	{
+		Attribute anAttribute = theRefinement.getCondition().getAttribute();
+		int anAttributeIndex = anAttribute.getIndex();
+		TreeSet<String> aDomain = itsTable.getDomain(anAttributeIndex);
+
+		boolean first = true;
+		for (String aConditionValue : aDomain)
+		{
+			Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(aConditionValue);
+			BitSet aMembers = itsTable.evaluate(aNewSubgroup.getConditions());
+			aNewSubgroup.setMembers(aMembers);
+
+			if (aNewSubgroup.getCoverage() >= itsSearchParameters.getMinimumCoverage())
+			{
+				Log.logCommandLine("candidate " + aNewSubgroup.getConditions() + " size: " + aNewSubgroup.getCoverage());
+				double aQuality = evaluateCandidate(aNewSubgroup);
+				aNewSubgroup.setMeasureValue(aQuality);
+				if (aQuality > itsSearchParameters.getQualityMeasureMinimum())
+					itsResult.add(aNewSubgroup);
+				itsCandidateQueue.add(new Candidate(aNewSubgroup, aQuality));
+			}
+			itsCandidateCount++;
+			Log.logCommandLine("Subgroup nr. " + itsCandidateCount + "; quality " + aNewSubgroup.getMeasureValue());
+			Log.logCommandLine("================================================================================");
 		}
 	}
 

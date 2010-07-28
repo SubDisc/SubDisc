@@ -14,7 +14,7 @@ public class RefinementList extends ArrayList<Refinement>
 	{
 		itsSubgroup = theSubgroup;
 		itsTable = theTable;
-//		Log.logCommandLine("refinementlist");
+		Log.logCommandLine("refinementlist");
 
 		Condition aCondition = itsTable.getFirstCondition();
 
@@ -22,7 +22,7 @@ public class RefinementList extends ArrayList<Refinement>
 		{
 			Refinement aRefinement = new Refinement(aCondition, itsSubgroup);
 			add(aRefinement);
-//			Log.logCommandLine("   condition: " + aCondition.toString());
+			Log.logCommandLine("   condition: " + aCondition.toString());
 		}
 		while ((aCondition = itsTable.getNextCondition(aCondition)) != null);
 	}

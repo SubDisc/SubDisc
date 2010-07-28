@@ -1,8 +1,6 @@
 package nl.liacs.subdisc;
 
-import java.util.ArrayList;
-import java.util.BitSet;
-import java.util.TreeSet;
+import java.util.*;
 
 public class Column
 {
@@ -97,14 +95,19 @@ public class Column
 	public TreeSet<String> getDomain()
 	{
 		TreeSet<String> aResult = new TreeSet<String>();
+		if (isBinaryType())
+		{
+			aResult.add("0");
+			aResult.add("1");
+			return aResult;
+		}
 
 		for (int i=0; i<itsSize; i++)
 			if (isNominalType())
 				aResult.add(itsNominals.get(i));
 			else if (isNumericType())
 				aResult.add(Float.toString(itsFloats.get(i)));
-			else
-				aResult.add(itsBinaries.get(i)?"1":"0");
+			//TODO ordinal?
 
 		return aResult;
 	}
