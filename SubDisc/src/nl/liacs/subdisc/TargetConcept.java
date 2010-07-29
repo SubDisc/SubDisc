@@ -2,66 +2,86 @@ package nl.liacs.subdisc;
 
 import java.util.ArrayList;
 
-public class TargetConcept
+public enum TargetConcept
 {
-	private int itsNrTargetAttributes;
-	private int itsTargetType;
-	private Attribute itsPrimaryTarget;
-	private String itsTargetValue;
-	private Attribute itsSecondaryTarget;
-	private ArrayList<Attribute> itsSecondaryTargets;
+	THE_ONLY_INSTANCE;
 
-	public static final int SINGLE_NOMINAL 				= 0;
-	public static final int SINGLE_NUMERIC 				= 1;
-	public static final int SINGLE_ORDINAL 				= 2;
-	public static final int DOUBLE_REGRESSION			= 3;
-	public static final int DOUBLE_CORRELATION			= 4;
-	public static final int MULTI_LABEL	   				= 5;
-	public static final int MULTI_BINARY_CLASSIFICATION = 6;
+	// itsMembers
+	private int			itsNrTargetAttributes = 1;	// always 1 in current code
+	private TargetType	itsTargetType;
+	private Attribute	itsPrimaryTarget;
+	private String		itsTargetValue;
+	private Attribute	itsSecondaryTarget;
+	private ArrayList<Attribute> itsSecondaryTargets;	// better use empty one by default, for-each/null safe
 
-	public TargetConcept()
+	public enum TargetType
 	{
-		itsNrTargetAttributes = 1;
-		itsTargetType = SINGLE_NOMINAL;
+		SINGLE_NOMINAL("single nominal"),
+		SINGLE_NUMERIC("single numeric"),
+		SINGLE_ORDINAL("single ordinal"),
+		DOUBLE_REGRESSION("single ordinal"),
+		DOUBLE_CORRELATION("double correlation"),
+		MULTI_LABEL("multi-label"),
+		MULTI_BINARY_CLASSIFICATION("multi-label");
+
+		public final String text;
+
+		private TargetType(String theText) { text = theText; }
+
+		public boolean isEMM()
+		{
+			switch(this)
+			{
+				case DOUBLE_REGRESSION :
+				case DOUBLE_CORRELATION :
+				case MULTI_LABEL :
+				case MULTI_BINARY_CLASSIFICATION : return true;
+				default : return false;
+			}
+		}
+
+		public boolean isImplemented()
+		{
+			switch(this)
+			{
+				case SINGLE_NOMINAL :
+				case DOUBLE_REGRESSION :
+				case DOUBLE_CORRELATION :
+				case MULTI_LABEL : return true;
+				default : return false;
+			}
+		}
 	}
 
-	public TargetConcept(int theTargetType, int theNrTargetAttributes)
+	// member methods
+	public int getNrTargetAttributes() { return itsNrTargetAttributes; }
+	public void setNrTargetAttributes(int theNr) { itsNrTargetAttributes = theNr; }
+	public TargetType getTargetType() { return itsTargetType; }
+	public void setTargetType(String theTargetType)
 	{
-		itsNrTargetAttributes = theNrTargetAttributes;
-		itsTargetType = theTargetType;
-	}
-
-	public TargetConcept(String theTargetType, int theNrTargetAttributes)
-	{
-		itsNrTargetAttributes = theNrTargetAttributes;
-		itsTargetType = getTypeCode(theTargetType);
+		for(TargetType t : TargetType.values())
+		{
+			if(t.text.equalsIgnoreCase(theTargetType))
+			{
+				itsTargetType = t;
+				return;
+			}
+		}
 	}
 
 	public Attribute getPrimaryTarget() { return itsPrimaryTarget; }
 	public void setPrimaryTarget(Attribute thePrimaryTarget) { itsPrimaryTarget = thePrimaryTarget; }
 	public String getTargetValue() { return itsTargetValue; }
 	public void setTargetValue(String theTargetValue) { itsTargetValue = theTargetValue; }
+
 	public Attribute getSecondaryTarget() { return itsSecondaryTarget; }
 	public void setSecondaryTarget(Attribute theSecondaryTarget) { itsSecondaryTarget = theSecondaryTarget; }
 
-	public int getNrTargetAttributes() { return itsNrTargetAttributes; }
-	public int getTargetType() { return itsTargetType; }
+	public boolean isSingleNominal() { return (itsTargetType == TargetType.SINGLE_NOMINAL); }
+//	public boolean isEMM() { return itsTargetType.isEMM(); }
+//	public boolean isImplemented() { return itsTargetType.isImplemented(); }
 
-	public boolean isSingleNominal() { return (itsTargetType == SINGLE_NOMINAL); }
-	public boolean isEMM()
-	{
-		return (itsTargetType == DOUBLE_REGRESSION ||
-			itsTargetType == DOUBLE_CORRELATION ||
-			itsTargetType == MULTI_LABEL ||
-			itsTargetType == MULTI_BINARY_CLASSIFICATION);
-	}
-	public boolean isImplemented()
-	{
-		return (itsTargetType == SINGLE_NOMINAL ||
-			itsTargetType == DOUBLE_REGRESSION ||
-			itsTargetType == DOUBLE_CORRELATION ||
-			itsTargetType == MULTI_LABEL);
-	}
+/*
 	public static boolean isImplemented(int theTargetType )
 	{
 		return (theTargetType == SINGLE_NOMINAL ||
@@ -69,7 +89,7 @@ public class TargetConcept
 		theTargetType == DOUBLE_CORRELATION ||
 		theTargetType == MULTI_LABEL);
 	}
-
+	
 	public static int getFirstTargetType()	{ return SINGLE_NOMINAL; }
 	public static int getLastTargetType()	{ return MULTI_BINARY_CLASSIFICATION; }
 
@@ -113,4 +133,7 @@ public class TargetConcept
 			aType == MULTI_LABEL ||
 			aType == MULTI_BINARY_CLASSIFICATION);
 	}
+*/
+	
+	
 }

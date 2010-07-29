@@ -92,8 +92,8 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		{
 			Candidate aRootCandidate = new Candidate(theStart, 0.0F);
 			itsCandidateQueue = new CandidateQueue(itsSearchParameters.getSearchStrategy(),
-												   itsSearchParameters.getSearchStrategyWidth(),
-												   aRootCandidate);
+													itsSearchParameters.getSearchStrategyWidth(),
+													aRootCandidate);
 			itsCandidateCount = 0;
 
 			long theEndTime = theBeginTime + (long)(itsSearchParameters.getMaximumTime()*60*1000);
@@ -199,7 +199,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 
 		switch (itsSearchParameters.getTargetType())
 		{
-			case TargetConcept.SINGLE_NOMINAL :
+			case SINGLE_NOMINAL :
 			{
 				Attribute aPrimaryTarget = itsSearchParameters.getTargetConcept().getPrimaryTarget();
 				Log.logCommandLine("target: " + aPrimaryTarget.getName());
@@ -209,7 +209,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 				aQuality = itsQualityMeasure.calculate(aCountHeadBody, theSubgroup.getCoverage());
 				break;
 			}
-			case TargetConcept.DOUBLE_REGRESSION :
+			case DOUBLE_REGRESSION :
 			{
 				RegressionMeasure aRM = new RegressionMeasure(itsBaseRM);
 				for (int i=0; i<itsTable.getNrRows(); i++)
@@ -219,7 +219,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 				aQuality = aRM.getEvaluationMeasureValue();
 				break;
 			}
-			case TargetConcept.DOUBLE_CORRELATION :
+			case DOUBLE_CORRELATION :
 			{
 				CorrelationMeasure aCM = new CorrelationMeasure(itsBaseCM);
 				for (int i=0; i<itsTable.getNrRows(); i++)
@@ -229,11 +229,12 @@ public class SubgroupDiscovery extends MiningAlgorithm
 				aQuality = aCM.getEvaluationMeasureValue();
 				break;
 			}
-			case TargetConcept.MULTI_LABEL :
+			case MULTI_LABEL :
 			{
 				aQuality = weightedEntropyEditDistance(theSubgroup); //also stores DAG in Subgroup
 				break;
 			}
+			default : break;
 		}
 		return aQuality;
 	}

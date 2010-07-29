@@ -1,5 +1,7 @@
 package nl.liacs.subdisc;
 
+import nl.liacs.subdisc.TargetConcept.TargetType;
+
 public class QualityMeasure
 {
 	int itsMeasure;
@@ -94,40 +96,38 @@ public class QualityMeasure
 	public void setTotalTargetCoverage(int theCount) { itsTotalTargetCoverage = theCount; }
 	public void setQualityMeasure(int theMeasure) { itsMeasure = theMeasure; }
 
-	public static int getFirstEvaluationMesure(int theTargetType)
+	public static int getFirstEvaluationMesure(TargetType theTargetType)
 	{
-		if (theTargetType == TargetConcept.SINGLE_NOMINAL)
-			return NOVELTY;
-		else if (theTargetType == TargetConcept.SINGLE_NUMERIC)
-			return Z_SCORE;
-		else if (theTargetType == TargetConcept.SINGLE_ORDINAL)
-			return AUC;
-		else if (theTargetType == TargetConcept.MULTI_LABEL)
-			return WEED;
-		else if (theTargetType == TargetConcept.DOUBLE_CORRELATION)
-			return CORRELATION_R;
-		else if (theTargetType == TargetConcept.DOUBLE_REGRESSION)
-			return LINEAR_REGRESSION;
-		else
-			return NOVELTY;
+		if(theTargetType == null)
+			return NOVELTY;	// MM TODO for now
+
+		switch(theTargetType)
+		{
+			case SINGLE_NOMINAL		: return NOVELTY;
+			case SINGLE_NUMERIC		: return Z_SCORE;
+			case SINGLE_ORDINAL		: return AUC;
+			case MULTI_LABEL		: return WEED;
+			case DOUBLE_CORRELATION	: return CORRELATION_R;
+			case DOUBLE_REGRESSION 	: return LINEAR_REGRESSION;
+			default					: return NOVELTY;
+		}
 	}
 
-	public static int getLastEvaluationMesure(int theTargetType)
+	public static int getLastEvaluationMesure(TargetType theTargetType)
 	{
-		if (theTargetType == TargetConcept.SINGLE_NOMINAL)
-			return SENSITIVITY;
-		else if (theTargetType == TargetConcept.SINGLE_NUMERIC)
-			return CHI2_TEST;
-		else if (theTargetType == TargetConcept.SINGLE_ORDINAL)
-			return MMAD;
-		else if (theTargetType == TargetConcept.MULTI_LABEL)
-			return EDIT_DISTANCE;
-		else if (theTargetType == TargetConcept.DOUBLE_CORRELATION)
-			return CORRELATION_ENTROPY;
-		else if (theTargetType == TargetConcept.DOUBLE_REGRESSION)
-			return LINEAR_REGRESSION;
-		else
-			return NOVELTY;
+		if(theTargetType == null)
+			return NOVELTY;	// MM TODO for now
+
+		switch(theTargetType)
+		{
+			case SINGLE_NOMINAL		: return SENSITIVITY;
+			case SINGLE_NUMERIC		: return CHI2_TEST;
+			case SINGLE_ORDINAL		: return MMAD;
+			case MULTI_LABEL		: return EDIT_DISTANCE;
+			case DOUBLE_CORRELATION	: return CORRELATION_ENTROPY;
+			case DOUBLE_REGRESSION	: return LINEAR_REGRESSION;
+			default					: return NOVELTY;
+		}
 	}
 
 	public float calculate(int theCountHeadBody, int theCoverage)

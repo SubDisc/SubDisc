@@ -95,6 +95,7 @@ public class FileLoaderTXT implements FileLoaderInterface
 
 		//assign types
 		itsTable = new Table(aNrRows, aNrColumns);
+		itsTable.itsName = theFile.getName();
 		for (int i=0; i<aNrColumns; i++)
 		{
 			if (aNominals.get(i))
