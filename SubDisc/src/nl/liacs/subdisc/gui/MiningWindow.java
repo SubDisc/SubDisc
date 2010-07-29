@@ -41,6 +41,7 @@ import javax.swing.SwingConstants;
 import javax.swing.border.BevelBorder;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
+import javax.swing.event.*;
 
 import nl.liacs.subdisc.Attribute;
 import nl.liacs.subdisc.Bayesian;
@@ -89,10 +90,10 @@ public class MiningWindow extends JFrame
 		itsTable = theTable;	// TODO check successful loading of Table
 		initMiningWindow();
 		initGuiComponents();
-		
+
 		// test
 		for(int i = 0, j = jComboBoxTargetType.getItemCount(); i < j; ++i)
-			System.out.println("item: " + (String)jComboBoxTargetType.getItemAt(i));	// MM TODO check 
+			System.out.println("item: " + (String)jComboBoxTargetType.getItemAt(i));	// MM TODO check
 	}
 
 	private void initMiningWindow()
@@ -550,6 +551,12 @@ public class MiningWindow extends JFrame
 		jListSecondaryTargets.setPreferredSize(new Dimension(86, 30));
 		jListSecondaryTargets.setMinimumSize(new Dimension(86, 22));
 		jListSecondaryTargets.setFont(new Font ("Dialog", 0, 10));
+		jListSecondaryTargets.addListSelectionListener(new ListSelectionListener() {
+				public void valueChanged(ListSelectionEvent evt) {
+					jListSecondaryTargetsActionPerformed(evt);
+				}
+			}
+		);
 		jPanelEvaluationFields.add(jListSecondaryTargets);
 
 		jLFieldTargetInfo.setForeground(Color.black);
@@ -726,7 +733,7 @@ public class MiningWindow extends JFrame
 
 	private void enableTableDependentComponents(boolean theSetting)
 	{
-		List<? extends AbstractButton> dataModelDependentComponents = 
+		List<? extends AbstractButton> dataModelDependentComponents =
 			new ArrayList<AbstractButton>(Arrays.asList(new AbstractButton[] {	jMenuItemDataExplorer,
 																				jMenuItemBrowseTarget,
 																				jMenuItemSubgroupDiscovery,
@@ -856,10 +863,9 @@ public class MiningWindow extends JFrame
 			initTargetInfo();
 	}
 
-	private void jListSecondaryTargetsActionPerformed(ActionEvent evt)
+	private void jListSecondaryTargetsActionPerformed(ListSelectionEvent evt)
 	{
-		if (getMiscFieldName() != null)
-			initTargetInfo();
+		initTargetInfo();
 	}
 
 	private void jButtonBaseModelActionPerformed(ActionEvent evt)
@@ -1244,19 +1250,15 @@ public class MiningWindow extends JFrame
 			removeAllMiscFieldItems();
 
 		//secondary targets =======================================
-		if (TargetConcept.isEMM(getTargetTypeName()))
+		if (aTargetType == TargetConcept.MULTI_LABEL && jListSecondaryTargets.getSelectedIndices().length == 0)
 		{
 			int aCount = 0;
 			for (int i = 0; i < itsTable.getNrColumns(); i++)
 			{
 				Attribute anAttribute = itsTable.getAttribute(i);
-				if ((aTargetType == TargetConcept.DOUBLE_REGRESSION && anAttribute.isNumericType()) ||
-					(aTargetType == TargetConcept.DOUBLE_CORRELATION && anAttribute.isNumericType()) ||
-					(aTargetType == TargetConcept.MULTI_LABEL && anAttribute.isBinaryType()) ||
-					(aTargetType == TargetConcept.MULTI_BINARY_CLASSIFICATION && anAttribute.isNominalType()))
+				if (anAttribute.isBinaryType())
 				{
 					addSecondaryTargetsItem(itsTable.getAttribute(i).getName());
-					isEmpty = false;
 					aCount++;
 				}
 			}
@@ -1321,6 +1323,12 @@ public class MiningWindow extends JFrame
 				break;
 			}
 			case TargetConcept.MULTI_LABEL					:
+			{
+				int[] aSelection = jListSecondaryTargets.getSelectedIndices();
+				jLFieldTargetInfo.setText("" + aSelection.length);
+				jLabelTargetInfo.setText(" binary targets");
+				break;
+			}
 			case TargetConcept.MULTI_BINARY_CLASSIFICATION	:
 			{
 				jLabelTargetInfo.setText(" target info");
@@ -1347,7 +1355,7 @@ public class MiningWindow extends JFrame
 	{
 		removeAllQualityMeasureItems();
 		int aTargetType = TargetConcept.getTypeCode(getTargetTypeName());
-		
+
 		for (int i = QualityMeasure.getFirstEvaluationMesure(aTargetType); i <= QualityMeasure.getLastEvaluationMesure(aTargetType); i++)
 			addQualityMeasureItem(QualityMeasure.getMeasureString(i));
 		initEvaluationMinimum();
@@ -1394,23 +1402,23 @@ public class MiningWindow extends JFrame
 	private void removeAllQualityMeasureItems() { if(jComboBoxQualityMeasure.getItemCount() > 0) jComboBoxQualityMeasure.removeAllItems(); }
 	private void addQualityMeasureItem(String anItem) { jComboBoxQualityMeasure.addItem(anItem); }
 	private String getQualityMeasureName() { return (String)jComboBoxQualityMeasure.getSelectedItem(); }
-	
+
 //	private void removeAllTargetTypeItems() { if(jComboBoxTargetType.getItemCount() > 0 ) jComboBoxTargetType.removeAllItems(); }	// TODO MM
 	private void removeAllTargetTypeItems()
 	{
 		if(jComboBoxTargetType.getItemCount() > 0)
 		{
-			System.out.println("pre jComboBoxTargetType.getItemCount() = " + jComboBoxTargetType.getItemCount());	
+			System.out.println("pre jComboBoxTargetType.getItemCount() = " + jComboBoxTargetType.getItemCount());
 			for(int i = 0, j = jComboBoxTargetType.getItemCount(); i < j; ++i)
 			{
-				System.out.println(j + " = " + j);	
-				System.out.println(i + " = " +(String)jComboBoxTargetType.getItemAt(i));	
+				System.out.println(j + " = " + j);
+				System.out.println(i + " = " +(String)jComboBoxTargetType.getItemAt(i));
 				jComboBoxTargetType.removeItemAt(i);
 			}
-			System.out.println("post jComboBoxTargetType.getItemCount() = " + jComboBoxTargetType.getItemCount());	
+			System.out.println("post jComboBoxTargetType.getItemCount() = " + jComboBoxTargetType.getItemCount());
 		}
 	}	// TODO removeAllItems() does not work
-	
+
 	private void addTargetTypeItem(String anItem) { jComboBoxTargetType.addItem(anItem); System.out.println("Added :" + anItem);}	// MM
 	private String getTargetTypeName() { return (String)jComboBoxTargetType.getSelectedItem(); }
 	private void setQualityMeasureMinimumName(String aValue) { jTextFieldQualityMeasureMinimum.setText(aValue); }
