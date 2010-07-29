@@ -12,12 +12,13 @@ import nl.liacs.subdisc.Column;
 import nl.liacs.subdisc.DAG;
 import nl.liacs.subdisc.DAGView;
 
-import org.jfree.chart.ChartPanel;
+import org.jfree.chart.*;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
+import org.jfree.chart.renderer.xy.StandardXYItemRenderer;
 
 public class ModelWindow extends JFrame
 {
@@ -42,14 +43,25 @@ public class ModelWindow extends JFrame
 		aDataSet.addSeries(aSeries);
 
 		// create the chart
-		JFreeChart aChart = org.jfree.chart.ChartFactory.createScatterPlot("Target", theX, theY,
-			aDataSet, PlotOrientation.HORIZONTAL, false, false, false);
+		JFreeChart aChart =
+			ChartFactory.createScatterPlot("model", theX, theY,	aDataSet, PlotOrientation.VERTICAL, false, true, false);
 		aChart.setAntiAlias(true);
 		XYPlot plot = aChart.getXYPlot();
 		plot.setDomainGridlinePaint(Color.white);
 		plot.setRangeGridlinePaint(Color.white);
 		plot.getRenderer().setSeriesPaint(0, Color.black);
 		plot.getRenderer().setSeriesShape(0, new Rectangle2D.Float(0.0f, 0.0f, 2.5f, 2.5f));
+
+		//line
+		StandardXYItemRenderer aLineRenderer = new StandardXYItemRenderer(StandardXYItemRenderer.LINES);
+		aDataSet = new XYSeriesCollection();
+		aSeries = new XYSeries("line");
+		aSeries.add(theXColumn.getMin(), theYColumn.getMin());
+		aSeries.add(theXColumn.getMax(), theYColumn.getMax());
+		aDataSet.addSeries(aSeries); //add second series to represent line
+		plot.setDataset(1, aDataSet);
+		plot.setRenderer(1, aLineRenderer);
+
 		ChartPanel aChartPanel = new ChartPanel(aChart);
 		jScrollPaneCenter.setViewportView(aChartPanel);
 

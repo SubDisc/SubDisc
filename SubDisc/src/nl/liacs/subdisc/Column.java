@@ -9,8 +9,8 @@ public class Column
 	private ArrayList<String> itsNominals;
 	private BitSet itsBinaries;
 	private int itsSize;
-	private float itsMin = 0.0f;
-	private float itsMax = 0.0f;
+	private float itsMin = Float.POSITIVE_INFINITY;
+	private float itsMax = Float.NEGATIVE_INFINITY;
 
 	public Column(int theType, int theNrRows)
 	{
@@ -70,7 +70,7 @@ public class Column
 
 	private void updateMinMax()
 	{
-		if (itsMin == itsMax)
+		if (itsMax == Float.NEGATIVE_INFINITY) //never computed?
 			for (int i=0; i<itsSize; i++)
 			{
 				float aValue = getFloat(i);
