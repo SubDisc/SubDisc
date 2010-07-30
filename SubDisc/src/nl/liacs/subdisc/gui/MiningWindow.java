@@ -132,6 +132,14 @@ public class MiningWindow extends JFrame
 		setSearchStrategyWidth("100");
 		initNumericStrategy();
 		enableTableDependentComponents(true); // TODO could check if already visible, no baseModel for all
+
+		switch(itsTargetConcept.getTargetType())
+		{
+			case DOUBLE_CORRELATION :
+			case DOUBLE_REGRESSION	:
+			case MULTI_LABEL		: break;
+			default : jButtonBaseModel.setEnabled(false); break;
+		}
 	}
 
 	/**
@@ -721,10 +729,15 @@ public class MiningWindow extends JFrame
 		initGuiComponents();
 	}
 
+	// TODO remove "best first"
 	private void jComboBoxSearchStrategyTypeActionPerformed(ActionEvent evt)
 	{
-		itsSearchParameters.setSearchStrategy(getSearchStrategyName());
-		jTextFieldSearchStrategyWidth.setEnabled(getSearchStrategyName() != "best first");
+		String aName = getSearchStrategyName();
+		if(aName != null)
+		{
+			itsSearchParameters.setSearchStrategy(aName);
+			jTextFieldSearchStrategyWidth.setEnabled(aName.equalsIgnoreCase("best first"));
+		}
 	}
 
 	private void jComboBoxQualityMeasureActionPerformed(ActionEvent evt)
@@ -1377,13 +1390,14 @@ public class MiningWindow extends JFrame
 	}
 	private void addQualityMeasureItem(String anItem) { jComboBoxQualityMeasure.addItem(anItem); }
 	private String getQualityMeasureName() { return (String) jComboBoxQualityMeasure.getSelectedItem(); }
-	// private void removeAllTargetTypeItems() { if(jComboBoxTargetType.getItemCount() > 0 ) jComboBoxTargetType.removeAllItems(); }	// TODO MM
-	private void removeAllTargetTypeItems()
+	private void removeAllTargetTypeItems() { if(jComboBoxTargetType.getItemCount() > 0 ) jComboBoxTargetType.removeAllItems(); }	// TODO MM
+	/*private void removeAllTargetTypeItems()
 	{
 		if(jComboBoxTargetType.getItemCount() > 0)
 			for(int i = 0, j = jComboBoxTargetType.getItemCount(); i < j; ++i)
 				jComboBoxTargetType.removeItemAt(i);
 	}	// TODO removeAllItems() does not work
+	*/
 	private void addTargetTypeItem(String anItem) { jComboBoxTargetType.addItem(anItem); }
 	private String getTargetTypeName() { return (String) jComboBoxTargetType.getSelectedItem(); }
 	private void setQualityMeasureMinimumName(String aValue) { jTextFieldQualityMeasureMinimum.setText(aValue); }
