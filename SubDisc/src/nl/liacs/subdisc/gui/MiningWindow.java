@@ -45,25 +45,7 @@ import javax.swing.border.TitledBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
-import nl.liacs.subdisc.Attribute;
-import nl.liacs.subdisc.Bayesian;
-import nl.liacs.subdisc.BinaryTable;
-import nl.liacs.subdisc.CandidateQueue;
-import nl.liacs.subdisc.Column;
-import nl.liacs.subdisc.Condition;
-import nl.liacs.subdisc.ConditionList;
-import nl.liacs.subdisc.CorrelationMeasure;
-import nl.liacs.subdisc.DAG;
-import nl.liacs.subdisc.ErrorWindow;
-import nl.liacs.subdisc.FileHandler;
-import nl.liacs.subdisc.Log;
-import nl.liacs.subdisc.QualityMeasure;
-import nl.liacs.subdisc.SearchParameters;
-import nl.liacs.subdisc.Subgroup;
-import nl.liacs.subdisc.SubgroupDiscovery;
-import nl.liacs.subdisc.SubgroupSet;
-import nl.liacs.subdisc.Table;
-import nl.liacs.subdisc.TargetConcept;
+import nl.liacs.subdisc.*;
 import nl.liacs.subdisc.FileHandler.Action;
 import nl.liacs.subdisc.SearchParameters.NumericStrategy;
 import nl.liacs.subdisc.TargetConcept.TargetType;
@@ -704,7 +686,7 @@ public class MiningWindow extends JFrame
 
 	private void enableTableDependentComponents(boolean theSetting)
 	{
-		List<? extends AbstractButton> dataModelDependentComponents = 
+		List<? extends AbstractButton> dataModelDependentComponents =
 			new ArrayList<AbstractButton>(Arrays.asList(new AbstractButton[]
 														{
 															jMenuItemDataExplorer,
@@ -862,9 +844,11 @@ public class MiningWindow extends JFrame
 					Column aPrimaryColumn = itsTable.getColumn(aPrimaryTarget);
 					Attribute aSecondaryTarget = itsTargetConcept.getSecondaryTarget();
 					Column aSecondaryColumn = itsTable.getColumn(aSecondaryTarget);
+					RegressionMeasure anRM = new RegressionMeasure(itsSearchParameters.getQualityMeasure(),
+						aPrimaryColumn, aSecondaryColumn, null);
 
 					aWindow = new ModelWindow(aPrimaryColumn, aSecondaryColumn,
-							aPrimaryTarget.getName(), aSecondaryTarget.getName());
+							aPrimaryTarget.getName(), aSecondaryTarget.getName(), anRM);
 					aWindow.setLocation(50, 50);
 					aWindow.setSize(700, 700);
 					aWindow.setVisible(true);
@@ -879,7 +863,7 @@ public class MiningWindow extends JFrame
 					Column aSecondaryColumn = itsTable.getColumn(aSecondaryTarget);
 
 					aWindow = new ModelWindow(aPrimaryColumn, aSecondaryColumn,
-							aPrimaryTarget.getName(), aSecondaryTarget.getName());
+							aPrimaryTarget.getName(), aSecondaryTarget.getName(), null); //no trendline
 					aWindow.setLocation(50, 50);
 					aWindow.setSize(700, 700);
 					aWindow.setVisible(true);
@@ -1088,7 +1072,7 @@ public class MiningWindow extends JFrame
 					{
 						anAttribute = itsTable.getAttribute(aRandom.nextInt(itsTable.getNrColumns()));
 					} while (!anAttribute.isNumericType());
-					int anOperator = aRandom.nextBoolean() ? 
+					int anOperator = aRandom.nextBoolean() ?
 							Condition.LESS_THAN_OR_EQUAL : Condition.GREATER_THAN_OR_EQUAL;
 					Condition aCondition = new Condition(anAttribute, anOperator);
 					float aMin = itsTable.getColumn(anAttribute).getMin();

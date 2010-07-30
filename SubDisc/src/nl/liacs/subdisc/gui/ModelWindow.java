@@ -1,6 +1,6 @@
 package nl.liacs.subdisc.gui;
 
-import java.awt.Color;
+import java.awt.*;
 import java.awt.geom.Rectangle2D;
 
 import javax.swing.JButton;
@@ -8,9 +8,7 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 
-import nl.liacs.subdisc.Column;
-import nl.liacs.subdisc.DAG;
-import nl.liacs.subdisc.DAGView;
+import nl.liacs.subdisc.*;
 
 import org.jfree.chart.*;
 import org.jfree.chart.JFreeChart;
@@ -31,7 +29,7 @@ public class ModelWindow extends JFrame
 
 	//correlation and regression ===============================
 
-	public ModelWindow(Column theXColumn, Column theYColumn, String theX, String theY)
+	public ModelWindow(Column theXColumn, Column theYColumn, String theX, String theY, RegressionMeasure theRM)
 	{
 		initComponents();
 
@@ -47,20 +45,25 @@ public class ModelWindow extends JFrame
 			ChartFactory.createScatterPlot("model", theX, theY,	aDataSet, PlotOrientation.VERTICAL, false, true, false);
 		aChart.setAntiAlias(true);
 		XYPlot plot = aChart.getXYPlot();
-		plot.setDomainGridlinePaint(Color.white);
-		plot.setRangeGridlinePaint(Color.white);
+		plot.setBackgroundPaint(Color.white);
+		plot.setDomainGridlinePaint(Color.gray);
+		plot.setRangeGridlinePaint(Color.gray);
 		plot.getRenderer().setSeriesPaint(0, Color.black);
 		plot.getRenderer().setSeriesShape(0, new Rectangle2D.Float(0.0f, 0.0f, 2.5f, 2.5f));
 
 		//line
-		StandardXYItemRenderer aLineRenderer = new StandardXYItemRenderer(StandardXYItemRenderer.LINES);
-		aDataSet = new XYSeriesCollection();
-		aSeries = new XYSeries("line");
-		aSeries.add(theXColumn.getMin(), theYColumn.getMin());
-		aSeries.add(theXColumn.getMax(), theYColumn.getMax());
-		aDataSet.addSeries(aSeries); //add second series to represent line
-		plot.setDataset(1, aDataSet);
-		plot.setRenderer(1, aLineRenderer);
+		if (theRM != null)
+		{
+			StandardXYItemRenderer aLineRenderer = new StandardXYItemRenderer(StandardXYItemRenderer.LINES);
+			aDataSet = new XYSeriesCollection();
+			aSeries = new XYSeries("line");
+			aSeries.add(theXColumn.getMin(), theRM.getBaseFunctionValue(theXColumn.getMin()));
+			aSeries.add(theXColumn.getMax(), theRM.getBaseFunctionValue(theXColumn.getMax()));
+			aDataSet.addSeries(aSeries); //add second series to represent line
+			plot.setDataset(1, aDataSet);
+			plot.setRenderer(1, aLineRenderer);
+			aLineRenderer.setSeriesStroke(0, new BasicStroke(2.0f));
+		}
 
 		ChartPanel aChartPanel = new ChartPanel(aChart);
 		jScrollPaneCenter.setViewportView(aChartPanel);
@@ -68,6 +71,8 @@ public class ModelWindow extends JFrame
 //		setIconImage(MiningWindow.ICON);
 		pack();
 	}
+
+
 
 	//DAG ==================================================
 

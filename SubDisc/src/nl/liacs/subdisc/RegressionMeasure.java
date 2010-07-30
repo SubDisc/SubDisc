@@ -263,5 +263,18 @@ public class RegressionMeasure
 		return itsCorrelation;
 	}
 
+	public double getSlope()
+	{
+		return itsSlope;
+	}
 
+	public double getIntercept()
+	{
+		return itsIntercept;
+	}
+
+	public double getBaseFunctionValue(double theX)
+	{
+		return theX*itsSlope + itsIntercept;
+	}
 }

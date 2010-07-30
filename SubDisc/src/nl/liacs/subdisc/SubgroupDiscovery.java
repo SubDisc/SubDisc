@@ -35,7 +35,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		itsBinaryTarget = itsTable.evaluate(aCondition);
 	}
 
-	//DOUBLE_CORRELATION
+	//DOUBLE_CORRELATION and DOUBLE_REGRESSION
 	public SubgroupDiscovery(SearchParameters theSearchParameters, Table theTable, boolean isRegression)
 	{
 		super(theSearchParameters);
