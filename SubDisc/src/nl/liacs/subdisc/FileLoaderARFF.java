@@ -247,7 +247,7 @@ public class FileLoaderARFF implements FileLoaderInterface
 				case(Attribute.NUMERIC) :
 				{
 					if(s.equalsIgnoreCase("?"))
-						itsTable.getColumns().get(i).add(Float.NaN);
+						itsTable.getColumns().get(i).add(0f);
 					else
 						itsTable.getColumns().get(i).add(Float.valueOf(s));
 					break;
