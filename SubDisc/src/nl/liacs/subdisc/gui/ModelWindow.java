@@ -32,6 +32,9 @@ public class ModelWindow extends JFrame
 	public ModelWindow(Column theXColumn, Column theYColumn, String theX, String theY, RegressionMeasure theRM)
 	{
 		initComponents();
+		String aName = "model";
+		if (theRM != null)
+			aName = "y = " + (float)theRM.getIntercept() + " + " + (float)theRM.getSlope() + " * x";
 
 		//data
 		XYSeries aSeries = new XYSeries("data");
@@ -42,7 +45,7 @@ public class ModelWindow extends JFrame
 
 		// create the chart
 		JFreeChart aChart =
-			ChartFactory.createScatterPlot("model", theX, theY,	aDataSet, PlotOrientation.VERTICAL, false, true, false);
+			ChartFactory.createScatterPlot(aName, theX, theY,	aDataSet, PlotOrientation.VERTICAL, false, true, false);
 		aChart.setAntiAlias(true);
 		XYPlot plot = aChart.getXYPlot();
 		plot.setBackgroundPaint(Color.white);

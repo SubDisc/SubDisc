@@ -1210,7 +1210,7 @@ public class MiningWindow extends JFrame
 					(aTargetType == TargetType.DOUBLE_REGRESSION && anAttribute.isNumericType()) ||
 					(aTargetType == TargetType.DOUBLE_CORRELATION && anAttribute.isNumericType()) ||
 					(aTargetType == TargetType.MULTI_LABEL && anAttribute.isNumericType()) ||
-					(aTargetType == TargetType.MULTI_BINARY_CLASSIFICATION && anAttribute.isBinaryType()) |
+					(aTargetType == TargetType.MULTI_BINARY_CLASSIFICATION && anAttribute.isBinaryType()) ||
 					(aTargetType == TargetType.MULTI_BINARY_CLASSIFICATION && anAttribute.isNominalType()))
 			{
 				addTargetAttributeItem(itsTable.getAttribute(i).getName());
