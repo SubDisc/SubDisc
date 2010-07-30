@@ -11,6 +11,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -63,9 +64,9 @@ import nl.liacs.subdisc.SubgroupDiscovery;
 import nl.liacs.subdisc.SubgroupSet;
 import nl.liacs.subdisc.Table;
 import nl.liacs.subdisc.TargetConcept;
-import nl.liacs.subdisc.TargetConcept.TargetType;
 import nl.liacs.subdisc.FileHandler.Action;
 import nl.liacs.subdisc.SearchParameters.NumericStrategy;
+import nl.liacs.subdisc.TargetConcept.TargetType;
 
 public class MiningWindow extends JFrame
 {
@@ -113,7 +114,7 @@ public class MiningWindow extends JFrame
 
 	private void initGuiComponents()
 	{
-		if (itsTable == null)
+		if(itsTable == null)
 			return; // MM avoids crash TODO report unsuccessful loading to user
 
 		// set dataset properties
@@ -130,7 +131,7 @@ public class MiningWindow extends JFrame
 		initSearchStrategyItems();
 		setSearchStrategyWidth("100");
 		initNumericStrategy();
-		enableTableDependentComponents(true); // TODO could check if already visible
+		enableTableDependentComponents(true); // TODO could check if already visible, no baseModel for all
 	}
 
 	/**
@@ -178,7 +179,7 @@ public class MiningWindow extends JFrame
 		jLFieldTargetTable = new JLabel();
 		jComboBoxTargetAttribute = new JComboBox();
 		jComboBoxMiscField = new JComboBox(); // used for target value or secondary target
-		jListSecondaryTargets = new javax.swing.JList(new DefaultListModel());	// TODO
+		jListSecondaryTargets = new JList(new DefaultListModel());
 		SecondaryTargets = new JScrollPane(jListSecondaryTargets);
 		jLFieldNrExamples = new JLabel();
 		jLFieldNrColumns = new JLabel();
@@ -235,7 +236,7 @@ public class MiningWindow extends JFrame
 		});
 		jMenuFile.add(jMenuItemOpenFile);
 
-		jMenuItemDataExplorer.setFont(new java.awt.Font("Dialog", 0, 10));
+		jMenuItemDataExplorer.setFont(new Font("Dialog", 0, 10));
 		jMenuItemDataExplorer.setText("Data Explorer");
 		jMenuItemDataExplorer.setMnemonic('E');
 		jMenuItemDataExplorer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_E, InputEvent.CTRL_MASK));
@@ -246,7 +247,7 @@ public class MiningWindow extends JFrame
 		});
 		jMenuFile.add(jMenuItemDataExplorer);
 
-		jMenuItemBrowseTarget.setFont(new java.awt.Font("Dialog", 0, 10));
+		jMenuItemBrowseTarget.setFont(new Font("Dialog", 0, 10));
 		jMenuItemBrowseTarget.setText("Browse");
 		jMenuItemBrowseTarget.setMnemonic('B');
 		jMenuItemBrowseTarget.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_B, InputEvent.CTRL_MASK));
@@ -259,7 +260,7 @@ public class MiningWindow extends JFrame
 
 		jMenuFile.add(jSeparator2);
 
-		jMenuItemSubgroupDiscovery.setFont(new java.awt.Font("Dialog", 0, 10));
+		jMenuItemSubgroupDiscovery.setFont(new Font("Dialog", 0, 10));
 		jMenuItemSubgroupDiscovery.setText("Subgroup Discovery");
 		jMenuItemSubgroupDiscovery.setMnemonic('S');
 		jMenuItemSubgroupDiscovery.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_MASK));
@@ -272,7 +273,7 @@ public class MiningWindow extends JFrame
 
 		jMenuFile.add(jSeparator3);
 
-		jMenuItemExit.setFont(new java.awt.Font("Dialog", 0, 10));
+		jMenuItemExit.setFont(new Font("Dialog", 0, 10));
 		jMenuItemExit.setText("Exit");
 		jMenuItemExit.setMnemonic('X');
 		jMenuItemExit.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q, InputEvent.CTRL_MASK));
@@ -284,11 +285,11 @@ public class MiningWindow extends JFrame
 		jMenuFile.add(jMenuItemExit);
 		jMiningWindowMenuBar.add(jMenuFile);
 
-		jMenuAbout.setFont(new java.awt.Font("Dialog", 0, 10));
+		jMenuAbout.setFont(new Font("Dialog", 0, 10));
 		jMenuAbout.setText("About");
 		jMenuAbout.setMnemonic('A');
 
-		jMenuItemAboutSubDisc.setFont(new java.awt.Font("Dialog", 0, 10));
+		jMenuItemAboutSubDisc.setFont(new Font("Dialog", 0, 10));
 		jMenuItemAboutSubDisc.setText("SubDisc");
 		jMenuItemAboutSubDisc.setMnemonic('I');
 		jMenuItemAboutSubDisc.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_I, InputEvent.CTRL_MASK));
@@ -299,14 +300,14 @@ public class MiningWindow extends JFrame
 		});
 		jMenuAbout.add(jMenuItemAboutSubDisc);
 		jMiningWindowMenuBar.add(jMenuAbout);
-		setFont(new java.awt.Font("Dialog", 0, 10));
-		addWindowListener(new java.awt.event.WindowAdapter() {
+		setFont(new Font("Dialog", 0, 10));
+		addWindowListener(new WindowAdapter() {
 			public void windowClosing(WindowEvent evt) {
 				exitForm(evt);
 			}
 		});
 
-		jPanelSouth.setFont(new java.awt.Font("Dialog", 0, 10));
+		jPanelSouth.setFont(new Font("Dialog", 0, 10));
 
 		jLabelLayoutFiller0.setPreferredSize(new Dimension(0, 40));
 		jLabelLayoutFiller0.setMinimumSize(new Dimension(0, 40));
@@ -323,7 +324,7 @@ public class MiningWindow extends JFrame
 		jButtonDataExplorer.setText("Data Explorer");
 		jButtonDataExplorer.setMinimumSize(new Dimension(82, 25));
 		jButtonDataExplorer.setMnemonic('E');
-		jButtonDataExplorer.addActionListener(new java.awt.event.ActionListener() {
+		jButtonDataExplorer.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
 				DataExplorerActionPerformed(evt);
 			}
@@ -337,7 +338,7 @@ public class MiningWindow extends JFrame
 		jButtonBrowse.setText("Browse");
 		jButtonBrowse.setMinimumSize(new Dimension(82, 25));
 		jButtonBrowse.setMnemonic('B');
-		jButtonBrowse.addActionListener(new java.awt.event.ActionListener() {
+		jButtonBrowse.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
 				BrowseActionPerformed(evt);
 			}
@@ -351,7 +352,7 @@ public class MiningWindow extends JFrame
 		jButtonSubgroupDiscovery.setText("Subgroup Discovery");
 		jButtonSubgroupDiscovery.setMinimumSize(new Dimension(82, 25));
 		jButtonSubgroupDiscovery.setMnemonic('S');
-		jButtonSubgroupDiscovery.addActionListener(new java.awt.event.ActionListener() {
+		jButtonSubgroupDiscovery.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
 				jButtonSubgroupDiscoveryActionPerformed(evt);
 			}
@@ -365,7 +366,7 @@ public class MiningWindow extends JFrame
 		jButtonRandomSubgroups.setText("Random Subgroups");
 		jButtonRandomSubgroups.setMinimumSize(new Dimension(82, 25));
 		jButtonRandomSubgroups.setMnemonic('R');
-		jButtonRandomSubgroups.addActionListener(new java.awt.event.ActionListener() {
+		jButtonRandomSubgroups.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
 				jButtonRandomSubgroupsActionPerformed(evt);
 			}
@@ -379,7 +380,7 @@ public class MiningWindow extends JFrame
 		jButtonRandomConditions.setText("Random Conditions");
 		jButtonRandomConditions.setMinimumSize(new Dimension(82, 25));
 		jButtonRandomConditions.setMnemonic('C');
-		jButtonRandomConditions.addActionListener(new java.awt.event.ActionListener() {
+		jButtonRandomConditions.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
 				jButtonRandomConditionsActionPerformed(evt);
 			}
@@ -541,7 +542,7 @@ public class MiningWindow extends JFrame
 		jButtonBaseModel.setText("Base Model");
 		jButtonBaseModel.setMinimumSize(new Dimension(82, 25));
 		jButtonBaseModel.setMnemonic('M');
-		jButtonBaseModel.addActionListener(new java.awt.event.ActionListener() {
+		jButtonBaseModel.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
 				jButtonBaseModelActionPerformed(evt);
 			}
@@ -693,7 +694,8 @@ public class MiningWindow extends JFrame
 		setJMenuBar(jMiningWindowMenuBar);
 	}
 
-	private void enableTableDependentComponents(boolean theSetting) {
+	private void enableTableDependentComponents(boolean theSetting)
+	{
 		List<? extends AbstractButton> dataModelDependentComponents = 
 			new ArrayList<AbstractButton>(Arrays.asList(new AbstractButton[]
 														{
@@ -708,7 +710,7 @@ public class MiningWindow extends JFrame
 															jButtonBaseModel
 														}));
 
-		for (AbstractButton a : dataModelDependentComponents)
+		for(AbstractButton a : dataModelDependentComponents)
 			a.setEnabled(theSetting);
 	}
 
@@ -721,14 +723,13 @@ public class MiningWindow extends JFrame
 
 	private void jComboBoxSearchStrategyTypeActionPerformed(ActionEvent evt)
 	{
-		if (getSearchStrategyName() == "best first")
-			jTextFieldSearchStrategyWidth.setEnabled(false);
-		else
-			jTextFieldSearchStrategyWidth.setEnabled(true);
+		itsSearchParameters.setSearchStrategy(getSearchStrategyName());
+		jTextFieldSearchStrategyWidth.setEnabled(getSearchStrategyName() != "best first");
 	}
 
 	private void jComboBoxQualityMeasureActionPerformed(ActionEvent evt)
 	{
+		itsSearchParameters.setQualityMeasureMinimum(getQualityMeasureMinimum());
 		initEvaluationMinimum();
 	}
 
@@ -748,10 +749,12 @@ public class MiningWindow extends JFrame
 
 	private void jComboBoxTargetAttributeActionPerformed(ActionEvent evt)
 	{
-		// int aTargetType = TargetConcept.getTypeCode(getTargetTypeName());
+		itsTargetConcept.setPrimaryTarget(itsTable.getAttribute(getTargetAttributeName()));
+		itsSearchParameters.setTargetConcept(itsTargetConcept);
+
 		TargetType aTargetType = itsTargetConcept.getTargetType();
 
-		if (getTargetAttributeName() != null &&
+		if(getTargetAttributeName() != null &&
 			(aTargetType == TargetType.SINGLE_NOMINAL ||
 				aTargetType == TargetType.MULTI_BINARY_CLASSIFICATION))
 		{
@@ -761,66 +764,68 @@ public class MiningWindow extends JFrame
 
 		// TODO these test could be member functions in TargetType?
 		// has MiscField?
-		if ((aTargetType == TargetType.SINGLE_NOMINAL) ||
-				(aTargetType == TargetType.DOUBLE_REGRESSION) ||
-				(aTargetType == TargetType.DOUBLE_CORRELATION) ||
-				(aTargetType == TargetType.MULTI_BINARY_CLASSIFICATION))
-		{
-			jComboBoxMiscField.setVisible(true);
-			jLabelMiscField.setVisible(true);
-			if ((aTargetType == TargetType.SINGLE_NOMINAL)
-					|| (aTargetType == TargetType.MULTI_BINARY_CLASSIFICATION))
-				jLabelMiscField.setText(" target value");
-			else
-				jLabelMiscField.setText(" secondary target");
-		}
+		boolean hasMiscField = (aTargetType == TargetType.SINGLE_NOMINAL ||
+								aTargetType == TargetType.DOUBLE_REGRESSION ||
+								aTargetType == TargetType.DOUBLE_CORRELATION ||
+								aTargetType == TargetType.MULTI_BINARY_CLASSIFICATION);
+		jComboBoxMiscField.setVisible(hasMiscField);
+		jLabelMiscField.setVisible(hasMiscField);
+
+		if(aTargetType == TargetType.SINGLE_NOMINAL ||
+			aTargetType == TargetType.MULTI_BINARY_CLASSIFICATION)
+			jLabelMiscField.setText(" target value");
 		else
-		{
-			jComboBoxMiscField.setVisible(false);
-			jLabelMiscField.setVisible(false);
-		}
+			jLabelMiscField.setText(" secondary target");
 
 		// has secondary targets (JList)
-		if ((aTargetType == TargetType.MULTI_LABEL)
-				|| (aTargetType == TargetType.MULTI_BINARY_CLASSIFICATION)) {
-			jLabelSecondaryTargets.setVisible(true);
-			jListSecondaryTargets.setVisible(true);
-			SecondaryTargets.setVisible(true);
-		}
-		else
-		{
-			jLabelSecondaryTargets.setVisible(false);
-			jListSecondaryTargets.setVisible(false);
-			SecondaryTargets.setVisible(false);
-		}
+		boolean hasSecondaryTargets = (aTargetType == TargetType.MULTI_LABEL ||
+										aTargetType == TargetType.MULTI_BINARY_CLASSIFICATION);
+		jLabelSecondaryTargets.setVisible(hasSecondaryTargets);
+		jListSecondaryTargets.setVisible(hasSecondaryTargets);
+		SecondaryTargets.setVisible(hasSecondaryTargets);
 
 		// has target attribute?
-		if (aTargetType == TargetType.MULTI_LABEL) {
-			jLabelTargetAttribute.setVisible(false);
-			jComboBoxTargetAttribute.setVisible(false);
-		} else {
-			jLabelTargetAttribute.setVisible(true);
-			jComboBoxTargetAttribute.setVisible(true);
-		}
+		boolean hasTargetAttribute = (aTargetType != TargetType.MULTI_LABEL);
+		jLabelTargetAttribute.setVisible(hasTargetAttribute);
+		jComboBoxTargetAttribute.setVisible(hasTargetAttribute);
 
 		// has base model?
-		if (aTargetType == TargetType.DOUBLE_CORRELATION
-				|| aTargetType == TargetType.DOUBLE_REGRESSION
-				|| aTargetType == TargetType.MULTI_LABEL)
-			jButtonBaseModel.setEnabled(true);
-		else
-			jButtonBaseModel.setEnabled(false);
+		boolean hasBaseModel = (aTargetType == TargetType.DOUBLE_CORRELATION ||
+								aTargetType == TargetType.DOUBLE_REGRESSION ||
+								aTargetType == TargetType.MULTI_LABEL);
+		jButtonBaseModel.setEnabled(hasBaseModel);
 	}
 
 	private void jComboBoxTargetTypeActionPerformed(ActionEvent evt)
 	{
+		itsTargetConcept.setTargetType(getTargetTypeName());
+		itsSearchParameters.setTargetConcept(itsTargetConcept);
+
 		initQualityMeasure();
 		initTargetAttributeItems();
 	}
 
 	private void jComboBoxMiscFieldActionPerformed(ActionEvent evt)
 	{
-		if (getMiscFieldName() != null)
+		switch(itsTargetConcept.getTargetType())
+		{
+			case SINGLE_NOMINAL :
+			case MULTI_BINARY_CLASSIFICATION :
+			{
+					itsTargetConcept.setTargetValue(getMiscFieldName());
+					break;
+			}
+			case DOUBLE_REGRESSION :
+			case DOUBLE_CORRELATION :
+			{
+				itsTargetConcept.setSecondaryTarget(itsTable.getAttribute(getTargetAttributeName()));
+				break;
+			}
+			default : break;
+		}
+		itsSearchParameters.setTargetConcept(itsTargetConcept);
+
+		if(getMiscFieldName() != null)
 			initTargetInfo();
 	}
 
@@ -836,16 +841,15 @@ public class MiningWindow extends JFrame
 			setupSearchParameters();
 
 			ModelWindow aWindow;
-			switch (itsTargetConcept.getTargetType())
+			switch(itsTargetConcept.getTargetType())
 			{
 				case DOUBLE_REGRESSION :
 				{
 					Attribute aPrimaryTarget = itsTargetConcept.getPrimaryTarget();
 					Column aPrimaryColumn = itsTable.getColumn(aPrimaryTarget);
-					Attribute aSecondaryTarget = itsTargetConcept
-							.getSecondaryTarget();
+					Attribute aSecondaryTarget = itsTargetConcept.getSecondaryTarget();
 					Column aSecondaryColumn = itsTable.getColumn(aSecondaryTarget);
-	
+
 					aWindow = new ModelWindow(aPrimaryColumn, aSecondaryColumn,
 							aPrimaryTarget.getName(), aSecondaryTarget.getName());
 					aWindow.setLocation(50, 50);
@@ -858,10 +862,9 @@ public class MiningWindow extends JFrame
 				{
 					Attribute aPrimaryTarget = itsTargetConcept.getPrimaryTarget();
 					Column aPrimaryColumn = itsTable.getColumn(aPrimaryTarget);
-					Attribute aSecondaryTarget = itsTargetConcept
-							.getSecondaryTarget();
+					Attribute aSecondaryTarget = itsTargetConcept.getSecondaryTarget();
 					Column aSecondaryColumn = itsTable.getColumn(aSecondaryTarget);
-	
+
 					aWindow = new ModelWindow(aPrimaryColumn, aSecondaryColumn,
 							aPrimaryTarget.getName(), aSecondaryTarget.getName());
 					aWindow.setLocation(50, 50);
@@ -875,19 +878,19 @@ public class MiningWindow extends JFrame
 					// compute selected targets
 					BitSet aSelectedColumns = new BitSet();
 					int[] aSelection = jListSecondaryTargets.getSelectedIndices();
-					for (int anIndex : aSelection)
+					for(int anIndex : aSelection)
 						aSelectedColumns.set(itsTable.getBinaryIndex(anIndex));
 					String[] aNames = new String[aSelectedColumns.cardinality()];
-					for (int anIndex : aSelection)
+					for(int anIndex : aSelection)
 						aNames[anIndex] = itsTable.getAttribute(itsTable.getBinaryIndex(anIndex)).getName();
-	
+
 					// compute base model
 					Bayesian aBayesian =
 						new Bayesian(new BinaryTable(itsTable, aSelectedColumns), aNames);
 					aBayesian.climb();
 					DAG aBaseDAG = aBayesian.getDAG();
 					aBaseDAG.print();
-	
+
 					aWindow = new ModelWindow(aBaseDAG, 1200, 900);
 					aWindow.setLocation(0, 0);
 					aWindow.setSize(1200, 900);
@@ -909,7 +912,7 @@ public class MiningWindow extends JFrame
 		try
 		{
 			// TODO
-			// if (initSearchParameters(itsSearchParameters))
+			// if(initSearchParameters(itsSearchParameters))
 			// {
 			// BrowseWindow aBrowseWindow = new
 			// BrowseWindow(getDatabaseSample(itsDataModel, getMiscFieldName()),
@@ -945,7 +948,7 @@ public class MiningWindow extends JFrame
 			setupSearchParameters();
 
 			//TODO other types not implemented yet
-			if (!itsTargetConcept.getTargetType().isImplemented())
+			if(!itsTargetConcept.getTargetType().isImplemented())
 				return;
 
 			echoMiningStart();
@@ -963,7 +966,7 @@ public class MiningWindow extends JFrame
 				{
 					BitSet aSelectedColumns = new BitSet();
 					int[] aSelection = jListSecondaryTargets.getSelectedIndices();
-					for (int anIndex : aSelection)
+					for(int anIndex : aSelection)
 						aSelectedColumns.set(itsTable.getBinaryIndex(anIndex));
 					aSubgroupDiscovery = new SubgroupDiscovery(itsSearchParameters, itsTable, aSelectedColumns);
 					break;
@@ -991,7 +994,7 @@ public class MiningWindow extends JFrame
 			aResultWindow.setVisible(true);
 
 			long anEnd = System.currentTimeMillis();
-			if (anEnd > aBegin + (long)(itsSearchParameters.getMaximumTime()*60*1000))
+			if(anEnd > aBegin + (long)(itsSearchParameters.getMaximumTime()*60*1000))
 				JOptionPane.showMessageDialog(null, "Mining process ended prematurely due to time limit.",
 											  "Time Limit", JOptionPane.INFORMATION_MESSAGE);
 
@@ -1019,7 +1022,7 @@ public class MiningWindow extends JFrame
 			aCondition.setValue(itsSearchParameters.getTargetConcept().getTargetValue());
 			BitSet aBinaryTarget = itsTable.evaluate(aCondition);
 
-			for (int i = 0; i < 100; i++)
+			for(int i = 0; i < 100; i++)
 			{
 				Subgroup aSubgroup = itsTable.getRandomSubgroup(300); // TODO
 				BitSet aColumnTarget = (BitSet) aBinaryTarget.clone();
@@ -1045,7 +1048,7 @@ public class MiningWindow extends JFrame
 		// get targets
 		BitSet aSelectedColumns = new BitSet();
 		int[] aSelection = jListSecondaryTargets.getSelectedIndices();
-		for (int anIndex : aSelection)
+		for(int anIndex : aSelection)
 			aSelectedColumns.set(itsTable.getBinaryIndex(anIndex));
 
 		// base model
@@ -1058,13 +1061,14 @@ public class MiningWindow extends JFrame
 		Random aRandom = new Random(System.currentTimeMillis());
 		int aSize = 100;
 		float aTotalQuality = 0.0f;
-		for (int i = 0; i < aSize; i++) // random conditions
+		for(int i = 0; i < aSize; i++) // random conditions
 		{
 			ConditionList aCL;
 			BitSet aMembers;
-			do {
+			do
+			{
 				aCL = new ConditionList();
-				for (int j = 0; j < itsSearchParameters.getSearchDepth(); j++) // j conditions
+				for(int j = 0; j < itsSearchParameters.getSearchDepth(); j++) // j conditions
 				{
 					Attribute anAttribute;
 					do
@@ -1103,20 +1107,19 @@ public class MiningWindow extends JFrame
 	private void setupSearchParameters()
 	{
 		initSearchParameters(itsSearchParameters);
-		itsTargetConcept.setTargetType(getTargetTypeName());
+		itsTargetConcept.setTargetType(getTargetTypeName());	// TODO can be removed, set already
 		initTargetConcept(itsTargetConcept);
-		itsSearchParameters.setTargetConcept(itsTargetConcept);
+		itsSearchParameters.setTargetConcept(itsTargetConcept);	// TODO can be removed, set already
 	}
 
 	/** Exit the Application */
-	private void exitForm(java.awt.event.WindowEvent evt)
+	private void exitForm(WindowEvent evt)
 	{
 		dispose();
 		System.exit(0);
 	}
 
-	// TODO can do without theSearchParameters, there is only
-	// itsSearchParameters
+	// TODO can do without theSearchParameters, there is only itsSearchParameters
 	private void initSearchParameters(SearchParameters theSearchParameters)
 	{
 		// theSearchParameters.setTarget(itsTable.getAttribute(getTargetAttributeName()));
@@ -1146,22 +1149,22 @@ public class MiningWindow extends JFrame
 		theSearchParameters.setBeta(1f);
 	}
 
-	// MM TODO
+	// Obsolete, this info is already up to date through *ActionPerformed methods
+	// TODO could call itsTargetConcept directly, no need for parameter
 	private void initTargetConcept(TargetConcept theTC)
 	{
 		Attribute aTarget = itsTable.getAttribute(getTargetAttributeName());
 		theTC.setPrimaryTarget(aTarget);
 
 		// target value
-		if ((theTC.getTargetType() == TargetType.SINGLE_NOMINAL)
-				|| (theTC.getTargetType() == TargetType.MULTI_BINARY_CLASSIFICATION))
-			theTC.setTargetValue(getMiscFieldName());
-
-		// secondary target
-		if ((theTC.getTargetType() == TargetType.DOUBLE_CORRELATION)
-				|| (theTC.getTargetType() == TargetType.DOUBLE_REGRESSION))
-			theTC.setSecondaryTarget(itsTable.getAttribute(getMiscFieldName()));
-
+		switch(theTC.getTargetType())
+		{
+			case SINGLE_NOMINAL					:
+			case MULTI_BINARY_CLASSIFICATION	: theTC.setTargetValue(getMiscFieldName()); break;
+			case DOUBLE_CORRELATION				:
+			case DOUBLE_REGRESSION				: theTC.setSecondaryTarget(itsTable.getAttribute(getMiscFieldName())); break;
+			default								: break;
+		}
 		// TODO add more details of target concept from GUI
 	}
 
@@ -1178,9 +1181,9 @@ public class MiningWindow extends JFrame
 		String aString = new String("Mining process finished in " + minutes
 				+ " minutes and " + secondsRemainder + " seconds.\n");
 
-		if (theNumberOfSubgroups == 0)
+		if(theNumberOfSubgroups == 0)
 			aString += "   No subgroups found that match the search criterion.\n";
-		else if (theNumberOfSubgroups == 1)
+		else if(theNumberOfSubgroups == 1)
 			aString += "   1 subgroup found.\n";
 		else
 			aString += "   " + theNumberOfSubgroups + " subgroups found.\n";
@@ -1191,20 +1194,19 @@ public class MiningWindow extends JFrame
 
 	private void initTargetAttributeItems()
 	{
-		// int aTargetType = TargetConcept.getTypeCode(getTargetTypeName());
 		TargetType aTargetType = itsTargetConcept.getTargetType();
 
 		// clear all
 		removeAllTargetAttributeItems();
-		if ((aTargetType == TargetType.DOUBLE_REGRESSION)
+		if((aTargetType == TargetType.DOUBLE_REGRESSION)
 				|| (aTargetType == TargetType.DOUBLE_CORRELATION))
 			removeAllMiscFieldItems();
 
 		// primary target and MiscField
 		boolean isEmpty = true;
-		for (int i = 0; i < itsTable.getNrColumns(); i++) {
+		for(int i = 0; i < itsTable.getNrColumns(); i++) {
 			Attribute anAttribute = itsTable.getAttribute(i);
-			if ((aTargetType == TargetType.SINGLE_NOMINAL && anAttribute.isNominalType()) ||
+			if((aTargetType == TargetType.SINGLE_NOMINAL && anAttribute.isNominalType()) ||
 					(aTargetType == TargetType.SINGLE_NOMINAL && anAttribute.isBinaryType()) ||
 					(aTargetType == TargetType.SINGLE_NUMERIC && anAttribute.isNumericType()) ||
 					(aTargetType == TargetType.SINGLE_ORDINAL && anAttribute.isNumericType()) ||
@@ -1215,24 +1217,24 @@ public class MiningWindow extends JFrame
 					(aTargetType == TargetType.MULTI_BINARY_CLASSIFICATION && anAttribute.isNominalType()))
 			{
 				addTargetAttributeItem(itsTable.getAttribute(i).getName());
-				if ((aTargetType == TargetType.DOUBLE_REGRESSION) ||
+				if((aTargetType == TargetType.DOUBLE_REGRESSION) ||
 						(aTargetType == TargetType.DOUBLE_CORRELATION))
 					addMiscFieldItem(itsTable.getAttribute(i).getName());
 
 				isEmpty = false;
 			}
 		}
-		if (aTargetType == TargetType.SINGLE_NOMINAL && isEmpty) // no target attribute selected
+		if(aTargetType == TargetType.SINGLE_NOMINAL && isEmpty) // no target attribute selected
 			removeAllMiscFieldItems();
 
 		// secondary targets =======================================
-		if (aTargetType == TargetType.MULTI_LABEL && jListSecondaryTargets.getSelectedIndices().length == 0)
+		if(aTargetType == TargetType.MULTI_LABEL && jListSecondaryTargets.getSelectedIndices().length == 0)
 		{
 			int aCount = 0;
-			for (int i = 0; i < itsTable.getNrColumns(); i++)
+			for(int i = 0; i < itsTable.getNrColumns(); i++)
 			{
 				Attribute anAttribute = itsTable.getAttribute(i);
-				if (anAttribute.isBinaryType())
+				if(anAttribute.isBinaryType())
 				{
 					addSecondaryTargetsItem(itsTable.getAttribute(i).getName());
 					aCount++;
@@ -1245,23 +1247,22 @@ public class MiningWindow extends JFrame
 	private void initTargetValueItems()
 	{
 		removeAllMiscFieldItems();
-		if (jComboBoxTargetAttribute.getItemCount() == 0) // no attributes for selected target concept type?
+		if(jComboBoxTargetAttribute.getItemCount() == 0) // no attributes for selected target concept type?
 			return;
 
 		// single target attribute
-		// if (!TargetConcept.isEMM(getTargetTypeName()))
+		// if(!TargetConcept.isEMM(getTargetTypeName()))
 		// {
 		Attribute aTarget = itsTable.getAttribute(getTargetAttributeName());
 		TreeSet<String> aValues = itsTable.getDomain(aTarget.getIndex());
-		for (String aValue : aValues)
+		for(String aValue : aValues)
 			addMiscFieldItem(aValue);
 		// }
 	}
 
 	private void initTargetInfo()
 	{
-		// int aTargetType = TargetConcept.getTypeCode(getTargetTypeName());
-		switch (itsTargetConcept.getTargetType())
+		switch(itsTargetConcept.getTargetType())
 		{
 			case SINGLE_NOMINAL :
 			{
@@ -1287,7 +1288,7 @@ public class MiningWindow extends JFrame
 			case DOUBLE_REGRESSION :
 			case DOUBLE_CORRELATION :
 			{
-				initTargetConcept(itsTargetConcept);	// MM TODO
+				initTargetConcept(itsTargetConcept);
 				Column aPrimaryColumn = itsTable.getColumn(itsTargetConcept.getPrimaryTarget());
 				Column aSecondaryColumn = itsTable.getColumn(itsTargetConcept.getSecondaryTarget());
 				CorrelationMeasure aCM =
@@ -1314,43 +1315,44 @@ public class MiningWindow extends JFrame
 		setSearchCoverageMinimum(Integer.toString(itsTotalCount / 10));
 	}
 
+	// TODO this is always the same so why remove and add
 	private void initTargetType()
 	{
 		removeAllTargetTypeItems();
-		for (TargetType t : TargetType.values())
-			if (t.isImplemented())
+		for(TargetType t : TargetType.values())
+			if(t.isImplemented())
 				addTargetTypeItem(t.text);
+		itsTargetConcept.setTargetType(getTargetTypeName());	// could use SINGLE_NOMINAL as default in TargetConcept
+//		jComboBoxTargetTypeActionPerformed(null);	// extreme hack to re-populate list, ActionListeners may respond to quickly
 	}
 
 	private void initQualityMeasure()
 	{
 		removeAllQualityMeasureItems();
-		// int aTargetType = TargetConcept.getTypeCode(getTargetTypeName());
 		TargetType aTargetType = itsTargetConcept.getTargetType();
 
-		for (int i = QualityMeasure.getFirstEvaluationMesure(aTargetType); i <= QualityMeasure.getLastEvaluationMesure(aTargetType); i++)
+		for(int i = QualityMeasure.getFirstEvaluationMesure(aTargetType); i <= QualityMeasure.getLastEvaluationMesure(aTargetType); i++)
 			addQualityMeasureItem(QualityMeasure.getMeasureString(i));
 		initEvaluationMinimum();
 	}
 
 	private void initEvaluationMinimum()
 	{
-		if (getQualityMeasureName() != null)
-			setQualityMeasureMinimumName(QualityMeasure.getMeasureMinimum(
-					getQualityMeasureName(), itsTargetAverage));
+		if(getQualityMeasureName() != null)
+			setQualityMeasureMinimumName(QualityMeasure.getMeasureMinimum(getQualityMeasureName(), itsTargetAverage));
 	}
 
 	private void initSearchStrategyItems()
 	{
 		removeAllSearchStrategyItems();
-		for (int i = 0; i <= CandidateQueue.LAST_SEARCH_STRATEGY; i++)
+		for(int i = 0; i <= CandidateQueue.LAST_SEARCH_STRATEGY; i++)
 			addSearchStrategyItem(SearchParameters.getSearchStrategyName(i));
 	}
 
 	private void initNumericStrategy()
 	{
 		removeAllNumericStrategyItems();
-		for (NumericStrategy n : SearchParameters.NumericStrategy.values())
+		for(NumericStrategy n : SearchParameters.NumericStrategy.values())
 			addNumericStrategyItem(n.text);
 	}
 
@@ -1370,7 +1372,7 @@ public class MiningWindow extends JFrame
 	private String getMiscFieldName() { return (String) jComboBoxMiscField.getSelectedItem(); }
 	private void removeAllQualityMeasureItems()
 	{
-		if (jComboBoxQualityMeasure.getItemCount() > 0)
+		if(jComboBoxQualityMeasure.getItemCount() > 0)
 			jComboBoxQualityMeasure.removeAllItems();
 	}
 	private void addQualityMeasureItem(String anItem) { jComboBoxQualityMeasure.addItem(anItem); }
@@ -1378,19 +1380,11 @@ public class MiningWindow extends JFrame
 	// private void removeAllTargetTypeItems() { if(jComboBoxTargetType.getItemCount() > 0 ) jComboBoxTargetType.removeAllItems(); }	// TODO MM
 	private void removeAllTargetTypeItems()
 	{
-		if (jComboBoxTargetType.getItemCount() > 0)
-		{
-			System.out.println("pre jComboBoxTargetType.getItemCount() = " + jComboBoxTargetType.getItemCount());
-			for (int i = 0, j = jComboBoxTargetType.getItemCount(); i < j; ++i)
-			{
-				System.out.println(j + " = " + j);
-				System.out.println(i + " = " + (String) jComboBoxTargetType.getItemAt(i));
+		if(jComboBoxTargetType.getItemCount() > 0)
+			for(int i = 0, j = jComboBoxTargetType.getItemCount(); i < j; ++i)
 				jComboBoxTargetType.removeItemAt(i);
-			}
-			System.out.println("post jComboBoxTargetType.getItemCount() = " + jComboBoxTargetType.getItemCount());
-		}
 	}	// TODO removeAllItems() does not work
-	private void addTargetTypeItem(String anItem) { jComboBoxTargetType.addItem(anItem); System.out.println("Added :" + anItem); }	// MM
+	private void addTargetTypeItem(String anItem) { jComboBoxTargetType.addItem(anItem); }
 	private String getTargetTypeName() { return (String) jComboBoxTargetType.getSelectedItem(); }
 	private void setQualityMeasureMinimumName(String aValue) { jTextFieldQualityMeasureMinimum.setText(aValue); }
 	private Float getQualityMeasureMinimum()

@@ -19,10 +19,10 @@ public enum TargetConcept
 		SINGLE_NOMINAL("single nominal"),
 		SINGLE_NUMERIC("single numeric"),
 		SINGLE_ORDINAL("single ordinal"),
-		DOUBLE_REGRESSION("single ordinal"),
+		DOUBLE_REGRESSION("double regression"),
 		DOUBLE_CORRELATION("double correlation"),
 		MULTI_LABEL("multi-label"),
-		MULTI_BINARY_CLASSIFICATION("multi-label");
+		MULTI_BINARY_CLASSIFICATION("multi binary classification");
 
 		public final String text;
 
