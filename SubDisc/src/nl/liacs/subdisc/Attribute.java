@@ -3,16 +3,13 @@ package nl.liacs.subdisc;
 public class Attribute
 {
 	private int itsIndex;
-	private int itsType;
+	private AttributeType itsType;
 	private String itsName;
 	private String itsShort;
 
-	public static final int NUMERIC = 0;
-	public static final int NOMINAL = 1;
-	public static final int ORDINAL = 2;
-	public static final int BINARY = 3;
+	public enum AttributeType { NUMERIC, NOMINAL, ORDINAL, BINARY; }
 
-	public Attribute(int theIndex, String theName, String theShort, int theType)
+	public Attribute(int theIndex, String theName, String theShort, AttributeType theType)
 	{
 		itsIndex = theIndex;
 		itsName = theName;
@@ -21,7 +18,7 @@ public class Attribute
 	}
 
 	//MRML
-	public Attribute(String theName, String theShort, int theType)
+	public Attribute(String theName, String theShort, AttributeType theType)
 	{
 		itsName = theName;
 		itsShort = theShort;
@@ -29,47 +26,23 @@ public class Attribute
 	}
 
 	public int getIndex() { return itsIndex; }	// TODO check, is null for ARFF/MRML
-	public int getType() { return itsType; }
+	public AttributeType getType() { return itsType; }
 	public String getName() { return itsName; }
 	public String getShort() { return itsShort; }
 	public boolean hasShort() { return (itsShort != null); }
-	public String getNameAndShort()
-	{
-		if (hasShort())
-			return itsName + " (" + getShort() + ")";
-		else
-			return itsName;
-	}
-
-	public String getNameOrShort()
-	{
-		if (hasShort())
-			return itsShort;
-		else
-			return itsName;
-	}
-
-	public String getTypeName()
-	{
-		switch (itsType)
-		{
-			case NUMERIC: return "numeric";
-			case NOMINAL: return "nominal";
-			case ORDINAL: return "ordinal";
-			case BINARY: return "binary";
-		}
-		return "unknown type";
-	}
+	public String getNameAndShort() { return itsName + (hasShort() ? " (" + getShort() + ")" : ""); }
+	public String getNameOrShort() { return hasShort() ? itsShort : itsName; }
+	public String getTypeName() { return itsType.name().toLowerCase(); }
 
 	public void print()
 	{
-		Log.logCommandLine("" + itsIndex + ":" + getNameAndShort() + " " + getTypeName());
+		Log.logCommandLine(itsIndex + ":" + getNameAndShort() + " " + getTypeName());
 	}
 
-	public boolean isNominalType() { return itsType == NOMINAL; }
-	public boolean isNumericType() { return itsType == NUMERIC; }
-	public boolean isOrdinalType() { return itsType == ORDINAL; }
-	public boolean isBinaryType() { return itsType == BINARY; }
+	public boolean isNominalType() { return itsType == AttributeType.NOMINAL; }
+	public boolean isNumericType() { return itsType == AttributeType.NUMERIC; }
+	public boolean isOrdinalType() { return itsType == AttributeType.ORDINAL; }
+	public boolean isBinaryType() { return itsType == AttributeType.BINARY; }
 
 	/**
 	 * NEW Methods for AttributeType change
@@ -77,14 +50,12 @@ public class Attribute
 	 */
 	public void setType(String theType)
 	{
-		if(theType.equalsIgnoreCase("numeric"))
-			itsType = 0;
-		if(theType.equalsIgnoreCase("nominal"))
-			itsType = 1;
-		if(theType.equalsIgnoreCase("ordinal"))
-			itsType = 2;
-		if(theType.equalsIgnoreCase("binary"))
-			itsType = 3;
+		for(AttributeType at : AttributeType.values())
+		{
+			if(at.name().equalsIgnoreCase(theType))
+				itsType = at;
+			break;
+		}
 	}
 	
 }

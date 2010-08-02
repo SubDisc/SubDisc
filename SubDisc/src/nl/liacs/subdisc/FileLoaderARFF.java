@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import nl.liacs.subdisc.Attribute.AttributeType;
+
 public class FileLoaderARFF implements FileLoaderInterface
 {
 	private Table itsTable;
@@ -91,7 +93,6 @@ public class FileLoaderARFF implements FileLoaderInterface
 					if(Keyword.ATTRIBUTE.occursIn(aLine))
 					{
 						Matcher m;
-						ArrayList<Attribute> al = new ArrayList<Attribute>();
 						int aCount = 0;
 
 						do
@@ -102,7 +103,7 @@ public class FileLoaderARFF implements FileLoaderInterface
 							m = Keyword.ATTRIBUTE.text.matcher(aLine);
 							if(m.find())
 							{
-								al.add(parseAttribute(aLine.substring(m.end()), aCount));
+								itsTable.getColumns().add(new Column(parseAttribute(aLine.substring(m.end()), aCount), 1000));	// TODO other default? 1000
 								aCount++;
 							}
 							else if(Keyword.DATA.occursIn(aLine))
@@ -113,11 +114,6 @@ public class FileLoaderARFF implements FileLoaderInterface
 						}
 						while((aLine = aReader.readLine()) != null);
 
-						itsTable.setAttributes(al);	// allows making itsAttributes unmodifiable/final
-						for (Attribute a : al)
-						{
-							itsTable.getColumns().add(new Column(a.getType(), 1000));	// TODO other default? 1000
-						}
 						attributeFound = true;
 					}
 					else
@@ -129,22 +125,9 @@ public class FileLoaderARFF implements FileLoaderInterface
 
 				else if(dataFound)
 				{
-					++itsTable.itsNrRows;
 					loadData(aLine);
 				}
 			}
-			/*
-			 * TEST
-			 * @relation 'labor-neg-data'
-			 * @attribute 'duration' real
-			 * @attribute 'wage-increase-first-year' real
-			 */
-			System.out.println("itsTable.itsName = " + itsTable.itsName);
-			for(Attribute a : itsTable.getAttributes())
-				a.print();
-//			for(Column c : itsTable.getColumns())
-//				c.print();
-
 		}
 		catch (IOException e)
 		{
@@ -152,7 +135,7 @@ public class FileLoaderARFF implements FileLoaderInterface
 			e.printStackTrace();
 		}
 
-		itsTable.itsNrColumns = itsTable.getAttributes().size();	// needed for MiningWindow
+		itsTable.update();
 		return itsTable;
 	}
 /*
@@ -223,7 +206,7 @@ public class FileLoaderARFF implements FileLoaderInterface
 	{
 		String s;
 
-		for(int i = 0, j = itsTable.getAttributes().size(); i < j; ++i)
+		for(int i = 0, j = itsTable.getColumns().size(); i < j; ++i)
 		{
 			int offset = 0;
 
@@ -242,9 +225,9 @@ public class FileLoaderARFF implements FileLoaderInterface
 			//System.out.println(s + " " + itsTable.getAttribute(i).getName() + " " + itsTable.getColumn(itsTable.getAttribute(i)).size());
 			// TODO determine default for missing NUMERIC/ORDINAL/BINARY values
 			// itsTable.getColumn(itsTable.getAttribute(i)).add(s); break;
-			switch(itsTable.getAttribute(i).getType())
+			switch(itsTable.getColumns().get(i).getType())
 			{
-				case(Attribute.NUMERIC) :
+				case NUMERIC :
 				{
 					if(s.equalsIgnoreCase("?"))
 						itsTable.getColumns().get(i).add(0f);
@@ -252,33 +235,39 @@ public class FileLoaderARFF implements FileLoaderInterface
 						itsTable.getColumns().get(i).add(Float.valueOf(s));
 					break;
 				}
-				case(Attribute.NOMINAL) :
+				case NOMINAL :
 					itsTable.getColumns().get(i).add(s); break;
-				case(Attribute.BINARY) :
+				case BINARY :
 				{
 					for(String p : positives)
+					{
 						if(s.equalsIgnoreCase(p))
-							itsTable.getColumns().get(i).add(true); break;
+						{
+							itsTable.getColumns().get(i).add(true);
+							break;
+						}
+					}
+					break;
 				}
 			}
 		}
 
 		if(!theString.isEmpty())
 			if(!Keyword.COMMENT.occursIn(theString))
-				System.out.println("ERROR " + theString);
+				System.out.println("ERROR: " + theString);
 				// criticalError(toManyArgumentsError);
 
 		return theString;
 	}
 
 	// determine attribute type(s), only NUMERIC/NOMINAL for now, not ORDINAL/BINARY
-	private int declaredType(String theAttributeName, String theString)
+	private AttributeType declaredType(String theAttributeName, String theString)
 	{
 		String s = theString.toLowerCase();
-		System.out.println("declaredType: " + s);
+//		System.out.println("declaredType: " + s);
 
 		if(s.startsWith("real") || s.startsWith("integer") || s.startsWith("numeric"))
-			return Attribute.NUMERIC;
+			return AttributeType.NUMERIC;
 
 		else if(s.startsWith("{"))
 		{
@@ -289,7 +278,7 @@ public class FileLoaderARFF implements FileLoaderInterface
 			// duplicate code
 			while(!theString.startsWith("}"))
 			{
-				System.out.println("String: " + theString);
+//				System.out.println("String: " + theString);
 				int offset = 0;
 
 				if(theString.startsWith("\'"))
@@ -329,27 +318,27 @@ public class FileLoaderARFF implements FileLoaderInterface
 					if(one.equalsIgnoreCase(negatives[i]))
 					{
 						if(two.equalsIgnoreCase(positives[i]))
-							return Attribute.BINARY;;
+							return AttributeType.BINARY;;
 
 					}
 					else if(one.equalsIgnoreCase(positives[i]))
 					{
 						if(two.equalsIgnoreCase(negatives[i]))
-							return Attribute.BINARY;;
+							return AttributeType.BINARY;;
 
 					}
 				}
 
 				// TODO present attributeType change dialog to user
 			}
-			return Attribute.NOMINAL;
+			return AttributeType.NOMINAL;
 		}
 
 		// TODO parseDate using dateFormat
 		else if(s.startsWith("date"))
-			return Attribute.NOMINAL;
-		System.out.println(s);
-		return Attribute.NOMINAL;
+			return AttributeType.NOMINAL;
+
+		return AttributeType.NOMINAL;
 	}
 
 	// TODO create ErrorDialog class, that also logs the error

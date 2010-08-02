@@ -1,10 +1,14 @@
 package nl.liacs.subdisc;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.BitSet;
+import java.util.TreeSet;
+
+import nl.liacs.subdisc.Attribute.AttributeType;
 
 public class Column
 {
-	private int itsType; //types in Attribute
+//	private AttributeType itsType; //types in Attribute
 	private Attribute itsAttribute;
 	private ArrayList<Float> itsFloats;
 	private ArrayList<String> itsNominals;
@@ -12,17 +16,30 @@ public class Column
 	private int itsSize;
 	private float itsMin = Float.POSITIVE_INFINITY;
 	private float itsMax = Float.NEGATIVE_INFINITY;
-
-	public Column(int theType, int theNrRows)
+/*
+	public Column(AttributeType theType, int theNrRows)
 	{
 		itsSize = 0;
 		itsType = theType;
-		switch (theType)
+		switch (itsType)
 		{
-			case Attribute.NUMERIC :
-			case Attribute.ORDINAL : { itsFloats = new ArrayList<Float>(theNrRows); break; }
-			case Attribute.NOMINAL : { itsNominals = new ArrayList<String>(theNrRows); break; }
-			case Attribute.BINARY : { itsBinaries = new BitSet(theNrRows); break; }
+			case NUMERIC :
+			case ORDINAL : { itsFloats = new ArrayList<Float>(theNrRows); break; }
+			case NOMINAL : { itsNominals = new ArrayList<String>(theNrRows); break; }
+			case BINARY : { itsBinaries = new BitSet(theNrRows); break; }
+		}
+	}
+*/
+	public Column(Attribute theAttribute, int theNrRows)
+	{
+		itsSize = 0;
+		itsAttribute = theAttribute;
+		switch (itsAttribute.getType())
+		{
+			case NUMERIC :
+			case ORDINAL : { itsFloats = new ArrayList<Float>(theNrRows); break; }
+			case NOMINAL : { itsNominals = new ArrayList<String>(theNrRows); break; }
+			case BINARY : { itsBinaries = new BitSet(theNrRows); break; }
 		}
 	}
 
@@ -35,27 +52,28 @@ public class Column
 	}
 	public void add(String theNominal) { itsNominals.add(theNominal); itsSize++; }
 	public int size() { return itsSize; }
-	public int getType() { return itsType; }
+	public Attribute getAttribute() { return itsAttribute; }
+	public AttributeType getType() { return itsAttribute.getType(); }
 	public float getFloat(int theIndex) { return itsFloats.get(theIndex).floatValue(); }
 	public String getNominal(int theIndex) { return itsNominals.get(theIndex); }
 	public boolean getBinary(int theIndex) { return itsBinaries.get(theIndex); }
 	public String getString(int theIndex)
 	{
-		switch (itsType)
+		switch (itsAttribute.getType())
 		{
-			case Attribute.NUMERIC :
-			case Attribute.ORDINAL : { return itsFloats.get(theIndex).toString(); }
-			case Attribute.NOMINAL : { return getNominal(theIndex); }
-			case Attribute.BINARY : { return getBinary(theIndex)?"1":"0"; }
+			case NUMERIC :
+			case ORDINAL : { return itsFloats.get(theIndex).toString(); }
+			case NOMINAL : { return getNominal(theIndex); }
+			case BINARY : { return getBinary(theIndex)?"1":"0"; }
 		}
 		return itsNominals.get(theIndex);
 	}
 	public BitSet getBinaries() { return itsBinaries; }
 
-	public boolean isNominalType() { return itsType == Attribute.NOMINAL; }
-	public boolean isNumericType() { return itsType == Attribute.NUMERIC; }
-	public boolean isOrdinalType() { return itsType == Attribute.ORDINAL; }
-	public boolean isBinaryType() { return itsType == Attribute.BINARY; }
+	public boolean isNominalType() { return itsAttribute.getType() == AttributeType.NOMINAL; }
+	public boolean isNumericType() { return itsAttribute.getType() == AttributeType.NUMERIC; }
+	public boolean isOrdinalType() { return itsAttribute.getType() == AttributeType.ORDINAL; }
+	public boolean isBinaryType() { return itsAttribute.getType() == AttributeType.BINARY; }
 
 	public float getMin()
 	{
@@ -84,12 +102,12 @@ public class Column
 
 	public void print()
 	{
-		switch (itsType)
+		switch (itsAttribute.getType())
 		{
-			case Attribute.NUMERIC :
-			case Attribute.ORDINAL : { Log.logCommandLine(itsFloats.toString()); break; }
-			case Attribute.NOMINAL : { Log.logCommandLine(itsNominals.toString()); break; }
-			case Attribute.BINARY : { Log.logCommandLine(itsBinaries.toString()); break; }
+			case NUMERIC :
+			case ORDINAL : { Log.logCommandLine(itsFloats.toString()); break; }
+			case NOMINAL : { Log.logCommandLine(itsNominals.toString()); break; }
+			case BINARY : { Log.logCommandLine(itsBinaries.toString()); break; }
 		}
 	}
 
@@ -121,8 +139,8 @@ public class Column
 	 * itsFloats / itsNominals / itsBinaries
 	 * @return 
 	 */
-	public void setType(int theType)
+	public void setType(String theType)
 	{
-		itsType = theType;
+		itsAttribute.setType(theType);
 	}
 }

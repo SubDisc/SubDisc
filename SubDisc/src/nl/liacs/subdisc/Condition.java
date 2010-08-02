@@ -74,7 +74,7 @@ public class Condition
 		itsValue = theValue;
 	}
 
-	public String getAttributeName() { return itsAttribute.getName(); }
+//	public String getAttributeName() { return itsAttribute.getName(); }
 
 	public Attribute getAttribute() { return itsAttribute; }
 
@@ -96,9 +96,7 @@ public class Condition
 
 	public String toCleanString()
 	{
-		String aName = itsAttribute.getName();
-		if (itsAttribute.hasShort())
-			aName = itsAttribute.getShort();
+		String aName = itsAttribute.hasShort() ? itsAttribute.getShort() : itsAttribute.getName();
 
 		if (itsAttribute.isNumericType())
 			return aName  + " " + getOperatorString() + " " + itsValue;

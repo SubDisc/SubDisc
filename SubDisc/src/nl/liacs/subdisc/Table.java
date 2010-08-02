@@ -6,8 +6,8 @@ public class Table
 {
 	// all but Random can be made final
 	public String itsName = "no tablename";
-	int itsNrRows;
-	int itsNrColumns;
+	private int itsNrRows;
+	private int itsNrColumns;
 	private ArrayList<Attribute> itsAttributes = new ArrayList<Attribute>();
 	private ArrayList<Column> itsColumns = new ArrayList<Column>();
 //	private String itsSeparator = ",";	// TODO remove
@@ -24,6 +24,14 @@ public class Table
 	public ArrayList<Attribute> getAttributes() { return itsAttributes; };
 	public ArrayList<Column> getColumns() { return itsColumns; };
 
+	public void update()
+	{
+		itsNrRows = itsColumns.size() > 0 ? itsColumns.get(0).size() : 0;
+		itsNrColumns = getColumns().size();	// needed for MiningWindow
+		for(Column c : itsColumns)
+			itsAttributes.add(c.getAttribute());
+	}
+	
 	// TODO some constructors and builder functions, may change
 	public Table()
 	{
@@ -37,31 +45,6 @@ public class Table
 		itsAttributes.ensureCapacity(theNrColumns);
 		itsColumns.ensureCapacity(theNrColumns);
 		itsRandomNumber = new Random(System.currentTimeMillis());
-	}
-
-	// allows making itsAttributes unmodifiable/final
-	public Table setAttributes(ArrayList<Attribute> theAttributes)
-	{
-		itsAttributes = theAttributes;
-		return this;
-	}
-
-	public Table addAttribute(Attribute theAttribute)
-	{
-		itsAttributes.add(theAttribute);
-		return this;
-	}
-
-	public Table setColumns(ArrayList<Column> theColumns)
-	{
-		itsColumns = theColumns;
-		return this;
-	}
-
-	public Table addColumn(Column theColumn)
-	{
-		itsColumns.add(theColumn);
-		return this;
 	}
 
 	public BitSet evaluate(Condition theCondition)

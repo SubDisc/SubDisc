@@ -5,6 +5,8 @@ import java.io.File;
 import java.io.FileReader;
 import java.util.BitSet;
 
+import nl.liacs.subdisc.Attribute.AttributeType;
+
 public class FileLoaderTXT implements FileLoaderInterface
 {
 	private Table itsTable;
@@ -16,16 +18,9 @@ public class FileLoaderTXT implements FileLoaderInterface
 		if(checkFormatAndType(theFile))
 		{
 			int aNrColumns = itsTable.getNrColumns();
-			int aNrRows = itsTable.getNrRows();
-
-			for (Attribute a : itsTable.getAttributes())
-			{
-				itsTable.getColumns().add(new Column(a.getType(), aNrRows));
-			}
 
 			BufferedReader aReader = new BufferedReader(new FileReader(theFile));
 			String aLine = aReader.readLine(); //skip header
-			int aRowCount = 0;
 
 			while ((aLine = aReader.readLine()) != null)
 			{
@@ -41,9 +36,11 @@ public class FileLoaderTXT implements FileLoaderInterface
 					else 											//NUMERIC
 						aColumn.add(Float.parseFloat(anImportRow[i]));
 				}
-				aRowCount++;
+
 			}
+
 			aReader.close();
+			itsTable.update();
 			Log.logCommandLine("File loaded: " + aNrColumns + " columns, " + itsTable.getNrRows() + " rows.");
 		}
 		else
@@ -99,12 +96,13 @@ public class FileLoaderTXT implements FileLoaderInterface
 		for (int i=0; i<aNrColumns; i++)
 		{
 			if (aNominals.get(i))
-				itsTable.getAttributes().add(new Attribute(i, aHeaders[i], null, Attribute.NOMINAL));
+				itsTable.getColumns().add(new Column(new Attribute(i, aHeaders[i], null, AttributeType.NOMINAL), aNrRows));
 			else if (aNotZeroOne.get(i))
-				itsTable.getAttributes().add(new Attribute(i, aHeaders[i], null, Attribute.NUMERIC));
+				itsTable.getColumns().add(new Column(new Attribute(i, aHeaders[i], null, AttributeType.NUMERIC), aNrRows));
 			else
-				itsTable.getAttributes().add(new Attribute(i, aHeaders[i], null, Attribute.BINARY));
+				itsTable.getColumns().add(new Column(new Attribute(i, aHeaders[i], null, AttributeType.BINARY), aNrRows));
 		}
+		itsTable.update();
 		for (Attribute anAttribute : itsTable.getAttributes())
 			anAttribute.print();
 		return isWellFormedFile;
