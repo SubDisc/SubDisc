@@ -33,7 +33,7 @@ public class ResultWindow extends JFrame
 		itsSubgroupSet = theSubgroupSet;
 		itsSearchParameters = theSearchParameters;
 		itsDAGView = theDAGView;
-		itsResultTableModel = new ResultTableModel(theSubgroupSet, theSearchParameters);
+		itsResultTableModel = new ResultTableModel(itsSubgroupSet, itsSearchParameters);
 		itsSubgroupTable = new JTable(itsResultTableModel);
 		if (!itsSubgroupSet.isEmpty())
 			itsSubgroupTable.addRowSelectionInterval(0, 0);

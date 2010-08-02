@@ -906,25 +906,8 @@ public class MiningWindow extends JFrame
 
 	private void BrowseActionPerformed(ActionEvent evt)
 	{
-		try
-		{
-			// TODO
-			// if(initSearchParameters(itsSearchParameters))
-			// {
-			// BrowseWindow aBrowseWindow = new
-			// BrowseWindow(getDatabaseSample(itsDataModel, getMiscFieldName()),
-			// itsDataModel.getTargetTable(), null);
-			// aBrowseWindow.setLocation(30, 150);
-			// aBrowseWindow.setSize(800, 600);
-			// aBrowseWindow.setVisible(true);
-			// }
-		}
-		catch (Exception e)
-		{
-			ErrorWindow aWindow = new ErrorWindow(e);
-			aWindow.setLocation(200, 200);
-			aWindow.setVisible(true);
-		}
+		new TableWindow(itsTable);
+		//tw.setVisible(true);
 	}
 
 	private void DataExplorerActionPerformed(ActionEvent evt)

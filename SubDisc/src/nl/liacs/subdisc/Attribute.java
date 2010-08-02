@@ -70,4 +70,21 @@ public class Attribute
 	public boolean isNumericType() { return itsType == NUMERIC; }
 	public boolean isOrdinalType() { return itsType == ORDINAL; }
 	public boolean isBinaryType() { return itsType == BINARY; }
+
+	/**
+	 * NEW Methods for AttributeType change
+	 * Needs more data/type checking
+	 */
+	public void setType(String theType)
+	{
+		if(theType.equalsIgnoreCase("numeric"))
+			itsType = 0;
+		if(theType.equalsIgnoreCase("nominal"))
+			itsType = 1;
+		if(theType.equalsIgnoreCase("ordinal"))
+			itsType = 2;
+		if(theType.equalsIgnoreCase("binary"))
+			itsType = 3;
+	}
+	
 }

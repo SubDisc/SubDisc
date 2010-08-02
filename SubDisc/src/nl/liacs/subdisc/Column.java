@@ -5,6 +5,7 @@ import java.util.*;
 public class Column
 {
 	private int itsType; //types in Attribute
+	private Attribute itsAttribute;
 	private ArrayList<Float> itsFloats;
 	private ArrayList<String> itsNominals;
 	private BitSet itsBinaries;
@@ -110,5 +111,18 @@ public class Column
 			//TODO ordinal?
 
 		return aResult;
+	}
+
+	/**
+	 * NEW Methods for AttributeType change
+	 * TODO update
+	 * itsType
+	 * (itsTable.)itsAttribute.setType()
+	 * itsFloats / itsNominals / itsBinaries
+	 * @return 
+	 */
+	public void setType(int theType)
+	{
+		itsType = theType;
 	}
 }
