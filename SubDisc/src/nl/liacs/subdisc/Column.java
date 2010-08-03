@@ -16,37 +16,25 @@ public class Column
 	private int itsSize;
 	private float itsMin = Float.POSITIVE_INFINITY;
 	private float itsMax = Float.NEGATIVE_INFINITY;
-/*
-	public Column(AttributeType theType, int theNrRows)
-	{
-		itsSize = 0;
-		itsType = theType;
-		switch (itsType)
-		{
-			case NUMERIC :
-			case ORDINAL : { itsFloats = new ArrayList<Float>(theNrRows); break; }
-			case NOMINAL : { itsNominals = new ArrayList<String>(theNrRows); break; }
-			case BINARY : { itsBinaries = new BitSet(theNrRows); break; }
-		}
-	}
-*/
+
 	public Column(Attribute theAttribute, int theNrRows)
 	{
 		itsSize = 0;
 		itsAttribute = theAttribute;
-		switch (itsAttribute.getType())
+		switch(itsAttribute.getType())
 		{
 			case NUMERIC :
-			case ORDINAL : { itsFloats = new ArrayList<Float>(theNrRows); break; }
-			case NOMINAL : { itsNominals = new ArrayList<String>(theNrRows); break; }
-			case BINARY : { itsBinaries = new BitSet(theNrRows); break; }
+			case ORDINAL : itsFloats = new ArrayList<Float>(theNrRows); break;
+			case NOMINAL : itsNominals = new ArrayList<String>(theNrRows); break;
+			case BINARY : itsBinaries = new BitSet(theNrRows); break;
+			default : itsNominals = new ArrayList<String>(theNrRows); break;	// TODO throw warning
 		}
 	}
 
 	public void add(float theFloat) { itsFloats.add(new Float(theFloat)); itsSize++; }
 	public void add(boolean theBinary)
 	{
-		if (theBinary)
+		if(theBinary)
 			itsBinaries.set(itsSize);
 		itsSize++;
 	}
@@ -54,6 +42,7 @@ public class Column
 	public int size() { return itsSize; }
 	public Attribute getAttribute() { return itsAttribute; }
 	public AttributeType getType() { return itsAttribute.getType(); }
+	public String getName() {return itsAttribute.getName(); }
 	public float getFloat(int theIndex) { return itsFloats.get(theIndex).floatValue(); }
 	public String getNominal(int theIndex) { return itsNominals.get(theIndex); }
 	public boolean getBinary(int theIndex) { return itsBinaries.get(theIndex); }
@@ -62,18 +51,18 @@ public class Column
 		switch (itsAttribute.getType())
 		{
 			case NUMERIC :
-			case ORDINAL : { return itsFloats.get(theIndex).toString(); }
-			case NOMINAL : { return getNominal(theIndex); }
-			case BINARY : { return getBinary(theIndex)?"1":"0"; }
+			case ORDINAL : return itsFloats.get(theIndex).toString();
+			case NOMINAL : return getNominal(theIndex);
+			case BINARY : return getBinary(theIndex)?"1":"0";
+			default : return ("Unknown type: " + itsAttribute.getTypeName());
 		}
-		return itsNominals.get(theIndex);
 	}
 	public BitSet getBinaries() { return itsBinaries; }
 
-	public boolean isNominalType() { return itsAttribute.getType() == AttributeType.NOMINAL; }
-	public boolean isNumericType() { return itsAttribute.getType() == AttributeType.NUMERIC; }
-	public boolean isOrdinalType() { return itsAttribute.getType() == AttributeType.ORDINAL; }
-	public boolean isBinaryType() { return itsAttribute.getType() == AttributeType.BINARY; }
+	public boolean isNominalType() { return itsAttribute.isNominalType(); }
+	public boolean isNumericType() { return itsAttribute.isNumericType(); }
+	public boolean isOrdinalType() { return itsAttribute.isOrdinalType(); }
+	public boolean isBinaryType() { return itsAttribute.isBinaryType(); }
 
 	public float getMin()
 	{
@@ -89,25 +78,26 @@ public class Column
 
 	private void updateMinMax()
 	{
-		if (itsMax == Float.NEGATIVE_INFINITY) //never computed?
-			for (int i=0; i<itsSize; i++)
+		if(itsMax == Float.NEGATIVE_INFINITY) //never computed?
+			for(int i=0; i<itsSize; i++)
 			{
 				float aValue = getFloat(i);
-				if (aValue > itsMax)
+				if(aValue > itsMax)
 					itsMax = aValue;
-				if (aValue < itsMin)
+				if(aValue < itsMin)
 					itsMin = aValue;
 			}
 	}
 
 	public void print()
 	{
-		switch (itsAttribute.getType())
+		switch(itsAttribute.getType())
 		{
 			case NUMERIC :
-			case ORDINAL : { Log.logCommandLine(itsFloats.toString()); break; }
-			case NOMINAL : { Log.logCommandLine(itsNominals.toString()); break; }
-			case BINARY : { Log.logCommandLine(itsBinaries.toString()); break; }
+			case ORDINAL : Log.logCommandLine(itsFloats.toString()); break;
+			case NOMINAL : Log.logCommandLine(itsNominals.toString()); break;
+			case BINARY : Log.logCommandLine(itsBinaries.toString()); break;
+			default : Log.logCommandLine("Unknown type: " + itsAttribute.getTypeName()); break;
 		}
 	}
 

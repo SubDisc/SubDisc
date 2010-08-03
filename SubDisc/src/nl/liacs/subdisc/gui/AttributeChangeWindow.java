@@ -20,44 +20,44 @@ import javax.swing.border.BevelBorder;
 import javax.swing.table.TableColumn;
 
 import nl.liacs.subdisc.FileHandler;
-import nl.liacs.subdisc.FileHandler.Action;
+import nl.liacs.subdisc.Table;
+import nl.liacs.subdisc.Attribute.AttributeType;
+import nl.liacs.subdisc.gui.AttributeTableModel.Column;
 
 public class AttributeChangeWindow extends JFrame
 {
 	private static final long serialVersionUID = 1L;
-	private JPanel jPanelNorth;
+	private JPanel jPanelMain;
 	private JButton jButtonPressMe;
-	private JScrollPane itsScrollPane;
+	private JScrollPane jScrollPane;
+	private JTable jTable;
 
-	public static void main(String[] args)
+	public AttributeChangeWindow(Table theTable)
 	{
-		AttributeChangeWindow a = new AttributeChangeWindow();
-
-		new FileHandler(Action.OPEN_FILE);
-		JTable table = new JTable(new AttributeTableModel(FileHandler.itsTable));
-		table.setPreferredScrollableViewportSize(new Dimension(1024, 800));
-		table.setFillsViewportHeight(true);
-
-		table.getColumnModel().getColumn(0).setPreferredWidth(10);
-		table.getColumnModel().getColumn(1).setPreferredWidth(50);
-		table.getColumnModel().getColumn(2).setPreferredWidth(50);
-		table.getColumnModel().getColumn(3).setPreferredWidth(50);
-
-		//Create the scroll pane and add the table to it.
-		JScrollPane aScrollPane = new JScrollPane(table);
-
-		a.initComponents(aScrollPane);
-		a.setupTypeColumn(table, table.getColumnModel().getColumn(2));	// NOTE (2) is dependent on TableTableModel
-		a.setTitle("Attribute types for " + FileHandler.itsTable.itsName);
-		a.setVisible(true);
+		initJTable(theTable);
+		initComponents();
+		setupTypeColumn(jTable, jTable.getColumnModel().getColumn(Column.TYPE.columnNr));
+		setTitle("Attribute types for: " + FileHandler.itsTable.itsName);
+		setVisible(true);
 	}
-	private void initComponents(JScrollPane theScrollPane)
-	{
-		jPanelNorth = new JPanel(new GridLayout(2, 1));
-		JPanel aSubgroupPanel = new JPanel();
-		JPanel aSubgroupSetPanel = new JPanel();
 
-		itsScrollPane = new JScrollPane(theScrollPane);
+	private void initJTable(Table theTable)
+	{
+		jTable = new JTable(new AttributeTableModel(theTable));
+		jTable.setPreferredScrollableViewportSize(new Dimension(1024, 800));
+		jTable.setFillsViewportHeight(true);
+
+		jTable.getColumnModel().getColumn(0).setPreferredWidth(10);
+		jTable.getColumnModel().getColumn(1).setPreferredWidth(50);
+		jTable.getColumnModel().getColumn(2).setPreferredWidth(50);
+	}
+
+	private void initComponents()
+	{
+		jPanelMain = new JPanel(new GridLayout(2, 0));
+		JPanel aButtonPanel = new JPanel();
+
+		jScrollPane = new JScrollPane(jTable);
 		addWindowListener(new WindowAdapter() {
 			public void windowClosing(WindowEvent evt) {
 				exitForm();
@@ -70,13 +70,12 @@ public class AttributeChangeWindow extends JFrame
 				System.out.println("You Pressed Button...");
 			}
 		});
-		aSubgroupPanel.add(jButtonPressMe);
+		aButtonPanel.add(jButtonPressMe);
 
-		jPanelNorth.add(aSubgroupPanel);
-		jPanelNorth.add(aSubgroupSetPanel);
-		getContentPane().add(jPanelNorth, BorderLayout.NORTH);
-		getContentPane().add(itsScrollPane, BorderLayout.CENTER);
-		
+		jPanelMain.add(aButtonPanel);
+		getContentPane().add(jScrollPane, BorderLayout.CENTER);
+		getContentPane().add(jPanelMain, BorderLayout.SOUTH);
+	
 		pack();
 	}
 
@@ -99,10 +98,8 @@ public class AttributeChangeWindow extends JFrame
 	{
 		JComboBox comboBox = new JComboBox();
 
-		comboBox.addItem("numeric");
-		comboBox.addItem("nominal");
-		comboBox.addItem("ordinal");
-		comboBox.addItem("binary");
+		for(AttributeType at : AttributeType.values())
+			comboBox.addItem(at.toString().toLowerCase());
 
 		theTypeColumn.setCellEditor(new DefaultCellEditor(comboBox));
 	}

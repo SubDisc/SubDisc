@@ -20,6 +20,7 @@ public class Table
 //	public String getSeparator() { return itsSeparator; }
 	public Attribute getAttribute(int i) { return itsAttributes.get(i); }
 	public Column getColumn(Attribute theAttribute) { return itsColumns.get(theAttribute.getIndex()); }	// index == null for ARFF/MRML
+	public Column getColumn(int theIndex) { return itsColumns.get(theIndex); }
 
 	public ArrayList<Attribute> getAttributes() { return itsAttributes; };
 	public ArrayList<Column> getColumns() { return itsColumns; };

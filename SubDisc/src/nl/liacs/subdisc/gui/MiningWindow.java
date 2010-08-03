@@ -113,7 +113,7 @@ public class MiningWindow extends JFrame
 		initSearchStrategyItems();
 		setSearchStrategyWidth("100");
 		initNumericStrategy();
-		enableTableDependentComponents(true); // TODO could check if already visible, no baseModel for all
+		enableTableDependentComponents(true); // TODO could check if already visible
 
 		switch(itsTargetConcept.getTargetType())
 		{
@@ -131,91 +131,112 @@ public class MiningWindow extends JFrame
 	 */
 	private void initComponents()
 	{
+		// menu items
 		jMiningWindowMenuBar = new JMenuBar();
 		jMenuFile = new JMenu();
 		jMenuItemOpenFile = new JMenuItem();
-		// jMenuItemShowDataModel = new JMenuItem();
 		jMenuItemDataExplorer = new JMenuItem();
 		jMenuItemBrowseTarget = new JMenuItem();
+		jMenuItemAttributeTypeChange = new JMenuItem();
 		jSeparator2 = new JSeparator();
 		jMenuItemSubgroupDiscovery = new JMenuItem();
 		jSeparator3 = new JSeparator();
 		jMenuItemExit = new JMenuItem();
 		jMenuAbout = new JMenu();
 		jMenuItemAboutSubDisc = new JMenuItem();
-		jPanelSouth = new JPanel();
-		jLabelLayoutFiller0 = new JLabel();
-		jPanelLayoutFiller1 = new JPanel();
-		jPanelMineButtons = new JPanel();
-		// jButtonDataModel = new JButton();
-		jButtonDataExplorer = new JButton();
-		jButtonBrowse = new JButton();
-		jButtonSubgroupDiscovery = new JButton();
-		jButtonRandomSubgroups = new JButton();
-		jButtonRandomConditions = new JButton();
-		jPanelLayoutFiller2 = new JPanel();
-		jLabelLayoutFiller3 = new JLabel();
-		jPanelCenter = new JPanel();
+
+		jPanelCenter = new JPanel();	// 4 panels
+		jPanelSouth = new JPanel();		// mining buttons
+
+		// dataset
 		jPanelRuleTarget = new JPanel();
+		// dataset - labels
 		jPanelRuleTargetLabels = new JPanel();
 		jLabelTargetTable = new JLabel();
-		jLabelTargetAttribute = new JLabel();
-		jLabelMiscField = new JLabel(); // used for target value or secondary target
-		jLabelSecondaryTargets = new JLabel();
 		jLabelNrExamples = new JLabel();
 		jLabelNrColumns = new JLabel();
-		jLabelTargetInfo = new JLabel();
+		// dataset - fields
 		jPanelRuleTargetFields = new JPanel();
 		jLFieldTargetTable = new JLabel();
-		jComboBoxTargetAttribute = new JComboBox();
-		jComboBoxMiscField = new JComboBox(); // used for target value or secondary target
-		jListSecondaryTargets = new JList(new DefaultListModel());
-		SecondaryTargets = new JScrollPane(jListSecondaryTargets);
 		jLFieldNrExamples = new JLabel();
 		jLFieldNrColumns = new JLabel();
-		jLFieldTargetInfo = new JLabel();
-		jButtonBaseModel = new JButton();
+		// dataset - buttons
+		jPanelRuleTargetButtons = new JPanel();
+		jButtonDataExplorer = initButton("Data Explorer", 'E');
+		jButtonBrowse = initButton("Browse", 'B');
+		jButtonAttributeTypeChange = initButton("Attribute Type Change", 'A');
+
+		// target concept
 		jPanelRuleEvaluation = new JPanel();
+		// target concept - labels
 		jPanelEvaluationLabels = new JPanel();
 		jLabelTargetType = new JLabel();
 		jLabelQualityMeasure = new JLabel();
 		jLabelEvaluationTreshold = new JLabel();
+		jLabelTargetAttribute = new JLabel();
+		jLabelMiscField = new JLabel(); // used for target value or secondary target
+		jLabelSecondaryTargets = new JLabel();
+		jLabelTargetInfo = new JLabel();
+		// target concept - fields
 		jPanelEvaluationFields = new JPanel();
 		jComboBoxTargetType = new JComboBox();
 		jComboBoxQualityMeasure = new JComboBox();
 		jTextFieldQualityMeasureMinimum = new JTextField();
+		jComboBoxTargetAttribute = new JComboBox();
+		jComboBoxMiscField = new JComboBox(); // used for target value or secondary target
+		jListSecondaryTargets = new JList(new DefaultListModel());
+		SecondaryTargets = new JScrollPane(jListSecondaryTargets);
+		jLFieldTargetInfo = new JLabel();
+		jButtonBaseModel = new JButton();
+
+		//search conditions
 		jPanelSearchParameters = new JPanel();
+		//search conditions - label
 		jPanelSearchParameterLabels = new JPanel();
 		jLabelSearchDepth = new JLabel();
 		jLabelSearchCoverageMinimum = new JLabel();
 		jLabelSearchCoverageMaximum = new JLabel();
 		jLabelSubgroupsMaximum = new JLabel();
 		jLabelSearchTimeMaximum = new JLabel();
+		//search conditions - fields
 		jPanelSearchParameterFields = new JPanel();
 		jTextFieldSearchDepth = new JTextField();
 		jTextFieldSearchCoverageMinimum = new JTextField();
 		jTextFieldSearchCoverageMaximum = new JTextField();
 		jTextFieldSubgroupsMaximum = new JTextField();
 		jTextFieldSearchTimeMaximum = new JTextField();
+		
+		// search strategy
 		jPanelSearchStrategy = new JPanel();
+		// search strategy - labels
 		jPanelSearchStrategyLabels = new JPanel();
 		jLabelStrategyType = new JLabel();
 		jLabelStrategyWidth = new JLabel();
 		jLabelSearchStrategyNumericFrr = new JLabel();
+		// search strategy - fields
 		jPanelSearchStrategyFields = new JPanel();
 		jComboBoxSearchStrategyType = new JComboBox();
 		jTextFieldSearchStrategyWidth = new JTextField();
 		jComboBoxNumeric = new JComboBox();
-		jPanelWest = new JPanel();
-		jPanelEast = new JPanel();
-		jPanelNorth = new JPanel();
-		jMiningWindowMenuBar.setFont(new Font("Dialog", 0, 10));
 
-		jMenuFile.setFont(new Font("Dialog", 0, 10));
+		// mining buttons
+		jLabelLayoutFiller0 = new JLabel();
+		jPanelLayoutFiller1 = new JPanel();
+		jPanelMineButtons = new JPanel();
+		jButtonSubgroupDiscovery = new JButton();
+		jButtonRandomSubgroups = new JButton();
+		jButtonRandomConditions = new JButton();
+		jPanelLayoutFiller2 = new JPanel();
+		jLabelLayoutFiller3 = new JLabel();
+
+		// setting up - menu items
+		jMiningWindowMenuBar.setFont(DEFAULT_FONT);
+
+		jMenuFile.setFont(DEFAULT_FONT);
 		jMenuFile.setText("File");
 		jMenuFile.setMnemonic('F');
 
-		jMenuItemOpenFile.setFont(new Font("Dialog", 0, 10));
+		jMenuItemOpenFile.setFont(DEFAULT_FONT);
 		jMenuItemOpenFile.setText("Open File");
 		jMenuItemOpenFile.setMnemonic('O');
 		jMenuItemOpenFile.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, InputEvent.CTRL_MASK));
@@ -226,7 +247,7 @@ public class MiningWindow extends JFrame
 		});
 		jMenuFile.add(jMenuItemOpenFile);
 
-		jMenuItemDataExplorer.setFont(new Font("Dialog", 0, 10));
+		jMenuItemDataExplorer.setFont(DEFAULT_FONT);
 		jMenuItemDataExplorer.setText("Data Explorer");
 		jMenuItemDataExplorer.setMnemonic('E');
 		jMenuItemDataExplorer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_E, InputEvent.CTRL_MASK));
@@ -237,7 +258,7 @@ public class MiningWindow extends JFrame
 		});
 		jMenuFile.add(jMenuItemDataExplorer);
 
-		jMenuItemBrowseTarget.setFont(new Font("Dialog", 0, 10));
+		jMenuItemBrowseTarget.setFont(DEFAULT_FONT);
 		jMenuItemBrowseTarget.setText("Browse");
 		jMenuItemBrowseTarget.setMnemonic('B');
 		jMenuItemBrowseTarget.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_B, InputEvent.CTRL_MASK));
@@ -248,9 +269,20 @@ public class MiningWindow extends JFrame
 		});
 		jMenuFile.add(jMenuItemBrowseTarget);
 
+		jMenuItemAttributeTypeChange.setFont(DEFAULT_FONT);
+		jMenuItemAttributeTypeChange.setText("Change Attribute Type");
+		jMenuItemAttributeTypeChange.setMnemonic('A');
+		jMenuItemAttributeTypeChange.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A, InputEvent.CTRL_MASK));
+		jMenuItemAttributeTypeChange.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				AttributeTypeChangeActionPerformed(evt);
+			}
+		});
+		jMenuFile.add(jMenuItemAttributeTypeChange);
+
 		jMenuFile.add(jSeparator2);
 
-		jMenuItemSubgroupDiscovery.setFont(new Font("Dialog", 0, 10));
+		jMenuItemSubgroupDiscovery.setFont(DEFAULT_FONT);
 		jMenuItemSubgroupDiscovery.setText("Subgroup Discovery");
 		jMenuItemSubgroupDiscovery.setMnemonic('S');
 		jMenuItemSubgroupDiscovery.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_MASK));
@@ -263,7 +295,7 @@ public class MiningWindow extends JFrame
 
 		jMenuFile.add(jSeparator3);
 
-		jMenuItemExit.setFont(new Font("Dialog", 0, 10));
+		jMenuItemExit.setFont(DEFAULT_FONT);
 		jMenuItemExit.setText("Exit");
 		jMenuItemExit.setMnemonic('X');
 		jMenuItemExit.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q, InputEvent.CTRL_MASK));
@@ -275,11 +307,11 @@ public class MiningWindow extends JFrame
 		jMenuFile.add(jMenuItemExit);
 		jMiningWindowMenuBar.add(jMenuFile);
 
-		jMenuAbout.setFont(new Font("Dialog", 0, 10));
+		jMenuAbout.setFont(DEFAULT_FONT);
 		jMenuAbout.setText("About");
 		jMenuAbout.setMnemonic('A');
 
-		jMenuItemAboutSubDisc.setFont(new Font("Dialog", 0, 10));
+		jMenuItemAboutSubDisc.setFont(DEFAULT_FONT);
 		jMenuItemAboutSubDisc.setText("SubDisc");
 		jMenuItemAboutSubDisc.setMnemonic('I');
 		jMenuItemAboutSubDisc.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_I, InputEvent.CTRL_MASK));
@@ -289,15 +321,267 @@ public class MiningWindow extends JFrame
 			}
 		});
 		jMenuAbout.add(jMenuItemAboutSubDisc);
+
 		jMiningWindowMenuBar.add(jMenuAbout);
-		setFont(new Font("Dialog", 0, 10));
-		addWindowListener(new WindowAdapter() {
-			public void windowClosing(WindowEvent evt) {
-				exitForm(evt);
+
+		jPanelCenter.setLayout(new GridLayout(2, 2));
+
+		// setting up - dataset ================================================
+		jPanelRuleTarget.setLayout(new BoxLayout(jPanelRuleTarget, 0));
+		jPanelRuleTarget.setBorder(new TitledBorder(new EtchedBorder(),
+				"dataset", 4, 2, new Font("Dialog", 1, 11)));
+		jPanelRuleTarget.setFont(new Font("Dialog", 1, 12));
+
+		jPanelRuleTargetLabels.setLayout(new GridLayout(7, 1));
+
+		jLabelTargetTable = initJLabel(" target table");
+		jPanelRuleTargetLabels.add(jLabelTargetTable);
+
+		jLabelNrExamples = initJLabel(" # examples");
+		jPanelRuleTargetLabels.add(jLabelNrExamples);
+
+		jLabelNrColumns = initJLabel(" # columns");
+		jPanelRuleTargetLabels.add(jLabelNrColumns);
+
+		jPanelRuleTarget.add(jPanelRuleTargetLabels);
+
+		jPanelRuleTargetFields.setLayout(new GridLayout(7, 1));
+
+		jLFieldTargetTable.setForeground(Color.black);
+		jLFieldTargetTable.setFont(DEFAULT_FONT);
+		jPanelRuleTargetFields.add(jLFieldTargetTable);
+
+		jLFieldNrExamples.setForeground(Color.black);
+		jLFieldNrExamples.setFont(DEFAULT_FONT);
+		jPanelRuleTargetFields.add(jLFieldNrExamples);
+
+		jLFieldNrColumns.setForeground(Color.black);
+		jLFieldNrColumns.setFont(DEFAULT_FONT);
+		jPanelRuleTargetFields.add(jLFieldNrColumns);
+
+		jPanelRuleTarget.add(jPanelRuleTargetFields);
+		jPanelCenter.add(jPanelRuleTarget);	// MM
+
+		// setting up - target concept - labels ================================
+		jPanelRuleEvaluation.setLayout(new BoxLayout(jPanelRuleEvaluation, 0));
+		jPanelRuleEvaluation.setBorder(new TitledBorder(new EtchedBorder(),
+				"target concept", 4, 2, new Font("Dialog", 1, 11)));
+		jPanelRuleEvaluation.setFont(new Font("Dialog", 1, 12));
+
+		jPanelEvaluationLabels.setLayout(new GridLayout(8, 1));
+
+		jComboBoxTargetType.setPreferredSize(new Dimension(86, 22));
+		jComboBoxTargetType.setMinimumSize(new Dimension(86, 22));
+		jComboBoxTargetType.setFont(DEFAULT_FONT);
+		jComboBoxTargetType.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				jComboBoxTargetTypeActionPerformed(evt);
 			}
 		});
+		jPanelEvaluationFields.add(jComboBoxTargetType);
 
-		jPanelSouth.setFont(new Font("Dialog", 0, 10));
+		jLabelTargetType = initJLabel(" target type");
+		jPanelEvaluationLabels.add(jLabelTargetType);
+
+		jLabelQualityMeasure = initJLabel(" quality measure");
+		jPanelEvaluationLabels.add(jLabelQualityMeasure);
+
+		jLabelEvaluationTreshold = initJLabel(" measure minimum");
+		jPanelEvaluationLabels.add(jLabelEvaluationTreshold);
+
+		jLabelTargetAttribute = initJLabel(" primary target");
+		jPanelEvaluationLabels.add(jLabelTargetAttribute);
+
+		jLabelMiscField = initJLabel("");
+		jPanelEvaluationLabels.add(jLabelMiscField);
+
+		jLabelSecondaryTargets = initJLabel(" secondary targets");
+		jPanelEvaluationLabels.add(jLabelSecondaryTargets);
+
+		jLabelTargetInfo = initJLabel("");;
+		jPanelEvaluationLabels.add(jLabelTargetInfo);
+		jPanelRuleEvaluation.add(jPanelEvaluationLabels);
+
+		// setting up - target concept - fields ================================
+		jPanelEvaluationFields.setLayout(new GridLayout(8, 1));
+
+		jComboBoxQualityMeasure.setPreferredSize(new Dimension(86, 22));
+		jComboBoxQualityMeasure.setMinimumSize(new Dimension(86, 22));
+		jComboBoxQualityMeasure.setFont(DEFAULT_FONT);
+		jComboBoxQualityMeasure.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				jComboBoxQualityMeasureActionPerformed(evt);
+			}
+		});
+		jPanelEvaluationFields.add(jComboBoxQualityMeasure);
+
+		jTextFieldQualityMeasureMinimum.setPreferredSize(new Dimension(86, 22));
+		jTextFieldQualityMeasureMinimum.setFont(DEFAULT_FONT);
+		jTextFieldQualityMeasureMinimum.setText("0");
+		jTextFieldQualityMeasureMinimum.setHorizontalAlignment(SwingConstants.RIGHT);
+		jTextFieldQualityMeasureMinimum.setMinimumSize(new Dimension(86, 22));
+		jPanelEvaluationFields.add(jTextFieldQualityMeasureMinimum);
+
+		jComboBoxTargetAttribute.setPreferredSize(new Dimension(86, 22));
+		jComboBoxTargetAttribute.setMinimumSize(new Dimension(86, 22));
+		jComboBoxTargetAttribute.setFont(DEFAULT_FONT);
+		jComboBoxTargetAttribute.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				jComboBoxTargetAttributeActionPerformed(evt);
+			}
+		});
+		jPanelEvaluationFields.add(jComboBoxTargetAttribute);
+
+		jComboBoxMiscField.setFont(DEFAULT_FONT);
+		jComboBoxMiscField.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				jComboBoxMiscFieldActionPerformed(evt);
+			}
+		});
+		jPanelEvaluationFields.add(jComboBoxMiscField);
+
+		jListSecondaryTargets.setPreferredSize(new Dimension(86, 30));
+		jListSecondaryTargets.setMinimumSize(new Dimension(86, 22));
+		jListSecondaryTargets.setFont(DEFAULT_FONT);
+		jListSecondaryTargets.addListSelectionListener(new ListSelectionListener() {
+			public void valueChanged(ListSelectionEvent evt) {
+				jListSecondaryTargetsActionPerformed(evt);
+			}
+		});
+		jPanelEvaluationFields.add(jListSecondaryTargets);
+
+		jLFieldTargetInfo.setForeground(Color.black);
+		jLFieldTargetInfo.setFont(DEFAULT_FONT);
+		jPanelEvaluationFields.add(jLFieldTargetInfo);
+
+//		jButtonBaseModel.setPreferredSize(new Dimension(86, 22));
+//		jButtonBaseModel.setMaximumSize(new Dimension(95, 25));
+//		jButtonBaseModel.setMinimumSize(new Dimension(82, 25));
+		jButtonBaseModel = initButton("Base Model", 'M');
+		jButtonBaseModel.setMnemonic('M');
+		jButtonBaseModel.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				jButtonBaseModelActionPerformed(evt);
+			}
+		});
+		jPanelEvaluationFields.add(jButtonBaseModel);
+
+		jPanelRuleEvaluation.add(jPanelEvaluationFields);
+		jPanelCenter.add(jPanelRuleEvaluation);		// MM
+
+		// setting up - search conditions ======================================
+		jPanelSearchParameters.setLayout(new BoxLayout(jPanelSearchParameters, 0));
+		jPanelSearchParameters.setBorder(new TitledBorder(new EtchedBorder(),
+				"search conditions", 4, 2, new Font("Dialog", 1, 11)));
+		jPanelSearchParameters.setFont(new Font("Dialog", 1, 12));
+
+		jPanelSearchParameterLabels.setLayout(new GridLayout(7, 1));
+
+		jLabelSearchDepth = initJLabel(" refinement depth");
+		jPanelSearchParameterLabels.add(jLabelSearchDepth);
+
+		jLabelSearchCoverageMinimum = initJLabel(" minimum coverage");
+		jPanelSearchParameterLabels.add(jLabelSearchCoverageMinimum);
+
+		jLabelSearchCoverageMaximum = initJLabel(" coverage fraction");
+		jPanelSearchParameterLabels.add(jLabelSearchCoverageMaximum);
+
+		jLabelSubgroupsMaximum = initJLabel(" maximum subgroups");
+		jPanelSearchParameterLabels.add(jLabelSubgroupsMaximum);
+
+		jLabelSearchTimeMaximum = initJLabel(" maximum time (min)");
+		jPanelSearchParameterLabels.add(jLabelSearchTimeMaximum);
+
+		jPanelSearchParameters.add(jPanelSearchParameterLabels);
+
+		jPanelSearchParameterFields.setLayout(new GridLayout(7, 1));
+
+		jTextFieldSearchDepth.setPreferredSize(new Dimension(86, 22));
+		jTextFieldSearchDepth.setFont(DEFAULT_FONT);
+		jTextFieldSearchDepth.setText("0");
+		jTextFieldSearchDepth.setHorizontalAlignment(SwingConstants.RIGHT);
+		jTextFieldSearchDepth.setMinimumSize(new Dimension(86, 22));
+		jPanelSearchParameterFields.add(jTextFieldSearchDepth);
+
+		jTextFieldSearchCoverageMinimum.setPreferredSize(new Dimension(86, 22));
+		jTextFieldSearchCoverageMinimum.setFont(DEFAULT_FONT);
+		jTextFieldSearchCoverageMinimum.setText("0");
+		jTextFieldSearchCoverageMinimum.setHorizontalAlignment(SwingConstants.RIGHT);
+		jTextFieldSearchCoverageMinimum.setMinimumSize(new Dimension(86, 22));
+		jPanelSearchParameterFields.add(jTextFieldSearchCoverageMinimum);
+
+		jTextFieldSearchCoverageMaximum.setPreferredSize(new Dimension(86, 22));
+		jTextFieldSearchCoverageMaximum.setFont(DEFAULT_FONT);
+		jTextFieldSearchCoverageMaximum.setText("0");
+		jTextFieldSearchCoverageMaximum.setHorizontalAlignment(SwingConstants.RIGHT);
+		jTextFieldSearchCoverageMaximum.setMinimumSize(new Dimension(86, 22));
+		jPanelSearchParameterFields.add(jTextFieldSearchCoverageMaximum);
+
+		jTextFieldSubgroupsMaximum.setPreferredSize(new Dimension(86, 22));
+		jTextFieldSubgroupsMaximum.setFont(DEFAULT_FONT);
+		jTextFieldSubgroupsMaximum.setText("0");
+		jTextFieldSubgroupsMaximum.setHorizontalAlignment(SwingConstants.RIGHT);
+		jTextFieldSubgroupsMaximum.setMinimumSize(new Dimension(86, 22));
+		jPanelSearchParameterFields.add(jTextFieldSubgroupsMaximum);
+
+		jTextFieldSearchTimeMaximum.setPreferredSize(new Dimension(86, 22));
+		jTextFieldSearchTimeMaximum.setFont(DEFAULT_FONT);
+		jTextFieldSearchTimeMaximum.setText("0");
+		jTextFieldSearchTimeMaximum.setHorizontalAlignment(SwingConstants.RIGHT);
+		jTextFieldSearchTimeMaximum.setMinimumSize(new Dimension(86, 22));
+		jPanelSearchParameterFields.add(jTextFieldSearchTimeMaximum);
+
+		jPanelSearchParameters.add(jPanelSearchParameterFields);
+		jPanelCenter.add(jPanelSearchParameters);	// MM
+
+		// setting up - search strategy ========================================
+		jPanelSearchStrategy.setLayout(new BoxLayout(jPanelSearchStrategy, 0));
+		jPanelSearchStrategy.setBorder(new TitledBorder(
+			new EtchedBorder(), "search strategy", 4, 2, new Font("Dialog", 1, 11)));
+		jPanelSearchStrategy.setFont(new Font("Dialog", 1, 12));
+
+		jPanelSearchStrategyLabels.setLayout(new GridLayout(7, 1));
+
+		jLabelStrategyType = initJLabel(" strategy type");
+		jPanelSearchStrategyLabels.add(jLabelStrategyType);
+
+		jLabelStrategyWidth = initJLabel(" search width");
+		jPanelSearchStrategyLabels.add(jLabelStrategyWidth);
+
+		jLabelSearchStrategyNumericFrr = initJLabel(" best numeric");
+		jPanelSearchStrategyLabels.add(jLabelSearchStrategyNumericFrr);
+
+		jPanelSearchStrategy.add(jPanelSearchStrategyLabels);
+
+		jPanelSearchStrategyFields.setLayout(new GridLayout(7, 1));
+
+		jComboBoxSearchStrategyType.setPreferredSize(new Dimension(86, 22));
+		jComboBoxSearchStrategyType.setMinimumSize(new Dimension(86, 22));
+		jComboBoxSearchStrategyType.setFont(DEFAULT_FONT);
+		jComboBoxSearchStrategyType.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				jComboBoxSearchStrategyTypeActionPerformed(evt);
+			}
+		});
+		jPanelSearchStrategyFields.add(jComboBoxSearchStrategyType);
+
+		jTextFieldSearchStrategyWidth.setPreferredSize(new Dimension(86, 22));
+		jTextFieldSearchStrategyWidth.setFont(DEFAULT_FONT);
+		jTextFieldSearchStrategyWidth.setText("0");
+		jTextFieldSearchStrategyWidth.setHorizontalAlignment(SwingConstants.RIGHT);
+		jTextFieldSearchStrategyWidth.setMinimumSize(new Dimension(86, 22));
+		jPanelSearchStrategyFields.add(jTextFieldSearchStrategyWidth);
+
+		jComboBoxNumeric.setPreferredSize(new Dimension(86, 22));
+		jComboBoxNumeric.setMinimumSize(new Dimension(86, 22));
+		jComboBoxNumeric.setFont(DEFAULT_FONT);
+		jPanelSearchStrategyFields.add(jComboBoxNumeric);
+
+		jPanelSearchStrategy.add(jPanelSearchStrategyFields);
+		jPanelCenter.add(jPanelSearchStrategy);	// MM
+
+		// setting up - mining buttons =========================================
+		jPanelSouth.setFont(DEFAULT_FONT);
 
 		jLabelLayoutFiller0.setPreferredSize(new Dimension(0, 40));
 		jLabelLayoutFiller0.setMinimumSize(new Dimension(0, 40));
@@ -306,14 +590,8 @@ public class MiningWindow extends JFrame
 		jPanelSouth.add(jPanelLayoutFiller1);
 
 		jPanelMineButtons.setMinimumSize(new Dimension(0, 40));
-
-		jButtonDataExplorer.setPreferredSize(new Dimension(100, 25));
-		jButtonDataExplorer.setBorder(new BevelBorder(0));
-		jButtonDataExplorer.setMaximumSize(new Dimension(95, 25));
-		jButtonDataExplorer.setFont(new Font("Dialog", 1, 11));
-		jButtonDataExplorer.setText("Data Explorer");
-		jButtonDataExplorer.setMinimumSize(new Dimension(82, 25));
-		jButtonDataExplorer.setMnemonic('E');
+/*
+		jButtonDataExplorer = initButton("Data Explorer", 'E');
 		jButtonDataExplorer.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
 				DataExplorerActionPerformed(evt);
@@ -321,13 +599,7 @@ public class MiningWindow extends JFrame
 		});
 		jPanelMineButtons.add(jButtonDataExplorer);
 
-		jButtonBrowse.setPreferredSize(new Dimension(80, 25));
-		jButtonBrowse.setBorder(new BevelBorder(0));
-		jButtonBrowse.setMaximumSize(new Dimension(95, 25));
-		jButtonBrowse.setFont(new Font("Dialog", 1, 11));
-		jButtonBrowse.setText("Browse");
-		jButtonBrowse.setMinimumSize(new Dimension(82, 25));
-		jButtonBrowse.setMnemonic('B');
+		jButtonBrowse = initButton("Browse", 'B');
 		jButtonBrowse.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
 				BrowseActionPerformed(evt);
@@ -335,13 +607,16 @@ public class MiningWindow extends JFrame
 		});
 		jPanelMineButtons.add(jButtonBrowse);
 
-		jButtonSubgroupDiscovery.setPreferredSize(new Dimension(120, 25));
-		jButtonSubgroupDiscovery.setBorder(new BevelBorder(0));
-		jButtonSubgroupDiscovery.setMaximumSize(new Dimension(130, 25));
-		jButtonSubgroupDiscovery.setFont(new Font("Dialog", 1, 11));
-		jButtonSubgroupDiscovery.setText("Subgroup Discovery");
-		jButtonSubgroupDiscovery.setMinimumSize(new Dimension(82, 25));
-		jButtonSubgroupDiscovery.setMnemonic('S');
+		jButtonAttributeTypeChange = initButton("Attribute Type Change", 'A');
+		jButtonAttributeTypeChange.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				AttributeTypeChangeActionPerformed(evt);
+			}
+		});
+		jPanelMineButtons.add(jButtonAttributeTypeChange);
+ */
+
+		jButtonSubgroupDiscovery = initButton("Subgroup Discovery", 'S');
 		jButtonSubgroupDiscovery.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
 				jButtonSubgroupDiscoveryActionPerformed(evt);
@@ -349,13 +624,7 @@ public class MiningWindow extends JFrame
 		});
 		jPanelMineButtons.add(jButtonSubgroupDiscovery);
 
-		jButtonRandomSubgroups.setPreferredSize(new Dimension(120, 25));
-		jButtonRandomSubgroups.setBorder(new BevelBorder(0));
-		jButtonRandomSubgroups.setMaximumSize(new Dimension(130, 25));
-		jButtonRandomSubgroups.setFont(new Font("Dialog", 1, 11));
-		jButtonRandomSubgroups.setText("Random Subgroups");
-		jButtonRandomSubgroups.setMinimumSize(new Dimension(82, 25));
-		jButtonRandomSubgroups.setMnemonic('R');
+		jButtonRandomSubgroups = initButton("Random Subgroups", 'R');
 		jButtonRandomSubgroups.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
 				jButtonRandomSubgroupsActionPerformed(evt);
@@ -363,13 +632,7 @@ public class MiningWindow extends JFrame
 		});
 		jPanelMineButtons.add(jButtonRandomSubgroups);
 
-		jButtonRandomConditions.setPreferredSize(new Dimension(120, 25));
-		jButtonRandomConditions.setBorder(new BevelBorder(0));
-		jButtonRandomConditions.setMaximumSize(new Dimension(130, 25));
-		jButtonRandomConditions.setFont(new Font("Dialog", 1, 11));
-		jButtonRandomConditions.setText("Random Conditions");
-		jButtonRandomConditions.setMinimumSize(new Dimension(82, 25));
-		jButtonRandomConditions.setMnemonic('C');
+		jButtonRandomConditions = initButton("Random Conditions", 'C');
 		jButtonRandomConditions.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
 				jButtonRandomConditionsActionPerformed(evt);
@@ -380,306 +643,17 @@ public class MiningWindow extends JFrame
 		jPanelSouth.add(jPanelMineButtons);
 		jPanelSouth.add(jPanelLayoutFiller2);
 		jPanelSouth.add(jLabelLayoutFiller3);
+
 		getContentPane().add(jPanelSouth, BorderLayout.SOUTH);
-
-		// dataset =================================
-		jPanelCenter.setLayout(new GridLayout(2, 2));
-
-		jPanelRuleTarget.setLayout(new BoxLayout(jPanelRuleTarget, 0));
-		jPanelRuleTarget.setBorder(new TitledBorder(new EtchedBorder(),
-				"dataset", 4, 2, new Font("Dialog", 1, 11)));
-		jPanelRuleTarget.setFont(new Font("Dialog", 1, 12));
-
-		jPanelRuleTargetLabels.setLayout(new GridLayout(7, 1));
-
-		jLabelTargetTable.setText(" target table");
-		jLabelTargetTable.setFont(new Font("Dialog", 0, 10));
-		jPanelRuleTargetLabels.add(jLabelTargetTable);
-
-		jLabelTargetAttribute.setText(" target attribute");
-		jLabelTargetAttribute.setFont(new Font("Dialog", 0, 10));
-		jPanelRuleTargetLabels.add(jLabelTargetAttribute);
-
-		jLabelNrExamples.setText(" # examples");
-		jLabelNrExamples.setFont(new Font("Dialog", 0, 10));
-		jPanelRuleTargetLabels.add(jLabelNrExamples);
-
-		jLabelNrColumns.setText(" # columns");
-		jLabelNrColumns.setFont(new Font("Dialog", 0, 10));
-		jPanelRuleTargetLabels.add(jLabelNrColumns);
-
-		jPanelRuleTarget.add(jPanelRuleTargetLabels);
-
-		jPanelRuleTargetFields.setLayout(new GridLayout(7, 1));
-
-		jLFieldTargetTable.setForeground(Color.black);
-		jLFieldTargetTable.setFont(new Font("Dialog", 0, 10));
-		jPanelRuleTargetFields.add(jLFieldTargetTable);
-
-		jLFieldNrExamples.setForeground(Color.black);
-		jLFieldNrExamples.setFont(new Font("Dialog", 0, 10));
-		jPanelRuleTargetFields.add(jLFieldNrExamples);
-
-		jLFieldNrColumns.setForeground(Color.black);
-		jLFieldNrColumns.setFont(new Font("Dialog", 0, 10));
-		jPanelRuleTargetFields.add(jLFieldNrColumns);
-
-		jPanelRuleTarget.add(jPanelRuleTargetFields);
-		jPanelCenter.add(jPanelRuleTarget);
-
-		// target concept
-		// ======================================================================
-		jPanelRuleEvaluation.setLayout(new BoxLayout(jPanelRuleEvaluation, 0));
-		jPanelRuleEvaluation.setBorder(new TitledBorder(new EtchedBorder(),
-				"target concept", 4, 2, new Font("Dialog", 1, 11)));
-		jPanelRuleEvaluation.setFont(new Font("Dialog", 1, 12));
-
-		jPanelEvaluationLabels.setLayout(new GridLayout(8, 1));
-
-		jComboBoxTargetType.setPreferredSize(new Dimension(86, 22));
-		jComboBoxTargetType.setMinimumSize(new Dimension(86, 22));
-		jComboBoxTargetType.setFont(new Font("Dialog", 0, 10));
-		jComboBoxTargetType.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent evt) {
-				jComboBoxTargetTypeActionPerformed(evt);
-			}
-		});
-		jPanelEvaluationFields.add(jComboBoxTargetType);
-
-		jLabelTargetType.setText(" target type");
-		jLabelTargetType.setFont(new Font("Dialog", 0, 10));
-		jPanelEvaluationLabels.add(jLabelTargetType);
-
-		jLabelQualityMeasure.setText(" quality measure");
-		jLabelQualityMeasure.setFont(new Font("Dialog", 0, 10));
-		jPanelEvaluationLabels.add(jLabelQualityMeasure);
-
-		jLabelEvaluationTreshold.setText(" measure minimum");
-		jLabelEvaluationTreshold.setFont(new Font("Dialog", 0, 10));
-		jPanelEvaluationLabels.add(jLabelEvaluationTreshold);
-
-		jLabelTargetAttribute.setText(" primary target");
-		jLabelTargetAttribute.setFont(new Font("Dialog", 0, 10));
-		jPanelEvaluationLabels.add(jLabelTargetAttribute);
-
-		jLabelMiscField.setFont(new Font("Dialog", 0, 10));
-		jPanelEvaluationLabels.add(jLabelMiscField);
-
-		jLabelSecondaryTargets.setText(" secondary targets");
-		jLabelSecondaryTargets.setFont(new Font("Dialog", 0, 10));
-		jPanelEvaluationLabels.add(jLabelSecondaryTargets);
-
-		jLabelTargetInfo.setFont(new Font("Dialog", 0, 10));
-		jPanelEvaluationLabels.add(jLabelTargetInfo);
-		jPanelRuleEvaluation.add(jPanelEvaluationLabels);
-
-		// fields ================================
-		jPanelEvaluationFields.setLayout(new GridLayout(8, 1));
-
-		jComboBoxQualityMeasure.setPreferredSize(new Dimension(86, 22));
-		jComboBoxQualityMeasure.setMinimumSize(new Dimension(86, 22));
-		jComboBoxQualityMeasure.setFont(new Font("Dialog", 0, 10));
-		jComboBoxQualityMeasure.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent evt) {
-				jComboBoxQualityMeasureActionPerformed(evt);
-			}
-		});
-		jPanelEvaluationFields.add(jComboBoxQualityMeasure);
-
-		jTextFieldQualityMeasureMinimum.setPreferredSize(new Dimension(86, 22));
-		jTextFieldQualityMeasureMinimum.setFont(new Font("Dialog", 0, 10));
-		jTextFieldQualityMeasureMinimum.setText("0");
-		jTextFieldQualityMeasureMinimum.setHorizontalAlignment(SwingConstants.RIGHT);
-		jTextFieldQualityMeasureMinimum.setMinimumSize(new Dimension(86, 22));
-		jPanelEvaluationFields.add(jTextFieldQualityMeasureMinimum);
-
-		jComboBoxTargetAttribute.setPreferredSize(new Dimension(86, 22));
-		jComboBoxTargetAttribute.setMinimumSize(new Dimension(86, 22));
-		jComboBoxTargetAttribute.setFont(new Font("Dialog", 0, 10));
-		jComboBoxTargetAttribute.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent evt) {
-				jComboBoxTargetAttributeActionPerformed(evt);
-			}
-		});
-		jPanelEvaluationFields.add(jComboBoxTargetAttribute);
-
-		jComboBoxMiscField.setFont(new Font("Dialog", 0, 10));
-		jComboBoxMiscField.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent evt) {
-				jComboBoxMiscFieldActionPerformed(evt);
-			}
-		});
-		jPanelEvaluationFields.add(jComboBoxMiscField);
-
-		jListSecondaryTargets.setPreferredSize(new Dimension(86, 30));
-		jListSecondaryTargets.setMinimumSize(new Dimension(86, 22));
-		jListSecondaryTargets.setFont(new Font("Dialog", 0, 10));
-		jListSecondaryTargets.addListSelectionListener(new ListSelectionListener() {
-			public void valueChanged(ListSelectionEvent evt) {
-				jListSecondaryTargetsActionPerformed(evt);
-			}
-		});
-		jPanelEvaluationFields.add(jListSecondaryTargets);
-
-		jLFieldTargetInfo.setForeground(Color.black);
-		jLFieldTargetInfo.setFont(new Font("Dialog", 0, 10));
-		jPanelEvaluationFields.add(jLFieldTargetInfo);
-
-		jButtonBaseModel.setPreferredSize(new Dimension(86, 22));
-		jButtonBaseModel.setBorder(new BevelBorder(0));
-		jButtonBaseModel.setMaximumSize(new Dimension(95, 25));
-		jButtonBaseModel.setFont(new Font("Dialog", 1, 11));
-		jButtonBaseModel.setText("Base Model");
-		jButtonBaseModel.setMinimumSize(new Dimension(82, 25));
-		jButtonBaseModel.setMnemonic('M');
-		jButtonBaseModel.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent evt) {
-				jButtonBaseModelActionPerformed(evt);
-			}
-		});
-		jPanelEvaluationFields.add(jButtonBaseModel);
-
-		jPanelRuleEvaluation.add(jPanelEvaluationFields);
-		jPanelCenter.add(jPanelRuleEvaluation);
-
-		// search conditions
-		// ===================================================================
-		jPanelSearchParameters.setLayout(new BoxLayout(jPanelSearchParameters,
-				0));
-		jPanelSearchParameters.setBorder(new TitledBorder(new EtchedBorder(),
-				"search conditions", 4, 2, new Font("Dialog", 1, 11)));
-		jPanelSearchParameters.setFont(new Font("Dialog", 1, 12));
-
-		jPanelSearchParameterLabels.setLayout(new GridLayout(7, 1));
-
-		jLabelSearchDepth.setText(" refinement depth");
-		jLabelSearchDepth.setFont(new Font("Dialog", 0, 10));
-		jPanelSearchParameterLabels.add(jLabelSearchDepth);
-
-		jLabelSearchCoverageMinimum.setText(" minimum coverage");
-		jLabelSearchCoverageMinimum.setFont(new Font("Dialog", 0, 10));
-		jPanelSearchParameterLabels.add(jLabelSearchCoverageMinimum);
-
-		jLabelSearchCoverageMaximum.setText(" coverage fraction");
-		jLabelSearchCoverageMaximum.setFont(new Font("Dialog", 0, 10));
-		jPanelSearchParameterLabels.add(jLabelSearchCoverageMaximum);
-
-		jLabelSubgroupsMaximum.setText(" maximum subgroups");
-		jLabelSubgroupsMaximum.setFont(new Font("Dialog", 0, 10));
-		jPanelSearchParameterLabels.add(jLabelSubgroupsMaximum);
-
-		jLabelSearchTimeMaximum.setText(" maximum time (min)");
-		jLabelSearchTimeMaximum.setFont(new Font("Dialog", 0, 10));
-		jPanelSearchParameterLabels.add(jLabelSearchTimeMaximum);
-
-		jPanelSearchParameters.add(jPanelSearchParameterLabels);
-
-		jPanelSearchParameterFields.setLayout(new GridLayout(7, 1));
-
-		jTextFieldSearchDepth.setPreferredSize(new Dimension(86, 22));
-		jTextFieldSearchDepth.setFont(new Font("Dialog", 0, 10));
-		jTextFieldSearchDepth.setText("0");
-		jTextFieldSearchDepth.setHorizontalAlignment(SwingConstants.RIGHT);
-		jTextFieldSearchDepth.setMinimumSize(new Dimension(86, 22));
-		jPanelSearchParameterFields.add(jTextFieldSearchDepth);
-
-		jTextFieldSearchCoverageMinimum.setPreferredSize(new Dimension(86, 22));
-		jTextFieldSearchCoverageMinimum.setFont(new Font("Dialog", 0, 10));
-		jTextFieldSearchCoverageMinimum.setText("0");
-		jTextFieldSearchCoverageMinimum.setHorizontalAlignment(SwingConstants.RIGHT);
-		jTextFieldSearchCoverageMinimum.setMinimumSize(new Dimension(86, 22));
-		jPanelSearchParameterFields.add(jTextFieldSearchCoverageMinimum);
-
-		jTextFieldSearchCoverageMaximum.setPreferredSize(new Dimension(86, 22));
-		jTextFieldSearchCoverageMaximum.setFont(new Font("Dialog", 0, 10));
-		jTextFieldSearchCoverageMaximum.setText("0");
-		jTextFieldSearchCoverageMaximum.setHorizontalAlignment(SwingConstants.RIGHT);
-		jTextFieldSearchCoverageMaximum.setMinimumSize(new Dimension(86, 22));
-		jPanelSearchParameterFields.add(jTextFieldSearchCoverageMaximum);
-
-		jTextFieldSubgroupsMaximum.setPreferredSize(new Dimension(86, 22));
-		jTextFieldSubgroupsMaximum.setFont(new Font("Dialog", 0, 10));
-		jTextFieldSubgroupsMaximum.setText("0");
-		jTextFieldSubgroupsMaximum.setHorizontalAlignment(SwingConstants.RIGHT);
-		jTextFieldSubgroupsMaximum.setMinimumSize(new Dimension(86, 22));
-		jPanelSearchParameterFields.add(jTextFieldSubgroupsMaximum);
-
-		jTextFieldSearchTimeMaximum.setPreferredSize(new Dimension(86, 22));
-		jTextFieldSearchTimeMaximum.setFont(new Font("Dialog", 0, 10));
-		jTextFieldSearchTimeMaximum.setText("0");
-		jTextFieldSearchTimeMaximum.setHorizontalAlignment(SwingConstants.RIGHT);
-		jTextFieldSearchTimeMaximum.setMinimumSize(new Dimension(86, 22));
-		jPanelSearchParameterFields.add(jTextFieldSearchTimeMaximum);
-
-		jPanelSearchParameters.add(jPanelSearchParameterFields);
-
-		jPanelCenter.add(jPanelSearchParameters);
-
-		jPanelSearchStrategy.setLayout(new BoxLayout(jPanelSearchStrategy, 0));
-		jPanelSearchStrategy.setBorder(new TitledBorder(
-			new EtchedBorder(), "search strategy", 4, 2, new Font("Dialog", 1, 11)));
-		jPanelSearchStrategy.setFont(new Font("Dialog", 1, 12));
-
-		jPanelSearchStrategyLabels.setLayout(new GridLayout(7, 1));
-
-		jLabelStrategyType.setText(" strategy type");
-		jLabelStrategyType.setFont(new Font("Dialog", 0, 10));
-		jPanelSearchStrategyLabels.add(jLabelStrategyType);
-
-		jLabelStrategyWidth.setText(" search width");
-		jLabelStrategyWidth.setFont(new Font("Dialog", 0, 10));
-		jPanelSearchStrategyLabels.add(jLabelStrategyWidth);
-
-		jLabelSearchStrategyNumericFrr.setText(" best numeric");
-		jLabelSearchStrategyNumericFrr.setFont(new Font("Dialog", 0, 10));
-		jPanelSearchStrategyLabels.add(jLabelSearchStrategyNumericFrr);
-
-		jPanelSearchStrategy.add(jPanelSearchStrategyLabels);
-
-		jPanelSearchStrategyFields.setLayout(new GridLayout(7, 1));
-
-		jComboBoxSearchStrategyType.setPreferredSize(new Dimension(86, 22));
-		jComboBoxSearchStrategyType.setMinimumSize(new Dimension(86, 22));
-		jComboBoxSearchStrategyType.setFont(new Font("Dialog", 0, 10));
-		jComboBoxSearchStrategyType.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent evt) {
-				jComboBoxSearchStrategyTypeActionPerformed(evt);
-			}
-		});
-		jPanelSearchStrategyFields.add(jComboBoxSearchStrategyType);
-
-		jTextFieldSearchStrategyWidth.setPreferredSize(new Dimension(86, 22));
-		jTextFieldSearchStrategyWidth.setFont(new Font("Dialog", 0, 10));
-		jTextFieldSearchStrategyWidth.setText("0");
-		jTextFieldSearchStrategyWidth.setHorizontalAlignment(SwingConstants.RIGHT);
-		jTextFieldSearchStrategyWidth.setMinimumSize(new Dimension(86, 22));
-		jPanelSearchStrategyFields.add(jTextFieldSearchStrategyWidth);
-
-		jComboBoxNumeric.setPreferredSize(new Dimension(86, 22));
-		jComboBoxNumeric.setMinimumSize(new Dimension(86, 22));
-		jComboBoxNumeric.setFont(new Font("Dialog", 0, 10));
-		jPanelSearchStrategyFields.add(jComboBoxNumeric);
-
-		jPanelSearchStrategy.add(jPanelSearchStrategyFields);
-
-		jPanelCenter.add(jPanelSearchStrategy);
-
 		getContentPane().add(jPanelCenter, BorderLayout.CENTER);
 
-		jPanelWest.setPreferredSize(new Dimension(5, 10));
-		jPanelWest.setMinimumSize(new Dimension(5, 10));
-
-		getContentPane().add(jPanelWest, BorderLayout.WEST);
-
-		jPanelEast.setPreferredSize(new Dimension(5, 10));
-		jPanelEast.setMinimumSize(new Dimension(5, 10));
-
-		getContentPane().add(jPanelEast, BorderLayout.EAST);
-
-		jPanelNorth.setPreferredSize(new Dimension(10, 5));
-		jPanelNorth.setMinimumSize(new Dimension(10, 5));
-
-		getContentPane().add(jPanelNorth, BorderLayout.NORTH);
+		// TODO who owns this
+		setFont(DEFAULT_FONT);
+		addWindowListener(new WindowAdapter() {
+			public void windowClosing(WindowEvent evt) {
+				exitForm(evt);
+			}
+		});
 
 		setJMenuBar(jMiningWindowMenuBar);
 	}
@@ -907,7 +881,6 @@ public class MiningWindow extends JFrame
 	private void BrowseActionPerformed(ActionEvent evt)
 	{
 		new TableWindow(itsTable);
-		//tw.setVisible(true);
 	}
 
 	private void DataExplorerActionPerformed(ActionEvent evt)
@@ -919,6 +892,11 @@ public class MiningWindow extends JFrame
 		// aDataExplorerWindow.setTitle("Explore data model: " +
 		// itsDataModel.getName());
 		// aDataExplorerWindow.setVisible(true);
+	}
+
+	private void AttributeTypeChangeActionPerformed(ActionEvent evt)
+	{
+		new AttributeChangeWindow(itsTable);
 	}
 
 	private void jButtonSubgroupDiscoveryActionPerformed(ActionEvent evt)
@@ -1464,6 +1442,7 @@ public class MiningWindow extends JFrame
 	// private JMenuItem jMenuItemShowDataModel;
 	private JMenuItem jMenuItemDataExplorer;
 	private JMenuItem jMenuItemBrowseTarget;
+	private JMenuItem jMenuItemAttributeTypeChange;
 	private JSeparator jSeparator2;
 	private JMenuItem jMenuItemSubgroupDiscovery;
 	private JSeparator jSeparator3;
@@ -1477,6 +1456,7 @@ public class MiningWindow extends JFrame
 	// private JButton jButtonDataModel;
 	private JButton jButtonDataExplorer;
 	private JButton jButtonBrowse;
+	private JButton jButtonAttributeTypeChange;
 	private JButton jButtonSubgroupDiscovery;
 	private JButton jButtonRandomSubgroups;
 	private JButton jButtonRandomConditions;
@@ -1485,6 +1465,7 @@ public class MiningWindow extends JFrame
 	private JPanel jPanelCenter;
 	private JPanel jPanelRuleTarget;
 	private JPanel jPanelRuleTargetLabels;
+	private JPanel jPanelRuleTargetButtons;
 	private JLabel jLabelTargetTable;
 	private JLabel jLabelTargetAttribute;
 	private JLabel jLabelMiscField;
@@ -1536,4 +1517,29 @@ public class MiningWindow extends JFrame
 	private JPanel jPanelWest;
 	private JPanel jPanelEast;
 	private JPanel jPanelNorth;
+
+	// GUI defaults and convenience methods
+	private static final Font DEFAULT_FONT = new Font("Dialog", 0, 10);
+//	private static final Font DEFAULT_BUTTON_FONT = new Font("Dialog", 1, 11);
+
+	private static JButton initButton(String theName, int theMnemonic)
+	{
+		JButton aButton = new JButton();
+		aButton.setPreferredSize(new Dimension(120, 25));
+		aButton.setBorder(new BevelBorder(0));
+		aButton.setMinimumSize(new Dimension(82, 25));
+		aButton.setMaximumSize(new Dimension(130, 25));
+		aButton.setFont(new Font ("Dialog", 1, 11));
+		aButton.setText(theName);
+		aButton.setMnemonic(theMnemonic);
+		return aButton;
+	}
+	private enum Mnomics { }
+
+	private static JLabel initJLabel(String theName)
+	{
+		JLabel aJLable = new JLabel(theName);
+		aJLable.setFont(DEFAULT_FONT);
+		return aJLable;
+	}
 }

@@ -34,10 +34,7 @@ public class Attribute
 	public String getNameOrShort() { return hasShort() ? itsShort : itsName; }
 	public String getTypeName() { return itsType.name().toLowerCase(); }
 
-	public void print()
-	{
-		Log.logCommandLine(itsIndex + ":" + getNameAndShort() + " " + getTypeName());
-	}
+	public void print() { Log.logCommandLine(itsIndex + ":" + getNameAndShort() + " " + getTypeName()); }
 
 	public boolean isNominalType() { return itsType == AttributeType.NOMINAL; }
 	public boolean isNumericType() { return itsType == AttributeType.NUMERIC; }
@@ -52,9 +49,11 @@ public class Attribute
 	{
 		for(AttributeType at : AttributeType.values())
 		{
-			if(at.name().equalsIgnoreCase(theType))
+			if(at.toString().equalsIgnoreCase(theType))
+			{
 				itsType = at;
-			break;
+				break;
+			}
 		}
 	}
 	

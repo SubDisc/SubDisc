@@ -9,9 +9,28 @@ import nl.liacs.subdisc.Table;
 public class AttributeTableModel extends AbstractTableModel
 {
 	private static final long serialVersionUID = 1L;
-	private static final String[] itsColumnNames = {"Select", "Attribute", "Type", "Set" };
 	private BitSet itsSelectedAttributes;
 	private Table itsTable;
+
+	// TODO change name to avoid confusion with Column class
+	public enum Column
+	{
+		SELECT(0),
+		ATTRIBUTE(1),
+		TYPE(2);
+
+		public final int columnNr;
+
+		private Column(int theColumnNr) { columnNr = theColumnNr; }
+
+		public static String getColumnName(int theColumnIndex)
+		{
+			for(Column c : Column.values())
+				if(c.columnNr == theColumnIndex)
+					return c.toString();
+			return "Incorrect column index.";
+		}
+	};
 
 	public AttributeTableModel(Table theTable)
 	{
@@ -20,13 +39,10 @@ public class AttributeTableModel extends AbstractTableModel
 	}
 
 	@Override
-	public int getColumnCount() { return itsColumnNames.length; }
+	public int getColumnCount() { return Column.values().length; }
 
 	@Override
-	public String getColumnName(int theColumnIndex)
-	{
-		return itsColumnNames[theColumnIndex];
-	}
+	public String getColumnName(int theColumnIndex) { return Column.getColumnName(theColumnIndex); }
 
 	@Override
 	public int getRowCount() { return itsTable.getNrColumns(); }
@@ -37,8 +53,8 @@ public class AttributeTableModel extends AbstractTableModel
 		switch(col)
 		{
 			case 0 : return itsSelectedAttributes.get(row);
-			case 1 : return itsTable.getAttribute(row).getName();
-			case 2 : return itsTable.getAttribute(row).getTypeName();
+			case 1 : return itsTable.getColumns().get(row).getAttribute().getName();
+			case 2 : return itsTable.getColumns().get(row).getAttribute().getTypeName();
 			default : return "Button_PlaceHolder";
 		}
 	}
@@ -49,7 +65,7 @@ public class AttributeTableModel extends AbstractTableModel
 	@Override
 	public boolean isCellEditable(int row, int col)
 	{
-		return (col == 0 || col == 2);
+		return (col == Column.SELECT.columnNr || col == Column.TYPE.columnNr);
 	}
 
 	public void setValueAt(Object value, int row, int col)
@@ -57,7 +73,7 @@ public class AttributeTableModel extends AbstractTableModel
 		switch(col)
 		{
 			case 0 : itsSelectedAttributes.flip(row); break;
-			case 2 : itsTable.getAttribute(row).setType(((String) value)); break;
+			case 2 : itsTable.getColumns().get(row).setType(((String) value)); break;
 		}
 		fireTableCellUpdated(row, col);
 	}

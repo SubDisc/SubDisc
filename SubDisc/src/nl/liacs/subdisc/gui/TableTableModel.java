@@ -18,7 +18,7 @@ public class TableTableModel extends AbstractTableModel
 	public int getColumnCount() { return itsTable.getNrColumns(); }
 
 	@Override
-	public String getColumnName(int theColumnIndex) { return itsTable.getAttribute(theColumnIndex).getName(); }
+	public String getColumnName(int theColumnIndex) { return itsTable.getColumn(theColumnIndex).getName(); }
 
 	@Override
 	public int getRowCount() { return itsTable.getNrRows(); }
