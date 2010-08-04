@@ -32,7 +32,28 @@ public class Table
 		for(Column c : itsColumns)
 			itsAttributes.add(c.getAttribute());
 	}
-	
+
+	public int[] getTypeCounts()
+	{
+		update();
+		int[] theCounts = new int[3];
+		for(Column c : itsColumns)
+		{
+			switch(c.getType())
+			{
+				case NOMINAL : ++theCounts[0]; break;
+				case NUMERIC :
+				case ORDINAL : ++theCounts[1]; break;
+				case BINARY : ++theCounts[2]; break;
+			}
+		}
+		return theCounts;
+	}
+
+//	public int getNrNNominals() {};
+//	public int getNrNumerics() {};
+//	public int getNrBinaries() {};
+
 	// TODO some constructors and builder functions, may change
 	public Table()
 	{

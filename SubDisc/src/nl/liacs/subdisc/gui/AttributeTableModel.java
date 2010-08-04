@@ -9,7 +9,7 @@ import nl.liacs.subdisc.Table;
 public class AttributeTableModel extends AbstractTableModel
 {
 	private static final long serialVersionUID = 1L;
-	private BitSet itsSelectedAttributes;
+	public BitSet itsSelectedAttributes;
 	private Table itsTable;
 
 	// TODO change name to avoid confusion with Column class
@@ -60,7 +60,7 @@ public class AttributeTableModel extends AbstractTableModel
 	}
 
 	@Override
-	public Class getColumnClass(int c) { return getValueAt(0, c).getClass(); }
+	public Class<?> getColumnClass(int c) { return getValueAt(0, c).getClass(); }
 
 	@Override
 	public boolean isCellEditable(int row, int col)
@@ -77,4 +77,5 @@ public class AttributeTableModel extends AbstractTableModel
 		}
 		fireTableCellUpdated(row, col);
 	}
+
 }

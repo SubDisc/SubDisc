@@ -45,7 +45,26 @@ import javax.swing.border.TitledBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
-import nl.liacs.subdisc.*;
+import nl.liacs.subdisc.Attribute;
+import nl.liacs.subdisc.Bayesian;
+import nl.liacs.subdisc.BinaryTable;
+import nl.liacs.subdisc.CandidateQueue;
+import nl.liacs.subdisc.Column;
+import nl.liacs.subdisc.Condition;
+import nl.liacs.subdisc.ConditionList;
+import nl.liacs.subdisc.CorrelationMeasure;
+import nl.liacs.subdisc.DAG;
+import nl.liacs.subdisc.ErrorWindow;
+import nl.liacs.subdisc.FileHandler;
+import nl.liacs.subdisc.Log;
+import nl.liacs.subdisc.QualityMeasure;
+import nl.liacs.subdisc.RegressionMeasure;
+import nl.liacs.subdisc.SearchParameters;
+import nl.liacs.subdisc.Subgroup;
+import nl.liacs.subdisc.SubgroupDiscovery;
+import nl.liacs.subdisc.SubgroupSet;
+import nl.liacs.subdisc.Table;
+import nl.liacs.subdisc.TargetConcept;
 import nl.liacs.subdisc.FileHandler.Action;
 import nl.liacs.subdisc.SearchParameters.NumericStrategy;
 import nl.liacs.subdisc.TargetConcept.TargetType;
@@ -101,9 +120,15 @@ public class MiningWindow extends JFrame
 
 		// set dataset properties
 		jLFieldTargetTable.setText(itsTable.itsName);
+		// TODO the following fields need to be updated after data/attribute change
 		itsTotalCount = itsTable.getNrRows();
 		jLFieldNrExamples.setText(String.valueOf(itsTotalCount));
 		jLFieldNrColumns.setText(String.valueOf(itsTable.getNrColumns()));
+		int[] aCounts = itsTable.getTypeCounts();
+		jLFieldNrNominals.setText(String.valueOf(aCounts[0]));
+		jLFieldNrNumerics.setText(String.valueOf(aCounts[1]));
+		jLFieldNrBinaries.setText(String.valueOf(aCounts[2]));
+
 		setSearchCoverageMaximum("1.0");
 
 		initTargetType();
@@ -155,11 +180,17 @@ public class MiningWindow extends JFrame
 		jLabelTargetTable = new JLabel();
 		jLabelNrExamples = new JLabel();
 		jLabelNrColumns = new JLabel();
+		jLabelNrNominals = new JLabel();
+		jLabelNrNumerics = new JLabel();
+		jLabelNrBinaries = new JLabel();
 		// dataset - fields
 		jPanelRuleTargetFields = new JPanel();
 		jLFieldTargetTable = new JLabel();
 		jLFieldNrExamples = new JLabel();
 		jLFieldNrColumns = new JLabel();
+		jLFieldNrNominals = new JLabel();
+		jLFieldNrNumerics = new JLabel();
+		jLFieldNrBinaries = new JLabel();
 		// dataset - buttons
 		jPanelRuleTargetButtons = new JPanel();
 		jButtonDataExplorer = initButton("Data Explorer", 'E');
@@ -220,14 +251,14 @@ public class MiningWindow extends JFrame
 		jComboBoxNumeric = new JComboBox();
 
 		// mining buttons
-		jLabelLayoutFiller0 = new JLabel();
-		jPanelLayoutFiller1 = new JPanel();
+//		jLabelLayoutFiller0 = new JLabel();
+//		jPanelLayoutFiller1 = new JPanel();
 		jPanelMineButtons = new JPanel();
 		jButtonSubgroupDiscovery = new JButton();
 		jButtonRandomSubgroups = new JButton();
 		jButtonRandomConditions = new JButton();
-		jPanelLayoutFiller2 = new JPanel();
-		jLabelLayoutFiller3 = new JLabel();
+//		jPanelLayoutFiller2 = new JPanel();
+//		jLabelLayoutFiller3 = new JLabel();
 
 		// setting up - menu items
 		jMiningWindowMenuBar.setFont(DEFAULT_FONT);
@@ -327,7 +358,7 @@ public class MiningWindow extends JFrame
 		jPanelCenter.setLayout(new GridLayout(2, 2));
 
 		// setting up - dataset ================================================
-		jPanelRuleTarget.setLayout(new BoxLayout(jPanelRuleTarget, 0));
+		jPanelRuleTarget.setLayout(new BorderLayout(40, 0));
 		jPanelRuleTarget.setBorder(new TitledBorder(new EtchedBorder(),
 				"dataset", 4, 2, new Font("Dialog", 1, 11)));
 		jPanelRuleTarget.setFont(new Font("Dialog", 1, 12));
@@ -343,7 +374,16 @@ public class MiningWindow extends JFrame
 		jLabelNrColumns = initJLabel(" # columns");
 		jPanelRuleTargetLabels.add(jLabelNrColumns);
 
-		jPanelRuleTarget.add(jPanelRuleTargetLabels);
+		jLabelNrNominals = initJLabel(" # nominals");
+		jPanelRuleTargetLabels.add(jLabelNrNominals);
+		
+		jLabelNrNumerics = initJLabel(" # numerics");
+		jPanelRuleTargetLabels.add(jLabelNrNumerics);
+		
+		jLabelNrBinaries = initJLabel(" # binaries");
+		jPanelRuleTargetLabels.add(jLabelNrBinaries);
+		
+		jPanelRuleTarget.add(jPanelRuleTargetLabels, BorderLayout.WEST);
 
 		jPanelRuleTargetFields.setLayout(new GridLayout(7, 1));
 
@@ -359,7 +399,46 @@ public class MiningWindow extends JFrame
 		jLFieldNrColumns.setFont(DEFAULT_FONT);
 		jPanelRuleTargetFields.add(jLFieldNrColumns);
 
-		jPanelRuleTarget.add(jPanelRuleTargetFields);
+		jLFieldNrNominals.setForeground(Color.black);
+		jLFieldNrNominals.setFont(DEFAULT_FONT);
+		jPanelRuleTargetFields.add(jLFieldNrNominals);
+		
+		jLFieldNrNumerics.setForeground(Color.black);
+		jLFieldNrNumerics.setFont(DEFAULT_FONT);
+		jPanelRuleTargetFields.add(jLFieldNrNumerics);
+		
+		jLFieldNrBinaries.setForeground(Color.black);
+		jLFieldNrBinaries.setFont(DEFAULT_FONT);
+		jPanelRuleTargetFields.add(jLFieldNrBinaries);
+		
+		jPanelRuleTarget.add(jPanelRuleTargetFields, BorderLayout.CENTER);
+
+		jPanelRuleTargetButtons.setLayout(new BoxLayout(jPanelRuleTargetButtons , BoxLayout.X_AXIS));
+		jButtonDataExplorer = initButton("Data Explorer", 'E');
+		jButtonDataExplorer.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				DataExplorerActionPerformed(evt);
+			}
+		});
+		jPanelRuleTargetButtons.add(jButtonDataExplorer);
+
+		jButtonBrowse = initButton("Browse", 'B');
+		jButtonBrowse.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				BrowseActionPerformed(evt);
+			}
+		});
+		jPanelRuleTargetButtons.add(jButtonBrowse);
+
+		jButtonAttributeTypeChange = initButton("Attribute Change", 'A');
+		jButtonAttributeTypeChange.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				AttributeTypeChangeActionPerformed(evt);
+			}
+		});
+		jPanelRuleTargetButtons.add(jButtonAttributeTypeChange);
+
+		jPanelRuleTarget.add(jPanelRuleTargetButtons, BorderLayout.SOUTH);
 		jPanelCenter.add(jPanelRuleTarget);	// MM
 
 		// setting up - target concept - labels ================================
@@ -582,39 +661,14 @@ public class MiningWindow extends JFrame
 
 		// setting up - mining buttons =========================================
 		jPanelSouth.setFont(DEFAULT_FONT);
-
+/*
 		jLabelLayoutFiller0.setPreferredSize(new Dimension(0, 40));
 		jLabelLayoutFiller0.setMinimumSize(new Dimension(0, 40));
 		jPanelSouth.add(jLabelLayoutFiller0);
 
 		jPanelSouth.add(jPanelLayoutFiller1);
-
+*/
 		jPanelMineButtons.setMinimumSize(new Dimension(0, 40));
-/*
-		jButtonDataExplorer = initButton("Data Explorer", 'E');
-		jButtonDataExplorer.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent evt) {
-				DataExplorerActionPerformed(evt);
-			}
-		});
-		jPanelMineButtons.add(jButtonDataExplorer);
-
-		jButtonBrowse = initButton("Browse", 'B');
-		jButtonBrowse.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent evt) {
-				BrowseActionPerformed(evt);
-			}
-		});
-		jPanelMineButtons.add(jButtonBrowse);
-
-		jButtonAttributeTypeChange = initButton("Attribute Type Change", 'A');
-		jButtonAttributeTypeChange.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent evt) {
-				AttributeTypeChangeActionPerformed(evt);
-			}
-		});
-		jPanelMineButtons.add(jButtonAttributeTypeChange);
- */
 
 		jButtonSubgroupDiscovery = initButton("Subgroup Discovery", 'S');
 		jButtonSubgroupDiscovery.addActionListener(new ActionListener() {
@@ -641,8 +695,8 @@ public class MiningWindow extends JFrame
 		jPanelMineButtons.add(jButtonRandomConditions);
 
 		jPanelSouth.add(jPanelMineButtons);
-		jPanelSouth.add(jPanelLayoutFiller2);
-		jPanelSouth.add(jLabelLayoutFiller3);
+//		jPanelSouth.add(jPanelLayoutFiller2);
+//		jPanelSouth.add(jLabelLayoutFiller3);
 
 		getContentPane().add(jPanelSouth, BorderLayout.SOUTH);
 		getContentPane().add(jPanelCenter, BorderLayout.CENTER);
@@ -1439,7 +1493,7 @@ public class MiningWindow extends JFrame
 	private JMenuBar jMiningWindowMenuBar;
 	private JMenu jMenuFile;
 	private JMenuItem jMenuItemOpenFile;
-	// private JMenuItem jMenuItemShowDataModel;
+//	private JMenuItem jMenuItemShowDataModel;
 	private JMenuItem jMenuItemDataExplorer;
 	private JMenuItem jMenuItemBrowseTarget;
 	private JMenuItem jMenuItemAttributeTypeChange;
@@ -1450,8 +1504,8 @@ public class MiningWindow extends JFrame
 	private JMenu jMenuAbout;
 	private JMenuItem jMenuItemAboutSubDisc;
 	private JPanel jPanelSouth;
-	private JLabel jLabelLayoutFiller0;
-	private JPanel jPanelLayoutFiller1;
+//	private JLabel jLabelLayoutFiller0;
+//	private JPanel jPanelLayoutFiller1;
 	private JPanel jPanelMineButtons;
 	// private JButton jButtonDataModel;
 	private JButton jButtonDataExplorer;
@@ -1460,8 +1514,8 @@ public class MiningWindow extends JFrame
 	private JButton jButtonSubgroupDiscovery;
 	private JButton jButtonRandomSubgroups;
 	private JButton jButtonRandomConditions;
-	private JPanel jPanelLayoutFiller2;
-	private JLabel jLabelLayoutFiller3;
+//	private JPanel jPanelLayoutFiller2;
+//	private JLabel jLabelLayoutFiller3;
 	private JPanel jPanelCenter;
 	private JPanel jPanelRuleTarget;
 	private JPanel jPanelRuleTargetLabels;
@@ -1472,6 +1526,9 @@ public class MiningWindow extends JFrame
 	private JLabel jLabelSecondaryTargets;
 	private JLabel jLabelNrExamples;
 	private JLabel jLabelNrColumns;
+	private JLabel jLabelNrNominals;
+	private JLabel jLabelNrNumerics;
+	private JLabel jLabelNrBinaries;
 	private JLabel jLabelTargetInfo;
 	private JPanel jPanelRuleTargetFields;
 	private JLabel jLFieldTargetTable;
@@ -1481,6 +1538,9 @@ public class MiningWindow extends JFrame
 	private JScrollPane SecondaryTargets;
 	private JLabel jLFieldNrExamples;
 	private JLabel jLFieldNrColumns;
+	private JLabel jLFieldNrNominals;
+	private JLabel jLFieldNrNumerics;
+	private JLabel jLFieldNrBinaries;
 	private JLabel jLFieldTargetInfo;
 	private JButton jButtonBaseModel;
 	private JPanel jPanelRuleEvaluation;
@@ -1514,9 +1574,6 @@ public class MiningWindow extends JFrame
 	private JComboBox jComboBoxSearchStrategyType;
 	private JTextField jTextFieldSearchStrategyWidth;
 	private JComboBox jComboBoxNumeric;
-	private JPanel jPanelWest;
-	private JPanel jPanelEast;
-	private JPanel jPanelNorth;
 
 	// GUI defaults and convenience methods
 	private static final Font DEFAULT_FONT = new Font("Dialog", 0, 10);
