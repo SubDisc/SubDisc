@@ -7,16 +7,26 @@ import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.BitSet;
 
+import javax.swing.AbstractButton;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.ButtonGroup;
 import javax.swing.DefaultCellEditor;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.JTextField;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
@@ -24,18 +34,27 @@ import javax.swing.table.TableColumn;
 import nl.liacs.subdisc.FileHandler;
 import nl.liacs.subdisc.Table;
 import nl.liacs.subdisc.Attribute.AttributeType;
-import nl.liacs.subdisc.gui.AttributeTableModel.Column;
+import nl.liacs.subdisc.gui.AttributeTableModel.ColumnHeader;
+import nl.liacs.subdisc.gui.AttributeTableModel.Selection;
 
-public class AttributeChangeWindow extends JFrame implements ActionListener
+public class AttributeChangeWindow extends JFrame implements ActionListener, ItemListener
 {
 	private static final long serialVersionUID = 1L;
+	private Table itsTable;
 	private JTable jTable;
+	private JCheckBox selectAll = GUI.buildCheckBox("Select all", this);
+	private JCheckBox selectAllNumeric = GUI.buildCheckBox("Select all numeric", this);
+	private JCheckBox selectAllNominal = GUI.buildCheckBox("Select all nominal", this);
+	private JCheckBox selectAllOrdinal = GUI.buildCheckBox("Select all ordinal", this);
+	private JCheckBox selectAllBinary = GUI.buildCheckBox("Select all binary", this);
+	private JCheckBox invertSelection = GUI.buildCheckBox("Invert selection", this);	// TODO needs rethinking
 
 	public AttributeChangeWindow(Table theTable)
 	{
-		initJTable(theTable);
+		itsTable = theTable;
+		initJTable(itsTable);
 		initComponents();
-		setupTypeColumn(jTable, jTable.getColumnModel().getColumn(Column.TYPE.columnNr));
+		setupTypeColumn(jTable, jTable.getColumnModel().getColumn(ColumnHeader.TYPE.columnNr));
 //		setupCheckBoxColumn(jTable.getColumnModel().getColumn(Column.SELECT.columnNr));
 		setTitle("Attribute types for: " + FileHandler.itsTable.itsName);
 		setVisible(true);
@@ -43,7 +62,7 @@ public class AttributeChangeWindow extends JFrame implements ActionListener
 
 	private void initJTable(Table theTable)
 	{
-		jTable = new JTable(new AttributeTableModel(theTable));
+		jTable = new JTable(AttributeTableModel.THE_ONLY_INSTANCE.setup(theTable));
 /*
 		{
 			public Component prepareRenderer(TableCellRenderer renderer, int row, int column){
@@ -67,8 +86,12 @@ public class AttributeChangeWindow extends JFrame implements ActionListener
 
 	private void initComponents()
 	{
-		JPanel jPanelMain = new JPanel(new GridLayout(2, 0));
-		JPanel aButtonPanel = new JPanel();
+		JPanel jPanelSouth = new JPanel(new GridLayout(1, 4));
+		JPanel aCheckBoxPanel = new JPanel();
+		JPanel aDisablePanel = new JPanel();
+		JPanel aRadioButtonPanel = new JPanel();
+		JPanel aChangeTypePanel = new JPanel();
+		JPanel aSetMissingPanel = new JPanel();
 
 		JScrollPane jScrollPane = new JScrollPane(jTable);
 		addWindowListener(new WindowAdapter() {
@@ -77,37 +100,127 @@ public class AttributeChangeWindow extends JFrame implements ActionListener
 			}
 		});
 
-		aButtonPanel.add(GUI.getButton("Disable Selected", 'D', "disable", this));
-		aButtonPanel.add(GUI.getButton("Enable Selected", 'E', "enable", this));
-		aButtonPanel.add(GUI.getButton("Change Type", 'C', "type", this));
-		aButtonPanel.add(GUI.getButton("Change Missing", 'M', "missing", this));
+		// selection checkboxes
+		aCheckBoxPanel.setLayout(new BoxLayout(aCheckBoxPanel, BoxLayout.Y_AXIS));
 
-		jPanelMain.add(aButtonPanel);
+		aCheckBoxPanel.add(selectAll);
+		aCheckBoxPanel.add(selectAllNumeric);
+		aCheckBoxPanel.add(selectAllNominal);
+		aCheckBoxPanel.add(selectAllOrdinal);
+		aCheckBoxPanel.add(selectAllBinary);
+		aCheckBoxPanel.add(invertSelection);
+		jPanelSouth.add(aCheckBoxPanel);
+
+		// enable / disable
+		JLabel aDisableLable = new JLabel("Disable/Enable Selected:");
+		aDisableLable.setFont(GUI.DEFAULT_BUTTON_FONT);
+		aDisablePanel.add(aDisableLable);
+		aDisablePanel.setLayout(new BoxLayout(aDisablePanel, BoxLayout.Y_AXIS));
+		aDisablePanel.add(Box.createVerticalGlue());
+		aDisablePanel.add(GUI.buildButton("Disable Selected", 'D', "disable", this));
+		aDisablePanel.add(Box.createVerticalGlue());
+		aDisablePanel.add(GUI.buildButton("Enable Selected", 'E', "enable", this));
+		aDisablePanel.add(Box.createVerticalGlue());
+		jPanelSouth.add(aDisablePanel);
+
+		// change type TODO buttons may need names
+		aRadioButtonPanel.setLayout(new BoxLayout(aRadioButtonPanel, BoxLayout.Y_AXIS));
+
+		ButtonGroup newType = new ButtonGroup();
+		for(AttributeType at : AttributeType.values())
+		{
+			aRadioButtonPanel.add(new JRadioButton(at.name().toLowerCase()));
+		}
+		for(Component rb : aRadioButtonPanel.getComponents())
+		{
+			newType.add((AbstractButton) rb);
+		}
+		JLabel aNewTypeLabel = new JLabel(" New type:");
+		aNewTypeLabel.setFont(GUI.DEFAULT_BUTTON_FONT);
+		aRadioButtonPanel.add(aNewTypeLabel, 0);
+
+		aChangeTypePanel.add(aRadioButtonPanel);
+		aChangeTypePanel.add(GUI.buildButton("Change Type", 'C', "type", this));
+		jPanelSouth.add(aChangeTypePanel);
+
+		// set missing
+		aSetMissingPanel.setLayout(new BoxLayout(aSetMissingPanel, BoxLayout.Y_AXIS));
+		aSetMissingPanel.add(Box.createRigidArea(new Dimension(0, 20)));
+		JLabel aSetMissingLabel = new JLabel("Set value for missing elements:");
+		aSetMissingLabel.setFont(GUI.DEFAULT_BUTTON_FONT);
+		aSetMissingPanel.add(aSetMissingLabel);
+		aSetMissingPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+
+		JTextField aNewMissingValue = new JTextField("?");	// TODO reset based on selected attributes' type
+		aNewMissingValue.setMaximumSize(new Dimension(220, 60));
+		aSetMissingPanel.add(aNewMissingValue);
+		aSetMissingPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+		aSetMissingPanel.add(GUI.buildButton("Change Missing", 'M', "missing", this));
+		jPanelSouth.add(aSetMissingPanel);
+
 		getContentPane().add(jScrollPane, BorderLayout.CENTER);
-		getContentPane().add(jPanelMain, BorderLayout.SOUTH);
+		getContentPane().add(jPanelSouth, BorderLayout.SOUTH);
 
 		pack();
 	}
 
+	// TODO use GUI.Event enums 
 	@Override
 	public void actionPerformed(ActionEvent theEvent)
 	{
-		System.out.println(theEvent.getActionCommand());
-		if("disable".equals(theEvent.getActionCommand()))
+//		System.out.println(theEvent.getActionCommand());
+		BitSet bs = AttributeTableModel.getSelectedAttributes();
+		for(int i=bs.nextSetBit(0); i>=0; i=bs.nextSetBit(i+1))
 		{
-			
+//			System.out.println(itsTable.getColumn(i).getName());
+			if("disable".equals(theEvent.getActionCommand()))
+			{
+				itsTable.getColumn(i).setIsEnabled(false);
+			}
+			else if("enable".equals(theEvent.getActionCommand()))
+			{
+				itsTable.getColumn(i).setIsEnabled(true);
+			}
+			else if("type".equals(theEvent.getActionCommand()))
+			{
+				
+			}
+			else if("missing".equals(theEvent.getActionCommand()))
+			{
+				
+			}
 		}
-		else if("enable".equals(theEvent.getActionCommand()))
+		itsTable.update();
+	}
+
+	@Override
+	public void itemStateChanged(ItemEvent theEvent)
+	{
+		boolean selected = (theEvent.getStateChange() == ItemEvent.SELECTED);
+		Object o = theEvent.getItemSelectable();
+		if(o == selectAll)
 		{
-			
+			AttributeTableModel.setSelectedAttributes(Selection.ALL);	// TODO will change
 		}
-		else if("type".equals(theEvent.getActionCommand()))
+		if(o == selectAllNumeric)
 		{
-			
+			AttributeTableModel.selectAllType(AttributeType.NUMERIC, selected);
 		}
-		else if("missing".equals(theEvent.getActionCommand()))
+		if(o == selectAllNominal)
 		{
-			
+			AttributeTableModel.selectAllType(AttributeType.NOMINAL, selected);
+		}
+		if(o == selectAllOrdinal)
+		{
+			AttributeTableModel.selectAllType(AttributeType.ORDINAL, selected);
+		}
+		if(o == selectAllBinary)
+		{
+			AttributeTableModel.selectAllType(AttributeType.BINARY, selected);
+		}
+		if(o == invertSelection)
+		{
+			AttributeTableModel.setSelectedAttributes(Selection.INVERT);	// TODO will change
 		}
 	}
 
@@ -157,5 +270,6 @@ public class AttributeChangeWindow extends JFrame implements ActionListener
 			return this;
 		}
 	}
+
 
 }

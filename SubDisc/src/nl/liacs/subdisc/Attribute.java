@@ -7,7 +7,7 @@ public class Attribute
 	private String itsName;
 	private String itsShort;
 
-	public enum AttributeType { NUMERIC, NOMINAL, ORDINAL, BINARY; }
+	public enum AttributeType { NOMINAL, NUMERIC, ORDINAL, BINARY; }
 
 	public Attribute(int theIndex, String theName, String theShort, AttributeType theType)
 	{

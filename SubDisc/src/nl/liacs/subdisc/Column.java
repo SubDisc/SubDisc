@@ -16,6 +16,7 @@ public class Column
 	private int itsSize;
 	private float itsMin = Float.POSITIVE_INFINITY;
 	private float itsMax = Float.NEGATIVE_INFINITY;
+	private boolean isEnabled = true;
 
 	public Column(Attribute theAttribute, int theNrRows)
 	{
@@ -91,6 +92,7 @@ public class Column
 
 	public void print()
 	{
+		Log.logCommandLine((isEnabled ? "Enabled" : "Disbled") + " Column " + this.getName() + ":"); // TODO TEST ONLY
 		switch(itsAttribute.getType())
 		{
 			case NUMERIC :
@@ -129,8 +131,7 @@ public class Column
 	 * itsFloats / itsNominals / itsBinaries
 	 * @return 
 	 */
-	public void setType(String theType)
-	{
-		itsAttribute.setType(theType);
-	}
+	public void setType(String theType) { itsAttribute.setType(theType); }
+	public boolean getIsEnabled() { return isEnabled; }
+	public void setIsEnabled(boolean theSetting) { isEnabled = theSetting; }
 }

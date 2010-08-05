@@ -195,7 +195,7 @@ public class MiningWindow extends JFrame
 		jPanelRuleTargetButtons = new JPanel();
 		jButtonDataExplorer = initButton("Data Explorer", 'E');
 		jButtonBrowse = initButton("Browse", 'B');
-		jButtonAttributeTypeChange = initButton("Attribute Type Change", 'A');
+		jButtonAttributeTypeChange = initButton("Attribute Type Change", 'A');	// TODO change to 'AttributeChange'
 
 		// target concept
 		jPanelRuleEvaluation = new JPanel();
@@ -719,9 +719,11 @@ public class MiningWindow extends JFrame
 														{
 															jMenuItemDataExplorer,
 															jMenuItemBrowseTarget,
+															jMenuItemAttributeTypeChange,
 															jMenuItemSubgroupDiscovery,
 															jButtonDataExplorer,
 															jButtonBrowse,
+															jButtonAttributeTypeChange,
 															jButtonSubgroupDiscovery,
 															jButtonRandomSubgroups,
 															jButtonRandomConditions,

@@ -41,9 +41,9 @@ public class Table
 		{
 			switch(c.getType())
 			{
-				case NOMINAL : ++theCounts[0]; break;
 				case NUMERIC :
 				case ORDINAL : ++theCounts[1]; break;
+				case NOMINAL : ++theCounts[0]; break;
 				case BINARY : ++theCounts[2]; break;
 			}
 		}
