@@ -12,15 +12,15 @@ public class AttributeTableModel extends AbstractTableModel
 	private static final long serialVersionUID = 1L;
 	public static final AttributeTableModel THE_ONLY_INSTANCE = new AttributeTableModel();
 
-	private static BitSet itsSelectedAttributes;
+//	private static BitSet itsSelectedAttributes;
 	private static Table itsTable;
 
 	// TODO change name to avoid confusion with Column class
 	public enum ColumnHeader
 	{
-		SELECT(0),
-		ATTRIBUTE(1),
-		TYPE(2);
+		ATTRIBUTE(0),
+		TYPE(1),
+		ENABLED(2);
 
 		public final int columnNr;
 
@@ -42,7 +42,7 @@ public class AttributeTableModel extends AbstractTableModel
 	public AttributeTableModel setup(Table theTable)
 	{
 		itsTable = theTable;
-		itsSelectedAttributes = new BitSet(itsTable.getNrColumns());
+//		itsSelectedAttributes = new BitSet(itsTable.getNrColumns());
 		return this;
 	}
 
@@ -60,16 +60,17 @@ public class AttributeTableModel extends AbstractTableModel
 	{
 		switch(col)
 		{
-			case 0 : return itsSelectedAttributes.get(row);
-			case 1 : return itsTable.getColumns().get(row).getAttribute().getName();
-			case 2 : return itsTable.getColumns().get(row).getAttribute().getTypeName();
-			default : return "Button_PlaceHolder";
+//			case ColumnHeader. : return itsSelectedAttributes.get(row);
+			case 0 : return itsTable.getColumns().get(row).getAttribute().getName();
+			case 1 : return itsTable.getColumns().get(row).getAttribute().getTypeName();
+			case 2 : return itsTable.getColumns().get(row).getIsEnabled() ? "yes" : "no";
+			default : return null;
 		}
 	}
 
 	@Override
 	public Class<?> getColumnClass(int c) { return getValueAt(0, c).getClass(); }
-
+/*
 	@Override
 	public boolean isCellEditable(int row, int col)
 	{
@@ -80,19 +81,19 @@ public class AttributeTableModel extends AbstractTableModel
 	{
 		switch(col)
 		{
-			case 0 : itsSelectedAttributes.flip(row); break;
+//			case 0 : itsSelectedAttributes.flip(row); break;
 			case 2 : itsTable.getColumns().get(row).setType(((String) value)); break;
 		}
 		fireTableCellUpdated(row, col);
 	}
-
-	public static BitSet getSelectedAttributes() { return (BitSet)itsSelectedAttributes.clone(); }
+*/
+//	public static BitSet getSelectedAttributes() { return (BitSet)itsSelectedAttributes.clone(); }
 	public static void setSelectedAttributes(Selection theSelection)	// TODO will change
 	{
 		switch(theSelection)
 		{
-		case ALL : itsSelectedAttributes.set(0, itsSelectedAttributes.size()); break;
-		case INVERT : itsSelectedAttributes.flip(0, itsSelectedAttributes.size()); break;
+//		case ALL : itsSelectedAttributes.set(0, itsSelectedAttributes.size()); break;
+//		case INVERT : itsSelectedAttributes.flip(0, itsSelectedAttributes.size()); break;
 //		default : selectType(theSelection);
 		}
 	}
@@ -103,13 +104,14 @@ public class AttributeTableModel extends AbstractTableModel
 		{
 			if(itsTable.getColumn(i).getType() == theType)
 			{
-				if(selected)
-					itsSelectedAttributes.set(i);
-				else
-					itsSelectedAttributes.clear(i);
+//				if(selected)
+//					itsSelectedAttributes.set(i);
+//				else
+//					itsSelectedAttributes.clear(i);
 			}
 		}
 		// TODO update table/window
+		
 	}
 
 	

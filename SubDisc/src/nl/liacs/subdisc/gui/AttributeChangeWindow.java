@@ -1,25 +1,21 @@
+/**
+ * TODO if changes are made also update other opened windows, eg. BrowseWindow
+ */
 package nl.liacs.subdisc.gui;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.util.BitSet;
 
 import javax.swing.AbstractButton;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
-import javax.swing.DefaultCellEditor;
-import javax.swing.JCheckBox;
-import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -27,67 +23,44 @@ import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.TableCellRenderer;
-import javax.swing.table.TableColumn;
 
-import nl.liacs.subdisc.FileHandler;
+import nl.liacs.subdisc.Column;
 import nl.liacs.subdisc.Table;
 import nl.liacs.subdisc.Attribute.AttributeType;
-import nl.liacs.subdisc.gui.AttributeTableModel.ColumnHeader;
-import nl.liacs.subdisc.gui.AttributeTableModel.Selection;
 
-public class AttributeChangeWindow extends JFrame implements ActionListener, ItemListener
+public class AttributeChangeWindow extends JFrame implements ActionListener
 {
 	private static final long serialVersionUID = 1L;
 	private Table itsTable;
 	private JTable jTable;
-	private JCheckBox selectAll = GUI.buildCheckBox("Select all", this);
-	private JCheckBox selectAllNumeric = GUI.buildCheckBox("Select all numeric", this);
-	private JCheckBox selectAllNominal = GUI.buildCheckBox("Select all nominal", this);
-	private JCheckBox selectAllOrdinal = GUI.buildCheckBox("Select all ordinal", this);
-	private JCheckBox selectAllBinary = GUI.buildCheckBox("Select all binary", this);
-	private JCheckBox invertSelection = GUI.buildCheckBox("Invert selection", this);	// TODO needs rethinking
+	private ButtonGroup aNewType = new ButtonGroup();
+	private JTextField aNewMissingValue = new JTextField("?");
 
 	public AttributeChangeWindow(Table theTable)
 	{
 		itsTable = theTable;
 		initJTable(itsTable);
 		initComponents();
-		setupTypeColumn(jTable, jTable.getColumnModel().getColumn(ColumnHeader.TYPE.columnNr));
-//		setupCheckBoxColumn(jTable.getColumnModel().getColumn(Column.SELECT.columnNr));
-		setTitle("Attribute types for: " + FileHandler.itsTable.itsName);
+		setTitle("Attribute types for: " + itsTable.itsName);
 		setVisible(true);
 	}
 
 	private void initJTable(Table theTable)
 	{
 		jTable = new JTable(AttributeTableModel.THE_ONLY_INSTANCE.setup(theTable));
-/*
-		{
-			public Component prepareRenderer(TableCellRenderer renderer, int row, int column){
-				Component returnComp = super.prepareRenderer(renderer, row, column);
-				if (!returnComp.getBackground().equals(getSelectionBackground())){
-					returnComp .setBackground(row % 2 == 0 ? new Color(240,240,240) : Color.WHITE);
-				}
-				return returnComp;
-			};
-		};
-*/
-		jTable.setDefaultRenderer(String.class, new CustomRenderer());
-//		jTable = new JTable(new AttributeTableModel(theTable));
 		jTable.setPreferredScrollableViewportSize(new Dimension(1024, 800));
 		jTable.setFillsViewportHeight(true);
-
-		jTable.getColumnModel().getColumn(0).setPreferredWidth(10);
+/*
+		jTable.getColumnModel().getColumn(0).setPreferredWidth(50);
 		jTable.getColumnModel().getColumn(1).setPreferredWidth(50);
 		jTable.getColumnModel().getColumn(2).setPreferredWidth(50);
+*/
 	}
 
 	private void initComponents()
 	{
 		JPanel jPanelSouth = new JPanel(new GridLayout(1, 4));
-		JPanel aCheckBoxPanel = new JPanel();
+		JPanel aSelectionPanel = new JPanel();
 		JPanel aDisablePanel = new JPanel();
 		JPanel aRadioButtonPanel = new JPanel();
 		JPanel aChangeTypePanel = new JPanel();
@@ -100,16 +73,18 @@ public class AttributeChangeWindow extends JFrame implements ActionListener, Ite
 			}
 		});
 
-		// selection checkboxes
-		aCheckBoxPanel.setLayout(new BoxLayout(aCheckBoxPanel, BoxLayout.Y_AXIS));
+		// selection buttons
+		aSelectionPanel.setLayout(new GridLayout(3, 2));
 
-		aCheckBoxPanel.add(selectAll);
-		aCheckBoxPanel.add(selectAllNumeric);
-		aCheckBoxPanel.add(selectAllNominal);
-		aCheckBoxPanel.add(selectAllOrdinal);
-		aCheckBoxPanel.add(selectAllBinary);
-		aCheckBoxPanel.add(invertSelection);
-		jPanelSouth.add(aCheckBoxPanel);
+		aSelectionPanel.add(GUI.buildButton("Select All", 'A', "all", this));
+		// TODO could use generic loop over all AttributeTypes
+		aSelectionPanel.add(GUI.buildButton("Select All Numeric", 'N', "numeric", this));
+		aSelectionPanel.add(GUI.buildButton("Select All Nominal", 'L', "nominal", this));
+		aSelectionPanel.add(GUI.buildButton("Select All Ordinal", 'O', "ordinal", this));
+		aSelectionPanel.add(GUI.buildButton("Select All Binary", 'B', "binary", this));
+		aSelectionPanel.add(GUI.buildButton("Invert Selection", 'I', "invert", this));
+//		aSelectionPanel.add(GUI.buildButton("Clear Selection", 'X', "clear", this));
+		jPanelSouth.add(aSelectionPanel);
 
 		// enable / disable
 		JLabel aDisableLable = new JLabel("Disable/Enable Selected:");
@@ -126,14 +101,13 @@ public class AttributeChangeWindow extends JFrame implements ActionListener, Ite
 		// change type TODO buttons may need names
 		aRadioButtonPanel.setLayout(new BoxLayout(aRadioButtonPanel, BoxLayout.Y_AXIS));
 
-		ButtonGroup newType = new ButtonGroup();
 		for(AttributeType at : AttributeType.values())
 		{
 			aRadioButtonPanel.add(new JRadioButton(at.name().toLowerCase()));
 		}
 		for(Component rb : aRadioButtonPanel.getComponents())
 		{
-			newType.add((AbstractButton) rb);
+			aNewType.add((AbstractButton) rb);
 		}
 		JLabel aNewTypeLabel = new JLabel(" New type:");
 		aNewTypeLabel.setFont(GUI.DEFAULT_BUTTON_FONT);
@@ -151,7 +125,6 @@ public class AttributeChangeWindow extends JFrame implements ActionListener, Ite
 		aSetMissingPanel.add(aSetMissingLabel);
 		aSetMissingPanel.add(Box.createRigidArea(new Dimension(0, 10)));
 
-		JTextField aNewMissingValue = new JTextField("?");	// TODO reset based on selected attributes' type
 		aNewMissingValue.setMaximumSize(new Dimension(220, 60));
 		aSetMissingPanel.add(aNewMissingValue);
 		aSetMissingPanel.add(Box.createRigidArea(new Dimension(0, 10)));
@@ -168,108 +141,84 @@ public class AttributeChangeWindow extends JFrame implements ActionListener, Ite
 	@Override
 	public void actionPerformed(ActionEvent theEvent)
 	{
-//		System.out.println(theEvent.getActionCommand());
-		BitSet bs = AttributeTableModel.getSelectedAttributes();
-		for(int i=bs.nextSetBit(0); i>=0; i=bs.nextSetBit(i+1))
+		String theCommand = theEvent.getActionCommand();
+		// generic loop prevents hard coding all AttributeTypes
+		for(AttributeType at : AttributeType.values())
 		{
-//			System.out.println(itsTable.getColumn(i).getName());
-			if("disable".equals(theEvent.getActionCommand()))
+			if(at.name().equalsIgnoreCase(theCommand))
 			{
-				itsTable.getColumn(i).setIsEnabled(false);
-			}
-			else if("enable".equals(theEvent.getActionCommand()))
-			{
-				itsTable.getColumn(i).setIsEnabled(true);
-			}
-			else if("type".equals(theEvent.getActionCommand()))
-			{
-				
-			}
-			else if("missing".equals(theEvent.getActionCommand()))
-			{
-				
+				selectType(at);
+				return;
 			}
 		}
-		itsTable.update();
+
+		if("all".equals(theCommand))
+		{
+			jTable.selectAll();
+		}
+		else if("invert".equals(theCommand))
+		{
+			for(int i = 0, j = itsTable.getColumns().size(); i < j; ++i)
+			{
+				if(jTable.isRowSelected(i))
+					jTable.removeRowSelectionInterval(i, i);
+				else
+					jTable.addRowSelectionInterval(i, i);
+			}
+		}
+		else
+		{
+			for(int i : jTable.getSelectedRows())
+			{
+				if("disable".equals(theCommand))
+				{
+					itsTable.getColumn(i).setIsEnabled(false);
+				}
+				else if("enable".equals(theCommand))
+				{
+					itsTable.getColumn(i).setIsEnabled(true);
+				}
+				else if("type".equals(theCommand))
+				{
+					setType();
+				}
+				else if("missing".equals(theCommand))
+				{
+					setMissing(i);
+				}
+			}
+			itsTable.update();
+			jTable.repaint();
+		}
+		// TODO TEST ONLY
+		for(Column c : itsTable.getColumns())
+		{
+//			System.out.println(c.getName() + " " + c.getIsEnabled());
+		}
 	}
 
-	@Override
-	public void itemStateChanged(ItemEvent theEvent)
+	private void selectType(AttributeType theType)
 	{
-		boolean selected = (theEvent.getStateChange() == ItemEvent.SELECTED);
-		Object o = theEvent.getItemSelectable();
-		if(o == selectAll)
-		{
-			AttributeTableModel.setSelectedAttributes(Selection.ALL);	// TODO will change
-		}
-		if(o == selectAllNumeric)
-		{
-			AttributeTableModel.selectAllType(AttributeType.NUMERIC, selected);
-		}
-		if(o == selectAllNominal)
-		{
-			AttributeTableModel.selectAllType(AttributeType.NOMINAL, selected);
-		}
-		if(o == selectAllOrdinal)
-		{
-			AttributeTableModel.selectAllType(AttributeType.ORDINAL, selected);
-		}
-		if(o == selectAllBinary)
-		{
-			AttributeTableModel.selectAllType(AttributeType.BINARY, selected);
-		}
-		if(o == invertSelection)
-		{
-			AttributeTableModel.setSelectedAttributes(Selection.INVERT);	// TODO will change
-		}
+		for(int i =0, j = itsTable.getColumns().size(); i < j; ++i)
+			if(itsTable.getColumn(i).getType() == theType)
+				jTable.addRowSelectionInterval(i, i);
+	}
+
+	// TODO
+	private void setType()
+	{
+		
+	}
+
+	private void setMissing(int theColumnIndex)
+	{
+		String aNewValue = aNewMissingValue.getText();
+		Column c = itsTable.getColumn(theColumnIndex);
+		if(c.isValidValue(aNewValue))
+			c.setNewMissingValue(aNewValue);
+		else
+			;	// TODO WARNING!!!
 	}
 
 	private void exitForm() { dispose(); }
-
-	public void setupTypeColumn(JTable table, TableColumn theTypeColumn)
-	{
-		JComboBox comboBox = new JComboBox();
-
-		for(AttributeType at : AttributeType.values())
-			comboBox.addItem(at.toString().toLowerCase());
-
-		theTypeColumn.setCellEditor(new DefaultCellEditor(comboBox));
-	}
-
-	public void setupCheckBoxColumn(TableColumn theCheckBoxColumn)
-	{
-		theCheckBoxColumn.setCellRenderer(new CheckBoxRenderer());
-	}
-
-	// will be put in separate classes
-	public class CustomRenderer extends DefaultTableCellRenderer
-	{
-		private static final long serialVersionUID = 1L;
-
-		@Override
-		public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column)
-		{
-			Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-			c.setBackground(Color.RED);
-			return c;
-		}
-	}
-
-	// TODO needs work
-	public class CheckBoxRenderer extends JLabel implements TableCellRenderer
-	{
-		private static final long serialVersionUID = 1L;
-
-		@Override
-		public Component getTableCellRendererComponent(
-			JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column)
-		{
-			Color newColor = (Boolean)value ? Color.GREEN : Color.RED;
-			setBackground(newColor);
-
-			return this;
-		}
-	}
-
-
 }

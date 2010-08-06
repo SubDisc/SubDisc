@@ -1,6 +1,8 @@
 package nl.liacs.subdisc;
 
+import java.awt.List;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.BitSet;
 import java.util.TreeSet;
 
@@ -13,6 +15,7 @@ public class Column
 	private ArrayList<Float> itsFloats;
 	private ArrayList<String> itsNominals;
 	private BitSet itsBinaries;
+	private BitSet itsMissing = new BitSet();
 	private int itsSize;
 	private float itsMin = Float.POSITIVE_INFINITY;
 	private float itsMax = Float.NEGATIVE_INFINITY;
@@ -134,4 +137,52 @@ public class Column
 	public void setType(String theType) { itsAttribute.setType(theType); }
 	public boolean getIsEnabled() { return isEnabled; }
 	public void setIsEnabled(boolean theSetting) { isEnabled = theSetting; }
+	/**
+	 * NOTE use setMissing to set missing values
+	 * Editing on the BitSet retrieved through getMissing() has no effect
+	 * on the original Columns' itsMissing
+	 * @return a clone of this columns itsMissing BitSet
+	 */
+	public BitSet getMissing() { return (BitSet) itsMissing.clone(); } 
+	public void setMissing(int theIndex) { itsMissing.set(theIndex); }
+	public boolean isValidValue(String theNewValue)
+	{
+		switch(getType())
+		{
+			case NUMERIC :
+			case ORDINAL :
+			{
+				try { Float.parseFloat(theNewValue); return true; }
+				catch (NumberFormatException anException) { return false; }
+			}
+			case NOMINAL : return true;
+			case BINARY :
+			{
+				// TODO use FileLoaderARFF.BOOLEAN_POSITIVE || BOOLEAN_NEGATIVE
+				return new ArrayList<String>(Arrays.asList(new String[] { "0", "1", "false", "true", "F", "T", "no", "yes" })).contains(theNewValue);
+			}
+			default : return false;
+		}
+	}
+	public void setNewMissingValue(String theNewValue)
+	{
+		for(int i = itsMissing.nextSetBit(0); i >= 0; i = itsMissing.nextSetBit(i + 1))
+		{
+			switch(getType())
+			{
+				case NUMERIC :
+				case ORDINAL : itsFloats.set(i, Float.valueOf(theNewValue)); break;
+				case NOMINAL : itsNominals.set(i, theNewValue); break;
+				case BINARY :
+				{
+					if("0".equalsIgnoreCase(theNewValue))
+						itsBinaries.clear(i);
+					else
+						itsBinaries.set(i);
+					break;
+				}
+			}
+//			System.out.println("set: " + i);
+		}
+	}
 }

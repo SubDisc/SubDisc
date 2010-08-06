@@ -35,7 +35,6 @@ public class GUI
 
 	private GUI() {}; // ininstantiable class
 
-	// TODO test for nulls
 	public static JButton buildButton(String theName, int theMnemonic, String theActionCommand, ActionListener theClass)
 	{
 		JButton aButton = new JButton();
@@ -51,6 +50,20 @@ public class GUI
 		return aButton;
 	}
 
+	public static JButton buildButton(String theName, String theActionCommand, ActionListener theClass)
+	{
+		JButton aButton = new JButton();
+		aButton.setPreferredSize(new Dimension(110, 25));
+		aButton.setBorder(new BevelBorder(0));
+		aButton.setMinimumSize(new Dimension(82, 25));
+		aButton.setMaximumSize(new Dimension(110, 25));
+		aButton.setFont(DEFAULT_BUTTON_FONT);
+		aButton.setText(theName);
+		aButton.setActionCommand(theActionCommand);
+		aButton.addActionListener(theClass);
+		return aButton;
+	}
+	
 	public static JCheckBox buildCheckBox(String theName, ItemListener theClass)
 	{
 		JCheckBox aCheckBox = new JCheckBox(theName);

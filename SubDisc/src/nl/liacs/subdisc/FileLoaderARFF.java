@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -14,9 +15,10 @@ import nl.liacs.subdisc.Attribute.AttributeType;
 public class FileLoaderARFF implements FileLoaderInterface
 {
 	private Table itsTable;
+	private int itsNrDataRows = 0;
 	private ArrayList<NominalAttribute> itsNominalAttributes = new ArrayList<NominalAttribute>();	// used to check data declarations
-	private static final String[] negatives = { "0", "false", "F", "no",};
-	private static final String[] positives = { "1", "true", "T", "yes",};
+	public static  ArrayList<String> BOOLEAN_NEGATIVES = new ArrayList<String>(Arrays.asList(new String[] { "0", "false", "F", "no" }));
+	public static  ArrayList<String> BOOLEAN_POSITIVES = new ArrayList<String>(Arrays.asList(new String[] { "1", "true", "T", "yes" }));
 
 	private static enum Keyword
 	{
@@ -30,10 +32,7 @@ public class FileLoaderARFF implements FileLoaderInterface
 
 		Keyword(String theKeyword) { text = Pattern.compile("^\\s*" + theKeyword + "\\s*", Pattern.CASE_INSENSITIVE); }
 
-		boolean occursIn(String theString)
-		{
-			return this.text.matcher(theString).find();
-		}
+		boolean occursIn(String theString) { return this.text.matcher(theString).find(); }
 	}
 
 	private class NominalAttribute
@@ -126,6 +125,7 @@ public class FileLoaderARFF implements FileLoaderInterface
 				else if(dataFound)
 				{
 					loadData(aLine);
+					++itsNrDataRows;
 				}
 			}
 		}
@@ -136,6 +136,7 @@ public class FileLoaderARFF implements FileLoaderInterface
 		}
 
 		itsTable.update();
+		
 		return itsTable;
 	}
 /*
@@ -208,6 +209,7 @@ public class FileLoaderARFF implements FileLoaderInterface
 
 		for(int i = 0, j = itsTable.getColumns().size(); i < j; ++i)
 		{
+			Column aColumn = itsTable.getColumn(i);
 			int offset = 0;
 
 			if(theString.trim().startsWith("\'"))
@@ -222,31 +224,28 @@ public class FileLoaderARFF implements FileLoaderInterface
 
 			theString = theString.substring(s.length() + offset).replaceFirst(",\\s*", "");
 
+			if(s.equalsIgnoreCase("?"))
+				aColumn.setMissing(itsNrDataRows);
+
 			//System.out.println(s + " " + itsTable.getAttribute(i).getName() + " " + itsTable.getColumn(itsTable.getAttribute(i)).size());
 			// TODO determine default for missing NUMERIC/ORDINAL/BINARY values
 			// itsTable.getColumn(itsTable.getAttribute(i)).add(s); break;
-			switch(itsTable.getColumns().get(i).getType())
+			switch(aColumn.getType())
 			{
 				case NUMERIC :
 				{
 					if(s.equalsIgnoreCase("?"))
-						itsTable.getColumns().get(i).add(0f);
+						aColumn.add(0f);
 					else
-						itsTable.getColumns().get(i).add(Float.valueOf(s));
+						aColumn.add(Float.valueOf(s));
 					break;
 				}
 				case NOMINAL :
-					itsTable.getColumns().get(i).add(s); break;
+					aColumn.add(s); break;
 				case BINARY :
 				{
-					for(String p : positives)
-					{
-						if(s.equalsIgnoreCase(p))
-						{
-							itsTable.getColumns().get(i).add(true);
-							break;
-						}
-					}
+					if(BOOLEAN_POSITIVES.contains(s.toLowerCase()))
+						aColumn.add(true);
 					break;
 				}
 			}
@@ -310,27 +309,14 @@ public class FileLoaderARFF implements FileLoaderInterface
 			// TODO use enum
 			if(nominalClasses.size() == 2)
 			{
-				String one = nominalClasses.get(0);
-				String two = nominalClasses.get(1);
+				String a = nominalClasses.get(0).toLowerCase();
+				String b = nominalClasses.get(1).toLowerCase();
 
-				for(int i = 0, j = negatives.length; i < j; ++i)
-				{
-					if(one.equalsIgnoreCase(negatives[i]))
-					{
-						if(two.equalsIgnoreCase(positives[i]))
-							return AttributeType.BINARY;;
-
-					}
-					else if(one.equalsIgnoreCase(positives[i]))
-					{
-						if(two.equalsIgnoreCase(negatives[i]))
-							return AttributeType.BINARY;;
-
-					}
-				}
-
-				// TODO present attributeType change dialog to user
+				if((BOOLEAN_NEGATIVES.contains(a) && BOOLEAN_POSITIVES.contains(b)) ||
+					(BOOLEAN_NEGATIVES.contains(b) && BOOLEAN_POSITIVES.contains(a)))
+					return AttributeType.BINARY;
 			}
+			// TODO present attributeType change dialog to user
 			return AttributeType.NOMINAL;
 		}
 

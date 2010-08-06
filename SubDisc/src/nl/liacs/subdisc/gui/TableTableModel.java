@@ -24,9 +24,5 @@ public class TableTableModel extends AbstractTableModel
 	public int getRowCount() { return itsTable.getNrRows(); }
 
 	@Override
-	public Object getValueAt(int row, int col)
-	{
-		return itsTable.getColumns().get(col).getString(row);
-	}
-
+	public Object getValueAt(int row, int col) { return itsTable.getColumn(col).getString(row); }
 }
