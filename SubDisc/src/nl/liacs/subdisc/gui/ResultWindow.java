@@ -12,6 +12,7 @@ import javax.swing.ListSelectionModel;
 
 import nl.liacs.subdisc.DAGView;
 import nl.liacs.subdisc.Log;
+import nl.liacs.subdisc.ROCList;
 import nl.liacs.subdisc.SearchParameters;
 import nl.liacs.subdisc.Subgroup;
 import nl.liacs.subdisc.SubgroupSet;
@@ -25,12 +26,14 @@ public class ResultWindow extends JFrame
 	private ResultTableModel itsResultTableModel;
 	private JTable itsSubgroupTable;
 	private SubgroupSet itsSubgroupSet;
+	private ROCList itsROCList;
 	private DAGView itsDAGView; //layout of the graph on the whole database
 
-	public ResultWindow(SubgroupSet theSubgroupSet, SearchParameters theSearchParameters, DAGView theDAGView)
+	public ResultWindow(SubgroupSet theSubgroupSet, ROCList theROCList, SearchParameters theSearchParameters, DAGView theDAGView)
 	{
 
 		itsSubgroupSet = theSubgroupSet;
+		itsROCList = theROCList;
 		itsSearchParameters = theSearchParameters;
 		itsDAGView = theDAGView;
 		itsResultTableModel = new ResultTableModel(itsSubgroupSet, itsSearchParameters);
@@ -104,6 +107,14 @@ public class ResultWindow extends JFrame
 		});
 		aSubgroupPanel.add(jButtonShowDAG);
 
+		jButtonROC = initButton("ROC", 'R');
+		jButtonROC.addActionListener(new java.awt.event.ActionListener() {
+			public void actionPerformed(java.awt.event.ActionEvent evt) {
+				jButtonROCActionPerformed();
+			}
+		});
+		aSubgroupPanel.add(jButtonROC);
+
 		jButtonDeleteSubgroups = initButton("Delete Pattern", 'D');
 		jButtonDeleteSubgroups.addActionListener(new java.awt.event.ActionListener() {
 			public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -121,6 +132,7 @@ public class ResultWindow extends JFrame
 				jButtonDeleteSubgroups.setEnabled(false);
 			}
 		}
+
 
 		//close button
 		jButtonCloseWindow = initButton("Close", 'C');
@@ -182,6 +194,18 @@ public class ResultWindow extends JFrame
 		}
 	}
 
+	private void jButtonROCActionPerformed()
+	{
+		System.out.format("itsSubgroupSet.size() =  %d , itsROCList.size() = %d%n", itsSubgroupSet.size(), itsROCList.size());
+		for(Subgroup s : itsSubgroupSet)
+			itsROCList.add(s);
+
+		System.out.println("itsROCList.size() = " + itsROCList.size());
+		// TODO to be removed, testing
+		for(Subgroup s : itsROCList)
+			s.print();
+	}
+
 	private void jButtonDeleteSubgroupsActionPerformed()
 	{
 		if (itsSubgroupSet.isEmpty())
@@ -217,6 +241,7 @@ public class ResultWindow extends JFrame
 	private javax.swing.JPanel jPanelSouth;
 	private javax.swing.JButton jButtonShowDAG;
 	private javax.swing.JButton jButtonDeleteSubgroups;
+	private javax.swing.JButton jButtonROC;
 	private javax.swing.JButton jButtonCloseWindow;
 	private javax.swing.JScrollPane itsScrollPane;
 }

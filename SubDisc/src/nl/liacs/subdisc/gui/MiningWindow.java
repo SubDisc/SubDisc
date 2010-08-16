@@ -58,6 +58,7 @@ import nl.liacs.subdisc.ErrorWindow;
 import nl.liacs.subdisc.FileHandler;
 import nl.liacs.subdisc.Log;
 import nl.liacs.subdisc.QualityMeasure;
+import nl.liacs.subdisc.ROCList;
 import nl.liacs.subdisc.RegressionMeasure;
 import nl.liacs.subdisc.SearchParameters;
 import nl.liacs.subdisc.Subgroup;
@@ -1001,8 +1002,9 @@ public class MiningWindow extends JFrame
 
 			//ResultWindow
 			SubgroupSet aPreliminaryResults = aSubgroupDiscovery.getResult();
+			ROCList aROCList = new ROCList(itsTable.getNrRows(), aSubgroupDiscovery.getBinaryTarget());	// TODO MARVIN ROC as member of SubgroupSet?
 //			aPreliminaryResults.print();
-			ResultWindow aResultWindow = new ResultWindow(aPreliminaryResults, itsSearchParameters, null);
+			ResultWindow aResultWindow = new ResultWindow(aPreliminaryResults, aROCList, itsSearchParameters, null);
 			aResultWindow.setLocation(0, 0);
 			aResultWindow.setSize(1200, 900);
 			aResultWindow.setVisible(true);

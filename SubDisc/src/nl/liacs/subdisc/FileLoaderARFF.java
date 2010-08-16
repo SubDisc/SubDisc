@@ -136,7 +136,6 @@ public class FileLoaderARFF implements FileLoaderInterface
 		}
 
 		itsTable.update();
-		
 		return itsTable;
 	}
 /*
