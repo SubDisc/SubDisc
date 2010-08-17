@@ -282,7 +282,7 @@ public class Table
 			else
 				t++;
 		}
-		Subgroup aSubgroup = new Subgroup(new ConditionList(), 0, theSize, 0);
+		Subgroup aSubgroup = new Subgroup(new ConditionList(), 0, theSize, 0, null);
 		aSubgroup.setMembers(aSample);
 		return aSubgroup;
 	}

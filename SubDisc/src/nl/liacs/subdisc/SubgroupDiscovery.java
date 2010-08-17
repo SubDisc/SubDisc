@@ -24,15 +24,16 @@ public class SubgroupDiscovery extends MiningAlgorithm
 	public SubgroupDiscovery(SearchParameters theSearchParameters, Table theTable, int theNrPositive)
 	{
 		super(theSearchParameters);
-		itsResult = new SubgroupSet(theSearchParameters.getMaximumSubgroups());
 		itsTable = theTable;
 		itsMaximumCoverage = itsTable.getNrRows();
 
-		itsQualityMeasure = new QualityMeasure(theSearchParameters.getQualityMeasure(), itsTable.getNrRows(), theNrPositive);
+		itsQualityMeasure = new QualityMeasure(theSearchParameters.getQualityMeasure(), itsMaximumCoverage, theNrPositive);
 		Attribute aTarget = theSearchParameters.getTargetConcept().getPrimaryTarget();
 		Condition aCondition = new Condition(aTarget, Condition.EQUALS);
 		aCondition.setValue(theSearchParameters.getTargetConcept().getTargetValue());
 		itsBinaryTarget = itsTable.evaluate(aCondition);
+
+		itsResult = new SubgroupSet(theSearchParameters.getMaximumSubgroups(), itsMaximumCoverage, itsBinaryTarget);
 	}
 
 	//DOUBLE_CORRELATION and DOUBLE_REGRESSION
@@ -77,7 +78,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 	{
 		//make subgroup to start with, containing all elements
 		ConditionList aConditions = new ConditionList();
-		Subgroup aStart = new Subgroup(aConditions, 0.0, itsMaximumCoverage, 0);
+		Subgroup aStart = new Subgroup(aConditions, 0.0, itsMaximumCoverage, 0, null);
 		BitSet aBitSet = new BitSet(itsMaximumCoverage);
 		aBitSet.set(0,itsMaximumCoverage);
 		aStart.setMembers(aBitSet);

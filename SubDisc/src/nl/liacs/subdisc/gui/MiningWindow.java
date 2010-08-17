@@ -1002,9 +1002,7 @@ public class MiningWindow extends JFrame
 
 			//ResultWindow
 			SubgroupSet aPreliminaryResults = aSubgroupDiscovery.getResult();
-			ROCList aROCList = new ROCList(itsTable.getNrRows(), aSubgroupDiscovery.getBinaryTarget());	// TODO MARVIN ROC as member of SubgroupSet?
-//			aPreliminaryResults.print();
-			ResultWindow aResultWindow = new ResultWindow(aPreliminaryResults, aROCList, itsSearchParameters, null);
+			ResultWindow aResultWindow = new ResultWindow(aPreliminaryResults, itsSearchParameters, null);
 			aResultWindow.setLocation(0, 0);
 			aResultWindow.setSize(1200, 900);
 			aResultWindow.setVisible(true);
@@ -1012,7 +1010,7 @@ public class MiningWindow extends JFrame
 			long anEnd = System.currentTimeMillis();
 			if(anEnd > aBegin + (long)(itsSearchParameters.getMaximumTime()*60*1000))
 				JOptionPane.showMessageDialog(null, "Mining process ended prematurely due to time limit.",
-											  "Time Limit", JOptionPane.INFORMATION_MESSAGE);
+												"Time Limit", JOptionPane.INFORMATION_MESSAGE);
 
 		}
 		catch (Exception e)

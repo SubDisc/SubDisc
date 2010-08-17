@@ -13,7 +13,7 @@ public class ROCList extends ArrayList<Subgroup>
 	public ROCList(int theNrRows, BitSet theBinaryTarget)
 	{
 		itsBinaryTarget = theBinaryTarget;
-		itsTotalCoverage = theNrRows;	// TODO itsBinaryTarget.size() always n*2^8
+		itsTotalCoverage = theNrRows;	// NOTE itsBinaryTarget.size() always n*2^6
 		itsTotalTargetCoverage = (float)itsBinaryTarget.cardinality();
 	}
 

@@ -2,6 +2,7 @@ package nl.liacs.subdisc.gui;
 
 import java.awt.GridLayout;
 import java.awt.event.KeyEvent;
+import java.util.HashSet;
 import java.util.Iterator;
 
 import javax.swing.JButton;
@@ -12,10 +13,10 @@ import javax.swing.ListSelectionModel;
 
 import nl.liacs.subdisc.DAGView;
 import nl.liacs.subdisc.Log;
-import nl.liacs.subdisc.ROCList;
 import nl.liacs.subdisc.SearchParameters;
 import nl.liacs.subdisc.Subgroup;
 import nl.liacs.subdisc.SubgroupSet;
+import nl.liacs.subdisc.TargetConcept.TargetType;
 
 public class ResultWindow extends JFrame
 {
@@ -26,14 +27,12 @@ public class ResultWindow extends JFrame
 	private ResultTableModel itsResultTableModel;
 	private JTable itsSubgroupTable;
 	private SubgroupSet itsSubgroupSet;
-	private ROCList itsROCList;
 	private DAGView itsDAGView; //layout of the graph on the whole database
 
-	public ResultWindow(SubgroupSet theSubgroupSet, ROCList theROCList, SearchParameters theSearchParameters, DAGView theDAGView)
+	public ResultWindow(SubgroupSet theSubgroupSet, SearchParameters theSearchParameters, DAGView theDAGView)
 	{
 
 		itsSubgroupSet = theSubgroupSet;
-		itsROCList = theROCList;
 		itsSearchParameters = theSearchParameters;
 		itsDAGView = theDAGView;
 		itsResultTableModel = new ResultTableModel(itsSubgroupSet, itsSearchParameters);
@@ -114,6 +113,7 @@ public class ResultWindow extends JFrame
 			}
 		});
 		aSubgroupPanel.add(jButtonROC);
+		jButtonROC.setEnabled(itsSearchParameters.getTargetType() == TargetType.SINGLE_NOMINAL);
 
 		jButtonDeleteSubgroups = initButton("Delete Pattern", 'D');
 		jButtonDeleteSubgroups.addActionListener(new java.awt.event.ActionListener() {
@@ -129,9 +129,12 @@ public class ResultWindow extends JFrame
 			if (itsSubgroupSet.isEmpty())
 			{
 				jButtonShowDAG.setEnabled(false);
+				jButtonROC.setEnabled(false);
 				jButtonDeleteSubgroups.setEnabled(false);
 			}
 		}
+
+			
 
 
 		//close button
@@ -196,14 +199,11 @@ public class ResultWindow extends JFrame
 
 	private void jButtonROCActionPerformed()
 	{
-		System.out.format("itsSubgroupSet.size() =  %d , itsROCList.size() = %d%n", itsSubgroupSet.size(), itsROCList.size());
-		for(Subgroup s : itsSubgroupSet)
-			itsROCList.add(s);
-
-		System.out.println("itsROCList.size() = " + itsROCList.size());
+		HashSet<Subgroup> ROCList = itsSubgroupSet.getROCList();
 		// TODO to be removed, testing
-		for(Subgroup s : itsROCList)
+		for(Subgroup s : ROCList)
 			s.print();
+		System.out.println("ROCList.size() = " + ROCList.size());
 	}
 
 	private void jButtonDeleteSubgroupsActionPerformed()
