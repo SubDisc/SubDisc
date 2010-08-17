@@ -73,7 +73,7 @@ public class ROCList extends ArrayList<Subgroup>
 		tmp.and(theSubgroup.getMembers());
 		int aHeadBody = tmp.cardinality();
 
-		System.out.println("aHeadBody = " + aHeadBody + "itsTotalTargetCoverage = " + itsTotalTargetCoverage + " getTruePositiveRate = " + aHeadBody / itsTotalTargetCoverage);
+		System.out.println("TPR: " + aHeadBody + " / " + itsTotalTargetCoverage);
 		return aHeadBody / itsTotalTargetCoverage;
 	}
 
@@ -83,8 +83,9 @@ public class ROCList extends ArrayList<Subgroup>
 		tmp.and(theSubgroup.getMembers());
 		int aHeadBody = tmp.cardinality();
 
-		System.out.println("getFalsePositiveRate = " + (itsTotalTargetCoverage - aHeadBody) / (itsTotalCoverage - itsTotalTargetCoverage));
-		return (itsTotalTargetCoverage - aHeadBody) / (itsTotalCoverage - itsTotalTargetCoverage);
+		System.out.println("FRP: (" + theSubgroup.getCoverage() + " - " + aHeadBody
+					+ ") / (" + itsTotalCoverage + " - " + itsTotalTargetCoverage + ")");
+		return (theSubgroup.getCoverage() - aHeadBody) / (itsTotalCoverage - itsTotalTargetCoverage);
 	}
 
 	public float getFalsePositiveRateAt(int theIndex)
