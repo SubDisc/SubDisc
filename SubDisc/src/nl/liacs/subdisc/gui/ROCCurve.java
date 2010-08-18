@@ -18,6 +18,9 @@ import java.util.Vector;
 
 import javax.swing.JPanel;
 
+import nl.liacs.subdisc.SearchParameters;
+import nl.liacs.subdisc.SubgroupSet;
+
 public class ROCCurve extends JPanel
 {
 	private static final long serialVersionUID = 1L;
@@ -27,6 +30,11 @@ public class ROCCurve extends JPanel
 	Vector<Arc2D> itsPoints;
 	float itsXMin, itsXMax;
 	int itsMin, itsMax;
+
+	public ROCCurve(SubgroupSet theSubgroupSet, SearchParameters theSearchParameters)
+	{
+		
+	}
 
 	public ROCCurve(Vector<Point2D> theCurve, Vector<Point2D> thePoints,
 					float theXMin, float theYMin, int theMin, float theXMax, float theYMax, int theMax)

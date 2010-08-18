@@ -2,7 +2,6 @@ package nl.liacs.subdisc.gui;
 
 import java.awt.GridLayout;
 import java.awt.event.KeyEvent;
-import java.util.HashSet;
 import java.util.Iterator;
 
 import javax.swing.JButton;
@@ -199,13 +198,45 @@ public class ResultWindow extends JFrame
 
 	private void jButtonROCActionPerformed()
 	{
-		HashSet<Subgroup> ROCList = itsSubgroupSet.getROCList();
 		// TODO to be removed, testing
-		for(Subgroup s : ROCList)
-			s.print();
-		System.out.println("ROCList.size() = " + ROCList.size());
-	}
+//		for(Subgroup s : ROCList)
+//			System.out.println(s.getID());
+		System.out.println("ROCList.size() = " + itsSubgroupSet.getROCList().size());
 
+		int aMinCoverage = itsSearchParameters.getMinimumCoverage();
+		int aMaxCoverage = itsSubgroupSet.getTotalCoverage() * (int)itsSearchParameters.getMaximumCoverage();
+		float aFalseCoverage = itsSubgroupSet.getTotalCoverage() - itsSubgroupSet.getTotalTargetCoverage();
+/*
+		ROCCurveWindow aROCCurveWindow = new ROCCurveWindow(itsSubgroupSet.getROCList(),
+															itsSubgroupSet,
+															aMinCoverage/aFalseCoverage,
+															aMinCoverage/itsSubgroupSet.getTotalTargetCoverage(),
+															aMinCoverage,
+															aMaxCoverage/aFalseCoverage,
+															aMaxCoverage/itsSubgroupSet.getTotalTargetCoverage(),
+															aMaxCoverage);
+*/
+		ROCCurveWindow aROCCurveWindow = new ROCCurveWindow(itsSubgroupSet, itsSearchParameters);
+	}
+/*
+ * 	private void jButtonROCActionPerformed()
+	{
+		int aMinCoverage = itsSearchParameters.getMinimumCoverage();
+		int aMaxCoverage = (int)(itsDatabaseSample.getCoverage() * itsSearchParameters.getMaximumCoverage());
+		int aFalseCoverage = itsDatabaseSample.getCoverage() - itsDatabaseSample.getTargetCoverage();
+		ROCCurveWindow aROCCurveWindow = new ROCCurveWindow(itsROCRuleList,
+															itsRuleSet,
+															aMinCoverage/(float)aFalseCoverage,
+															aMinCoverage/(float)itsDatabaseSample.getTargetCoverage(),
+															aMinCoverage,
+															aMaxCoverage/(float)aFalseCoverage,
+															aMaxCoverage/(float)itsDatabaseSample.getTargetCoverage(),
+															aMaxCoverage);
+		aROCCurveWindow.setLocation(100, 100);
+		aROCCurveWindow.setSize(400, 400);
+		aROCCurveWindow.setVisible(true);
+	}
+ */
 	private void jButtonDeleteSubgroupsActionPerformed()
 	{
 		if (itsSubgroupSet.isEmpty())

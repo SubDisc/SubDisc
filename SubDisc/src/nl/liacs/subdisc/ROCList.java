@@ -1,48 +1,43 @@
 package nl.liacs.subdisc;
 
 import java.util.ArrayList;
-import java.util.BitSet;
 
 public class ROCList extends ArrayList<Subgroup>
 {
 	private static final long serialVersionUID = 1L;
-	private final BitSet itsBinaryTarget;
-	private final int itsTotalCoverage;
-	private final float itsTotalTargetCoverage;
 
-	public ROCList(int theNrRows, BitSet theBinaryTarget)
-	{
-		itsBinaryTarget = theBinaryTarget;
-		itsTotalCoverage = theNrRows;	// NOTE itsBinaryTarget.size() always n*2^6
-		itsTotalTargetCoverage = (float)itsBinaryTarget.cardinality();
-	}
+	public ROCList(ArrayList<Subgroup> aSubgroupList) { super.addAll(aSubgroupList); }
 
+	@Override
 	public boolean add(Subgroup theSubgroup)
 	{
-		int anIndex = size();
-
-		float aTPR = getTruePositiveRate(theSubgroup);
-		float aFPR = getFalsePositiveRate(theSubgroup);
+		float aTPR = theSubgroup.getTruePositiveRate();
+		float aFPR = theSubgroup.getFalsePositiveRate();
 
 		if (aTPR <= aFPR) //always under curve
 			return false;
 
 		super.add(theSubgroup);
-		if (size() > 1)
+		if (size() == 1)
+			return true;
+		else
 		{
-/*
+//			boolean addOrSet = false;
+			int anIndex = size() - 1;
+
 			//move new rule from end to correct position
-			while ((anIndex > 0) && (getFalsePositiveRateAt(anIndex - 1) >= aFPR))
+			Float theOtherFPR = get(anIndex - 1).getFalsePositiveRate();
+			while ((anIndex > 0) && (theOtherFPR >= aFPR))
 			{
-				Rule aRule = getRule(anIndex - 1);
-				set(anIndex - 1, theRule);
-				set(anIndex, aRule);
+				Subgroup anotherSubgroup = get(anIndex - 1);
+				set(anIndex - 1, theSubgroup);
+				set(anIndex, anotherSubgroup);
 				anIndex--;
 			}
 
-			if (getFalsePositiveRateAt(anIndex + 1) == getFalsePositiveRateAt(anIndex))
+			if (get(anIndex + 1).getFalsePositiveRate() == get(anIndex).getFalsePositiveRate())
 			{
-				if (getTruePositiveRateAt(anIndex + 1) > getTruePositiveRateAt(anIndex))
+				if (get(anIndex + 1).getTruePositiveRate() > get((anIndex)).getTruePositiveRate())
 					remove(anIndex);
 				else
 					remove(anIndex + 1);
@@ -53,48 +48,48 @@ public class ROCList extends ArrayList<Subgroup>
 				remove(anIndex);
 //				return false;
 			}
+
 			while ((anIndex > 0) && (getSlopeAt(anIndex - 2) <= getSlopeAt(anIndex - 1)))
 			{
 				remove(anIndex - 1);
 				anIndex--;
 			}
+
 			while ((anIndex < size() - 1) && (getSlopeAt(anIndex) <= getSlopeAt(anIndex + 1)))
 			{
 				remove(anIndex + 1);
 			}
-*/
+
+			return true;
 		}
-		return true;
 	}
 
-	private float getTruePositiveRate(Subgroup theSubgroup)
+	private float getSlopeAt(int theIndex)
 	{
-		BitSet tmp = (BitSet) itsBinaryTarget.clone();
-		tmp.and(theSubgroup.getMembers());
-		int aHeadBody = tmp.cardinality();
-
-		System.out.println("TPR: " + aHeadBody + " / " + itsTotalTargetCoverage);
-		return aHeadBody / itsTotalTargetCoverage;
-	}
-
-	private float getFalsePositiveRate(Subgroup theSubgroup)
-	{
-		BitSet tmp = (BitSet) itsBinaryTarget.clone();
-		tmp.and(theSubgroup.getMembers());
-		int aHeadBody = tmp.cardinality();
-
-		System.out.println("FRP: (" + theSubgroup.getCoverage() + " - " + aHeadBody
-					+ ") / (" + itsTotalCoverage + " - " + itsTotalTargetCoverage + ")");
-		return (theSubgroup.getCoverage() - aHeadBody) / (itsTotalCoverage - itsTotalTargetCoverage);
-	}
-
-	public float getFalsePositiveRateAt(int theIndex)
-	{
-		if (theIndex == -1)
+		if(size() == 0)
 			return 0.0F;
-		if (theIndex == size())
-			return 1.0F;
-		else
-			return 0.0F;//getRule(theIndex).getFalsePositiveRate();
+		if(theIndex == -1)
+			return get(0).getTruePositiveRate()/get(0).getFalsePositiveRate();
+		if(theIndex == size())
+			return 0.0F;
+		if(theIndex == size() - 1)
+			return (1.0F - get(theIndex).getTruePositiveRate())/
+					(1.0F - get(theIndex).getFalsePositiveRate());
+		if(get(theIndex + 1).getFalsePositiveRate() == get(theIndex ).getFalsePositiveRate())
+			return 0.0F;
+		return (get(theIndex + 1).getTruePositiveRate() - get(theIndex).getTruePositiveRate())/
+				(get(theIndex + 1).getFalsePositiveRate() - get(theIndex).getFalsePositiveRate());
+	}
+
+	public float getAreaUnderCurve()
+	{
+		float anArea = 0.0F;
+
+		for (int i = -1; i < size(); i++)
+		{
+			float aWidth = get(i+i).getFalsePositiveRate() - get(i).getFalsePositiveRate();
+			anArea += aWidth * ((get(i).getTruePositiveRate() + get(i + 1).getTruePositiveRate())/2.0F);
+		}
+		return anArea;
 	}
 }
