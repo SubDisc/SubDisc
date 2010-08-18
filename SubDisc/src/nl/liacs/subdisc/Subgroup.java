@@ -103,7 +103,12 @@ public class Subgroup implements Comparable<Object>
 	/**
 	 * NOTE For now this equals implementation is only used for the ROCList
 	 * HashSet implementation.
+	 * Two subgroups are considered equal if:
+	 * for each condition(Attribute-Operator pair) in this.conditionList there
+	 * is a matching condition(Attribute-Operator pair) in other.conditionList
+	 * and both itsMembers are equal.
 	 */
+/*
 	@Override
 	public boolean equals(Object o)
 	{
@@ -111,14 +116,31 @@ public class Subgroup implements Comparable<Object>
 			return false;
 
 		Subgroup s = (Subgroup) o;
-		// TODO remove
-		System.out.println("Comparing:\n");
-		this.print();
-		s.print();
-		return getTruePositiveRate().equals(s.getTruePositiveRate()) &&
-				getFalsePositiveRate().equals(s.getFalsePositiveRate());
-	}
 
+		for(Condition c : itsConditions.itsConditions)
+		{
+			boolean hasSameAttributeAndOperator = false;
+			for(Condition sc : s.itsConditions.itsConditions)
+			{
+				if(c.getAttribute().getName().equalsIgnoreCase(sc.getAttribute().getName()) &&
+						c.getOperatorString().equalsIgnoreCase(sc.getOperatorString()))
+				{
+					hasSameAttributeAndOperator = true;
+					System.out.println(this.getID()+ " " + s.getID());
+					this.print();
+					s.print();
+					break;
+				}
+			}
+			if(!hasSameAttributeAndOperator)
+				return false;
+		}
+
+		return itsMembers.equals(s.itsMembers);
+		//getTruePositiveRate().equals(s.getTruePositiveRate()) &&
+			//	getFalsePositiveRate().equals(s.getFalsePositiveRate());
+	}
+*/
 	/**
 	 * TODO Even for the SubgroupSet.getROCList code this is NOT enough.
 	 * All subgroups are from the same SubgroupSet/ experiment with the same target.
@@ -129,35 +151,34 @@ public class Subgroup implements Comparable<Object>
 	 * (x < 10) and (x < 11) should be considered equal
 	 * (y < 10) and (x < 10) should be considered different 
 	 */
+/*
 	@Override
 	public int hashCode()
 	{
 		int hashCode = 0;
 		for(Condition c : itsConditions.itsConditions)
-			hashCode += (c.getAttribute().hashCode() + c.getOperatorString().hashCode());
+			hashCode += (c.getAttribute().getName().hashCode() + c.getOperatorString().hashCode());
 		return 31*itsMembers.hashCode() + hashCode;
 	}
-
+*/
 	// TODO check if returned BitSet is null, ie. not set for SubgroupSet
-	private Float getTruePositiveRate()
+	public Float getTruePositiveRate()
 	{
-		BitSet tmp = (BitSet)itsParentSet.getBinaryTarget();
+		BitSet tmp = itsParentSet.getBinaryTarget();
 		getMembers().and(tmp);
 		int aHeadBody = tmp.cardinality();
-
-		System.out.println("TPR: " + aHeadBody + " / " + itsParentSet.getTotalTargetCoverage());
+//		System.out.println("TPR: " + aHeadBody + " / " + itsParentSet.getTotalTargetCoverage());
 		return aHeadBody / itsParentSet.getTotalTargetCoverage();
 	}
 
-	private Float getFalsePositiveRate()
+	public Float getFalsePositiveRate()
 	{
 		BitSet tmp = (BitSet)itsParentSet.getBinaryTarget();
 		getMembers().and(tmp);
 		int aHeadBody = tmp.cardinality();
-
-		System.out.println("FRP: (" + getCoverage() + " - " + aHeadBody +
-							") / (" + itsParentSet.getTotalCoverage() +
-							" - " + itsParentSet.getTotalTargetCoverage() + ")");
+//		System.out.println("FRP: (" + getCoverage() + " - " + aHeadBody +
+//							") / (" + itsParentSet.getTotalCoverage() +
+//							" - " + itsParentSet.getTotalTargetCoverage() + ")");
 		return (getCoverage() - aHeadBody) / (itsParentSet.getTotalCoverage() - itsParentSet.getTotalTargetCoverage());
 	}
 }
