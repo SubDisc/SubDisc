@@ -14,6 +14,15 @@ public class DTDResolver implements EntityResolver
 {
 	public InputSource resolveEntity(String publicId, String systemId)
 	{
-		return new InputSource(this.getClass().getResourceAsStream(systemId.substring(systemId.lastIndexOf("/")).toLowerCase()));
+		try
+		{
+			return new InputSource(this.getClass().getResourceAsStream(systemId.substring(systemId.lastIndexOf("/")).toLowerCase()));
+		}
+		catch (Exception e)
+		{
+//			new ErrorDialog(e, ErrorDialog.DTDError);
+		}
+		// if systemId is null or other error assume and try mrml
+		return null;
 	}
 }

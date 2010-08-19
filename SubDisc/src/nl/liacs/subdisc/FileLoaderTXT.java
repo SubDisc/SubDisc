@@ -1,3 +1,6 @@
+/**
+ * TODO Needs better trim()
+ */
 package nl.liacs.subdisc;
 
 import java.io.BufferedReader;

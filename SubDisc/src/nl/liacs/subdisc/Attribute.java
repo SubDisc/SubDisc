@@ -12,16 +12,16 @@ public class Attribute
 	public Attribute(int theIndex, String theName, String theShort, AttributeType theType)
 	{
 		itsIndex = theIndex;
-		itsName = theName;
-		itsShort = theShort;
+		itsName = (theName == null ? String.valueOf(System.nanoTime()) : theName);	// TODO throw warning
+		itsShort = (theShort == null ? "" :theShort);
 		itsType = theType;
 	}
 
 	//MRML
 	public Attribute(String theName, String theShort, AttributeType theType)
 	{
-		itsName = theName;
-		itsShort = theShort;
+		itsName = (theName == null ? String.valueOf(System.nanoTime()) : theShort);	// TODO throw warning
+		itsShort = (theShort == null ? "" :theShort);
 		itsType = theType;
 	}
 
@@ -29,7 +29,7 @@ public class Attribute
 	public AttributeType getType() { return itsType; }
 	public String getName() { return itsName; }
 	public String getShort() { return itsShort; }
-	public boolean hasShort() { return (itsShort != null); }
+	public boolean hasShort() { return (!itsShort.isEmpty()); }
 	public String getNameAndShort() { return itsName + (hasShort() ? " (" + getShort() + ")" : ""); }
 	public String getNameOrShort() { return hasShort() ? itsShort : itsName; }
 	public String getTypeName() { return itsType.name().toLowerCase(); }

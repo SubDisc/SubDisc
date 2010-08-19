@@ -58,7 +58,6 @@ import nl.liacs.subdisc.ErrorWindow;
 import nl.liacs.subdisc.FileHandler;
 import nl.liacs.subdisc.Log;
 import nl.liacs.subdisc.QualityMeasure;
-import nl.liacs.subdisc.ROCList;
 import nl.liacs.subdisc.RegressionMeasure;
 import nl.liacs.subdisc.SearchParameters;
 import nl.liacs.subdisc.Subgroup;
@@ -166,6 +165,9 @@ public class MiningWindow extends JFrame
 		jMenuItemAttributeTypeChange = new JMenuItem();
 		jSeparator2 = new JSeparator();
 		jMenuItemSubgroupDiscovery = new JMenuItem();
+		jMenuItemCreateAutorunFile = new JMenuItem();
+		jMenuItemAddToAutorunFile = new JMenuItem();
+		jMenuItemLoadAutorunFile = new JMenuItem();
 		jSeparator3 = new JSeparator();
 		jMenuItemExit = new JMenuItem();
 		jMenuAbout = new JMenu();
@@ -324,6 +326,39 @@ public class MiningWindow extends JFrame
 			}
 		});
 		jMenuFile.add(jMenuItemSubgroupDiscovery);
+
+		jMenuItemCreateAutorunFile.setFont(DEFAULT_FONT);
+		jMenuItemCreateAutorunFile.setText("Create Autorun File");
+//		jMenuItemCreateAutorunFile.setMnemonic();
+//		jMenuItemCreateAutorunFile.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A, InputEvent.CTRL_MASK));
+		jMenuItemCreateAutorunFile.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				jMenuItemCreateAutorunFileActionPerformed(evt);
+			}
+		});
+		jMenuFile.add(jMenuItemCreateAutorunFile);
+
+		jMenuItemAddToAutorunFile.setFont(DEFAULT_FONT);
+		jMenuItemAddToAutorunFile.setText("Add to Autorun File");
+//		jMenuItemAddToAutorunFile.setMnemonic();
+//		jMenuItemAddToAutorunFile.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A, InputEvent.CTRL_MASK));
+		jMenuItemAddToAutorunFile.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				jMenuItemAddToAutorunFileActionPerformed(evt);
+			}
+		});
+		jMenuFile.add(jMenuItemAddToAutorunFile);
+
+		jMenuItemLoadAutorunFile.setFont(DEFAULT_FONT);
+		jMenuItemLoadAutorunFile.setText("Load Autorun File");
+//		jMenuItemLoadAutorunFile.setMnemonic();
+//		jMenuItemLoadAutorunFile.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A, InputEvent.CTRL_MASK));
+		jMenuItemLoadAutorunFile.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				jMenuItemLoadAutorunFileActionPerformed(evt);
+			}
+		});
+		jMenuFile.add(jMenuItemLoadAutorunFile);
 
 		jMenuFile.add(jSeparator3);
 
@@ -702,7 +737,6 @@ public class MiningWindow extends JFrame
 		getContentPane().add(jPanelSouth, BorderLayout.SOUTH);
 		getContentPane().add(jPanelCenter, BorderLayout.CENTER);
 
-		// TODO who owns this
 		setFont(DEFAULT_FONT);
 		addWindowListener(new WindowAdapter() {
 			public void windowClosing(WindowEvent evt) {
@@ -735,6 +769,7 @@ public class MiningWindow extends JFrame
 			a.setEnabled(theSetting);
 	}
 
+	/* MENU ITEMS */
 	private void jMenuItemOpenFileActionPerformed(ActionEvent evt)
 	{
 		new FileHandler(Action.OPEN_FILE);
@@ -742,6 +777,65 @@ public class MiningWindow extends JFrame
 		initGuiComponents();
 	}
 
+	private void jMenuItemCreateAutorunFileActionPerformed(ActionEvent evt)
+	{
+		setupSearchParameters();
+		itsSearchParameters.getAllSearchParameters();
+	}
+
+	
+	private void jMenuItemAddToAutorunFileActionPerformed(ActionEvent evt)
+	{
+	}
+	
+	private void jMenuItemLoadAutorunFileActionPerformed(ActionEvent evt)
+	{
+	}
+	
+	private void jMenuItemAboutSubDiscActionPerformed(ActionEvent evt)
+	{
+		// TODO
+		JOptionPane.showMessageDialog(null, "Subgroup Discovery", "About SubDisc",
+				JOptionPane.INFORMATION_MESSAGE);
+	}
+
+	private void jMenuItemExitActionPerformed(ActionEvent evt)
+	{
+		Log.logCommandLine("exit");
+		dispose();
+		System.exit(0);
+	}
+
+	/* DATASET BUTTONS */
+	private void BrowseActionPerformed(ActionEvent evt)
+	{
+		new TableWindow(itsTable);
+	}
+
+	private void DataExplorerActionPerformed(ActionEvent evt)
+	{
+		// TODO
+		// DataExplorerWindow aDataExplorerWindow = new
+		// DataExplorerWindow(itsDataModel);
+		// aDataExplorerWindow.setLocation(30, 150);
+		// aDataExplorerWindow.setTitle("Explore data model: " +
+		// itsDataModel.getName());
+		// aDataExplorerWindow.setVisible(true);
+	}
+
+	private void AttributeTypeChangeActionPerformed(ActionEvent evt)
+	{
+		new AttributeChangeWindow(itsTable);
+	}
+
+	/* Exit application */
+	private void exitForm(WindowEvent evt)
+	{
+		dispose();
+		System.exit(0);
+	}
+
+	
 	// TODO remove "best first"
 	private void jComboBoxSearchStrategyTypeActionPerformed(ActionEvent evt)
 	{
@@ -757,20 +851,6 @@ public class MiningWindow extends JFrame
 	{
 		itsSearchParameters.setQualityMeasureMinimum(getQualityMeasureMinimum());
 		initEvaluationMinimum();
-	}
-
-	private void jMenuItemAboutSubDiscActionPerformed(ActionEvent evt)
-	{
-		// TODO
-		JOptionPane.showMessageDialog(null, "Subgroup Discovery",
-				"About SubDisc", JOptionPane.INFORMATION_MESSAGE);
-	}
-
-	private void jMenuItemExitActionPerformed(ActionEvent evt)
-	{
-		Log.logCommandLine("exit");
-		dispose();
-		System.exit(0);
 	}
 
 	private void jComboBoxTargetAttributeActionPerformed(ActionEvent evt)
@@ -935,27 +1015,7 @@ public class MiningWindow extends JFrame
 		}
 	}
 
-	private void BrowseActionPerformed(ActionEvent evt)
-	{
-		new TableWindow(itsTable);
-	}
-
-	private void DataExplorerActionPerformed(ActionEvent evt)
-	{
-		// TODO
-		// DataExplorerWindow aDataExplorerWindow = new
-		// DataExplorerWindow(itsDataModel);
-		// aDataExplorerWindow.setLocation(30, 150);
-		// aDataExplorerWindow.setTitle("Explore data model: " +
-		// itsDataModel.getName());
-		// aDataExplorerWindow.setVisible(true);
-	}
-
-	private void AttributeTypeChangeActionPerformed(ActionEvent evt)
-	{
-		new AttributeChangeWindow(itsTable);
-	}
-
+	/* MINING BUTTONS */
 	private void jButtonSubgroupDiscoveryActionPerformed(ActionEvent evt)
 	{
 		try
@@ -1126,13 +1186,6 @@ public class MiningWindow extends JFrame
 		itsSearchParameters.setTargetConcept(itsTargetConcept);	// TODO can be removed, set already
 	}
 
-	/** Exit the Application */
-	private void exitForm(WindowEvent evt)
-	{
-		dispose();
-		System.exit(0);
-	}
-
 	// TODO can do without theSearchParameters, there is only itsSearchParameters
 	private void initSearchParameters(SearchParameters theSearchParameters)
 	{
@@ -1212,8 +1265,8 @@ public class MiningWindow extends JFrame
 
 		// clear all
 		removeAllTargetAttributeItems();
-		if((aTargetType == TargetType.DOUBLE_REGRESSION)
-				|| (aTargetType == TargetType.DOUBLE_CORRELATION))
+		if((aTargetType == TargetType.DOUBLE_REGRESSION) ||
+				(aTargetType == TargetType.DOUBLE_CORRELATION))
 			removeAllMiscFieldItems();
 
 		// primary target and MiscField
@@ -1478,10 +1531,12 @@ public class MiningWindow extends JFrame
 	private Integer getSearchStrategyWidth()
 	{
 		int aWidth;
-		try {
-			aWidth = Integer.parseInt(jTextFieldSearchStrategyWidth.getText()
-					.trim());
-		} catch (Exception ex) {
+		try
+		{
+			aWidth = Integer.parseInt(jTextFieldSearchStrategyWidth.getText().trim());
+		}
+		catch (Exception ex)
+		{
 			return null;
 		}
 		return new Integer(aWidth);
@@ -1501,6 +1556,9 @@ public class MiningWindow extends JFrame
 	private JMenuItem jMenuItemAttributeTypeChange;
 	private JSeparator jSeparator2;
 	private JMenuItem jMenuItemSubgroupDiscovery;
+	private JMenuItem jMenuItemCreateAutorunFile;
+	private JMenuItem jMenuItemAddToAutorunFile;
+	private JMenuItem jMenuItemLoadAutorunFile;
 	private JSeparator jSeparator3;
 	private JMenuItem jMenuItemExit;
 	private JMenu jMenuAbout;

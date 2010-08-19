@@ -61,21 +61,19 @@ public enum SearchParameters
 	/* SEARCH STRATEGY */
 	public int getSearchStrategy() { return itsSearchStrategy; }
 
-	public static String getSearchStrategyName( int theSearchStrategy)
+	public static String getSearchStrategyName(int theSearchStrategy)
 	{
-		String aString = "";
 		switch(theSearchStrategy)
 		{
-			case CandidateQueue.BFS		: { aString = "breadth first"; break; }
-			case CandidateQueue.DFS		: { aString = "depth first"; break; }
-			case CandidateQueue.BESTFIRST	: { aString = "best first"; break; }
-			case CandidateQueue.BEAM	: { aString = "beam"; break; }
-			default			: { aString = ""; break; }
+			case CandidateQueue.BFS		: return "breadth first";
+			case CandidateQueue.DFS		: return "depth first";
+			case CandidateQueue.BESTFIRST	: return "best first";
+			case CandidateQueue.BEAM	: return "beam";
+			default						: return "";
 		}
-		return aString;
 	}
 
-	public void setSearchStrategy( String theSearchStrategyName)
+	public void setSearchStrategy(String theSearchStrategyName)
 	{
 		if (theSearchStrategyName.equals("breadth first"))
 			itsSearchStrategy = CandidateQueue.BFS;
