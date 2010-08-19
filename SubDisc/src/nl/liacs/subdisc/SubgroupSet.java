@@ -2,29 +2,39 @@ package nl.liacs.subdisc;
 
 import java.util.ArrayList;
 import java.util.BitSet;
-import java.util.Iterator;
 import java.util.TreeSet;
 
 public class SubgroupSet extends TreeSet<Subgroup>
 {
 	private static final long serialVersionUID = 1L;
+	private final int itsMaximumSize;
 
-	private int itsMaximumSize = -1; // no maximum
-
-	// for subgroupset in nominal target setting (used for TPR/FPR in ROCList)
+	// For subgroupset in nominal target setting (used for TPR/FPR in ROCList)
 	private final int itsTotalCoverage;
 	private final float itsTotalTargetCoverage;
 	private final BitSet itsBinaryTarget;
 
+	/**
+	 * Create a SubgroupSet of a certain size. In a nominal target setting
+	 * theTotalCoverage and theBianryTarget should also be set.
+	 * @param theSize, use theSize <= 0 for no maximum size
+	 * @param theTotalCoverage
+	 * @param theBinaryTarget
+	 */
 	public SubgroupSet(int theSize, int theTotalCoverage, BitSet theBinaryTarget)
 	{
 		itsMaximumSize = theSize;
 		itsTotalCoverage = theTotalCoverage;
-		itsBinaryTarget = theBinaryTarget;
+		itsBinaryTarget = (theBinaryTarget == null ? new BitSet(0) : theBinaryTarget);
 		itsTotalTargetCoverage = (float)theBinaryTarget.cardinality();
 	}
 
-	// TODO other members are set to avoid nulls
+	/**
+	 * Create a SubgroupSet of a certain size.
+	 * SubgroupSets' other members are only used in a nominal target setting,
+	 * but still set to avoid nulls.
+	 * @param theSize, use theSize <= 0 for no maximum size
+	 */
 	public SubgroupSet(int theSize)
 	{
 		itsMaximumSize = theSize;
@@ -33,26 +43,18 @@ public class SubgroupSet extends TreeSet<Subgroup>
 		itsTotalTargetCoverage = -1;
 	}
 
+	/**
+	 * Try to add theSubgroup to the SubgroupSet. Then check if the SubgroupSet
+	 * did not exceed itsMaximumSize. If it does, remove the last Subgroup.
+	 */
+	@Override
 	public boolean add(Subgroup theSubgroup)
 	{
 		boolean aResult = super.add(theSubgroup);
-		if (aResult)
-			trimQueue();
+		if((itsMaximumSize > 0) && (size() > itsMaximumSize))
+			remove(last());
 
 		return aResult;
-	}
-
-	public void trimQueue()
-	{
-		if (itsMaximumSize < 0) // no maximum
-			return;
-		while (size() > itsMaximumSize)
-		{
-			Iterator<Subgroup> anIterator = iterator();
-			while (anIterator.hasNext())
-				anIterator.next();
-			anIterator.remove();
-		}
 	}
 
 	public Subgroup getBestSubgroup() { return first(); }
@@ -60,25 +62,20 @@ public class SubgroupSet extends TreeSet<Subgroup>
 	public void setIDs()
 	{
 		int aCount = 1;
-		Iterator<Subgroup> anIterator = this.iterator();
-		while (anIterator.hasNext())
-		{
-			Subgroup aSubgroup = anIterator.next();
-			aSubgroup.setID(aCount);
-			aCount++;
-		}
+		for(Subgroup s : this)
+			s.setID(aCount++);
 	}
 
 	public void print()
 	{
-		for (Subgroup aSubgroup : this)
-			Log.logCommandLine(aSubgroup.getID() + "," + aSubgroup.getCoverage() + "," + aSubgroup.getMeasureValue());
+		for (Subgroup s : this)
+			Log.logCommandLine(s.getID() + "," + s.getCoverage() + "," + s.getMeasureValue());
 	}
 
 	/**
-	 * ROCList functions
-	 * getROCList return a new ROCList each time its called, if subgroups are 
-	 * removed from the SubgroupSet the new ROCList reflects these changes
+	 * ROCList functions.
+	 * getROCList() return a new ROCList each time it is called. If subgroups
+	 * are removed from the SubgroupSet the new ROCList reflects these changes.
 	 * TODO update single ROCList instance?
 	 */
 	public BitSet getBinaryTarget() { return (BitSet) itsBinaryTarget.clone(); }

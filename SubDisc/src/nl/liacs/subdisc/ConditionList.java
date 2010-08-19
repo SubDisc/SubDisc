@@ -1,3 +1,6 @@
+/**
+ * TODO why not extend ArrayListList<Condition>
+ */
 package nl.liacs.subdisc;
 
 import java.util.ArrayList;

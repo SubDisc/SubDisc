@@ -2,94 +2,115 @@ package nl.liacs.subdisc;
 
 import java.util.ArrayList;
 
-public class ROCList extends ArrayList<Subgroup>
+public class ROCList extends ArrayList<SubgroupROCPoint>
 {
 	private static final long serialVersionUID = 1L;
 
-	public ROCList(ArrayList<Subgroup> aSubgroupList) { super.addAll(aSubgroupList); }
+	public ROCList(ArrayList<Subgroup> theSubgroupList)
+	{
+		for(Subgroup s : theSubgroupList)
+		{
+			add(new SubgroupROCPoint(s));
+		}
+	}
 
 	@Override
-	public boolean add(Subgroup theSubgroup)
+	public boolean add(SubgroupROCPoint theSubgroupROCPoint)
 	{
-		float aTPR = theSubgroup.getTruePositiveRate();
-		float aFPR = theSubgroup.getFalsePositiveRate();
+		int anIndex = size();
+		float aTPR = theSubgroupROCPoint.getTPR();
+		float aFPR = theSubgroupROCPoint.getFPR();
 
 		if (aTPR <= aFPR) //always under curve
 			return false;
 
-		super.add(theSubgroup);
-		if (size() == 1)
-			return true;
-		else
-		{
-//			boolean addOrSet = false;
-			int anIndex = size() - 1;
+		super.add(theSubgroupROCPoint);
 
+		if (size() > 1)
+		{
 			//move new rule from end to correct position
-			Float theOtherFPR = get(anIndex - 1).getFalsePositiveRate();
-			while ((anIndex > 0) && (theOtherFPR >= aFPR))
+			while((anIndex > 0) && (getFalsePositiveRateAt(anIndex - 1) >= aFPR))
 			{
-				Subgroup anotherSubgroup = get(anIndex - 1);
-				set(anIndex - 1, theSubgroup);
-				set(anIndex, anotherSubgroup);
+				SubgroupROCPoint anotherPoint = get(anIndex - 1);
+				set(anIndex - 1, theSubgroupROCPoint);
+				set(anIndex, anotherPoint);
 				anIndex--;
 			}
 
-			if (get(anIndex + 1).getFalsePositiveRate() == get(anIndex).getFalsePositiveRate())
+			if(getFalsePositiveRateAt(anIndex + 1) == getFalsePositiveRateAt(anIndex))
 			{
-				if (get(anIndex + 1).getTruePositiveRate() > get((anIndex)).getTruePositiveRate())
+				if(getTruePositiveRateAt(anIndex + 1) > getTruePositiveRateAt(anIndex))
 					remove(anIndex);
 				else
 					remove(anIndex + 1);
 			}
 
-			if (getSlopeAt(anIndex - 1) <= getSlopeAt(anIndex))
+			if(getSlopeAt(anIndex - 1) <= getSlopeAt(anIndex))
 			{
 				remove(anIndex);
-//				return false;
+//					return false;
 			}
-
-			while ((anIndex > 0) && (getSlopeAt(anIndex - 2) <= getSlopeAt(anIndex - 1)))
+			while((anIndex > 0) && (getSlopeAt(anIndex - 2) <= getSlopeAt(anIndex - 1)))
 			{
 				remove(anIndex - 1);
 				anIndex--;
 			}
-
-			while ((anIndex < size() - 1) && (getSlopeAt(anIndex) <= getSlopeAt(anIndex + 1)))
+			while((anIndex < size() - 1) && (getSlopeAt(anIndex) <= getSlopeAt(anIndex + 1)))
 			{
 				remove(anIndex + 1);
 			}
-
-			return true;
 		}
+
+		return true;
+	}
+
+	public float getTruePositiveRateAt(int theIndex)
+	{
+		if (theIndex == -1)
+			return 0.0F;
+		if (theIndex == size())
+			return 1.0F;
+		else
+			return get(theIndex).getTPR();
+	}
+
+	private float getFalsePositiveRateAt(int theIndex)
+	{
+		if (theIndex == -1)
+			return 0.0F;
+		if (theIndex == size())
+			return 1.0F;
+		else
+			return get(theIndex).getFPR();
 	}
 
 	private float getSlopeAt(int theIndex)
 	{
 		if(size() == 0)
 			return 0.0F;
-		if(theIndex == -1)
-			return get(0).getTruePositiveRate()/get(0).getFalsePositiveRate();
-		if(theIndex == size())
+		else if(theIndex == -1)
+			return getTruePositiveRateAt(0) / getFalsePositiveRateAt(0);
+		else if(theIndex == size())
 			return 0.0F;
-		if(theIndex == size() - 1)
-			return (1.0F - get(theIndex).getTruePositiveRate())/
-					(1.0F - get(theIndex).getFalsePositiveRate());
-		if(get(theIndex + 1).getFalsePositiveRate() == get(theIndex ).getFalsePositiveRate())
+		else if(theIndex == size() - 1)
+			return (1.0F - getTruePositiveRateAt(theIndex)) / (1.0F - getFalsePositiveRateAt(theIndex));
+		else if(getFalsePositiveRateAt(theIndex + 1) == getFalsePositiveRateAt(theIndex))
 			return 0.0F;
-		return (get(theIndex + 1).getTruePositiveRate() - get(theIndex).getTruePositiveRate())/
-				(get(theIndex + 1).getFalsePositiveRate() - get(theIndex).getFalsePositiveRate());
+		else
+			return (getTruePositiveRateAt(theIndex + 1) - getTruePositiveRateAt(theIndex)) /
+					(getFalsePositiveRateAt(theIndex + 1) - getFalsePositiveRateAt(theIndex));
 	}
 
 	public float getAreaUnderCurve()
 	{
-		float anArea = 0.0F;
-
+		float anArea = 0;
+		
 		for (int i = -1; i < size(); i++)
 		{
-			float aWidth = get(i+i).getFalsePositiveRate() - get(i).getFalsePositiveRate();
-			anArea += aWidth * ((get(i).getTruePositiveRate() + get(i + 1).getTruePositiveRate())/2.0F);
+			float aWidth = getFalsePositiveRateAt(i+1) - getFalsePositiveRateAt(i);
+			anArea += aWidth * ((getTruePositiveRateAt(i)+getTruePositiveRateAt(i+1))/2.0F);
 		}
 		return anArea;
 	}
 }
+

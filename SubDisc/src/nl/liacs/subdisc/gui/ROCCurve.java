@@ -1,6 +1,3 @@
-/**
- * TODO use ArrayList, not Vector
- */
 package nl.liacs.subdisc.gui;
 
 import java.awt.BasicStroke;
@@ -13,73 +10,80 @@ import java.awt.geom.Arc2D;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.Point2D;
 import java.text.NumberFormat;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.ListIterator;
 import java.util.Vector;
 
 import javax.swing.JPanel;
 
+import nl.liacs.subdisc.ROCList;
 import nl.liacs.subdisc.SearchParameters;
+import nl.liacs.subdisc.Subgroup;
+import nl.liacs.subdisc.SubgroupROCPoint;
 import nl.liacs.subdisc.SubgroupSet;
 
 public class ROCCurve extends JPanel
 {
 	private static final long serialVersionUID = 1L;
 
-	GeneralPath itsCurve;
-	GeneralPath itsLines;
-	Vector<Arc2D> itsPoints;
-	float itsXMin, itsXMax;
-	int itsMin, itsMax;
+	private GeneralPath itsCurve;
+	private GeneralPath itsLines;
+	private ArrayList<Arc2D.Float> itsPoints;
+	private String itsAreaUnderCurve;
+	private float itsXMin, itsXMax, itsYMin, itsYMax;
+	private int itsMin, itsMax;
 
 	public ROCCurve(SubgroupSet theSubgroupSet, SearchParameters theSearchParameters)
-	{
-		
-	}
-
-	public ROCCurve(Vector<Point2D> theCurve, Vector<Point2D> thePoints,
-					float theXMin, float theYMin, int theMin, float theXMax, float theYMax, int theMax)
 	{
 		super();
 		setBackground(Color.white);
 
+		ROCList aROCList = theSubgroupSet.getROCList();
+		NumberFormat aFormatter = NumberFormat.getNumberInstance();
+		aFormatter.setMaximumFractionDigits(3);
+		itsAreaUnderCurve = aFormatter.format(aROCList.getAreaUnderCurve());
+		for(SubgroupROCPoint p : aROCList)
+			System.out.println(p);
+
+		List<SubgroupROCPoint> aPoints = new ArrayList<SubgroupROCPoint>(theSubgroupSet.size());
+		for(Subgroup s : theSubgroupSet)
+			aPoints.add(new SubgroupROCPoint(s));
+
 		itsCurve = new GeneralPath();
 		itsCurve.moveTo(0, 0);
-		ListIterator<Point2D> anIterator = theCurve.listIterator();
-		while (anIterator.hasNext())
-		{
-			Point2D aPoint = anIterator.next();
-			float anX = (float)aPoint.getX();
-			float aY = (float)aPoint.getY();
-			itsCurve.lineTo(anX, -aY);
-		}
+		for(SubgroupROCPoint p : aROCList)
+			itsCurve.lineTo(p.getFPR(), -p.getTPR());
 		itsCurve.lineTo(1, -1);
 
-		itsPoints = new Vector<Arc2D>();
-		anIterator = thePoints.listIterator();
-		while (anIterator.hasNext())
-		{
-			Point2D aPoint = anIterator.next();
-			float anX = (float)aPoint.getX();
-			float aY = (float)aPoint.getY();
-			Arc2D anArc = new Arc2D.Float(anX, -aY, 0.0F, 0.0F, -180.0F, 180.0F, Arc2D.OPEN);
-			itsPoints.add(anArc);
-		}
+		itsPoints = new ArrayList<Arc2D.Float>(aPoints.size());
+		for(SubgroupROCPoint p : aPoints)
+			itsPoints.add(new Arc2D.Float(p.getFPR(), -p.getTPR(), 0.0F, 0.0F, -180.0F, 180.0F, Arc2D.OPEN));
 
-		itsXMin = theXMin;
-		itsXMax = theXMax;
-		itsMin = theMin;
-		itsMax = theMax;
+		int aTotalCoverage = theSubgroupSet.getTotalCoverage();
+		float aTotalTargetCoverage = theSubgroupSet.getTotalTargetCoverage();
+		int aMinCoverage = theSearchParameters.getMinimumCoverage();
+		int aMaxCoverage = aTotalCoverage * (int)theSearchParameters.getMaximumCoverage();
+		float aFalseCoverage = aTotalCoverage - aTotalTargetCoverage;
+		
+		itsXMin = aMinCoverage/aFalseCoverage;
+		itsXMax = aMaxCoverage/aFalseCoverage;
+		itsYMin = aMinCoverage/aTotalTargetCoverage;
+		itsYMax = aMaxCoverage/aTotalTargetCoverage;
+		itsMin = aMinCoverage;
+		itsMax = aMaxCoverage;
 
 		itsLines = new GeneralPath();
-		itsLines.moveTo(theXMin, 0);
-		itsLines.lineTo(0, -theYMin);
-		itsLines.moveTo(theXMax, 0);
-		itsLines.lineTo(0, -theYMax);
+		itsLines.moveTo(itsXMin, 0);
+		itsLines.lineTo(0, -itsYMin);
+		itsLines.moveTo(itsXMax, 0);
+		itsLines.lineTo(0, -itsYMax);
 		itsLines.moveTo(0, 0);
 		itsLines.lineTo(0, -1);
 		itsLines.lineTo(1, -1);
 		itsLines.lineTo(1, 0);
 		itsLines.lineTo(0, 0);
+		//PathIterator p = itsLines.getPathIterator(new AffineTransform());
 		for(int i=0; i<11; i++)
 		{
 			itsLines.moveTo(i*0.1F, 0.0F);
@@ -121,6 +125,8 @@ public class ROCCurve extends JPanel
 		}
 	}
 
+	public String getAreaUnderCurve() { return itsAreaUnderCurve; }
+
 	public void paintComponent(Graphics theGraphic)
 	{
 		int aWidth = getWidth();
@@ -135,17 +141,13 @@ public class ROCCurve extends JPanel
 
 		if (itsPoints != null)
 		{
-			ListIterator<Arc2D> anIterator = itsPoints.listIterator();
-			while (anIterator.hasNext())
-			{
-				Arc2D aPoint = anIterator.next();
+			for(Arc2D aPoint : itsPoints)
 				aGraphic.draw(aPoint);
-			}
 		}
 
 		aGraphic.setStroke(new BasicStroke(2.0F/aSize));
 		aGraphic.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-								  RenderingHints.VALUE_ANTIALIAS_ON);
+									RenderingHints.VALUE_ANTIALIAS_ON);
 		aGraphic.draw(itsCurve);
 		aGraphic.setStroke(new BasicStroke(1.0F/aSize));
 		aGraphic.draw(itsLines);

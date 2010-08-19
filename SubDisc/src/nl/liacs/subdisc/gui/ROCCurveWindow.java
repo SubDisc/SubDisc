@@ -2,115 +2,28 @@ package nl.liacs.subdisc.gui;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.WindowEvent;
-import java.awt.geom.GeneralPath;
-import java.awt.geom.Point2D;
-import java.text.NumberFormat;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.Vector;
 
 import javax.swing.JFrame;
 
-import nl.liacs.subdisc.ROCList;
 import nl.liacs.subdisc.SearchParameters;
-import nl.liacs.subdisc.Subgroup;
 import nl.liacs.subdisc.SubgroupSet;
 
 public class ROCCurveWindow extends JFrame
 {
 	private static final long serialVersionUID = 1L;
 
-	private ROCCurve itsROCCurve;
-	GeneralPath itsCurve;
-
 	public ROCCurveWindow(SubgroupSet theSubgroupSet, SearchParameters theSearchParameters)
 	{
-		int aMinCoverage = theSearchParameters.getMinimumCoverage();
-		int aMaxCoverage = theSubgroupSet.getTotalCoverage() * (int)theSearchParameters.getMaximumCoverage();
-		float aFalseCoverage = theSubgroupSet.getTotalCoverage() - theSubgroupSet.getTotalTargetCoverage();
-
 		initComponents();
 
-		ROCList aROCList = theSubgroupSet.getROCList();
-		NumberFormat aFormatter = NumberFormat.getNumberInstance();
-		aFormatter.setMaximumFractionDigits(3);
-		setTitle("ROC Curve (area under curve: " + aFormatter.format(aROCList.getAreaUnderCurve()) + ")");
-
-		List<Point2D> aCurve = new ArrayList<Point2D>(aROCList.size());
-		for(Subgroup s : aROCList)
-			aCurve.add(new Point2D.Float(s.getFalsePositiveRate(), s.getTruePositiveRate()));
-
-		List<Point2D> aPoints = new ArrayList<Point2D>(theSubgroupSet.size());
-		for(Subgroup s : theSubgroupSet)
-			aPoints.add(new Point2D.Float(s.getFalsePositiveRate(), s.getTruePositiveRate()));
-
-		itsROCCurve = new ROCCurve(aCurve, aPoints, theXMin, theYMin, theMin, theXMax, theYMax, theMax);
-		jScrollPaneCenter.setViewportView(itsROCCurve);
-		setIconImage(MiningWindow.ICON);
+		ROCCurve aROCCurve = new ROCCurve(theSubgroupSet, theSearchParameters);
+		setTitle("ROC Curve (area under curve: " + aROCCurve.getAreaUnderCurve() + ")");
+		jScrollPaneCenter.setViewportView(aROCCurve);
+//		setIconImage(MiningWindow.ICON);
 		pack();
-	}
-/*
-	public ROCCurveWindow(ROCList theROCList, SubgroupSet theSubgroupSet,
-							float theXMin, float theYMin, int theMin, float theXMax, float theYMax, int theMax)
-	{
-		initComponents();
-
-		NumberFormat aFormatter = NumberFormat.getNumberInstance();
-		aFormatter.setMaximumFractionDigits(3);
-		setTitle("ROC Curve (area under curve: " + aFormatter.format(theROCList.getAreaUnderCurve()) + ")");
-
-		Vector<Point2D> aCurve = new Vector<Point2D>();
-		ListIterator<Rule> aListIterator = theROCList.listIterator();
-		while (aListIterator.hasNext())
-		{
-			Rule aRule = aListIterator.next();
-			Point2D aPoint = new Point2D.Float(aRule.getFalsePositiveRate(),
-										 aRule.getTruePositiveRate());
-			aCurve.add(aPoint);
-		}
-
-		Vector<Point2D> aPoints = new Vector<Point2D>();
-		Iterator<Rule> anIterator = theSubgroupSet.iterator();
-		while (anIterator.hasNext())
-		{
-			Rule aRule = anIterator.next();
-			Point2D aPoint = new Point2D.Float(aRule.getFalsePositiveRate(),
-										 aRule.getTruePositiveRate());
-			aPoints.add(aPoint);
-		}
-
-		itsROCCurve = new ROCCurve(aCurve, aPoints, theXMin, theYMin, theMin, theXMax, theYMax, theMax);
-		jScrollPaneCenter.setViewportView(itsROCCurve);
-		setIconImage(MiningWindow.ICON);
-		pack();
-	}
-*/
-	public ROCCurveWindow(DecisionList theDecisionList)
-	{
-		initComponents();
-
-		NumberFormat aFormatter = NumberFormat.getNumberInstance();
-		aFormatter.setMaximumFractionDigits(3);
-		setTitle("ROC Curve (area under curve: " + aFormatter.format(theDecisionList.getAreaUnderCurve()) + ")");
-
-		Vector<Point2D> aCurve = new Vector<Point2D>();
-		ListIterator<Rule> aListIterator = theDecisionList.listIterator();
-		int anIndex = 0;
-
-		while (aListIterator.hasNext())
-		{
-			aListIterator.next();
-			Point2D aPoint = new Point2D.Float(theDecisionList.getFalsePositiveRate(anIndex),
-												theDecisionList.getTruePositiveRate(anIndex));
-			aCurve.add(aPoint);
-			anIndex ++;
-		}
-
-		itsROCCurve = new ROCCurve(aCurve);
-		jScrollPaneCenter.setViewportView(itsROCCurve);
-		setIconImage(MiningWindow.ICON);
-		pack();
+		setLocation(100, 100);
+		setSize(400, 400);
+		setVisible(true);
 	}
 
 	private void initComponents()

@@ -77,8 +77,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 	public void Mine(long theBeginTime)
 	{
 		//make subgroup to start with, containing all elements
-		ConditionList aConditions = new ConditionList();
-		Subgroup aStart = new Subgroup(aConditions, 0.0, itsMaximumCoverage, 0, itsResult);
+		Subgroup aStart = new Subgroup(0.0, itsMaximumCoverage, 0, itsResult);
 		BitSet aBitSet = new BitSet(itsMaximumCoverage);
 		aBitSet.set(0,itsMaximumCoverage);
 		aStart.setMembers(aBitSet);
