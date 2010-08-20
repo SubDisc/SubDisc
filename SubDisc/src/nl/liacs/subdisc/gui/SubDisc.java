@@ -7,12 +7,7 @@ public class SubDisc
 {
 	static public void main(String[] args)
 	{
-		new FileHandler(Action.OPEN_FILE);
-
-		if(FileHandler.itsTable != null)
-			new MiningWindow(FileHandler.itsTable).setVisible(true);
-		else
-			new MiningWindow().setVisible(true);
+		new MiningWindow(new FileHandler(Action.OPEN_FILE).getTable()).setVisible(true);
 	}
 
 }

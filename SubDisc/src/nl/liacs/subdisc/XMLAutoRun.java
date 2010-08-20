@@ -1,5 +1,8 @@
 package nl.liacs.subdisc;
 
+import java.io.File;
+
+import nl.liacs.subdisc.FileHandler.Action;
 import nl.liacs.subdisc.XMLDocument.XMLType;
 
 import org.w3c.dom.Document;
@@ -9,23 +12,51 @@ public class XMLAutoRun
 {
 	private Document itsDocument;
 
-	public XMLAutoRun(SearchParameters theSearchParameters, Table theTable)
+	public enum AutoRun { CREATE, ADD }
+
+	public XMLAutoRun(SearchParameters theSearchParameters, Table theTable, AutoRun theFileOption)
 	{
 		if(theSearchParameters == null || theTable == null)
 			return;
 
-		itsDocument = XMLDocument.buildDocument(XMLType.AUTORUN);
+		File aFile = new FileHandler(Action.SAVE).getFile();
+
+		if(aFile == null)
+			return;
+
+		buildDocument(aFile, theSearchParameters, theTable, theFileOption);
+	}
+
+	/**
+	 * TODO move to FileLoaderXML
+	 * Load AutoRun file and create the SearchParameters and Table it describes.
+	 * @param theFile
+	 * @return true iif the file is parsed successfully and all data is set.
+	 */
+	public static boolean loadAutoRunFile(File theFile)
+	{
+		boolean succes = false;
+		return succes;
+	}
+
+	private void buildDocument(File theFile, SearchParameters theSearchParameters, Table theTable, AutoRun theFileOption)
+	{
+		// TODO from  here create new method, should not be in constructor
+		if(theFileOption == AutoRun.CREATE)
+			itsDocument = XMLDocument.buildDocument(XMLType.AUTORUN);
+		else
+			itsDocument = XMLDocument.parseXMLFile(theFile);
+
 		itsDocument.getLastChild().appendChild(buildExperimentElement(theSearchParameters, theTable));
+		XMLDocument.saveDocument(itsDocument, theFile);
 	}
 
 	private Node buildExperimentElement(SearchParameters theSearchParameters, Table theTable)
 	{
 		Node anExperimentNode = itsDocument.createElement("experiment");
-//		Node anExperimentElement = ((Document)theAutoRunNode).createElement("experiment");
 
 		for(XMLNode x : XMLNode.values())
 			x.createNode(anExperimentNode, theSearchParameters, theTable);
-
 
 		return anExperimentNode;
 	}
@@ -79,335 +110,72 @@ public class XMLAutoRun
 		return aSearchParameterArray;
 	}
 */
-	/*
-	 * 		String[] aSearchParameterArray = new String[28];
-		TargetConcept aTargetConcept = getTargetConcept();
 
-		aSearchParameterArray[0] = "TargetConcept: ";
-		aSearchParameterArray[1] = String.valueOf(aTargetConcept.getNrTargetAttributes());
-		aSearchParameterArray[2] = aTargetConcept.getTargetType().name();
-
-		Attribute aPrimaryTarget = aTargetConcept.getPrimaryTarget();
-		aSearchParameterArray[3] = String.valueOf(aPrimaryTarget.getIndex());
-		aSearchParameterArray[4] = aPrimaryTarget.getName();
-		aSearchParameterArray[5] = aPrimaryTarget.getShort();
-		aSearchParameterArray[6] = aPrimaryTarget.getType().name();
+	/**
+	 * TODO for PrimaryTarget/SecodaryTarget(s) the index, name, short and type
+	 * can be taken from the table, no need to include them as Nodes.
+	 * TODO Make a Node for MRML?
+	 * TODO Make a Node for TARGET_CONCEPT
+	 * TODO Make a Node for SEARCH_PARAMETERS
+	 * TODO Make a Node for the whole table. --- 
+	 * 
+	 * XMLNode lists all items that will go into the autorun.xml. It contains;
+	 * 1. all searchParameters
+	 * 2. an XML version of the original Table
 	 */
 	private enum XMLNode
 	{
-		TARGET_CONCEPT
-		{
-			@Override
-			public String getValueFromData(theSearchParameters, theTable)
-			{
-				return "";
-			}
-
-			@Override
-			public void setValueFromFile(SearchParameters theSearchParameter, String theValue)
-			{
-			}
-		},
-		NR_TARGET_ATTRIBUTES
-		{
-			@Override
-			public String getValueFromData()
-			{
-				return String.valueOf(itsSearchParameters. TargetConcept.getNrTargetAttributes());
-			}
-
-			@Override
-			public void setValueFromFile(SearchParameters theSearchParameter, String theValue)
-			{
-			}
-		},
-		TARGET_TYPE_NAME
-		{
-			@Override
-			public String getValueFromData() {}
-
-			@Override
-			public void setValueFromFile(SearchParameters theSearchParameter, String theValue)
-			{
-			}
-		},
-		PRIMARY_TARGET
-		{
-			@Override
-			public String getValueFromData() {}
-
-			@Override
-			public void setValueFromFile(SearchParameters theSearchParameter, String theValue)
-			{
-			}
-		},
-		PRIMARY_TARGET_INDEX
-		{
-			@Override
-			public String getValueFromData() {}
-
-			@Override
-			public void setValueFromFile(SearchParameters theSearchParameter, String theValue)
-			{
-			}
-		},
-		PRIMARY_TARGET_NAME
-		{
-			@Override
-			public String getValueFromData() {}
-
-			@Override
-			public void setValueFromFile(SearchParameters theSearchParameter, String theValue)
-			{
-			}
-		},
-		PRIMARY_TARGET_SHORT
-		{
-			@Override
-			public String getValueFromData() {}
-
-			@Override
-			public void setValueFromFile(SearchParameters theSearchParameter, String theValue)
-			{
-			}
-		},
-		PRIMARY_TARGET_TYPE
-		{
-			@Override
-			public String getValueFromData() {}
-
-			@Override
-			public void setValueFromFile(SearchParameters theSearchParameter, String theValue)
-			{
-			}
-		},
-		TARGET_VALUE
-		{
-			@Override
-			public String getValueFromData() {}
-
-			@Override
-			public void setValueFromFile(SearchParameters theSearchParameter, String theValue)
-			{
-			}
-		},
-		SECONDARY_TARGET
-		{
-			@Override
-			public String getValueFromData() {}
-
-			@Override
-			public void setValueFromFile(SearchParameters theSearchParameter, String theValue)
-			{
-			}
-		},
-		SECONDARY_TARGET_INDEX
-		{
-			@Override
-			public String getValueFromData() {}
-
-			@Override
-			public void setValueFromFile(SearchParameters theSearchParameter, String theValue)
-			{
-			}
-		},
-		SECONDARY_TARGET_NAME
-		{
-			@Override
-			public String getValueFromData() {}
-
-			@Override
-			public void setValueFromFile(SearchParameters theSearchParameter, String theValue)
-			{
-			}
-		},
-		SECONDARY_TARGET_SHORT
-		{
-			@Override
-			public String getValueFromData() {}
-
-			@Override
-			public void setValueFromFile(SearchParameters theSearchParameter, String theValue)
-			{
-			}
-		},
-		SECONDARY_TARGET_TYPE
-		{
-			@Override
-			public String getValueFromData() {}
-
-			@Override
-			public void setValueFromFile(SearchParameters theSearchParameter, String theValue)
-			{
-			}
-		},
-		SECONDARY_TARGETS
-		{
-			@Override
-			public String getValueFromData() {}
-
-			@Override
-			public void setValueFromFile(SearchParameters theSearchParameter, String theValue)
-			{
-			}
-		},
-		QUALITY_MEASURE
-		{
-			@Override
-			public String getValueFromData() {}
-
-			@Override
-			public void setValueFromFile(SearchParameters theSearchParameter, String theValue)
-			{
-			}
-		},
-		QUALITY_MEASURE_MINIMUM
-		{
-			@Override
-			public String getValueFromData() {}
-
-			@Override
-			public void setValueFromFile(SearchParameters theSearchParameter, String theValue)
-			{
-			}
-		},
-		SEARCH_DEPTH
-		{
-			@Override
-			public String getValueFromData() {}
-
-			@Override
-			public void setValueFromFile(SearchParameters theSearchParameter, String theValue)
-			{
-			}
-		},
-		MINIMUM_SEARCH_DEPTH
-		{
-			@Override
-			public String getValueFromData() {}
-
-			@Override
-			public void setValueFromFile(SearchParameters theSearchParameter, String theValue)
-			{
-			}
-		},
-		MAXIMUM_SEARCH_DEPTH
-		{
-			@Override
-			public String getValueFromData() {}
-
-			@Override
-			public void setValueFromFile(SearchParameters theSearchParameter, String theValue)
-			{
-			}
-		},
-		MAXIMUM_NR_SUBGROUPS
-		{
-			@Override
-			public String getValueFromData() {}
-
-			@Override
-			public void setValueFromFile(SearchParameters theSearchParameter, String theValue)
-			{
-			}
-		},
-		MAXIMUM_TIME
-		{
-			@Override
-			public String getValueFromData() {}
-
-			@Override
-			public void setValueFromFile(SearchParameters theSearchParameter, String theValue)
-			{
-			}
-		},
-		SEACRH_STRATEGY
-		{
-			@Override
-			public String getValueFromData() {}
-
-			@Override
-			public void setValueFromFile(SearchParameters theSearchParameter, String theValue)
-			{
-			}
-		},
-		SEARCH_STRATEGY_WIDTH
-		{
-			@Override
-			public String getValueFromData() {}
-
-			@Override
-			public void setValueFromFile(SearchParameters theSearchParameter, String theValue)
-			{
-			}
-		},
-		NUMERIC_STRATEGY
-		{
-			@Override
-			public String getValueFromData() {}
-
-			@Override
-			public void setValueFromFile(SearchParameters theSearchParameter, String theValue)
-			{
-			}
-		},
-		NR_SPLITPOINTS
-		{
-			@Override
-			public String getValueFromData() {}
-
-			@Override
-			public void setValueFromFile(SearchParameters theSearchParameter, String theValue)
-			{
-			}
-		},
-		ALPHA
-		{
-			@Override
-			public String getValueFromData() {}
-
-			@Override
-			public void setValueFromFile(SearchParameters theSearchParameter, String theValue)
-			{
-			}
-		},
-		BETA
-		{
-			@Override
-			public String getValueFromData() {}
-
-			@Override
-			public void setValueFromFile(SearchParameters theSearchParameter, String theValue)
-			{
-			}
-		},
-		POST_PROCESSING_COUNT
-		{
-			@Override
-			public String getValueFromData() {}
-
-			@Override
-			public void setValueFromFile(SearchParameters theSearchParameter, String theValue)
-			{
-			}
-		},
-		MAXIMUM_POST_PROCESSING_COUNT
-		{
-			@Override
-			public String getValueFromData(SearchParameters theSearchParameter, String theValue) {}
-
-			@Override
-			public void setValueFromFile(SearchParameters theSearchParameter, String theValue)
-			{
-			}
-		};
-
-		abstract String getValueFromData(SearchParameters theSearchParameters, Table theTable);
-		abstract void setValueFromFile(SearchParameters theSearchParameter, String theValue);
+		TARGET_CONCEPT, SEARCH_PARAMETERS, TABLE;
 
 		public void createNode(Node theExperimentNode, SearchParameters theSearchParameters, Table theTable)
 		{
-			theExperimentNode.appendChild(theExperimentNode.getOwnerDocument().createElement(toString())).setTextContent(getValueFromData(theSearchParameters, theTable));
+			if(this == TARGET_CONCEPT)
+				createTargetConceptNode(theExperimentNode, theSearchParameters.getTargetConcept());
+			else if(this == SEARCH_PARAMETERS)
+				createSearchParametersNode(theExperimentNode, theSearchParameters);
+			else if(this == TABLE)
+				createTableNode(theExperimentNode, theTable);
+/*
+			else
+				theExperimentNode.appendChild(theExperimentNode
+												.getOwnerDocument()
+												.createElement(toString().toLowerCase()))
+												.setTextContent(getValueFromData(theSearchParameters, theTable));
+*/
+		}
+
+		private Node createTargetConceptNode(Node theExperimentNode, TargetConcept theTargetConcept)
+		{
+			Document d = theExperimentNode.getOwnerDocument();
+			Node aTargetConceptNode = theExperimentNode.appendChild(d.createElement("target_concept"));
+
+			for(XMLNodeTargetConcept x : XMLNodeTargetConcept.values())
+				aTargetConceptNode.appendChild(d.createElement(x.toString().toLowerCase()))
+												.setTextContent(x.getValueFromData(theTargetConcept));
+
+			return aTargetConceptNode;
+		}
+
+		private Node createSearchParametersNode(Node theExperimentNode, SearchParameters theSearchParameters)
+		{
+			Document d = theExperimentNode.getOwnerDocument();
+			Node aSearchParametersNode = theExperimentNode.appendChild(d.createElement("search_parameters"));
+
+			for(XMLNodeSearchParameter s : XMLNodeSearchParameter.values())
+				aSearchParametersNode.appendChild(d.createElement(s.toString().toLowerCase()))
+													.setTextContent(s.getValueFromData(theSearchParameters));
+
+			return aSearchParametersNode;
+		}
+
+		private Node createTableNode(Node theExperimentNode, Table theTable)
+		{
+			Document d = theExperimentNode.getOwnerDocument();
+			Node aTableNode = theExperimentNode.appendChild(d.createElement("table"));
+
+			// create a createXML method in Table/Column
+
+			return aTableNode;
 		}
 	}	
 }

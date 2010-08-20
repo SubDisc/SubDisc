@@ -95,7 +95,7 @@ public class XMLDocument
 			t.setOutputProperty("doctype-system", theXMLDoc.getDoctype().getSystemId());
 			t.setOutputProperty("indent", "yes");
 			t.setOutputProperty("{http://xml.apache.org/xalan}indent-amount", "2");
- 			t.transform(new DOMSource(theXMLDoc), new StreamResult(aFileOutputStream));
+			t.transform(new DOMSource(theXMLDoc), new StreamResult(aFileOutputStream));
 		}
 		catch (Exception e)
 		{

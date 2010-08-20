@@ -51,6 +51,16 @@ public enum TargetConcept
 				default : return false;
 			}
 		}
+
+		public boolean hasSecondaryTarget()
+		{
+			switch(this)
+			{
+				case DOUBLE_REGRESSION :
+				case DOUBLE_CORRELATION : return true;
+				default : return false;
+			}
+		}
 	}
 
 	// member methods

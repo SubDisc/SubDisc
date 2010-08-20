@@ -65,9 +65,11 @@ import nl.liacs.subdisc.SubgroupDiscovery;
 import nl.liacs.subdisc.SubgroupSet;
 import nl.liacs.subdisc.Table;
 import nl.liacs.subdisc.TargetConcept;
+import nl.liacs.subdisc.XMLAutoRun;
 import nl.liacs.subdisc.FileHandler.Action;
 import nl.liacs.subdisc.SearchParameters.NumericStrategy;
 import nl.liacs.subdisc.TargetConcept.TargetType;
+import nl.liacs.subdisc.XMLAutoRun.AutoRun;
 
 public class MiningWindow extends JFrame
 {
@@ -95,9 +97,14 @@ public class MiningWindow extends JFrame
 
 	public MiningWindow(Table theTable)
 	{
-		itsTable = theTable; // TODO check successful loading of Table
 		initMiningWindow();
-		initGuiComponents();
+		if(theTable == null)
+			enableTableDependentComponents(false);
+		else
+		{
+			itsTable = theTable;
+			initGuiComponents();
+		}
 	}
 
 	private void initMiningWindow()
@@ -165,9 +172,9 @@ public class MiningWindow extends JFrame
 		jMenuItemAttributeTypeChange = new JMenuItem();
 		jSeparator2 = new JSeparator();
 		jMenuItemSubgroupDiscovery = new JMenuItem();
-		jMenuItemCreateAutorunFile = new JMenuItem();
-		jMenuItemAddToAutorunFile = new JMenuItem();
-		jMenuItemLoadAutorunFile = new JMenuItem();
+		jMenuItemCreateAutoRunFile = new JMenuItem();
+		jMenuItemAddToAutoRunFile = new JMenuItem();
+//		jMenuItemLoadAutoRunFile = new JMenuItem();
 		jSeparator3 = new JSeparator();
 		jMenuItemExit = new JMenuItem();
 		jMenuAbout = new JMenu();
@@ -327,39 +334,39 @@ public class MiningWindow extends JFrame
 		});
 		jMenuFile.add(jMenuItemSubgroupDiscovery);
 
-		jMenuItemCreateAutorunFile.setFont(DEFAULT_FONT);
-		jMenuItemCreateAutorunFile.setText("Create Autorun File");
-//		jMenuItemCreateAutorunFile.setMnemonic();
-//		jMenuItemCreateAutorunFile.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A, InputEvent.CTRL_MASK));
-		jMenuItemCreateAutorunFile.addActionListener(new ActionListener() {
+		jMenuItemCreateAutoRunFile.setFont(DEFAULT_FONT);
+		jMenuItemCreateAutoRunFile.setText("Create Autorun File");
+//		jMenuItemCreateAutoRunFile.setMnemonic();
+//		jMenuItemCreateAutoRunFile.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A, InputEvent.CTRL_MASK));
+		jMenuItemCreateAutoRunFile.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
-				jMenuItemCreateAutorunFileActionPerformed(evt);
+				jMenuItemAutoRunFileActionPerformed(AutoRun.CREATE);
 			}
 		});
-		jMenuFile.add(jMenuItemCreateAutorunFile);
+		jMenuFile.add(jMenuItemCreateAutoRunFile);
 
-		jMenuItemAddToAutorunFile.setFont(DEFAULT_FONT);
-		jMenuItemAddToAutorunFile.setText("Add to Autorun File");
-//		jMenuItemAddToAutorunFile.setMnemonic();
-//		jMenuItemAddToAutorunFile.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A, InputEvent.CTRL_MASK));
-		jMenuItemAddToAutorunFile.addActionListener(new ActionListener() {
+		jMenuItemAddToAutoRunFile.setFont(DEFAULT_FONT);
+		jMenuItemAddToAutoRunFile.setText("Add to Autorun File");
+//		jMenuItemAddToAutoRunFile.setMnemonic();
+//		jMenuItemAddToAutoRunFile.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A, InputEvent.CTRL_MASK));
+		jMenuItemAddToAutoRunFile.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
-				jMenuItemAddToAutorunFileActionPerformed(evt);
+				jMenuItemAutoRunFileActionPerformed(AutoRun.ADD);
 			}
 		});
-		jMenuFile.add(jMenuItemAddToAutorunFile);
-
-		jMenuItemLoadAutorunFile.setFont(DEFAULT_FONT);
-		jMenuItemLoadAutorunFile.setText("Load Autorun File");
-//		jMenuItemLoadAutorunFile.setMnemonic();
-//		jMenuItemLoadAutorunFile.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A, InputEvent.CTRL_MASK));
-		jMenuItemLoadAutorunFile.addActionListener(new ActionListener() {
+		jMenuFile.add(jMenuItemAddToAutoRunFile);
+/*
+		jMenuItemLoadAutoRunFile.setFont(DEFAULT_FONT);
+		jMenuItemLoadAutoRunFile.setText("Load Autorun File");
+//		jMenuItemLoadAutoRunFile.setMnemonic();
+//		jMenuItemLoadAutoRunFile.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A, InputEvent.CTRL_MASK));
+		jMenuItemLoadAutoRunFile.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
-				jMenuItemLoadAutorunFileActionPerformed(evt);
+				jMenuItemAutoRunFileActionPerformed(AutoRun.LOAD);
 			}
 		});
-		jMenuFile.add(jMenuItemLoadAutorunFile);
-
+		jMenuFile.add(jMenuItemLoadAutoRunFile);
+*/
 		jMenuFile.add(jSeparator3);
 
 		jMenuItemExit.setFont(DEFAULT_FONT);
@@ -772,26 +779,23 @@ public class MiningWindow extends JFrame
 	/* MENU ITEMS */
 	private void jMenuItemOpenFileActionPerformed(ActionEvent evt)
 	{
-		new FileHandler(Action.OPEN_FILE);
-		itsTable = FileHandler.itsTable;
-		initGuiComponents();
+		Table aTable = new FileHandler(Action.OPEN_FILE).getTable();
+		if(aTable != null)
+		{
+			itsTable = aTable;
+			initGuiComponents();
+		}
 	}
 
-	private void jMenuItemCreateAutorunFileActionPerformed(ActionEvent evt)
+	private void jMenuItemAutoRunFileActionPerformed(AutoRun theFileOption)
 	{
 		setupSearchParameters();
-		itsSearchParameters.getAllSearchParameters();
+//		if(theFileOption == AutoRun.LOAD)
+//			;
+//		else
+			new XMLAutoRun(itsSearchParameters, itsTable, theFileOption);
 	}
 
-	
-	private void jMenuItemAddToAutorunFileActionPerformed(ActionEvent evt)
-	{
-	}
-	
-	private void jMenuItemLoadAutorunFileActionPerformed(ActionEvent evt)
-	{
-	}
-	
 	private void jMenuItemAboutSubDiscActionPerformed(ActionEvent evt)
 	{
 		// TODO
@@ -1556,9 +1560,9 @@ public class MiningWindow extends JFrame
 	private JMenuItem jMenuItemAttributeTypeChange;
 	private JSeparator jSeparator2;
 	private JMenuItem jMenuItemSubgroupDiscovery;
-	private JMenuItem jMenuItemCreateAutorunFile;
-	private JMenuItem jMenuItemAddToAutorunFile;
-	private JMenuItem jMenuItemLoadAutorunFile;
+	private JMenuItem jMenuItemCreateAutoRunFile;
+	private JMenuItem jMenuItemAddToAutoRunFile;
+//	private JMenuItem jMenuItemLoadAutoRunFile;	//TODO part of jMenuItemOpenFile
 	private JSeparator jSeparator3;
 	private JMenuItem jMenuItemExit;
 	private JMenu jMenuAbout;
