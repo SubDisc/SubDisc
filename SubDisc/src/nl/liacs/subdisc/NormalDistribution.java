@@ -51,26 +51,26 @@ public class NormalDistribution
 	/* calculate error function using Horner's method
 	   fractional error in math formula less than 1.2 * 10 ^ -7.
        although subject to catastrophic cancellation when z in very close to 0 */
-    public double calcErf(double z)
-    {
-        double t = 1.0 / (1.0 + 0.5 * Math.abs(z));
+	public double calcErf(double z)
+	{
+		double t = 1.0 / (1.0 + 0.5 * Math.abs(z));
 
-        double ans = 1 - t * Math.exp( -z*z   -   1.26551223 +
-                                            t * ( 1.00002368 +
-                                            t * ( 0.37409196 +
-                                            t * ( 0.09678418 +
-                                            t * (-0.18628806 +
-                                            t * ( 0.27886807 +
-                                            t * (-1.13520398 +
-                                            t * ( 1.48851587 +
-                                            t * (-0.82215223 +
-                                            t * ( 0.17087277))))))))));
-        if (z >= 0)
-        	return  ans;
-        else
-        	return -ans;
-    }
-    
+		double ans = 1 - t * Math.exp( -z*z   -   1.26551223 +
+										t * ( 1.00002368 +
+											t * ( 0.37409196 +
+												t * ( 0.09678418 +
+													t * (-0.18628806 +
+														t * ( 0.27886807 +
+															t * (-1.13520398 +
+																t * ( 1.48851587 +
+																	t * (-0.82215223 +
+																		t * ( 0.17087277))))))))));
+		if (z >= 0)
+			return  ans;
+		else
+			return -ans;
+	}
+
 	public double getMu() { return itsMu; }
 	public double getSigma() { return itsSigma; }
 	public double getVariance() { return itsSigma * itsSigma; }
