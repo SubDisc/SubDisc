@@ -1,7 +1,15 @@
 package nl.liacs.subdisc;
 
-public class Attribute
+import org.w3c.dom.Node;
+
+/**
+ * Each Column in a Table is identified by its Attribute. Attributes can be used
+ * as PrimaryTarget or SecondaryTarget, but only when the AttributeType of the
+ * Attribute is appropriate for the TargetConcepts' TargetType.
+ */
+public class Attribute implements XMLNodeInterface
 {
+	// when adding/removing members be sure to update addNodeTo() and loadNode()
 	private int itsIndex;
 	private AttributeType itsType;
 	private String itsName;
@@ -56,5 +64,19 @@ public class Attribute
 			}
 		}
 	}
-	
+
+	/**
+	 * Create a XML Node representation of this Attribute.
+	 * @param theParentNode, the Node of which this Node will be a ChildNode.
+	 * @return A Node that contains all the information of this Attribute.
+	 */
+	@Override
+	public void addNodeTo(Node theParentNode)
+	{
+		Node aNode = XMLNode.addNodeTo(theParentNode, "attribute");
+		XMLNode.addNodeTo(aNode, "name", itsName);
+		XMLNode.addNodeTo(aNode, "short", itsShort);
+		XMLNode.addNodeTo(aNode, "type", itsType);
+		XMLNode.addNodeTo(aNode, "itsIndex", itsIndex);
+	}
 }

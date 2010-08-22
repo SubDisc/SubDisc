@@ -2,10 +2,16 @@ package nl.liacs.subdisc;
 
 import nl.liacs.subdisc.TargetConcept.TargetType;
 
-public enum SearchParameters
+import org.w3c.dom.Node;
+
+/**
+ * SearchParameters contains all search parameters for an experiment.
+ */
+public enum SearchParameters implements XMLNodeInterface
 {
 	THE_ONLY_INSTANCE;
 
+	// when adding/removing members be sure to update addNodeTo() and loadNode()
 	private TargetConcept	itsTargetConcept;
 	private int				itsQualityMeasure;
 	private float			itsQualityMeasureMinimum;
@@ -17,7 +23,7 @@ public enum SearchParameters
 	private float			itsMaximumTime;
 
 	private int				itsSearchStrategy;
-	private int				itsSearchWidth;
+	private int				itsSearchStrategyWidth;
 	private NumericStrategy	itsNumericStrategy;
 
 	private int				itsNrSplitPoints;
@@ -104,8 +110,8 @@ public enum SearchParameters
 			itsNumericStrategy = NumericStrategy.NUMERIC_BEST;
 	}
 
-	public void setSearchStrategyWidth(int theWidth)	{ itsSearchWidth = theWidth; }
-	public int getSearchStrategyWidth()		{ return itsSearchWidth; }
+	public void setSearchStrategyWidth(int theWidth)	{ itsSearchStrategyWidth = theWidth; }
+	public int getSearchStrategyWidth()		{ return itsSearchStrategyWidth; }
 	public int getNrSplitPoints()			{ return itsNrSplitPoints; }
 	public void setNrSplitPoints(int theNr)	{ itsNrSplitPoints = theNr; }
 	public float getAlpha()					{ return itsAlpha; }
@@ -116,4 +122,25 @@ public enum SearchParameters
 	public void setPostProcessingCount(int theNr)	{ itsPostProcessingCount = theNr; }
 	public int getMaximumPostProcessingSubgroups()	{ return itsMaximumPostProcessingSubgroups; }
 	public void setMaximumPostProcessingSubgroups(int theNr)	{ itsMaximumPostProcessingSubgroups = theNr; }
+
+	@Override
+	public void addNodeTo(Node theParentNode)
+	{
+		Node aNode = XMLNode.addNodeTo(theParentNode, "search_parameters");
+		XMLNode.addNodeTo(aNode, "quality_measure", getQualityMeasureString());
+		XMLNode.addNodeTo(aNode, "quality_measure_minimum", getQualityMeasureMinimum());
+		XMLNode.addNodeTo(aNode, "search_depth", getSearchDepth());
+		XMLNode.addNodeTo(aNode, "minimum_coverage", getMinimumCoverage());
+		XMLNode.addNodeTo(aNode, "maximum_coverage", getMaximumCoverage());
+		XMLNode.addNodeTo(aNode, "maximum_subgroups", getMaximumSubgroups());
+		XMLNode.addNodeTo(aNode, "maximum_time", getMaximumTime());
+		XMLNode.addNodeTo(aNode, "search_strategy", getSearchStrategyName(getSearchStrategy()));
+		XMLNode.addNodeTo(aNode, "search_strategy_width", getSearchStrategyWidth());
+		XMLNode.addNodeTo(aNode, "numeric_strategy", getNumericStrategy());
+		XMLNode.addNodeTo(aNode, "nr_split_points", getNrSplitPoints());
+		XMLNode.addNodeTo(aNode, "alpha", getAlpha());
+		XMLNode.addNodeTo(aNode, "beta", getBeta());
+		XMLNode.addNodeTo(aNode, "post_processing_count", getPostProcessingCount());
+		XMLNode.addNodeTo(aNode, "maximum_post_processing_subgroups", getMaximumPostProcessingSubgroups());
+	}
 }

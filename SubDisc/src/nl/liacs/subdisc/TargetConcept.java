@@ -1,18 +1,26 @@
 package nl.liacs.subdisc;
 
-import java.util.ArrayList;
+import java.util.List;
 
-public enum TargetConcept
+import org.w3c.dom.Node;
+
+/**
+ * Depending on the TargetType of a TargetConcept, it holds the PrimaryTarget
+ * and/or SecondaryTarget(s). The TargetType indicates what type of search
+ * setting will be used in the experiment.
+ */
+public enum TargetConcept implements XMLNodeInterface
 {
 	THE_ONLY_INSTANCE;
 
+	// when adding/removing members be sure to update addNodeTo() and loadNode()
 	// itsMembers
 	private int			itsNrTargetAttributes = 1;	// always 1 in current code
 	private TargetType	itsTargetType;
 	private Attribute	itsPrimaryTarget;
 	private String		itsTargetValue;
 	private Attribute	itsSecondaryTarget;
-	private ArrayList<Attribute> itsSecondaryTargets;	// better use empty one by default, for-each/null safe
+	private List<Attribute> itsSecondaryTargets;	// better use empty one by default, for-each/null safe
 
 	public enum TargetType
 	{
@@ -24,9 +32,9 @@ public enum TargetConcept
 		MULTI_LABEL("multi-label"),
 		MULTI_BINARY_CLASSIFICATION("multi binary classification");
 
-		public final String text;
+		public final String TEXT;
 
-		private TargetType(String theText) { text = theText; }
+		private TargetType(String theText) { TEXT = theText; }
 
 		public boolean isEMM()
 		{
@@ -71,7 +79,7 @@ public enum TargetConcept
 	{
 		for(TargetType t : TargetType.values())
 		{
-			if(t.text.equalsIgnoreCase(theTargetType))
+			if(t.TEXT.equalsIgnoreCase(theTargetType))
 			{
 				itsTargetType = t;
 				return;
@@ -90,6 +98,35 @@ public enum TargetConcept
 	public boolean isSingleNominal() { return (itsTargetType == TargetType.SINGLE_NOMINAL); }
 //	public boolean isEMM() { return itsTargetType.isEMM(); }
 //	public boolean isImplemented() { return itsTargetType.isImplemented(); }
+
+	/**
+	 * Create a XML Node representation of this TaretConcept.
+	 * @param theParentNode, the Node of which this Node will be a ChildNode.
+	 * @return A Node that contains all the information of this TargetConcept.
+	 */
+	@Override
+	public void addNodeTo(Node theParentNode)
+	{
+		Node aNode = XMLNode.addNodeTo(theParentNode, "target_concept");
+		XMLNode.addNodeTo(aNode, "nr_target_attributes", itsNrTargetAttributes);
+		XMLNode.addNodeTo(aNode, "target_type", itsTargetType);
+		XMLNode.addNodeTo(aNode, "primary_target", itsPrimaryTarget.getName());
+		XMLNode.addNodeTo(aNode, "target_value", itsTargetValue);
+		if(itsSecondaryTarget == null)
+			XMLNode.addNodeTo(aNode, "secondary_target");
+		else
+			XMLNode.addNodeTo(aNode, "secondary_target", itsSecondaryTarget.getName());
+		if(itsSecondaryTargets == null || itsSecondaryTargets.size() == 0)
+			XMLNode.addNodeTo(aNode, "secondary_targets");
+		else
+		{
+			StringBuilder sb = new StringBuilder(itsSecondaryTargets.size() * 10);
+			for(Attribute a : itsSecondaryTargets)
+				sb.append(a.getName() + ",");
+			sb.deleteCharAt(sb.length() - 1);	// removes last comma
+			XMLNode.addNodeTo(aNode, "secondary_targets", sb);
+		}
+	}
 
 /*
 	public static boolean isImplemented(int theTargetType )

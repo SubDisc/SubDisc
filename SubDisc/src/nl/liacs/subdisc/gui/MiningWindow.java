@@ -1392,7 +1392,7 @@ public class MiningWindow extends JFrame
 		removeAllTargetTypeItems();
 		for(TargetType t : TargetType.values())
 			if(t.isImplemented())
-				addTargetTypeItem(t.text);
+				addTargetTypeItem(t.TEXT);
 		itsTargetConcept.setTargetType(getTargetTypeName());	// could use SINGLE_NOMINAL as default in TargetConcept
 //		jComboBoxTargetTypeActionPerformed(null);	// extreme hack to re-populate list, ActionListeners may respond to quickly
 	}

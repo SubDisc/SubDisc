@@ -60,56 +60,6 @@ public class XMLAutoRun
 
 		return anExperimentNode;
 	}
-/*
-	public String[] getAllSearchParameters()
-	{
-		String[] aSearchParameterArray = new String[28];
-		TargetConcept aTargetConcept = getTargetConcept();
-
-		aSearchParameterArray[0] = "TargetConcept: ";
-		aSearchParameterArray[1] = String.valueOf(aTargetConcept.getNrTargetAttributes());
-		aSearchParameterArray[2] = aTargetConcept.getTargetType().name();
-
-		Attribute aPrimaryTarget = aTargetConcept.getPrimaryTarget();
-		aSearchParameterArray[3] = String.valueOf(aPrimaryTarget.getIndex());
-		aSearchParameterArray[4] = aPrimaryTarget.getName();
-		aSearchParameterArray[5] = aPrimaryTarget.getShort();
-		aSearchParameterArray[6] = aPrimaryTarget.getType().name();
-
-		aSearchParameterArray[7] = aTargetConcept.getTargetValue();
-
-		Attribute aSecondaryTarget = aTargetConcept.getSecondaryTarget();	// TODO
-//		aSearchParameterArray[8] = String.valueOf(aSecondaryTarget.getIndex());
-//		aSearchParameterArray[9] = aSecondaryTarget.getName();
-//		aSearchParameterArray[10] = aSecondaryTarget.getShort();
-//		aSearchParameterArray[11] = aSecondaryTarget.getType().name();
-
-//		aTargetConcept.getSecondaryTargets(); 
-		
-		aSearchParameterArray[13] = getQualityMeasureString();
-		aSearchParameterArray[14] = String.valueOf(getQualityMeasureMinimum());
-
-		aSearchParameterArray[15] = String.valueOf(getSearchDepth());
-		aSearchParameterArray[16] = String.valueOf(getMinimumCoverage());
-		aSearchParameterArray[17] = String.valueOf(getMaximumCoverage());
-		aSearchParameterArray[18] = String.valueOf(getMaximumSubgroups());
-		aSearchParameterArray[19] = String.valueOf(getMaximumTime());
-
-		aSearchParameterArray[20] = getSearchStrategyName(getSearchStrategy());
-		aSearchParameterArray[21] = String.valueOf(getSearchStrategyWidth());
-		aSearchParameterArray[22] = getNumericStrategy().name();
-
-		aSearchParameterArray[23] = String.valueOf(getNrSplitPoints());
-		aSearchParameterArray[24] = String.valueOf(getAlpha());
-		aSearchParameterArray[25] = String.valueOf(getBeta());
-		aSearchParameterArray[26] = String.valueOf(getPostProcessingCount());
-		aSearchParameterArray[27] = String.valueOf(getMaximumPostProcessingSubgroups());
-
-		for(String s : aSearchParameterArray)
-			System.out.println(s);
-		return aSearchParameterArray;
-	}
-*/
 
 	/**
 	 * TODO for PrimaryTarget/SecodaryTarget(s) the index, name, short and type
@@ -144,35 +94,24 @@ public class XMLAutoRun
 */
 		}
 
-		private Node createTargetConceptNode(Node theExperimentNode, TargetConcept theTargetConcept)
+		private void createTargetConceptNode(Node theExperimentNode, TargetConcept theTargetConcept)
 		{
-			Document d = theExperimentNode.getOwnerDocument();
-			Node aTargetConceptNode = theExperimentNode.appendChild(d.createElement("target_concept"));
-
-			for(XMLNodeTargetConcept x : XMLNodeTargetConcept.values())
-				aTargetConceptNode.appendChild(d.createElement(x.toString().toLowerCase()))
-												.setTextContent(x.getValueFromData(theTargetConcept));
-
-			return aTargetConceptNode;
+			theTargetConcept.addNodeTo(theExperimentNode);
 		}
 
-		private Node createSearchParametersNode(Node theExperimentNode, SearchParameters theSearchParameters)
+		private void createSearchParametersNode(Node theExperimentNode, SearchParameters theSearchParameters)
 		{
-			Document d = theExperimentNode.getOwnerDocument();
-			Node aSearchParametersNode = theExperimentNode.appendChild(d.createElement("search_parameters"));
-
-			for(XMLNodeSearchParameter s : XMLNodeSearchParameter.values())
-				aSearchParametersNode.appendChild(d.createElement(s.toString().toLowerCase()))
-													.setTextContent(s.getValueFromData(theSearchParameters));
-
-			return aSearchParametersNode;
+			theSearchParameters.addNodeTo(theExperimentNode);
 		}
 
 		private Node createTableNode(Node theExperimentNode, Table theTable)
 		{
-			Document d = theExperimentNode.getOwnerDocument();
-			Node aTableNode = theExperimentNode.appendChild(d.createElement("table"));
+			Node aTableNode = theExperimentNode.appendChild(theExperimentNode
+															.getOwnerDocument()
+															.createElement("table"));
 
+			for(Column c : theTable.getColumns())
+				c.addNodeTo(aTableNode);
 			// create a createXML method in Table/Column
 
 			return aTableNode;

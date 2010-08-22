@@ -1,6 +1,5 @@
 package nl.liacs.subdisc;
 
-import java.awt.List;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
@@ -8,9 +7,16 @@ import java.util.TreeSet;
 
 import nl.liacs.subdisc.Attribute.AttributeType;
 
-public class Column
+import org.w3c.dom.Node;
+
+/**
+ * A Column contains all data from a column read from a file or database. Its
+ * members store some of the important characteristics of a Column. A Column is
+ * identified by its Attribute.
+ */
+public class Column implements XMLNodeInterface
 {
-//	private AttributeType itsType; //types in Attribute
+	// when adding/removing members be sure to update addNodeTo() and loadNode()
 	private Attribute itsAttribute;
 	private ArrayList<Float> itsFloats;
 	private ArrayList<String> itsNominals;
@@ -183,6 +189,53 @@ public class Column
 				}
 			}
 //			System.out.println("set: " + i);
+		}
+	}
+
+	/**
+	 * TODO change representation of Row as <row>a,b,c,..z</row>
+	 * TODO use indexes for column/row <row nr=1>
+	 * Create a XML Node representation of this Column.
+	 * Note: the missing values are included as a ChildNode, but the Row Node
+	 * may not contain the "?" values. Instead it contains the value that is set
+	 * by default or by the user. Default values for the AttributeTypes are:
+	 * 0 for NUMERIC/ORDINAL, 0 for BINARY (indicating false) and "" for NOMINAL
+	 * (the empty string).
+	 * @param theParentNode, the Node of which this Node will be a ChildNode.
+	 * @return A Node that contains all the information of this column.
+	 */
+	@Override
+	public void addNodeTo(Node theParentNode)
+	{
+		Node aNode = XMLNode.addNodeTo(theParentNode, "column");
+		XMLNode.addNodeTo(aNode, "min", itsMin);
+		XMLNode.addNodeTo(aNode, "max", itsMax);
+		XMLNode.addNodeTo(aNode, "enabled", isEnabled);
+
+		if(itsMissing.cardinality() > 0)
+		{
+			StringBuilder aMissing = new StringBuilder(itsSize);
+			for(int i = itsMissing.nextSetBit(0); i >= 0; i = itsMissing.nextSetBit(i + 1))
+				aMissing.append(i + ",");
+			aMissing.deleteCharAt(aMissing.length() - 1);	// removes last comma
+			XMLNode.addNodeTo(aNode, "min", aMissing);
+		}
+		else
+			XMLNode.addNodeTo(aNode, "missing");
+
+		switch(itsAttribute.getType())
+		{
+			case NOMINAL :	for(String s : itsNominals)
+								XMLNode.addNodeTo(aNode, "row", s);
+							break;
+			case NUMERIC :
+			case ORDINAL :	for(Float f : itsFloats)
+								XMLNode.addNodeTo(aNode, "row", f);
+							break;
+			case BINARY :	for(int i = 0, j = itsSize; i < j; ++i)
+								XMLNode.addNodeTo(aNode, "row", getBinary(i) ? "1" : "0");
+							break;
+			default		:	break;
 		}
 	}
 }
