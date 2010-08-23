@@ -208,6 +208,7 @@ public class Column implements XMLNodeInterface
 	public void addNodeTo(Node theParentNode)
 	{
 		Node aNode = XMLNode.addNodeTo(theParentNode, "column");
+		itsAttribute.addNodeTo(aNode);
 		XMLNode.addNodeTo(aNode, "min", itsMin);
 		XMLNode.addNodeTo(aNode, "max", itsMax);
 		XMLNode.addNodeTo(aNode, "enabled", isEnabled);

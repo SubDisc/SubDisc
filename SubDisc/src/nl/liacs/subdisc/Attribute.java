@@ -77,6 +77,6 @@ public class Attribute implements XMLNodeInterface
 		XMLNode.addNodeTo(aNode, "name", itsName);
 		XMLNode.addNodeTo(aNode, "short", itsShort);
 		XMLNode.addNodeTo(aNode, "type", itsType);
-		XMLNode.addNodeTo(aNode, "itsIndex", itsIndex);
+		XMLNode.addNodeTo(aNode, "index", itsIndex);
 	}
 }

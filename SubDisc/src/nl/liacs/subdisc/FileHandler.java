@@ -43,20 +43,11 @@ public class FileHandler extends JFrame
 		String aFileName = itsFile.getName().toLowerCase();
 
 		if(aFileName.endsWith(".txt"))
-		{
-			try
-			{
-				itsTable = new FileLoaderTXT().loadFile(itsFile);
-			}
-			catch (Exception e)
-			{
-				e.printStackTrace();
-			}
-		}
+				itsTable = new FileLoaderTXT(itsFile).getTable();
 		else if(aFileName.endsWith(".arff"))
-			itsTable = new FileLoaderARFF().loadFile(itsFile);
+			itsTable = new FileLoaderARFF(itsFile).getTable();
 		else if(aFileName.endsWith(".xml"))
-			;//				itsTable = new FileLoaderXML(aFile);
+			itsTable = new FileLoaderXML(itsFile).getTable();
 
 //			itsTable.print();
 	}

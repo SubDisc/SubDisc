@@ -14,7 +14,7 @@ import nl.liacs.subdisc.Attribute.AttributeType;
 
 public class FileLoaderARFF implements FileLoaderInterface
 {
-	private Table itsTable;
+	private Table itsTable = null;
 	private int itsNrDataRows = 0;
 	private ArrayList<NominalAttribute> itsNominalAttributes = new ArrayList<NominalAttribute>();	// used to check data declarations
 	public static  ArrayList<String> BOOLEAN_NEGATIVES = new ArrayList<String>(Arrays.asList(new String[] { "0", "false", "F", "no" }));
@@ -47,10 +47,17 @@ public class FileLoaderARFF implements FileLoaderInterface
 		}
 	}
 
+	public FileLoaderARFF(File theFile)
+	{
+		if(theFile != null && theFile.exists())
+			loadFile(theFile);
+		else
+			;	// new ErrorDialog(e, ErrorDialog.noSuchFileError);
+	}
+
 	// TODO multiple '@relation' and '@data' declarations should throw error
 	// TODO rewrite parser, use keyword check on each line
-	@Override
-	public Table loadFile(File theFile)
+	private void loadFile(File theFile)
 	{
 		BufferedReader aReader = null;
 
@@ -134,9 +141,19 @@ public class FileLoaderARFF implements FileLoaderInterface
 			// criticalError(e);
 			e.printStackTrace();
 		}
-
+		finally
+		{
+			try
+			{
+				if (aReader != null)
+					aReader.close();
+			}
+			catch (IOException e)
+			{
+				e.printStackTrace();
+			}
+		}
 		itsTable.update();
-		return itsTable;
 	}
 /*
 	private static boolean prematureEOF(File theFile, String theLine, String theSectionToFind)
@@ -330,5 +347,10 @@ public class FileLoaderARFF implements FileLoaderInterface
 	private static void criticalError()
 	{
 		Log.logCommandLine("ERROR");
+	}
+
+	public Table getTable()
+	{
+		return itsTable;
 	}
 }

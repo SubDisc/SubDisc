@@ -18,6 +18,8 @@ import javax.xml.transform.stream.StreamResult;
 
 import org.w3c.dom.DOMImplementation;
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
 
 public class XMLDocument
 {
@@ -75,12 +77,17 @@ public class XMLDocument
 			builder.setErrorHandler(XMLErrorHandler.THE_ONLY_INSTANCE);
 			builder.setEntityResolver(new DTDResolver());
 			aDocument = builder.parse(theXMLFile);
+
+			NodeList aNodeList = aDocument.getLastChild().getChildNodes();
+			int aLength = aNodeList.getLength();
+			for(int i = 0; i < aLength; ++i)
+				((Element)aNodeList.item(i)).setAttribute("id", String.valueOf(i));
 		}
 		catch (Exception e)
 		{
+			e.printStackTrace();
 //			new ErrorDialog(e, ErrorDialog.parsingError);
 		}
-
 		return aDocument;
 	}
 
@@ -99,6 +106,7 @@ public class XMLDocument
 		}
 		catch (Exception e)
 		{
+			e.printStackTrace();
 //			new ErrorDialog(e, ErrorDialog.writeError);
 		}
 		finally

@@ -6,7 +6,9 @@ import nl.liacs.subdisc.FileHandler.Action;
 import nl.liacs.subdisc.XMLDocument.XMLType;
 
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 public class XMLAutoRun
 {
@@ -47,13 +49,31 @@ public class XMLAutoRun
 		else
 			itsDocument = XMLDocument.parseXMLFile(theFile);
 
-		itsDocument.getLastChild().appendChild(buildExperimentElement(theSearchParameters, theTable));
+		if(itsDocument == null)
+			return;	// TODO error message in XMLDocument
+
+		Node autorun = itsDocument.getLastChild();
+		autorun.appendChild(buildExperimentElement(theSearchParameters, theTable));
+
+		// do this only after trying to insert new node
+		((Element) autorun).setAttribute("nr_experiments",
+											String.valueOf(autorun.getChildNodes().getLength()));
+
 		XMLDocument.saveDocument(itsDocument, theFile);
 	}
 
 	private Node buildExperimentElement(SearchParameters theSearchParameters, Table theTable)
 	{
+		// reset all experiment ids, avoids trouble when the autorun.xml file is
+		// edited by hand and experiments are added/removed.
+		NodeList aNodeList = itsDocument.getLastChild().getChildNodes();
+		int aLength = aNodeList.getLength();
+		for(int i = 0; i < aLength; ++i)
+			((Element)aNodeList.item(i)).setAttribute("id", String.valueOf(i));
+
 		Node anExperimentNode = itsDocument.createElement("experiment");
+		((Element) anExperimentNode).setAttribute("id", String.valueOf(aLength));
+//		((Element) anExperimentNode).setIdAttribute("id", true);
 
 		for(XMLNode x : XMLNode.values())
 			x.createNode(anExperimentNode, theSearchParameters, theTable);

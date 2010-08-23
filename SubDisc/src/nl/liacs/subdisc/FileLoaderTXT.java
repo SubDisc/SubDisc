@@ -1,50 +1,76 @@
-/**
- * TODO Needs better trim()
- */
 package nl.liacs.subdisc;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.io.IOException;
 import java.util.BitSet;
 
 import nl.liacs.subdisc.Attribute.AttributeType;
 
 public class FileLoaderTXT implements FileLoaderInterface
 {
-	private Table itsTable;
+	private Table itsTable = null;
 	private String itsSeparator = FileLoaderInterface.DEFAULT_SEPARATOR;
 
-	@Override
-	public Table loadFile(File theFile) throws Exception
+	public FileLoaderTXT(File theFile)
+	{
+		if(theFile != null && theFile.exists())
+			loadFile(theFile);
+		else
+			;	// new ErrorDialog(e, ErrorDialog.noSuchFileError);
+	}
+
+	private Table loadFile(File theFile)
 	{
 		if(checkFormatAndType(theFile))
 		{
 			int aNrColumns = itsTable.getNrColumns();
+			BufferedReader aReader = null;
 
-			BufferedReader aReader = new BufferedReader(new FileReader(theFile));
-			String aLine = aReader.readLine(); //skip header
-
-			while ((aLine = aReader.readLine()) != null)
+			try
 			{
-				String[] anImportRow = aLine.split(itsSeparator,-1);
-				//read fields
-				for (int i = 0; i < aNrColumns; i++)
+
+				aReader = new BufferedReader(new FileReader(theFile));
+				String aLine = aReader.readLine(); //skip header
+
+				while ((aLine = aReader.readLine()) != null)
 				{
-					Column aColumn = itsTable.getColumns().get(i);
-					if (itsTable.getAttribute(i).isNominalType()) 		//NOMINAL
-						aColumn.add(anImportRow[i]);
-					else if (itsTable.getAttribute(i).isBinaryType()) 	//BINARY
-						aColumn.add(anImportRow[i].equals("1"));
-					else 											//NUMERIC
-						aColumn.add(Float.parseFloat(anImportRow[i]));
+					String[] anImportRow = aLine.split(itsSeparator,-1);
+					//read fields
+					for (int i = 0; i < aNrColumns; ++i)
+					{
+						Column aColumn = itsTable.getColumns().get(i);
+						if (itsTable.getAttribute(i).isNominalType())		//NOMINAL
+							aColumn.add(anImportRow[i].trim());
+						else if (itsTable.getAttribute(i).isBinaryType())	//BINARY
+							aColumn.add(anImportRow[i].trim().equals("1"));
+						else												//NUMERIC
+							aColumn.add(Float.parseFloat(anImportRow[i]));
+					}
 				}
 
+				itsTable.update();
+				Log.logCommandLine("File loaded: " + aNrColumns + " columns, " + itsTable.getNrRows() + " rows.");
 			}
-
-			aReader.close();
-			itsTable.update();
-			Log.logCommandLine("File loaded: " + aNrColumns + " columns, " + itsTable.getNrRows() + " rows.");
+			catch (IOException e)
+			{
+				e.printStackTrace();
+//				new ErrorDialog(e, ErrorDialog.fileReaderError);
+			}
+			finally
+			{
+				try
+				{
+					if (aReader != null)
+						aReader.close();
+				}
+				catch (IOException e)
+				{
+					e.printStackTrace();
+//					new ErrorDialog(e, ErrorDialog.fileReaderError);
+				}
+			}
 		}
 		else
 		{
@@ -53,68 +79,94 @@ public class FileLoaderTXT implements FileLoaderInterface
 		return itsTable;
 	}
 
-	private boolean checkFormatAndType(File theFile) throws Exception
+	private boolean checkFormatAndType(File theFile)
 	{
-		BufferedReader aReader = new BufferedReader(new FileReader(theFile));
-		boolean isWellFormedFile = true;
-		BitSet aNominals = new BitSet();
-		BitSet aNotZeroOne = new BitSet();
-		String aLine = aReader.readLine(); //first line is header
-		String[] aHeaders = aLine.split(itsSeparator,-1);
-		int aNrColumns = aHeaders.length;
-		int aNrRows = 0;
-
-		while ((aLine = aReader.readLine()) != null)
+		BufferedReader aReader = null;
+		try
 		{
-			aNrRows++;
-
-			String[] aRow = aLine.split(itsSeparator,-1);
-			int aLineNrColumns = aRow.length;
-
-			for (int i=0; i<aLineNrColumns; i++)
+			aReader = new BufferedReader(new FileReader(theFile));
+			boolean isWellFormedFile = true;
+			BitSet aNominals = new BitSet();
+			BitSet aNotZeroOne = new BitSet();
+			String aLine = aReader.readLine(); //first line is header
+			String[] aHeaders = aLine.split(itsSeparator,-1);
+			int aNrColumns = aHeaders.length;
+			int aNrRows = 0;
+	
+			while ((aLine = aReader.readLine()) != null)
 			{
-				try
+				++aNrRows;
+
+				String[] aRow = aLine.split(itsSeparator, -1);
+				int aLineNrColumns = aRow.length;
+
+				for (int i = 0; i < aLineNrColumns; ++i)
 				{
-					Float.parseFloat(aRow[i]);
-					if (!aRow[i].equals("0") && !aRow[i].equals("1")) //numeric could be binary also
-						aNotZeroOne.set(i);
+					try
+					{
+						Float.parseFloat(aRow[i]);
+						if (!aRow[i].equals("0") && !aRow[i].equals("1")) //numeric could be binary also
+							aNotZeroOne.set(i);
+					}
+					catch (NumberFormatException anException) //if not a float
+					{
+						aNominals.set(i);
+					}
 				}
-				catch (NumberFormatException anException) //if not a float
+
+				if( aLineNrColumns != aNrColumns)
 				{
-					aNominals.set(i);
+					Log.logCommandLine("Line " + aNrRows + " has " + aLineNrColumns + " columns, instead of the expected " + aNrColumns);
+					isWellFormedFile = false; //continue checking
 				}
 			}
 
-			if( aLineNrColumns != aNrColumns)
+			//assign types
+			itsTable = new Table(aNrRows, aNrColumns);
+			itsTable.itsName = theFile.getName();
+			for (int i=0; i<aNrColumns; i++)
 			{
-				Log.logCommandLine("Line " + aNrRows + " has " + aLineNrColumns + " columns, instead of the expected " + aNrColumns);
-				isWellFormedFile = false; //continue checking
+				if (aNominals.get(i))
+					itsTable.getColumns().add(new Column(new Attribute(i, aHeaders[i].trim(), null, AttributeType.NOMINAL), aNrRows));
+				else if (aNotZeroOne.get(i))
+					itsTable.getColumns().add(new Column(new Attribute(i, aHeaders[i].trim(), null, AttributeType.NUMERIC), aNrRows));
+				else
+					itsTable.getColumns().add(new Column(new Attribute(i, aHeaders[i].trim(), null, AttributeType.BINARY), aNrRows));
+			}
+			itsTable.update();
+			for (Attribute anAttribute : itsTable.getAttributes())
+				anAttribute.print();
+			return isWellFormedFile;
+		}
+		catch (IOException e)
+		{
+			e.printStackTrace();
+//			new ErrorDialog(e, ErrorDialog.fileReaderError);
+			return false;
+		}
+		finally
+		{
+			try
+			{
+				if (aReader != null)
+					aReader.close();
+			}
+			catch (IOException e)
+			{
+				e.printStackTrace();
+//				new ErrorDialog(e, ErrorDialog.fileReaderError);
 			}
 		}
-		aReader.close();
 
-		//assign types
-		itsTable = new Table(aNrRows, aNrColumns);
-		itsTable.itsName = theFile.getName();
-		for (int i=0; i<aNrColumns; i++)
-		{
-			if (aNominals.get(i))
-				itsTable.getColumns().add(new Column(new Attribute(i, aHeaders[i], null, AttributeType.NOMINAL), aNrRows));
-			else if (aNotZeroOne.get(i))
-				itsTable.getColumns().add(new Column(new Attribute(i, aHeaders[i], null, AttributeType.NUMERIC), aNrRows));
-			else
-				itsTable.getColumns().add(new Column(new Attribute(i, aHeaders[i], null, AttributeType.BINARY), aNrRows));
-		}
-		itsTable.update();
-		for (Attribute anAttribute : itsTable.getAttributes())
-			anAttribute.print();
-		return isWellFormedFile;
 	}
 
-//	@Override
 	public void setSeparator(String theNewSeparator)
 	{
 		itsSeparator = theNewSeparator;
 	}
 
+	public Table getTable()
+	{
+		return itsTable;
+	}
 }
