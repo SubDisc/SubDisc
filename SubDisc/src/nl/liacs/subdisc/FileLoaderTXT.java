@@ -122,9 +122,7 @@ public class FileLoaderTXT implements FileLoaderInterface
 			}
 
 			//assign types
-			itsTable = new Table(aNrRows, aNrColumns);
-			itsTable.setName(FileType.removeExtension(theFile));
-			itsTable.setSource(theFile.getName());
+			itsTable = new Table(theFile.getName(), FileType.removeExtension(theFile), aNrRows, aNrColumns);
 
 			for (int i=0; i<aNrColumns; i++)
 			{

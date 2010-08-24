@@ -14,16 +14,25 @@ public class XMLErrorHandler implements ErrorHandler
 	@Override
 	public void error(SAXParseException e) throws SAXException
 	{
+		logWarning(e);
 	}
 
 	@Override
 	public void fatalError(SAXParseException e) throws SAXException
 	{
+		logWarning(e);
 	}
 
 	@Override
 	public void warning(SAXParseException e) throws SAXException
 	{
+		logWarning(e);
 	}
 
+	private void logWarning(SAXParseException e)
+	{
+		System.out.println(e.getMessage());
+		System.out.println(e.getLineNumber());
+//		e.printStackTrace();
+	}
 }

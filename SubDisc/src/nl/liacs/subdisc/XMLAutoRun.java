@@ -124,17 +124,9 @@ public class XMLAutoRun
 			theSearchParameters.addNodeTo(theExperimentNode);
 		}
 
-		private Node createTableNode(Node theExperimentNode, Table theTable)
+		private void createTableNode(Node theExperimentNode, Table theTable)
 		{
-			Node aTableNode = theExperimentNode.appendChild(theExperimentNode
-															.getOwnerDocument()
-															.createElement("table"));
-
-			for(Column c : theTable.getColumns())
-				c.addNodeTo(aTableNode);
-			// create a createXML method in Table/Column
-
-			return aTableNode;
+			theTable.addNodeTo(theExperimentNode);
 		}
 	}	
 }

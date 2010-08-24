@@ -92,67 +92,111 @@ public class MiningWindow extends JFrame
 	public MiningWindow()
 	{
 		initMiningWindow();
-		enableTableDependentComponents(false);
 	}
 
 	public MiningWindow(Table theTable)
 	{
+		itsTable = theTable;
 		initMiningWindow();
-		if(theTable == null)
-			enableTableDependentComponents(false);
-		else
-		{
-			itsTable = theTable;
-			initGuiComponents();
-		}
+		initGuiComponents();
+	}
+
+	public MiningWindow(Table theTable, SearchParameters theSearchParameters)
+	{
+		itsTable = theTable;
+		itsTable.update();
+		initMiningWindow();
+
+		if(theSearchParameters != null)
+			itsTargetConcept = theSearchParameters.getTargetConcept();
+		itsSearchParameters = theSearchParameters;
+		initGuiComponentsFromFile();
 	}
 
 	private void initMiningWindow()
 	{
 		// Initialise graphical components
 		initComponents();
+		initNeverChangingGuiComponents();
+		enableTableDependentComponents(itsTable != null);
 		setTitle("Subgroup Discovery");
 		// setIconImage(ICON);
 		pack();
 		setSize(700, 600);
+		setVisible(true);
 
 		// Open log/debug files
 		Log.openFileOutputStreams();
 	}
 
+	private void initNeverChangingGuiComponents()
+	{
+		// Add all implemented TargetTypes
+		for(TargetType t : TargetType.values())
+			if(t.isImplemented())
+				jComboBoxTargetType.addItem(t.TEXT);
+
+		// Add all SearchStrategies
+		for(int i = 0; i <= CandidateQueue.LAST_SEARCH_STRATEGY; i++)
+			jComboBoxSearchStrategyType.addItem(SearchParameters.getSearchStrategyName(i));
+
+		// Add all Numeric Strategies
+		for(NumericStrategy n : SearchParameters.NumericStrategy.values())
+			jComboBoxNumeric.addItem(n.TEXT);
+	}
+
 	private void initGuiComponents()
 	{
-		if(itsTable == null)
-			return; // MM avoids crash TODO report unsuccessful loading to user
+		//dataset
+		initGuiComponentsDataSet();
 
-		// set dataset properties
-		jLFieldTargetTable.setText(itsTable.getName());
-		// TODO the following fields need to be updated after data/attribute change
-		itsTotalCount = itsTable.getNrRows();
-		jLFieldNrExamples.setText(String.valueOf(itsTotalCount));
-		jLFieldNrColumns.setText(String.valueOf(itsTable.getNrColumns()));
-		int[] aCounts = itsTable.getTypeCounts();
-		jLFieldNrNominals.setText(String.valueOf(aCounts[0]));
-		jLFieldNrNumerics.setText(String.valueOf(aCounts[1]));
-		jLFieldNrBinaries.setText(String.valueOf(aCounts[2]));
+		// target concept
+//		itsTargetConcept.setTargetType(getTargetTypeName());	// could use SINGLE_NOMINAL as default in TargetConcept
+//		switch(itsTargetConcept.getTargetType())
+//		{
+//			case DOUBLE_CORRELATION :
+//			case DOUBLE_REGRESSION	:
+//			case MULTI_LABEL		: break;
+//			default : jButtonBaseModel.setEnabled(false); break;
+//		}
 
-		setSearchCoverageMaximum("1.0");
-
-		initTargetType();
+		// search conditions
 		setSearchDepthMaximum("1");
+		setSearchCoverageMaximum("1.0");
 		setSubgroupsMaximum("50");
 		setSearchTimeMaximum("1.0");
-		initSearchStrategyItems();
-		setSearchStrategyWidth("100");
-		initNumericStrategy();
-		enableTableDependentComponents(true); // TODO could check if already visible
 
-		switch(itsTargetConcept.getTargetType())
+		// search strategy
+		setSearchStrategyWidth("100");
+	}
+
+	private void initGuiComponentsFromFile()
+	{
+		initGuiComponentsDataSet();
+
+		// TODO disable all ActionListeners while setting values
+
+		// target concept
+		jComboBoxTargetType.setSelectedItem(itsTargetConcept.getTargetType().TEXT);
+		jComboBoxQualityMeasure.setSelectedItem(itsSearchParameters.getQualityMeasureString());
+		jComboBoxTargetAttribute.setSelectedItem(itsTargetConcept.getPrimaryTarget().getName());
+		jTextFieldQualityMeasureMinimum.setText(String.valueOf(itsSearchParameters.getQualityMeasureMinimum()));
+
+	}
+
+	private void initGuiComponentsDataSet()
+	{
+		if(itsTable != null)
 		{
-			case DOUBLE_CORRELATION :
-			case DOUBLE_REGRESSION	:
-			case MULTI_LABEL		: break;
-			default : jButtonBaseModel.setEnabled(false); break;
+			jLFieldTargetTable.setText(itsTable.getTableName());
+			// TODO the following fields need to be updated after data/attribute change
+			itsTotalCount = itsTable.getNrRows();
+			jLFieldNrExamples.setText(String.valueOf(itsTotalCount));
+			jLFieldNrColumns.setText(String.valueOf(itsTable.getNrColumns()));
+			int[] aCounts = itsTable.getTypeCounts();
+			jLFieldNrNominals.setText(String.valueOf(aCounts[0]));
+			jLFieldNrNumerics.setText(String.valueOf(aCounts[1]));
+			jLFieldNrBinaries.setText(String.valueOf(aCounts[2]));
 		}
 	}
 
@@ -763,6 +807,8 @@ public class MiningWindow extends JFrame
 															jMenuItemBrowseTarget,
 															jMenuItemAttributeTypeChange,
 															jMenuItemSubgroupDiscovery,
+															jMenuItemCreateAutoRunFile,
+															jMenuItemAddToAutoRunFile,
 															jButtonDataExplorer,
 															jButtonBrowse,
 															jButtonAttributeTypeChange,
@@ -783,7 +829,7 @@ public class MiningWindow extends JFrame
 		if(aTable != null)
 		{
 			itsTable = aTable;
-			initGuiComponents();
+// TODO			initGuiComponents(false);
 		}
 	}
 
@@ -871,7 +917,8 @@ public class MiningWindow extends JFrame
 			Log.logCommandLine("init");
 			initTargetValueItems();
 		}
-
+		// TODO TEST
+		System.out.println(getTargetAttributeName());
 		// TODO these test could be member functions in TargetType?
 		// has MiscField?
 		boolean hasMiscField = (aTargetType == TargetType.SINGLE_NOMINAL ||
@@ -1185,9 +1232,9 @@ public class MiningWindow extends JFrame
 	private void setupSearchParameters()
 	{
 		initSearchParameters(itsSearchParameters);
-		itsTargetConcept.setTargetType(getTargetTypeName());	// TODO can be removed, set already
+//		itsTargetConcept.setTargetType(getTargetTypeName());	// TODO can be removed, set already
 		initTargetConcept(itsTargetConcept);
-		itsSearchParameters.setTargetConcept(itsTargetConcept);	// TODO can be removed, set already
+//		itsSearchParameters.setTargetConcept(itsTargetConcept);	// TODO can be removed, set already
 	}
 
 	// TODO can do without theSearchParameters, there is only itsSearchParameters
@@ -1386,17 +1433,6 @@ public class MiningWindow extends JFrame
 		setSearchCoverageMinimum(Integer.toString(itsTotalCount / 10));
 	}
 
-	// TODO this is always the same so why remove and add
-	private void initTargetType()
-	{
-		removeAllTargetTypeItems();
-		for(TargetType t : TargetType.values())
-			if(t.isImplemented())
-				addTargetTypeItem(t.TEXT);
-		itsTargetConcept.setTargetType(getTargetTypeName());	// could use SINGLE_NOMINAL as default in TargetConcept
-//		jComboBoxTargetTypeActionPerformed(null);	// extreme hack to re-populate list, ActionListeners may respond to quickly
-	}
-
 	private void initQualityMeasure()
 	{
 		removeAllQualityMeasureItems();
@@ -1411,20 +1447,6 @@ public class MiningWindow extends JFrame
 	{
 		if(getQualityMeasureName() != null)
 			setQualityMeasureMinimumName(QualityMeasure.getMeasureMinimum(getQualityMeasureName(), itsTargetAverage));
-	}
-
-	private void initSearchStrategyItems()
-	{
-		removeAllSearchStrategyItems();
-		for(int i = 0; i <= CandidateQueue.LAST_SEARCH_STRATEGY; i++)
-			addSearchStrategyItem(SearchParameters.getSearchStrategyName(i));
-	}
-
-	private void initNumericStrategy()
-	{
-		removeAllNumericStrategyItems();
-		for(NumericStrategy n : SearchParameters.NumericStrategy.values())
-			addNumericStrategyItem(n.TEXT);
 	}
 
 	/* FIELD METHODS OF SUBDISC COMPONENTS */
@@ -1448,15 +1470,6 @@ public class MiningWindow extends JFrame
 	}
 	private void addQualityMeasureItem(String anItem) { jComboBoxQualityMeasure.addItem(anItem); }
 	private String getQualityMeasureName() { return (String) jComboBoxQualityMeasure.getSelectedItem(); }
-	private void removeAllTargetTypeItems() { if(jComboBoxTargetType.getItemCount() > 0 ) jComboBoxTargetType.removeAllItems(); }	// TODO MM
-	/*private void removeAllTargetTypeItems()
-	{
-		if(jComboBoxTargetType.getItemCount() > 0)
-			for(int i = 0, j = jComboBoxTargetType.getItemCount(); i < j; ++i)
-				jComboBoxTargetType.removeItemAt(i);
-	}	// TODO removeAllItems() does not work
-	*/
-	private void addTargetTypeItem(String anItem) { jComboBoxTargetType.addItem(anItem); }
 	private String getTargetTypeName() { return (String) jComboBoxTargetType.getSelectedItem(); }
 	private void setQualityMeasureMinimumName(String aValue) { jTextFieldQualityMeasureMinimum.setText(aValue); }
 	private Float getQualityMeasureMinimum()
@@ -1526,8 +1539,6 @@ public class MiningWindow extends JFrame
 	}
 
 	// search strategy
-	private void removeAllSearchStrategyItems() { jComboBoxSearchStrategyType.removeAllItems(); }
-	private void addSearchStrategyItem(String anItem) { jComboBoxSearchStrategyType.addItem(anItem); }
 	private String getSearchStrategyName() { return (String) jComboBoxSearchStrategyType.getSelectedItem(); }
 
 	// search width
@@ -1548,8 +1559,6 @@ public class MiningWindow extends JFrame
 
 	// numeric strategy
 	private String getNumericStrategy() { return (String) jComboBoxNumeric.getSelectedItem(); }
-	private void removeAllNumericStrategyItems() { jComboBoxNumeric.removeAllItems(); }
-	private void addNumericStrategyItem(String anItem) { jComboBoxNumeric.addItem(anItem); }
 
 	private JMenuBar jMiningWindowMenuBar;
 	private JMenu jMenuFile;

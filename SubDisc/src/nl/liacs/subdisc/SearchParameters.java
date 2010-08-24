@@ -48,11 +48,10 @@ public class SearchParameters implements XMLNodeInterface
 		}
 	}
 
-	public SearchParameters(Node theTargetConceptNode, Node theSearchParametersNode)
+	public SearchParameters(Node theSearchParametersNode)
 	{
-		if((theTargetConceptNode == null) || (theSearchParametersNode == null))
+		if(theSearchParametersNode == null)
 			return;	// TODO throw warning dialog
-		itsTargetConcept = new TargetConcept(theTargetConceptNode);
 		loadData(theSearchParametersNode);
 	}
 
@@ -169,7 +168,7 @@ public class SearchParameters implements XMLNodeInterface
 			Node aSetting = aChildren.item(i);
 			String aNodeName = aSetting.getNodeName();
 			if("quality_measure".equalsIgnoreCase(aNodeName))
-				itsQualityMeasure = Integer.parseInt(aSetting.getTextContent());
+				itsQualityMeasure = QualityMeasure.getMeasureCode(aSetting.getTextContent());
 			else if("quality_measure_minimum".equalsIgnoreCase(aNodeName))
 				itsQualityMeasureMinimum = Float.parseFloat(aSetting.getTextContent());
 			else if("search_depth".equalsIgnoreCase(aNodeName))

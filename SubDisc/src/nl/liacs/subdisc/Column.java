@@ -7,6 +7,7 @@ import java.util.TreeSet;
 
 import nl.liacs.subdisc.Attribute.AttributeType;
 
+import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
@@ -50,7 +51,7 @@ public class Column implements XMLNodeInterface
 			Node aSetting = aChildren.item(i);
 			String aNodeName = aSetting.getNodeName();
 			if("attribute".equalsIgnoreCase(aNodeName))
-				;//itsAttribute = new Attribute(aSetting);
+				itsAttribute = new Attribute(aSetting);
 			else if("min".equalsIgnoreCase(aNodeName))
 				itsMin = Float.parseFloat(aSetting.getTextContent());
 			else if("max".equalsIgnoreCase(aNodeName))
@@ -59,9 +60,12 @@ public class Column implements XMLNodeInterface
 				isEnabled = Boolean.valueOf(aSetting.getTextContent());
 			else if("missing".equalsIgnoreCase(aNodeName))
 			{
-				itsMissing = new BitSet();
-				for(String s : aSetting.getTextContent().split(",", -1))
-					;//itsMissing.set(bitIndex);
+				String[] aMissing = aSetting.getTextContent().split(",", -1);
+				int aNrMissing = aMissing.length;
+				itsMissing = new BitSet(aNrMissing);
+				for(int k = 0; k < aNrMissing; ++k )
+					if("1".equalsIgnoreCase(aMissing[k]))
+						itsMissing.set(k);
 			}
 		}
 	}
@@ -233,6 +237,7 @@ public class Column implements XMLNodeInterface
 	public void addNodeTo(Node theParentNode)
 	{
 		Node aNode = XMLNode.addNodeTo(theParentNode, "column");
+		((Element)aNode).setAttribute("nr", "0");
 		itsAttribute.addNodeTo(aNode);
 		XMLNode.addNodeTo(aNode, "min", itsMin);
 		XMLNode.addNodeTo(aNode, "max", itsMax);

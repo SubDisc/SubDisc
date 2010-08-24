@@ -1,6 +1,7 @@
 package nl.liacs.subdisc;
 
 import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 /**
  * Each Column in a Table is identified by its Attribute. Attributes can be used
@@ -10,27 +11,51 @@ import org.w3c.dom.Node;
 public class Attribute implements XMLNodeInterface
 {
 	// when adding/removing members be sure to update addNodeTo() and loadNode()
-	private int itsIndex;
 	private AttributeType itsType;
 	private String itsName;
 	private String itsShort;
+	private int itsIndex;
 
 	public enum AttributeType { NOMINAL, NUMERIC, ORDINAL, BINARY; }
 
 	public Attribute(String theName, String theShort, AttributeType theType, int theIndex)
 	{
 		itsName = (theName == null ? String.valueOf(System.nanoTime()) : theName);	// TODO throw warning
-		itsShort = (theShort == null ? "" :theShort);
-		itsType = (theType == null ? AttributeType.NOMINAL :theType);	// TODO this is a quick hack for now
-		itsIndex = theIndex;
+		itsShort = (theShort == null ? "" : theShort);
+		itsType = (theType == null ? AttributeType.NOMINAL : theType);	// TODO this is a quick hack for now
+		itsIndex = theIndex;	// TODO should not be < 0
 	}
 
 	//MRML
 	public Attribute(String theName, String theShort, AttributeType theType)
 	{
 		itsName = (theName == null ? String.valueOf(System.nanoTime()) : theShort);	// TODO throw warning
-		itsShort = (theShort == null ? "" :theShort);
-		itsType = (theType == null ? AttributeType.NOMINAL :theType);	// TODO this is a quick hack for now
+		itsShort = (theShort == null ? "" : theShort);
+		itsType = (theType == null ? AttributeType.NOMINAL : theType);	// TODO this is a quick hack for now
+	}
+
+	/**
+	 * Create an Attribute from an XML AttributeNode.
+	 */
+	public Attribute(Node theAttributeNode)
+	{
+		if(theAttributeNode == null)
+			return;	// TODO throw warning dialog
+
+		NodeList aChildren = theAttributeNode.getChildNodes();
+		for(int i = 0, j = aChildren.getLength(); i < j; ++i)
+		{
+			Node aSetting = aChildren.item(i);
+			String aNodeName = aSetting.getNodeName();
+			if("name".equalsIgnoreCase(aNodeName))
+				itsName = aSetting.getTextContent();
+			else if("short".equalsIgnoreCase(aNodeName))
+				itsShort = aSetting.getTextContent();
+			else if("type".equalsIgnoreCase(aNodeName))
+				itsType = setType(aSetting.getTextContent());
+			else if("index".equalsIgnoreCase(aNodeName))
+				itsIndex = Integer.parseInt(aSetting.getTextContent());
+		}
 	}
 
 	public int getIndex() { return itsIndex; }	// TODO check, is null for ARFF/MRML
@@ -53,7 +78,7 @@ public class Attribute implements XMLNodeInterface
 	 * NEW Methods for AttributeType change
 	 * Needs more data/type checking
 	 */
-	public void setType(String theType)
+	public AttributeType setType(String theType)
 	{
 		for(AttributeType at : AttributeType.values())
 		{
@@ -63,6 +88,7 @@ public class Attribute implements XMLNodeInterface
 				break;
 			}
 		}
+		return (itsType == null ? AttributeType.NOMINAL : itsType);
 	}
 
 	/**

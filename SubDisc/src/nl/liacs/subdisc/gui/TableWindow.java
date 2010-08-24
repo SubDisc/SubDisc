@@ -23,7 +23,7 @@ public class TableWindow extends JFrame
 		JScrollPane aScrollPane = new JScrollPane(aJTable);
 		jPanelMain.add(aScrollPane);
 		getContentPane().add(jPanelMain);
-		setTitle("Data for: " + theTable.getName());
+		setTitle("Data for: " + theTable.getTableName());
 		pack();
 		setVisible(true);
 	}

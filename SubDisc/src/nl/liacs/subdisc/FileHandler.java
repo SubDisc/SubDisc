@@ -19,6 +19,7 @@ public class FileHandler extends JFrame
 	private static String itsLastFileLocation = ".";
 
 	private Table itsTable;
+	private SearchParameters itsSearchParameters;
 	private File itsFile;
 
 	public FileHandler(Action theAction)
@@ -43,11 +44,15 @@ public class FileHandler extends JFrame
 		String aFileName = itsFile.getName().toLowerCase();
 
 		if(aFileName.endsWith(".txt"))
-				itsTable = new FileLoaderTXT(itsFile).getTable();
+			itsTable = new FileLoaderTXT(itsFile).getTable();
 		else if(aFileName.endsWith(".arff"))
 			itsTable = new FileLoaderARFF(itsFile).getTable();
 		else if(aFileName.endsWith(".xml"))
-			itsTable = new FileLoaderXML(itsFile).getTable();
+		{
+			FileLoaderXML aLoader = new FileLoaderXML(itsFile);
+			itsTable = aLoader.getTable();
+			itsSearchParameters =  aLoader.getSearchParameters();
+		}
 
 //			itsTable.print();
 	}
@@ -102,5 +107,6 @@ public class FileHandler extends JFrame
 	 * @return itsTable if present, null otherwise
 	 */
 	public Table getTable() { return itsTable; };
+	public SearchParameters getSearchParameters() { return itsSearchParameters; };
 
 }

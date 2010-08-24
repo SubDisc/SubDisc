@@ -5,9 +5,13 @@ import nl.liacs.subdisc.FileHandler.Action;
 
 public class SubDisc
 {
-	static public void main(String[] args)
+	public static void main(String[] args)
 	{
-		new MiningWindow(new FileHandler(Action.OPEN_FILE).getTable()).setVisible(true);
+		FileHandler aLoader = new FileHandler(Action.OPEN_FILE);
+		if(aLoader.getSearchParameters() == null)
+			new MiningWindow(aLoader.getTable());
+		else
+			new MiningWindow(aLoader.getTable(), aLoader.getSearchParameters());
 	}
 
 }

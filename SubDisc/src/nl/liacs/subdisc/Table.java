@@ -13,19 +13,17 @@ import org.w3c.dom.NodeList;
 public class Table
 {
 	// all but Random can be made final
-	private String itsName = "no tablename";
-	private String itsSource = "no known source";
+	private String itsTableName;
+	private String itsSource;
 	private int itsNrRows;
 	private int itsNrColumns;
 	private ArrayList<Attribute> itsAttributes = new ArrayList<Attribute>();
 	private ArrayList<Column> itsColumns = new ArrayList<Column>();
 //	private String itsSeparator = ",";	// TODO remove
-	private Random itsRandomNumber;
+	private Random itsRandomNumber = new Random(System.currentTimeMillis());
 
-	public String getName() { return itsName; }
-	public void setName(String theName) { itsName = theName; }
+	public String getTableName() { return itsTableName; }
 	public String getSource() { return itsSource; }
-	public void setSource(String theSource) { itsSource = theSource; }
 
 	// NOTE itsNrColumns is not tied to itsColumns.size()
 	public int getNrRows() { return itsNrRows; }
@@ -69,37 +67,34 @@ public class Table
 //	public int getNrBinaries() {};
 
 	// TODO some constructors and builder functions, may change
-	public Table()
+	public Table(String theTableName, String theSource)
 	{
-		itsRandomNumber = new Random(System.currentTimeMillis());	// Not needed in constructor?
+		itsTableName = theTableName;
+		itsSource = theSource;
+//		itsRandomNumber = new Random(System.currentTimeMillis());	// Not needed in constructor?
 	}
 
-	public Table(int theNrRows, int theNrColumns)
+	public Table(String theTableName, String theSource, int theNrRows, int theNrColumns)
 	{
+		itsTableName = theTableName;
+		itsSource = theSource;
 		itsNrRows = theNrRows;
 		itsNrColumns = theNrColumns;
 		itsAttributes.ensureCapacity(theNrColumns);
 		itsColumns.ensureCapacity(theNrColumns);
-		itsRandomNumber = new Random(System.currentTimeMillis());
+//		itsRandomNumber = new Random(System.currentTimeMillis());
 	}
 
+	// TODO order of nodes is known, when all is stable 
 	public Table(Node theTableNode)
 	{
-		/*
-		private String itsName = "no tablename";
-		private String itsSource = "no known source";
-		private int itsNrRows;
-		private int itsNrColumns;
-		private ArrayList<Attribute> itsAttributes = new ArrayList<Attribute>();
-		private ArrayList<Column> itsColumns = new ArrayList<Column>();
-		*/
 		NodeList aChildren = theTableNode.getChildNodes();
 		for(int i = 0, j = aChildren.getLength(); i < j; ++i)
 		{
 			Node aSetting = aChildren.item(i);
 			String aNodeName = aSetting.getNodeName();
-			if("name".equalsIgnoreCase(aNodeName))
-				itsName = aSetting.getTextContent();
+			if("table_name".equalsIgnoreCase(aNodeName))
+				itsTableName = aSetting.getTextContent();
 			else if("source".equalsIgnoreCase(aNodeName))
 				itsSource = aSetting.getTextContent();
 			else if("nr_rows".equalsIgnoreCase(aNodeName))
@@ -109,6 +104,7 @@ public class Table
 			else if("column".equalsIgnoreCase(aNodeName))
 				itsColumns.add(new Column(aSetting));
 		}
+		update();
 	}
 
 	public BitSet evaluate(Condition theCondition)
@@ -355,7 +351,7 @@ public class Table
 	public void addNodeTo(Node theParentNode)
 	{
 		Node aNode = XMLNode.addNodeTo(theParentNode, "table");
-		XMLNode.addNodeTo(aNode, "name", itsName);
+		XMLNode.addNodeTo(aNode, "table_name", itsTableName);
 		XMLNode.addNodeTo(aNode, "source", itsSource);
 		XMLNode.addNodeTo(aNode, "nr_rows", itsNrRows);
 		XMLNode.addNodeTo(aNode, "nr_columns", itsNrColumns);
@@ -363,7 +359,7 @@ public class Table
 		for(int i = 0, j = itsColumns.size(); i < j; ++i)
 		{
 			itsColumns.get(i).addNodeTo(aNode);
-			((Element)aNode.getLastChild()).setAttribute("id", String.valueOf(i));
+			((Element)aNode.getLastChild()).setAttribute("nr", String.valueOf(i));
 		}
 
 	}

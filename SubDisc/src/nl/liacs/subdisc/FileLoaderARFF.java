@@ -83,9 +83,9 @@ public class FileLoaderARFF implements FileLoaderInterface
 				{
 					if(Keyword.RELATION.occursIn(aLine))
 					{
-						itsTable = new Table();
-						itsTable.setName(removeOuterQuotes(aLine.split("\\s", 2)[1]));	// TODO use m.end()
-						itsTable.setSource(FileType.removeExtension(theFile));
+						itsTable = new Table(removeOuterQuotes(aLine.split("\\s", 2)[1]), theFile.getName());
+//						itsTable.setName();	// TODO use m.end()
+//						itsTable.setSource(theFile.getName());	// TODO without extension? FileType.removeExtension(theFile)
 						relationFound = true;
 					}
 					else

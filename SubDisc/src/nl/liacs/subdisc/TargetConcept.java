@@ -82,20 +82,21 @@ public class TargetConcept implements XMLNodeInterface
 		{
 			Node aSetting = aChildren.item(i);
 			String aNodeName = aSetting.getNodeName();
-
 			if("nr_target_attributes".equalsIgnoreCase(aNodeName))
 				itsNrTargetAttributes = Integer.parseInt(aSetting.getTextContent());
+			if("target_type".equalsIgnoreCase(aNodeName))
+				setTargetType(aSetting.getTextContent());
 			else if("primary_target".equalsIgnoreCase(aNodeName))
-				itsPrimaryTarget = new Attribute(aSetting.getTextContent(), null, null);	// TODO
+				itsPrimaryTarget = new Attribute(aSetting);	// TODO
 			else if("target_value".equalsIgnoreCase(aNodeName))
 				itsTargetValue = aSetting.getTextContent();
 			else if("secondary_target".equalsIgnoreCase(aNodeName))
-				itsSecondaryTarget = new Attribute(aSetting.getTextContent(), null, null);	// TODO
+				itsSecondaryTarget = new Attribute(aSetting);	// TODO
 			else if("secondary_targets".equalsIgnoreCase(aNodeName))
 			{
 				itsSecondaryTargets = new ArrayList<Attribute>();
 				for(String s : aSetting.getTextContent().split(",", -1))
-					itsSecondaryTargets.add(new Attribute(s, null, null));
+					itsSecondaryTargets.add(new Attribute(s, null, null));	// TODO
 			}
 			else
 				;	// TODO throw warning dialog
