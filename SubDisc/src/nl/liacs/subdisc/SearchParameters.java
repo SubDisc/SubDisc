@@ -3,14 +3,13 @@ package nl.liacs.subdisc;
 import nl.liacs.subdisc.TargetConcept.TargetType;
 
 import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 /**
  * SearchParameters contains all search parameters for an experiment.
  */
-public enum SearchParameters implements XMLNodeInterface
+public class SearchParameters implements XMLNodeInterface
 {
-	THE_ONLY_INSTANCE;
-
 	// when adding/removing members be sure to update addNodeTo() and loadNode()
 	private TargetConcept	itsTargetConcept;
 	private int				itsQualityMeasure;
@@ -36,10 +35,28 @@ public enum SearchParameters implements XMLNodeInterface
 	{
 		NUMERIC_BINS("bins"), NUMERIC_BEST("best"), NUMERIC_ALL("all");
 
-		public final String text;
+		public final String TEXT;
 
-		private NumericStrategy(String theText) { text = theText; }
+		private NumericStrategy(String theText) { TEXT = theText; }
+
+		public static NumericStrategy getNumericStrategy(String theString)
+		{
+			for(NumericStrategy n : NumericStrategy.values())
+				if(n.TEXT.equalsIgnoreCase(theString))
+					return n;
+			return NUMERIC_BINS;	// TODO default, could throw not found dialog
+		}
 	}
+
+	public SearchParameters(Node theTargetConceptNode, Node theSearchParametersNode)
+	{
+		if((theTargetConceptNode == null) || (theSearchParametersNode == null))
+			return;	// TODO throw warning dialog
+		itsTargetConcept = new TargetConcept(theTargetConceptNode);
+		loadData(theSearchParametersNode);
+	}
+
+	public SearchParameters() {}	// TODO for now
 
 	/* QUALITY MEASURE */
 	public TargetConcept getTargetConcept() { return itsTargetConcept; }
@@ -136,11 +153,54 @@ public enum SearchParameters implements XMLNodeInterface
 		XMLNode.addNodeTo(aNode, "maximum_time", getMaximumTime());
 		XMLNode.addNodeTo(aNode, "search_strategy", getSearchStrategyName(getSearchStrategy()));
 		XMLNode.addNodeTo(aNode, "search_strategy_width", getSearchStrategyWidth());
-		XMLNode.addNodeTo(aNode, "numeric_strategy", getNumericStrategy());
+		XMLNode.addNodeTo(aNode, "numeric_strategy", getNumericStrategy().TEXT);
 		XMLNode.addNodeTo(aNode, "nr_split_points", getNrSplitPoints());
 		XMLNode.addNodeTo(aNode, "alpha", getAlpha());
 		XMLNode.addNodeTo(aNode, "beta", getBeta());
 		XMLNode.addNodeTo(aNode, "post_processing_count", getPostProcessingCount());
 		XMLNode.addNodeTo(aNode, "maximum_post_processing_subgroups", getMaximumPostProcessingSubgroups());
 	}
+
+	private void loadData(Node theSearchParametersNode)
+	{
+		NodeList aChildren = theSearchParametersNode.getChildNodes();
+		for(int i = 0, j = aChildren.getLength(); i < j; ++i)
+		{
+			Node aSetting = aChildren.item(i);
+			String aNodeName = aSetting.getNodeName();
+			if("quality_measure".equalsIgnoreCase(aNodeName))
+				itsQualityMeasure = Integer.parseInt(aSetting.getTextContent());
+			else if("quality_measure_minimum".equalsIgnoreCase(aNodeName))
+				itsQualityMeasureMinimum = Float.parseFloat(aSetting.getTextContent());
+			else if("search_depth".equalsIgnoreCase(aNodeName))
+				itsSearchDepth = Integer.parseInt(aSetting.getTextContent());
+			else if("minimum_coverage".equalsIgnoreCase(aNodeName))
+				itsMinimumCoverage = Integer.parseInt(aSetting.getTextContent());
+			else if("maximum_coverage".equalsIgnoreCase(aNodeName))
+				itsMaximumCoverage = Float.parseFloat(aSetting.getTextContent());
+			else if("maximum_subgroups".equalsIgnoreCase(aNodeName))
+				itsMaximumSubgroups = Integer.parseInt(aSetting.getTextContent());
+			else if("maximum_time".equalsIgnoreCase(aNodeName))
+				itsMaximumTime = Float.parseFloat(aSetting.getTextContent());
+			else if("search_strategy".equalsIgnoreCase(aNodeName))
+				setSearchStrategy(aSetting.getTextContent());
+			else if("search_strategy_width".equalsIgnoreCase(aNodeName))
+				itsSearchStrategyWidth = Integer.parseInt(aSetting.getTextContent());
+			else if("numeric_strategy".equalsIgnoreCase(aNodeName))
+				itsNumericStrategy = (NumericStrategy.getNumericStrategy(aSetting.getTextContent()));
+			else if("nr_split_points".equalsIgnoreCase(aNodeName))
+				itsNrSplitPoints = Integer.parseInt(aSetting.getTextContent());
+			else if("alpha".equalsIgnoreCase(aNodeName))
+				itsAlpha = Float.parseFloat(aSetting.getTextContent());
+			else if("beta".equalsIgnoreCase(aNodeName))
+				itsBeta = Float.parseFloat(aSetting.getTextContent());
+			else if("post_processing_count".equalsIgnoreCase(aNodeName))
+				itsPostProcessingCount = Integer.parseInt(aSetting.getTextContent());
+			else if("maximum_post_processing_subgroups".equalsIgnoreCase(aNodeName))
+				itsMaximumPostProcessingSubgroups = Integer.parseInt(aSetting.getTextContent());
+			else
+				;	// TODO throw warning dialog
+		}
+	}
+
 }

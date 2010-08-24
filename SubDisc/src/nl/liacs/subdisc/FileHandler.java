@@ -102,4 +102,5 @@ public class FileHandler extends JFrame
 	 * @return itsTable if present, null otherwise
 	 */
 	public Table getTable() { return itsTable; };
+
 }

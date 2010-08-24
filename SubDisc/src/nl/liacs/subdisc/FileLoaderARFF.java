@@ -84,7 +84,8 @@ public class FileLoaderARFF implements FileLoaderInterface
 					if(Keyword.RELATION.occursIn(aLine))
 					{
 						itsTable = new Table();
-						itsTable.itsName = removeOuterQuotes(aLine.split("\\s", 2)[1]);	// TODO use m.end()
+						itsTable.setName(removeOuterQuotes(aLine.split("\\s", 2)[1]));	// TODO use m.end()
+						itsTable.setSource(FileType.removeExtension(theFile));
 						relationFound = true;
 					}
 					else
@@ -193,7 +194,7 @@ public class FileLoaderARFF implements FileLoaderInterface
 
 		theLine = theLine.replaceFirst("\\'?" + aName + "\\'?", "").trim();
 
-		return new Attribute(theIndex, aName, null, declaredType(aName, theLine));	// (aName, theLine) HACK for NominalAttribute
+		return new Attribute(aName, null, declaredType(aName, theLine), theIndex);	// (aName, theLine) HACK for NominalAttribute
 	}
 
 	// TODO do this only once for the whole line

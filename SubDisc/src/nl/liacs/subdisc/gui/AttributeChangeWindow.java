@@ -41,7 +41,7 @@ public class AttributeChangeWindow extends JFrame implements ActionListener
 		itsTable = theTable;
 		initJTable(itsTable);
 		initComponents();
-		setTitle("Attribute types for: " + itsTable.itsName);
+		setTitle("Attribute types for: " + itsTable.getName());
 		setVisible(true);
 	}
 

@@ -8,6 +8,7 @@ import java.util.TreeSet;
 import nl.liacs.subdisc.Attribute.AttributeType;
 
 import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 /**
  * A Column contains all data from a column read from a file or database. Its
@@ -38,6 +39,30 @@ public class Column implements XMLNodeInterface
 			case NOMINAL : itsNominals = new ArrayList<String>(theNrRows); break;
 			case BINARY : itsBinaries = new BitSet(theNrRows); break;
 			default : itsNominals = new ArrayList<String>(theNrRows); break;	// TODO throw warning
+		}
+	}
+
+	public Column(Node theColumnNode)
+	{
+		NodeList aChildren = theColumnNode.getChildNodes();
+		for(int i = 0, j = aChildren.getLength(); i < j; ++i)
+		{
+			Node aSetting = aChildren.item(i);
+			String aNodeName = aSetting.getNodeName();
+			if("attribute".equalsIgnoreCase(aNodeName))
+				;//itsAttribute = new Attribute(aSetting);
+			else if("min".equalsIgnoreCase(aNodeName))
+				itsMin = Float.parseFloat(aSetting.getTextContent());
+			else if("max".equalsIgnoreCase(aNodeName))
+				itsMax = Float.parseFloat(aSetting.getTextContent());
+			else if("enabled".equalsIgnoreCase(aNodeName))
+				isEnabled = Boolean.valueOf(aSetting.getTextContent());
+			else if("missing".equalsIgnoreCase(aNodeName))
+			{
+				itsMissing = new BitSet();
+				for(String s : aSetting.getTextContent().split(",", -1))
+					;//itsMissing.set(bitIndex);
+			}
 		}
 	}
 
@@ -219,11 +244,12 @@ public class Column implements XMLNodeInterface
 			for(int i = itsMissing.nextSetBit(0); i >= 0; i = itsMissing.nextSetBit(i + 1))
 				aMissing.append(i + ",");
 			aMissing.deleteCharAt(aMissing.length() - 1);	// removes last comma
-			XMLNode.addNodeTo(aNode, "min", aMissing);
+			XMLNode.addNodeTo(aNode, "missing", aMissing);
 		}
 		else
 			XMLNode.addNodeTo(aNode, "missing");
-
+/*
+ * Do not include data in XML.
 		switch(itsAttribute.getType())
 		{
 			case NOMINAL :	for(String s : itsNominals)
@@ -238,5 +264,6 @@ public class Column implements XMLNodeInterface
 							break;
 			default		:	break;
 		}
+*/
 	}
 }

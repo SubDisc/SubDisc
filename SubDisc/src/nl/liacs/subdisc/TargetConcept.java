@@ -1,17 +1,18 @@
 package nl.liacs.subdisc;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 /**
  * Depending on the TargetType of a TargetConcept, it holds the PrimaryTarget
  * and/or SecondaryTarget(s). The TargetType indicates what type of search
  * setting will be used in the experiment.
  */
-public enum TargetConcept implements XMLNodeInterface
+public class TargetConcept implements XMLNodeInterface
 {
-	THE_ONLY_INSTANCE;
 
 	// when adding/removing members be sure to update addNodeTo() and loadNode()
 	// itsMembers
@@ -71,6 +72,38 @@ public enum TargetConcept implements XMLNodeInterface
 		}
 	}
 
+	public TargetConcept(Node theTargetConceptNode)
+	{
+		if(theTargetConceptNode == null)
+			return;	// TODO throw warning dialog
+
+		NodeList aChildren = theTargetConceptNode.getChildNodes();
+		for(int i = 0, j = aChildren.getLength(); i < j; ++i)
+		{
+			Node aSetting = aChildren.item(i);
+			String aNodeName = aSetting.getNodeName();
+
+			if("nr_target_attributes".equalsIgnoreCase(aNodeName))
+				itsNrTargetAttributes = Integer.parseInt(aSetting.getTextContent());
+			else if("primary_target".equalsIgnoreCase(aNodeName))
+				itsPrimaryTarget = new Attribute(aSetting.getTextContent(), null, null);	// TODO
+			else if("target_value".equalsIgnoreCase(aNodeName))
+				itsTargetValue = aSetting.getTextContent();
+			else if("secondary_target".equalsIgnoreCase(aNodeName))
+				itsSecondaryTarget = new Attribute(aSetting.getTextContent(), null, null);	// TODO
+			else if("secondary_targets".equalsIgnoreCase(aNodeName))
+			{
+				itsSecondaryTargets = new ArrayList<Attribute>();
+				for(String s : aSetting.getTextContent().split(",", -1))
+					itsSecondaryTargets.add(new Attribute(s, null, null));
+			}
+			else
+				;	// TODO throw warning dialog
+		}
+	}
+
+	public TargetConcept() {} // TODO for now
+
 	// member methods
 	public int getNrTargetAttributes() { return itsNrTargetAttributes; }
 	public void setNrTargetAttributes(int theNr) { itsNrTargetAttributes = theNr; }
@@ -109,7 +142,7 @@ public enum TargetConcept implements XMLNodeInterface
 	{
 		Node aNode = XMLNode.addNodeTo(theParentNode, "target_concept");
 		XMLNode.addNodeTo(aNode, "nr_target_attributes", itsNrTargetAttributes);
-		XMLNode.addNodeTo(aNode, "target_type", itsTargetType);
+		XMLNode.addNodeTo(aNode, "target_type", itsTargetType.TEXT);
 		XMLNode.addNodeTo(aNode, "primary_target", itsPrimaryTarget.getName());
 		XMLNode.addNodeTo(aNode, "target_value", itsTargetValue);
 		if(itsSecondaryTarget == null)
@@ -127,7 +160,6 @@ public enum TargetConcept implements XMLNodeInterface
 			XMLNode.addNodeTo(aNode, "secondary_targets", sb);
 		}
 	}
-
 /*
 	public static boolean isImplemented(int theTargetType )
 	{

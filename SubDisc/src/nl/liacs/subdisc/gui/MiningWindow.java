@@ -86,8 +86,8 @@ public class MiningWindow extends JFrame
 	private double itsTargetAverage; // numeric target
 
 	// TODO there should be at most 1 MiningWindow();
-	private SearchParameters itsSearchParameters = SearchParameters.THE_ONLY_INSTANCE;
-	private TargetConcept itsTargetConcept = TargetConcept.THE_ONLY_INSTANCE;
+	private SearchParameters itsSearchParameters = new SearchParameters();
+	private TargetConcept itsTargetConcept = new TargetConcept();
 
 	public MiningWindow()
 	{
@@ -126,7 +126,7 @@ public class MiningWindow extends JFrame
 			return; // MM avoids crash TODO report unsuccessful loading to user
 
 		// set dataset properties
-		jLFieldTargetTable.setText(itsTable.itsName);
+		jLFieldTargetTable.setText(itsTable.getName());
 		// TODO the following fields need to be updated after data/attribute change
 		itsTotalCount = itsTable.getNrRows();
 		jLFieldNrExamples.setText(String.valueOf(itsTotalCount));
@@ -1424,7 +1424,7 @@ public class MiningWindow extends JFrame
 	{
 		removeAllNumericStrategyItems();
 		for(NumericStrategy n : SearchParameters.NumericStrategy.values())
-			addNumericStrategyItem(n.text);
+			addNumericStrategyItem(n.TEXT);
 	}
 
 	/* FIELD METHODS OF SUBDISC COMPONENTS */

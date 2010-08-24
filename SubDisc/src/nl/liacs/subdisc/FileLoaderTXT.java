@@ -123,15 +123,17 @@ public class FileLoaderTXT implements FileLoaderInterface
 
 			//assign types
 			itsTable = new Table(aNrRows, aNrColumns);
-			itsTable.itsName = theFile.getName();
+			itsTable.setName(FileType.removeExtension(theFile));
+			itsTable.setSource(theFile.getName());
+
 			for (int i=0; i<aNrColumns; i++)
 			{
 				if (aNominals.get(i))
-					itsTable.getColumns().add(new Column(new Attribute(i, aHeaders[i].trim(), null, AttributeType.NOMINAL), aNrRows));
+					itsTable.getColumns().add(new Column(new Attribute(aHeaders[i].trim(), null, AttributeType.NOMINAL, i), aNrRows));
 				else if (aNotZeroOne.get(i))
-					itsTable.getColumns().add(new Column(new Attribute(i, aHeaders[i].trim(), null, AttributeType.NUMERIC), aNrRows));
+					itsTable.getColumns().add(new Column(new Attribute(aHeaders[i].trim(), null, AttributeType.NUMERIC, i), aNrRows));
 				else
-					itsTable.getColumns().add(new Column(new Attribute(i, aHeaders[i].trim(), null, AttributeType.BINARY), aNrRows));
+					itsTable.getColumns().add(new Column(new Attribute(aHeaders[i].trim(), null, AttributeType.BINARY, i), aNrRows));
 			}
 			itsTable.update();
 			for (Attribute anAttribute : itsTable.getAttributes())

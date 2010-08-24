@@ -17,12 +17,12 @@ public class Attribute implements XMLNodeInterface
 
 	public enum AttributeType { NOMINAL, NUMERIC, ORDINAL, BINARY; }
 
-	public Attribute(int theIndex, String theName, String theShort, AttributeType theType)
+	public Attribute(String theName, String theShort, AttributeType theType, int theIndex)
 	{
-		itsIndex = theIndex;
 		itsName = (theName == null ? String.valueOf(System.nanoTime()) : theName);	// TODO throw warning
 		itsShort = (theShort == null ? "" :theShort);
-		itsType = theType;
+		itsType = (theType == null ? AttributeType.NOMINAL :theType);	// TODO this is a quick hack for now
+		itsIndex = theIndex;
 	}
 
 	//MRML
@@ -30,7 +30,7 @@ public class Attribute implements XMLNodeInterface
 	{
 		itsName = (theName == null ? String.valueOf(System.nanoTime()) : theShort);	// TODO throw warning
 		itsShort = (theShort == null ? "" :theShort);
-		itsType = theType;
+		itsType = (theType == null ? AttributeType.NOMINAL :theType);	// TODO this is a quick hack for now
 	}
 
 	public int getIndex() { return itsIndex; }	// TODO check, is null for ARFF/MRML

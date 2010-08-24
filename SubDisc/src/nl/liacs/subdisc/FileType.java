@@ -5,6 +5,7 @@
  */
 package nl.liacs.subdisc;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -51,4 +52,10 @@ public enum FileType
 	public final String DESCRIPTION;
 	private FileType(String theDescription) { DESCRIPTION = theDescription; }
 	abstract List<String> getExtensions();
+
+	public static String removeExtension(File theFile)
+	{
+		String aString = theFile.getName();
+		return aString.substring(0, aString.lastIndexOf('.'));
+	}
 }

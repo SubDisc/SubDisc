@@ -1,7 +1,8 @@
 /**
  * @author marvin
  * This is a convenience class for XML Node creation. It is uninstantiable and
- * contains only static methods.
+ * contains only static methods. Therefore it does not implement the
+ * XMLNodeInterface.
  */
 package nl.liacs.subdisc;
 
