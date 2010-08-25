@@ -31,7 +31,10 @@ public class FileLoaderXML implements FileLoaderInterface
 		{
 			String aNodeName = aSettings.item(i).getNodeName();
 			if("table".equalsIgnoreCase(aNodeName))
+			{
 				itsTable = new Table(aSettings.item(i));
+				itsTable.update();
+			}
 			else if("search_parameters".equalsIgnoreCase(aNodeName))
 				itsSearchParameters = new SearchParameters(aSettings.item(i));
 			else if("target_concept".equalsIgnoreCase(aNodeName))	// TODO NOTE order sensitive

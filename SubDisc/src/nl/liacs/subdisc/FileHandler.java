@@ -78,6 +78,9 @@ public class FileHandler extends JFrame
 		//setIconImage(MiningWindow.ICON)
 		JFileChooser aChooser = new JFileChooser(new File(itsLastFileLocation));
 		aChooser.setFileFilter (new FileTypeFilter(FileType.ALL_DATA));	// TODO ALL_DATA for now
+		aChooser.addChoosableFileFilter(new FileTypeFilter(FileType.TXT));
+		aChooser.addChoosableFileFilter(new FileTypeFilter(FileType.ARFF));
+		aChooser.addChoosableFileFilter(new FileTypeFilter(FileType.XML));
 
 		int theOption = -1;
 

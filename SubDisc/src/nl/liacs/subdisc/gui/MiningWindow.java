@@ -104,7 +104,6 @@ public class MiningWindow extends JFrame
 	public MiningWindow(Table theTable, SearchParameters theSearchParameters)
 	{
 		itsTable = theTable;
-		itsTable.update();
 		initMiningWindow();
 
 		if(theSearchParameters != null)
@@ -131,18 +130,24 @@ public class MiningWindow extends JFrame
 
 	private void initNeverChangingGuiComponents()
 	{
+		// TODO disable if no table?
+		// should do for-each combobox/field
+//		boolean hasTable = (itsTable != null);
 		// Add all implemented TargetTypes
 		for(TargetType t : TargetType.values())
 			if(t.isImplemented())
 				jComboBoxTargetType.addItem(t.TEXT);
+//		jComboBoxTargetType.setEnabled(hasTable);
 
 		// Add all SearchStrategies
 		for(int i = 0; i <= CandidateQueue.LAST_SEARCH_STRATEGY; i++)
 			jComboBoxSearchStrategyType.addItem(SearchParameters.getSearchStrategyName(i));
+//		jComboBoxSearchStrategyType.setEnabled(hasTable);
 
 		// Add all Numeric Strategies
 		for(NumericStrategy n : SearchParameters.NumericStrategy.values())
 			jComboBoxSearchStrategyNumeric.addItem(n.TEXT);
+//		jComboBoxSearchStrategyNumeric.setEnabled(hasTable);
 	}
 
 	private void initGuiComponents()
@@ -151,14 +156,14 @@ public class MiningWindow extends JFrame
 		initGuiComponentsDataSet();
 
 		// target concept
-//		itsTargetConcept.setTargetType(getTargetTypeName());	// could use SINGLE_NOMINAL as default in TargetConcept
-//		switch(itsTargetConcept.getTargetType())
-//		{
-//			case DOUBLE_CORRELATION :
-//			case DOUBLE_REGRESSION	:
-//			case MULTI_LABEL		: break;
-//			default : jButtonBaseModel.setEnabled(false); break;
-//		}
+		itsTargetConcept.setTargetType(getTargetTypeName());	// could use SINGLE_NOMINAL as default in TargetConcept
+		switch(itsTargetConcept.getTargetType())
+		{
+			case DOUBLE_CORRELATION :
+			case DOUBLE_REGRESSION	:
+			case MULTI_LABEL		: break;
+			default : jButtonBaseModel.setEnabled(false); break;
+		}
 
 		// search conditions
 		setSearchDepthMaximum("1");
@@ -175,6 +180,18 @@ public class MiningWindow extends JFrame
 		initGuiComponentsDataSet();
 
 		// TODO disable all ActionListeners while setting values
+
+		// search strategy
+		jComboBoxSearchStrategyType.setSelectedItem(SearchParameters.getSearchStrategyName(itsSearchParameters.getSearchStrategy())); // NOTE calls setSearchCoverageMinimum()
+		setSearchStrategyWidth(String.valueOf(itsSearchParameters.getSearchStrategyWidth()));
+		setNumericStrategy(itsSearchParameters.getNumericStrategy().TEXT);
+		
+		// search conditions
+		setSearchDepthMaximum(String.valueOf(itsSearchParameters.getSearchDepth()));
+		setSearchCoverageMaximum(String.valueOf(itsSearchParameters.getMaximumSubgroups()));
+		setSubgroupsMaximum("50");
+		setSearchTimeMaximum("1.0");
+
 
 		// target concept
 		jComboBoxTargetType.setSelectedItem(itsTargetConcept.getTargetType().TEXT);
@@ -381,6 +398,8 @@ public class MiningWindow extends JFrame
 		});
 		jMenuFile.add(jMenuItemSubgroupDiscovery);
 
+		jMenuFile.add(jSeparator3);
+
 		jMenuItemCreateAutoRunFile.setFont(DEFAULT_FONT);
 		jMenuItemCreateAutoRunFile.setText("Create Autorun File");
 //		jMenuItemCreateAutoRunFile.setMnemonic();
@@ -391,8 +410,6 @@ public class MiningWindow extends JFrame
 			}
 		});
 		jMenuFile.add(jMenuItemCreateAutoRunFile);
-
-		jMenuFile.add(jSeparator3);
 
 		jMenuItemAddToAutoRunFile.setFont(DEFAULT_FONT);
 		jMenuItemAddToAutoRunFile.setText("Add to Autorun File");
@@ -722,7 +739,7 @@ public class MiningWindow extends JFrame
 		jLabelSearchStrategyNumericFrr = initJLabel(" best numeric");
 		jPanelSearchStrategyLabels.add(jLabelSearchStrategyNumericFrr);
 		
-		jLabelSearchStrategyNrBins = initJLabel(" nr bins");
+		jLabelSearchStrategyNrBins = initJLabel(" number of bins");
 		jPanelSearchStrategyLabels.add(jLabelSearchStrategyNrBins);
 		
 		jPanelSearchStrategy.add(jPanelSearchStrategyLabels);
@@ -967,6 +984,9 @@ public class MiningWindow extends JFrame
 
 	private void jComboBoxTargetTypeActionPerformed(ActionEvent evt)
 	{
+		if(itsTable == null)
+			return;
+
 		itsTargetConcept.setTargetType(getTargetTypeName());
 		itsSearchParameters.setTargetConcept(itsTargetConcept);
 
@@ -1258,16 +1278,16 @@ public class MiningWindow extends JFrame
 		// sense for certain target concepts
 
 		theSearchParameters.setQualityMeasure(getQualityMeasureName());
-		theSearchParameters.setQualityMeasureMinimum(getQualityMeasureMinimum().floatValue());
+		theSearchParameters.setQualityMeasureMinimum(getQualityMeasureMinimum());
 
-		theSearchParameters.setSearchDepth(getSearchDepthMaximum().intValue());
-		theSearchParameters.setMinimumCoverage(getSearchCoverageMinimum().intValue());
-		theSearchParameters.setMaximumCoverage(getSearchCoverageMaximum().floatValue());
-		theSearchParameters.setMaximumSubgroups(getSubgroupsMaximum().intValue());
-		theSearchParameters.setMaximumTime(getSearchTimeMaximum().floatValue());
+		theSearchParameters.setSearchDepth(getSearchDepthMaximum());
+		theSearchParameters.setMinimumCoverage(getSearchCoverageMinimum());
+		theSearchParameters.setMaximumCoverage(getSearchCoverageMaximum());
+		theSearchParameters.setMaximumSubgroups(getSubgroupsMaximum());
+		theSearchParameters.setMaximumTime(getSearchTimeMaximum());
 
 		theSearchParameters.setSearchStrategy(getSearchStrategyName());
-		theSearchParameters.setSearchStrategyWidth(getSearchStrategyWidth().intValue());
+		theSearchParameters.setSearchStrategyWidth(getSearchStrategyWidth());
 		theSearchParameters.setNumericStrategy(getNumericStrategy());
 		theSearchParameters.setNrSplitPoints(7);
 
@@ -1484,70 +1504,64 @@ public class MiningWindow extends JFrame
 	private String getQualityMeasureName() { return (String) jComboBoxQualityMeasure.getSelectedItem(); }
 	private String getTargetTypeName() { return (String) jComboBoxTargetType.getSelectedItem(); }
 	private void setQualityMeasureMinimumName(String aValue) { jTextFieldQualityMeasureMinimum.setText(aValue); }
-	private Float getQualityMeasureMinimum()
+	private float getQualityMeasureMinimum()
 	{
-		float aMinimum;
-		try {
-			aMinimum = Float.parseFloat(jTextFieldQualityMeasureMinimum.getText().trim());
-		} catch (Exception ex) {
-			return null;
-		}
-		return new Float(aMinimum);
+		float aMinimum = 0.0F;
+		try
+		{
+			aMinimum = Float.parseFloat(jTextFieldQualityMeasureMinimum.getText());
+		} catch (Exception ex) {}
+		return aMinimum;
 	}
 	private void setSearchDepthMaximum(String aValue) { jTextFieldSearchDepth.setText(aValue); }
-	private Integer getSearchDepthMaximum() {
-		int aMaximum;
-		try {
-			aMaximum = Integer.parseInt(jTextFieldSearchDepth.getText().trim());
-		} catch (Exception ex) {
-			return null;
-		}
-		return new Integer(aMaximum);
+	private int getSearchDepthMaximum()
+	{
+		int aMaximum = 1;
+		try
+		{
+			aMaximum = Integer.parseInt(jTextFieldSearchDepth.getText());
+		} catch (Exception ex) {}
+		return aMaximum;
 	}
 	private void setSearchCoverageMinimum(String aValue) { jTextFieldSearchCoverageMinimum.setText(aValue); }
 	private void setSearchCoverageMaximum(String aValue) { jTextFieldSearchCoverageMaximum.setText(aValue); }
 	private void setSubgroupsMaximum(String aValue) { jTextFieldSubgroupsMaximum.setText(aValue); }
 	private void setSearchTimeMaximum(String aValue) { jTextFieldSearchTimeMaximum.setText(aValue); }
-	private Integer getSearchCoverageMinimum()
+	private int getSearchCoverageMinimum()
 	{
-		int aMinimum;
-		try {
-			aMinimum = Integer.parseInt(jTextFieldSearchCoverageMinimum
-					.getText().trim());
-		} catch (Exception ex) {
-			return null;
-		}
-		return new Integer(aMinimum);
+		int aMinimum = 0;
+		try
+		{
+			aMinimum = Integer.parseInt(jTextFieldSearchCoverageMinimum.getText());
+		} catch (Exception ex) {}
+		return aMinimum;
 	}
-	private Float getSearchCoverageMaximum() {
-		float aMaximum;
-		try {
-			aMaximum = Float.parseFloat(jTextFieldSearchCoverageMaximum
-					.getText().trim());
-		} catch (Exception ex) {
-			return null;
-		}
-		return new Float(aMaximum);
+	private float getSearchCoverageMaximum()
+	{
+		float aMaximum = 1.0F;
+		try
+		{
+			aMaximum = Float.parseFloat(jTextFieldSearchCoverageMaximum.getText());
+		} catch (Exception ex) {}
+		return aMaximum;
 	}
-	private Integer getSubgroupsMaximum() {
-		int aMaximum;
-		try {
-			aMaximum = Integer.parseInt(jTextFieldSubgroupsMaximum.getText()
-					.trim());
-		} catch (Exception ex) {
-			return null;
-		}
-		return new Integer(aMaximum);
+	private int getSubgroupsMaximum()
+	{
+		int aMaximum = 50;
+		try
+		{
+			aMaximum = Integer.parseInt(jTextFieldSubgroupsMaximum.getText());
+		} catch (Exception ex) {}
+		return aMaximum;
 	}
-	private Float getSearchTimeMaximum() {
-		float aMaximum;
-		try {
-			aMaximum = Float.parseFloat(jTextFieldSearchTimeMaximum.getText()
-					.trim());
-		} catch (Exception ex) {
-			return null;
-		}
-		return new Float(aMaximum);
+	private float getSearchTimeMaximum()
+	{
+		float aMaximum = 1.0F;
+		try
+		{
+			aMaximum = Float.parseFloat(jTextFieldSearchTimeMaximum.getText());
+		} catch (Exception ex) {}
+		return aMaximum;
 	}
 
 	// search strategy
@@ -1555,22 +1569,32 @@ public class MiningWindow extends JFrame
 
 	// search width
 	private void setSearchStrategyWidth(String aValue) { jTextFieldSearchStrategyWidth.setText(aValue); }
-	private Integer getSearchStrategyWidth()
+	private int getSearchStrategyWidth()
 	{
-		int aWidth;
+		int aWidth = 100;
 		try
 		{
-			aWidth = Integer.parseInt(jTextFieldSearchStrategyWidth.getText().trim());
+			aWidth = Integer.parseInt(jTextFieldSearchStrategyWidth.getText());
 		}
-		catch (Exception ex)
-		{
-			return null;
-		}
-		return new Integer(aWidth);
+		catch (Exception ex) {}
+		return aWidth;
 	}
 
 	// numeric strategy
+	private void setNumericStrategy(String aStrategy) { jComboBoxSearchStrategyNumeric.setSelectedItem(aStrategy); }
 	private String getNumericStrategy() { return (String) jComboBoxSearchStrategyNumeric.getSelectedItem(); }
+	private int getSearchStrategyNrBins()
+	{
+		int aMinimum = 7;
+		try
+		{
+			aMinimum = Integer.parseInt(jTextFieldSearchCoverageMinimum.getText());
+		} catch (Exception ex) {}
+		return aMinimum;
+	}
+	private void setSearchStrategyNrBins(String aValue) { jTextFieldSearchStrategyNrBins.setText(aValue); }
+
+
 
 	private JMenuBar jMiningWindowMenuBar;
 	private JMenu jMenuFile;
