@@ -180,25 +180,32 @@ public class MiningWindow extends JFrame
 		initGuiComponentsDataSet();
 
 		// TODO disable all ActionListeners while setting values
+		// TODO some field may be set automatically, order is very important
 
 		// search strategy
-		jComboBoxSearchStrategyType.setSelectedItem(SearchParameters.getSearchStrategyName(itsSearchParameters.getSearchStrategy())); // NOTE calls setSearchCoverageMinimum()
+		setSearchStrategyType(SearchParameters.getSearchStrategyName(itsSearchParameters.getSearchStrategy()));
 		setSearchStrategyWidth(String.valueOf(itsSearchParameters.getSearchStrategyWidth()));
 		setNumericStrategy(itsSearchParameters.getNumericStrategy().TEXT);
-		
-		// search conditions
-		setSearchDepthMaximum(String.valueOf(itsSearchParameters.getSearchDepth()));
-		setSearchCoverageMaximum(String.valueOf(itsSearchParameters.getMaximumSubgroups()));
-		setSubgroupsMaximum("50");
-		setSearchTimeMaximum("1.0");
+		setSearchStrategyNrBins(String.valueOf(itsSearchParameters.getNrSplitPoints() + 1));	// TODO use nrBins/splitPoints
 
+		// search conditions
+		// NOTE setSearchStrategyType() calls setSearchCoverageMinimum(), so
+		// setSearchCoverageMinimum must be called AFTER setSearchStrategyType 
+		setSearchDepthMaximum(String.valueOf(itsSearchParameters.getSearchDepth()));
+		setSearchCoverageMinimum(String.valueOf(itsSearchParameters.getMinimumCoverage()));
+		setSearchCoverageMaximum(String.valueOf(itsSearchParameters.getMaximumCoverage()));
+		setSubgroupsMaximum(String.valueOf(itsSearchParameters.getMaximumSubgroups()));
+		setSearchTimeMaximum(String.valueOf(itsSearchParameters.getMaximumTime()));
 
 		// target concept
-		jComboBoxTargetType.setSelectedItem(itsTargetConcept.getTargetType().TEXT);
-		jComboBoxQualityMeasure.setSelectedItem(itsSearchParameters.getQualityMeasureString());
-		jComboBoxTargetAttribute.setSelectedItem(itsTargetConcept.getPrimaryTarget().getName());
-		jTextFieldQualityMeasureMinimum.setText(String.valueOf(itsSearchParameters.getQualityMeasureMinimum()));
-
+		setTargetTypeName(itsTargetConcept.getTargetType().TEXT);
+		setQualityMeasureMinimum(String.valueOf(itsSearchParameters.getQualityMeasureMinimum()));	// TODO must be called before setQualityMeasure (prevents overwriting)
+		setQualityMeasure(itsSearchParameters.getQualityMeasureString());
+		setQualityMeasureMinimum(String.valueOf(itsSearchParameters.getQualityMeasureMinimum()));	// TODO see above, but needs to be set again
+		setTargetAttribute(itsTargetConcept.getPrimaryTarget().getName());
+//		setMiscField(itsTargetConcept.getSecondaryTarget());
+//		setMiscField(itsTargetConcept.getTargetValue());
+		// setSecondaryTargets(); // TODO initialised from primaryTargetList
 	}
 
 	private void initGuiComponentsDataSet()
@@ -1412,6 +1419,7 @@ public class MiningWindow extends JFrame
 
 	private void initTargetInfo()
 	{
+		System.out.println("initTargetInfo");	// TODO MM
 		switch(itsTargetConcept.getTargetType())
 		{
 			case SINGLE_NOMINAL :
@@ -1431,7 +1439,7 @@ public class MiningWindow extends JFrame
 				Attribute aTarget = itsTable.getAttribute(getTargetAttributeName());
 				itsTargetAverage = itsTable.getAverage(aTarget.getIndex());
 				jLabelTargetInfo.setText(" average");
-				jLFieldTargetInfo.setText("" + itsTargetAverage);
+				jLFieldTargetInfo.setText(String.valueOf(itsTargetAverage));
 				break;
 			}
 			case SINGLE_ORDINAL :
@@ -1450,7 +1458,7 @@ public class MiningWindow extends JFrame
 			case MULTI_LABEL :
 			{
 				int[] aSelection = jListSecondaryTargets.getSelectedIndices();
-				jLFieldTargetInfo.setText("" + aSelection.length);
+				jLFieldTargetInfo.setText(String.valueOf(aSelection.length));
 				jLabelTargetInfo.setText(" binary targets");
 				break;
 			}
@@ -1478,33 +1486,45 @@ public class MiningWindow extends JFrame
 	private void initEvaluationMinimum()
 	{
 		if(getQualityMeasureName() != null)
-			setQualityMeasureMinimumName(QualityMeasure.getMeasureMinimum(getQualityMeasureName(), itsTargetAverage));
+			setQualityMeasureMinimum(QualityMeasure.getMeasureMinimum(getQualityMeasureName(), itsTargetAverage));
 	}
 
 	/* FIELD METHODS OF SUBDISC COMPONENTS */
-	private void removeAllTargetAttributeItems() { jComboBoxTargetAttribute.removeAllItems(); }
-	private void addTargetAttributeItem(String anItem) { jComboBoxTargetAttribute.addItem(anItem); }
-	private void removeAllSecondaryTargetsItems() { jListSecondaryTargets.removeAll(); }
-	private void addSecondaryTargetsItem(String theItem)
-	{
-		DefaultListModel aModel = (DefaultListModel) (jListSecondaryTargets.getModel());
-		int anEnd = aModel.getSize();
-		aModel.add(anEnd, theItem);
-	}
-	private String getTargetAttributeName() { return (String) jComboBoxTargetAttribute.getSelectedItem(); }
-	private void removeAllMiscFieldItems() { jComboBoxMiscField.removeAllItems(); }
-	private void addMiscFieldItem(String anItem) { jComboBoxMiscField.addItem(anItem); }
-	private String getMiscFieldName() { return (String) jComboBoxMiscField.getSelectedItem(); }
+
+	// target type - target type
+	private String getTargetTypeName() { return (String) jComboBoxTargetType.getSelectedItem(); }
+	private void setTargetTypeName(String aName) { jComboBoxTargetType.setSelectedItem(aName); }
+
+	// target type - quality measure
+	private String getQualityMeasureName() { return (String) jComboBoxQualityMeasure.getSelectedItem(); }
+	private void setQualityMeasure(String aName) { jComboBoxQualityMeasure.setSelectedItem(aName); }
+	private void addQualityMeasureItem(String anItem) { jComboBoxQualityMeasure.addItem(anItem); }
 	private void removeAllQualityMeasureItems()
 	{
-	//	if(jComboBoxQualityMeasure.getItemCount() > 0)
-			jComboBoxQualityMeasure.removeAllItems();
+		//	if(jComboBoxQualityMeasure.getItemCount() > 0)
+		jComboBoxQualityMeasure.removeAllItems();
 	}
-	private void addQualityMeasureItem(String anItem) { jComboBoxQualityMeasure.addItem(anItem); }
-	private String getQualityMeasureName() { return (String) jComboBoxQualityMeasure.getSelectedItem(); }
-	private String getTargetTypeName() { return (String) jComboBoxTargetType.getSelectedItem(); }
-	private void setQualityMeasureMinimumName(String aValue) { jTextFieldQualityMeasureMinimum.setText(aValue); }
-	private float getQualityMeasureMinimum() { return getValue(0.0F, jTextFieldQualityMeasureMinimum.getText()); }
+
+	// target type - quality measure minimum (member of itsSearchParameters)
+	private float getQualityMeasureMinimum() { System.out.println("get"); return getValue(0.0F, jTextFieldQualityMeasureMinimum.getText()); }
+	private void setQualityMeasureMinimum(String aValue) { jTextFieldQualityMeasureMinimum.setText(aValue); }
+
+	// target type - target attribute
+	private String getTargetAttributeName() { return (String) jComboBoxTargetAttribute.getSelectedItem(); }
+	private void setTargetAttribute(String aName) { jComboBoxTargetAttribute.setSelectedItem(aName); }
+	private void addTargetAttributeItem(String anItem) { jComboBoxTargetAttribute.addItem(anItem); }
+	private void removeAllTargetAttributeItems() { jComboBoxTargetAttribute.removeAllItems(); }
+
+	// target type - misc field (target value/secondary target)
+	private void addMiscFieldItem(String anItem) { jComboBoxMiscField.addItem(anItem); }
+	private void removeAllMiscFieldItems() { jComboBoxMiscField.removeAllItems(); }
+	private String getMiscFieldName() { return (String) jComboBoxMiscField.getSelectedItem(); }
+
+	private void addSecondaryTargetsItem(String theItem) { ((DefaultListModel) jListSecondaryTargets.getModel()).addElement(theItem); }
+	private void removeAllSecondaryTargetsItems() { jListSecondaryTargets.removeAll(); }
+
+
+
 	private void setSearchDepthMaximum(String aValue) { jTextFieldSearchDepth.setText(aValue); }
 	private int getSearchDepthMaximum() { return getValue(1, jTextFieldSearchDepth.getText()); }
 	private void setSearchCoverageMinimum(String aValue) { jTextFieldSearchCoverageMinimum.setText(aValue); }
@@ -1516,16 +1536,19 @@ public class MiningWindow extends JFrame
 	private int getSubgroupsMaximum() { return getValue(50, jTextFieldSubgroupsMaximum.getText());}
 	private float getSearchTimeMaximum() { return getValue(1.0F, jTextFieldSearchTimeMaximum.getText()); }
 
-	// search strategy
+	// search strategy - search strategy
 	private String getSearchStrategyName() { return (String) jComboBoxSearchStrategyType.getSelectedItem(); }
+	private void setSearchStrategyType(String aValue) { jComboBoxSearchStrategyType.setSelectedItem(aValue); }
 
-	// search width
-	private void setSearchStrategyWidth(String aValue) { jTextFieldSearchStrategyWidth.setText(aValue); }
+	// search strategy - search width
 	private int getSearchStrategyWidth() { return getValue(100, jTextFieldSearchStrategyWidth.getText()); }
+	private void setSearchStrategyWidth(String aValue) { jTextFieldSearchStrategyWidth.setText(aValue); }
 
-	// numeric strategy
-	private void setNumericStrategy(String aStrategy) { jComboBoxSearchStrategyNumeric.setSelectedItem(aStrategy); }
+	// search strategy - numeric strategy
 	private String getNumericStrategy() { return (String) jComboBoxSearchStrategyNumeric.getSelectedItem(); }
+	private void setNumericStrategy(String aStrategy) { jComboBoxSearchStrategyNumeric.setSelectedItem(aStrategy); }
+
+	// search strategy - number of bins
 	private int getSearchStrategyNrBins() { return getValue(7, jTextFieldSearchCoverageMinimum.getText()); }
 	private void setSearchStrategyNrBins(String aValue) { jTextFieldSearchStrategyNrBins.setText(aValue); }
 
