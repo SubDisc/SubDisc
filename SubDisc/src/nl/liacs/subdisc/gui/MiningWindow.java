@@ -1497,104 +1497,59 @@ public class MiningWindow extends JFrame
 	private String getMiscFieldName() { return (String) jComboBoxMiscField.getSelectedItem(); }
 	private void removeAllQualityMeasureItems()
 	{
-		if(jComboBoxQualityMeasure.getItemCount() > 0)
+	//	if(jComboBoxQualityMeasure.getItemCount() > 0)
 			jComboBoxQualityMeasure.removeAllItems();
 	}
 	private void addQualityMeasureItem(String anItem) { jComboBoxQualityMeasure.addItem(anItem); }
 	private String getQualityMeasureName() { return (String) jComboBoxQualityMeasure.getSelectedItem(); }
 	private String getTargetTypeName() { return (String) jComboBoxTargetType.getSelectedItem(); }
 	private void setQualityMeasureMinimumName(String aValue) { jTextFieldQualityMeasureMinimum.setText(aValue); }
-	private float getQualityMeasureMinimum()
-	{
-		float aMinimum = 0.0F;
-		try
-		{
-			aMinimum = Float.parseFloat(jTextFieldQualityMeasureMinimum.getText());
-		} catch (Exception ex) {}
-		return aMinimum;
-	}
+	private float getQualityMeasureMinimum() { return getValue(0.0F, jTextFieldQualityMeasureMinimum.getText()); }
 	private void setSearchDepthMaximum(String aValue) { jTextFieldSearchDepth.setText(aValue); }
-	private int getSearchDepthMaximum()
-	{
-		int aMaximum = 1;
-		try
-		{
-			aMaximum = Integer.parseInt(jTextFieldSearchDepth.getText());
-		} catch (Exception ex) {}
-		return aMaximum;
-	}
+	private int getSearchDepthMaximum() { return getValue(1, jTextFieldSearchDepth.getText()); }
 	private void setSearchCoverageMinimum(String aValue) { jTextFieldSearchCoverageMinimum.setText(aValue); }
 	private void setSearchCoverageMaximum(String aValue) { jTextFieldSearchCoverageMaximum.setText(aValue); }
 	private void setSubgroupsMaximum(String aValue) { jTextFieldSubgroupsMaximum.setText(aValue); }
 	private void setSearchTimeMaximum(String aValue) { jTextFieldSearchTimeMaximum.setText(aValue); }
-	private int getSearchCoverageMinimum()
-	{
-		int aMinimum = 0;
-		try
-		{
-			aMinimum = Integer.parseInt(jTextFieldSearchCoverageMinimum.getText());
-		} catch (Exception ex) {}
-		return aMinimum;
-	}
-	private float getSearchCoverageMaximum()
-	{
-		float aMaximum = 1.0F;
-		try
-		{
-			aMaximum = Float.parseFloat(jTextFieldSearchCoverageMaximum.getText());
-		} catch (Exception ex) {}
-		return aMaximum;
-	}
-	private int getSubgroupsMaximum()
-	{
-		int aMaximum = 50;
-		try
-		{
-			aMaximum = Integer.parseInt(jTextFieldSubgroupsMaximum.getText());
-		} catch (Exception ex) {}
-		return aMaximum;
-	}
-	private float getSearchTimeMaximum()
-	{
-		float aMaximum = 1.0F;
-		try
-		{
-			aMaximum = Float.parseFloat(jTextFieldSearchTimeMaximum.getText());
-		} catch (Exception ex) {}
-		return aMaximum;
-	}
+	private int getSearchCoverageMinimum() { return getValue(0, jTextFieldSearchCoverageMinimum.getText()); }
+	private float getSearchCoverageMaximum() { return getValue(1.0F, jTextFieldSearchCoverageMaximum.getText()); }
+	private int getSubgroupsMaximum() { return getValue(50, jTextFieldSubgroupsMaximum.getText());}
+	private float getSearchTimeMaximum() { return getValue(1.0F, jTextFieldSearchTimeMaximum.getText()); }
 
 	// search strategy
 	private String getSearchStrategyName() { return (String) jComboBoxSearchStrategyType.getSelectedItem(); }
 
 	// search width
 	private void setSearchStrategyWidth(String aValue) { jTextFieldSearchStrategyWidth.setText(aValue); }
-	private int getSearchStrategyWidth()
-	{
-		int aWidth = 100;
-		try
-		{
-			aWidth = Integer.parseInt(jTextFieldSearchStrategyWidth.getText());
-		}
-		catch (Exception ex) {}
-		return aWidth;
-	}
+	private int getSearchStrategyWidth() { return getValue(100, jTextFieldSearchStrategyWidth.getText()); }
 
 	// numeric strategy
 	private void setNumericStrategy(String aStrategy) { jComboBoxSearchStrategyNumeric.setSelectedItem(aStrategy); }
 	private String getNumericStrategy() { return (String) jComboBoxSearchStrategyNumeric.getSelectedItem(); }
-	private int getSearchStrategyNrBins()
-	{
-		int aMinimum = 7;
-		try
-		{
-			aMinimum = Integer.parseInt(jTextFieldSearchCoverageMinimum.getText());
-		} catch (Exception ex) {}
-		return aMinimum;
-	}
+	private int getSearchStrategyNrBins() { return getValue(7, jTextFieldSearchCoverageMinimum.getText()); }
 	private void setSearchStrategyNrBins(String aValue) { jTextFieldSearchStrategyNrBins.setText(aValue); }
 
+	private int getValue(int theDefaultValue, String theText)
+	{
+		int aValue = theDefaultValue;
+		try
+		{
+			aValue = Integer.parseInt(theText);
+		}
+		catch (Exception ex) {}	// TODO warning dialog
+		return aValue;
+	}
 
+	private float getValue(float theDefaultValue, String theText)
+	{
+		float aValue = theDefaultValue;
+		try
+		{
+			aValue = Float.parseFloat(theText);
+		}
+		catch (Exception ex) {}	// TODO warning dialog
+		return aValue;
+	}
 
 	private JMenuBar jMiningWindowMenuBar;
 	private JMenu jMenuFile;
