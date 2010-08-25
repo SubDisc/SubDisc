@@ -17,23 +17,17 @@ public class ConditionList
 	public ConditionList copy()
 	{
 		ConditionList aNewConditionList = new ConditionList();
-		for (int i=0; i<itsConditions.size(); i++)
-			aNewConditionList.addCondition(itsConditions.get(i).copy());
+		for(Condition aCondition : itsConditions)
+			aNewConditionList.addCondition(aCondition.copy());
 		return aNewConditionList;
 	}
 
 	public String toString()
 	{
-		String aResult = "";
-		for (int i=0; i<itsConditions.size(); i++)
-		{
-			String aCondition = itsConditions.get(i).toString();
-			if (i == 0)
-				aResult += aCondition;
-			else
-				aResult += " AND " + aCondition;
-		}
-		return aResult;
+		StringBuilder aResult = new StringBuilder(itsConditions.size() * 25);
+		for(Condition aCondition : itsConditions)
+			aResult.append(aCondition + " AND ");
+		return aResult.replace(aResult.length() - 5, aResult.length(), "").toString();
 	}
 
 	//this method computes logical equivalence. This means that the actual number of conditions or the order may differ.

@@ -27,7 +27,7 @@ public class CorrelationMeasure
 		itsXSquaredSum = 0;
 		itsYSquaredSum = 0;
 		itsType = theType;
-		for (int i=0; i<thePrimaryColumn.size(); i++)
+		for (int i = 0, j = thePrimaryColumn.size(); i < j; i++)
 			addObservation(thePrimaryColumn.getFloat(i), theSecondaryColumn.getFloat(i));
 	}
 
@@ -52,7 +52,7 @@ public class CorrelationMeasure
 		if(theXValues.length == theYValues.length)
 		{
 			itsSampleSize = theXValues.length;
-			for(int n=0; n<theXValues.length; n++)
+			for(int n = 0; n < itsSampleSize; n++)
 			{
 				itsXSum += theXValues[n];
 				itsYSum += theYValues[n];

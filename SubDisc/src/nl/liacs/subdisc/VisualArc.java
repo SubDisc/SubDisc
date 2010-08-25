@@ -1,3 +1,7 @@
+/**
+ * TODO the min and max methods in this class behave exactly the same as
+ * Math.min() and Math.max(). They can be removed.
+ */
 package nl.liacs.subdisc;
 
 import java.awt.BasicStroke;
@@ -33,12 +37,12 @@ public class VisualArc extends MShape
 	{
 		Point p1a = itsFromNode.getConnectPoint();
 		Point p2a = itsToNode.getConnectPoint();
-		Point p1 = new Point(min(p1a.x, p2a.x), min(p1a.y, p2a.y));
-		Point p2 = new Point(max(p1a.x, p2a.x), max(p1a.y, p2a.y));
-		int xmin = min(p1.x, p2.x);
-		int xmax = max(p1.x, p2.x);
-		int ymin = min(p1.y, p2.y);
-		int ymax = max(p1.y, p2.y);
+		Point p1 = new Point(Math.min(p1a.x, p2a.x), Math.min(p1a.y, p2a.y));
+		Point p2 = new Point(Math.max(p1a.x, p2a.x), Math.max(p1a.y, p2a.y));
+		int xmin = Math.min(p1.x, p2.x);
+		int xmax = Math.max(p1.x, p2.x);
+		int ymin = Math.min(p1.y, p2.y);
+		int ymax = Math.max(p1.y, p2.y);
 		int w = xmax - xmin;
 		int h = ymax - ymin;
 		setBounds(xmin, ymin, w, h);
@@ -152,7 +156,7 @@ public class VisualArc extends MShape
 //		g2.drawPolygon(tmpPoly);
 		g2.fillPolygon(tmpPoly);
 	}
-
+/*
 	private int max(int i1, int i2)
 	{
 		if (i1 > i2)
@@ -168,21 +172,19 @@ public class VisualArc extends MShape
 		else
 			return i2;
 	}
-
+*/
 // UNUSED	private int mean(double i1, double i2) { return (int) ((i1 + i2) / 2); }
 
 	public boolean containsFromShape(MShape aShape)
 	{
-		if (itsFromNode.equals(aShape))
-			return true;
-		return false;
+		return itsFromNode.equals(aShape);
 	}
 
 	public MShape getConnectedShape(MShape aShape)
 	{
-		if (itsFromNode.equals(aShape))
+		if(itsFromNode.equals(aShape))
 			return itsToNode;
-		else if (itsToNode.equals(aShape))
+		else if(itsToNode.equals(aShape))
 			return itsFromNode;
 		else
 			return null;

@@ -183,9 +183,9 @@ public class RegressionMeasure
 		if(itsBase!=null)
 		{
 			itsComplementErrorTermSquaredSum=0;
-			for(int n=0; n < (itsBase.getSampleSize()-itsSampleSize); n++)
+			for(int n=0; n < (itsBase.getSampleSize()-itsSampleSize); n++)	// TODO
 			{
-				if(itsComplementData.size()!=itsBase.getSampleSize()-itsSampleSize)
+				if(itsComplementData.size()!=itsBase.getSampleSize()-itsSampleSize)	// TODO
 					System.err.println("dD");
 
 				double anErrorTerm = getErrorTerm(itsComplementData.get(n));
@@ -212,9 +212,10 @@ public class RegressionMeasure
 		return getErrorTerm(theDataPoint.getX(), theDataPoint.getY());
 	}
 
+	// Exposes the private itsData list, better return new ArrayList<>(itsData)?
 	public ArrayList<DataPoint> getData()
 	{
-		return itsData;
+		return itsData; 
 	}
 
 	private double getErrorTermVariance(double theErrorTermSquaredSum, double theSampleSize)

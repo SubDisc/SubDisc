@@ -22,7 +22,7 @@ public class CrossCube extends DataCube
 
 	public void setCount(int theIndex, int theCount)
 	{
-		if (theIndex >= itsSize)
+		if(theIndex >= itsSize)
 			Log.error("out of bounds");
 		else
 		{
@@ -37,7 +37,7 @@ public class CrossCube extends DataCube
 
 	public void incrementCount(int theIndex)
 	{
-		if (theIndex >= itsSize)
+		if(theIndex >= itsSize)
 			Log.error("out of bounds");
 		else
 		{
@@ -52,10 +52,10 @@ public class CrossCube extends DataCube
 	{
 		double anEntropy = 0;
 
-		if (itsTotalCount == 0)
+		if(itsTotalCount == 0)
 			return 0;
 
-		for (int i=0; i<itsSize; i++)
+		for(int i=0; i<itsSize; i++)
 		{
 			double aFraction = itsCounts[i]/(double)itsTotalCount;
 			if (aFraction > 0)
@@ -69,10 +69,10 @@ public class CrossCube extends DataCube
 	{
 		double aCoverage = 0;
 
-		if (itsTotalCount == 0)
+		if(itsTotalCount == 0)
 			return 0;
 
-		for (int i=0; i<itsDimensions; i++)
+		for(int i=0; i<itsDimensions; i++)
 			aCoverage += itsCounts[(int)Math.pow(2, i)];
 
 		return aCoverage;
@@ -91,7 +91,7 @@ public class CrossCube extends DataCube
 	{
 		double aQuality = 0;
 
-		if (itsTotalCount == 0)
+		if(itsTotalCount == 0)
 			return 0;
 
 		int q_i = getSize() / 2;
@@ -100,7 +100,7 @@ public class CrossCube extends DataCube
 		double LogGam_alpha_ijk = Function.logGamma(alpha_ijk); //uniform prior BDeu metric
 		double LogGam_alpha_ij = Function.logGamma(alpha_ij);
 
-		for (int j=0; j<q_i; j++)
+		for(int j=0; j<q_i; j++)
 		{
 			double aSum = 0;
 			double aPost = 0;
@@ -121,8 +121,8 @@ public class CrossCube extends DataCube
 	{
 		int anIndex = 0;
 
-		for (int i=0; i<itsDimensions; i++)
-			if (theBitSet.get(i))
+		for(int i=0; i<itsDimensions; i++)
+			if(theBitSet.get(i))
 				anIndex += (int)Math.pow(2, itsDimensions-i-1);
 
 		return anIndex;
@@ -133,8 +133,8 @@ public class CrossCube extends DataCube
 		BitSet aBitSet = new BitSet(itsDimensions);
 		int anIndex = theIndex;
 
-		for (int i=itsDimensions - 1; i >= 0; i--)
-			if (anIndex >= (int) Math.pow(2, i))
+		for(int i=itsDimensions - 1; i >= 0; i--)
+			if(anIndex >= (int) Math.pow(2, i))
 			{
 				aBitSet.set(itsDimensions - i - 1);
 				anIndex -= (int) Math.pow(2, i);

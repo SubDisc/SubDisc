@@ -23,6 +23,7 @@ public class DAGView extends JPanel implements Serializable, MouseListener
 	private ArrayList<VisualNode> itsComponentSet = new ArrayList<VisualNode>();
 	private ArrayList<VisualArc> itsConnectorSet = new ArrayList<VisualArc>();
 	private DAG itsDAG;
+	private int itsDAGSize;
 	private int itsDAGWidth;
 	private int itsDAGHeight;
 	Random itsRandom;
@@ -31,6 +32,7 @@ public class DAGView extends JPanel implements Serializable, MouseListener
 	{
 		super();
 		itsDAG = theDAG;
+		itsDAGSize = itsDAG.getSize();
 //		itsRandom = new Random((long) System.currentTimeMillis()); // truely random
 		itsRandom = new Random(12345); // random, but always the same
 		propertySupport = new PropertyChangeSupport(this);
@@ -46,7 +48,7 @@ public class DAGView extends JPanel implements Serializable, MouseListener
 
 	public void drawDAG()
 	{
-		for (int i=0; i<itsDAG.getSize(); i++)
+		for(int i = 0; i < itsDAGSize; i++)
 		{
 			int anX = itsDAGWidth/2 + itsRandom.nextInt(20);
 			int aY = itsDAGHeight/2 + itsRandom.nextInt(20);
@@ -54,11 +56,11 @@ public class DAGView extends JPanel implements Serializable, MouseListener
 			addNodeComponent(aNode);
 		}
 
-		for (int i = 0; i < itsDAG.getSize(); i++)
+		for(int i = 0; i < itsDAGSize; i++)
 		{
 			for(int j = 0; j < i ; j++)
 			{
-				switch (itsDAG.getNode(j).isConnected(i))
+				switch(itsDAG.getNode(j).isConnected(i))
 				{
 					case 0: //we have i-/-j (not connected)
 					{
@@ -88,11 +90,11 @@ public class DAGView extends JPanel implements Serializable, MouseListener
 	public void drawDAG(DAGView theDAGView)
 	{
 		itsComponentSet = theDAGView.itsComponentSet; // no deep copy
-		for (int i = 0; i < itsDAG.getSize(); i++)
+		for(int i = 0; i < itsDAGSize; i++)
 		{
 			for(int j = 0; j < i ; j++)
 			{
-				switch (itsDAG.getNode(j).isConnected(i))
+				switch(itsDAG.getNode(j).isConnected(i))
 				{
 					case 0: //we have i-/-j (not connected)
 					{
@@ -118,9 +120,9 @@ public class DAGView extends JPanel implements Serializable, MouseListener
 	{
 		VisualNode aVisualNode;
 
-		for (float aNeighbourhood = 1f; aNeighbourhood > 0f; aNeighbourhood -= 0.05f)
+		for(float aNeighbourhood = 1f; aNeighbourhood > 0f; aNeighbourhood -= 0.05f)
 		{
-			for (int i=0; i<1000; i++)
+			for(int i = 0; i < 1000; i++)
 			{
 				int anX = itsRandom.nextInt(itsDAGWidth - 30)-50;
 				int aY = itsRandom.nextInt(itsDAGHeight - 20)-50;
@@ -130,11 +132,11 @@ public class DAGView extends JPanel implements Serializable, MouseListener
 				float aMinDistance = (aVisualNode.getX() - anX)*(aVisualNode.getX() - anX) + (aVisualNode.getY() - aY)*(aVisualNode.getY() - aY);
 
 				//find closest
-				for (int j=1; j<itsDAG.getSize(); j++)
+				for(int j = 1; j < itsDAGSize; j++)
 				{
 					aVisualNode = itsComponentSet.get(j);
 					float aDistance = (aVisualNode.getX() - anX)*(aVisualNode.getX() - anX) + (aVisualNode.getY() - aY)*(aVisualNode.getY() - aY);
-					if (aDistance < aMinDistance)
+					if(aDistance < aMinDistance)
 					{
 						aMinDistance = aDistance;
 						aWinner = j;
@@ -146,9 +148,9 @@ public class DAGView extends JPanel implements Serializable, MouseListener
 				aVisualNode.shift((int) (0.1f * (anX - aVisualNode.getX())),
 								 (int) (0.1f * (aY - aVisualNode.getY())));
 
-				for (int j = 0; j < itsDAG.getSize(); j++)
+				for(int j = 0; j < itsDAGSize; j++)
 				{
-					if (aNode.isConnected(j) > 0)
+					if(aNode.isConnected(j) > 0)
 					{
 						aVisualNode = itsComponentSet.get(j);
 						aVisualNode.shift((int) (aNeighbourhood * 0.1f * (anX - aVisualNode.getX())),
@@ -170,26 +172,17 @@ public class DAGView extends JPanel implements Serializable, MouseListener
 	{
 		super.paint(g);
 
-		for (int i = 0; i < itsConnectorSet.size(); i++)
-		{
-			VisualArc c = (VisualArc) itsConnectorSet.get(i);
+		for(VisualArc c : itsConnectorSet)
 			c.paint(g);
-		}
 
-		for (int i = 0; i < itsComponentSet.size(); i++)
-		{
-			VisualNode c = (VisualNode)itsComponentSet.get(i);
+		for(VisualNode c : itsComponentSet)
 			c.paint(g);
-		}
 	}
 
 	public void updateConnectors()
 	{
-		for (int i = 0; i < itsConnectorSet.size(); i++)
-		{
-			VisualArc c = (VisualArc) itsConnectorSet.get(i);
+		for(VisualArc c : itsConnectorSet)
 			c.calcBounds();
-		}
 	}
 
 	public void connect(int theID1, int theID2)
@@ -198,7 +191,7 @@ public class DAGView extends JPanel implements Serializable, MouseListener
 		VisualNode aNode2 = (VisualNode) itsComponentSet.get(theID2);
 		VisualArc anArc = new VisualArc(aNode1, aNode2);
 
-		if (!itsConnectorSet.contains(anArc))
+		if(!itsConnectorSet.contains(anArc))
 			itsConnectorSet.add(anArc);
 	}
 
