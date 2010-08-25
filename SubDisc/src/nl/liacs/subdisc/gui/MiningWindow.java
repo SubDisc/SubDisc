@@ -142,7 +142,7 @@ public class MiningWindow extends JFrame
 
 		// Add all Numeric Strategies
 		for(NumericStrategy n : SearchParameters.NumericStrategy.values())
-			jComboBoxNumeric.addItem(n.TEXT);
+			jComboBoxSearchStrategyNumeric.addItem(n.TEXT);
 	}
 
 	private void initGuiComponents()
@@ -216,10 +216,11 @@ public class MiningWindow extends JFrame
 		jMenuItemAttributeTypeChange = new JMenuItem();
 		jSeparator2 = new JSeparator();
 		jMenuItemSubgroupDiscovery = new JMenuItem();
+		jSeparator3 = new JSeparator();
 		jMenuItemCreateAutoRunFile = new JMenuItem();
 		jMenuItemAddToAutoRunFile = new JMenuItem();
 //		jMenuItemLoadAutoRunFile = new JMenuItem();
-		jSeparator3 = new JSeparator();
+		jSeparator4 = new JSeparator();
 		jMenuItemExit = new JMenuItem();
 		jMenuAbout = new JMenu();
 		jMenuItemAboutSubDisc = new JMenuItem();
@@ -298,11 +299,13 @@ public class MiningWindow extends JFrame
 		jLabelStrategyType = new JLabel();
 		jLabelStrategyWidth = new JLabel();
 		jLabelSearchStrategyNumericFrr = new JLabel();
+		jLabelSearchStrategyNrBins = new JLabel();
 		// search strategy - fields
 		jPanelSearchStrategyFields = new JPanel();
 		jComboBoxSearchStrategyType = new JComboBox();
 		jTextFieldSearchStrategyWidth = new JTextField();
-		jComboBoxNumeric = new JComboBox();
+		jComboBoxSearchStrategyNumeric = new JComboBox();
+		jTextFieldSearchStrategyNrBins = new JTextField();
 
 		// mining buttons
 //		jLabelLayoutFiller0 = new JLabel();
@@ -389,6 +392,8 @@ public class MiningWindow extends JFrame
 		});
 		jMenuFile.add(jMenuItemCreateAutoRunFile);
 
+		jMenuFile.add(jSeparator3);
+
 		jMenuItemAddToAutoRunFile.setFont(DEFAULT_FONT);
 		jMenuItemAddToAutoRunFile.setText("Add to Autorun File");
 //		jMenuItemAddToAutoRunFile.setMnemonic();
@@ -411,7 +416,7 @@ public class MiningWindow extends JFrame
 		});
 		jMenuFile.add(jMenuItemLoadAutoRunFile);
 */
-		jMenuFile.add(jSeparator3);
+		jMenuFile.add(jSeparator4);
 
 		jMenuItemExit.setFont(DEFAULT_FONT);
 		jMenuItemExit.setText("Exit");
@@ -716,7 +721,10 @@ public class MiningWindow extends JFrame
 
 		jLabelSearchStrategyNumericFrr = initJLabel(" best numeric");
 		jPanelSearchStrategyLabels.add(jLabelSearchStrategyNumericFrr);
-
+		
+		jLabelSearchStrategyNrBins = initJLabel(" nr bins");
+		jPanelSearchStrategyLabels.add(jLabelSearchStrategyNrBins);
+		
 		jPanelSearchStrategy.add(jPanelSearchStrategyLabels);
 
 		jPanelSearchStrategyFields.setLayout(new GridLayout(7, 1));
@@ -737,11 +745,18 @@ public class MiningWindow extends JFrame
 		jTextFieldSearchStrategyWidth.setHorizontalAlignment(SwingConstants.RIGHT);
 		jTextFieldSearchStrategyWidth.setMinimumSize(new Dimension(86, 22));
 		jPanelSearchStrategyFields.add(jTextFieldSearchStrategyWidth);
+		
+		jComboBoxSearchStrategyNumeric.setPreferredSize(new Dimension(86, 22));
+		jComboBoxSearchStrategyNumeric.setMinimumSize(new Dimension(86, 22));
+		jComboBoxSearchStrategyNumeric.setFont(DEFAULT_FONT);
+		jPanelSearchStrategyFields.add(jComboBoxSearchStrategyNumeric);
 
-		jComboBoxNumeric.setPreferredSize(new Dimension(86, 22));
-		jComboBoxNumeric.setMinimumSize(new Dimension(86, 22));
-		jComboBoxNumeric.setFont(DEFAULT_FONT);
-		jPanelSearchStrategyFields.add(jComboBoxNumeric);
+		jTextFieldSearchStrategyNrBins.setPreferredSize(new Dimension(86, 22));
+		jTextFieldSearchStrategyNrBins.setFont(DEFAULT_FONT);
+		jTextFieldSearchStrategyNrBins.setText("0");
+		jTextFieldSearchStrategyNrBins.setHorizontalAlignment(SwingConstants.RIGHT);
+		jTextFieldSearchStrategyNrBins.setMinimumSize(new Dimension(86, 22));
+		jPanelSearchStrategyFields.add(jTextFieldSearchStrategyNrBins);
 
 		jPanelSearchStrategy.add(jPanelSearchStrategyFields);
 		jPanelCenter.add(jPanelSearchStrategy);	// MM
@@ -836,10 +851,7 @@ public class MiningWindow extends JFrame
 	private void jMenuItemAutoRunFileActionPerformed(AutoRun theFileOption)
 	{
 		setupSearchParameters();
-//		if(theFileOption == AutoRun.LOAD)
-//			;
-//		else
-			new XMLAutoRun(itsSearchParameters, itsTable, theFileOption);
+		new XMLAutoRun(itsSearchParameters, itsTable, theFileOption);
 	}
 
 	private void jMenuItemAboutSubDiscActionPerformed(ActionEvent evt)
@@ -885,15 +897,16 @@ public class MiningWindow extends JFrame
 		System.exit(0);
 	}
 
-	
-	// TODO remove "best first"
+	// TODO remove "best first" ? set not visible
 	private void jComboBoxSearchStrategyTypeActionPerformed(ActionEvent evt)
 	{
 		String aName = getSearchStrategyName();
 		if(aName != null)
 		{
+			boolean aBestFirst = "best first".equalsIgnoreCase(aName);
 			itsSearchParameters.setSearchStrategy(aName);
-			jTextFieldSearchStrategyWidth.setEnabled(aName.equalsIgnoreCase("best first"));
+			jLabelStrategyWidth.setVisible(aBestFirst);
+			jTextFieldSearchStrategyWidth.setVisible(aBestFirst);
 		}
 	}
 
@@ -917,8 +930,7 @@ public class MiningWindow extends JFrame
 			Log.logCommandLine("init");
 			initTargetValueItems();
 		}
-		// TODO TEST
-		System.out.println(getTargetAttributeName());
+
 		// TODO these test could be member functions in TargetType?
 		// has MiscField?
 		boolean hasMiscField = (aTargetType == TargetType.SINGLE_NOMINAL ||
@@ -934,7 +946,7 @@ public class MiningWindow extends JFrame
 		else
 			jLabelMiscField.setText(" secondary target");
 
-		// has secondary targets (JList)
+		// has secondary targets (JList)?
 		boolean hasSecondaryTargets = (aTargetType == TargetType.MULTI_LABEL ||
 										aTargetType == TargetType.MULTI_BINARY_CLASSIFICATION);
 		jLabelSecondaryTargets.setVisible(hasSecondaryTargets);
@@ -1558,7 +1570,7 @@ public class MiningWindow extends JFrame
 	}
 
 	// numeric strategy
-	private String getNumericStrategy() { return (String) jComboBoxNumeric.getSelectedItem(); }
+	private String getNumericStrategy() { return (String) jComboBoxSearchStrategyNumeric.getSelectedItem(); }
 
 	private JMenuBar jMiningWindowMenuBar;
 	private JMenu jMenuFile;
@@ -1569,10 +1581,11 @@ public class MiningWindow extends JFrame
 	private JMenuItem jMenuItemAttributeTypeChange;
 	private JSeparator jSeparator2;
 	private JMenuItem jMenuItemSubgroupDiscovery;
+	private JSeparator jSeparator3;
 	private JMenuItem jMenuItemCreateAutoRunFile;
 	private JMenuItem jMenuItemAddToAutoRunFile;
 //	private JMenuItem jMenuItemLoadAutoRunFile;	//TODO part of jMenuItemOpenFile
-	private JSeparator jSeparator3;
+	private JSeparator jSeparator4;
 	private JMenuItem jMenuItemExit;
 	private JMenu jMenuAbout;
 	private JMenuItem jMenuItemAboutSubDisc;
@@ -1643,10 +1656,12 @@ public class MiningWindow extends JFrame
 	private JLabel jLabelStrategyType;
 	private JLabel jLabelStrategyWidth;
 	private JLabel jLabelSearchStrategyNumericFrr;
+	private JLabel jLabelSearchStrategyNrBins;
 	private JPanel jPanelSearchStrategyFields;
 	private JComboBox jComboBoxSearchStrategyType;
 	private JTextField jTextFieldSearchStrategyWidth;
-	private JComboBox jComboBoxNumeric;
+	private JComboBox jComboBoxSearchStrategyNumeric;
+	private JTextField jTextFieldSearchStrategyNrBins;
 
 	// GUI defaults and convenience methods
 	private static final Font DEFAULT_FONT = new Font("Dialog", 0, 10);

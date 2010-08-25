@@ -91,7 +91,7 @@ public class SearchParameters implements XMLNodeInterface
 			case CandidateQueue.DFS		: return "depth first";
 			case CandidateQueue.BESTFIRST	: return "best first";
 			case CandidateQueue.BEAM	: return "beam";
-			default						: return "";
+			default						: return "";	// TODO warning dialog
 		}
 	}
 
@@ -106,7 +106,7 @@ public class SearchParameters implements XMLNodeInterface
 		else if (theSearchStrategyName.equals("beam"))
 			itsSearchStrategy = CandidateQueue.BEAM;
 		else
-			itsSearchStrategy = CandidateQueue.BESTFIRST; // default
+			itsSearchStrategy = CandidateQueue.BESTFIRST; // default TODO warning dialog
 	}
 
 	public NumericStrategy getNumericStrategy() { return itsNumericStrategy; }
