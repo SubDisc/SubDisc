@@ -97,6 +97,7 @@ public class MiningWindow extends JFrame
 	public MiningWindow(Table theTable)
 	{
 		itsTable = theTable;
+		itsTotalCount = itsTable.getNrRows();
 		initMiningWindow();
 		initGuiComponents();
 	}
@@ -104,6 +105,7 @@ public class MiningWindow extends JFrame
 	public MiningWindow(Table theTable, SearchParameters theSearchParameters)
 	{
 		itsTable = theTable;
+		itsTotalCount = itsTable.getNrRows();
 		initMiningWindow();
 
 		if(theSearchParameters != null)
@@ -1428,6 +1430,7 @@ public class MiningWindow extends JFrame
 				String aSelectedTargetValue = getMiscFieldName();
 				itsPositiveCount = itsTable.countValues(aTarget.getIndex(), aSelectedTargetValue);
 				float aPercentage = ((float) itsPositiveCount * 100f) / (float) itsTotalCount;
+				System.out.println("aPercentage = " + (itsPositiveCount * 100f) + " / " + itsTotalCount);	// TODO MM
 				NumberFormat aFormatter = NumberFormat.getNumberInstance();
 				aFormatter.setMaximumFractionDigits(1);
 				jLFieldTargetInfo.setText(itsPositiveCount + " (" + aFormatter.format(aPercentage) + " %)");
