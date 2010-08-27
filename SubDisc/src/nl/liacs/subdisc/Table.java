@@ -279,11 +279,11 @@ public class Table
 		Column aColumn = itsColumns.get(theColumn);
 		boolean aOne = theValue.equals("1");
 
-		for (int i=0; i<aColumn.size(); i++)
+		for (int i=0, j = aColumn.size(); i < j; i++)
 		{
 			if (aColumn.isNominalType() && aColumn.getNominal(i).equals(theValue))
 				aResult++;
-			if (aColumn.isBinaryType() && aColumn.getBinary(i)==aOne)
+			else if (aColumn.isBinaryType() && aColumn.getBinary(i)==aOne)
 				aResult++;
 		}
 		return aResult;

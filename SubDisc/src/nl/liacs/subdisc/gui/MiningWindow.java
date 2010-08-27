@@ -216,7 +216,6 @@ public class MiningWindow extends JFrame
 		{
 			jLFieldTargetTable.setText(itsTable.getTableName());
 			// TODO the following fields need to be updated after data/attribute change
-			itsTotalCount = itsTable.getNrRows();
 			jLFieldNrExamples.setText(String.valueOf(itsTotalCount));
 			jLFieldNrColumns.setText(String.valueOf(itsTable.getNrColumns()));
 			int[] aCounts = itsTable.getTypeCounts();
@@ -929,10 +928,10 @@ public class MiningWindow extends JFrame
 		String aName = getSearchStrategyName();
 		if(aName != null)
 		{
-			boolean aBestFirst = "best first".equalsIgnoreCase(aName);
+			boolean aBestFirst = SearchParameters.getSearchStrategyName(CandidateQueue.BESTFIRST).equalsIgnoreCase(aName);
 			itsSearchParameters.setSearchStrategy(aName);
-			jLabelStrategyWidth.setVisible(aBestFirst);
-			jTextFieldSearchStrategyWidth.setVisible(aBestFirst);
+			jLabelStrategyWidth.setVisible(!aBestFirst);
+			jTextFieldSearchStrategyWidth.setVisible(!aBestFirst);
 		}
 	}
 
@@ -1471,7 +1470,6 @@ public class MiningWindow extends JFrame
 
 	private void initTargetInfo()
 	{
-		System.out.println("initTargetInfo");	// TODO MM
 		switch(itsTargetConcept.getTargetType())
 		{
 			case SINGLE_NOMINAL :
@@ -1480,7 +1478,6 @@ public class MiningWindow extends JFrame
 				String aSelectedTargetValue = getMiscFieldName();
 				itsPositiveCount = itsTable.countValues(aTarget.getIndex(), aSelectedTargetValue);
 				float aPercentage = ((float) itsPositiveCount * 100f) / (float) itsTotalCount;
-				System.out.println("aPercentage = " + (itsPositiveCount * 100f) + " / " + itsTotalCount);	// TODO MM
 				NumberFormat aFormatter = NumberFormat.getNumberInstance();
 				aFormatter.setMaximumFractionDigits(1);
 				jLFieldTargetInfo.setText(itsPositiveCount + " (" + aFormatter.format(aPercentage) + " %)");
@@ -1559,7 +1556,7 @@ public class MiningWindow extends JFrame
 	}
 
 	// target type - quality measure minimum (member of itsSearchParameters)
-	private float getQualityMeasureMinimum() { System.out.println("get"); return getValue(0.0F, jTextFieldQualityMeasureMinimum.getText()); }
+	private float getQualityMeasureMinimum() { return getValue(0.0F, jTextFieldQualityMeasureMinimum.getText()); }
 	private void setQualityMeasureMinimum(String aValue) { jTextFieldQualityMeasureMinimum.setText(aValue); }
 
 	// target type - target attribute

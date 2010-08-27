@@ -261,8 +261,7 @@ public class FileLoaderARFF implements FileLoaderInterface
 					aColumn.add(s); break;
 				case BINARY :
 				{
-					if(BOOLEAN_POSITIVES.contains(s.toLowerCase()))
-						aColumn.add(true);
+					aColumn.add(BOOLEAN_POSITIVES.contains(s.toLowerCase()));
 					break;
 				}
 			}
