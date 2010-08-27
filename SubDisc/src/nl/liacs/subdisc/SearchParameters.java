@@ -118,9 +118,9 @@ public class SearchParameters implements XMLNodeInterface
 		for(NumericStrategy n : NumericStrategy.values())
 			if(n.text.equalsIgnoreCase(theNumericStrategy))
 				itsNumericStrategy = n;
-*/		if(theNumericStrategy.equalsIgnoreCase("all"))
+*/		if (theNumericStrategy.equalsIgnoreCase("all"))
 			itsNumericStrategy = NumericStrategy.NUMERIC_ALL;
-		else if(theNumericStrategy.equalsIgnoreCase("bin"))
+		else if (theNumericStrategy.equalsIgnoreCase("bins"))
 			itsNumericStrategy = NumericStrategy.NUMERIC_BINS;
 		else
 			itsNumericStrategy = NumericStrategy.NUMERIC_BEST;

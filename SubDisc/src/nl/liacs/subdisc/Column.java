@@ -1,7 +1,6 @@
 package nl.liacs.subdisc;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.BitSet;
 import java.util.TreeSet;
 
@@ -23,6 +22,7 @@ public class Column implements XMLNodeInterface
 	private ArrayList<Float> itsFloats;
 	private ArrayList<String> itsNominals;
 	private BitSet itsBinaries;
+	private String itsMissingValue;
 	private BitSet itsMissing = new BitSet();
 	private int itsSize;
 	private float itsMin = Float.POSITIVE_INFINITY;
@@ -36,50 +36,59 @@ public class Column implements XMLNodeInterface
 		switch(itsAttribute.getType())
 		{
 			case NUMERIC :
-			case ORDINAL : itsFloats = new ArrayList<Float>(theNrRows); break;
-			case NOMINAL : itsNominals = new ArrayList<String>(theNrRows); break;
-			case BINARY : itsBinaries = new BitSet(theNrRows); break;
-			default : itsNominals = new ArrayList<String>(theNrRows); break;	// TODO throw warning
+			case ORDINAL : 
+			{
+				itsFloats = new ArrayList<Float>(theNrRows);
+				itsMissingValue = String.valueOf(0.0F);
+				break;
+			}
+			case NOMINAL :
+			{
+				itsNominals = new ArrayList<String>(theNrRows);
+				itsMissingValue = "";
+				break;
+			}
+			case BINARY :
+			{
+				itsBinaries = new BitSet(theNrRows);
+				itsMissingValue = "0";
+				break;
+			}
+			default :
+			{
+				itsNominals = new ArrayList<String>(theNrRows);
+				itsMissingValue = "";
+				break;	// TODO throw warning
+			}
 		}
 	}
 
 	public Column(Node theColumnNode)
 	{
 		NodeList aChildren = theColumnNode.getChildNodes();
-		for(int i = 0, j = aChildren.getLength(); i < j; ++i)
+		for (int i = 0, j = aChildren.getLength(); i < j; i++)
 		{
 			Node aSetting = aChildren.item(i);
 			String aNodeName = aSetting.getNodeName();
-			if("attribute".equalsIgnoreCase(aNodeName))
+			if ("attribute".equalsIgnoreCase(aNodeName))
 				itsAttribute = new Attribute(aSetting);
-			else if("min".equalsIgnoreCase(aNodeName))
-				itsMin = Float.parseFloat(aSetting.getTextContent());
-			else if("max".equalsIgnoreCase(aNodeName))
-				itsMax = Float.parseFloat(aSetting.getTextContent());
-			else if("enabled".equalsIgnoreCase(aNodeName))
+			else if ("missing_value".equalsIgnoreCase(aNodeName))
+				itsMissingValue = aSetting.getTextContent();
+			else if ("enabled".equalsIgnoreCase(aNodeName))
 				isEnabled = Boolean.valueOf(aSetting.getTextContent());
-			else if("missing".equalsIgnoreCase(aNodeName))
-			{
-				String[] aMissing = aSetting.getTextContent().split(",", -1);
-				int aNrMissing = aMissing.length;
-				itsMissing = new BitSet(aNrMissing);
-				for(int k = 0; k < aNrMissing; ++k )
-					if("1".equalsIgnoreCase(aMissing[k]))
-						itsMissing.set(k);
-			}
 		}
 	}
 
 	public void add(float theFloat) { itsFloats.add(new Float(theFloat)); itsSize++; }
 	public void add(boolean theBinary)
 	{
-		if(theBinary)
+		if (theBinary)
 			itsBinaries.set(itsSize);
 		itsSize++;
 	}
 	public void add(String theNominal) { itsNominals.add(theNominal); itsSize++; }
 	public int size() { return itsSize; }
-	public Attribute getAttribute() { return itsAttribute; }
+	public Attribute getAttribute() { return itsAttribute; }	// TODO return copy of mutable type
 	public AttributeType getType() { return itsAttribute.getType(); }
 	public String getName() {return itsAttribute.getName(); }
 	public float getFloat(int theIndex) { return itsFloats.get(theIndex).floatValue(); }
@@ -96,7 +105,7 @@ public class Column implements XMLNodeInterface
 			default : return ("Unknown type: " + itsAttribute.getTypeName());
 		}
 	}
-	public BitSet getBinaries() { return itsBinaries; }
+	public BitSet getBinaries() { return itsBinaries; }	// TODO return copy of mutable type
 
 	public boolean isNominalType() { return itsAttribute.isNominalType(); }
 	public boolean isNumericType() { return itsAttribute.isNumericType(); }
@@ -121,9 +130,9 @@ public class Column implements XMLNodeInterface
 			for(int i=0; i<itsSize; i++)
 			{
 				float aValue = getFloat(i);
-				if(aValue > itsMax)
+				if (aValue > itsMax)
 					itsMax = aValue;
-				if(aValue < itsMin)
+				if (aValue < itsMin)
 					itsMin = aValue;
 			}
 	}
@@ -193,8 +202,8 @@ public class Column implements XMLNodeInterface
 			case NOMINAL : return true;
 			case BINARY :
 			{
-				// TODO use FileLoaderARFF.BOOLEAN_POSITIVE || BOOLEAN_NEGATIVE
-				return new ArrayList<String>(Arrays.asList(new String[] { "0", "1", "false", "true", "F", "T", "no", "yes" })).contains(theNewValue);
+				return (FileLoaderARFF.BOOLEAN_NEGATIVES.contains(theNewValue) ||
+						FileLoaderARFF.BOOLEAN_POSITIVES.contains(theNewValue));
 			}
 			default : return false;
 		}
@@ -222,14 +231,12 @@ public class Column implements XMLNodeInterface
 	}
 
 	/**
-	 * TODO change representation of Row as <row>a,b,c,..z</row>
-	 * TODO use indexes for column/row <row nr=1>
 	 * Create a XML Node representation of this Column.
-	 * Note: the missing values are included as a ChildNode, but the Row Node
-	 * may not contain the "?" values. Instead it contains the value that is set
-	 * by default or by the user. Default values for the AttributeTypes are:
-	 * 0 for NUMERIC/ORDINAL, 0 for BINARY (indicating false) and "" for NOMINAL
-	 * (the empty string).
+	 * Note: the value for missing values is included as missing_value, as
+	 * described by itsMissingValue. When data is loaded, '?' values are
+	 * replaced by itsMissingValue by the FileLoader. Default values for the
+	 * AttributeTypes are: 0.0F for NUMERIC/ORDINAL, 0 for BINARY
+	 * (indicating false) and "" for NOMINAL (the empty string).
 	 * @param theParentNode, the Node of which this Node will be a ChildNode.
 	 * @return A Node that contains all the information of this column.
 	 */
@@ -239,36 +246,7 @@ public class Column implements XMLNodeInterface
 		Node aNode = XMLNode.addNodeTo(theParentNode, "column");
 		((Element)aNode).setAttribute("nr", "0");
 		itsAttribute.addNodeTo(aNode);
-		XMLNode.addNodeTo(aNode, "min", itsMin);
-		XMLNode.addNodeTo(aNode, "max", itsMax);
+		XMLNode.addNodeTo(aNode, "missing_value", itsMissingValue);
 		XMLNode.addNodeTo(aNode, "enabled", isEnabled);
-
-		if(itsMissing.cardinality() > 0)
-		{
-			StringBuilder aMissing = new StringBuilder(itsSize);
-			for(int i = itsMissing.nextSetBit(0); i >= 0; i = itsMissing.nextSetBit(i + 1))
-				aMissing.append(i + ",");
-			aMissing.deleteCharAt(aMissing.length() - 1);	// removes last comma
-			XMLNode.addNodeTo(aNode, "missing", aMissing);
-		}
-		else
-			XMLNode.addNodeTo(aNode, "missing");
-/*
- * Do not include data in XML.
-		switch(itsAttribute.getType())
-		{
-			case NOMINAL :	for(String s : itsNominals)
-								XMLNode.addNodeTo(aNode, "row", s);
-							break;
-			case NUMERIC :
-			case ORDINAL :	for(Float f : itsFloats)
-								XMLNode.addNodeTo(aNode, "row", f);
-							break;
-			case BINARY :	for(int i = 0, j = itsSize; i < j; ++i)
-								XMLNode.addNodeTo(aNode, "row", getBinary(i) ? "1" : "0");
-							break;
-			default		:	break;
-		}
-*/
 	}
 }

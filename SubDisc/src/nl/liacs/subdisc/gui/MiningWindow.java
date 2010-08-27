@@ -774,6 +774,11 @@ public class MiningWindow extends JFrame
 		jComboBoxSearchStrategyNumeric.setPreferredSize(new Dimension(86, 22));
 		jComboBoxSearchStrategyNumeric.setMinimumSize(new Dimension(86, 22));
 		jComboBoxSearchStrategyNumeric.setFont(DEFAULT_FONT);
+		jComboBoxSearchStrategyNumeric.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				jComboBoxSearchStrategyNumericActionPerformed(evt);
+			}
+		});
 		jPanelSearchStrategyFields.add(jComboBoxSearchStrategyNumeric);
 
 		jTextFieldSearchStrategyNrBins.setPreferredSize(new Dimension(86, 22));
@@ -924,7 +929,6 @@ public class MiningWindow extends JFrame
 		System.exit(0);
 	}
 
-	// TODO remove "best first" ? set not visible
 	private void jComboBoxSearchStrategyTypeActionPerformed(ActionEvent evt)
 	{
 		String aName = getSearchStrategyName();
@@ -937,6 +941,18 @@ public class MiningWindow extends JFrame
 		}
 	}
 
+	private void jComboBoxSearchStrategyNumericActionPerformed(ActionEvent evt)
+	{
+		String aName = getNumericStrategy();
+		if(aName != null)
+		{
+			itsSearchParameters.setNumericStrategy(aName);
+			boolean aBin = (itsSearchParameters.getNumericStrategy() == NumericStrategy.NUMERIC_BINS);
+			jLabelSearchStrategyNrBins.setVisible(aBin);
+			jTextFieldSearchStrategyNrBins.setVisible(aBin);
+		}
+	}
+	
 	private void jComboBoxQualityMeasureActionPerformed(ActionEvent evt)
 	{
 		itsSearchParameters.setQualityMeasureMinimum(getQualityMeasureMinimum());
@@ -1601,7 +1617,7 @@ public class MiningWindow extends JFrame
 	private void setNumericStrategy(String aStrategy) { jComboBoxSearchStrategyNumeric.setSelectedItem(aStrategy); }
 
 	// search strategy - number of bins
-	private int getSearchStrategyNrBins() { return getValue(7, jTextFieldSearchCoverageMinimum.getText()); }
+	private int getSearchStrategyNrBins() { return getValue(8, jTextFieldSearchCoverageMinimum.getText()); }
 	private void setSearchStrategyNrBins(String aValue) { jTextFieldSearchStrategyNrBins.setText(aValue); }
 
 	private int getValue(int theDefaultValue, String theText)

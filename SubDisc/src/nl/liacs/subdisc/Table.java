@@ -89,19 +89,15 @@ public class Table
 	public Table(Node theTableNode)
 	{
 		NodeList aChildren = theTableNode.getChildNodes();
-		for(int i = 0, j = aChildren.getLength(); i < j; ++i)
+		for (int i = 0, j = aChildren.getLength(); i < j; ++i)
 		{
 			Node aSetting = aChildren.item(i);
 			String aNodeName = aSetting.getNodeName();
-			if("table_name".equalsIgnoreCase(aNodeName))
+			if ("table_name".equalsIgnoreCase(aNodeName))
 				itsTableName = aSetting.getTextContent();
-			else if("source".equalsIgnoreCase(aNodeName))
+			else if ("source".equalsIgnoreCase(aNodeName))
 				itsSource = aSetting.getTextContent();
-			else if("nr_rows".equalsIgnoreCase(aNodeName))
-				itsNrRows = Integer.valueOf(aSetting.getTextContent());
-			else if("nr_columns".equalsIgnoreCase(aNodeName))
-				itsNrColumns = Integer.valueOf(aSetting.getTextContent());
-			else if("column".equalsIgnoreCase(aNodeName))
+			else if ("column".equalsIgnoreCase(aNodeName))
 				itsColumns.add(new Column(aSetting));
 		}
 		update();
@@ -268,7 +264,7 @@ public class Table
 		Arrays.sort(aDomain);
 		float[] aSplitPoints = new float[theNrSplits];
 		for (int j=0; j<theNrSplits; j++)
-			aSplitPoints[j] = aDomain[aDomain.length*(j+1)/(theNrSplits+1)];		// N.B. Order matters to prevent integer division from yielding zero.
+			aSplitPoints[j] = aDomain[aDomain.length*(j+1)/(theNrSplits+1)];	// N.B. Order matters to prevent integer division from yielding zero.
 		return aSplitPoints;
 	}
 
@@ -277,13 +273,12 @@ public class Table
 	{
 		int aResult = 0;
 		Column aColumn = itsColumns.get(theColumn);
-		boolean aOne = theValue.equals("1");
 
 		for (int i=0, j = aColumn.size(); i < j; i++)
 		{
 			if (aColumn.isNominalType() && aColumn.getNominal(i).equals(theValue))
 				aResult++;
-			else if (aColumn.isBinaryType() && aColumn.getBinary(i)==aOne)
+			else if (aColumn.isBinaryType() && aColumn.getBinary(i)==theValue.equals("1"))
 				aResult++;
 		}
 		return aResult;
@@ -293,7 +288,7 @@ public class Table
 	{
 		float aResult = 0;
 		Column aColumn = itsColumns.get(theColumn);
-		for (int i=0; i<aColumn.size(); i++)
+		for (int i=0, j=aColumn.size(); i<j; i++)
 			aResult += aColumn.getFloat(i);
 		return aResult/itsNrRows;
 	}
@@ -353,15 +348,12 @@ public class Table
 		Node aNode = XMLNode.addNodeTo(theParentNode, "table");
 		XMLNode.addNodeTo(aNode, "table_name", itsTableName);
 		XMLNode.addNodeTo(aNode, "source", itsSource);
-		XMLNode.addNodeTo(aNode, "nr_rows", itsNrRows);
-		XMLNode.addNodeTo(aNode, "nr_columns", itsNrColumns);
 
-		for(int i = 0, j = itsColumns.size(); i < j; ++i)
+		for (int i = 0, j = itsColumns.size(); i < j; ++i)
 		{
 			itsColumns.get(i).addNodeTo(aNode);
 			((Element)aNode.getLastChild()).setAttribute("nr", String.valueOf(i));
 		}
-
 	}
 
 }
