@@ -192,7 +192,7 @@ public class MiningWindow extends JFrame
 
 		// search conditions
 		// NOTE setSearchStrategyType() calls setSearchCoverageMinimum(), so
-		// setSearchCoverageMinimum must be called AFTER setSearchStrategyType 
+		// setSearchCoverageMinimum must be called AFTER setSearchStrategyType
 		setSearchDepthMaximum(String.valueOf(itsSearchParameters.getSearchDepth()));
 		setSearchCoverageMinimum(String.valueOf(itsSearchParameters.getMinimumCoverage()));
 		setSearchCoverageMaximum(String.valueOf(itsSearchParameters.getMaximumCoverage()));
@@ -316,7 +316,7 @@ public class MiningWindow extends JFrame
 		jTextFieldSearchCoverageMaximum = new JTextField();
 		jTextFieldSubgroupsMaximum = new JTextField();
 		jTextFieldSearchTimeMaximum = new JTextField();
-		
+
 		// search strategy
 		jPanelSearchStrategy = new JPanel();
 		// search strategy - labels
@@ -493,13 +493,13 @@ public class MiningWindow extends JFrame
 
 		jLabelNrNominals = initJLabel(" # nominals");
 		jPanelRuleTargetLabels.add(jLabelNrNominals);
-		
+
 		jLabelNrNumerics = initJLabel(" # numerics");
 		jPanelRuleTargetLabels.add(jLabelNrNumerics);
-		
+
 		jLabelNrBinaries = initJLabel(" # binaries");
 		jPanelRuleTargetLabels.add(jLabelNrBinaries);
-		
+
 		jPanelRuleTarget.add(jPanelRuleTargetLabels, BorderLayout.WEST);
 
 		jPanelRuleTargetFields.setLayout(new GridLayout(7, 1));
@@ -519,15 +519,15 @@ public class MiningWindow extends JFrame
 		jLFieldNrNominals.setForeground(Color.black);
 		jLFieldNrNominals.setFont(DEFAULT_FONT);
 		jPanelRuleTargetFields.add(jLFieldNrNominals);
-		
+
 		jLFieldNrNumerics.setForeground(Color.black);
 		jLFieldNrNumerics.setFont(DEFAULT_FONT);
 		jPanelRuleTargetFields.add(jLFieldNrNumerics);
-		
+
 		jLFieldNrBinaries.setForeground(Color.black);
 		jLFieldNrBinaries.setFont(DEFAULT_FONT);
 		jPanelRuleTargetFields.add(jLFieldNrBinaries);
-		
+
 		jPanelRuleTarget.add(jPanelRuleTargetFields, BorderLayout.CENTER);
 
 		jPanelRuleTargetButtons.setLayout(new BoxLayout(jPanelRuleTargetButtons , BoxLayout.X_AXIS));
@@ -746,10 +746,10 @@ public class MiningWindow extends JFrame
 
 		jLabelSearchStrategyNumericFrr = initJLabel(" best numeric");
 		jPanelSearchStrategyLabels.add(jLabelSearchStrategyNumericFrr);
-		
+
 		jLabelSearchStrategyNrBins = initJLabel(" number of bins");
 		jPanelSearchStrategyLabels.add(jLabelSearchStrategyNrBins);
-		
+
 		jPanelSearchStrategy.add(jPanelSearchStrategyLabels);
 
 		jPanelSearchStrategyFields.setLayout(new GridLayout(7, 1));
@@ -770,7 +770,7 @@ public class MiningWindow extends JFrame
 		jTextFieldSearchStrategyWidth.setHorizontalAlignment(SwingConstants.RIGHT);
 		jTextFieldSearchStrategyWidth.setMinimumSize(new Dimension(86, 22));
 		jPanelSearchStrategyFields.add(jTextFieldSearchStrategyWidth);
-		
+
 		jComboBoxSearchStrategyNumeric.setPreferredSize(new Dimension(86, 22));
 		jComboBoxSearchStrategyNumeric.setMinimumSize(new Dimension(86, 22));
 		jComboBoxSearchStrategyNumeric.setFont(DEFAULT_FONT);
@@ -912,7 +912,9 @@ public class MiningWindow extends JFrame
 
 	private void AttributeTypeChangeActionPerformed(ActionEvent evt)
 	{
-		new AttributeChangeWindow(itsTable);
+		AttributeChangeWindow anACW = new AttributeChangeWindow(itsTable);
+		anACW.setLocation(100, 100);
+		anACW.setSize(800, 700);
 	}
 
 	/* Exit application */

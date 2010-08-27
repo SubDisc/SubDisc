@@ -20,9 +20,13 @@ public class RefinementList extends ArrayList<Refinement>
 
 		do
 		{
-			Refinement aRefinement = new Refinement(aCondition, itsSubgroup);
-			add(aRefinement);
-			Log.logCommandLine("   condition: " + aCondition.toString());
+			Column aColumn = itsTable.getColumn(aCondition.getAttribute());
+			if (aColumn.getIsEnabled())
+			{
+				Refinement aRefinement = new Refinement(aCondition, itsSubgroup);
+				add(aRefinement);
+				Log.logCommandLine("   condition: " + aCondition.toString());
+			}
 		}
 		while ((aCondition = itsTable.getNextCondition(aCondition)) != null);
 	}
