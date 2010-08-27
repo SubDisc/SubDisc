@@ -71,7 +71,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		itsBaseDAG = aBayesian.getDAG();
 		itsBaseDAG.print();
 		//TODO fix alpha, beta
-		itsQualityMeasure = new QualityMeasure(itsBaseDAG, itsMaximumCoverage, 0.5f, 1f);
+		itsQualityMeasure = new QualityMeasure(itsBaseDAG, itsMaximumCoverage, theSearchParameters.getAlpha(), theSearchParameters.getBeta());
 	}
 
 	public void Mine(long theBeginTime)
@@ -250,7 +250,8 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		aBayesian.climb(); //induce DAG
 		DAG aDAG = aBayesian.getDAG();
 		theSubgroup.setDAG(aDAG); //store DAG with subgroup for later use
-		return itsQualityMeasure.calculateEDIT_DISTANCE(theSubgroup);
+//		return itsQualityMeasure.calculateEDIT_DISTANCE(theSubgroup);
+		return itsQualityMeasure.calculateWEED(theSubgroup);
 	}
 
 	public int getNumberOfSubgroups() { return itsResult.size(); }

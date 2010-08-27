@@ -1304,7 +1304,9 @@ public class MiningWindow extends JFrame
 		theSearchParameters.setMaximumPostProcessingSubgroups(100);
 
 		// bayesian stuff
-		theSearchParameters.setAlpha(0.5f);
+		if ( getQualityMeasureName().equals("Edit Distance") )
+			theSearchParameters.setAlpha(0.0f);
+		else theSearchParameters.setAlpha(0.5f);
 		theSearchParameters.setBeta(1f);
 	}
 
