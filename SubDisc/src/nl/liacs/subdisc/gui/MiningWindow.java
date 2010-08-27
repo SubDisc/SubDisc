@@ -1180,22 +1180,69 @@ public class MiningWindow extends JFrame
 		{
 			setupSearchParameters();
 
-			QualityMeasure aQualityMeasure =
-				new QualityMeasure(itsSearchParameters.getQualityMeasure(), itsTable.getNrRows(), itsPositiveCount);
-
-			Attribute aTarget = itsSearchParameters.getTargetConcept().getPrimaryTarget();
-			Condition aCondition = new Condition(aTarget, Condition.EQUALS);
-			aCondition.setValue(itsSearchParameters.getTargetConcept().getTargetValue());
-			BitSet aBinaryTarget = itsTable.evaluate(aCondition);
-
-			for(int i = 0; i < 100; i++)
+			switch(itsTargetConcept.getTargetType())
 			{
-				Subgroup aSubgroup = itsTable.getRandomSubgroup(300); // TODO
-				BitSet aColumnTarget = (BitSet) aBinaryTarget.clone();
-				aColumnTarget.and(aSubgroup.getMembers());
-				int aCountHeadBody = aColumnTarget.cardinality();
-				double aQuality = aQualityMeasure.calculate(aCountHeadBody, aSubgroup.getCoverage());
-				Log.logCommandLine((i + 1) + "," + aSubgroup.getCoverage() + "," + aQuality);
+				case SINGLE_NOMINAL :
+				case DOUBLE_REGRESSION :
+				case DOUBLE_CORRELATION :
+				{
+					QualityMeasure aQualityMeasure =
+						new QualityMeasure(itsSearchParameters.getQualityMeasure(), itsTable.getNrRows(), itsPositiveCount);
+
+					Attribute aTarget = itsSearchParameters.getTargetConcept().getPrimaryTarget();
+					Condition aCondition = new Condition(aTarget, Condition.EQUALS);
+					aCondition.setValue(itsSearchParameters.getTargetConcept().getTargetValue());
+					BitSet aBinaryTarget = itsTable.evaluate(aCondition);
+
+					for(int i = 0; i < 100; i++) // TODO make #(repetitions) a parameter
+					{
+						Subgroup aSubgroup = itsTable.getRandomSubgroup(300); // TODO make subgroup size a parameter
+						BitSet aColumnTarget = (BitSet) aBinaryTarget.clone();
+						aColumnTarget.and(aSubgroup.getMembers());
+						int aCountHeadBody = aColumnTarget.cardinality();
+						double aQuality = aQualityMeasure.calculate(aCountHeadBody, aSubgroup.getCoverage());
+						Log.logCommandLine((i + 1) + "," + aSubgroup.getCoverage() + "," + aQuality);
+					}
+					break;
+				}
+				case MULTI_LABEL :
+				{
+					// get targets
+					BitSet aSelectedColumns = new BitSet();
+					int[] aSelection = jListSecondaryTargets.getSelectedIndices();
+					for(int anIndex : aSelection)
+						aSelectedColumns.set(itsTable.getBinaryIndex(anIndex));
+
+					// base model
+					BinaryTable aBaseTable = new BinaryTable(itsTable, aSelectedColumns);
+					Bayesian aBayesian = new Bayesian(aBaseTable);
+					aBayesian.climb();
+					QualityMeasure aQualityMeasure =
+						new QualityMeasure(aBayesian.getDAG(), itsTable.getNrRows(), itsSearchParameters.getAlpha(), itsSearchParameters.getBeta());
+
+					int aNrRepetitions = 100; // TODO make #(repetitions) a parameter
+					double aTotalQuality = 0.0;
+					for(int i = 0; i < aNrRepetitions; i++) 
+					{
+						Subgroup aSubgroup = itsTable.getRandomSubgroup(300); // TODO make subgroup size a parameter
+
+						// build model
+						BinaryTable aBinaryTable = aBaseTable.selectRows(aSubgroup.getMembers());
+						aBayesian = new Bayesian(aBinaryTable);
+						aBayesian.climb();
+						DAG aDAG = aBayesian.getDAG();
+						aSubgroup.setDAG(aDAG); // store DAG with subgroup for later use
+
+						double aQuality = aQualityMeasure.calculateWEED(aSubgroup);
+						aTotalQuality += aQuality;
+						Log.logCommandLine("" + (i + 1) + "," + aSubgroup.getCoverage()
+								+ "," + aQuality);
+					}
+					Log.logCommandLine("average quality " + aTotalQuality / aNrRepetitions);
+
+					break;
+				}
+				default : return; // TODO should never get here, throw warning
 			}
 		}
 		catch (Exception e)
@@ -1262,7 +1309,7 @@ public class MiningWindow extends JFrame
 			DAG aDAG = aBayesian.getDAG();
 			aSubgroup.setDAG(aDAG); // store DAG with subgroup for later use
 
-			double aQuality = aQualityMeasure.calculateEDIT_DISTANCE(aSubgroup);
+			double aQuality = aQualityMeasure.calculateWEED(aSubgroup);
 			aTotalQuality += aQuality;
 			Log.logCommandLine("" + (i + 1) + "," + aSubgroup.getCoverage()
 					+ "," + aQuality);
@@ -1306,7 +1353,8 @@ public class MiningWindow extends JFrame
 		// bayesian stuff
 		if ( getQualityMeasureName().equals("Edit Distance") )
 			theSearchParameters.setAlpha(0.0f);
-		else theSearchParameters.setAlpha(0.5f);
+		else 
+			theSearchParameters.setAlpha(0.5f);
 		theSearchParameters.setBeta(1f);
 	}
 
@@ -1546,7 +1594,7 @@ public class MiningWindow extends JFrame
 	private void setSearchStrategyType(String aValue) { jComboBoxSearchStrategyType.setSelectedItem(aValue); }
 
 	// search strategy - search width
-	private int getSearchStrategyWidth() { return getValue(100, jTextFieldSearchStrategyWidth.getText()); }
+	private int getSearchStrategyWidth() { return getValue(10, jTextFieldSearchStrategyWidth.getText()); }
 	private void setSearchStrategyWidth(String aValue) { jTextFieldSearchStrategyWidth.setText(aValue); }
 
 	// search strategy - numeric strategy
