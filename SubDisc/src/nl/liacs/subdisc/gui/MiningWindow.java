@@ -175,6 +175,7 @@ public class MiningWindow extends JFrame
 
 		// search strategy
 		setSearchStrategyWidth("100");
+		setSearchStrategyNrBins("4");
 	}
 
 	private void initGuiComponentsFromFile()
@@ -188,7 +189,7 @@ public class MiningWindow extends JFrame
 		setSearchStrategyType(SearchParameters.getSearchStrategyName(itsSearchParameters.getSearchStrategy()));
 		setSearchStrategyWidth(String.valueOf(itsSearchParameters.getSearchStrategyWidth()));
 		setNumericStrategy(itsSearchParameters.getNumericStrategy().TEXT);
-		setSearchStrategyNrBins(String.valueOf(itsSearchParameters.getNrSplitPoints() + 1));	// TODO use nrBins/splitPoints
+		setSearchStrategyNrBins(String.valueOf(itsSearchParameters.getNrBins()));	// TODO use nrBins/splitPoints
 
 		// search conditions
 		// NOTE setSearchStrategyType() calls setSearchCoverageMinimum(), so
@@ -936,8 +937,7 @@ public class MiningWindow extends JFrame
 		{
 			boolean aBestFirst = SearchParameters.getSearchStrategyName(CandidateQueue.BESTFIRST).equalsIgnoreCase(aName);
 			itsSearchParameters.setSearchStrategy(aName);
-			jLabelStrategyWidth.setVisible(!aBestFirst);
-			jTextFieldSearchStrategyWidth.setVisible(!aBestFirst);
+			jTextFieldSearchStrategyWidth.setEnabled(!aBestFirst);
 		}
 	}
 
@@ -948,11 +948,10 @@ public class MiningWindow extends JFrame
 		{
 			itsSearchParameters.setNumericStrategy(aName);
 			boolean aBin = (itsSearchParameters.getNumericStrategy() == NumericStrategy.NUMERIC_BINS);
-			jLabelSearchStrategyNrBins.setVisible(aBin);
-			jTextFieldSearchStrategyNrBins.setVisible(aBin);
+			jTextFieldSearchStrategyNrBins.setEnabled(aBin);
 		}
 	}
-	
+
 	private void jComboBoxQualityMeasureActionPerformed(ActionEvent evt)
 	{
 		itsSearchParameters.setQualityMeasureMinimum(getQualityMeasureMinimum());
@@ -1239,7 +1238,7 @@ public class MiningWindow extends JFrame
 
 					int aNrRepetitions = 100; // TODO make #(repetitions) a parameter
 					double aTotalQuality = 0.0;
-					for(int i = 0; i < aNrRepetitions; i++) 
+					for(int i = 0; i < aNrRepetitions; i++)
 					{
 						Subgroup aSubgroup = itsTable.getRandomSubgroup(300); // TODO make subgroup size a parameter
 
@@ -1362,7 +1361,7 @@ public class MiningWindow extends JFrame
 		theSearchParameters.setSearchStrategy(getSearchStrategyName());
 		theSearchParameters.setSearchStrategyWidth(getSearchStrategyWidth());
 		theSearchParameters.setNumericStrategy(getNumericStrategy());
-		theSearchParameters.setNrSplitPoints(7);
+		theSearchParameters.setNrBins(getSearchStrategyNrBins());
 
 		theSearchParameters.setPostProcessingCount(20);
 		theSearchParameters.setMaximumPostProcessingSubgroups(100);
@@ -1370,7 +1369,7 @@ public class MiningWindow extends JFrame
 		// bayesian stuff
 		if ( getQualityMeasureName().equals("Edit Distance") )
 			theSearchParameters.setAlpha(0.0f);
-		else 
+		else
 			theSearchParameters.setAlpha(0.5f);
 		theSearchParameters.setBeta(1f);
 	}
@@ -1609,7 +1608,7 @@ public class MiningWindow extends JFrame
 	private void setSearchStrategyType(String aValue) { jComboBoxSearchStrategyType.setSelectedItem(aValue); }
 
 	// search strategy - search width
-	private int getSearchStrategyWidth() { return getValue(10, jTextFieldSearchStrategyWidth.getText()); }
+	private int getSearchStrategyWidth() { return getValue(100, jTextFieldSearchStrategyWidth.getText()); }
 	private void setSearchStrategyWidth(String aValue) { jTextFieldSearchStrategyWidth.setText(aValue); }
 
 	// search strategy - numeric strategy
@@ -1617,7 +1616,7 @@ public class MiningWindow extends JFrame
 	private void setNumericStrategy(String aStrategy) { jComboBoxSearchStrategyNumeric.setSelectedItem(aStrategy); }
 
 	// search strategy - number of bins
-	private int getSearchStrategyNrBins() { return getValue(8, jTextFieldSearchCoverageMinimum.getText()); }
+	private int getSearchStrategyNrBins() { return getValue(4, jTextFieldSearchStrategyNrBins.getText()); }
 	private void setSearchStrategyNrBins(String aValue) { jTextFieldSearchStrategyNrBins.setText(aValue); }
 
 	private int getValue(int theDefaultValue, String theText)

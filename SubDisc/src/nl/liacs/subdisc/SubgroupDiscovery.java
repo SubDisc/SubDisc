@@ -136,7 +136,8 @@ public class SubgroupDiscovery extends MiningAlgorithm
 	{
 		Attribute anAttribute = theRefinement.getCondition().getAttribute();
 		int anAttributeIndex = anAttribute.getIndex();
-		int aNrSplitPoints = itsSearchParameters.getNrSplitPoints();
+		int aNrSplitPoints = itsSearchParameters.getNrBins() - 1;  //this is the crucial translation from nr bins to nr splitpoint
+Log.logCommandLine("nr splits:" + aNrSplitPoints);
 		int aMinimumCoverage = itsSearchParameters.getMinimumCoverage();
 		float aQualityMeasureMinimum = itsSearchParameters.getQualityMeasureMinimum();
 		float[] aSplitPoints = itsTable.getSplitPoints(anAttributeIndex, theSubgroup.getMembers(), aNrSplitPoints);

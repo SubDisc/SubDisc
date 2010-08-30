@@ -25,7 +25,7 @@ public class SearchParameters implements XMLNodeInterface
 	private int				itsSearchStrategyWidth;
 	private NumericStrategy	itsNumericStrategy;
 
-	private int				itsNrSplitPoints;
+	private int				itsNrBins;
 	private float			itsAlpha;
 	private float			itsBeta;
 	private int				itsPostProcessingCount;
@@ -44,7 +44,7 @@ public class SearchParameters implements XMLNodeInterface
 			for(NumericStrategy n : NumericStrategy.values())
 				if(n.TEXT.equalsIgnoreCase(theString))
 					return n;
-			return NUMERIC_BINS;	// TODO default, could throw not found dialog
+			return NUMERIC_BINS;
 		}
 	}
 
@@ -128,8 +128,8 @@ public class SearchParameters implements XMLNodeInterface
 
 	public void setSearchStrategyWidth(int theWidth)	{ itsSearchStrategyWidth = theWidth; }
 	public int getSearchStrategyWidth()		{ return itsSearchStrategyWidth; }
-	public int getNrSplitPoints()			{ return itsNrSplitPoints; }
-	public void setNrSplitPoints(int theNr)	{ itsNrSplitPoints = theNr; }
+	public int getNrBins()			{ return itsNrBins; }
+	public void setNrBins(int theNr)	{ itsNrBins = theNr; }
 	public float getAlpha()					{ return itsAlpha; }
 	public void setAlpha(float theAlpha)	{ itsAlpha = theAlpha; }
 	public float getBeta()					{ return itsBeta; }
@@ -153,7 +153,7 @@ public class SearchParameters implements XMLNodeInterface
 		XMLNode.addNodeTo(aNode, "search_strategy", getSearchStrategyName(getSearchStrategy()));
 		XMLNode.addNodeTo(aNode, "search_strategy_width", getSearchStrategyWidth());
 		XMLNode.addNodeTo(aNode, "numeric_strategy", getNumericStrategy().TEXT);
-		XMLNode.addNodeTo(aNode, "nr_split_points", getNrSplitPoints());
+		XMLNode.addNodeTo(aNode, "nr_bins", getNrBins());
 		XMLNode.addNodeTo(aNode, "alpha", getAlpha());
 		XMLNode.addNodeTo(aNode, "beta", getBeta());
 		XMLNode.addNodeTo(aNode, "post_processing_count", getPostProcessingCount());
@@ -187,8 +187,8 @@ public class SearchParameters implements XMLNodeInterface
 				itsSearchStrategyWidth = Integer.parseInt(aSetting.getTextContent());
 			else if("numeric_strategy".equalsIgnoreCase(aNodeName))
 				itsNumericStrategy = (NumericStrategy.getNumericStrategy(aSetting.getTextContent()));
-			else if("nr_split_points".equalsIgnoreCase(aNodeName))
-				itsNrSplitPoints = Integer.parseInt(aSetting.getTextContent());
+			else if("nr_bins".equalsIgnoreCase(aNodeName))
+				itsNrBins = Integer.parseInt(aSetting.getTextContent());
 			else if("alpha".equalsIgnoreCase(aNodeName))
 				itsAlpha = Float.parseFloat(aSetting.getTextContent());
 			else if("beta".equalsIgnoreCase(aNodeName))
