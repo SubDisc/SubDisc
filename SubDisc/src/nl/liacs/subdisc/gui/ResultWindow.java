@@ -122,6 +122,15 @@ public class ResultWindow extends JFrame
 		});
 		aSubgroupPanel.add(jButtonDeleteSubgroups);
 
+		jButtonPostprocess = initButton("Postprocess results", 'P');
+		jButtonPostprocess.addActionListener(new java.awt.event.ActionListener() {
+			public void actionPerformed(java.awt.event.ActionEvent evt) {
+				jButtonPostprocessActionPerformed();
+			}
+		});
+		aSubgroupPanel.add(jButtonPostprocess);
+		jButtonPostprocess.setEnabled(itsSearchParameters.getTargetType() == TargetType.MULTI_LABEL);
+
 		//possibly disable buttons
 		if (itsSubgroupSet != null) //Subgroup set
 		{
@@ -130,6 +139,7 @@ public class ResultWindow extends JFrame
 				jButtonShowDAG.setEnabled(false);
 				jButtonROC.setEnabled(false);
 				jButtonDeleteSubgroups.setEnabled(false);
+				jButtonPostprocess.setEnabled(false);
 			}
 		}
 
@@ -229,6 +239,11 @@ public class ResultWindow extends JFrame
 			jButtonDeleteSubgroups.setEnabled(false);
 		}
 	}
+	
+	private void jButtonPostprocessActionPerformed()
+	{
+		Log.logCommandLine("Postprocessing! (to be implemented)");
+	}
 
 	private void jButtonCloseWindowActionPerformed() { dispose(); }
 	private void exitForm() {	dispose(); }
@@ -236,6 +251,7 @@ public class ResultWindow extends JFrame
 	private javax.swing.JPanel jPanelSouth;
 	private javax.swing.JButton jButtonShowDAG;
 	private javax.swing.JButton jButtonDeleteSubgroups;
+	private javax.swing.JButton jButtonPostprocess;
 	private javax.swing.JButton jButtonROC;
 	private javax.swing.JButton jButtonCloseWindow;
 	private javax.swing.JScrollPane itsScrollPane;
