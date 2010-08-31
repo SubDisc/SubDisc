@@ -297,8 +297,7 @@ public class ResultWindow extends JFrame
 		{
 			Bayesian aGlobalBayesian = new Bayesian(itsBinaryTable);
 			aGlobalBayesian.climb();
-			QualityMeasure aTempQM = new QualityMeasure(aGlobalBayesian.getDAG(), itsNrRecords, itsSearchParameters.getAlpha(), itsSearchParameters.getBeta());
-			aQMs[i] = aTempQM;
+			aQMs[i] = new QualityMeasure(aGlobalBayesian.getDAG(), itsNrRecords, itsSearchParameters.getAlpha(), itsSearchParameters.getBeta());
 		}
 		
 		// Iterate over subgroups
@@ -316,14 +315,10 @@ public class ResultWindow extends JFrame
 			{
 				Bayesian aLocalBayesian = new Bayesian(aSubgroupTable);
 				aLocalBayesian.climb();
-				DAG aDAG = aLocalBayesian.getDAG();
-				aSubgroup.setDAG(aDAG);
+				DAG aLocalDAG = aLocalBayesian.getDAG();
+				aSubgroup.setDAG(aLocalDAG);
 				for (int j=0; j<itsSearchParameters.getPostProcessingCount(); j++)
-				{
-					double aNewSubQuality = aQMs[j].calculateWEED(aSubgroup);
-					Log.logCommandLine(""+aNewSubQuality);
 					aTotalQuality += aQMs[j].calculateWEED(aSubgroup);
-				}
 			}
 			aSubgroup.setMeasureValue(aTotalQuality/(double) Math.pow(itsSearchParameters.getPostProcessingCount(),2));
 			aNewSubgroupSet.add(aSubgroup);
@@ -332,6 +327,7 @@ public class ResultWindow extends JFrame
 		}
 		aNewSubgroupSet.setIDs();
 		itsSubgroupSet = aNewSubgroupSet;
+		itsResultTableModel.fireTableDataChanged();
 		itsSubgroupTable.repaint();
 }
 

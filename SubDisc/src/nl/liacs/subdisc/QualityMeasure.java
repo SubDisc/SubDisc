@@ -18,7 +18,7 @@ public class QualityMeasure
 	int[] itsPopulationCounts;
 
 	//Bayesian
-	private static DAG itsDAG;
+	private DAG itsDAG;
 	private static int itsNrNodes;
 	private static float itsAlpha;
 	private static float itsBeta;
