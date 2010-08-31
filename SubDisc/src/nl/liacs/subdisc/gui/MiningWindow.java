@@ -1170,7 +1170,24 @@ public class MiningWindow extends JFrame
 
 			//ResultWindow
 			SubgroupSet aPreliminaryResults = aSubgroupDiscovery.getResult();
-			ResultWindow aResultWindow = new ResultWindow(aPreliminaryResults, itsSearchParameters, null);
+			ResultWindow aResultWindow;
+			switch (itsTargetConcept.getTargetType())
+			{
+				case MULTI_LABEL :
+				{
+					BitSet aSelectedColumns = new BitSet();
+					int[] aSelection = jListSecondaryTargets.getSelectedIndices();
+					for(int anIndex : aSelection)
+						aSelectedColumns.set(itsTable.getBinaryIndex(anIndex));
+					BinaryTable aBinaryTable = new BinaryTable(itsTable, aSelectedColumns);
+					aResultWindow = new ResultWindow(aPreliminaryResults, itsSearchParameters, null, aBinaryTable, itsTotalCount);
+					break;
+				}
+				default :
+				{
+					aResultWindow = new ResultWindow(aPreliminaryResults, itsSearchParameters, null);
+				}
+			}
 			aResultWindow.setLocation(0, 0);
 			aResultWindow.setSize(1200, 900);
 			aResultWindow.setVisible(true);

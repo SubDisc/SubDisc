@@ -2,13 +2,20 @@ package nl.liacs.subdisc.gui;
 
 import java.awt.GridLayout;
 import java.awt.event.KeyEvent;
+import java.util.BitSet;
 import java.util.Iterator;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
+
+import nl.liacs.subdisc.Bayesian;
+import nl.liacs.subdisc.BinaryTable;
+import nl.liacs.subdisc.DAG;
+import nl.liacs.subdisc.QualityMeasure;
 
 import nl.liacs.subdisc.DAGView;
 import nl.liacs.subdisc.Log;
@@ -27,6 +34,8 @@ public class ResultWindow extends JFrame
 	private JTable itsSubgroupTable;
 	private SubgroupSet itsSubgroupSet;
 	private DAGView itsDAGView; //layout of the graph on the whole database
+	private BinaryTable itsBinaryTable;
+	private int itsNrRecords;
 
 	public ResultWindow(SubgroupSet theSubgroupSet, SearchParameters theSearchParameters, DAGView theDAGView)
 	{
@@ -47,6 +56,31 @@ public class ResultWindow extends JFrame
 			setTitle("No patterns found that match the set criterion");
 		else
 			setTitle(itsSubgroupSet.size() + " patterns found");
+		
+	}
+
+	public ResultWindow(SubgroupSet theSubgroupSet, SearchParameters theSearchParameters, DAGView theDAGView, BinaryTable theTable, int theNrRecords)
+	{
+
+		itsSubgroupSet = theSubgroupSet;
+		itsSearchParameters = theSearchParameters;
+		itsDAGView = theDAGView;
+		itsResultTableModel = new ResultTableModel(itsSubgroupSet, itsSearchParameters);
+		itsSubgroupTable = new JTable(itsResultTableModel);
+		if (!itsSubgroupSet.isEmpty())
+			itsSubgroupTable.addRowSelectionInterval(0, 0);
+
+		initComponents ();
+//		setIconImage(ICON);
+		initialise();
+
+		if (itsSubgroupSet.isEmpty())
+			setTitle("No patterns found that match the set criterion");
+		else
+			setTitle(itsSubgroupSet.size() + " patterns found");
+		
+		itsBinaryTable = theTable;
+		itsNrRecords = theNrRecords;
 	}
 
 	public void initialise()
@@ -242,8 +276,64 @@ public class ResultWindow extends JFrame
 
 	private void jButtonPostprocessActionPerformed()
 	{
-		Log.logCommandLine("Postprocessing! (to be implemented)");
-	}
+		String inputValue = JOptionPane.showInputDialog("#DAGs fitted to each subgroup.");
+		try
+		{ 
+			itsSearchParameters.setPostProcessingCount(Integer.parseInt(inputValue)); 
+		}
+		catch (Exception e)
+		{ 
+			JOptionPane.showMessageDialog(null, "Your input is unsound.");
+			return;
+		}
+		
+		if (itsSubgroupSet.isEmpty())
+			return;
+
+		// Create quality measures on whole dataset
+		Log.logCommandLine("Creating quality measures");
+		QualityMeasure[] aQMs = new QualityMeasure[itsSearchParameters.getPostProcessingCount()];
+		for (int i=0; i<itsSearchParameters.getPostProcessingCount(); i++)
+		{
+			Bayesian aGlobalBayesian = new Bayesian(itsBinaryTable);
+			aGlobalBayesian.climb();
+			QualityMeasure aTempQM = new QualityMeasure(aGlobalBayesian.getDAG(), itsNrRecords, itsSearchParameters.getAlpha(), itsSearchParameters.getBeta());
+			aQMs[i] = aTempQM;
+		}
+		
+		// Iterate over subgroups
+		SubgroupSet aNewSubgroupSet = new SubgroupSet(itsSearchParameters.getMaximumSubgroups());
+		Iterator<Subgroup> anIterator = itsSubgroupSet.iterator();
+		int aCount = 1;
+		while (anIterator.hasNext())
+		{
+			Log.logCommandLine("Postprocessing subgroup " + aCount);
+			Subgroup aSubgroup = anIterator.next();
+			double aTotalQuality = 0.0;
+			BitSet aSubgroupMembers = aSubgroup.getMembers();
+			BinaryTable aSubgroupTable = itsBinaryTable.selectRows(aSubgroupMembers);
+			for (int i=0; i<itsSearchParameters.getPostProcessingCount(); i++)
+			{
+				Bayesian aLocalBayesian = new Bayesian(aSubgroupTable);
+				aLocalBayesian.climb();
+				DAG aDAG = aLocalBayesian.getDAG();
+				aSubgroup.setDAG(aDAG);
+				for (int j=0; j<itsSearchParameters.getPostProcessingCount(); j++)
+				{
+					double aNewSubQuality = aQMs[j].calculateWEED(aSubgroup);
+					Log.logCommandLine(""+aNewSubQuality);
+					aTotalQuality += aQMs[j].calculateWEED(aSubgroup);
+				}
+			}
+			aSubgroup.setMeasureValue(aTotalQuality/(double) Math.pow(itsSearchParameters.getPostProcessingCount(),2));
+			aNewSubgroupSet.add(aSubgroup);
+			
+			aCount++;
+		}
+		aNewSubgroupSet.setIDs();
+		itsSubgroupSet = aNewSubgroupSet;
+		itsSubgroupTable.repaint();
+}
 
 	private void jButtonCloseWindowActionPerformed() { dispose(); }
 	private void exitForm() {	dispose(); }
