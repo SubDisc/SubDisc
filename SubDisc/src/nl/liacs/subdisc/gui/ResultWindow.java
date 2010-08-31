@@ -122,7 +122,7 @@ public class ResultWindow extends JFrame
 		});
 		aSubgroupPanel.add(jButtonDeleteSubgroups);
 
-		jButtonPostprocess = initButton("Postprocess results", 'P');
+		jButtonPostprocess = initButton("Postprocess", 'P');
 		jButtonPostprocess.addActionListener(new java.awt.event.ActionListener() {
 			public void actionPerformed(java.awt.event.ActionEvent evt) {
 				jButtonPostprocessActionPerformed();
@@ -143,7 +143,7 @@ public class ResultWindow extends JFrame
 			}
 		}
 
-			
+
 
 
 		//close button
@@ -239,7 +239,7 @@ public class ResultWindow extends JFrame
 			jButtonDeleteSubgroups.setEnabled(false);
 		}
 	}
-	
+
 	private void jButtonPostprocessActionPerformed()
 	{
 		Log.logCommandLine("Postprocessing! (to be implemented)");

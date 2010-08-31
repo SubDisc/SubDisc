@@ -491,9 +491,10 @@ public class QualityMeasure
 		itsVStructures = theDAG.determineVStructures();
 	}
 
-	public double calculateWEED(Subgroup theSubgroup)
+	public float calculateWEED(Subgroup theSubgroup)
 	{
-		return Math.pow(calculateEntropy(theSubgroup.getMembers().cardinality()),itsAlpha) * Math.pow(calculateEditDistance(theSubgroup.getDAG()),itsBeta);
+		return (float) Math.pow(calculateEntropy(theSubgroup.getMembers().cardinality()),itsAlpha) *
+			   (float) Math.pow(calculateEditDistance(theSubgroup.getDAG()),itsBeta);
 	}
 
 	public double calculateEDIT_DISTANCE(Subgroup theSubgroup)

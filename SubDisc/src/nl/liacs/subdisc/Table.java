@@ -85,7 +85,7 @@ public class Table
 //		itsRandomNumber = new Random(System.currentTimeMillis());
 	}
 
-	// TODO order of nodes is known, when all is stable 
+	// TODO order of nodes is known, when all is stable
 	public Table(Node theTableNode)
 	{
 		NodeList aChildren = theTableNode.getChildNodes();
@@ -248,6 +248,38 @@ public class Table
 				k++;
 			}
 		}
+
+		return aResult;
+	}
+
+	//returns the unique, sorted domain
+	public float[] getUniqueNumericDomain(int theColumn, BitSet theSubset)
+	{
+		//get domain including doubles
+		float[] aDomain = getNumericDomain(theColumn, theSubset);
+		Arrays.sort(aDomain);
+
+		//count uniques
+		float aCurrent = aDomain[0];
+		int aCount = 1;
+		for (Float aFloat : aDomain)
+			if (aFloat != aCurrent)
+			{
+				aCurrent = aFloat;
+				aCount++;
+			}
+
+		float[] aResult = new float[aCount];
+		aCurrent = aDomain[0];
+		aCount = 1;
+		aResult[0] = aDomain[0];
+		for (Float aFloat : aDomain)
+			if (aFloat != aCurrent)
+			{
+				aCurrent = aFloat;
+				aResult[aCount] = aFloat;
+				aCount++;
+			}
 
 		return aResult;
 	}

@@ -136,36 +136,100 @@ public class SubgroupDiscovery extends MiningAlgorithm
 	{
 		Attribute anAttribute = theRefinement.getCondition().getAttribute();
 		int anAttributeIndex = anAttribute.getIndex();
-		int aNrSplitPoints = itsSearchParameters.getNrBins() - 1;  //this is the crucial translation from nr bins to nr splitpoint
-Log.logCommandLine("nr splits:" + aNrSplitPoints);
 		int aMinimumCoverage = itsSearchParameters.getMinimumCoverage();
 		float aQualityMeasureMinimum = itsSearchParameters.getQualityMeasureMinimum();
-		float[] aSplitPoints = itsTable.getSplitPoints(anAttributeIndex, theSubgroup.getMembers(), aNrSplitPoints);
 
-		boolean first = true;
-		for(int j=0; j<aNrSplitPoints; j++)
+		switch (itsSearchParameters.getNumericStrategy())
 		{
-			if(first || aSplitPoints[j] != aSplitPoints[j-1])
+			case NUMERIC_ALL :
 			{
-				String aConditionValue = Float.toString(aSplitPoints[j]);
-				Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(aConditionValue);
-				BitSet aMembers = itsTable.evaluate(aNewSubgroup.getConditions());
-				aNewSubgroup.setMembers(aMembers);
-
-				if(aNewSubgroup.getCoverage() >= aMinimumCoverage)
+				float[] aSplitPoints = itsTable.getUniqueNumericDomain(anAttributeIndex, theSubgroup.getMembers());
+				for(float aSplit : aSplitPoints)
 				{
-					Log.logCommandLine("candidate " + aNewSubgroup.getConditions() + " size: " + aNewSubgroup.getCoverage());
-					double aQuality = evaluateCandidate(aNewSubgroup);
-					aNewSubgroup.setMeasureValue(aQuality);
-					if(aQuality > aQualityMeasureMinimum)
-						itsResult.add(aNewSubgroup);
-					itsCandidateQueue.add(new Candidate(aNewSubgroup, aQuality));
+					String aConditionValue = Float.toString(aSplit);
+					Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(aConditionValue);
+					BitSet aMembers = itsTable.evaluate(aNewSubgroup.getConditions());
+					aNewSubgroup.setMembers(aMembers);
+
+					if(aNewSubgroup.getCoverage() >= aMinimumCoverage)
+					{
+						Log.logCommandLine("candidate " + aNewSubgroup.getConditions() + " size: " + aNewSubgroup.getCoverage());
+						float aQuality = evaluateCandidate(aNewSubgroup);
+						aNewSubgroup.setMeasureValue(aQuality);
+						if(aQuality > aQualityMeasureMinimum)
+							itsResult.add(aNewSubgroup);
+						itsCandidateQueue.add(new Candidate(aNewSubgroup, aQuality));
+						Log.logCommandLine("  subgroup nr. " + itsCandidateCount + "; quality " + aNewSubgroup.getMeasureValue());
+					}
+					itsCandidateCount++;
 				}
-				itsCandidateCount++;
-				Log.logCommandLine("Subgroup nr. " + itsCandidateCount + "; quality " + aNewSubgroup.getMeasureValue());
-				Log.logCommandLine("================================================================================");
+				break;
 			}
-			first = false;
+			case NUMERIC_BINS :
+			{
+				int aNrSplitPoints = itsSearchParameters.getNrBins() - 1;  //this is the crucial translation from nr bins to nr splitpoint
+				float[] aSplitPoints = itsTable.getSplitPoints(anAttributeIndex, theSubgroup.getMembers(), aNrSplitPoints);
+				boolean first = true;
+				for(int j=0; j<aNrSplitPoints; j++)
+				{
+					if(first || aSplitPoints[j] != aSplitPoints[j-1])
+					{
+						String aConditionValue = Float.toString(aSplitPoints[j]);
+						Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(aConditionValue);
+						BitSet aMembers = itsTable.evaluate(aNewSubgroup.getConditions());
+						aNewSubgroup.setMembers(aMembers);
+
+						if(aNewSubgroup.getCoverage() >= aMinimumCoverage)
+						{
+							Log.logCommandLine("candidate " + aNewSubgroup.getConditions() + " size: " + aNewSubgroup.getCoverage());
+							float aQuality = evaluateCandidate(aNewSubgroup);
+							aNewSubgroup.setMeasureValue(aQuality);
+							if(aQuality > aQualityMeasureMinimum)
+								itsResult.add(aNewSubgroup);
+							itsCandidateQueue.add(new Candidate(aNewSubgroup, aQuality));
+							Log.logCommandLine("  subgroup nr. " + itsCandidateCount + "; quality " + aNewSubgroup.getMeasureValue());
+						}
+						itsCandidateCount++;
+					}
+					first = false;
+				}
+				break;
+			}
+			case NUMERIC_BEST :
+			{
+				float[] aSplitPoints = itsTable.getUniqueNumericDomain(anAttributeIndex, theSubgroup.getMembers());
+				float aMax = Float.NEGATIVE_INFINITY;
+				float aBest = aSplitPoints[0];
+				Subgroup aBestSubgroup = null;
+				for(float aSplit : aSplitPoints)
+				{
+					String aConditionValue = Float.toString(aSplit);
+					Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(aConditionValue);
+					BitSet aMembers = itsTable.evaluate(aNewSubgroup.getConditions());
+					aNewSubgroup.setMembers(aMembers);
+
+					if(aNewSubgroup.getCoverage() >= aMinimumCoverage)
+					{
+						float aQuality = evaluateCandidate(aNewSubgroup);
+						aNewSubgroup.setMeasureValue(aQuality);
+						if(aQuality > aMax)
+						{
+							aMax = aQuality;
+							aBest = aSplit;
+							aBestSubgroup = aNewSubgroup;
+						}
+					}
+				}
+
+				//add best
+				Log.logCommandLine("candidate " + aBestSubgroup.getConditions() + " size: " + aBestSubgroup.getCoverage());
+				if(aMax > aQualityMeasureMinimum)
+					itsResult.add(aBestSubgroup);
+				itsCandidateQueue.add(new Candidate(aBestSubgroup, aMax));
+				Log.logCommandLine("  subgroup nr. " + itsCandidateCount + "; quality " + aMax);
+				itsCandidateCount++;
+				break;
+			}
 		}
 	}
 
@@ -186,28 +250,27 @@ Log.logCommandLine("nr splits:" + aNrSplitPoints);
 			if(aNewSubgroup.getCoverage() >= aMinimumCoverage)
 			{
 				Log.logCommandLine("candidate " + aNewSubgroup.getConditions() + " size: " + aNewSubgroup.getCoverage());
-				double aQuality = evaluateCandidate(aNewSubgroup);
+				float aQuality = evaluateCandidate(aNewSubgroup);
 				aNewSubgroup.setMeasureValue(aQuality);
 				if (aQuality > aQualityMeasureMinimum)
 					itsResult.add(aNewSubgroup);
 				itsCandidateQueue.add(new Candidate(aNewSubgroup, aQuality));
+				Log.logCommandLine("  subgroup nr. " + itsCandidateCount + "; quality " + aNewSubgroup.getMeasureValue());
 			}
 			itsCandidateCount++;
-			Log.logCommandLine("Subgroup nr. " + itsCandidateCount + "; quality " + aNewSubgroup.getMeasureValue());
-			Log.logCommandLine("================================================================================");
 		}
 	}
 
-	private double evaluateCandidate(Subgroup theSubgroup)
+	private float evaluateCandidate(Subgroup theSubgroup)
 	{
-		double aQuality = 0.0;
+		float aQuality = 0.0f;
 
 		switch (itsSearchParameters.getTargetType())
 		{
 			case SINGLE_NOMINAL :
 			{
 				Attribute aPrimaryTarget = itsSearchParameters.getTargetConcept().getPrimaryTarget();
-				Log.logCommandLine("target: " + aPrimaryTarget.getName());
+//				Log.logCommandLine("target: " + aPrimaryTarget.getName());
 				BitSet aTarget = (BitSet)itsBinaryTarget.clone();
 				aTarget.and(theSubgroup.getMembers());
 				int aCountHeadBody = aTarget.cardinality();
@@ -221,7 +284,7 @@ Log.logCommandLine("nr splits:" + aNrSplitPoints);
 					if (theSubgroup.getMembers().get(i))
 						aRM.addObservation(itsPrimaryColumn.getFloat(i), itsSecondaryColumn.getFloat(i));
 
-				aQuality = aRM.getEvaluationMeasureValue();
+				aQuality = (float) aRM.getEvaluationMeasureValue();
 				break;
 			}
 			case DOUBLE_CORRELATION :
@@ -231,7 +294,7 @@ Log.logCommandLine("nr splits:" + aNrSplitPoints);
 					if (theSubgroup.getMembers().get(i))
 						aCM.addObservation(itsPrimaryColumn.getFloat(i), itsSecondaryColumn.getFloat(i));
 
-				aQuality = aCM.getEvaluationMeasureValue();
+				aQuality = (float) aCM.getEvaluationMeasureValue();
 				break;
 			}
 			case MULTI_LABEL :
@@ -244,7 +307,7 @@ Log.logCommandLine("nr splits:" + aNrSplitPoints);
 		return aQuality;
 	}
 
-	private double weightedEntropyEditDistance(Subgroup theSubgroup)
+	private float weightedEntropyEditDistance(Subgroup theSubgroup)
 	{
 		BinaryTable aBinaryTable = itsBinaryTable.selectRows(theSubgroup.getMembers());
 		Bayesian aBayesian = new Bayesian(aBinaryTable);

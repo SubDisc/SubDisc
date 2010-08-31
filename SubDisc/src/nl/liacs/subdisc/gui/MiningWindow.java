@@ -175,7 +175,7 @@ public class MiningWindow extends JFrame
 
 		// search strategy
 		setSearchStrategyWidth("100");
-		setSearchStrategyNrBins("4");
+		setSearchStrategyNrBins("8");
 	}
 
 	private void initGuiComponentsFromFile()
@@ -1616,7 +1616,7 @@ public class MiningWindow extends JFrame
 	private void setNumericStrategy(String aStrategy) { jComboBoxSearchStrategyNumeric.setSelectedItem(aStrategy); }
 
 	// search strategy - number of bins
-	private int getSearchStrategyNrBins() { return getValue(4, jTextFieldSearchStrategyNrBins.getText()); }
+	private int getSearchStrategyNrBins() { return getValue(8, jTextFieldSearchStrategyNrBins.getText()); }
 	private void setSearchStrategyNrBins(String aValue) { jTextFieldSearchStrategyNrBins.setText(aValue); }
 
 	private int getValue(int theDefaultValue, String theText)
