@@ -2,10 +2,39 @@ package nl.liacs.subdisc;
 
 import nl.liacs.subdisc.TargetConcept.TargetType;
 
+/**
+ * Contingency table:</br>
+ * <table border="1" cellpadding="2" cellspacing="0">
+ * 	<tr align="center">
+ * 		<td></td>
+ * 		<td>B</td>
+ * 		<td><span style="text-decoration: overline">B</span></td>
+ * 		<td></td>
+ * 	</tr>
+ * 	<tr align="center">
+ * 		<td>H</td>
+ * 		<td><i>n</i>(HB)</td>
+ * 		<td><i>n</i>(H<span style="text-decoration: overline">B</span>)</td>
+ * 		<td><i>n</i>(H)</td>
+ * 	</tr>
+ * 	<tr align="center">
+ * 		<td><span style="text-decoration: overline">H</span></td>
+ * 		<td><i>n</i>(<span style="text-decoration: overline">H</span>B)</td>
+ * 		<td><i>n</i>(<span style="text-decoration: overline">HB</span>)</td>
+ * 		<td><i>n</i>(<span style="text-decoration: overline">H</span>)</td>
+ * 	</tr>
+ * 	<tr align="center">
+ * 		<td></td>
+ * 		<td><i>n</i>(B)</td>
+ * 		<td><i>n</i>(<span style="text-decoration: overline">B</span>)</td>
+ * 		<td>N</td>
+ * 	</tr>
+ * </table> 
+ */
 public class QualityMeasure
 {
 	int itsMeasure;
-	private static int itsNrRecords;
+	private final int itsNrRecords;
 
 	//SINGLE_NOMINAL
 	int itsTotalTargetCoverage;
@@ -68,8 +97,6 @@ public class QualityMeasure
 	//DOUBLE_REGRESSION
 	public static final int LINEAR_REGRESSION = 36;
 
-
-
 	//SINGLE =========================================================================================
 
 	public QualityMeasure(int theMeasure, int theTotalCoverage, int theTotalTargetCoverage)
@@ -79,6 +106,7 @@ public class QualityMeasure
 		itsTotalTargetCoverage = theTotalTargetCoverage;
 	}
 
+	// unused for now
 	public QualityMeasure(int theMeasure, int theTotalCoverage, int theTotalTargetCoverage,
 					double theTotalSum, double theTotalSSD, double theTotalMedian,
 					double theTotalMedianAD, int[] thePopulationCounts)
@@ -95,6 +123,7 @@ public class QualityMeasure
 
 	public void setTotalTargetCoverage(int theCount) { itsTotalTargetCoverage = theCount; }
 	public void setQualityMeasure(int theMeasure) { itsMeasure = theMeasure; }
+	// end unused
 
 	public static int getFirstEvaluationMesure(TargetType theTargetType)
 	{
@@ -471,15 +500,36 @@ public class QualityMeasure
 
 
 	//Baysian ========================================================================================
-	public QualityMeasure(DAG theDAG, int theNrRecords)
+
+	// start MM
+	// For Baysian setting also supply QualityMeasure parameter
+	// allows making itsMeasure final and makes it in line with the rest of the
+	// code.
+	public QualityMeasure(int theMeasure, DAG theDAG, int theNrRecords, float theAlpha, float theBeta)
 	{
+		itsMeasure = theMeasure;
 		itsDAG = theDAG;
 		itsNrNodes = theDAG.getSize();
 		itsNrRecords = theNrRecords;
-		itsAlpha = 1f;
-		itsBeta = 1f;
+		itsAlpha = theAlpha;
+		itsBeta = theBeta;
 		itsVStructures = theDAG.determineVStructures();
 	}
+
+	public float calculate(Subgroup theSubgroup)
+	{
+		switch (itsMeasure)
+		{
+			case WEED : 
+				return (float) Math.pow(calculateEntropy(theSubgroup.getCoverage(), itsNrRecords), itsAlpha) *
+						(float) Math.pow(calculateEditDistance(theSubgroup.getDAG()), itsBeta);
+			case EDIT_DISTANCE :
+				return calculateEditDistance(theSubgroup.getDAG());
+			default : return 0f; // throw warning
+			
+		}
+	}
+	// end MM
 
 	public QualityMeasure(DAG theDAG, int theNrRecords, float theAlpha, float theBeta)
 	{
@@ -491,12 +541,14 @@ public class QualityMeasure
 		itsVStructures = theDAG.determineVStructures();
 	}
 
+	// TODO MM can be removed
 	public float calculateWEED(Subgroup theSubgroup)
 	{
 		return (float) Math.pow(calculateEntropy(theSubgroup.getMembers().cardinality()),itsAlpha) *
 			   (float) Math.pow(calculateEditDistance(theSubgroup.getDAG()),itsBeta);
 	}
 
+	// TODO MM can be removed, never used
 	public double calculateEDIT_DISTANCE(Subgroup theSubgroup)
 	{
 		return calculateEditDistance(theSubgroup.getDAG());
@@ -520,6 +572,7 @@ public class QualityMeasure
 		return (float) nrEdits / (float) (itsNrNodes*(itsNrNodes-1)/2); // Actually n choose 2, but this boils down to the same...
 	}
 
+	// TODO MM can be removed
 	public float calculateEntropy(int theSubgroupSupport)
 	{
 		if (theSubgroupSupport==0 || itsNrRecords==theSubgroupSupport)

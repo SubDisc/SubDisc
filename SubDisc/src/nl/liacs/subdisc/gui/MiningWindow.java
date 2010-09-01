@@ -1245,7 +1245,8 @@ public class MiningWindow extends JFrame
 					aBayesian.climb();
 					QualityMeasure aQualityMeasure =
 						new QualityMeasure(aBayesian.getDAG(), itsTable.getNrRows(), itsSearchParameters.getAlpha(), itsSearchParameters.getBeta());
-
+//					TODO MM for Baysian QualityMeasure constructor supply QualityMeasure
+//						new QualityMeasure(itsSearchParameters.getQualityMeasure(), aBayesian.getDAG(), itsTable.getNrRows(), itsSearchParameters.getAlpha(), itsSearchParameters.getBeta());
 					int aNrRepetitions = 100; // TODO make #(repetitions) a parameter
 					double aTotalQuality = 0.0;
 					for(int i = 0; i < aNrRepetitions; i++)
@@ -1290,6 +1291,8 @@ public class MiningWindow extends JFrame
 		aBayesian.climb();
 		QualityMeasure aQualityMeasure =
 			new QualityMeasure(aBayesian.getDAG(), itsTable.getNrRows(), 0.5f, 1f);
+//			TODO MM for Baysian QualityMeasure constructor supply QualityMeasure
+//			new QualityMeasure(itsSearchParameters.getQualityMeasure(), aBayesian.getDAG(), itsTable.getNrRows(), itsSearchParameters.getAlpha(), itsSearchParameters.getBeta());
 
 		Random aRandom = new Random(System.currentTimeMillis());
 		int aSize = 100;
@@ -1330,6 +1333,8 @@ public class MiningWindow extends JFrame
 			aSubgroup.setDAG(aDAG); // store DAG with subgroup for later use
 
 			double aQuality = aQualityMeasure.calculateWEED(aSubgroup);
+//			TODO MM for Baysian QualityMeasure constructor supply QualityMeasure
+//			double aQuality = aQualityMeasure.calculate(aSubgroup);
 			aTotalQuality += aQuality;
 			Log.logCommandLine("" + (i + 1) + "," + aSubgroup.getCoverage()
 					+ "," + aQuality);

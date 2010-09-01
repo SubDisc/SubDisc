@@ -7,9 +7,9 @@ public class SubgroupDiscovery extends MiningAlgorithm
 	private SubgroupSet itsResult;
 	private CandidateQueue itsCandidateQueue;
 	private int itsCandidateCount;
-	private int itsMaximumCoverage;	// set by all constructors itsTable.getNrRows()
-	private Table itsTable;
-	private QualityMeasure itsQualityMeasure;
+	private final Table itsTable;
+	private final int itsMaximumCoverage;	// itsTable.getNrRows()
+	private final QualityMeasure itsQualityMeasure;
 
 	//target concept type-specific information, including base models
 	private BitSet itsBinaryTarget; 	//SINGLE_NOMINAL
@@ -72,6 +72,8 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		itsBaseDAG.print();
 		//TODO fix alpha, beta
 		itsQualityMeasure = new QualityMeasure(itsBaseDAG, itsMaximumCoverage, theSearchParameters.getAlpha(), theSearchParameters.getBeta());
+//		TODO MM for Baysian QualityMeasure constructor supply QualityMeasure
+//		new QualityMeasure(itsSearchParameters.getQualityMeasure(), aBayesian.getDAG(), itsMaximumCoverage, itsSearchParameters.getAlpha(), itsSearchParameters.getBeta());
 	}
 
 	public void Mine(long theBeginTime)
@@ -316,6 +318,9 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		theSubgroup.setDAG(aDAG); //store DAG with subgroup for later use
 //		return itsQualityMeasure.calculateEDIT_DISTANCE(theSubgroup);
 		return itsQualityMeasure.calculateWEED(theSubgroup);
+		// TODO MM for Baysian QualityMeasure constructor supply QualityMeasure
+//		return itsQualityMeasure.calculate(theSubgroup);
+
 	}
 
 	public int getNumberOfSubgroups() { return itsResult.size(); }
