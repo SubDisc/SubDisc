@@ -222,8 +222,7 @@ public class CorrelationMeasure
 
 	/**
 	 * TODO Verify whether solution is the same when z1 - z2 and z2 - z1
-	 *
-	 * @return
+	 * @return the <i>p-value</i>
 	 */
 	public double getPValue()
 	{

@@ -176,15 +176,16 @@ public class Column implements XMLNodeInterface
 	 * itsType
 	 * (itsTable.)itsAttribute.setType()
 	 * itsFloats / itsNominals / itsBinaries
-	 * @return 
 	 */
 	public void setType(String theType) { itsAttribute.setType(theType); }
 	public boolean getIsEnabled() { return isEnabled; }
 	public void setIsEnabled(boolean theSetting) { isEnabled = theSetting; }
 	/**
-	 * NOTE use setMissing to set missing values
-	 * Editing on the BitSet retrieved through getMissing() has no effect
-	 * on the original Columns' itsMissing
+	 * Returns a <b>copy of</b> a BitSet representing the missing values for
+	 * this Column, those rows that contained a '?' value in the original
+	 * data. NOTE: use {@link #setMissing(int) setMissing} to set missing values
+	 * . Editing on the BitSet retrieved through getMissing() has no effect on 
+	 * the original missing values BitSet.
 	 * @return a clone of this columns itsMissing BitSet
 	 */
 	public BitSet getMissing() { return (BitSet) itsMissing.clone(); } 
@@ -237,7 +238,7 @@ public class Column implements XMLNodeInterface
 	 * replaced by itsMissingValue by the FileLoader. Default values for the
 	 * AttributeTypes are: 0.0F for NUMERIC/ORDINAL, 0 for BINARY
 	 * (indicating false) and "" for NOMINAL (the empty string).
-	 * @param theParentNode, the Node of which this Node will be a ChildNode.
+	 * @param theParentNode the Node of which this Node will be a ChildNode.
 	 * @return A Node that contains all the information of this column.
 	 */
 	@Override

@@ -93,8 +93,8 @@ public class Attribute implements XMLNodeInterface
 
 	/**
 	 * Create a XML Node representation of this Attribute.
-	 * @param theParentNode, the Node of which this Node will be a ChildNode.
-	 * @return A Node that contains all the information of this Attribute.
+	 * @param theParentNode the Node of which this Node will be a ChildNode
+	 * @return A Node that contains all the information of this Attribute
 	 */
 	@Override
 	public void addNodeTo(Node theParentNode)
