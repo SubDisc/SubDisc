@@ -53,10 +53,10 @@ public class ResultWindow extends JFrame
 		initialise();
 
 		if (itsSubgroupSet.isEmpty())
-			setTitle("No patterns found that match the set criterion");
+			setTitle("No subgroups found that match the set criterion");
 		else
-			setTitle(itsSubgroupSet.size() + " patterns found");
-		
+			setTitle(itsSubgroupSet.size() + " subgroups found");
+
 	}
 
 	public ResultWindow(SubgroupSet theSubgroupSet, SearchParameters theSearchParameters, DAGView theDAGView, BinaryTable theTable, int theNrRecords)
@@ -78,7 +78,7 @@ public class ResultWindow extends JFrame
 			setTitle("No patterns found that match the set criterion");
 		else
 			setTitle(itsSubgroupSet.size() + " patterns found");
-		
+
 		itsBinaryTable = theTable;
 		itsNrRecords = theNrRecords;
 	}
@@ -103,8 +103,8 @@ public class ResultWindow extends JFrame
 			public void keyPressed(java.awt.event.KeyEvent key)
 			{
 				if (key.getKeyCode() == KeyEvent.VK_ENTER)
-					if (itsSubgroupTable.getRowCount() > 0)
-						jButtonShowDAGActionPerformed();
+					if (itsSubgroupTable.getRowCount() > 0 && itsSearchParameters.getTargetType() != TargetType.SINGLE_NOMINAL)
+						jButtonShowModelActionPerformed();
 				if (key.getKeyCode() == KeyEvent.VK_DELETE)
 					if(itsSubgroupTable.getRowCount() > 0)
 						jButtonDeleteSubgroupsActionPerformed();
@@ -131,13 +131,14 @@ public class ResultWindow extends JFrame
 			}
 		});
 
-		jButtonShowDAG = initButton("Show DAG", 'S');
-		jButtonShowDAG.addActionListener(new java.awt.event.ActionListener() {
+		jButtonShowModel = initButton("Show Model", 'S');
+		jButtonShowModel.addActionListener(new java.awt.event.ActionListener() {
 			public void actionPerformed(java.awt.event.ActionEvent evt) {
-				jButtonShowDAGActionPerformed();
+				jButtonShowModelActionPerformed();
 			}
 		});
-		aSubgroupPanel.add(jButtonShowDAG);
+		aSubgroupPanel.add(jButtonShowModel);
+		jButtonShowModel.setVisible(itsSearchParameters.getTargetType() != TargetType.SINGLE_NOMINAL);
 
 		jButtonROC = initButton("ROC", 'R');
 		jButtonROC.addActionListener(new java.awt.event.ActionListener() {
@@ -146,7 +147,7 @@ public class ResultWindow extends JFrame
 			}
 		});
 		aSubgroupPanel.add(jButtonROC);
-		jButtonROC.setEnabled(itsSearchParameters.getTargetType() == TargetType.SINGLE_NOMINAL);
+		jButtonROC.setVisible(itsSearchParameters.getTargetType() == TargetType.SINGLE_NOMINAL);
 
 		jButtonDeleteSubgroups = initButton("Delete Pattern", 'D');
 		jButtonDeleteSubgroups.addActionListener(new java.awt.event.ActionListener() {
@@ -163,22 +164,19 @@ public class ResultWindow extends JFrame
 			}
 		});
 		aSubgroupPanel.add(jButtonPostprocess);
-		jButtonPostprocess.setEnabled(itsSearchParameters.getTargetType() == TargetType.MULTI_LABEL);
+		jButtonPostprocess.setVisible(itsSearchParameters.getTargetType() == TargetType.MULTI_LABEL);
 
 		//possibly disable buttons
 		if (itsSubgroupSet != null) //Subgroup set
 		{
 			if (itsSubgroupSet.isEmpty())
 			{
-				jButtonShowDAG.setEnabled(false);
+				jButtonShowModel.setEnabled(false);
 				jButtonROC.setEnabled(false);
 				jButtonDeleteSubgroups.setEnabled(false);
 				jButtonPostprocess.setEnabled(false);
 			}
 		}
-
-
-
 
 		//close button
 		jButtonCloseWindow = initButton("Close", 'C');
@@ -209,34 +207,47 @@ public class ResultWindow extends JFrame
 		return aButton;
 	}
 
-	private void jButtonShowDAGActionPerformed()
+	private void jButtonShowModelActionPerformed()
 	{
 		int[] aSelectionIndex = itsSubgroupTable.getSelectedRows();
 
-		if (aSelectionIndex.length>0)
+		switch (itsSearchParameters.getTargetType())
 		{
-			int i = 0;
-			while (i < aSelectionIndex.length)
+			case MULTI_LABEL :
 			{
-				Log.logCommandLine("subgroup " + (aSelectionIndex[i]+1));
-				Iterator<Subgroup> anIterator = itsSubgroupSet.iterator();
-				int aCount = 0;
-				while (anIterator.hasNext())
+				if (aSelectionIndex.length>0)
 				{
-					Subgroup aSubgroup = anIterator.next();
-					if (aCount == aSelectionIndex[i])
+					int i = 0;
+					while (i < aSelectionIndex.length)
 					{
-						ModelWindow aWindow = new ModelWindow(aSubgroup.getDAG(), 1200, 900);
-						aWindow.setLocation(0, 0);
-						aWindow.setSize(1200, 900);
-						aWindow.setVisible(true);
-						aWindow.setTitle("Bayesian net induced from subgroup " + (aSelectionIndex[i]+1));
-					}
-					aCount++;
-				}
+						Log.logCommandLine("subgroup " + (aSelectionIndex[i]+1));
+						Iterator<Subgroup> anIterator = itsSubgroupSet.iterator();
+						int aCount = 0;
+						while (anIterator.hasNext())
+						{
+							Subgroup aSubgroup = anIterator.next();
+							if (aCount == aSelectionIndex[i])
+							{
+								ModelWindow aWindow = new ModelWindow(aSubgroup.getDAG(), 1200, 900);
+								aWindow.setLocation(0, 0);
+								aWindow.setSize(1200, 900);
+								aWindow.setVisible(true);
+								aWindow.setTitle("Bayesian net induced from subgroup " + (aSelectionIndex[i]+1));
+							}
+							aCount++;
+						}
 
-				i++;
+						i++;
+					}
+				}
+				break;
 			}
+			case DOUBLE_CORRELATION : //TODO show window at all?
+			case DOUBLE_REGRESSION :
+				//TODO implement modelwindow with scatterplot and line
+				break;
+			default :
+				break;
 		}
 	}
 
@@ -278,15 +289,15 @@ public class ResultWindow extends JFrame
 	{
 		String inputValue = JOptionPane.showInputDialog("#DAGs fitted to each subgroup.");
 		try
-		{ 
-			itsSearchParameters.setPostProcessingCount(Integer.parseInt(inputValue)); 
+		{
+			itsSearchParameters.setPostProcessingCount(Integer.parseInt(inputValue));
 		}
 		catch (Exception e)
-		{ 
+		{
 			JOptionPane.showMessageDialog(null, "Your input is unsound.");
 			return;
 		}
-		
+
 		if (itsSubgroupSet.isEmpty())
 			return;
 
@@ -299,7 +310,7 @@ public class ResultWindow extends JFrame
 			aGlobalBayesian.climb();
 			aQMs[i] = new QualityMeasure(aGlobalBayesian.getDAG(), itsNrRecords, itsSearchParameters.getAlpha(), itsSearchParameters.getBeta());
 		}
-		
+
 		// Iterate over subgroups
 		SubgroupSet aNewSubgroupSet = new SubgroupSet(itsSearchParameters.getMaximumSubgroups());
 		Iterator<Subgroup> anIterator = itsSubgroupSet.iterator();
@@ -322,7 +333,7 @@ public class ResultWindow extends JFrame
 			}
 			aSubgroup.setMeasureValue(aTotalQuality/(double) Math.pow(itsSearchParameters.getPostProcessingCount(),2));
 			aNewSubgroupSet.add(aSubgroup);
-			
+
 			aCount++;
 		}
 		aNewSubgroupSet.setIDs();
@@ -335,7 +346,7 @@ public class ResultWindow extends JFrame
 	private void exitForm() {	dispose(); }
 
 	private javax.swing.JPanel jPanelSouth;
-	private javax.swing.JButton jButtonShowDAG;
+	private javax.swing.JButton jButtonShowModel;
 	private javax.swing.JButton jButtonDeleteSubgroups;
 	private javax.swing.JButton jButtonPostprocess;
 	private javax.swing.JButton jButtonROC;

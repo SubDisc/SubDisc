@@ -57,7 +57,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 	}
 
 	//MULTI_LABEL
-	public SubgroupDiscovery(SearchParameters theSearchParameters, Table theTable, BitSet theColumns)
+	public SubgroupDiscovery(SearchParameters theSearchParameters, Table theTable)
 	{
 		super(theSearchParameters);
 		itsResult = new SubgroupSet(theSearchParameters.getMaximumSubgroups());
@@ -65,7 +65,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		itsMaximumCoverage = itsTable.getNrRows();
 
 		//compute base model
-		itsBinaryTable = new BinaryTable(itsTable, theColumns);
+		itsBinaryTable = new BinaryTable(itsTable, theSearchParameters.getTargetConcept().getMultiTargets());
 		Bayesian aBayesian = new Bayesian(itsBinaryTable);
 		aBayesian.climb();
 		itsBaseDAG = aBayesian.getDAG();
@@ -105,7 +105,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 
 				if(aSubgroup.getDepth() < aSearchDepth)
 				{
-					RefinementList aRefinementList = new RefinementList(aSubgroup, itsTable);
+					RefinementList aRefinementList = new RefinementList(aSubgroup, itsTable, itsSearchParameters.getTargetConcept());
 
 					for(int i = 0, j = aRefinementList.size(); i < j; i++)
 					{

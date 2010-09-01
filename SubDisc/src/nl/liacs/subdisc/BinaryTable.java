@@ -10,15 +10,11 @@ public class BinaryTable
 	private int itsNrRecords; //Nr. of examples
 
 	//From Table
-	public BinaryTable(Table theTable, BitSet theColumns)
+	public BinaryTable(Table theTable, ArrayList<Attribute> theAttributes)
 	{
-		int theSize = theColumns.cardinality();
-		itsColumns = new ArrayList<BitSet>(theSize);
-		itsNrRecords = theTable.getNrRows();
-
-		for (int i=0; i<theTable.getNrColumns(); i++)
-			if (theColumns.get(i))
-				itsColumns.add(theTable.getBinaryColumn(i));
+		itsColumns = new ArrayList<BitSet>(theAttributes.size());
+		for (Attribute anAttribute : theAttributes)
+			itsColumns.add(theTable.getBinaryColumn(anAttribute.getIndex()));
 	}
 
 	//empty

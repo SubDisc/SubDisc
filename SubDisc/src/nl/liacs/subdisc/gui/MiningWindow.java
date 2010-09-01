@@ -274,7 +274,6 @@ public class MiningWindow extends JFrame
 		jLFieldNrBinaries = new JLabel();
 		// dataset - buttons
 		jPanelRuleTargetButtons = new JPanel();
-		jButtonDataExplorer = initButton("Data Explorer", 'E');
 		jButtonBrowse = initButton("Browse", 'B');
 		jButtonAttributeTypeChange = initButton("Attribute Type Change", 'A');	// TODO change to 'AttributeChange'
 
@@ -532,13 +531,13 @@ public class MiningWindow extends JFrame
 		jPanelRuleTarget.add(jPanelRuleTargetFields, BorderLayout.CENTER);
 
 		jPanelRuleTargetButtons.setLayout(new BoxLayout(jPanelRuleTargetButtons , BoxLayout.X_AXIS));
-		jButtonDataExplorer = initButton("Data Explorer", 'E');
-		jButtonDataExplorer.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent evt) {
-				DataExplorerActionPerformed(evt);
-			}
-		});
-		jPanelRuleTargetButtons.add(jButtonDataExplorer);
+//		jButtonDataExplorer = initButton("Data Explorer", 'E');
+//		jButtonDataExplorer.addActionListener(new ActionListener() {
+//			public void actionPerformed(ActionEvent evt) {
+//				DataExplorerActionPerformed(evt);
+//			}
+//		});
+//		jPanelRuleTargetButtons.add(jButtonDataExplorer);
 
 		jButtonBrowse = initButton("Browse", 'B');
 		jButtonBrowse.addActionListener(new ActionListener() {
@@ -548,7 +547,7 @@ public class MiningWindow extends JFrame
 		});
 		jPanelRuleTargetButtons.add(jButtonBrowse);
 
-		jButtonAttributeTypeChange = initButton("Attribute Change", 'A');
+		jButtonAttributeTypeChange = initButton("Attributes", 'A');
 		jButtonAttributeTypeChange.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
 				AttributeTypeChangeActionPerformed(evt);
@@ -855,7 +854,7 @@ public class MiningWindow extends JFrame
 															jMenuItemSubgroupDiscovery,
 															jMenuItemCreateAutoRunFile,
 															jMenuItemAddToAutoRunFile,
-															jButtonDataExplorer,
+//															jButtonDataExplorer,  //TODO add when implemented
 															jButtonBrowse,
 															jButtonAttributeTypeChange,
 															jButtonSubgroupDiscovery,
@@ -1045,6 +1044,14 @@ public class MiningWindow extends JFrame
 
 	private void jListSecondaryTargetsActionPerformed(ListSelectionEvent evt)
 	{
+		// compute selected targets and update TargetConcept
+		int[] aSelection = jListSecondaryTargets.getSelectedIndices();
+		ArrayList<Attribute> aList = new ArrayList<Attribute>(aSelection.length);
+		for(int anIndex : aSelection)
+			aList.add(itsTable.getAttribute(itsTable.getBinaryIndex(anIndex)));
+		itsTargetConcept.setMultiTargets(aList);
+
+		//update GUI
 		initTargetInfo();
 	}
 
@@ -1091,18 +1098,18 @@ public class MiningWindow extends JFrame
 				}
 				case MULTI_LABEL :
 				{
-					// compute selected targets
-					BitSet aSelectedColumns = new BitSet();
-					int[] aSelection = jListSecondaryTargets.getSelectedIndices();
-					for(int anIndex : aSelection)
-						aSelectedColumns.set(itsTable.getBinaryIndex(anIndex));
-					String[] aNames = new String[aSelectedColumns.cardinality()];
-					for(int anIndex : aSelection)
-						aNames[anIndex] = itsTable.getAttribute(itsTable.getBinaryIndex(anIndex)).getName();
+					ArrayList<Attribute> aList = itsTargetConcept.getMultiTargets();
+					String[] aNames = new String[aList.size()];
+					int aCount = 0;
+					for(Attribute anAttribute : aList)
+					{
+						aNames[aCount] = anAttribute.getName();
+						aCount++;
+					}
 
 					// compute base model
 					Bayesian aBayesian =
-						new Bayesian(new BinaryTable(itsTable, aSelectedColumns), aNames);
+						new Bayesian(new BinaryTable(itsTable, aList), aNames);
 					aBayesian.climb();
 					DAG aBaseDAG = aBayesian.getDAG();
 					aBaseDAG.print();
@@ -1147,11 +1154,7 @@ public class MiningWindow extends JFrame
 				}
 				case MULTI_LABEL :
 				{
-					BitSet aSelectedColumns = new BitSet();
-					int[] aSelection = jListSecondaryTargets.getSelectedIndices();
-					for(int anIndex : aSelection)
-						aSelectedColumns.set(itsTable.getBinaryIndex(anIndex));
-					aSubgroupDiscovery = new SubgroupDiscovery(itsSearchParameters, itsTable, aSelectedColumns);
+					aSubgroupDiscovery = new SubgroupDiscovery(itsSearchParameters, itsTable);
 					break;
 				}
 				case DOUBLE_REGRESSION :
@@ -1175,11 +1178,7 @@ public class MiningWindow extends JFrame
 			{
 				case MULTI_LABEL :
 				{
-					BitSet aSelectedColumns = new BitSet();
-					int[] aSelection = jListSecondaryTargets.getSelectedIndices();
-					for(int anIndex : aSelection)
-						aSelectedColumns.set(itsTable.getBinaryIndex(anIndex));
-					BinaryTable aBinaryTable = new BinaryTable(itsTable, aSelectedColumns);
+					BinaryTable aBinaryTable = new BinaryTable(itsTable, itsTargetConcept.getMultiTargets());
 					aResultWindow = new ResultWindow(aPreliminaryResults, itsSearchParameters, null, aBinaryTable, itsTotalCount);
 					break;
 				}
@@ -1240,14 +1239,8 @@ public class MiningWindow extends JFrame
 				}
 				case MULTI_LABEL :
 				{
-					// get targets
-					BitSet aSelectedColumns = new BitSet();
-					int[] aSelection = jListSecondaryTargets.getSelectedIndices();
-					for(int anIndex : aSelection)
-						aSelectedColumns.set(itsTable.getBinaryIndex(anIndex));
-
 					// base model
-					BinaryTable aBaseTable = new BinaryTable(itsTable, aSelectedColumns);
+					BinaryTable aBaseTable = new BinaryTable(itsTable, itsTargetConcept.getMultiTargets());
 					Bayesian aBayesian = new Bayesian(aBaseTable);
 					aBayesian.climb();
 					QualityMeasure aQualityMeasure =
@@ -1291,14 +1284,8 @@ public class MiningWindow extends JFrame
 	{
 		setupSearchParameters();
 
-		// get targets
-		BitSet aSelectedColumns = new BitSet();
-		int[] aSelection = jListSecondaryTargets.getSelectedIndices();
-		for(int anIndex : aSelection)
-			aSelectedColumns.set(itsTable.getBinaryIndex(anIndex));
-
 		// base model
-		BinaryTable aBaseTable = new BinaryTable(itsTable, aSelectedColumns);
+		BinaryTable aBaseTable = new BinaryTable(itsTable, itsTargetConcept.getMultiTargets());
 		Bayesian aBayesian = new Bayesian(aBaseTable);
 		aBayesian.climb();
 		QualityMeasure aQualityMeasure =
@@ -1353,9 +1340,7 @@ public class MiningWindow extends JFrame
 	private void setupSearchParameters()
 	{
 		initSearchParameters(itsSearchParameters);
-//		itsTargetConcept.setTargetType(getTargetTypeName());	// TODO can be removed, set already
-		initTargetConcept(itsTargetConcept);
-//		itsSearchParameters.setTargetConcept(itsTargetConcept);	// TODO can be removed, set already
+		initTargetConcept();
 	}
 
 	// TODO can do without theSearchParameters, there is only itsSearchParameters
@@ -1392,20 +1377,22 @@ public class MiningWindow extends JFrame
 	}
 
 	// Obsolete, this info is already up to date through *ActionPerformed methods
-	// TODO could call itsTargetConcept directly, no need for parameter
-	private void initTargetConcept(TargetConcept theTC)
+	private void initTargetConcept()
 	{
 		Attribute aTarget = itsTable.getAttribute(getTargetAttributeName());
-		theTC.setPrimaryTarget(aTarget);
+		itsTargetConcept.setPrimaryTarget(aTarget);
 
 		// target value
-		switch(theTC.getTargetType())
+		switch(itsTargetConcept.getTargetType())
 		{
-			case SINGLE_NOMINAL					:
-			case MULTI_BINARY_CLASSIFICATION	: theTC.setTargetValue(getMiscFieldName()); break;
-			case DOUBLE_CORRELATION				:
-			case DOUBLE_REGRESSION				: theTC.setSecondaryTarget(itsTable.getAttribute(getMiscFieldName())); break;
-			default								: break;
+			case SINGLE_NOMINAL	:
+			case MULTI_BINARY_CLASSIFICATION :
+				itsTargetConcept.setTargetValue(getMiscFieldName());
+				break;
+			case DOUBLE_CORRELATION	:
+			case DOUBLE_REGRESSION :
+				itsTargetConcept.setSecondaryTarget(itsTable.getAttribute(getMiscFieldName())); break;
+			default	: break;
 		}
 		// TODO add more details of target concept from GUI
 	}
@@ -1469,7 +1456,7 @@ public class MiningWindow extends JFrame
 		if(aTargetType == TargetType.SINGLE_NOMINAL && isEmpty) // no target attribute selected
 			removeAllMiscFieldItems();
 
-		// secondary targets =======================================
+		// multi targets =======================================
 		if(aTargetType == TargetType.MULTI_LABEL && jListSecondaryTargets.getSelectedIndices().length == 0)
 		{
 			int aCount = 0;
@@ -1530,7 +1517,7 @@ public class MiningWindow extends JFrame
 			case DOUBLE_REGRESSION :
 			case DOUBLE_CORRELATION :
 			{
-				initTargetConcept(itsTargetConcept);
+				initTargetConcept();
 				Column aPrimaryColumn = itsTable.getColumn(itsTargetConcept.getPrimaryTarget());
 				Column aSecondaryColumn = itsTable.getColumn(itsTargetConcept.getSecondaryTarget());
 				CorrelationMeasure aCM =

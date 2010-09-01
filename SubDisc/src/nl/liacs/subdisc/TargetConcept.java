@@ -21,7 +21,7 @@ public class TargetConcept implements XMLNodeInterface
 	private Attribute	itsPrimaryTarget;
 	private String		itsTargetValue;
 	private Attribute	itsSecondaryTarget;
-	private List<Attribute> itsSecondaryTargets;	// better use empty one by default, for-each/null safe
+	private ArrayList<Attribute> itsMultiTargets;
 
 	public enum TargetType
 	{
@@ -92,11 +92,11 @@ public class TargetConcept implements XMLNodeInterface
 				itsTargetValue = aSetting.getTextContent();
 			else if("secondary_target".equalsIgnoreCase(aNodeName))
 				itsSecondaryTarget = new Attribute(aSetting);	// TODO
-			else if("secondary_targets".equalsIgnoreCase(aNodeName))
+			else if("multi_targets".equalsIgnoreCase(aNodeName))
 			{
-				itsSecondaryTargets = new ArrayList<Attribute>();
+				itsMultiTargets = new ArrayList<Attribute>();
 				for(String s : aSetting.getTextContent().split(",", -1))
-					itsSecondaryTargets.add(new Attribute(s, null, null));	// TODO
+					itsMultiTargets.add(new Attribute(s, null, null));	// TODO
 			}
 			else
 				;	// TODO throw warning dialog
@@ -129,9 +129,29 @@ public class TargetConcept implements XMLNodeInterface
 	public Attribute getSecondaryTarget() { return itsSecondaryTarget; }
 	public void setSecondaryTarget(Attribute theSecondaryTarget) { itsSecondaryTarget = theSecondaryTarget; }
 
+	public ArrayList<Attribute> getMultiTargets() { return itsMultiTargets; }
+	public void setMultiTargets(ArrayList<Attribute> theMultiTargets)
+	{
+		itsMultiTargets = theMultiTargets;
+	}
+
 	public boolean isSingleNominal() { return (itsTargetType == TargetType.SINGLE_NOMINAL); }
-//	public boolean isEMM() { return itsTargetType.isEMM(); }
-//	public boolean isImplemented() { return itsTargetType.isImplemented(); }
+
+	public boolean isTargetAttribute(Attribute theAttribute)
+	{
+		switch (itsTargetType)
+		{
+			case SINGLE_NOMINAL :
+				return (theAttribute == itsPrimaryTarget);
+			case DOUBLE_REGRESSION :
+			case DOUBLE_CORRELATION :
+				return (theAttribute == itsPrimaryTarget || theAttribute == itsSecondaryTarget);
+			case MULTI_LABEL :
+				return (itsMultiTargets.contains(theAttribute));
+			default :
+				return false;
+		}
+	}
 
 	/**
 	 * Create a XML Node representation of this TaretConcept.
@@ -150,12 +170,12 @@ public class TargetConcept implements XMLNodeInterface
 			XMLNode.addNodeTo(aNode, "secondary_target");
 		else
 			XMLNode.addNodeTo(aNode, "secondary_target", itsSecondaryTarget.getName());
-		if(itsSecondaryTargets == null || itsSecondaryTargets.size() == 0)
+		if(itsMultiTargets == null || itsMultiTargets.size() == 0)
 			XMLNode.addNodeTo(aNode, "secondary_targets");
 		else
 		{
-			StringBuilder sb = new StringBuilder(itsSecondaryTargets.size() * 10);
-			for(Attribute a : itsSecondaryTargets)
+			StringBuilder sb = new StringBuilder(itsMultiTargets.size() * 10);
+			for(Attribute a : itsMultiTargets)
 				sb.append(a.getName() + ",");
 			sb.deleteCharAt(sb.length() - 1);	// removes last comma
 			XMLNode.addNodeTo(aNode, "secondary_targets", sb);
@@ -169,7 +189,7 @@ public class TargetConcept implements XMLNodeInterface
 		theTargetType == DOUBLE_CORRELATION ||
 		theTargetType == MULTI_LABEL);
 	}
-	
+
 	public static int getFirstTargetType()	{ return SINGLE_NOMINAL; }
 	public static int getLastTargetType()	{ return MULTI_BINARY_CLASSIFICATION; }
 
@@ -214,6 +234,6 @@ public class TargetConcept implements XMLNodeInterface
 			aType == MULTI_BINARY_CLASSIFICATION);
 	}
 */
-	
-	
+
+
 }

@@ -8,9 +8,7 @@ public class RefinementList extends ArrayList<Refinement>
 	private Table itsTable;
 	private Subgroup itsSubgroup;
 
-//	TODO
-//	public RefinementList(Subgroup theSubgroup, Table theTable, SearchParameters theParameters)
-	public RefinementList(Subgroup theSubgroup, Table theTable)
+	public RefinementList(Subgroup theSubgroup, Table theTable, TargetConcept theTC)
 	{
 		itsSubgroup = theSubgroup;
 		itsTable = theTable;
@@ -20,8 +18,9 @@ public class RefinementList extends ArrayList<Refinement>
 
 		do
 		{
-			Column aColumn = itsTable.getColumn(aCondition.getAttribute());
-			if (aColumn.getIsEnabled())
+			Attribute anAttribute = aCondition.getAttribute();
+			Column aColumn = itsTable.getColumn(anAttribute);
+			if (aColumn.getIsEnabled() && !theTC.isTargetAttribute(anAttribute))
 			{
 				Refinement aRefinement = new Refinement(aCondition, itsSubgroup);
 				add(aRefinement);
