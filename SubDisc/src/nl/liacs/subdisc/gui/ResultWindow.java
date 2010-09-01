@@ -337,9 +337,13 @@ public class ResultWindow extends JFrame
 			aCount++;
 		}
 		aNewSubgroupSet.setIDs();
-		itsSubgroupSet = aNewSubgroupSet;
-		itsResultTableModel.fireTableDataChanged();
-		itsSubgroupTable.repaint();
+
+		// Display postprocessed results
+		ResultWindow aResultWindow = new ResultWindow(aNewSubgroupSet, itsSearchParameters, null, itsBinaryTable, itsNrRecords);
+		aResultWindow.setLocation(0, 0);
+		aResultWindow.setSize(1200, 900);
+		aResultWindow.setVisible(true);
+		jButtonCloseWindowActionPerformed();
 }
 
 	private void jButtonCloseWindowActionPerformed() { dispose(); }
