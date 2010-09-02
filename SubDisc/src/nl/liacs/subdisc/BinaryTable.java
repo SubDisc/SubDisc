@@ -15,6 +15,7 @@ public class BinaryTable
 		itsColumns = new ArrayList<BitSet>(theAttributes.size());
 		for (Attribute anAttribute : theAttributes)
 			itsColumns.add(theTable.getBinaryColumn(anAttribute.getIndex()));
+		itsNrRecords = theTable.getNrRows();
 	}
 
 	//empty
