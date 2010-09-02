@@ -33,18 +33,18 @@ import nl.liacs.subdisc.TargetConcept.TargetType;
  */
 public class QualityMeasure
 {
-	int itsMeasure;
+	private final int itsMeasure;
 	private final int itsNrRecords;
 
 	//SINGLE_NOMINAL
-	int itsTotalTargetCoverage;
+	private int itsTotalTargetCoverage;
 
 	//SINGLE_NUMERIC and SINGLE_ORDINAL
-	double itsTotalSum;
-	double itsTotalSSD;
-	double itsTotalMedian;
-	double itsTotalMedianAD;
-	int[] itsPopulationCounts;
+	private double itsTotalSum;
+	private double itsTotalSSD;
+	private double itsTotalMedian;
+	private double itsTotalMedianAD;
+	private int[] itsPopulationCounts;
 
 	//Bayesian
 	private DAG itsDAG;
@@ -122,7 +122,7 @@ public class QualityMeasure
 	}
 
 	public void setTotalTargetCoverage(int theCount) { itsTotalTargetCoverage = theCount; }
-	public void setQualityMeasure(int theMeasure) { itsMeasure = theMeasure; }
+//	public void setQualityMeasure(int theMeasure) { itsMeasure = theMeasure; }
 	// end unused
 
 	public static int getFirstEvaluationMesure(TargetType theTargetType)
@@ -501,19 +501,15 @@ public class QualityMeasure
 
 	//Baysian ========================================================================================
 
-	// start MM
-	// For Baysian setting also supply QualityMeasure parameter
-	// allows making itsMeasure final and makes it in line with the rest of the
-	// code.
 	public QualityMeasure(int theMeasure, DAG theDAG, int theNrRecords, float theAlpha, float theBeta)
 	{
 		itsMeasure = theMeasure;
-		itsDAG = theDAG;
-		itsNrNodes = theDAG.getSize();
 		itsNrRecords = theNrRecords;
+		itsDAG = theDAG;
+		itsNrNodes = itsDAG.getSize();
 		itsAlpha = theAlpha;
 		itsBeta = theBeta;
-		itsVStructures = theDAG.determineVStructures();
+		itsVStructures = itsDAG.determineVStructures();
 	}
 
 	public float calculate(Subgroup theSubgroup)
@@ -521,37 +517,13 @@ public class QualityMeasure
 		switch (itsMeasure)
 		{
 			case WEED : 
-				return (float) Math.pow(calculateEntropy(theSubgroup.getCoverage(), itsNrRecords), itsAlpha) *
+				return (float) Math.pow(calculateEntropy(itsNrRecords, theSubgroup.getCoverage()), itsAlpha) *
 						(float) Math.pow(calculateEditDistance(theSubgroup.getDAG()), itsBeta);
 			case EDIT_DISTANCE :
 				return calculateEditDistance(theSubgroup.getDAG());
-			default : return 0f; // throw warning
-			
+			default : Log.logCommandLine("QualityMeasure not WEED or EDIT_DISTANCE.");
+						return 0f; // TODO throw warning
 		}
-	}
-	// end MM
-
-	public QualityMeasure(DAG theDAG, int theNrRecords, float theAlpha, float theBeta)
-	{
-		itsDAG = theDAG;
-		itsNrNodes = theDAG.getSize();
-		itsNrRecords = theNrRecords;
-		itsAlpha = theAlpha;
-		itsBeta = theBeta;
-		itsVStructures = theDAG.determineVStructures();
-	}
-
-	// TODO MM can be removed
-	public float calculateWEED(Subgroup theSubgroup)
-	{
-		return (float) Math.pow(calculateEntropy(theSubgroup.getMembers().cardinality()),itsAlpha) *
-			   (float) Math.pow(calculateEditDistance(theSubgroup.getDAG()),itsBeta);
-	}
-
-	// TODO MM can be removed, never used
-	public double calculateEDIT_DISTANCE(Subgroup theSubgroup)
-	{
-		return calculateEditDistance(theSubgroup.getDAG());
 	}
 
 	public float calculateEditDistance(DAG theDAG)
@@ -562,22 +534,13 @@ public class QualityMeasure
 			return (float) Math.PI;
 		}
 		int nrEdits = 0;
-		for(int i=0; i<itsNrNodes; ++i)
-			for(int j=0; j<i ; ++j)
-				if ( (theDAG.getNode(j).isConnected(i)==0 && itsDAG.getNode(j).isConnected(i)!=0) || (theDAG.getNode(j).isConnected(i)!=0 && itsDAG.getNode(j).isConnected(i)==0) )
+		for (int i=0; i<itsNrNodes; i++)
+			for (int j=0; j<i; j++)
+				if ((theDAG.getNode(j).isConnected(i)==0 && itsDAG.getNode(j).isConnected(i)!=0) || (theDAG.getNode(j).isConnected(i)!=0 && itsDAG.getNode(j).isConnected(i)==0))
 					nrEdits++;
-				else if ( theDAG.getNode(j).isConnected(i)==0 )
-						if ( theDAG.testVStructure(j,i) != itsVStructures[j][i] )
+				else if (theDAG.getNode(j).isConnected(i)==0)
+						if (theDAG.testVStructure(j,i) != itsVStructures[j][i])
 							nrEdits++;
 		return (float) nrEdits / (float) (itsNrNodes*(itsNrNodes-1)/2); // Actually n choose 2, but this boils down to the same...
-	}
-
-	// TODO MM can be removed
-	public float calculateEntropy(int theSubgroupSupport)
-	{
-		if (theSubgroupSupport==0 || itsNrRecords==theSubgroupSupport)
-			return 0;
-		float pj = (float)theSubgroupSupport / (float)itsNrRecords;
-		return (float)((-1 * pj * Math.log(pj)/Math.log(2)) - ((1 - pj) * Math.log(1 - pj)/Math.log(2)));
 	}
 }

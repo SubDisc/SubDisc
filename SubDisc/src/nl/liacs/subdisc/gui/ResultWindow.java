@@ -1,28 +1,13 @@
 package nl.liacs.subdisc.gui;
 
-import java.awt.GridLayout;
-import java.awt.event.KeyEvent;
-import java.util.BitSet;
-import java.util.Iterator;
+import java.awt.*;
+import java.awt.event.*;
+import java.util.*;
 
-import javax.swing.JButton;
-import javax.swing.JFrame;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JTable;
-import javax.swing.ListSelectionModel;
+import javax.swing.*;
 
-import nl.liacs.subdisc.Bayesian;
-import nl.liacs.subdisc.BinaryTable;
-import nl.liacs.subdisc.DAG;
-import nl.liacs.subdisc.QualityMeasure;
-
-import nl.liacs.subdisc.DAGView;
-import nl.liacs.subdisc.Log;
-import nl.liacs.subdisc.SearchParameters;
-import nl.liacs.subdisc.Subgroup;
-import nl.liacs.subdisc.SubgroupSet;
-import nl.liacs.subdisc.TargetConcept.TargetType;
+import nl.liacs.subdisc.*;
+import nl.liacs.subdisc.TargetConcept.*;
 
 public class ResultWindow extends JFrame
 {
@@ -221,14 +206,12 @@ public class ResultWindow extends JFrame
 					while (i < aSelectionIndex.length)
 					{
 						Log.logCommandLine("subgroup " + (aSelectionIndex[i]+1));
-						Iterator<Subgroup> anIterator = itsSubgroupSet.iterator();
 						int aCount = 0;
-						while (anIterator.hasNext())
+						for (Subgroup s : itsSubgroupSet)
 						{
-							Subgroup aSubgroup = anIterator.next();
 							if (aCount == aSelectionIndex[i])
 							{
-								ModelWindow aWindow = new ModelWindow(aSubgroup.getDAG(), 1200, 900);
+								ModelWindow aWindow = new ModelWindow(s.getDAG(), 1200, 900);
 								aWindow.setLocation(0, 0);
 								aWindow.setSize(1200, 900);
 								aWindow.setVisible(true);
@@ -302,43 +285,37 @@ public class ResultWindow extends JFrame
 			return;
 
 		// Create quality measures on whole dataset
-		Log.logCommandLine("Creating quality measures");
-		QualityMeasure[] aQMs = new QualityMeasure[itsSearchParameters.getPostProcessingCount()];
-		for (int i=0; i<itsSearchParameters.getPostProcessingCount(); i++)
+		Log.logCommandLine("Creating quality measures.");
+		int aPostProcessingCount = itsSearchParameters.getPostProcessingCount();
+		double aPostProcessingCountSquare = Math.pow(aPostProcessingCount, 2);
+		int aQualityMeasure = itsSearchParameters.getQualityMeasure();
+
+		QualityMeasure[] aQMs = new QualityMeasure[aPostProcessingCount];
+		for (int i = 0; i < aPostProcessingCount; i++)
 		{
 			Bayesian aGlobalBayesian = new Bayesian(itsBinaryTable);
 			aGlobalBayesian.climb();
-			aQMs[i] = new QualityMeasure(aGlobalBayesian.getDAG(), itsNrRecords, itsSearchParameters.getAlpha(), itsSearchParameters.getBeta());
-//			TODO MM for Baysian QualityMeasure constructor supply QualityMeasure
-//			new QualityMeasure(itsSearchParameters.getQualityMeasure(), aGlobalBayesian.getDAG(), itsNrRecords, itsSearchParameters.getAlpha(), itsSearchParameters.getBeta());
+			aQMs[i] = new QualityMeasure(aQualityMeasure, aGlobalBayesian.getDAG(), itsNrRecords, itsSearchParameters.getAlpha(), itsSearchParameters.getBeta());
 		}
 
 		// Iterate over subgroups
 		SubgroupSet aNewSubgroupSet = new SubgroupSet(itsSearchParameters.getMaximumSubgroups());
-		Iterator<Subgroup> anIterator = itsSubgroupSet.iterator();
-		int aCount = 1;
-		while (anIterator.hasNext())
+		int aCount = 0;
+		for (Subgroup s : itsSubgroupSet)
 		{
-			Log.logCommandLine("Postprocessing subgroup " + aCount);
-			Subgroup aSubgroup = anIterator.next();
+			Log.logCommandLine("Postprocessing subgroup " + ++aCount);
 			double aTotalQuality = 0.0;
-			BitSet aSubgroupMembers = aSubgroup.getMembers();
-			BinaryTable aSubgroupTable = itsBinaryTable.selectRows(aSubgroupMembers);
-			for (int i=0; i<itsSearchParameters.getPostProcessingCount(); i++)
+			BinaryTable aSubgroupTable = itsBinaryTable.selectRows(s.getMembers());
+			for (int i = 0; i < aPostProcessingCount; i++)
 			{
 				Bayesian aLocalBayesian = new Bayesian(aSubgroupTable);
 				aLocalBayesian.climb();
-				DAG aLocalDAG = aLocalBayesian.getDAG();
-				aSubgroup.setDAG(aLocalDAG);
-				for (int j=0; j<itsSearchParameters.getPostProcessingCount(); j++)
-					aTotalQuality += aQMs[j].calculateWEED(aSubgroup);
-//				TODO MM for Baysian QualityMeasure constructor supply QualityMeasure
-//				aTotalQuality += aQMs[j].calculate(aSubgroup);
+				s.setDAG(aLocalBayesian.getDAG());
+				for (int j = 0; j < aPostProcessingCount; j++)
+					aTotalQuality += aQMs[j].calculate(s);
 			}
-			aSubgroup.setMeasureValue(aTotalQuality/(double) Math.pow(itsSearchParameters.getPostProcessingCount(),2));
-			aNewSubgroupSet.add(aSubgroup);
-
-			aCount++;
+			s.setMeasureValue(aTotalQuality / aPostProcessingCountSquare);
+			aNewSubgroupSet.add(s);
 		}
 		aNewSubgroupSet.setIDs();
 

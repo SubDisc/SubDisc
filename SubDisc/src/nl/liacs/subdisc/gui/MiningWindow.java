@@ -1244,9 +1244,11 @@ public class MiningWindow extends JFrame
 					Bayesian aBayesian = new Bayesian(aBaseTable);
 					aBayesian.climb();
 					QualityMeasure aQualityMeasure =
-						new QualityMeasure(aBayesian.getDAG(), itsTable.getNrRows(), itsSearchParameters.getAlpha(), itsSearchParameters.getBeta());
-//					TODO MM for Baysian QualityMeasure constructor supply QualityMeasure
-//						new QualityMeasure(itsSearchParameters.getQualityMeasure(), aBayesian.getDAG(), itsTable.getNrRows(), itsSearchParameters.getAlpha(), itsSearchParameters.getBeta());
+						new QualityMeasure(itsSearchParameters.getQualityMeasure(),
+											aBayesian.getDAG(),
+											itsTotalCount,
+											itsSearchParameters.getAlpha(),
+											itsSearchParameters.getBeta());
 					int aNrRepetitions = 100; // TODO make #(repetitions) a parameter
 					double aTotalQuality = 0.0;
 					for(int i = 0; i < aNrRepetitions; i++)
@@ -1257,13 +1259,11 @@ public class MiningWindow extends JFrame
 						BinaryTable aBinaryTable = aBaseTable.selectRows(aSubgroup.getMembers());
 						aBayesian = new Bayesian(aBinaryTable);
 						aBayesian.climb();
-						DAG aDAG = aBayesian.getDAG();
-						aSubgroup.setDAG(aDAG); // store DAG with subgroup for later use
+						aSubgroup.setDAG(aBayesian.getDAG()); // store DAG with subgroup for later use
 
-						double aQuality = aQualityMeasure.calculateWEED(aSubgroup);
+						double aQuality = aQualityMeasure.calculate(aSubgroup);
 						aTotalQuality += aQuality;
-						Log.logCommandLine("" + (i + 1) + "," + aSubgroup.getCoverage()
-								+ "," + aQuality);
+						Log.logCommandLine((i + 1) + "," + aSubgroup.getCoverage() + "," + aQuality);
 					}
 					Log.logCommandLine("average quality " + aTotalQuality / aNrRepetitions);
 
@@ -1290,12 +1290,17 @@ public class MiningWindow extends JFrame
 		Bayesian aBayesian = new Bayesian(aBaseTable);
 		aBayesian.climb();
 		QualityMeasure aQualityMeasure =
-			new QualityMeasure(aBayesian.getDAG(), itsTable.getNrRows(), 0.5f, 1f);
-//			TODO MM for Baysian QualityMeasure constructor supply QualityMeasure
+			new QualityMeasure(itsSearchParameters.getQualityMeasure(),
+								aBayesian.getDAG(),
+								itsTotalCount,
+								0.5f,
+								1f);
 //			new QualityMeasure(itsSearchParameters.getQualityMeasure(), aBayesian.getDAG(), itsTable.getNrRows(), itsSearchParameters.getAlpha(), itsSearchParameters.getBeta());
 
 		Random aRandom = new Random(System.currentTimeMillis());
 		int aSize = 100;
+		int aDepth = itsSearchParameters.getSearchDepth();
+		int aMinimumCoverage = itsSearchParameters.getMinimumCoverage();
 		float aTotalQuality = 0.0f;
 		for(int i = 0; i < aSize; i++) // random conditions
 		{
@@ -1304,7 +1309,7 @@ public class MiningWindow extends JFrame
 			do
 			{
 				aCL = new ConditionList();
-				for(int j = 0; j < itsSearchParameters.getSearchDepth(); j++) // j conditions
+				for(int j = 0; j < aDepth; j++) // j conditions
 				{
 					Attribute anAttribute;
 					do
@@ -1321,23 +1326,19 @@ public class MiningWindow extends JFrame
 					aCL.addCondition(aCondition);
 				}
 				aMembers = itsTable.evaluate(aCL);
-			} while (aMembers.cardinality() < itsSearchParameters.getMinimumCoverage());
-			// Log.logCommandLine(aCL.toString());
+			} while (aMembers.cardinality() < aMinimumCoverage);
+			// Log.logCommandLine(aCL.toString());+
 			Subgroup aSubgroup = new Subgroup(aCL, aMembers, aCL.size());
 
 			// build model
 			BinaryTable aBinaryTable = aBaseTable.selectRows(aMembers);
 			aBayesian = new Bayesian(aBinaryTable);
 			aBayesian.climb();
-			DAG aDAG = aBayesian.getDAG();
-			aSubgroup.setDAG(aDAG); // store DAG with subgroup for later use
+			aSubgroup.setDAG(aBayesian.getDAG()); // store DAG with subgroup for later use
 
-			double aQuality = aQualityMeasure.calculateWEED(aSubgroup);
-//			TODO MM for Baysian QualityMeasure constructor supply QualityMeasure
-//			double aQuality = aQualityMeasure.calculate(aSubgroup);
+			double aQuality = aQualityMeasure.calculate(aSubgroup);
 			aTotalQuality += aQuality;
-			Log.logCommandLine("" + (i + 1) + "," + aSubgroup.getCoverage()
-					+ "," + aQuality);
+			Log.logCommandLine((i + 1) + "," + aSubgroup.getCoverage() + "," + aQuality);
 		}
 		Log.logCommandLine("average quality " + aTotalQuality / aSize);
 	}
