@@ -39,7 +39,7 @@ public class Column implements XMLNodeInterface
 			case ORDINAL : 
 			{
 				itsFloats = new ArrayList<Float>(theNrRows);
-				itsMissingValue = String.valueOf(0.0F);
+				itsMissingValue = String.valueOf(0.0f);
 				break;
 			}
 			case NOMINAL :

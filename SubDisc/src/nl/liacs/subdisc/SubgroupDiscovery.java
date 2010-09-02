@@ -101,7 +101,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 
 			int aSearchDepth = itsSearchParameters.getSearchDepth();
 			long theEndTime = theBeginTime + (long)(itsSearchParameters.getMaximumTime()*60*1000);
-			while ((itsCandidateQueue != null && itsCandidateQueue.size() > 0 )&& (System.currentTimeMillis() <= theEndTime))
+			while ((itsCandidateQueue != null && itsCandidateQueue.size() > 0 ) && (System.currentTimeMillis() <= theEndTime))
 			{
 				Candidate aCandidate = itsCandidateQueue.removeFirst(); // take off first Candidate from Queue
 				Subgroup aSubgroup = aCandidate.getSubgroup();

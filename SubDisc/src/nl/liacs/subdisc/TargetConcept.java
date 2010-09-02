@@ -1,10 +1,8 @@
 package nl.liacs.subdisc;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
+import org.w3c.dom.*;
 
 /**
  * Depending on the TargetType of a TargetConcept, it holds the PrimaryTarget
@@ -39,7 +37,7 @@ public class TargetConcept implements XMLNodeInterface
 
 		public boolean isEMM()
 		{
-			switch(this)
+			switch (this)
 			{
 				case DOUBLE_REGRESSION :
 				case DOUBLE_CORRELATION :
@@ -51,7 +49,7 @@ public class TargetConcept implements XMLNodeInterface
 
 		public boolean isImplemented()
 		{
-			switch(this)
+			switch (this)
 			{
 				case SINGLE_NOMINAL :
 				case DOUBLE_REGRESSION :
@@ -63,7 +61,7 @@ public class TargetConcept implements XMLNodeInterface
 
 		public boolean hasSecondaryTarget()
 		{
-			switch(this)
+			switch (this)
 			{
 				case DOUBLE_REGRESSION :
 				case DOUBLE_CORRELATION : return true;
@@ -74,28 +72,28 @@ public class TargetConcept implements XMLNodeInterface
 
 	public TargetConcept(Node theTargetConceptNode)
 	{
-		if(theTargetConceptNode == null)
+		if (theTargetConceptNode == null)
 			return;	// TODO throw warning dialog
 
 		NodeList aChildren = theTargetConceptNode.getChildNodes();
-		for(int i = 0, j = aChildren.getLength(); i < j; ++i)
+		for (int i = 0, j = aChildren.getLength(); i < j; ++i)
 		{
 			Node aSetting = aChildren.item(i);
 			String aNodeName = aSetting.getNodeName();
-			if("nr_target_attributes".equalsIgnoreCase(aNodeName))
+			if ("nr_target_attributes".equalsIgnoreCase(aNodeName))
 				itsNrTargetAttributes = Integer.parseInt(aSetting.getTextContent());
-			if("target_type".equalsIgnoreCase(aNodeName))
+			if ("target_type".equalsIgnoreCase(aNodeName))
 				setTargetType(aSetting.getTextContent());
-			else if("primary_target".equalsIgnoreCase(aNodeName))
+			else if ("primary_target".equalsIgnoreCase(aNodeName))
 				itsPrimaryTarget = new Attribute(aSetting);	// TODO
-			else if("target_value".equalsIgnoreCase(aNodeName))
+			else if ("target_value".equalsIgnoreCase(aNodeName))
 				itsTargetValue = aSetting.getTextContent();
-			else if("secondary_target".equalsIgnoreCase(aNodeName))
+			else if ("secondary_target".equalsIgnoreCase(aNodeName))
 				itsSecondaryTarget = new Attribute(aSetting);	// TODO
-			else if("multi_targets".equalsIgnoreCase(aNodeName))
+			else if ("multi_targets".equalsIgnoreCase(aNodeName))
 			{
 				itsMultiTargets = new ArrayList<Attribute>();
-				for(String s : aSetting.getTextContent().split(",", -1))
+				for (String s : aSetting.getTextContent().split(",", -1))
 					itsMultiTargets.add(new Attribute(s, null, null));	// TODO
 			}
 			else
@@ -111,9 +109,9 @@ public class TargetConcept implements XMLNodeInterface
 	public TargetType getTargetType() { return itsTargetType; }
 	public void setTargetType(String theTargetType)
 	{
-		for(TargetType t : TargetType.values())
+		for (TargetType t : TargetType.values())
 		{
-			if(t.TEXT.equalsIgnoreCase(theTargetType))
+			if (t.TEXT.equalsIgnoreCase(theTargetType))
 			{
 				itsTargetType = t;
 				return;
@@ -166,16 +164,16 @@ public class TargetConcept implements XMLNodeInterface
 		XMLNode.addNodeTo(aNode, "target_type", itsTargetType.TEXT);
 		XMLNode.addNodeTo(aNode, "primary_target", itsPrimaryTarget.getName());
 		XMLNode.addNodeTo(aNode, "target_value", itsTargetValue);
-		if(itsSecondaryTarget == null)
+		if (itsSecondaryTarget == null)
 			XMLNode.addNodeTo(aNode, "secondary_target");
 		else
 			XMLNode.addNodeTo(aNode, "secondary_target", itsSecondaryTarget.getName());
-		if(itsMultiTargets == null || itsMultiTargets.size() == 0)
+		if (itsMultiTargets == null || itsMultiTargets.size() == 0)
 			XMLNode.addNodeTo(aNode, "secondary_targets");
 		else
 		{
 			StringBuilder sb = new StringBuilder(itsMultiTargets.size() * 10);
-			for(Attribute a : itsMultiTargets)
+			for (Attribute a : itsMultiTargets)
 				sb.append(a.getName() + ",");
 			sb.deleteCharAt(sb.length() - 1);	// removes last comma
 			XMLNode.addNodeTo(aNode, "secondary_targets", sb);

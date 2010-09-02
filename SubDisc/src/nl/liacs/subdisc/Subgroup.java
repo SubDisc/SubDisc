@@ -2,6 +2,21 @@ package nl.liacs.subdisc;
 
 import java.util.BitSet;
 
+/**
+ * A Subgroup contains a number of instances form the original data. Subgroups
+ * are formed by, a number of, {@link Condition Condition}s. Its members include
+ * : a {@link ConditionList ConditionList}, a BitSet representing the instances
+ * included in this Subgroup, the number of instances in this Subgroup (its
+ * coverage), a unique identifier, and the value used to form this Subgroup. It
+ * may also contain a {@link DAG DAG}, and a {@link SubgroupSet SubgroupSet}.
+ * @see Condition
+ * @see ConditionList
+ * @see DAG
+ * @see MiningWindow
+ * @see SubgroupDiscovery
+ * @see SubgroupSet
+ * @see Condition
+ */
 public class Subgroup implements Comparable<Object>
 {
 	private ConditionList itsConditions;
@@ -13,16 +28,20 @@ public class Subgroup implements Comparable<Object>
 	int itsDepth;
 	private final SubgroupSet itsParentSet;
 
+	/*
+	 *  TODO null check ConditionList
+	 * In case no SubgroupSet is provided an empty one is created, this avoids
+	 * extra checks in for example getFalsePositiveRate().
+	 */
 	/**
-	 * Create a Subgroup, called by SubgroupDiscovery.Mine() and via
-	 * MiningWindow.jButtonRandomSubgroupsActionPerformed().
-	 * In case no SubgroupSet is provided an empty one is created,
-	 * this avoids extra checks in eg. getFalsePositiveRate().
-	 * TODO null check ConditionList
-	 * @param theMeasureValue
-	 * @param theCoverage
+	 * Creates a Subgroup, this constructor is called by
+	 * {@link SubgroupDiscovery#Mine() Mine} and
+	 * {@link MiningWindow#jButtonRandomSubgroupsActionPerformed()
+	 * jButtonRandomSubgroupsActionPerformed}.
+	 * @param theMeasureValue the value used to create this Subgroup.
+	 * @param theCoverage the number of instances contained in this Subgroup.
 	 * @param theDepth
-	 * @param theSubgroupSet
+	 * @param theSubgroupSet the SubgroupSet this Subgroup is contained in.
 	 */
 	public Subgroup(double theMeasureValue, int theCoverage, int theDepth, SubgroupSet theSubgroupSet)
 	{
@@ -35,11 +54,15 @@ public class Subgroup implements Comparable<Object>
 		itsParentSet = (theSubgroupSet == null ? new SubgroupSet(0) : theSubgroupSet);
 	}
 
-	/**
-	 * Create a Subgroup, called by MiningWindow.jButtonRandomConditionsActionPerformed()
-	 * Most of subgroups' other members are still set, this avoids extra checks
-	 * in eg. getFalsePositiveRate().
+	/*
 	 * TODO null check theConditions
+	 * Most of subgroups' members for which no parameter is supplied are still
+	 * set, this avoids extra checks in for example getFalsePositiveRate().
+	 */
+	 /**
+	 * Creates a Subgroup, this constructor is called by
+	 * {@link MiningWindow#jButtonRandomConditionsActionPerformed()
+	 * jButtonRandomConditionsActionPerformed}.
 	 * @param theConditions
 	 * @param theMembers
 	 * @param theDepth
@@ -221,35 +244,35 @@ public class Subgroup implements Comparable<Object>
 		return 31*itsMembers.hashCode() + hashCode;
 	}
 */
+	// TODO not safe for divide by ZERO
 	/**
-	 * If no itsParentSet was set for this subgroup or no itsBinaryTarget was
-	 * set for this subgroups' itsParentSet this function return 0.0F.
-	 * @return TruePositiveRate aka. TPR
+	 * Returns the TruePositiveRate for this Subgroup.
+	 * If no itsParentSet was set for this subgroup, or no itsBinaryTarget was
+	 * set for this subgroups' itsParentSet this function return 0.0f.
+	 * @return the TruePositiveRate, also known as TPR.
 	 */
 	public Float getTruePositiveRate()
 	{
 		BitSet tmp = itsParentSet.getBinaryTarget();
 		tmp.and(getMembers());
 		int aHeadBody = tmp.cardinality();
-//		print();
-//		System.out.println("TPR: " + aHeadBody + " / " + itsParentSet.getTotalTargetCoverage());
+
 		return aHeadBody / itsParentSet.getTotalTargetCoverage();
 	}
 
+	// TODO not safe for divide by ZERO
 	/**
-	 * If no itsParentSet was set for this subgroup or no itsBinaryTarget was
-	 * set for this subgroups' itsParentSet this function return 0.0F.
-	 * @return FalsePositiveRate aka. FPR
+	 * Returns the FalsePositiveRate for this Subgroup.
+	 * If no itsParentSet was set for this subgroup, or no itsBinaryTarget was
+	 * set for this subgroups' itsParentSet this function return 0.0f.
+	 * @return the FalsePositiveRate, also known as FPR.
 	 */
 	public Float getFalsePositiveRate()
 	{
-		BitSet tmp = (BitSet)itsParentSet.getBinaryTarget();
+		BitSet tmp = itsParentSet.getBinaryTarget();
 		tmp.and(getMembers());
 		int aHeadBody = tmp.cardinality();
-//		print();
-//		System.out.println("FRP: (" + getCoverage() + " - " + aHeadBody +
-//							") / (" + itsParentSet.getTotalCoverage() +
-//							" - " + itsParentSet.getTotalTargetCoverage() + ")");
+
 		return (getCoverage() - aHeadBody) / (itsParentSet.getTotalCoverage() - itsParentSet.getTotalTargetCoverage());
 	}
 }
