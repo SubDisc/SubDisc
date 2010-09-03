@@ -270,7 +270,7 @@ public class ResultWindow extends JFrame
 
 	private void jButtonPostprocessActionPerformed()
 	{
-		String inputValue = JOptionPane.showInputDialog("#DAGs fitted to each subgroup.");
+		String inputValue = JOptionPane.showInputDialog("# DAGs fitted to each subgroup.");
 		try
 		{
 			itsSearchParameters.setPostProcessingCount(Integer.parseInt(inputValue));

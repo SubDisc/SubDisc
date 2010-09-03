@@ -57,6 +57,7 @@ import nl.liacs.subdisc.DAG;
 import nl.liacs.subdisc.ErrorWindow;
 import nl.liacs.subdisc.FileHandler;
 import nl.liacs.subdisc.Log;
+import nl.liacs.subdisc.NormalDistribution;
 import nl.liacs.subdisc.QualityMeasure;
 import nl.liacs.subdisc.RegressionMeasure;
 import nl.liacs.subdisc.SearchParameters;
@@ -1212,6 +1213,19 @@ public class MiningWindow extends JFrame
 		{
 			setupSearchParameters();
 
+			String inputValue = JOptionPane.showInputDialog("# random subgroups");
+			int aNrRepetitions;
+			try
+			{
+				aNrRepetitions = Integer.parseInt(inputValue);
+			}
+			catch (Exception e)
+			{
+				JOptionPane.showMessageDialog(null, "Your input is unsound.");
+				return;
+			}
+			double[] aQualities = new double[aNrRepetitions];
+
 			switch(itsTargetConcept.getTargetType())
 			{
 				case SINGLE_NOMINAL :
@@ -1226,14 +1240,17 @@ public class MiningWindow extends JFrame
 					aCondition.setValue(itsSearchParameters.getTargetConcept().getTargetValue());
 					BitSet aBinaryTarget = itsTable.evaluate(aCondition);
 
-					for (int i = 0; i < 100; i++) // TODO make #(repetitions) a parameter
+					Random aRandom = new Random(System.currentTimeMillis());
+					for (int i = 0; i < aNrRepetitions; i++)
 					{
-						Subgroup aSubgroup = itsTable.getRandomSubgroup(300); // TODO make subgroup size a parameter
+						double aFractionalSubgroupSize = aRandom.nextDouble() * itsTotalCount;
+						int aSubgroupSize = (int) aFractionalSubgroupSize;
+						Subgroup aSubgroup = itsTable.getRandomSubgroup(aSubgroupSize);
 						BitSet aColumnTarget = (BitSet) aBinaryTarget.clone();
 						aColumnTarget.and(aSubgroup.getMembers());
 						int aCountHeadBody = aColumnTarget.cardinality();
-						double aQuality = aQualityMeasure.calculate(aCountHeadBody, aSubgroup.getCoverage());
-						Log.logCommandLine((i + 1) + "," + aSubgroup.getCoverage() + "," + aQuality);
+						aQualities[i] = aQualityMeasure.calculate(aCountHeadBody, aSubgroup.getCoverage());
+						Log.logCommandLine((i + 1) + "," + aSubgroup.getCoverage() + "," + aQualities[i]);
 					}
 					break;
 				}
@@ -1243,17 +1260,14 @@ public class MiningWindow extends JFrame
 					BinaryTable aBaseTable = new BinaryTable(itsTable, itsTargetConcept.getMultiTargets());
 					Bayesian aBayesian = new Bayesian(aBaseTable);
 					aBayesian.climb();
-					QualityMeasure aQualityMeasure =
-						new QualityMeasure(itsSearchParameters.getQualityMeasure(),
-											aBayesian.getDAG(),
-											itsTotalCount,
-											itsSearchParameters.getAlpha(),
-											itsSearchParameters.getBeta());
-					int aNrRepetitions = 100; // TODO make #(repetitions) a parameter
+					QualityMeasure aQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), aBayesian.getDAG(), itsTotalCount, itsSearchParameters.getAlpha(), itsSearchParameters.getBeta());
 					double aTotalQuality = 0.0;
+					Random aRandom = new Random(System.currentTimeMillis());
 					for (int i = 0; i < aNrRepetitions; i++)
 					{
-						Subgroup aSubgroup = itsTable.getRandomSubgroup(300); // TODO make subgroup size a parameter
+						double aFractionalSubgroupSize = aRandom.nextDouble() * itsTotalCount;
+						int aSubgroupSize = (int) aFractionalSubgroupSize;
+						Subgroup aSubgroup = itsTable.getRandomSubgroup(aSubgroupSize);
 
 						// build model
 						BinaryTable aBinaryTable = aBaseTable.selectRows(aSubgroup.getMembers());
@@ -1261,16 +1275,17 @@ public class MiningWindow extends JFrame
 						aBayesian.climb();
 						aSubgroup.setDAG(aBayesian.getDAG()); // store DAG with subgroup for later use
 
-						double aQuality = aQualityMeasure.calculate(aSubgroup);
-						aTotalQuality += aQuality;
-						Log.logCommandLine((i + 1) + "," + aSubgroup.getCoverage() + "," + aQuality);
+						aQualities[i] = aQualityMeasure.calculate(aSubgroup);
+						aTotalQuality += aQualities[i];
+						Log.logCommandLine((i + 1) + "," + aSubgroup.getCoverage() + "," + aQualities[i]);
 					}
-					Log.logCommandLine("average quality " + aTotalQuality / aNrRepetitions);
 
 					break;
 				}
 				default : return; // TODO should never get here, throw warning
 			}
+			
+			reportOverallStatistics(aQualities, aNrRepetitions);
 		}
 		catch (Exception e)
 		{
@@ -1285,24 +1300,29 @@ public class MiningWindow extends JFrame
 	{
 		setupSearchParameters();
 
+		String inputValue = JOptionPane.showInputDialog("# random conditions");
+		int aNrRepetitions;
+		try
+		{
+			aNrRepetitions = Integer.parseInt(inputValue);
+		}
+		catch (Exception e)
+		{
+			JOptionPane.showMessageDialog(null, "Your input is unsound.");
+			return;
+		}
+		double[] aQualities = new double[aNrRepetitions];
+
 		// base model
 		BinaryTable aBaseTable = new BinaryTable(itsTable, itsTargetConcept.getMultiTargets());
 		Bayesian aBayesian = new Bayesian(aBaseTable);
 		aBayesian.climb();
-		QualityMeasure aQualityMeasure =
-			new QualityMeasure(itsSearchParameters.getQualityMeasure(),
-								aBayesian.getDAG(),
-								itsTotalCount,
-								0.5f,
-								1f);
-//			new QualityMeasure(itsSearchParameters.getQualityMeasure(), aBayesian.getDAG(), itsTable.getNrRows(), itsSearchParameters.getAlpha(), itsSearchParameters.getBeta());
+		QualityMeasure aQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), aBayesian.getDAG(), itsTotalCount, itsSearchParameters.getAlpha(), itsSearchParameters.getBeta());
 
 		Random aRandom = new Random(System.currentTimeMillis());
-		int aSize = 100;
 		int aDepth = itsSearchParameters.getSearchDepth();
 		int aMinimumCoverage = itsSearchParameters.getMinimumCoverage();
-		float aTotalQuality = 0.0f;
-		for (int i = 0; i < aSize; i++) // random conditions
+		for (int i = 0; i < aNrRepetitions; i++) // random conditions
 		{
 			ConditionList aCL;
 			BitSet aMembers;
@@ -1338,11 +1358,26 @@ public class MiningWindow extends JFrame
 			aBayesian.climb();
 			aSubgroup.setDAG(aBayesian.getDAG()); // store DAG with subgroup for later use
 
-			double aQuality = aQualityMeasure.calculate(aSubgroup);
-			aTotalQuality += aQuality;
-			Log.logCommandLine((i + 1) + "," + aSubgroup.getCoverage() + "," + aQuality);
+			aQualities[i] = aQualityMeasure.calculate(aSubgroup);
+			Log.logCommandLine((i + 1) + "," + aSubgroup.getCoverage() + "," + aQualities[i]);
 		}
-		Log.logCommandLine("average quality " + aTotalQuality / aSize);
+		reportOverallStatistics(aQualities, aNrRepetitions);
+	}
+	
+	private void reportOverallStatistics(double[] theQualities, int theNrRepetitions)
+	{
+		Log.logCommandLine("====================================");
+		Log.logCommandLine("Overall statistics:");
+		NormalDistribution aDistro = new NormalDistribution(theQualities, theNrRepetitions);
+		double aMu = aDistro.getMu();
+		double aSigma = aDistro.getSigma();
+		Log.logCommandLine("  mu    = " + aMu);
+		Log.logCommandLine("  sigma = " + aSigma);
+		Log.logCommandLine("------------------------------------");
+		Log.logCommandLine("Significant quality cutoff values:");
+		Log.logCommandLine("  alpha = 10% : " + (aMu+1.2815517*aSigma));
+		Log.logCommandLine("  alpha =  5% : " + (aMu+1.6448537*aSigma));
+		Log.logCommandLine("  alpha =  1% : " + (aMu+2.326348*aSigma));
 	}
 
 	private void setupSearchParameters()

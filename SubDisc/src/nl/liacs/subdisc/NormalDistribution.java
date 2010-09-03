@@ -24,6 +24,21 @@ public class NormalDistribution
 		itsRandom = new Random(System.currentTimeMillis());
 	}
 	
+	public NormalDistribution(double[] theSample, int theLength)
+	{
+		double aTotalQuality = 0.0;
+		for (int i=0; i<theLength; i++)
+			aTotalQuality += theSample[i];
+		itsMu = aTotalQuality / theLength;
+
+		double aSquareDiff = 0.0;
+		for (int j=0; j<theLength; j++)
+			aSquareDiff += Math.pow(theSample[j]-itsMu,2);
+		itsSigma = Math.sqrt(aSquareDiff/theLength);
+
+		itsRandom = new Random(System.currentTimeMillis());
+	}
+	
 	// deliver next random double from current distribution
 	public double getNextDouble()
 	{
@@ -31,46 +46,46 @@ public class NormalDistribution
 	}
 	
 	// calculate probability density function in the point x
-	public double calcPDF(double x)
+	public double calcPDF(double theX)
 	{
 		return Math.pow( 
-					Math.E, - Math.pow(x-itsMu,2) / (2*itsSigma*itsSigma) 
+					Math.E, - Math.pow(theX-itsMu,2) / (2*itsSigma*itsSigma) 
 				) / ( 
 					itsSigma * Math.sqrt( 2*Math.PI ) 
 				);
 	}
 	
 	// calculate cumulative distribution function in the point x, based on the error function
-	public double calcCDF(double x)
+	public double calcCDF(double theX)
 	{
 		return 0.5 * ( 1 + calcErf( 
-									(x - itsMu) / (itsSigma * Math.sqrt(2))
+									(theX - itsMu) / (itsSigma * Math.sqrt(2))
 								));
 	}
 	
 	/* calculate error function using Horner's method
 	   fractional error in math formula less than 1.2 * 10 ^ -7.
        although subject to catastrophic cancellation when z in very close to 0 */
-	public double calcErf(double z)
+	public double calcErf(double theZ)
 	{
-		double t = 1.0 / (1.0 + 0.5 * Math.abs(z));
+		double aT = 1.0 / (1.0 + 0.5 * Math.abs(theZ));
 
-		double ans = 1 - t * Math.exp( -z*z   -   1.26551223 +
-										t * ( 1.00002368 +
-											t * ( 0.37409196 +
-												t * ( 0.09678418 +
-													t * (-0.18628806 +
-														t * ( 0.27886807 +
-															t * (-1.13520398 +
-																t * ( 1.48851587 +
-																	t * (-0.82215223 +
-																		t * ( 0.17087277))))))))));
-		if (z >= 0)
-			return  ans;
+		double aResult = 1 - aT * Math.exp( -theZ*theZ   -   1.26551223 +
+										aT * ( 1.00002368 +
+											aT * ( 0.37409196 +
+												aT * ( 0.09678418 +
+													aT * (-0.18628806 +
+														aT * ( 0.27886807 +
+															aT * (-1.13520398 +
+																aT * ( 1.48851587 +
+																	aT * (-0.82215223 +
+																		aT * ( 0.17087277))))))))));
+		if (theZ >= 0)
+			return  aResult;
 		else
-			return -ans;
+			return -aResult;
 	}
-
+	
 	public double getMu() { return itsMu; }
 	public double getSigma() { return itsSigma; }
 	public double getVariance() { return itsSigma * itsSigma; }
