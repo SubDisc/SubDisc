@@ -1243,8 +1243,11 @@ public class MiningWindow extends JFrame
 					Random aRandom = new Random(System.currentTimeMillis());
 					for (int i = 0; i < aNrRepetitions; i++)
 					{
-						double aFractionalSubgroupSize = aRandom.nextDouble() * itsTotalCount;
-						int aSubgroupSize = (int) aFractionalSubgroupSize;
+						int aSubgroupSize;
+						do
+							aSubgroupSize = (int) (aRandom.nextDouble() * itsTotalCount);
+						while (aSubgroupSize < itsSearchParameters.getMinimumCoverage());
+
 						Subgroup aSubgroup = itsTable.getRandomSubgroup(aSubgroupSize);
 						BitSet aColumnTarget = (BitSet) aBinaryTarget.clone();
 						aColumnTarget.and(aSubgroup.getMembers());
@@ -1284,7 +1287,7 @@ public class MiningWindow extends JFrame
 				}
 				default : return; // TODO should never get here, throw warning
 			}
-			
+
 			reportOverallStatistics(aQualities, aNrRepetitions);
 		}
 		catch (Exception e)
@@ -1363,7 +1366,7 @@ public class MiningWindow extends JFrame
 		}
 		reportOverallStatistics(aQualities, aNrRepetitions);
 	}
-	
+
 	private void reportOverallStatistics(double[] theQualities, int theNrRepetitions)
 	{
 		Log.logCommandLine("====================================");
