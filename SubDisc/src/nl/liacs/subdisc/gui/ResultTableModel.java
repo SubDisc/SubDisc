@@ -31,7 +31,7 @@ public class ResultTableModel extends AbstractTableModel
 		return itsSubgroupSet.size();
 	}
 
-	public int getColumnCount() { return 5; }
+	public int getColumnCount() { return 6; }
 
 	public String getColumnName(int theColumnIndex)
 	{
@@ -42,7 +42,8 @@ public class ResultTableModel extends AbstractTableModel
 			case 1  : { aColumnName = "Depth"; break; }
 			case 2	: { aColumnName = "Coverage"; break; }
 			case 3	: { aColumnName = "Measure"; break; }
-			case 4	: { aColumnName = "Conditions"; break; }
+			case 4	: { aColumnName = "p-value"; break; }
+			case 5	: { aColumnName = "Conditions"; break; }
 		}
 		return aColumnName;
 	}
@@ -75,6 +76,15 @@ public class ResultTableModel extends AbstractTableModel
 						aString = aFormatter.format(aSubgroup.getMeasureValue());
 						break; }
 			case 4: {
+//						aFormatter.setMaximumFractionDigits(6);
+						if (aSubgroup.getPValue() == -1)
+							aString = "  -";
+						else
+							aString = Double.toString(aSubgroup.getPValue());
+//							aString = aFormatter.format(aSubgroup.getPValue());
+						break;
+					}
+			case 5: {
 						aString = aSubgroup.getConditions().toString();
 						break;
 					}

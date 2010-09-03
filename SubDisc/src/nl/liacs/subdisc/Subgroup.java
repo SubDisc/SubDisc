@@ -27,6 +27,7 @@ public class Subgroup implements Comparable<Object>
 	private double itsMeasureValue;
 	int itsDepth;
 	private final SubgroupSet itsParentSet;
+	private boolean isPValueComputed;
 
 	/*
 	 *  TODO null check ConditionList
@@ -52,6 +53,7 @@ public class Subgroup implements Comparable<Object>
 		itsDepth = theDepth;
 		itsDAG = null;	//not set yet
 		itsParentSet = (theSubgroupSet == null ? new SubgroupSet(0) : theSubgroupSet);
+		isPValueComputed = false;
 	}
 
 	/*
@@ -76,6 +78,7 @@ public class Subgroup implements Comparable<Object>
 		itsDepth = theDepth;
 		itsDAG = null;	//not set yet
 		itsParentSet = new SubgroupSet(0);
+		isPValueComputed = false;
 	}
 
 	public void addCondition(Condition theCondition)
@@ -129,7 +132,7 @@ public class Subgroup implements Comparable<Object>
 			return 1;
 
 		Subgroup s = (Subgroup) o;
-		
+
 		if(getMeasureValue() > s.getMeasureValue())
 			return -1;
 		else if(getMeasureValue() < s.getMeasureValue())
@@ -229,10 +232,10 @@ public class Subgroup implements Comparable<Object>
 	 * All subgroups are from the same SubgroupSet/ experiment with the same target.
 	 * However, two subgroups formed from different Attributes in itsConditions
 	 * should be considered unequal. This requires an @Override from itsConditions
-	 * hashCode(), as it should not include condition values. 
+	 * hashCode(), as it should not include condition values.
 	 * Eg. two subgroups that have the same members and are formed from:
 	 * (x < 10) and (x < 11) should be considered equal
-	 * (y < 10) and (x < 10) should be considered different 
+	 * (y < 10) and (x < 10) should be considered different
 	 */
 /*
 	@Override
@@ -274,5 +277,16 @@ public class Subgroup implements Comparable<Object>
 		int aHeadBody = tmp.cardinality();
 
 		return (getCoverage() - aHeadBody) / (itsParentSet.getTotalCoverage() - itsParentSet.getTotalTargetCoverage());
+	}
+
+	public double getPValue()
+	{
+		if (!isPValueComputed)
+			return -1.0;
+
+		double aResult = 0.00000000005d;
+
+		//TODO bereken
+		return aResult;
 	}
 }

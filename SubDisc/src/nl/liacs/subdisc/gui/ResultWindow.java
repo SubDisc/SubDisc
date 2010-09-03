@@ -73,8 +73,9 @@ public class ResultWindow extends JFrame
 		itsSubgroupTable.getColumnModel().getColumn(0).setPreferredWidth(15);
 		itsSubgroupTable.getColumnModel().getColumn(1).setPreferredWidth(15);
 		itsSubgroupTable.getColumnModel().getColumn(2).setPreferredWidth(20);
-		itsSubgroupTable.getColumnModel().getColumn(3).setPreferredWidth(80);
-		itsSubgroupTable.getColumnModel().getColumn(4).setPreferredWidth(600);
+		itsSubgroupTable.getColumnModel().getColumn(3).setPreferredWidth(70);
+		itsSubgroupTable.getColumnModel().getColumn(4).setPreferredWidth(70);
+		itsSubgroupTable.getColumnModel().getColumn(5).setPreferredWidth(600);
 
 		itsScrollPane.add(itsSubgroupTable);
 		itsScrollPane.setViewportView(itsSubgroupTable);
