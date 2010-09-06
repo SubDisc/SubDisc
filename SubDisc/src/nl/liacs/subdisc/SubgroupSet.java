@@ -3,7 +3,7 @@ package nl.liacs.subdisc;
 import java.util.*;
 
 /**
- * A SubgroupSet is a TreeSet of {@link Subgroup Subgroup}s. If the size is set
+ * A SubgroupSet is a TreeSet of {@link Subgroup Subgroup}s. If its size is set
  * to <= 0, the SubgroupSet has no maximum size, else the number of Subgroups it
  * can contain is limited by its size. In a nominal target setting
  * ({@link TargetType TargetType}) a {@link ROCList ROCList} can be obtained

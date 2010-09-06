@@ -3,6 +3,7 @@ package nl.liacs.subdisc.gui;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
+import java.util.List;
 
 import javax.swing.*;
 
@@ -260,29 +261,27 @@ public class ResultWindow extends JFrame
 	{
 		if (itsSubgroupSet.isEmpty())
 			return;
-		Iterator<Subgroup> anIterator = itsSubgroupSet.iterator();
 
+		int aSubgroupSetIndex = itsSubgroupSet.size();
 		int[] aSelectionIndex = itsSubgroupTable.getSelectedRows();
+		Iterator<Subgroup> anIterator = itsSubgroupSet.descendingIterator();
 
-		for (int i = 0; i < aSelectionIndex.length; i++)
+		for (int i = aSelectionIndex.length - 1; i >= 0; i--)
 		{
-			for (int j = 0; j <= aSelectionIndex[i]; j++)
+			while (--aSubgroupSetIndex >= aSelectionIndex[i])
 				anIterator.next();
-
 			anIterator.remove();
 
-			for (int j = i + 1; j< aSelectionIndex.length; j++)
-				if (aSelectionIndex[j] > aSelectionIndex[i] )
-					aSelectionIndex[j] -= 1;
+			if (anIterator.hasNext())
+				anIterator.next();
 		}
+		itsSubgroupTable.getSelectionModel().clearSelection();
 		itsSubgroupTable.repaint();
 
 		if (!itsSubgroupSet.isEmpty())
 			itsSubgroupTable.addRowSelectionInterval(0, 0);
 		else
-		{
 			jButtonDeleteSubgroups.setEnabled(false);
-		}
 	}
 
 	private void jButtonPostprocessActionPerformed()

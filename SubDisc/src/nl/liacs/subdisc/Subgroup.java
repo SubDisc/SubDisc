@@ -252,7 +252,7 @@ public class Subgroup implements Comparable<Object>
 	/**
 	 * Returns the TruePositiveRate for this Subgroup.
 	 * If no itsParentSet was set for this subgroup, or no itsBinaryTarget was
-	 * set for this subgroups' itsParentSet this function return 0.0f.
+	 * set for this subgroups' itsParentSet this function returns 0.0f.
 	 * @return the TruePositiveRate, also known as TPR.
 	 */
 	public Float getTruePositiveRate()
@@ -268,7 +268,7 @@ public class Subgroup implements Comparable<Object>
 	/**
 	 * Returns the FalsePositiveRate for this Subgroup.
 	 * If no itsParentSet was set for this subgroup, or no itsBinaryTarget was
-	 * set for this subgroups' itsParentSet this function return 0.0f.
+	 * set for this subgroups' itsParentSet this function returns 0.0f.
 	 * @return the FalsePositiveRate, also known as FPR.
 	 */
 	public Float getFalsePositiveRate()
