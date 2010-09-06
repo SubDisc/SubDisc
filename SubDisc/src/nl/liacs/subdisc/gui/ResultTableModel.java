@@ -77,7 +77,7 @@ public class ResultTableModel extends AbstractTableModel
 						break; }
 			case 4: {
 //						aFormatter.setMaximumFractionDigits(6);
-						if (aSubgroup.getPValue() == -1)
+						if (aSubgroup.getPValue() == Math.PI)
 							aString = "  -";
 						else
 							aString = Double.toString(aSubgroup.getPValue());

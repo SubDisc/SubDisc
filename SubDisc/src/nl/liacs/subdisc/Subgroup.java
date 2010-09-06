@@ -28,6 +28,7 @@ public class Subgroup implements Comparable<Object>
 	int itsDepth;
 	private final SubgroupSet itsParentSet;
 	private boolean isPValueComputed;
+	private double itsPValue;
 
 	/*
 	 *  TODO null check ConditionList
@@ -282,11 +283,18 @@ public class Subgroup implements Comparable<Object>
 	public double getPValue()
 	{
 		if (!isPValueComputed)
-			return -1.0;
-
-		double aResult = 0.00000000005d;
-
-		//TODO bereken
-		return aResult;
+			return Math.PI;
+		else return itsPValue;
+	}
+	
+	public void setPValue(NormalDistribution aDistro)
+	{
+		isPValueComputed = true;
+		itsPValue = 1 - aDistro.calcCDF(itsMeasureValue);
+	}
+	
+	public void renouncePValue()
+	{
+		isPValueComputed = false;
 	}
 }

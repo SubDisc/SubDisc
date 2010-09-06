@@ -19,10 +19,12 @@ public class ResultWindow extends JFrame
 	private JTable itsSubgroupTable;
 	private SubgroupSet itsSubgroupSet;
 	private DAGView itsDAGView; //layout of the graph on the whole database
+	private Table itsTable;
 	private BinaryTable itsBinaryTable;
+	private QualityMeasure itsQualityMeasure;
 	private int itsNrRecords;
 
-	public ResultWindow(SubgroupSet theSubgroupSet, SearchParameters theSearchParameters, DAGView theDAGView)
+	public ResultWindow(SubgroupSet theSubgroupSet, SearchParameters theSearchParameters, DAGView theDAGView, Table theTable, QualityMeasure theQualityMeasure, int theNrRecords)
 	{
 
 		itsSubgroupSet = theSubgroupSet;
@@ -42,9 +44,13 @@ public class ResultWindow extends JFrame
 		else
 			setTitle(itsSubgroupSet.size() + " subgroups found");
 
+		itsTable = theTable;
+		itsBinaryTable = null;
+		itsQualityMeasure = theQualityMeasure;
+		itsNrRecords = theNrRecords;
 	}
 
-	public ResultWindow(SubgroupSet theSubgroupSet, SearchParameters theSearchParameters, DAGView theDAGView, BinaryTable theTable, int theNrRecords)
+	public ResultWindow(SubgroupSet theSubgroupSet, SearchParameters theSearchParameters, DAGView theDAGView, Table theTable, BinaryTable theBinaryTable, QualityMeasure theQualityMeasure, int theNrRecords)
 	{
 
 		itsSubgroupSet = theSubgroupSet;
@@ -60,11 +66,13 @@ public class ResultWindow extends JFrame
 		initialise();
 
 		if (itsSubgroupSet.isEmpty())
-			setTitle("No patterns found that match the set criterion");
+			setTitle("No subgroups found that match the set criterion");
 		else
-			setTitle(itsSubgroupSet.size() + " patterns found");
+			setTitle(itsSubgroupSet.size() + " subgroups found");
 
-		itsBinaryTable = theTable;
+		itsTable = theTable;
+		itsBinaryTable = theBinaryTable;
+		itsQualityMeasure = theQualityMeasure;
 		itsNrRecords = theNrRecords;
 	}
 
@@ -73,8 +81,8 @@ public class ResultWindow extends JFrame
 		itsSubgroupTable.getColumnModel().getColumn(0).setPreferredWidth(15);
 		itsSubgroupTable.getColumnModel().getColumn(1).setPreferredWidth(15);
 		itsSubgroupTable.getColumnModel().getColumn(2).setPreferredWidth(20);
-		itsSubgroupTable.getColumnModel().getColumn(3).setPreferredWidth(70);
-		itsSubgroupTable.getColumnModel().getColumn(4).setPreferredWidth(70);
+		itsSubgroupTable.getColumnModel().getColumn(3).setPreferredWidth(50);
+		itsSubgroupTable.getColumnModel().getColumn(4).setPreferredWidth(90);
 		itsSubgroupTable.getColumnModel().getColumn(5).setPreferredWidth(600);
 
 		itsScrollPane.add(itsSubgroupTable);
@@ -143,7 +151,7 @@ public class ResultWindow extends JFrame
 		});
 		aSubgroupPanel.add(jButtonDeleteSubgroups);
 
-		jButtonPostprocess = initButton("Postprocess", 'P');
+		jButtonPostprocess = initButton("Repeated modeling", 'M');
 		jButtonPostprocess.addActionListener(new java.awt.event.ActionListener() {
 			public void actionPerformed(java.awt.event.ActionEvent evt) {
 				jButtonPostprocessActionPerformed();
@@ -151,6 +159,14 @@ public class ResultWindow extends JFrame
 		});
 		aSubgroupPanel.add(jButtonPostprocess);
 		jButtonPostprocess.setVisible(itsSearchParameters.getTargetType() == TargetType.MULTI_LABEL);
+
+		jButtonPValues = initButton("Compute p-values", 'P');
+		jButtonPValues.addActionListener(new java.awt.event.ActionListener() {
+			public void actionPerformed(java.awt.event.ActionEvent evt) {
+				jButtonPValuesActionPerformed();
+			}
+		});
+		aSubgroupPanel.add(jButtonPValues);
 
 		//possibly disable buttons
 		if (itsSubgroupSet != null) //Subgroup set
@@ -316,17 +332,41 @@ public class ResultWindow extends JFrame
 					aTotalQuality += aQMs[j].calculate(s);
 			}
 			s.setMeasureValue(aTotalQuality / aPostProcessingCountSquare);
+			s.renouncePValue();
 			aNewSubgroupSet.add(s);
 		}
 		aNewSubgroupSet.setIDs();
 
 		// Display postprocessed results
-		ResultWindow aResultWindow = new ResultWindow(aNewSubgroupSet, itsSearchParameters, null, itsBinaryTable, itsNrRecords);
+		ResultWindow aResultWindow = new ResultWindow(aNewSubgroupSet, itsSearchParameters, null, itsTable, itsBinaryTable, itsQualityMeasure, itsNrRecords);
 		aResultWindow.setLocation(0, 0);
 		aResultWindow.setSize(1200, 900);
 		aResultWindow.setVisible(true);
 		jButtonCloseWindowActionPerformed();
-}
+	}
+	
+	private void jButtonPValuesActionPerformed()
+	{
+		String inputValue = JOptionPane.showInputDialog("Number of random subgroups to be used\nfor distribution estimation:");
+		int aNrRepetitions;
+		try
+		{
+			aNrRepetitions = Integer.parseInt(inputValue);
+		}
+		catch (Exception e)
+		{
+			JOptionPane.showMessageDialog(null, "Not a valid number.");
+			return;
+		}
+		
+		Validation aValidation = new Validation(itsSearchParameters, itsTable, itsQualityMeasure); 
+		NormalDistribution aDistro = aValidation.RandomSubgroups(aNrRepetitions);
+		
+		for (Subgroup aSubgroup : itsSubgroupSet)
+			aSubgroup.setPValue(aDistro);
+
+		itsSubgroupTable.repaint();
+	}
 
 	private void jButtonCloseWindowActionPerformed() { dispose(); }
 	private void exitForm() {	dispose(); }
@@ -335,6 +375,7 @@ public class ResultWindow extends JFrame
 	private javax.swing.JButton jButtonShowModel;
 	private javax.swing.JButton jButtonDeleteSubgroups;
 	private javax.swing.JButton jButtonPostprocess;
+	private javax.swing.JButton jButtonPValues;
 	private javax.swing.JButton jButtonROC;
 	private javax.swing.JButton jButtonCloseWindow;
 	private javax.swing.JScrollPane itsScrollPane;

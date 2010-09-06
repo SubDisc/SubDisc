@@ -1142,12 +1142,12 @@ public class MiningWindow extends JFrame
 				case MULTI_LABEL :
 				{
 					BinaryTable aBinaryTable = new BinaryTable(itsTable, itsTargetConcept.getMultiTargets());
-					aResultWindow = new ResultWindow(aPreliminaryResults, itsSearchParameters, null, aBinaryTable, itsTotalCount);
+					aResultWindow = new ResultWindow(aPreliminaryResults, itsSearchParameters, null, itsTable, aBinaryTable, aSubgroupDiscovery.getQualityMeasure(), itsTotalCount);
 					break;
 				}
 				default :
 				{
-					aResultWindow = new ResultWindow(aPreliminaryResults, itsSearchParameters, null);
+					aResultWindow = new ResultWindow(aPreliminaryResults, itsSearchParameters, null, itsTable, aSubgroupDiscovery.getQualityMeasure(), itsTotalCount);
 				}
 			}
 			aResultWindow.setLocation(0, 0);
@@ -1350,7 +1350,7 @@ public class MiningWindow extends JFrame
 		theSearchParameters.setPostProcessingCount(20);
 		theSearchParameters.setMaximumPostProcessingSubgroups(100);
 
-		// bayesian stuff
+		// Bayesian stuff
 		if (QualityMeasure.getMeasureString(QualityMeasure.EDIT_DISTANCE).equals(getQualityMeasureName()))
 			theSearchParameters.setAlpha(0.0f);
 		else
