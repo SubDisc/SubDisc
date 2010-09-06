@@ -21,24 +21,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.TreeSet;
 
-import javax.swing.AbstractButton;
-import javax.swing.BoxLayout;
-import javax.swing.DefaultListModel;
-import javax.swing.JButton;
-import javax.swing.JComboBox;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JList;
-import javax.swing.JMenu;
-import javax.swing.JMenuBar;
-import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JSeparator;
-import javax.swing.JTextField;
-import javax.swing.KeyStroke;
-import javax.swing.SwingConstants;
+import javax.swing.*;
 import javax.swing.border.BevelBorder;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
@@ -1224,6 +1207,7 @@ public class MiningWindow extends JFrame
 				case DOUBLE_REGRESSION :
 				case DOUBLE_CORRELATION :
 				{
+					//base model
 					aQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), itsTable.getNrRows(), 100); //TODO fix 100, is useless?
 					break;
 				}
@@ -1279,7 +1263,7 @@ public class MiningWindow extends JFrame
 	{
 		setupSearchParameters();
 
-		String inputValue = JOptionPane.showInputDialog("# random conditions");
+		String inputValue = JOptionPane.showInputDialog("Number of random conditions to be used\nfor distribution estimation:");
 		int aNrRepetitions;
 		try
 		{
@@ -1287,7 +1271,7 @@ public class MiningWindow extends JFrame
 		}
 		catch (Exception e)
 		{
-			JOptionPane.showMessageDialog(null, "Your input is unsound.");
+			JOptionPane.showMessageDialog(null, "Not a valid number.");
 			return;
 		}
 		double[] aQualities = new double[aNrRepetitions];
@@ -1298,65 +1282,41 @@ public class MiningWindow extends JFrame
 		aBayesian.climb();
 		QualityMeasure aQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), aBayesian.getDAG(), itsTotalCount, itsSearchParameters.getAlpha(), itsSearchParameters.getBeta());
 
-		Random aRandom = new Random(System.currentTimeMillis());
-		int aDepth = itsSearchParameters.getSearchDepth();
-		int aMinimumCoverage = itsSearchParameters.getMinimumCoverage();
-		for (int i = 0; i < aNrRepetitions; i++) // random conditions
+		Validation aValidation = new Validation(itsSearchParameters, itsTable, aQualityMeasure);
+		NormalDistribution aDistro = aValidation.RandomConditions(aNrRepetitions);
+
+		int aMethod = JOptionPane.showOptionDialog(null,
+			"The following quality measure thresholds were computed:\n" +
+			"1% significance level: " + aDistro.getOnePercentSignificance() + "\n" +
+			"5% significance level: " + aDistro.getFivePercentSignificance() + "\n" +
+			"10% significance level: " + aDistro.getTenPercentSignificance() + "\n" +
+			"Would you like to keep one of these thresholds as search constraint?",
+			"Keep quality measure threshold?",
+			JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null,
+			new String[] {"1% significance", "5% significance", "10% significance", "Ignore statistics"},
+			"1% significance");
+		switch (aMethod)
 		{
-			ConditionList aCL;
-			BitSet aMembers;
-			do
+			case 0:
 			{
-				aCL = new ConditionList();
-				for (int j = 0; j < aDepth; j++) // j conditions
-				{
-					Attribute anAttribute;
-					do
-					{
-						anAttribute = itsTable.getAttribute(aRandom.nextInt(itsTable.getNrColumns()));
-					}
-					while (!anAttribute.isNumericType());
-					int anOperator = aRandom.nextBoolean() ?
-							Condition.LESS_THAN_OR_EQUAL : Condition.GREATER_THAN_OR_EQUAL;
-					Condition aCondition = new Condition(anAttribute, anOperator);
-					float aMin = itsTable.getColumn(anAttribute).getMin();
-					float aMax = itsTable.getColumn(anAttribute).getMax();
-					aCondition.setValue(
-						Float.toString(aMin + (aMax - aMin) / 4 + (aMax - aMin) * aRandom.nextFloat() / 2));
-					aCL.addCondition(aCondition);
-				}
-				aMembers = itsTable.evaluate(aCL);
+				setQualityMeasureMinimum(Double.toString(aDistro.getOnePercentSignificance()));
+				break;
 			}
-			while (aMembers.cardinality() < aMinimumCoverage);
-			// Log.logCommandLine(aCL.toString());+
-			Subgroup aSubgroup = new Subgroup(aCL, aMembers, aCL.size());
-
-			// build model
-			BinaryTable aBinaryTable = aBaseTable.selectRows(aMembers);
-			aBayesian = new Bayesian(aBinaryTable);
-			aBayesian.climb();
-			aSubgroup.setDAG(aBayesian.getDAG()); // store DAG with subgroup for later use
-
-			aQualities[i] = aQualityMeasure.calculate(aSubgroup);
-			Log.logCommandLine((i + 1) + "," + aSubgroup.getCoverage() + "," + aQualities[i]);
+			case 1:
+			{
+				setQualityMeasureMinimum(Double.toString(aDistro.getFivePercentSignificance()));
+				break;
+			}
+			case 2:
+			{
+				setQualityMeasureMinimum(Double.toString(aDistro.getTenPercentSignificance()));
+				break;
+			}
+			case 3:
+			{
+				break; //discard statistics
+			}
 		}
-		reportOverallStatistics(aQualities, aNrRepetitions);
-	}
-
-	private void reportOverallStatistics(double[] theQualities, int theNrRepetitions)
-	{
-		Log.logCommandLine("====================================");
-		Log.logCommandLine("Overall statistics:");
-		NormalDistribution aDistro = new NormalDistribution(theQualities);
-		double aMu = aDistro.getMu();
-		double aSigma = aDistro.getSigma();
-		Log.logCommandLine("  mu    = " + aMu);
-		Log.logCommandLine("  sigma = " + aSigma);
-		Log.logCommandLine("------------------------------------");
-		Log.logCommandLine("Significant quality cutoff values:");
-		Log.logCommandLine("  alpha = 10% : " + (aMu+1.2815517*aSigma));
-		Log.logCommandLine("  alpha =  5% : " + (aMu+1.6448537*aSigma));
-		Log.logCommandLine("  alpha =  1% : " + (aMu+2.326348*aSigma));
 	}
 
 	private void setupSearchParameters()

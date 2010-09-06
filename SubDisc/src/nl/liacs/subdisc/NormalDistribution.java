@@ -93,4 +93,18 @@ public class NormalDistribution
 	public double getOnePercentSignificance() {return itsMu + 2.326348*itsSigma; }
 	public double getFivePercentSignificance() {return itsMu + 1.6448537*itsSigma; }
 	public double getTenPercentSignificance() {return itsMu + 1.2815517*itsSigma; }
+
+	public void printStatistics()
+	{
+		Log.logCommandLine("====================================");
+		Log.logCommandLine("Overall statistics:");
+		Log.logCommandLine("  mu    = " + itsMu);
+		Log.logCommandLine("  sigma = " + itsSigma);
+		Log.logCommandLine("------------------------------------");
+		Log.logCommandLine("Significant quality cutoff values:");
+		Log.logCommandLine("  alpha =  1% : " + getOnePercentSignificance());
+		Log.logCommandLine("  alpha =  5% : " + getFivePercentSignificance());
+		Log.logCommandLine("  alpha = 10% : " + getTenPercentSignificance());
+	}
+
 }
