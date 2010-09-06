@@ -1224,9 +1224,10 @@ public class MiningWindow extends JFrame
 				case DOUBLE_REGRESSION :
 				case DOUBLE_CORRELATION :
 				{
-					//TODO
+					aQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), itsTable.getNrRows(), 100); //TODO fix 100, is useless?
+					break;
 				}
-				default : return; // TODO should never get here, throw warning
+				default : return; // TODO should never get here
 			}
 
 			Validation aValidation = new Validation(itsSearchParameters, itsTable, aQualityMeasure);

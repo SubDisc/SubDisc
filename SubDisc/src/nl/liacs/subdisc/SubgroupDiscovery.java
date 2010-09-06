@@ -66,7 +66,6 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		itsBinaryTable = new BinaryTable(itsTable, itsSearchParameters.getTargetConcept().getMultiTargets());
 		Bayesian aBayesian = new Bayesian(itsBinaryTable);
 		aBayesian.climb();
-		aBayesian.getDAG().print();
 		//TODO fix alpha, beta
 		itsQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(),
 												aBayesian.getDAG(),

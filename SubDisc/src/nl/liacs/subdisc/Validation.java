@@ -46,7 +46,6 @@ public class Validation
 					aColumnTarget.and(aSubgroup.getMembers());
 					int aCountHeadBody = aColumnTarget.cardinality();
 					aQualities[i] = itsQualityMeasure.calculate(aCountHeadBody, aSubgroup.getCoverage());
-//					Log.logCommandLine((i + 1) + "," + aSubgroup.getCoverage() + "," + aQualities[i]);
 				}
 				break;
 			}
@@ -71,18 +70,36 @@ public class Validation
 					aSubgroup.setDAG(aBayesian.getDAG()); // store DAG with subgroup for later use
 
 					aQualities[i] = itsQualityMeasure.calculate(aSubgroup);
-//					Log.logCommandLine((i + 1) + "," + aSubgroup.getCoverage() + "," + aQualities[i]);
 				}
-
 				break;
 			}
 			case DOUBLE_REGRESSION :
+				//TODO implement
 			case DOUBLE_CORRELATION :
 			{
-				//TODO
+				Column aPrimaryColumn = itsTable.getColumn(itsTargetConcept.getPrimaryTarget());
+				Column aSecondaryColumn = itsTable.getColumn(itsTargetConcept.getSecondaryTarget());
+				CorrelationMeasure itsBaseCM =
+					new CorrelationMeasure(itsSearchParameters.getQualityMeasure(), aPrimaryColumn, aSecondaryColumn);
+
+				for (int i=0; i<theNrRepetitions; i++)
+				{
+					do
+						aSubgroupSize = (int) (aRandom.nextDouble() * itsTable.getNrRows());
+					while (aSubgroupSize < itsSearchParameters.getMinimumCoverage());
+					Subgroup aSubgroup = itsTable.getRandomSubgroup(aSubgroupSize);
+
+					CorrelationMeasure aCM = new CorrelationMeasure(itsBaseCM);
+
+					for (int j=0; j<itsTable.getNrRows(); j++)
+						if (aSubgroup.getMembers().get(j))
+							aCM.addObservation(aPrimaryColumn.getFloat(j), aSecondaryColumn.getFloat(j));
+
+					aQualities[i] = aCM.getEvaluationMeasureValue();
+				}
 				break;
 			}
 		}
-		return new NormalDistribution(aQualities);
+		return new NormalDistribution(aQualities); //return the normal distribution belonging to this random sample
 	}
 }
