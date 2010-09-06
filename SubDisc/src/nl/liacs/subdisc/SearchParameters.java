@@ -33,7 +33,7 @@ public class SearchParameters implements XMLNodeInterface
 
 	public static enum NumericStrategy
 	{
-		NUMERIC_BEST("best"), NUMERIC_BINS("bins"), NUMERIC_ALL("all");
+		NUMERIC_BINS("bins"), NUMERIC_BEST("best"), NUMERIC_ALL("all");
 
 		public final String TEXT;
 

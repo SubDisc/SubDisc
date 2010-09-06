@@ -224,12 +224,15 @@ public class SubgroupDiscovery extends MiningAlgorithm
 				}
 
 				//add best
-				Log.logCommandLine("candidate " + aBestSubgroup.getConditions() + " size: " + aBestSubgroup.getCoverage());
-				if (aMax > aQualityMeasureMinimum)
-					itsResult.add(aBestSubgroup);
-				itsCandidateQueue.add(new Candidate(aBestSubgroup, aMax));
-				Log.logCommandLine("  subgroup nr. " + itsCandidateCount + "; quality " + aMax);
-				itsCandidateCount++;
+				if (aBestSubgroup!=null) //at least one threshold found that has enough quality and coverage
+				{
+					Log.logCommandLine("candidate " + aBestSubgroup.getConditions() + " size: " + aBestSubgroup.getCoverage());
+					if (aMax > aQualityMeasureMinimum)
+						itsResult.add(aBestSubgroup);
+					itsCandidateQueue.add(new Candidate(aBestSubgroup, aMax));
+					Log.logCommandLine("  subgroup nr. " + itsCandidateCount + "; quality " + aMax);
+					itsCandidateCount++;
+				}
 				break;
 			}
 		}

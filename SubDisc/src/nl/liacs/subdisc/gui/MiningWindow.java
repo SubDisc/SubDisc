@@ -45,28 +45,7 @@ import javax.swing.border.TitledBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
-import nl.liacs.subdisc.Attribute;
-import nl.liacs.subdisc.Bayesian;
-import nl.liacs.subdisc.BinaryTable;
-import nl.liacs.subdisc.CandidateQueue;
-import nl.liacs.subdisc.Column;
-import nl.liacs.subdisc.Condition;
-import nl.liacs.subdisc.ConditionList;
-import nl.liacs.subdisc.CorrelationMeasure;
-import nl.liacs.subdisc.DAG;
-import nl.liacs.subdisc.ErrorWindow;
-import nl.liacs.subdisc.FileHandler;
-import nl.liacs.subdisc.Log;
-import nl.liacs.subdisc.NormalDistribution;
-import nl.liacs.subdisc.QualityMeasure;
-import nl.liacs.subdisc.RegressionMeasure;
-import nl.liacs.subdisc.SearchParameters;
-import nl.liacs.subdisc.Subgroup;
-import nl.liacs.subdisc.SubgroupDiscovery;
-import nl.liacs.subdisc.SubgroupSet;
-import nl.liacs.subdisc.Table;
-import nl.liacs.subdisc.TargetConcept;
-import nl.liacs.subdisc.XMLAutoRun;
+import nl.liacs.subdisc.*;
 import nl.liacs.subdisc.FileHandler.Action;
 import nl.liacs.subdisc.SearchParameters.NumericStrategy;
 import nl.liacs.subdisc.TargetConcept.TargetType;
@@ -1213,7 +1192,7 @@ public class MiningWindow extends JFrame
 		{
 			setupSearchParameters();
 
-			String inputValue = JOptionPane.showInputDialog("# random subgroups");
+			String inputValue = JOptionPane.showInputDialog("Number of random subgroups to be used\nfor distribution estimation:");
 			int aNrRepetitions;
 			try
 			{
@@ -1221,40 +1200,16 @@ public class MiningWindow extends JFrame
 			}
 			catch (Exception e)
 			{
-				JOptionPane.showMessageDialog(null, "Your input is unsound.");
+				JOptionPane.showMessageDialog(null, "Not a valid number.");
 				return;
 			}
-			double[] aQualities = new double[aNrRepetitions];
 
+			QualityMeasure aQualityMeasure;
 			switch(itsTargetConcept.getTargetType())
 			{
 				case SINGLE_NOMINAL :
-				case DOUBLE_REGRESSION :
-				case DOUBLE_CORRELATION :
 				{
-					QualityMeasure aQualityMeasure =
-						new QualityMeasure(itsSearchParameters.getQualityMeasure(), itsTable.getNrRows(), itsPositiveCount);
-
-					Attribute aTarget = itsSearchParameters.getTargetConcept().getPrimaryTarget();
-					Condition aCondition = new Condition(aTarget, Condition.EQUALS);
-					aCondition.setValue(itsSearchParameters.getTargetConcept().getTargetValue());
-					BitSet aBinaryTarget = itsTable.evaluate(aCondition);
-
-					Random aRandom = new Random(System.currentTimeMillis());
-					for (int i = 0; i < aNrRepetitions; i++)
-					{
-						int aSubgroupSize;
-						do
-							aSubgroupSize = (int) (aRandom.nextDouble() * itsTotalCount);
-						while (aSubgroupSize < itsSearchParameters.getMinimumCoverage());
-
-						Subgroup aSubgroup = itsTable.getRandomSubgroup(aSubgroupSize);
-						BitSet aColumnTarget = (BitSet) aBinaryTarget.clone();
-						aColumnTarget.and(aSubgroup.getMembers());
-						int aCountHeadBody = aColumnTarget.cardinality();
-						aQualities[i] = aQualityMeasure.calculate(aCountHeadBody, aSubgroup.getCoverage());
-						Log.logCommandLine((i + 1) + "," + aSubgroup.getCoverage() + "," + aQualities[i]);
-					}
+					aQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), itsTable.getNrRows(), itsPositiveCount);
 					break;
 				}
 				case MULTI_LABEL :
@@ -1263,32 +1218,52 @@ public class MiningWindow extends JFrame
 					BinaryTable aBaseTable = new BinaryTable(itsTable, itsTargetConcept.getMultiTargets());
 					Bayesian aBayesian = new Bayesian(aBaseTable);
 					aBayesian.climb();
-					QualityMeasure aQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), aBayesian.getDAG(), itsTotalCount, itsSearchParameters.getAlpha(), itsSearchParameters.getBeta());
-					double aTotalQuality = 0.0;
-					Random aRandom = new Random(System.currentTimeMillis());
-					for (int i = 0; i < aNrRepetitions; i++)
-					{
-						double aFractionalSubgroupSize = aRandom.nextDouble() * itsTotalCount;
-						int aSubgroupSize = (int) aFractionalSubgroupSize;
-						Subgroup aSubgroup = itsTable.getRandomSubgroup(aSubgroupSize);
-
-						// build model
-						BinaryTable aBinaryTable = aBaseTable.selectRows(aSubgroup.getMembers());
-						aBayesian = new Bayesian(aBinaryTable);
-						aBayesian.climb();
-						aSubgroup.setDAG(aBayesian.getDAG()); // store DAG with subgroup for later use
-
-						aQualities[i] = aQualityMeasure.calculate(aSubgroup);
-						aTotalQuality += aQualities[i];
-						Log.logCommandLine((i + 1) + "," + aSubgroup.getCoverage() + "," + aQualities[i]);
-					}
-
+					aQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), aBayesian.getDAG(), itsTotalCount, itsSearchParameters.getAlpha(), itsSearchParameters.getBeta());
 					break;
+				}
+				case DOUBLE_REGRESSION :
+				case DOUBLE_CORRELATION :
+				{
+					//TODO
 				}
 				default : return; // TODO should never get here, throw warning
 			}
 
-			reportOverallStatistics(aQualities, aNrRepetitions);
+			Validation aValidation = new Validation(itsSearchParameters, itsTable, aQualityMeasure);
+			NormalDistribution aDistro = aValidation.RandomSubgroups(aNrRepetitions);
+
+			int aMethod = JOptionPane.showOptionDialog(null,
+				"The following quality measure thresholds were computed:\n" +
+				"1% significance level: " + aDistro.getOnePercentSignificance() + "\n" +
+				"5% significance level: " + aDistro.getFivePercentSignificance() + "\n" +
+				"10% significance level: " + aDistro.getTenPercentSignificance() + "\n" +
+				"Would you like to keep one of these thresholds as search constraint?",
+				"Keep quality measure threshold?",
+				JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null,
+				new String[] {"1% significance", "5% significance", "10% significance", "Ignore statistics"},
+				"1% significance");
+			switch (aMethod)
+			{
+				case 0:
+				{
+					setQualityMeasureMinimum(Double.toString(aDistro.getOnePercentSignificance()));
+					break;
+				}
+				case 1:
+				{
+					setQualityMeasureMinimum(Double.toString(aDistro.getFivePercentSignificance()));
+					break;
+				}
+				case 2:
+				{
+					setQualityMeasureMinimum(Double.toString(aDistro.getTenPercentSignificance()));
+					break;
+				}
+				case 3:
+				{
+					break; //discard statistics
+				}
+			}
 		}
 		catch (Exception e)
 		{
@@ -1371,7 +1346,7 @@ public class MiningWindow extends JFrame
 	{
 		Log.logCommandLine("====================================");
 		Log.logCommandLine("Overall statistics:");
-		NormalDistribution aDistro = new NormalDistribution(theQualities, theNrRepetitions);
+		NormalDistribution aDistro = new NormalDistribution(theQualities);
 		double aMu = aDistro.getMu();
 		double aSigma = aDistro.getSigma();
 		Log.logCommandLine("  mu    = " + aMu);

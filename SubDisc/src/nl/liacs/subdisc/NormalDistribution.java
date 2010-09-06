@@ -7,7 +7,7 @@ public class NormalDistribution
 	private static double itsMu;
 	private static double itsSigma;
 	private static Random itsRandom;
-	
+
 	// constructor for standard normal distribution
 	public NormalDistribution()
 	{
@@ -15,7 +15,7 @@ public class NormalDistribution
 		itsSigma = 1.0;
 		itsRandom = new Random(System.currentTimeMillis());
 	}
-	
+
 	// constructor for normal distribution with general mean and variance
 	public NormalDistribution(double theMean, double theVariance)
 	{
@@ -23,46 +23,46 @@ public class NormalDistribution
 		itsSigma = Math.sqrt(theVariance);
 		itsRandom = new Random(System.currentTimeMillis());
 	}
-	
-	public NormalDistribution(double[] theSample, int theLength)
+
+	public NormalDistribution(double[] theSample)
 	{
 		double aTotalQuality = 0.0;
-		for (int i=0; i<theLength; i++)
+		for (int i=0; i<theSample.length; i++)
 			aTotalQuality += theSample[i];
-		itsMu = aTotalQuality / theLength;
+		itsMu = aTotalQuality / theSample.length;
 
 		double aSquareDiff = 0.0;
-		for (int j=0; j<theLength; j++)
+		for (int j=0; j<theSample.length; j++)
 			aSquareDiff += Math.pow(theSample[j]-itsMu,2);
-		itsSigma = Math.sqrt(aSquareDiff/theLength);
+		itsSigma = Math.sqrt(aSquareDiff/theSample.length);
 
 		itsRandom = new Random(System.currentTimeMillis());
 	}
-	
+
 	// deliver next random double from current distribution
 	public double getNextDouble()
 	{
 		return itsSigma * itsRandom.nextGaussian() + itsMu;
 	}
-	
+
 	// calculate probability density function in the point x
 	public double calcPDF(double theX)
 	{
-		return Math.pow( 
-					Math.E, - Math.pow(theX-itsMu,2) / (2*itsSigma*itsSigma) 
-				) / ( 
-					itsSigma * Math.sqrt( 2*Math.PI ) 
+		return Math.pow(
+					Math.E, - Math.pow(theX-itsMu,2) / (2*itsSigma*itsSigma)
+				) / (
+					itsSigma * Math.sqrt( 2*Math.PI )
 				);
 	}
-	
+
 	// calculate cumulative distribution function in the point x, based on the error function
 	public double calcCDF(double theX)
 	{
-		return 0.5 * ( 1 + calcErf( 
+		return 0.5 * ( 1 + calcErf(
 									(theX - itsMu) / (itsSigma * Math.sqrt(2))
 								));
 	}
-	
+
 	/* calculate error function using Horner's method
 	   fractional error in math formula less than 1.2 * 10 ^ -7.
        although subject to catastrophic cancellation when z in very close to 0 */
@@ -85,8 +85,12 @@ public class NormalDistribution
 		else
 			return -aResult;
 	}
-	
+
 	public double getMu() { return itsMu; }
 	public double getSigma() { return itsSigma; }
 	public double getVariance() { return itsSigma * itsSigma; }
+
+	public double getOnePercentSignificance() {return itsMu + 2.326348*itsSigma; }
+	public double getFivePercentSignificance() {return itsMu + 1.6448537*itsSigma; }
+	public double getTenPercentSignificance() {return itsMu + 1.2815517*itsSigma; }
 }
