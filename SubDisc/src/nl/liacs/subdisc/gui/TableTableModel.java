@@ -1,8 +1,8 @@
 package nl.liacs.subdisc.gui;
 
-import javax.swing.table.AbstractTableModel;
+import javax.swing.table.*;
 
-import nl.liacs.subdisc.Table;
+import nl.liacs.subdisc.*;
 
 public class TableTableModel extends AbstractTableModel
 {
@@ -18,7 +18,13 @@ public class TableTableModel extends AbstractTableModel
 	public int getColumnCount() { return itsTable.getNrColumns(); }
 
 	@Override
-	public String getColumnName(int theColumnIndex) { return itsTable.getColumn(theColumnIndex).getName(); }
+	public String getColumnName(int theColumnIndex)
+	{
+		Column aColumn = itsTable.getColumn(theColumnIndex);
+		return String.format("<html><center>%s<br>(%d distinct)</html>",
+								aColumn.getName(),
+								aColumn.getNrDistinct());
+	}
 
 	@Override
 	public int getRowCount() { return itsTable.getNrRows(); }

@@ -1,14 +1,10 @@
 package nl.liacs.subdisc;
 
-import java.util.ArrayList;
-import java.util.BitSet;
-import java.util.TreeSet;
+import java.util.*;
 
-import nl.liacs.subdisc.Attribute.AttributeType;
+import nl.liacs.subdisc.Attribute.*;
 
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
+import org.w3c.dom.*;
 
 /**
  * A Column contains all data from a column read from a file or database. Its
@@ -231,12 +227,33 @@ public class Column implements XMLNodeInterface
 		}
 	}
 
+	/*
+	 * NOTE This may not be the fastest implementation, and the hashCode() used 
+	 * for insertion into the HashSet() can never COMPLETELY guaranty uniqueness
+	 * for each value.
+	 */
+	/**
+	 * Counts the number of distinct values, or cardinality, for this Column.
+	 * @return The number of distinct values.
+	 */
+	public int getNrDistinct()
+	{
+		switch (getType())
+		{
+			case NUMERIC:
+			case ORDINAL : return new HashSet<Float>(itsFloats).size();
+			case NOMINAL : return new HashSet<String>(itsNominals).size();
+			case BINARY : return 2;
+			default : return 0;	// TODO throw warning
+		}
+	}
+
 	/**
 	 * Create a XML Node representation of this Column.
 	 * Note: the value for missing values is included as missing_value, as
 	 * described by itsMissingValue. When data is loaded, '?' values are
 	 * replaced by itsMissingValue by the FileLoader. Default values for the
-	 * AttributeTypes are: 0.0F for NUMERIC/ORDINAL, 0 for BINARY
+	 * AttributeTypes are: 0.0f for NUMERIC/ORDINAL, 0 for BINARY
 	 * (indicating false) and "" for NOMINAL (the empty string).
 	 * @param theParentNode the Node of which this Node will be a ChildNode.
 	 * @return A Node that contains all the information of this column.

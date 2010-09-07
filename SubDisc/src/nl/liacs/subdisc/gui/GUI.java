@@ -24,6 +24,7 @@ public class GUI
 	public static final Font DEFAULT_TEXT_FONT = new Font ("Dialog", 0, 10);
 	public static final Font DEFAULT_BUTTON_FONT = new Font ("Dialog", 1, 11);
 	public static final Dimension DEFAULT_TEXT_FIELD_DIMENSION = new Dimension (86, 22);
+	public static final Dimension DEFAULT_WINDOW_DIMENSION = new Dimension (1024, 800);
 
 	public enum Event
 	{
