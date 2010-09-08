@@ -228,9 +228,8 @@ public class Column implements XMLNodeInterface
 	}
 
 	/*
-	 * NOTE This may not be the fastest implementation, and the hashCode() used 
-	 * for insertion into the HashSet() can never COMPLETELY guaranty uniqueness
-	 * for each value.
+	 * NOTE This may not be the fastest implementation, but it avoids HashSets'
+	 * hashCode() clashes.
 	 */
 	/**
 	 * Counts the number of distinct values, or cardinality, for this Column.
@@ -241,8 +240,8 @@ public class Column implements XMLNodeInterface
 		switch (getType())
 		{
 			case NUMERIC:
-			case ORDINAL : return new HashSet<Float>(itsFloats).size();
-			case NOMINAL : return new HashSet<String>(itsNominals).size();
+			case ORDINAL : return new TreeSet<Float>(itsFloats).size();
+			case NOMINAL : return new TreeSet<String>(itsNominals).size();
 			case BINARY : return 2;
 			default : return 0;	// TODO throw warning
 		}
