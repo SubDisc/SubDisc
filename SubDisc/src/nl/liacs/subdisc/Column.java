@@ -173,7 +173,185 @@ public class Column implements XMLNodeInterface
 	 * (itsTable.)itsAttribute.setType()
 	 * itsFloats / itsNominals / itsBinaries
 	 */
-	public void setType(String theType) { itsAttribute.setType(theType); }
+	public boolean setType(String theType)
+	{
+
+		if (itsAttribute.getTypeName().equals(theType))
+			return true;
+		else
+		{
+			AttributeType aNewType = AttributeType.getAttributeType(theType);
+			switch (itsAttribute.getType())
+			{
+				case NUMERIC :
+				case ORDINAL :
+				{
+					switch (aNewType)
+					{
+						case NUMERIC :
+						case ORDINAL : return toNumericType(aNewType);
+						case NOMINAL : return toNominalType();
+						case BINARY : return toBinaryType();
+						default : return false;
+					}
+				}
+				case NOMINAL :
+				{
+					switch (aNewType)
+					{
+						case NUMERIC : 
+						case ORDINAL : return toNumericType(aNewType);
+						case NOMINAL : return true;	// not strictly needed
+						case BINARY : return toBinaryType();
+						default : return false;
+					}
+				}
+				case BINARY :
+				{
+					switch (aNewType)
+					{
+						case NUMERIC :
+						case ORDINAL : return toNumericType(aNewType);
+						case NOMINAL : return toNominalType();
+						case BINARY : return true;	// not strictly needed
+						default : return false;
+					}
+				}
+				default : return false;
+			}
+		}
+	}
+
+	/*
+	 * Switching between Column AttributeTypes of NUMERIC and ORDINAL is always
+	 * possible, without any other further changes. Changing from a BINARY
+	 * AttributeType is also possible. Changing from a NOMINAL AttributeType is
+	 * only possible is all values in itsNominal can be parsed ad Floats.
+	 */
+	private boolean toNumericType(AttributeType theType)
+	{
+		if (theType == null)
+			return false;
+		else
+		{
+			boolean aValidNewType = false;
+			switch (itsAttribute.getType())
+			{
+				case NUMERIC :
+				case ORDINAL : aValidNewType = itsAttribute.setType(theType); break;
+				case NOMINAL :
+				{
+					itsFloats = new ArrayList<Float>(itsNominals.size());
+					for (String s : itsNominals)
+					{
+						try { Float.valueOf(s); }
+						catch (NumberFormatException e)
+						{
+							itsFloats = null;
+							return false;
+						}
+					}
+					// If here all values are parsed succesfully
+					itsNominals = null;
+					aValidNewType = true;
+					break;
+				}
+				case BINARY :
+				{
+					// TODO
+				}
+				default : return false;
+			}
+			return aValidNewType;
+		}
+	}
+
+	/*
+	 * The AttributeType of a Column can always be changed to NOMINAL.
+	 */
+	private boolean toNominalType()
+	{
+		boolean aValidNewType = false;
+		switch (itsAttribute.getType())
+		{
+			case NUMERIC :
+			case ORDINAL :
+			{
+				itsNominals = new ArrayList<String>(itsFloats.size());
+				for (Float f : itsFloats)
+					itsNominals.add(Float.toString(f));
+				itsFloats = null;
+				aValidNewType = true;
+				break;
+			}
+			case NOMINAL : aValidNewType = true; break;	// should not happen
+			case BINARY :
+			{
+				// Initialise to "0", then update only set bits in itsBitSet.
+				itsNominals= new ArrayList<String>(Collections.nCopies(itsBinaries.size(), "0"));
+				for (int i = itsBinaries.nextSetBit(0); i >= 0; i = itsBinaries.nextSetBit(i + 1))
+					itsNominals.set(i, "1");
+				itsBinaries = null;
+				aValidNewType = true;
+				break;
+			}
+			// itsAttribute.getType() unknown TODO throw warning
+			default : aValidNewType = false; break;
+		}
+		itsAttribute.setType(AttributeType.NOMINAL);
+		return aValidNewType;
+	}
+
+	/*
+	 * If there are only two distinct values for a Column with a 
+	 * NUMERIC/ORDINAL/NOMINAL AttributeType, its type can be changed to BINARY.
+	 * The value of the first value in itsFloats/itsNominal will serve as the
+	 * 'true' case, meaning the bits in the new itsBinary BitSet will be set for
+	 * all instances having that value.
+	 */
+	private boolean toBinaryType()
+	{
+		if (getNrDistinct() != 2)
+			return false;
+		else
+		{
+			boolean aValidNewType = false;
+			switch (itsAttribute.getType())
+			{
+				case NUMERIC :
+				case ORDINAL :
+				{
+					itsBinaries = new BitSet(itsFloats.size());
+					Float aTrue = itsFloats.get(0);
+					// All false initially, only set 'true' bits.
+					for (int i = 0, j = itsFloats.size(); i < j; i++)
+						if (aTrue == itsFloats.get(i))
+							itsBinaries.set(i);
+					itsFloats = null;
+					aValidNewType = true;
+					break;
+				}
+				case NOMINAL :
+				{
+					itsBinaries = new BitSet(itsNominals.size());
+					String aTrue = itsNominals.get(0);
+					// All false initially, only set 'true' bits.
+					for (int i = 0, j = itsNominals.size(); i < j; i++)
+						if (aTrue.equals(itsNominals.get(i)))
+								itsBinaries.set(i);
+					itsNominals = null;
+					aValidNewType = true;
+					break;
+				}
+				case BINARY : aValidNewType = true; break;	// should not happen
+				// itsAttribute.getType() unknown TODO throw warning
+				default : aValidNewType = false; break;
+			}
+			itsAttribute.setType(AttributeType.BINARY);
+			return aValidNewType;
+		}
+	}
+
 	public boolean getIsEnabled() { return isEnabled; }
 	public void setIsEnabled(boolean theSetting) { isEnabled = theSetting; }
 	/**
@@ -186,6 +364,7 @@ public class Column implements XMLNodeInterface
 	 */
 	public BitSet getMissing() { return (BitSet) itsMissing.clone(); } 
 	public void setMissing(int theIndex) { itsMissing.set(theIndex); }
+	// TODO make it private and put check into setNewMissingValue()
 	public boolean isValidValue(String theNewValue)
 	{
 		switch(getType())

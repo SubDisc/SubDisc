@@ -16,7 +16,23 @@ public class Attribute implements XMLNodeInterface
 	private String itsShort;
 	private int itsIndex;
 
-	public enum AttributeType { NOMINAL, NUMERIC, ORDINAL, BINARY; }
+	public enum AttributeType
+	{
+		NOMINAL,
+		NUMERIC,
+		ORDINAL,
+		BINARY;
+
+		public static AttributeType getAttributeType(String theType)
+		{
+			for (AttributeType at : AttributeType.values())
+				if (at.name().toLowerCase().equals(theType))
+					return at;
+			// TODO throw warning
+			// default
+			return AttributeType.NOMINAL;
+		}
+	}
 
 	public Attribute(String theName, String theShort, AttributeType theType, int theIndex)
 	{
@@ -39,21 +55,21 @@ public class Attribute implements XMLNodeInterface
 	 */
 	public Attribute(Node theAttributeNode)
 	{
-		if(theAttributeNode == null)
+		if (theAttributeNode == null)
 			return;	// TODO throw warning dialog
 
 		NodeList aChildren = theAttributeNode.getChildNodes();
-		for(int i = 0, j = aChildren.getLength(); i < j; ++i)
+		for (int i = 0, j = aChildren.getLength(); i < j; ++i)
 		{
 			Node aSetting = aChildren.item(i);
 			String aNodeName = aSetting.getNodeName();
-			if("name".equalsIgnoreCase(aNodeName))
+			if ("name".equalsIgnoreCase(aNodeName))
 				itsName = aSetting.getTextContent();
-			else if("short".equalsIgnoreCase(aNodeName))
+			else if ("short".equalsIgnoreCase(aNodeName))
 				itsShort = aSetting.getTextContent();
-			else if("type".equalsIgnoreCase(aNodeName))
+			else if ("type".equalsIgnoreCase(aNodeName))
 				itsType = setType(aSetting.getTextContent());
-			else if("index".equalsIgnoreCase(aNodeName))
+			else if ("index".equalsIgnoreCase(aNodeName))
 				itsIndex = Integer.parseInt(aSetting.getTextContent());
 		}
 	}
@@ -74,21 +90,50 @@ public class Attribute implements XMLNodeInterface
 	public boolean isOrdinalType() { return itsType == AttributeType.ORDINAL; }
 	public boolean isBinaryType() { return itsType == AttributeType.BINARY; }
 
+	/*
+	 * TODO this method should be made obsolete.
+	 */
 	/**
-	 * NEW Methods for AttributeType change
-	 * Needs more data/type checking
+	 * Sets the {@link AttributeType AttributeType} for this Attribute. This is
+	 * used for changing the AttributeType of a {@link Column Column}. The
+	 * Column is responsible for checking whether its AttributeType can be
+	 * changed to this new AttributeType.
+	 * 
+	 * @return The new AttributeType, or the default AttributeType.NOMINAL if
+	 * the String passed in as a parameter cannot be resolved to a valid
+	 * AttributeType.
 	 */
 	public AttributeType setType(String theType)
 	{
-		for(AttributeType at : AttributeType.values())
+		for (AttributeType at : AttributeType.values())
 		{
-			if(at.toString().equalsIgnoreCase(theType))
+			if (at.toString().equals(theType))
 			{
 				itsType = at;
 				break;
 			}
 		}
 		return (itsType == null ? AttributeType.NOMINAL : itsType);
+	}
+
+	/**
+	 * Sets the {@link AttributeType AttributeType} for this Attribute. This is
+	 * used for changing the AttributeType of a {@link Column Column}. The
+	 * Column is responsible for checking whether its AttributeType can be
+	 * changed to this new AttributeType.
+	 * 
+	 * @return False if the AttributeType passed in as a parameter is null, true
+	 * otherwise.
+	 */
+	public boolean setType(AttributeType theType)
+	{
+		if (theType != null)
+		{
+			itsType = theType;
+			return true;
+		}
+		else
+			return false;
 	}
 
 	/**

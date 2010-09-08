@@ -1,32 +1,15 @@
-/**
+/*
  * TODO if changes are made also update other opened windows, eg. BrowseWindow
  */
 package nl.liacs.subdisc.gui;
 
-import java.awt.BorderLayout;
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.GridLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import java.awt.*;
+import java.awt.event.*;
 
-import javax.swing.AbstractButton;
-import javax.swing.Box;
-import javax.swing.BoxLayout;
-import javax.swing.ButtonGroup;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JRadioButton;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
-import javax.swing.JTextField;
+import javax.swing.*;
 
-import nl.liacs.subdisc.Column;
-import nl.liacs.subdisc.Table;
-import nl.liacs.subdisc.Attribute.AttributeType;
+import nl.liacs.subdisc.*;
+import nl.liacs.subdisc.Attribute.*;
 
 public class AttributeChangeWindow extends JFrame implements ActionListener
 {
@@ -47,8 +30,8 @@ public class AttributeChangeWindow extends JFrame implements ActionListener
 
 	private void initJTable(Table theTable)
 	{
-		jTable = new JTable(AttributeTableModel.THE_ONLY_INSTANCE.setup(theTable));
-		jTable.setPreferredScrollableViewportSize(new Dimension(1024, 800));
+		jTable = new JTable(new AttributeTableModel(theTable));
+		jTable.setPreferredScrollableViewportSize(new Dimension(GUI.DEFAULT_WINDOW_DIMENSION));
 		jTable.setFillsViewportHeight(true);
 /*
 		jTable.getColumnModel().getColumn(0).setPreferredWidth(50);
@@ -74,7 +57,7 @@ public class AttributeChangeWindow extends JFrame implements ActionListener
 		});
 
 		// selection buttons
-		aSelectionPanel.setLayout(new GridLayout(3, 2));
+		aSelectionPanel.setLayout(new BoxLayout(aSelectionPanel, BoxLayout.Y_AXIS));
 
 		aSelectionPanel.add(GUI.buildButton("Select All", 'A', "all", this));
 		// TODO could use generic loop over all AttributeTypes
@@ -83,7 +66,7 @@ public class AttributeChangeWindow extends JFrame implements ActionListener
 		aSelectionPanel.add(GUI.buildButton("Select All Ordinal", 'O', "ordinal", this));
 		aSelectionPanel.add(GUI.buildButton("Select All Binary", 'B', "binary", this));
 		aSelectionPanel.add(GUI.buildButton("Invert Selection", 'I', "invert", this));
-//		aSelectionPanel.add(GUI.buildButton("Clear Selection", 'X', "clear", this));
+		aSelectionPanel.add(GUI.buildButton("Clear Selection", 'X', "clear", this));
 		jPanelSouth.add(aSelectionPanel);
 
 		// enable / disable
@@ -96,24 +79,31 @@ public class AttributeChangeWindow extends JFrame implements ActionListener
 		aDisablePanel.add(Box.createVerticalGlue());
 		aDisablePanel.add(GUI.buildButton("Enable Selected", 'E', "enable", this));
 		aDisablePanel.add(Box.createVerticalGlue());
+		aDisablePanel.add(GUI.buildButton("Toggle Selection", 'T', "toggle", this));
+		aDisablePanel.add(Box.createVerticalGlue());
 		jPanelSouth.add(aDisablePanel);
 
 		// change type TODO buttons may need names
+		aChangeTypePanel.setLayout(new BoxLayout(aChangeTypePanel, BoxLayout.Y_AXIS));
+		JLabel aNewTypeLabel = new JLabel("New type:");
+		aNewTypeLabel.setFont(GUI.DEFAULT_BUTTON_FONT);
+		aChangeTypePanel.add(aNewTypeLabel);
+		aChangeTypePanel.add(Box.createVerticalGlue());
+
 		aRadioButtonPanel.setLayout(new BoxLayout(aRadioButtonPanel, BoxLayout.Y_AXIS));
 
 		for(AttributeType at : AttributeType.values())
 		{
-			aRadioButtonPanel.add(new JRadioButton(at.name().toLowerCase()));
+			JRadioButton aRadioButton = new JRadioButton(at.name().toLowerCase());
+			aRadioButton.setActionCommand(at.name());
+			aRadioButtonPanel.add(aRadioButton);
 		}
+
 		for(Component rb : aRadioButtonPanel.getComponents())
-		{
 			aNewType.add((AbstractButton) rb);
-		}
-		JLabel aNewTypeLabel = new JLabel(" New type:");
-		aNewTypeLabel.setFont(GUI.DEFAULT_BUTTON_FONT);
-		aRadioButtonPanel.add(aNewTypeLabel, 0);
 
 		aChangeTypePanel.add(aRadioButtonPanel);
+		aChangeTypePanel.add(Box.createVerticalGlue());
 		aChangeTypePanel.add(GUI.buildButton("Change Type", 'C', "type", this));
 		jPanelSouth.add(aChangeTypePanel);
 
@@ -143,24 +133,24 @@ public class AttributeChangeWindow extends JFrame implements ActionListener
 	{
 		String theCommand = theEvent.getActionCommand();
 		// generic loop prevents hard coding all AttributeTypes
-		for(AttributeType at : AttributeType.values())
+		for (AttributeType at : AttributeType.values())
 		{
-			if(at.name().equalsIgnoreCase(theCommand))
+			if (at.name().equalsIgnoreCase(theCommand))
 			{
-				selectType(at);
+				for (int i = 0, j = itsTable.getColumns().size(); i < j; ++i)
+					if (itsTable.getColumn(i).getType() == at)
+						jTable.addRowSelectionInterval(i, i);
 				return;
 			}
 		}
 
-		if("all".equals(theCommand))
-		{
+		if ("all".equals(theCommand))
 			jTable.selectAll();
-		}
-		else if("invert".equals(theCommand))
+		else if ("invert".equals(theCommand))
 		{
-			for(int i = 0, j = itsTable.getColumns().size(); i < j; ++i)
+			for (int i = 0, j = itsTable.getColumns().size(); i < j; ++i)
 			{
-				if(jTable.isRowSelected(i))
+				if (jTable.isRowSelected(i))
 					jTable.removeRowSelectionInterval(i, i);
 				else
 					jTable.addRowSelectionInterval(i, i);
@@ -168,56 +158,55 @@ public class AttributeChangeWindow extends JFrame implements ActionListener
 		}
 		else
 		{
-			for(int i : jTable.getSelectedRows())
+			if ("disable".equals(theCommand) || "enable".equals(theCommand))
 			{
-				if("disable".equals(theCommand))
+				boolean enable = "enable".equals(theCommand);
+				for (int i : jTable.getSelectedRows())
+					itsTable.getColumn(i).setIsEnabled(enable);
+			}
+			else if ("toggle".equals(theCommand))
+			{
+				Column aColumn = null;
+				for (int i : jTable.getSelectedRows())
 				{
-					itsTable.getColumn(i).setIsEnabled(false);
-				}
-				else if("enable".equals(theCommand))
-				{
-					itsTable.getColumn(i).setIsEnabled(true);
-				}
-				else if("type".equals(theCommand))
-				{
-					setType();
-				}
-				else if("missing".equals(theCommand))
-				{
-					setMissing(i);
+					aColumn = itsTable.getColumn(i);
+					aColumn.setIsEnabled(!aColumn.getIsEnabled());
 				}
 			}
+			else if ("type".equals(theCommand))
+			{
+				String aType = aNewType.getSelection().getActionCommand();
+				for (int i : jTable.getSelectedRows())
+					itsTable.getColumn(i).setType(aType);
+			}
+			else if ("missing".equals(theCommand))
+				for (int i : jTable.getSelectedRows())
+						setMissing(i);
+
 			itsTable.update();
 			jTable.repaint();
 		}
-		// TODO TEST ONLY
-		for(Column c : itsTable.getColumns())
-		{
-//			System.out.println(c.getName() + " " + c.getIsEnabled());
-		}
 	}
-
+/*
 	private void selectType(AttributeType theType)
 	{
-		for(int i =0, j = itsTable.getColumns().size(); i < j; ++i)
-			if(itsTable.getColumn(i).getType() == theType)
+		for (int i = 0, j = itsTable.getColumns().size(); i < j; ++i)
+			if (itsTable.getColumn(i).getType() == theType)
 				jTable.addRowSelectionInterval(i, i);
 	}
-
-	// TODO
-	private void setType()
-	{
-		
-	}
-
+*/
+	/*
+	 * TODO the isValidValue() will be checked in setMissingValue() and that
+	 * method will throw a warning.
+	 */
 	private void setMissing(int theColumnIndex)
 	{
 		String aNewValue = aNewMissingValue.getText();
 		Column c = itsTable.getColumn(theColumnIndex);
-		if(c.isValidValue(aNewValue))
+		if (c.isValidValue(aNewValue))
 			c.setNewMissingValue(aNewValue);
 		else
-			;	// TODO WARNING!!!
+			;	// TODO throw warning
 	}
 
 	private void exitForm() { dispose(); }

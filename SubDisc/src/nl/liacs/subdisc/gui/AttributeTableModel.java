@@ -1,22 +1,18 @@
 package nl.liacs.subdisc.gui;
 
-import java.util.BitSet;
+import javax.swing.table.*;
 
-import javax.swing.table.AbstractTableModel;
-
-import nl.liacs.subdisc.Table;
-import nl.liacs.subdisc.Attribute.AttributeType;
+import nl.liacs.subdisc.*;
+import nl.liacs.subdisc.Attribute.*;
 
 public class AttributeTableModel extends AbstractTableModel
 {
 	private static final long serialVersionUID = 1L;
-	public static final AttributeTableModel THE_ONLY_INSTANCE = new AttributeTableModel();
 
 //	private static BitSet itsSelectedAttributes;
-	private static Table itsTable;
+	private Table itsTable;
 
-	// TODO change name to avoid confusion with Column class
-	public enum ColumnHeader
+	public enum AttributeTableHeader
 	{
 		ATTRIBUTE(0),
 		TYPE(1),
@@ -24,33 +20,32 @@ public class AttributeTableModel extends AbstractTableModel
 
 		public final int columnNr;
 
-		private ColumnHeader(int theColumnNr) { columnNr = theColumnNr; }
+		private AttributeTableHeader(int theColumnNr) { columnNr = theColumnNr; }
 
 		public static String getColumnName(int theColumnIndex)
 		{
-			for(ColumnHeader c : ColumnHeader.values())
-				if(c.columnNr == theColumnIndex)
-					return c.toString();
+			for (AttributeTableHeader h : AttributeTableHeader.values())
+				if (h.columnNr == theColumnIndex)
+					return h.toString();
 			return "Incorrect column index.";
 		}
 	};
 
 	public enum Selection { ALL, INVERT }	// TODO REMOVE
 
-	private AttributeTableModel() {}
-
-	public AttributeTableModel setup(Table theTable)
+	public AttributeTableModel(Table theTable)
 	{
-		itsTable = theTable;
-//		itsSelectedAttributes = new BitSet(itsTable.getNrColumns());
-		return this;
+		if (theTable != null)
+			itsTable = theTable;
+		else
+			return;	// TODO throw warning. All methods should check null also.
 	}
 
 	@Override
-	public int getColumnCount() { return ColumnHeader.values().length; }
+	public int getColumnCount() { return AttributeTableHeader.values().length; }
 
 	@Override
-	public String getColumnName(int theColumnIndex) { return ColumnHeader.getColumnName(theColumnIndex); }
+	public String getColumnName(int theColumnIndex) { return AttributeTableHeader.getColumnName(theColumnIndex); }
 
 	@Override
 	public int getRowCount() { return itsTable.getNrColumns(); }
@@ -58,14 +53,14 @@ public class AttributeTableModel extends AbstractTableModel
 	@Override
 	public Object getValueAt(int row, int col)
 	{
-		switch(col)
-		{
-//			case ColumnHeader. : return itsSelectedAttributes.get(row);
-			case 0 : return itsTable.getColumns().get(row).getAttribute().getName();
-			case 1 : return itsTable.getColumns().get(row).getAttribute().getTypeName();
-			case 2 : return itsTable.getColumns().get(row).getIsEnabled() ? "yes" : "no";
-			default : return null;
-		}
+			if (col == AttributeTableHeader.ATTRIBUTE.columnNr)
+				return itsTable.getColumns().get(row).getAttribute().getName();
+			else if (col == AttributeTableHeader.TYPE.columnNr)
+				return itsTable.getColumns().get(row).getAttribute().getTypeName();
+			else if (col == AttributeTableHeader.ENABLED.columnNr)
+				return itsTable.getColumns().get(row).getIsEnabled() ? "yes" : "no";
+			else
+				return null;	// TODO throw warning. 
 	}
 
 	@Override
@@ -90,7 +85,7 @@ public class AttributeTableModel extends AbstractTableModel
 //	public static BitSet getSelectedAttributes() { return (BitSet)itsSelectedAttributes.clone(); }
 	public static void setSelectedAttributes(Selection theSelection)	// TODO will change
 	{
-		switch(theSelection)
+		switch (theSelection)
 		{
 //		case ALL : itsSelectedAttributes.set(0, itsSelectedAttributes.size()); break;
 //		case INVERT : itsSelectedAttributes.flip(0, itsSelectedAttributes.size()); break;
@@ -98,11 +93,11 @@ public class AttributeTableModel extends AbstractTableModel
 		}
 	}
 
-	public static void selectAllType(AttributeType theType, boolean selected)
+	public void selectAllType(AttributeType theType, boolean selected)
 	{
-		for(int i = 0, j = itsTable.getColumns().size(); i < j; ++i)
+		for (int i = 0, j = itsTable.getColumns().size(); i < j; ++i)
 		{
-			if(itsTable.getColumn(i).getType() == theType)
+			if (itsTable.getColumn(i).getType() == theType)
 			{
 //				if(selected)
 //					itsSelectedAttributes.set(i);
