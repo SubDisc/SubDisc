@@ -5,6 +5,7 @@ package nl.liacs.subdisc.gui;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.util.*;
 
 import javax.swing.*;
 
@@ -94,8 +95,9 @@ public class AttributeChangeWindow extends JFrame implements ActionListener
 
 		for(AttributeType at : AttributeType.values())
 		{
-			JRadioButton aRadioButton = new JRadioButton(at.name().toLowerCase());
-			aRadioButton.setActionCommand(at.name());
+			String aType = at.toString();
+			JRadioButton aRadioButton = new JRadioButton(aType.toLowerCase());
+			aRadioButton.setActionCommand(aType);
 			aRadioButtonPanel.add(aRadioButton);
 		}
 
@@ -180,8 +182,38 @@ public class AttributeChangeWindow extends JFrame implements ActionListener
 					itsTable.getColumn(i).setType(aType);
 			}
 			else if ("missing".equals(theCommand))
+			{
+				String aNewValue = aNewMissingValue.getText();
+				ArrayList<Integer> aWrongType = new ArrayList<Integer>(jTable.getSelectedRows().length);
 				for (int i : jTable.getSelectedRows())
-						setMissing(i);
+					if (!setMissing(i, aNewValue))
+						aWrongType.add(i);
+
+				if (aWrongType.size() > 0)
+				{
+					jTable.getSelectionModel().clearSelection();
+					for (int i : aWrongType)
+						jTable.addRowSelectionInterval(i, i);
+
+					String anIndicator;
+					if (aWrongType.size() == 1)
+					{
+						Column aColumn = itsTable.getColumn(aWrongType.get(0));
+						anIndicator = String.format("attribute '%s', which is of type '%s'.%n",
+										aColumn.getName(),
+										aColumn.getAttribute().getTypeName());
+					}
+					else
+						anIndicator = "some attributes. They are of an incompatible type.\n See selection.";
+					JOptionPane.showMessageDialog(null,
+										String.format(
+											"'%s' is not a valid value for %s",
+											aNewValue,
+											anIndicator),
+										"alert",
+										JOptionPane.ERROR_MESSAGE);
+				}
+			}
 
 			itsTable.update();
 			jTable.repaint();
@@ -196,17 +228,12 @@ public class AttributeChangeWindow extends JFrame implements ActionListener
 	}
 */
 	/*
-	 * TODO the isValidValue() will be checked in setMissingValue() and that
-	 * method will throw a warning.
+	 * TODO change, will cause havoc if many columns are select and of the
+	 * incorrect type
 	 */
-	private void setMissing(int theColumnIndex)
+	private boolean setMissing(int theColumnIndex, String theNewValue)
 	{
-		String aNewValue = aNewMissingValue.getText();
-		Column c = itsTable.getColumn(theColumnIndex);
-		if (c.isValidValue(aNewValue))
-			c.setNewMissingValue(aNewValue);
-		else
-			;	// TODO throw warning
+		return itsTable.getColumn(theColumnIndex).setNewMissingValue(theNewValue);
 	}
 
 	private void exitForm() { dispose(); }
