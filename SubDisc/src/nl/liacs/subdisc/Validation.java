@@ -114,12 +114,36 @@ public class Validation
 	{
 		double[] aQualities = new double[theNrRepetitions];
 		Random aRandom = new Random(System.currentTimeMillis());
-		int aSubgroupSize;
 
 		switch(itsTargetConcept.getTargetType())
 		{
 			case SINGLE_NOMINAL :
 			{
+				Attribute aTarget = itsTargetConcept.getPrimaryTarget();
+				Condition aCondition = new Condition(aTarget, Condition.EQUALS);
+				aCondition.setValue(itsTargetConcept.getTargetValue());
+				BitSet aBinaryTarget = itsTable.evaluate(aCondition);
+
+				int aDepth = itsSearchParameters.getSearchDepth();
+				int aMinimumCoverage = itsSearchParameters.getMinimumCoverage();
+				for (int i=0; i<theNrRepetitions; i++)
+				{
+					ConditionList aCL;
+					BitSet aMembers;
+					do
+					{
+						aCL = getRandomConditionList(aDepth, aRandom);
+						aMembers = itsTable.evaluate(aCL);
+					}
+					while (aMembers.cardinality() < aMinimumCoverage);
+					Log.logCommandLine(aCL.toString());
+					Subgroup aSubgroup = new Subgroup(aCL, aMembers, aCL.size());
+
+					BitSet aColumnTarget = (BitSet) aBinaryTarget.clone();
+					aColumnTarget.and(aSubgroup.getMembers());
+					int aCountHeadBody = aColumnTarget.cardinality();
+					aQualities[i] = itsQualityMeasure.calculate(aCountHeadBody, aSubgroup.getCoverage());
+				}
 				break;
 			}
 			case MULTI_LABEL :
@@ -160,6 +184,34 @@ public class Validation
 				//TODO implement
 			case DOUBLE_CORRELATION :
 			{
+				Column aPrimaryColumn = itsTable.getColumn(itsTargetConcept.getPrimaryTarget());
+				Column aSecondaryColumn = itsTable.getColumn(itsTargetConcept.getSecondaryTarget());
+				CorrelationMeasure itsBaseCM =
+					new CorrelationMeasure(itsSearchParameters.getQualityMeasure(), aPrimaryColumn, aSecondaryColumn);
+
+				int aDepth = itsSearchParameters.getSearchDepth();
+				int aMinimumCoverage = itsSearchParameters.getMinimumCoverage();
+				for (int i=0; i<theNrRepetitions; i++)
+				{
+					ConditionList aCL;
+					BitSet aMembers;
+					do
+					{
+						aCL = getRandomConditionList(aDepth, aRandom);
+						aMembers = itsTable.evaluate(aCL);
+					}
+					while (aMembers.cardinality() < aMinimumCoverage);
+					Log.logCommandLine(aCL.toString());
+					Subgroup aSubgroup = new Subgroup(aCL, aMembers, aCL.size());
+
+					CorrelationMeasure aCM = new CorrelationMeasure(itsBaseCM);
+
+					for (int j=0; j<itsTable.getNrRows(); j++)
+						if (aSubgroup.getMembers().get(j))
+							aCM.addObservation(aPrimaryColumn.getFloat(j), aSecondaryColumn.getFloat(j));
+
+					aQualities[i] = aCM.getEvaluationMeasureValue();
+				}
 				break;
 			}
 		}

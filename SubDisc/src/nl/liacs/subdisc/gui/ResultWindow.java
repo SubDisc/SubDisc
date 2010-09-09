@@ -79,8 +79,8 @@ public class ResultWindow extends JFrame
 
 	public void initialise()
 	{
-		itsSubgroupTable.getColumnModel().getColumn(0).setPreferredWidth(15);
-		itsSubgroupTable.getColumnModel().getColumn(1).setPreferredWidth(15);
+		itsSubgroupTable.getColumnModel().getColumn(0).setPreferredWidth(10);
+		itsSubgroupTable.getColumnModel().getColumn(1).setPreferredWidth(10);
 		itsSubgroupTable.getColumnModel().getColumn(2).setPreferredWidth(20);
 		itsSubgroupTable.getColumnModel().getColumn(3).setPreferredWidth(50);
 		itsSubgroupTable.getColumnModel().getColumn(4).setPreferredWidth(90);
@@ -345,7 +345,14 @@ public class ResultWindow extends JFrame
 	}
 	
 	private void jButtonPValuesActionPerformed()
-	{
+	{	// Obtain input
+		int aMethod = JOptionPane.showOptionDialog(null,
+				"By which method should the p-values be computed?",
+				"Which method?",
+				JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null,
+				new String[] {"Random subgroups", "Random conditions"},
+				"Random subgroups");
+
 		String inputValue = JOptionPane.showInputDialog("Number of random subgroups to be used\nfor distribution estimation:");
 		int aNrRepetitions;
 		try
@@ -357,9 +364,27 @@ public class ResultWindow extends JFrame
 			JOptionPane.showMessageDialog(null, "Not a valid number.");
 			return;
 		}
-		
+
+		// Compute p-values
 		Validation aValidation = new Validation(itsSearchParameters, itsTable, itsQualityMeasure); 
-		NormalDistribution aDistro = aValidation.RandomSubgroups(aNrRepetitions);
+		NormalDistribution aDistro;
+		switch (aMethod)
+		{
+			case 0:
+			{
+				aDistro = aValidation.RandomSubgroups(aNrRepetitions);
+				break;
+			}
+			case 1:
+			{
+				aDistro = aValidation.RandomConditions(aNrRepetitions);
+				break;
+			}
+			default:
+			{	// Should never reach this code
+				aDistro = null;
+			}
+		}
 		
 		for (Subgroup aSubgroup : itsSubgroupSet)
 			aSubgroup.setPValue(aDistro);
