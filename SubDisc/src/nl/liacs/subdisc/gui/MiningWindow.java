@@ -1,38 +1,20 @@
 package nl.liacs.subdisc.gui;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.GridLayout;
-import java.awt.Image;
-import java.awt.Toolkit;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.text.NumberFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.BitSet;
+import java.awt.*;
+import java.awt.event.*;
+import java.text.*;
+import java.util.*;
 import java.util.List;
-import java.util.Random;
-import java.util.TreeSet;
 
 import javax.swing.*;
-import javax.swing.border.BevelBorder;
-import javax.swing.border.EtchedBorder;
-import javax.swing.border.TitledBorder;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
+import javax.swing.border.*;
+import javax.swing.event.*;
 
 import nl.liacs.subdisc.*;
 import nl.liacs.subdisc.FileHandler.Action;
-import nl.liacs.subdisc.SearchParameters.NumericStrategy;
-import nl.liacs.subdisc.TargetConcept.TargetType;
-import nl.liacs.subdisc.XMLAutoRun.AutoRun;
+import nl.liacs.subdisc.SearchParameters.*;
+import nl.liacs.subdisc.TargetConcept.*;
+import nl.liacs.subdisc.XMLAutoRun.*;
 
 public class MiningWindow extends JFrame
 {
@@ -81,7 +63,7 @@ public class MiningWindow extends JFrame
 	{
 		// Initialise graphical components
 		initComponents();
-		initNeverChangingGuiComponents();
+		initStaticGuiComponents();
 		enableTableDependentComponents(itsTable != null);
 		setTitle("Subgroup Discovery");
 		// setIconImage(ICON);
@@ -93,7 +75,7 @@ public class MiningWindow extends JFrame
 		Log.openFileOutputStreams();
 	}
 
-	private void initNeverChangingGuiComponents()
+	private void initStaticGuiComponents()
 	{
 		// TODO disable if no table?
 		// should do for-each combobox/field
@@ -121,7 +103,6 @@ public class MiningWindow extends JFrame
 		initGuiComponentsDataSet();
 
 		// target concept
-		itsTargetConcept.setTargetType(getTargetTypeName());	// could use SINGLE_NOMINAL as default in TargetConcept
 		switch(itsTargetConcept.getTargetType())
 		{
 			case DOUBLE_CORRELATION :
@@ -179,7 +160,6 @@ public class MiningWindow extends JFrame
 		if (itsTable != null)
 		{
 			jLFieldTargetTable.setText(itsTable.getTableName());
-			// TODO the following fields need to be updated after data/attribute change
 			jLFieldNrExamples.setText(String.valueOf(itsTotalCount));
 			jLFieldNrColumns.setText(String.valueOf(itsTable.getNrColumns()));
 			int[] aCounts = itsTable.getTypeCounts();
@@ -817,7 +797,7 @@ public class MiningWindow extends JFrame
 															jMenuItemSubgroupDiscovery,
 															jMenuItemCreateAutoRunFile,
 															jMenuItemAddToAutoRunFile,
-//															jButtonDataExplorer,  //TODO add when implemented
+//															jButtonDataExplorer,	//TODO add when implemented
 															jButtonBrowse,
 															jButtonAttributeTypeChange,
 															jButtonSubgroupDiscovery,
@@ -830,6 +810,12 @@ public class MiningWindow extends JFrame
 			a.setEnabled(theSetting);
 	}
 
+	public void update()
+	{
+		initGuiComponentsDataSet();
+		jComboBoxTargetTypeActionPerformed(null);	// update hack
+	}
+
 	/* MENU ITEMS */
 	private void jMenuItemOpenFileActionPerformed(ActionEvent evt)
 	{
@@ -837,7 +823,8 @@ public class MiningWindow extends JFrame
 		if (aTable != null)
 		{
 			itsTable = aTable;
-// TODO			initGuiComponents(false);
+			initGuiComponents();
+			jComboBoxTargetTypeActionPerformed(null);	// update hack
 		}
 	}
 
@@ -880,9 +867,7 @@ public class MiningWindow extends JFrame
 
 	private void AttributeTypeChangeActionPerformed(ActionEvent evt)
 	{
-		AttributeChangeWindow anACW = new AttributeChangeWindow(itsTable);
-		anACW.setLocation(100, 100);
-		anACW.setSize(800, 700);
+		new AttributeChangeWindow(this, itsTable);
 	}
 
 	/* Exit application */
@@ -974,7 +959,7 @@ public class MiningWindow extends JFrame
 		if (itsTable == null)
 			return;
 
-		itsTargetConcept.setTargetType(getTargetTypeName());
+		itsTargetConcept.setTargetType(TargetType.getTargetType(getTargetTypeName()));
 		itsSearchParameters.setTargetConcept(itsTargetConcept);
 
 		initQualityMeasure();
@@ -1559,7 +1544,7 @@ public class MiningWindow extends JFrame
 	}
 
 	// target type - quality measure minimum (member of itsSearchParameters)
-	private float getQualityMeasureMinimum() { return getValue(0.0F, jTextFieldQualityMeasureMinimum.getText()); }
+	private float getQualityMeasureMinimum() { return getValue(0.0f, jTextFieldQualityMeasureMinimum.getText()); }
 	private void setQualityMeasureMinimum(String aValue) { jTextFieldQualityMeasureMinimum.setText(aValue); }
 
 	// target type - target attribute
@@ -1585,9 +1570,9 @@ public class MiningWindow extends JFrame
 	private void setSubgroupsMaximum(String aValue) { jTextFieldSubgroupsMaximum.setText(aValue); }
 	private void setSearchTimeMaximum(String aValue) { jTextFieldSearchTimeMaximum.setText(aValue); }
 	private int getSearchCoverageMinimum() { return getValue(0, jTextFieldSearchCoverageMinimum.getText()); }
-	private float getSearchCoverageMaximum() { return getValue(1.0F, jTextFieldSearchCoverageMaximum.getText()); }
+	private float getSearchCoverageMaximum() { return getValue(1.0f, jTextFieldSearchCoverageMaximum.getText()); }
 	private int getSubgroupsMaximum() { return getValue(50, jTextFieldSubgroupsMaximum.getText());}
-	private float getSearchTimeMaximum() { return getValue(1.0F, jTextFieldSearchTimeMaximum.getText()); }
+	private float getSearchTimeMaximum() { return getValue(1.0f, jTextFieldSearchTimeMaximum.getText()); }
 
 	// search strategy - search strategy
 	private String getSearchStrategyName() { return (String) jComboBoxSearchStrategyType.getSelectedItem(); }

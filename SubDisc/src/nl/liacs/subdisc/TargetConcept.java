@@ -5,9 +5,10 @@ import java.util.*;
 import org.w3c.dom.*;
 
 /**
- * Depending on the TargetType of a TargetConcept, it holds the PrimaryTarget
- * and/or SecondaryTarget(s). The TargetType indicates what type of search
- * setting will be used in the experiment.
+ * Depending on the {@link TargetType TargetType} of a TargetConcept, it holds
+ * the <code>PrimaryTarget</code> and/or <code>SecondaryTarget</code>/<code>
+ * MultiTargets</code>. The TargetType indicates what type of search setting
+ * will be used in the experiment.
  */
 public class TargetConcept implements XMLNodeInterface
 {
@@ -34,6 +35,20 @@ public class TargetConcept implements XMLNodeInterface
 		public final String TEXT;
 
 		private TargetType(String theText) { TEXT = theText; }
+
+		public static TargetType getTargetType(String theType)
+		{
+			for (TargetType t : TargetType.values())
+				if (t.TEXT.equals(theType))
+					return t;
+
+			/*
+			 * theType cannot be resolved to a TargetType. Log error and return
+			 * default.
+			 */
+			Log.logCommandLine(String.format("'%s' is not a valid TargetType. Returning SINGLE_NOMINAL.", theType));
+			return TargetType.SINGLE_NOMINAL;
+		}
 
 		public boolean isEMM()
 		{
@@ -83,7 +98,7 @@ public class TargetConcept implements XMLNodeInterface
 			if ("nr_target_attributes".equalsIgnoreCase(aNodeName))
 				itsNrTargetAttributes = Integer.parseInt(aSetting.getTextContent());
 			if ("target_type".equalsIgnoreCase(aNodeName))
-				setTargetType(aSetting.getTextContent());
+				setTargetType(TargetType.getTargetType(aSetting.getTextContent()));
 			else if ("primary_target".equalsIgnoreCase(aNodeName))
 				itsPrimaryTarget = new Attribute(aSetting);	// TODO
 			else if ("target_value".equalsIgnoreCase(aNodeName))
@@ -101,22 +116,21 @@ public class TargetConcept implements XMLNodeInterface
 		}
 	}
 
-	public TargetConcept() {} // TODO for now
+	public TargetConcept()
+	{
+		itsTargetType = TargetType.SINGLE_NOMINAL;
+	}
 
 	// member methods
 	public int getNrTargetAttributes() { return itsNrTargetAttributes; }
 	public void setNrTargetAttributes(int theNr) { itsNrTargetAttributes = theNr; }
 	public TargetType getTargetType() { return itsTargetType; }
-	public void setTargetType(String theTargetType)
+	public void setTargetType(TargetType theTargetType)
 	{
-		for (TargetType t : TargetType.values())
-		{
-			if (t.TEXT.equalsIgnoreCase(theTargetType))
-			{
-				itsTargetType = t;
-				return;
-			}
-		}
+		if (theTargetType != null)
+			itsTargetType = theTargetType;
+		else
+			Log.logCommandLine("Setting a TargetType to 'null' is not allowed.");
 	}
 
 	public Attribute getPrimaryTarget() { return itsPrimaryTarget; }
@@ -152,9 +166,9 @@ public class TargetConcept implements XMLNodeInterface
 	}
 
 	/**
-	 * Create a XML Node representation of this TaretConcept.
-	 * @param theParentNode, the Node of which this Node will be a ChildNode.
-	 * @return A Node that contains all the information of this TargetConcept.
+	 * Creates an {@link XMLNode XMLNode} representation of this TaretConcept.
+	 * @param theParentNode, the Node of which this Node will be a ChildNode
+	 * @return a Node that contains all the information of this TargetConcept
 	 */
 	@Override
 	public void addNodeTo(Node theParentNode)
@@ -169,7 +183,7 @@ public class TargetConcept implements XMLNodeInterface
 		else
 			XMLNode.addNodeTo(aNode, "secondary_target", itsSecondaryTarget.getName());
 		if (itsMultiTargets == null || itsMultiTargets.size() == 0)
-			XMLNode.addNodeTo(aNode, "secondary_targets");
+			XMLNode.addNodeTo(aNode, "multi_targets");
 		else
 		{
 			StringBuilder sb = new StringBuilder(itsMultiTargets.size() * 10);

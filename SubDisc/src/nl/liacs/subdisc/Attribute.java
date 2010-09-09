@@ -88,7 +88,7 @@ public class Attribute implements XMLNodeInterface
 	public boolean hasShort() { return (!itsShort.isEmpty()); }
 	public String getNameAndShort() { return itsName + (hasShort() ? " (" + getShort() + ")" : ""); }
 	public String getNameOrShort() { return hasShort() ? itsShort : itsName; }
-	public String getTypeName() { return itsType.name().toLowerCase(); }
+	public String getTypeName() { return itsType.toString().toLowerCase(); }
 
 	public void print() { Log.logCommandLine(itsIndex + ":" + getNameAndShort() + " " + getTypeName()); }
 

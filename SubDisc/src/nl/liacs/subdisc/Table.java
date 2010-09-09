@@ -19,7 +19,6 @@ public class Table
 	private int itsNrColumns;
 	private ArrayList<Attribute> itsAttributes = new ArrayList<Attribute>();
 	private ArrayList<Column> itsColumns = new ArrayList<Column>();
-//	private String itsSeparator = ",";	// TODO remove
 	private Random itsRandomNumber = new Random(System.currentTimeMillis());
 
 	public String getTableName() { return itsTableName; }
@@ -45,6 +44,7 @@ public class Table
 			itsAttributes.add(c.getAttribute());
 	}
 
+	// TODO also include enabled
 	public int[] getTypeCounts()
 	{
 		update();
@@ -231,15 +231,15 @@ public class Table
 
 	// Misc ===============================
 
-
-	//TODO sort the output?
 	public float[] getNumericDomain(int theColumn, BitSet theSubset)
 	{
-		int aNrMembers = theSubset.cardinality();
-		float[] aResult = new float[aNrMembers];
-		int k=0;
+		float[] aResult = new float[theSubset.cardinality()];
 
 		Column aColumn = itsColumns.get(theColumn);
+		for (int i = 0, j = 0; i < itsNrRows; i++)
+			if (theSubset.get(i))
+				aResult[j++] = aColumn.getFloat(i);
+/*
 		for (int i=0; i<itsNrRows; i++)
 		{
 			if (theSubset.get(i))
@@ -248,7 +248,8 @@ public class Table
 				k++;
 			}
 		}
-
+*/
+		Arrays.sort(aResult);
 		return aResult;
 	}
 
@@ -257,7 +258,6 @@ public class Table
 	{
 		//get domain including doubles
 		float[] aDomain = getNumericDomain(theColumn, theSubset);
-		Arrays.sort(aDomain);
 
 		//count uniques
 		float aCurrent = aDomain[0];
@@ -293,7 +293,6 @@ public class Table
 	public float[] getSplitPoints(int theColumn, BitSet theSubset, int theNrSplits)
 	{
 		float[] aDomain = getNumericDomain(theColumn, theSubset);
-		Arrays.sort(aDomain);
 		float[] aSplitPoints = new float[theNrSplits];
 		for (int j=0; j<theNrSplits; j++)
 			aSplitPoints[j] = aDomain[aDomain.length*(j+1)/(theNrSplits+1)];	// N.B. Order matters to prevent integer division from yielding zero.

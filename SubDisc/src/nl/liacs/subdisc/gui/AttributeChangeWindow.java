@@ -19,13 +19,17 @@ public class AttributeChangeWindow extends JFrame implements ActionListener
 	private JTable jTable;
 	private ButtonGroup aNewType = new ButtonGroup();
 	private JTextField aNewMissingValue = new JTextField("?");
+	private final MiningWindow itsMiningWindow;
 
-	public AttributeChangeWindow(Table theTable)
+	public AttributeChangeWindow(MiningWindow theMiningWindow, Table theTable)
 	{
+		itsMiningWindow = theMiningWindow;
 		itsTable = theTable;
 		initJTable(itsTable);
 		initComponents();
 		setTitle("Attribute types for: " + itsTable.getTableName());
+		setLocation(100, 100);
+		setSize(800, 700);	// use GUI.DEFAULT_WINDOW_SIZE
 		setVisible(true);
 	}
 
@@ -62,10 +66,10 @@ public class AttributeChangeWindow extends JFrame implements ActionListener
 
 		aSelectionPanel.add(GUI.buildButton("Select All", 'A', "all", this));
 		// TODO could use generic loop over all AttributeTypes
-		aSelectionPanel.add(GUI.buildButton("Select All Numeric", 'N', "numeric", this));
-		aSelectionPanel.add(GUI.buildButton("Select All Nominal", 'L', "nominal", this));
-		aSelectionPanel.add(GUI.buildButton("Select All Ordinal", 'O', "ordinal", this));
-		aSelectionPanel.add(GUI.buildButton("Select All Binary", 'B', "binary", this));
+		aSelectionPanel.add(GUI.buildButton("Select All Numeric", 'N', AttributeType.NUMERIC.toString(), this));
+		aSelectionPanel.add(GUI.buildButton("Select All Nominal", 'L', AttributeType.NOMINAL.toString(), this));
+		aSelectionPanel.add(GUI.buildButton("Select All Ordinal", 'O', AttributeType.ORDINAL.toString(), this));
+		aSelectionPanel.add(GUI.buildButton("Select All Binary", 'B', AttributeType.BINARY.toString(), this));
 		aSelectionPanel.add(GUI.buildButton("Invert Selection", 'I', "invert", this));
 		aSelectionPanel.add(GUI.buildButton("Clear Selection", 'X', "clear", this));
 		jPanelSouth.add(aSelectionPanel);
@@ -84,7 +88,7 @@ public class AttributeChangeWindow extends JFrame implements ActionListener
 		aDisablePanel.add(Box.createVerticalGlue());
 		jPanelSouth.add(aDisablePanel);
 
-		// change type TODO buttons may need names
+		// change type
 		aChangeTypePanel.setLayout(new BoxLayout(aChangeTypePanel, BoxLayout.Y_AXIS));
 		JLabel aNewTypeLabel = new JLabel("New type:");
 		aNewTypeLabel.setFont(GUI.DEFAULT_BUTTON_FONT);
@@ -97,7 +101,7 @@ public class AttributeChangeWindow extends JFrame implements ActionListener
 		{
 			String aType = at.toString();
 			JRadioButton aRadioButton = new JRadioButton(aType.toLowerCase());
-			aRadioButton.setActionCommand(aType);
+			aRadioButton.setActionCommand(aType);	// UPPERCASE
 			aRadioButtonPanel.add(aRadioButton);
 		}
 
@@ -137,9 +141,9 @@ public class AttributeChangeWindow extends JFrame implements ActionListener
 		// generic loop prevents hard coding all AttributeTypes
 		for (AttributeType at : AttributeType.values())
 		{
-			if (at.name().equalsIgnoreCase(theCommand))
+			if (at.toString().equals(theCommand))
 			{
-				for (int i = 0, j = itsTable.getColumns().size(); i < j; ++i)
+				for (int i = 0, j = itsTable.getColumns().size(); i < j; i++)
 					if (itsTable.getColumn(i).getType() == at)
 						jTable.addRowSelectionInterval(i, i);
 				return;
@@ -214,9 +218,9 @@ public class AttributeChangeWindow extends JFrame implements ActionListener
 										JOptionPane.ERROR_MESSAGE);
 				}
 			}
-
 			itsTable.update();
 			jTable.repaint();
+			itsMiningWindow.update();
 		}
 	}
 /*
@@ -227,10 +231,6 @@ public class AttributeChangeWindow extends JFrame implements ActionListener
 				jTable.addRowSelectionInterval(i, i);
 	}
 */
-	/*
-	 * TODO change, will cause havoc if many columns are select and of the
-	 * incorrect type
-	 */
 	private boolean setMissing(int theColumnIndex, String theNewValue)
 	{
 		return itsTable.getColumn(theColumnIndex).setNewMissingValue(theNewValue);
