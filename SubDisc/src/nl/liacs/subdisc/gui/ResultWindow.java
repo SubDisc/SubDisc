@@ -351,6 +351,11 @@ public class ResultWindow extends JFrame
 				JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null,
 				new String[] {"Random subgroups", "Random conditions"},
 				"Random subgroups");
+		if (!(aMethod == 0 || aMethod == 1))
+		{
+			JOptionPane.showMessageDialog(null, "No method selected;\np-values cannot be computed.");
+			return;
+		}
 
 		String inputValue = JOptionPane.showInputDialog("Number of random subgroups to be used\nfor distribution estimation:");
 		int aNrRepetitions;
@@ -367,18 +372,28 @@ public class ResultWindow extends JFrame
 		// Compute p-values
 		Validation aValidation = new Validation(itsSearchParameters, itsTable, itsQualityMeasure);
 		NormalDistribution aDistro;
-		System.out.println(aMethod);	// TODO REMOVE
-		if (aMethod == 0 || aMethod == 1)
+		switch (aMethod)
 		{
-			if (aMethod == 0)
-				for (Subgroup aSubgroup : itsSubgroupSet)
-					aSubgroup.setPValue(aValidation.RandomSubgroups(aNrRepetitions));
-			else if (aMethod == 1)
-				for (Subgroup aSubgroup : itsSubgroupSet)
-					aSubgroup.setPValue(aValidation.RandomConditions(aNrRepetitions));
-
-			itsSubgroupTable.repaint();
+			case 0:
+			{
+				aDistro = aValidation.RandomSubgroups(aNrRepetitions);
+				break;
+			}
+			case 1:
+			{
+				aDistro = aValidation.RandomConditions(aNrRepetitions);
+				break;
+			}
+			default:
+			{	// Should never reach this code
+				aDistro = null;
+			}
 		}
+
+		for (Subgroup aSubgroup : itsSubgroupSet)
+			aSubgroup.setPValue(aDistro);
+
+		itsSubgroupTable.repaint();
 	}
 
 	private void jButtonCloseWindowActionPerformed() { dispose(); }
