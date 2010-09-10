@@ -19,18 +19,27 @@ public class AttributeChangeWindow extends JFrame implements ActionListener
 	private JTable jTable;
 	private ButtonGroup aNewType = new ButtonGroup();
 	private JTextField aNewMissingValue = new JTextField("?");
-	private final MiningWindow itsMiningWindow;
+	private JLabel itsFeedBackLabel = new JLabel();
+	private MiningWindow itsMiningWindow;
 
 	public AttributeChangeWindow(MiningWindow theMiningWindow, Table theTable)
 	{
-		itsMiningWindow = theMiningWindow;
-		itsTable = theTable;
-		initJTable(itsTable);
-		initComponents();
-		setTitle("Attribute types for: " + itsTable.getTableName());
-		setLocation(100, 100);
-		setSize(800, 700);	// use GUI.DEFAULT_WINDOW_SIZE
-		setVisible(true);
+		if (theTable == null || theMiningWindow == null)
+		{
+			Log.logCommandLine("To create a Data Editor Window parameters can not be null.");
+			return;
+		}
+		else
+		{
+			itsMiningWindow = theMiningWindow;
+			itsTable = theTable;
+			initJTable(itsTable);
+			initComponents();
+			setTitle("Attribute types for: " + itsTable.getTableName());
+			setLocation(100, 100);
+			setSize(GUI.DEFAULT_WINDOW_DIMENSION);
+			setVisible(true);
+		}
 	}
 
 	private void initJTable(Table theTable)
@@ -61,6 +70,8 @@ public class AttributeChangeWindow extends JFrame implements ActionListener
 			}
 		});
 
+//		jPanelSouth.add(Box.createHorizontalGlue());
+
 		// selection buttons
 		aSelectionPanel.setLayout(new BoxLayout(aSelectionPanel, BoxLayout.Y_AXIS));
 
@@ -73,20 +84,6 @@ public class AttributeChangeWindow extends JFrame implements ActionListener
 		aSelectionPanel.add(GUI.buildButton("Invert Selection", 'I', "invert", this));
 		aSelectionPanel.add(GUI.buildButton("Clear Selection", 'X', "clear", this));
 		jPanelSouth.add(aSelectionPanel);
-
-		// enable / disable
-		JLabel aDisableLable = new JLabel("Disable/Enable Selected:");
-		aDisableLable.setFont(GUI.DEFAULT_BUTTON_FONT);
-		aDisablePanel.add(aDisableLable);
-		aDisablePanel.setLayout(new BoxLayout(aDisablePanel, BoxLayout.Y_AXIS));
-		aDisablePanel.add(Box.createVerticalGlue());
-		aDisablePanel.add(GUI.buildButton("Disable Selected", 'D', "disable", this));
-		aDisablePanel.add(Box.createVerticalGlue());
-		aDisablePanel.add(GUI.buildButton("Enable Selected", 'E', "enable", this));
-		aDisablePanel.add(Box.createVerticalGlue());
-		aDisablePanel.add(GUI.buildButton("Toggle Selection", 'T', "toggle", this));
-		aDisablePanel.add(Box.createVerticalGlue());
-		jPanelSouth.add(aDisablePanel);
 
 		// change type
 		aChangeTypePanel.setLayout(new BoxLayout(aChangeTypePanel, BoxLayout.Y_AXIS));
@@ -113,6 +110,20 @@ public class AttributeChangeWindow extends JFrame implements ActionListener
 		aChangeTypePanel.add(GUI.buildButton("Change Type", 'C', "type", this));
 		jPanelSouth.add(aChangeTypePanel);
 
+		// enable / disable
+		JLabel aDisableLable = new JLabel("Disable/Enable Selected:");
+		aDisableLable.setFont(GUI.DEFAULT_BUTTON_FONT);
+		aDisablePanel.add(aDisableLable);
+		aDisablePanel.setLayout(new BoxLayout(aDisablePanel, BoxLayout.Y_AXIS));
+		aDisablePanel.add(Box.createVerticalGlue());
+		aDisablePanel.add(GUI.buildButton("Disable Selected", 'D', "disable", this));
+		aDisablePanel.add(Box.createVerticalGlue());
+		aDisablePanel.add(GUI.buildButton("Enable Selected", 'E', "enable", this));
+		aDisablePanel.add(Box.createVerticalGlue());
+		aDisablePanel.add(GUI.buildButton("Toggle Selected", 'T', "toggle", this));
+		aDisablePanel.add(Box.createVerticalGlue());
+		jPanelSouth.add(aDisablePanel);
+
 		// set missing
 		aSetMissingPanel.setLayout(new BoxLayout(aSetMissingPanel, BoxLayout.Y_AXIS));
 		aSetMissingPanel.add(Box.createRigidArea(new Dimension(0, 20)));
@@ -127,21 +138,26 @@ public class AttributeChangeWindow extends JFrame implements ActionListener
 		aSetMissingPanel.add(GUI.buildButton("Change Missing", 'M', "missing", this));
 		jPanelSouth.add(aSetMissingPanel);
 
+//		jPanelSouth.add(Box.createHorizontalGlue());
+
+		itsFeedBackLabel.setText("Attributes loaded for " + itsTable.getTableName());
+
 		getContentPane().add(jScrollPane, BorderLayout.CENTER);
 		getContentPane().add(jPanelSouth, BorderLayout.SOUTH);
+//		getContentPane().add(itsFeedBackLabel);
 
 		pack();
 	}
 
-	// TODO use GUI.Event enums 
+	// TODO use GUI.Event enums
 	@Override
 	public void actionPerformed(ActionEvent theEvent)
 	{
-		String theCommand = theEvent.getActionCommand();
+		String aCommand = theEvent.getActionCommand();
 		// generic loop prevents hard coding all AttributeTypes
 		for (AttributeType at : AttributeType.values())
 		{
-			if (at.toString().equals(theCommand))
+			if (at.toString().equals(aCommand))
 			{
 				for (int i = 0, j = itsTable.getColumns().size(); i < j; i++)
 					if (itsTable.getColumn(i).getType() == at)
@@ -150,9 +166,9 @@ public class AttributeChangeWindow extends JFrame implements ActionListener
 			}
 		}
 
-		if ("all".equals(theCommand))
+		if ("all".equals(aCommand))
 			jTable.selectAll();
-		else if ("invert".equals(theCommand))
+		else if ("invert".equals(aCommand))
 		{
 			for (int i = 0, j = itsTable.getColumns().size(); i < j; ++i)
 			{
@@ -162,15 +178,17 @@ public class AttributeChangeWindow extends JFrame implements ActionListener
 					jTable.addRowSelectionInterval(i, i);
 			}
 		}
+		else if ("clear".equals(aCommand))
+			jTable.clearSelection();
 		else
 		{
-			if ("disable".equals(theCommand) || "enable".equals(theCommand))
+			if ("disable".equals(aCommand) || "enable".equals(aCommand))
 			{
-				boolean enable = "enable".equals(theCommand);
+				boolean enable = "enable".equals(aCommand);
 				for (int i : jTable.getSelectedRows())
 					itsTable.getColumn(i).setIsEnabled(enable);
 			}
-			else if ("toggle".equals(theCommand))
+			else if ("toggle".equals(aCommand))
 			{
 				Column aColumn = null;
 				for (int i : jTable.getSelectedRows())
@@ -179,18 +197,18 @@ public class AttributeChangeWindow extends JFrame implements ActionListener
 					aColumn.setIsEnabled(!aColumn.getIsEnabled());
 				}
 			}
-			else if ("type".equals(theCommand))
+			else if ("type".equals(aCommand))
 			{
 				String aType = aNewType.getSelection().getActionCommand();
 				for (int i : jTable.getSelectedRows())
 					itsTable.getColumn(i).setType(aType);
 			}
-			else if ("missing".equals(theCommand))
+			else if ("missing".equals(aCommand))
 			{
 				String aNewValue = aNewMissingValue.getText();
 				ArrayList<Integer> aWrongType = new ArrayList<Integer>(jTable.getSelectedRows().length);
 				for (int i : jTable.getSelectedRows())
-					if (!setMissing(i, aNewValue))
+					if (!itsTable.getColumn(i).setNewMissingValue(aNewValue))
 						aWrongType.add(i);
 
 				if (aWrongType.size() > 0)
@@ -218,22 +236,9 @@ public class AttributeChangeWindow extends JFrame implements ActionListener
 										JOptionPane.ERROR_MESSAGE);
 				}
 			}
-			itsTable.update();
 			jTable.repaint();
 			itsMiningWindow.update();
 		}
-	}
-/*
-	private void selectType(AttributeType theType)
-	{
-		for (int i = 0, j = itsTable.getColumns().size(); i < j; ++i)
-			if (itsTable.getColumn(i).getType() == theType)
-				jTable.addRowSelectionInterval(i, i);
-	}
-*/
-	private boolean setMissing(int theColumnIndex, String theNewValue)
-	{
-		return itsTable.getColumn(theColumnIndex).setNewMissingValue(theNewValue);
 	}
 
 	private void exitForm() { dispose(); }

@@ -3,68 +3,106 @@ package nl.liacs.subdisc.gui;
 import javax.swing.table.*;
 
 import nl.liacs.subdisc.*;
-import nl.liacs.subdisc.Attribute.*;
 
 public class AttributeTableModel extends AbstractTableModel
 {
 	private static final long serialVersionUID = 1L;
 
-//	private static BitSet itsSelectedAttributes;
 	private Table itsTable;
 
 	public enum AttributeTableHeader
 	{
 		ATTRIBUTE(0),
 		TYPE(1),
-		ENABLED(2);
+		ENABLED(2),
+		MISSING(3);
 
 		public final int columnNr;
-
 		private AttributeTableHeader(int theColumnNr) { columnNr = theColumnNr; }
 
 		public static String getColumnName(int theColumnIndex)
 		{
 			for (AttributeTableHeader h : AttributeTableHeader.values())
 				if (h.columnNr == theColumnIndex)
-					return h.toString();
+					if(h == MISSING)
+						return "MISSING VALUE";
+					else
+						return h.toString();
+			Log.logCommandLine(
+				"Error in AttributeTableHeader.getColumnName(): invalid index '"
+				+ theColumnIndex + "'.");
 			return "Incorrect column index.";
 		}
 	};
 
-	public enum Selection { ALL, INVERT }	// TODO REMOVE
-
 	public AttributeTableModel(Table theTable)
 	{
-		if (theTable != null)
-			itsTable = theTable;
+		if (theTable == null)
+		{
+			LogError(" Constructor()");
+			return;
+		}
 		else
-			return;	// TODO throw warning. All methods should check null also.
+			itsTable = theTable;
 	}
 
 	@Override
 	public int getColumnCount() { return AttributeTableHeader.values().length; }
 
 	@Override
-	public String getColumnName(int theColumnIndex) { return AttributeTableHeader.getColumnName(theColumnIndex); }
+	public String getColumnName(int theColumnIndex)
+	{
+		return AttributeTableHeader.getColumnName(theColumnIndex);
+	}
 
 	@Override
-	public int getRowCount() { return itsTable.getNrColumns(); }
+	public int getRowCount()
+	{
+		if (itsTable == null)
+		{
+			LogError(".getRowCount()");
+			return 0;
+		}
+		else
+			return itsTable.getNrColumns();
+	}
 
 	@Override
 	public Object getValueAt(int row, int col)
 	{
+		if (itsTable == null)
+		{
+			LogError(".getValueAt()");
+			return null;
+		}
+		else
+		{
 			if (col == AttributeTableHeader.ATTRIBUTE.columnNr)
 				return itsTable.getColumns().get(row).getAttribute().getName();
 			else if (col == AttributeTableHeader.TYPE.columnNr)
 				return itsTable.getColumns().get(row).getAttribute().getTypeName();
 			else if (col == AttributeTableHeader.ENABLED.columnNr)
 				return itsTable.getColumns().get(row).getIsEnabled() ? "yes" : "no";
+			else if (col == AttributeTableHeader.MISSING.columnNr)
+				return itsTable.getColumns().get(row).getMissingValue();
 			else
-				return null;	// TODO throw warning. 
+			{
+				Log.logCommandLine(
+					"Error in AttributeTableModel.getValueAt(): " +
+					"invalid index: '" + col + "' for AttributeTableHeader.");
+				return null; 
+			}
+		}
 	}
 
-	@Override
-	public Class<?> getColumnClass(int c) { return getValueAt(0, c).getClass(); }
+//	@Override
+//	public Class<?> getColumnClass(int c) { return getValueAt(0, c).getClass(); }
+
+	private void LogError(String theMethod)
+	{
+		Log.logCommandLine(
+			"Error in AttributeTableWindow" + theMethod + ": Table is 'null'.");
+	}
 /*
 	@Override
 	public boolean isCellEditable(int row, int col)
@@ -82,6 +120,7 @@ public class AttributeTableModel extends AbstractTableModel
 		fireTableCellUpdated(row, col);
 	}
 */
+/*
 //	public static BitSet getSelectedAttributes() { return (BitSet)itsSelectedAttributes.clone(); }
 	public static void setSelectedAttributes(Selection theSelection)	// TODO will change
 	{
@@ -92,7 +131,8 @@ public class AttributeTableModel extends AbstractTableModel
 //		default : selectType(theSelection);
 		}
 	}
-
+*/
+/*
 	public void selectAllType(AttributeType theType, boolean selected)
 	{
 		for (int i = 0, j = itsTable.getColumns().size(); i < j; ++i)
@@ -108,6 +148,6 @@ public class AttributeTableModel extends AbstractTableModel
 		// TODO update table/window
 		
 	}
-
+*/
 	
 }

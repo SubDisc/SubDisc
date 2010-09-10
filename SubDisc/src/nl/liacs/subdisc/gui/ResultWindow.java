@@ -3,7 +3,6 @@ package nl.liacs.subdisc.gui;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
-import java.util.List;
 
 import javax.swing.*;
 
@@ -366,30 +365,20 @@ public class ResultWindow extends JFrame
 		}
 
 		// Compute p-values
-		Validation aValidation = new Validation(itsSearchParameters, itsTable, itsQualityMeasure); 
+		Validation aValidation = new Validation(itsSearchParameters, itsTable, itsQualityMeasure);
 		NormalDistribution aDistro;
-		switch (aMethod)
+		System.out.println(aMethod);	// TODO REMOVE
+		if (aMethod == 0 || aMethod == 1)
 		{
-			case 0:
-			{
-				aDistro = aValidation.RandomSubgroups(aNrRepetitions);
-				break;
-			}
-			case 1:
-			{
-				aDistro = aValidation.RandomConditions(aNrRepetitions);
-				break;
-			}
-			default:
-			{	// Should never reach this code
-				aDistro = null;
-			}
-		}
-		
-		for (Subgroup aSubgroup : itsSubgroupSet)
-			aSubgroup.setPValue(aDistro);
+			if (aMethod == 0)
+				for (Subgroup aSubgroup : itsSubgroupSet)
+					aSubgroup.setPValue(aValidation.RandomSubgroups(aNrRepetitions));
+			else if (aMethod == 1)
+				for (Subgroup aSubgroup : itsSubgroupSet)
+					aSubgroup.setPValue(aValidation.RandomConditions(aNrRepetitions));
 
-		itsSubgroupTable.repaint();
+			itsSubgroupTable.repaint();
+		}
 	}
 
 	private void jButtonCloseWindowActionPerformed() { dispose(); }

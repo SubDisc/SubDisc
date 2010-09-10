@@ -9,7 +9,8 @@ import org.w3c.dom.NodeList;
  * only when the {@link AttributeType AttributeType} of the Attribute is
  * appropriate for the {@link TargetConcept TargetConcept}s
  * {@link TargetType TargetType}. All Attribute constructors and setters ensure
- * that its AttributeType is never null (NOMINAL by default).
+ * that its AttributeType is never <code>null</code> (<code>NOMINAL</code> by
+ * default).
  */
 public class Attribute implements XMLNodeInterface
 {
@@ -131,8 +132,8 @@ public class Attribute implements XMLNodeInterface
 	 * Column is responsible for checking whether its AttributeType can be
 	 * changed to this new AttributeType.
 	 * 
-	 * @return False if the AttributeType passed in as a parameter is null, true
-	 * otherwise.
+	 * @return <code>false</code> if the AttributeType passed in as a parameter
+	 * is <code>null</code>, <code>true</code> otherwise
 	 */
 	public boolean setType(AttributeType theType)
 	{
@@ -146,9 +147,9 @@ public class Attribute implements XMLNodeInterface
 	}
 
 	/**
-	 * Create a XML Node representation of this Attribute.
+	 * Create an {@link XMLNode XMLNode} representation of this Attribute.
 	 * @param theParentNode the Node of which this Node will be a ChildNode
-	 * @return A Node that contains all the information of this Attribute
+	 * @return a Node that contains all the information of this Attribute
 	 */
 	@Override
 	public void addNodeTo(Node theParentNode)

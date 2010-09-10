@@ -19,27 +19,71 @@ public class TableTableModel extends AbstractTableModel
 
 	public TableTableModel(Table theTable)
 	{
-		if (theTable != null)
-			itsTable = theTable;
+		if (theTable == null)
+		{
+			Log.logCommandLine(" Constructor()");
+			return;
+		}
 		else
-			return;	// TODO throw warning. All methods should check null also.
+			itsTable = theTable;
 	}
 
 	@Override
-	public int getColumnCount() { return itsTable.getNrColumns(); }
+	public int getColumnCount()
+	{
+		if (itsTable == null)
+		{
+			LogError(".getColumnCount()");
+			return 0;
+		}
+		else
+			return itsTable.getNrColumns();
+	}
 
 	@Override
 	public String getColumnName(int theColumnIndex)
 	{
-		Column aColumn = itsTable.getColumn(theColumnIndex);
-		return String.format("<html><center>%s<br>(%d distinct)</html>",
-								aColumn.getName(),
-								aColumn.getNrDistinct());
+		if (itsTable == null)
+		{
+			LogError(".getColumnName()");
+			return "Incorrect column index.";
+		}
+		else
+		{
+			Column aColumn = itsTable.getColumn(theColumnIndex);
+			return String.format("<html><center>%s<br>(%d distinct)</html>",
+									aColumn.getName(),
+									aColumn.getNrDistinct());
+		}
 	}
 
 	@Override
-	public int getRowCount() { return itsTable.getNrRows(); }
+	public int getRowCount()
+	{
+		if (itsTable == null)
+		{
+			LogError(".getRowCount()");
+			return 0;
+		}
+		else
+			return itsTable.getNrRows();
+	}
 
 	@Override
-	public Object getValueAt(int row, int col) { return itsTable.getColumn(col).getString(row); }
+	public Object getValueAt(int theRow, int theColumn)
+	{
+		if (itsTable == null)
+		{
+			LogError(".getValueAt()");
+			return null;
+		}
+		else
+			return itsTable.getColumn(theColumn).getString(theRow);
+	}
+
+	private void LogError(String theMethod)
+	{
+		Log.logCommandLine(
+			"Error in TableTableWindow" + theMethod + ": Table is 'null'.");
+	}
 }

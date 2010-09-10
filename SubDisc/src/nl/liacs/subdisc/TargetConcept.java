@@ -8,7 +8,9 @@ import org.w3c.dom.*;
  * Depending on the {@link TargetType TargetType} of a TargetConcept, it holds
  * the <code>PrimaryTarget</code> and/or <code>SecondaryTarget</code>/<code>
  * MultiTargets</code>. The TargetType indicates what type of search setting
- * will be used in the experiment.
+ * will be used in the experiment. All TargetConcept constructors and setters
+ * ensure that its TargetType is never <code>null</code> (<code>SINGLE_NOMINAL
+ * </code> by default).
  */
 public class TargetConcept implements XMLNodeInterface
 {
@@ -166,8 +168,8 @@ public class TargetConcept implements XMLNodeInterface
 	}
 
 	/**
-	 * Creates an {@link XMLNode XMLNode} representation of this TaretConcept.
-	 * @param theParentNode, the Node of which this Node will be a ChildNode
+	 * Creates an {@link XMLNode XMLNode} representation of this TargetConcept.
+	 * @param theParentNode the Node of which this Node will be a ChildNode
 	 * @return a Node that contains all the information of this TargetConcept
 	 */
 	@Override

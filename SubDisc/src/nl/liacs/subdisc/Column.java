@@ -101,7 +101,7 @@ public class Column implements XMLNodeInterface
 			default : return ("Unknown type: " + itsAttribute.getTypeName());
 		}
 	}
-	public BitSet getBinaries() { return itsBinaries; }	// TODO return copy of mutable type
+	public BitSet getBinaries() { return (BitSet) itsBinaries.clone(); }
 
 	public boolean isNominalType() { return itsAttribute.isNominalType(); }
 	public boolean isNumericType() { return itsAttribute.isNumericType(); }
@@ -371,41 +371,57 @@ public class Column implements XMLNodeInterface
 	public void setMissing(int theIndex) { itsMissing.set(theIndex); }
 
 	/**
+	 * Retrieves the value currently set for all missing values.
+	 * @return the value currently set for all missing values
+	 */
+	public String getMissingValue()
+	{
+		return itsMissingValue;
+	}
+
+	/**
 	 * Sets the new missing value for this Column. The missing value is used as
 	 * replacement value for all values that where '?' in the original data.
 	 * @param theNewValue the value to use as new missing value
-	 * @return <code>true</code> if setting the new missing value successful,
-	 * <code>false</code>otherwise
+	 * @return <code>true</code> if setting the new missing value is successful,
+	 * <code>false</code> otherwise
 	 */
 	public boolean setNewMissingValue(String theNewValue)
 	{
 		if (isValidValue(theNewValue))
 		{
-			for(int i = itsMissing.nextSetBit(0); i >= 0; i = itsMissing.nextSetBit(i + 1))
+			switch (itsAttribute.getType())
 			{
-				switch(getType())
+				case NOMINAL :
 				{
-					case NUMERIC :
-					// should do Float.valueOf(theNewValue) once outside loop
-					case ORDINAL : itsFloats.set(i, Float.valueOf(theNewValue)); break;
-					case NOMINAL : itsNominals.set(i, theNewValue); break;
-					case BINARY :
-					{
-						// should do "0".equals(theNewValue) once outside loop
-						if("0".equals(theNewValue))
+					for (int i = itsMissing.nextSetBit(0); i >= 0; i = itsMissing.nextSetBit(i + 1))
+						itsNominals.set(i, theNewValue);
+					return true;
+				}
+				case NUMERIC :
+				case ORDINAL :
+				{
+					Float aNewValue = Float.valueOf(theNewValue);
+					for (int i = itsMissing.nextSetBit(0); i >= 0; i = itsMissing.nextSetBit(i + 1))
+						itsFloats.set(i, aNewValue);
+					return true;
+				}
+				case BINARY :
+				{
+					boolean aNewValue = "0".equals(theNewValue); 
+					for (int i = itsMissing.nextSetBit(0); i >= 0; i = itsMissing.nextSetBit(i + 1))
+						if (aNewValue)
 							itsBinaries.clear(i);
 						else
 							itsBinaries.set(i);
-						break;
-					}
-					default :
-					{
-						logTypeError("Column.setNewMissingValue()");
-						return false;
-					}
+					return true;
+				}
+				default :
+				{
+					logTypeError("Column.setNewMissingValue()");
+					return false;
 				}
 			}
-			return true;
 		}
 		else
 			return false;

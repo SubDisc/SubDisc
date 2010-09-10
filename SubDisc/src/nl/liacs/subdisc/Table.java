@@ -1,14 +1,10 @@
 package nl.liacs.subdisc;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.BitSet;
-import java.util.Random;
-import java.util.TreeSet;
+import java.util.*;
 
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
+import nl.liacs.subdisc.Attribute.*;
+
+import org.w3c.dom.*;
 
 public class Table
 {
@@ -36,42 +32,11 @@ public class Table
 	public ArrayList<Attribute> getAttributes() { return itsAttributes; };
 	public ArrayList<Column> getColumns() { return itsColumns; };
 
-	public void update()
-	{
-		itsNrRows = itsColumns.size() > 0 ? itsColumns.get(0).size() : 0;
-		itsNrColumns = getColumns().size();	// needed for MiningWindow
-		for(Column c : itsColumns)
-			itsAttributes.add(c.getAttribute());
-	}
-
-	// TODO also include enabled
-	public int[] getTypeCounts()
-	{
-		update();
-		int[] theCounts = new int[3];
-		for(Column c : itsColumns)
-		{
-			switch(c.getType())
-			{
-				case NUMERIC :
-				case ORDINAL : ++theCounts[1]; break;
-				case NOMINAL : ++theCounts[0]; break;
-				case BINARY : ++theCounts[2]; break;
-			}
-		}
-		return theCounts;
-	}
-
-//	public int getNrNNominals() {};
-//	public int getNrNumerics() {};
-//	public int getNrBinaries() {};
-
 	// TODO some constructors and builder functions, may change
 	public Table(String theTableName, String theSource)
 	{
 		itsTableName = theTableName;
 		itsSource = theSource;
-//		itsRandomNumber = new Random(System.currentTimeMillis());	// Not needed in constructor?
 	}
 
 	public Table(String theTableName, String theSource, int theNrRows, int theNrColumns)
@@ -82,7 +47,6 @@ public class Table
 		itsNrColumns = theNrColumns;
 		itsAttributes.ensureCapacity(theNrColumns);
 		itsColumns.ensureCapacity(theNrColumns);
-//		itsRandomNumber = new Random(System.currentTimeMillis());
 	}
 
 	// TODO order of nodes is known, when all is stable
@@ -102,6 +66,86 @@ public class Table
 		}
 		update();
 	}
+
+	/*
+	 * TODO change this method, goal is to create a lock() function that 'locks'
+	 * the table. itsNrRows/itsNrColumn and itsAttributes/itsColumns.size() do
+	 * not change anymore. Update is expensive right now. If itsAttributes would
+	 * be implemented as a HashSet/TreeSet adding would be less of a problem.
+	 */
+	/**
+	 * Update this Table. This means the number of rows and columns are set, and
+	 * this Tables list of {@link Attribute Attribute}s is updated.
+	 */
+	public void update()
+	{
+		itsNrRows = itsColumns.size() > 0 ? itsColumns.get(0).size() : 0;
+		itsNrColumns = itsColumns.size();	// needed for MiningWindow
+		itsAttributes.clear();	// expensive
+		for(Column c : itsColumns)
+			itsAttributes.add(c.getAttribute());
+	}
+
+	/**
+	 * Retrieves an array of <code>int[]</code>s, containing the number of
+	 * {@link Columns Columns} for each {@link AttributeType AttributeType}, and
+	 * the number of those Columns that are enabled. The <code>int[]</code>s are
+	 * for AttributeTypes: <code>NOMINAL</code>, <code>NUMERIC</code>,
+	 * <code>ORDINAL</code> and <code>BINARY</code>, respectively.
+	 * @return an array of <code>int[]</code>s, containing for each
+	 * AttributeType the number of Columns of that type, and the number of
+	 * those Columns that is enabled
+	 */
+	public int[][] getTypeCounts()
+	{
+		int[][] aCounts = new int[4][2];
+		for(Column c : itsColumns)
+		{
+			switch(c.getType())
+			{
+				case NOMINAL :
+				{
+					++aCounts[0][0];
+					if (c.getIsEnabled())
+						++aCounts[0][1];
+					break;
+				}
+				case NUMERIC :
+				{
+					++aCounts[1][0];
+					if (c.getIsEnabled())
+						++aCounts[1][1];
+					break;
+				}
+				case ORDINAL :
+				{
+					++aCounts[2][0];
+					if (c.getIsEnabled())
+						++aCounts[2][1];
+					break;
+				}
+				case BINARY :
+				{
+					++aCounts[3][0];
+					if (c.getIsEnabled())
+						++aCounts[3][1];
+					break;
+				}
+			}
+		}
+		return aCounts;
+	}
+
+	/*
+	 * TODO Would be more intuitive, but current is more efficient as it only
+	 * loops over all Columns once. An alternative would be to ensure the Table
+	 * is always updated after AttributeType changes/Column.setIsEnabled() and
+	 * use itsNominals/itsNrNumerics/itsNrOrdinals/itsNrBinaries members.
+	 */
+//	public int getNrNominals() {};
+//	public int getNrNumerics() {};
+//	public int getNrOrdinals() {};
+//	public int getNrBinaries() {};
 
 	public BitSet evaluate(Condition theCondition)
 	{
@@ -160,11 +204,12 @@ public class Table
 	//returns a complete column (as long as it is binary)
 	public BitSet getBinaryColumn(int i)
 	{
-		Column aColumn = itsColumns.get(i);
-		return aColumn.getBinaries();
+		return itsColumns.get(i).getBinaries();
 	}
 
+	// Obsolete, see MiningWindow.jListSecondaryTargetsActionPerformed()
 	//returns the index of the theIndex'th binary column
+/*
 	public int getBinaryIndex(int theIndex) throws ArrayIndexOutOfBoundsException
 	{
 		int anIndex = 0;
@@ -180,15 +225,14 @@ public class Table
 		}
 		throw(new ArrayIndexOutOfBoundsException("trying to acces index " + theIndex));
 	}
-
+*/
 
 	//Data Model ===========================================================================
 
 	public Attribute getAttribute(String theName)
 	{
-		for (int i=0; i<itsAttributes.size(); i++)
+		for (Attribute anAttribute : itsAttributes)
 		{
-			Attribute anAttribute = itsAttributes.get(i);
 			if (anAttribute.getName().equals(theName))
 				return anAttribute;
 		}
@@ -197,11 +241,7 @@ public class Table
 
 	public Condition getFirstCondition()
 	{
-		Attribute aFirstAttribute = itsAttributes.get(0);
-		if (aFirstAttribute.isNumericType())
-			return new Condition(aFirstAttribute, Condition.FIRST_NUMERIC_OPERATOR);
-		else
-			return new Condition(aFirstAttribute, Condition.FIRST_NOMINAL_OPERATOR);
+		return new Condition(itsAttributes.get(0));
 	}
 
 	public Condition getNextCondition(Condition theCurrentCondition)
@@ -216,13 +256,14 @@ public class Table
 			if (anIndex == itsNrColumns-1) // No more attributes
 				aCondition = null;
 			else
-			{
-				Attribute anAttribute = itsAttributes.get(anIndex+1);
-				if (anAttribute.isNumericType())
-					aCondition = new Condition(anAttribute, Condition.FIRST_NUMERIC_OPERATOR);
-				else
-					aCondition = new Condition(anAttribute, Condition.FIRST_NOMINAL_OPERATOR);
-			}
+				aCondition = new Condition(itsAttributes.get(anIndex + 1));
+//			{
+//				Attribute anAttribute = itsAttributes.get(anIndex+1);
+//				if (anAttribute.isNumericType())
+//					aCondition = new Condition(anAttribute, Condition.FIRST_NUMERIC_OPERATOR);
+//				else
+//					aCondition = new Condition(anAttribute, Condition.FIRST_NOMINAL_OPERATOR);
+//			}
 		}
 
 		return aCondition;

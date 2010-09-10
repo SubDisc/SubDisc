@@ -41,22 +41,32 @@ public class MiningWindow extends JFrame
 
 	public MiningWindow(Table theTable)
 	{
-		itsTable = theTable;
-		itsTotalCount = itsTable.getNrRows();
-		initMiningWindow();
-		initGuiComponents();
+		if (theTable != null)
+		{
+			itsTable = theTable;
+			itsTotalCount = itsTable.getNrRows();
+			initMiningWindow();
+			initGuiComponents();
+		}
+		else
+			initMiningWindow();
 	}
 
 	public MiningWindow(Table theTable, SearchParameters theSearchParameters)
 	{
-		itsTable = theTable;
-		itsTotalCount = itsTable.getNrRows();
-		initMiningWindow();
+		if (theTable != null)
+		{
+			itsTable = theTable;
+			itsTotalCount = itsTable.getNrRows();
+			initMiningWindow();
 
-		if(theSearchParameters != null)
-			itsTargetConcept = theSearchParameters.getTargetConcept();
-		itsSearchParameters = theSearchParameters;
-		initGuiComponentsFromFile();
+			if(theSearchParameters != null)
+				itsTargetConcept = theSearchParameters.getTargetConcept();
+			itsSearchParameters = theSearchParameters;
+			initGuiComponentsFromFile();
+		}
+		else
+			initMiningWindow();
 	}
 
 	private void initMiningWindow()
@@ -155,6 +165,7 @@ public class MiningWindow extends JFrame
 		// setSecondaryTargets(); // TODO initialised from primaryTargetList
 	}
 
+	// TODO use separate JLabels for "(x enabled)"
 	private void initGuiComponentsDataSet()
 	{
 		if (itsTable != null)
@@ -162,11 +173,20 @@ public class MiningWindow extends JFrame
 			jLFieldTargetTable.setText(itsTable.getTableName());
 			jLFieldNrExamples.setText(String.valueOf(itsTotalCount));
 			jLFieldNrColumns.setText(String.valueOf(itsTable.getNrColumns()));
-			int[] aCounts = itsTable.getTypeCounts();
-			jLFieldNrNominals.setText(String.valueOf(aCounts[0]));
-			jLFieldNrNumerics.setText(String.valueOf(aCounts[1]));
-			jLFieldNrBinaries.setText(String.valueOf(aCounts[2]));
+			int[][] aCounts = itsTable.getTypeCounts();
+			jLFieldNrNominals.setText(initGuiComponentsDataSetHelper(aCounts[0]));
+			jLFieldNrNumerics.setText(initGuiComponentsDataSetHelper(aCounts[1]));
+//			jLFieldNrOrdinals.setText(initGuiComponentsDataSetHelper(aCounts[2]));
+			jLFieldNrBinaries.setText(initGuiComponentsDataSetHelper(aCounts[3]));
 		}
+	}
+
+	// TODO use separate JLabels for "(x enabled)"
+	private String initGuiComponentsDataSetHelper(int[] theCounts)
+	{
+		int aCount = theCounts[0];
+		String aNrEnabled = (aCount == 0 ? "" : "    (" + theCounts[1] + " enabled)");
+		return String.format("%d%s", aCount, aNrEnabled);
 	}
 
 	/**
@@ -823,6 +843,8 @@ public class MiningWindow extends JFrame
 		if (aTable != null)
 		{
 			itsTable = aTable;
+			itsTotalCount = itsTable.getNrRows();
+			enableTableDependentComponents(true);
 			initGuiComponents();
 			jComboBoxTargetTypeActionPerformed(null);	// update hack
 		}
@@ -916,7 +938,7 @@ public class MiningWindow extends JFrame
 			(aTargetType == TargetType.SINGLE_NOMINAL ||
 				aTargetType == TargetType.MULTI_BINARY_CLASSIFICATION))
 		{
-			Log.logCommandLine("init");
+			Log.logCommandLine("init");	// TODO every time SINGLE_NOMINAL is selected
 			initTargetValueItems();
 		}
 
@@ -990,13 +1012,31 @@ public class MiningWindow extends JFrame
 			initTargetInfo();
 	}
 
+	/*
+	 * This method now completely bypasses Table.getBinaryIndex(), making that
+	 * method obsolete.
+	 * Also, this is much more efficient, looping over all Attributes only (max)
+	 * once, and stopping when all BINARY typed Attributes have been found.
+	 */
 	private void jListSecondaryTargetsActionPerformed(ListSelectionEvent evt)
 	{
 		// compute selected targets and update TargetConcept
-		int[] aSelection = jListSecondaryTargets.getSelectedIndices();
-		ArrayList<Attribute> aList = new ArrayList<Attribute>(aSelection.length);
-		for (int anIndex : aSelection)
-			aList.add(itsTable.getAttribute(itsTable.getBinaryIndex(anIndex)));
+//		int[] aSelection = jListSecondaryTargets.getSelectedIndices();
+//		ArrayList<Attribute> aList = new ArrayList<Attribute>(aSelection.length);
+//		for (int anIndex : aSelection)
+//			aList.add(itsTable.getAttribute(itsTable.getBinaryIndex(anIndex)));
+		int aNrBinary = jListSecondaryTargets.getSelectedIndices().length;
+		ArrayList<Attribute> aList = new ArrayList<Attribute>(aNrBinary);
+		for (Attribute a : itsTable.getAttributes())
+		{
+			if (a.isBinaryType())
+			{
+				aList.add(a);
+				if (--aNrBinary == 0)
+					break;
+			}
+		}
+
 		itsTargetConcept.setMultiTargets(aList);
 
 		//update GUI
@@ -1427,12 +1467,11 @@ public class MiningWindow extends JFrame
 		if (aTargetType == TargetType.MULTI_LABEL && jListSecondaryTargets.getSelectedIndices().length == 0)
 		{
 			int aCount = 0;
-			for (int i = 0; i < itsTable.getNrColumns(); i++)
+			for (Attribute anAttribute : itsTable.getAttributes())
 			{
-				Attribute anAttribute = itsTable.getAttribute(i);
 				if (anAttribute.isBinaryType())
 				{
-					addSecondaryTargetsItem(itsTable.getAttribute(i).getName());
+					addSecondaryTargetsItem(anAttribute.getName());
 					aCount++;
 				}
 			}
@@ -1537,11 +1576,7 @@ public class MiningWindow extends JFrame
 	private String getQualityMeasureName() { return (String) jComboBoxQualityMeasure.getSelectedItem(); }
 	private void setQualityMeasure(String aName) { jComboBoxQualityMeasure.setSelectedItem(aName); }
 	private void addQualityMeasureItem(String anItem) { jComboBoxQualityMeasure.addItem(anItem); }
-	private void removeAllQualityMeasureItems()
-	{
-		//	if(jComboBoxQualityMeasure.getItemCount() > 0)
-		jComboBoxQualityMeasure.removeAllItems();
-	}
+	private void removeAllQualityMeasureItems() { jComboBoxQualityMeasure.removeAllItems(); }
 
 	// target type - quality measure minimum (member of itsSearchParameters)
 	private float getQualityMeasureMinimum() { return getValue(0.0f, jTextFieldQualityMeasureMinimum.getText()); }
@@ -1593,10 +1628,7 @@ public class MiningWindow extends JFrame
 	private int getValue(int theDefaultValue, String theText)
 	{
 		int aValue = theDefaultValue;
-		try
-		{
-			aValue = Integer.parseInt(theText);
-		}
+		try { aValue = Integer.parseInt(theText); }
 		catch (Exception ex) {}	// TODO warning dialog
 		return aValue;
 	}
@@ -1604,10 +1636,7 @@ public class MiningWindow extends JFrame
 	private float getValue(float theDefaultValue, String theText)
 	{
 		float aValue = theDefaultValue;
-		try
-		{
-			aValue = Float.parseFloat(theText);
-		}
+		try { aValue = Float.parseFloat(theText); }
 		catch (Exception ex) {}	// TODO warning dialog
 		return aValue;
 	}

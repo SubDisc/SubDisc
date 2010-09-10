@@ -8,7 +8,9 @@ public class SubDisc
 	public static void main(String[] args)
 	{
 		FileHandler aLoader = new FileHandler(Action.OPEN_FILE);
-		if(aLoader.getSearchParameters() == null)
+		if (aLoader.getTable() == null)
+			new MiningWindow();
+		else if (aLoader.getSearchParameters() == null)
 			new MiningWindow(aLoader.getTable());
 		else
 			new MiningWindow(aLoader.getTable(), aLoader.getSearchParameters());

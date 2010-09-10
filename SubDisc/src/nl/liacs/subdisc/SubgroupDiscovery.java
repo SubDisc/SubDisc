@@ -92,7 +92,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 	{
 		try
 		{
-			Candidate aRootCandidate = new Candidate(theStart, 0.0F);
+			Candidate aRootCandidate = new Candidate(theStart, 0.0f);
 			itsCandidateQueue = new CandidateQueue(itsSearchParameters.getSearchStrategy(),
 													itsSearchParameters.getSearchStrategyWidth(),
 													aRootCandidate);
