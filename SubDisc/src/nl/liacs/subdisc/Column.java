@@ -390,6 +390,7 @@ public class Column implements XMLNodeInterface
 	{
 		if (isValidValue(theNewValue))
 		{
+			itsMissingValue = theNewValue;
 			switch (itsAttribute.getType())
 			{
 				case NOMINAL :
@@ -408,7 +409,7 @@ public class Column implements XMLNodeInterface
 				}
 				case BINARY :
 				{
-					boolean aNewValue = "0".equals(theNewValue); 
+					boolean aNewValue = "0".equals(theNewValue);
 					for (int i = itsMissing.nextSetBit(0); i >= 0; i = itsMissing.nextSetBit(i + 1))
 						if (aNewValue)
 							itsBinaries.clear(i);
@@ -486,3 +487,4 @@ public class Column implements XMLNodeInterface
 		XMLNode.addNodeTo(aNode, "enabled", isEnabled);
 	}
 }
+

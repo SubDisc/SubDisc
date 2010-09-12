@@ -90,7 +90,7 @@ public class AttributeTableModel extends AbstractTableModel
 				Log.logCommandLine(
 					"Error in AttributeTableModel.getValueAt(): " +
 					"invalid index: '" + col + "' for AttributeTableHeader.");
-				return null; 
+				return null;
 			}
 		}
 	}
@@ -149,5 +149,5 @@ public class AttributeTableModel extends AbstractTableModel
 		
 	}
 */
-	
 }
+

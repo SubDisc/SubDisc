@@ -889,7 +889,14 @@ public class MiningWindow extends JFrame
 
 	private void AttributeTypeChangeActionPerformed(ActionEvent evt)
 	{
-		new AttributeChangeWindow(this, itsTable);
+		final MiningWindow aParent = this;
+		SwingUtilities.invokeLater(new Runnable()
+		{
+			public void run()
+			{
+				new AttributeChangeWindow(aParent, itsTable);
+			}
+		});
 	}
 
 	/* Exit application */

@@ -38,6 +38,7 @@ public class AttributeChangeWindow extends JFrame implements ActionListener
 			setTitle("Attribute types for: " + itsTable.getTableName());
 			setLocation(100, 100);
 			setSize(GUI.DEFAULT_WINDOW_DIMENSION);
+			setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 			setVisible(true);
 		}
 	}
@@ -243,3 +244,4 @@ public class AttributeChangeWindow extends JFrame implements ActionListener
 
 	private void exitForm() { dispose(); }
 }
+
