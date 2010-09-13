@@ -249,16 +249,20 @@ public class FileLoaderARFF implements FileLoaderInterface
 			// itsTable.getColumn(itsTable.getAttribute(i)).add(s); break;
 			switch(aColumn.getType())
 			{
+				case NOMINAL :
+				{
+					aColumn.add(s);
+					break;
+				}
 				case NUMERIC :
+				case ORDINAL:
 				{
 					if(s.equalsIgnoreCase("?"))
-						aColumn.add(0f);
+						aColumn.add(0.0f);
 					else
 						aColumn.add(Float.valueOf(s));
 					break;
 				}
-				case NOMINAL :
-					aColumn.add(s); break;
 				case BINARY :
 				{
 					aColumn.add(BOOLEAN_POSITIVES.contains(s.toLowerCase()));

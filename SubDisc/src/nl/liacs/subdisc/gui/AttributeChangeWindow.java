@@ -18,7 +18,8 @@ public class AttributeChangeWindow extends JFrame implements ActionListener
 	private Table itsTable;
 	private JTable jTable;
 	private ButtonGroup aNewType = new ButtonGroup();
-	private JTextField aNewMissingValue = new JTextField("?");
+	private JTextField aNewMissingValue =
+		new JTextField(AttributeType.NOMINAL.DEFAULT_MISSING_VALUE);
 	private JLabel itsFeedBackLabel = new JLabel();
 	private MiningWindow itsMiningWindow;
 
@@ -38,7 +39,7 @@ public class AttributeChangeWindow extends JFrame implements ActionListener
 			setTitle("Attribute types for: " + itsTable.getTableName());
 			setLocation(100, 100);
 			setSize(GUI.DEFAULT_WINDOW_DIMENSION);
-			setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+			setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 			setVisible(true);
 		}
 	}
@@ -78,8 +79,8 @@ public class AttributeChangeWindow extends JFrame implements ActionListener
 
 		aSelectionPanel.add(GUI.buildButton("Select All", 'A', "all", this));
 		// TODO could use generic loop over all AttributeTypes
-		aSelectionPanel.add(GUI.buildButton("Select All Numeric", 'N', AttributeType.NUMERIC.toString(), this));
 		aSelectionPanel.add(GUI.buildButton("Select All Nominal", 'L', AttributeType.NOMINAL.toString(), this));
+		aSelectionPanel.add(GUI.buildButton("Select All Numeric", 'N', AttributeType.NUMERIC.toString(), this));
 		aSelectionPanel.add(GUI.buildButton("Select All Ordinal", 'O', AttributeType.ORDINAL.toString(), this));
 		aSelectionPanel.add(GUI.buildButton("Select All Binary", 'B', AttributeType.BINARY.toString(), this));
 		aSelectionPanel.add(GUI.buildButton("Invert Selection", 'I', "invert", this));

@@ -20,17 +20,48 @@ public class Attribute implements XMLNodeInterface
 	private String itsShort;
 	private int itsIndex;
 
+	/**
+	 * There are only a limited number of AttributeTypes an
+	 * {@link Attribute Attribute} can have. The AttributeType enum contains
+	 * them all. The <code>public final String DEFAULT_MISSING_VALUE</code>
+	 * gives the default missing value for that AttributeType.
+	 */
 	public enum AttributeType
 	{
-		NOMINAL,
-		NUMERIC,
-		ORDINAL,
-		BINARY;
+		NOMINAL("?"),
+		NUMERIC("0.0"),
+		ORDINAL("0.0"),
+		BINARY("0");
 
+		/*
+		 * NOTE if DEFAULT_MISSING_VALUE is changed for NUMERIC/ORDINAL, check
+		 * the switch() code for the Column constructor:
+		 * public Column(Attribute theAttribute, int theNrRows)
+		 */
+		/**
+		 * The default missing value for each AttributeType. To set a different
+		 * missing value use
+		 * {@link Column.setNewMissingValue() Column.setNewMissingValue()}.
+		 */
+		public final String DEFAULT_MISSING_VALUE;
+
+		private AttributeType(String theDefaultMissingValue)
+		{
+			DEFAULT_MISSING_VALUE = theDefaultMissingValue; 
+		}
+
+		/**
+		 * Returns the AttributeType corresponding to the String parameter. This
+		 * method is case insensitive. If the corresponding AttributeType can
+		 * not be found, the default AttributeType NOMINAL is returned.
+		 * @param theType the String corresponding to an AtrtibuteType
+		 * @return the AttributeType corresponding to the String parameter, or
+		 * AttributeType NOMINAL if no corresponding AttributeType is found.
+		 */
 		public static AttributeType getAttributeType(String theType)
 		{
 			for (AttributeType at : AttributeType.values())
-				if (at.toString().equals(theType))
+				if (at.toString().equalsIgnoreCase(theType))
 					return at;
 
 			/*

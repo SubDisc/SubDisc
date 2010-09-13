@@ -11,7 +11,7 @@ import org.w3c.dom.*;
  * members store some of the important characteristics of a Column. A Column is
  * identified by its [@link Attribute Attribute}. One important member stores
  * the value for data that was missing (having a value of '?') in the original
- * data. Default values for the {@link AttributeType AttributeType}s are: 0.0f
+ * data. Default values for the {@link AttributeType AttributeType}s are: 0.0
  * for <code>NUMERIC</code>/<code>ORDINAL</code>, 0 for <code>BINARY</code>
  * (indicating <code>false</code>) and "" for <code>NOMINAL</code> (the empty
  * String).
@@ -36,23 +36,28 @@ public class Column implements XMLNodeInterface
 		itsAttribute = theAttribute;
 		switch(itsAttribute.getType())
 		{
-			case NUMERIC :
-			case ORDINAL : 
-			{
-				itsFloats = new ArrayList<Float>(theNrRows);
-				itsMissingValue = String.valueOf(0.0f);
-				break;
-			}
 			case NOMINAL :
 			{
 				itsNominals = new ArrayList<String>(theNrRows);
-				itsMissingValue = "";
+				itsMissingValue = AttributeType.NOMINAL.DEFAULT_MISSING_VALUE;
+				break;
+			}
+			case NUMERIC :
+			{
+				itsFloats = new ArrayList<Float>(theNrRows);
+				itsMissingValue = AttributeType.NUMERIC.DEFAULT_MISSING_VALUE;
+				break;
+			}
+			case ORDINAL :
+			{
+				itsFloats = new ArrayList<Float>(theNrRows);
+				itsMissingValue = AttributeType.ORDINAL.DEFAULT_MISSING_VALUE;
 				break;
 			}
 			case BINARY :
 			{
 				itsBinaries = new BitSet(theNrRows);
-				itsMissingValue = "0";
+				itsMissingValue = AttributeType.BINARY.DEFAULT_MISSING_VALUE;
 				break;
 			}
 			default : logTypeError("Column() Constructor"); break;
@@ -94,9 +99,9 @@ public class Column implements XMLNodeInterface
 	{
 		switch (itsAttribute.getType())
 		{
+			case NOMINAL : return getNominal(theIndex);
 			case NUMERIC :
 			case ORDINAL : return itsFloats.get(theIndex).toString();
-			case NOMINAL : return getNominal(theIndex);
 			case BINARY : return getBinary(theIndex)?"1":"0";
 			default : return ("Unknown type: " + itsAttribute.getTypeName());
 		}
@@ -137,9 +142,9 @@ public class Column implements XMLNodeInterface
 	{
 		switch(itsAttribute.getType())
 		{
+			case NOMINAL : Log.logCommandLine(itsNominals.toString()); break;
 			case NUMERIC :
 			case ORDINAL : Log.logCommandLine(itsFloats.toString()); break;
-			case NOMINAL : Log.logCommandLine(itsNominals.toString()); break;
 			case BINARY : Log.logCommandLine(itsBinaries.toString()); break;
 			default : logTypeError("Column.print()"); break;
 		}
@@ -190,13 +195,48 @@ public class Column implements XMLNodeInterface
 			AttributeType aNewType = AttributeType.getAttributeType(theType);
 			switch (aNewType)
 			{
+				case NOMINAL : return toNominalType();
 				case NUMERIC :
 				case ORDINAL : return toNumericType(aNewType);
-				case NOMINAL : return toNominalType();
 				case BINARY : return toBinaryType();
 				default : logTypeError("Column.setType()"); return false;
 			}
 		}
+	}
+
+	/*
+	 * The AttributeType of a Column can always be changed to NOMINAL.
+	 */
+	private boolean toNominalType()
+	{
+		switch (itsAttribute.getType())
+		{
+			case NOMINAL : break;	// should not happen
+			case NUMERIC :
+			case ORDINAL :
+			{
+				itsNominals = new ArrayList<String>(itsFloats.size());
+				for (Float f : itsFloats)
+					itsNominals.add(Float.toString(f));
+				itsFloats = null;
+				break;
+			}
+			case BINARY :
+			{
+				/*
+				 * Initialise to "0", then update only set bits in itsBitSet.
+				 * Cleanup (for GarbageCollector).
+				 */
+				itsNominals= new ArrayList<String>(Collections.nCopies(itsBinaries.size(), "0"));
+				for (int i = itsBinaries.nextSetBit(0); i >= 0; i = itsBinaries.nextSetBit(i + 1))
+					itsNominals.set(i, "1");
+				itsBinaries = null;
+				break;
+			}
+			default : logTypeError("Column.toNominalType()"); return false;
+		}
+		itsMissingValue = AttributeType.NOMINAL.DEFAULT_MISSING_VALUE;
+		return itsAttribute.setType(AttributeType.NOMINAL);
 	}
 
 	/*
@@ -209,8 +249,6 @@ public class Column implements XMLNodeInterface
 	{
 		switch (itsAttribute.getType())
 		{
-			case NUMERIC :
-			case ORDINAL : break;
 			case NOMINAL :
 			{
 				itsFloats = new ArrayList<Float>(itsNominals.size());
@@ -234,6 +272,8 @@ public class Column implements XMLNodeInterface
 				itsNominals = null;
 				break;
 			}
+			case NUMERIC :
+			case ORDINAL : break;
 			case BINARY :
 			{
 				/*
@@ -248,41 +288,8 @@ public class Column implements XMLNodeInterface
 			}
 			default : logTypeError("Column.toNumericType()"); return false;
 		}
+		itsMissingValue = theType.DEFAULT_MISSING_VALUE;
 		return itsAttribute.setType(theType);
-	}
-
-	/*
-	 * The AttributeType of a Column can always be changed to NOMINAL.
-	 */
-	private boolean toNominalType()
-	{
-		switch (itsAttribute.getType())
-		{
-			case NUMERIC :
-			case ORDINAL :
-			{
-				itsNominals = new ArrayList<String>(itsFloats.size());
-				for (Float f : itsFloats)
-					itsNominals.add(Float.toString(f));
-				itsFloats = null;
-				break;
-			}
-			case NOMINAL : break;	// should not happen
-			case BINARY :
-			{
-				/*
-				 * Initialise to "0", then update only set bits in itsBitSet.
-				 * Cleanup (for GarbageCollector).
-				 */
-				itsNominals= new ArrayList<String>(Collections.nCopies(itsBinaries.size(), "0"));
-				for (int i = itsBinaries.nextSetBit(0); i >= 0; i = itsBinaries.nextSetBit(i + 1))
-					itsNominals.set(i, "1");
-				itsBinaries = null;
-				break;
-			}
-			default : logTypeError("Column.toNominalType()"); return false;
-		}
-		return itsAttribute.setType(AttributeType.NOMINAL);
 	}
 
 	/*
@@ -300,6 +307,17 @@ public class Column implements XMLNodeInterface
 		{
 			switch (itsAttribute.getType())
 			{
+				case NOMINAL :
+				{
+					itsBinaries = new BitSet(itsNominals.size());
+					String aTrue = itsNominals.get(0);
+					// All false initially, only set 'true' bits.
+					for (int i = 0, j = itsNominals.size(); i < j; i++)
+						if (aTrue.equals(itsNominals.get(i)))
+								itsBinaries.set(i);
+					itsNominals = null;
+					break;
+				}
 				case NUMERIC :
 				case ORDINAL :
 				{
@@ -312,20 +330,10 @@ public class Column implements XMLNodeInterface
 					itsFloats = null;
 					break;
 				}
-				case NOMINAL :
-				{
-					itsBinaries = new BitSet(itsNominals.size());
-					String aTrue = itsNominals.get(0);
-					// All false initially, only set 'true' bits.
-					for (int i = 0, j = itsNominals.size(); i < j; i++)
-						if (aTrue.equals(itsNominals.get(i)))
-								itsBinaries.set(i);
-					itsNominals = null;
-					break;
-				}
 				case BINARY : break;	// should not happen
 				default : logTypeError("Column.toBinaryType()"); return false;
 			}
+			itsMissingValue = AttributeType.BINARY.DEFAULT_MISSING_VALUE;
 			return itsAttribute.setType(AttributeType.BINARY);
 		}
 	}
@@ -432,13 +440,13 @@ public class Column implements XMLNodeInterface
 	{
 		switch(itsAttribute.getType())
 		{
+			case NOMINAL : return true;
 			case NUMERIC :
 			case ORDINAL :
 			{
 				try { Float.parseFloat(theNewValue); return true; }
 				catch (NumberFormatException anException) { return false; }
 			}
-			case NOMINAL : return true;
 			case BINARY :
 			{
 				// TODO take it out of FileLoaderARFF and put it into ?
@@ -461,9 +469,9 @@ public class Column implements XMLNodeInterface
 	{
 		switch (itsAttribute.getType())
 		{
+			case NOMINAL : return new TreeSet<String>(itsNominals).size();
 			case NUMERIC:
 			case ORDINAL : return new TreeSet<Float>(itsFloats).size();
-			case NOMINAL : return new TreeSet<String>(itsNominals).size();
 			case BINARY : return 2;
 			default : logTypeError("Column.getNrDistinct()"); return 0;
 		}
