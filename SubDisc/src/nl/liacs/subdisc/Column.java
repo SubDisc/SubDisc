@@ -7,17 +7,17 @@ import nl.liacs.subdisc.Attribute.*;
 import org.w3c.dom.*;
 
 /**
- * A Column contains all data from a column read from a file or database. Its
- * members store some of the important characteristics of a Column. A Column is
- * identified by its [@link Attribute Attribute}. One important member stores
- * the value for data that was missing (having a value of '?') in the original
- * data. Default values for the {@link AttributeType AttributeType}s are: 0.0
- * for <code>NUMERIC</code>/<code>ORDINAL</code>, 0 for <code>BINARY</code>
- * (indicating <code>false</code>) and "" for <code>NOMINAL</code> (the empty
- * String).
+ * A Column contains all data from a column read from a <code>File</code> or
+ * database. Its members store some of the important characteristics of the
+ * Column. A Column is identified by its [@link Attribute Attribute}. One
+ * important member stores the value for data that was missing (having a value
+ * of '?') in the original data. See {@link AttributeType AttributeType} for the
+ * default values for the various AttributeTypes.
  */
 public class Column implements XMLNodeInterface
 {
+	private static final int DEFAULT_INIT_SIZE = 1000;
+
 	// when adding/removing members be sure to update addNodeTo() and loadNode()
 	private Attribute itsAttribute;
 	private ArrayList<Float> itsFloats;
@@ -25,15 +25,54 @@ public class Column implements XMLNodeInterface
 	private BitSet itsBinaries;
 	private String itsMissingValue;
 	private BitSet itsMissing = new BitSet();
-	private int itsSize;
+	private int itsSize = 0;
 	private float itsMin = Float.POSITIVE_INFINITY;
 	private float itsMax = Float.NEGATIVE_INFINITY;
 	private boolean isEnabled = true;
 
+	/**
+	 * 
+	 * @param theAttribute
+	 */
+	public Column(Attribute theAttribute)
+	{
+		itsAttribute = theAttribute;
+		setupColumn(DEFAULT_INIT_SIZE);
+	}
+
+	/**
+	 * 
+	 * @param theAttribute
+	 */
+
 	public Column(Attribute theAttribute, int theNrRows)
 	{
-		itsSize = 0;
 		itsAttribute = theAttribute;
+		setupColumn(theNrRows);
+	}
+
+	/**
+	 * 
+	 * @param theAttribute
+	 */
+	public Column(Node theColumnNode)
+	{
+		NodeList aChildren = theColumnNode.getChildNodes();
+		for (int i = 0, j = aChildren.getLength(); i < j; i++)
+		{
+			Node aSetting = aChildren.item(i);
+			String aNodeName = aSetting.getNodeName();
+			if ("attribute".equalsIgnoreCase(aNodeName))
+				itsAttribute = new Attribute(aSetting);
+			else if ("missing_value".equalsIgnoreCase(aNodeName))
+				itsMissingValue = aSetting.getTextContent();
+			else if ("enabled".equalsIgnoreCase(aNodeName))
+				isEnabled = Boolean.valueOf(aSetting.getTextContent());
+		}
+	}
+
+	private void setupColumn(int theNrRows)
+	{
 		switch(itsAttribute.getType())
 		{
 			case NOMINAL :
@@ -64,22 +103,6 @@ public class Column implements XMLNodeInterface
 		}
 	}
 
-	public Column(Node theColumnNode)
-	{
-		NodeList aChildren = theColumnNode.getChildNodes();
-		for (int i = 0, j = aChildren.getLength(); i < j; i++)
-		{
-			Node aSetting = aChildren.item(i);
-			String aNodeName = aSetting.getNodeName();
-			if ("attribute".equalsIgnoreCase(aNodeName))
-				itsAttribute = new Attribute(aSetting);
-			else if ("missing_value".equalsIgnoreCase(aNodeName))
-				itsMissingValue = aSetting.getTextContent();
-			else if ("enabled".equalsIgnoreCase(aNodeName))
-				isEnabled = Boolean.valueOf(aSetting.getTextContent());
-		}
-	}
-
 	public void add(float theFloat) { itsFloats.add(new Float(theFloat)); itsSize++; }
 	public void add(boolean theBinary)
 	{
@@ -92,6 +115,7 @@ public class Column implements XMLNodeInterface
 	public Attribute getAttribute() { return itsAttribute; }	// TODO return copy of mutable type
 	public AttributeType getType() { return itsAttribute.getType(); }
 	public String getName() {return itsAttribute.getName(); }
+	// TODO these methods should all check for ArrayIndexOutOfBounds Exceptions
 	public float getFloat(int theIndex) { return itsFloats.get(theIndex).floatValue(); }
 	public String getNominal(int theIndex) { return itsNominals.get(theIndex); }
 	public boolean getBinary(int theIndex) { return itsBinaries.get(theIndex); }

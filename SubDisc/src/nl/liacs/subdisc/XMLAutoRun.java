@@ -1,14 +1,11 @@
 package nl.liacs.subdisc;
 
-import java.io.File;
+import java.io.*;
 
-import nl.liacs.subdisc.FileHandler.Action;
-import nl.liacs.subdisc.XMLDocument.XMLType;
+import nl.liacs.subdisc.FileHandler.*;
+import nl.liacs.subdisc.XMLDocument.*;
 
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
+import org.w3c.dom.*;
 
 public class XMLAutoRun
 {
@@ -18,22 +15,30 @@ public class XMLAutoRun
 
 	public XMLAutoRun(SearchParameters theSearchParameters, Table theTable, AutoRun theFileOption)
 	{
-		if(theSearchParameters == null || theTable == null)
+		if (theSearchParameters == null || theTable == null)
 			return;
+		else
+		{
+			File aFile = new FileHandler(Action.SAVE).getFile();
 
-		File aFile = new FileHandler(Action.SAVE).getFile();
+			if (aFile == null)
+				return;
+			else
+				buildDocument(aFile, theSearchParameters, theTable, theFileOption);
+		}
 
-		if(aFile == null)
-			return;
-
-		buildDocument(aFile, theSearchParameters, theTable, theFileOption);
 	}
 
+	// TODO move to FileLoaderXML, method never used
 	/**
-	 * TODO move to FileLoaderXML
-	 * Load AutoRun file and create the SearchParameters and Table it describes.
-	 * @param theFile
-	 * @return true iif the file is parsed successfully and all data is set.
+	 * Loads an <code>AutoRun File</code> and creates the
+	 * {@link SearchParameter SearchParameter}s and
+	 * {@link Table Table} it describes.
+	 * 
+	 * @param theFile the <code>File</code> to load
+	 * 
+	 * @return <code>true</code> if and only if the <code>File</code> is parsed
+	 * successfully and all data is set
 	 */
 	public static boolean loadAutoRunFile(File theFile)
 	{
@@ -44,20 +49,23 @@ public class XMLAutoRun
 	private void buildDocument(File theFile, SearchParameters theSearchParameters, Table theTable, AutoRun theFileOption)
 	{
 		// TODO from  here create new method, should not be in constructor
-		if(theFileOption == AutoRun.CREATE)
+		if (theFileOption == AutoRun.CREATE)
 			itsDocument = XMLDocument.buildDocument(XMLType.AUTORUN);
 		else
 			itsDocument = XMLDocument.parseXMLFile(theFile);
 
-		if(itsDocument == null)
+		if (itsDocument == null)
 			return;	// TODO error message in XMLDocument
 
-		Node autorun = itsDocument.getLastChild();
-		autorun.appendChild(buildExperimentElement(theSearchParameters, theTable));
+		Node anAutorunNode = itsDocument.getLastChild();
+		anAutorunNode
+			.appendChild(buildExperimentElement(theSearchParameters, theTable));
 
 		// do this only after trying to insert new node
-		((Element) autorun).setAttribute("nr_experiments",
-											String.valueOf(autorun.getChildNodes().getLength()));
+		((Element) anAutorunNode).setAttribute("nr_experiments",
+												String.valueOf(anAutorunNode
+																.getChildNodes()
+																.getLength()));
 
 		XMLDocument.saveDocument(itsDocument, theFile);
 	}
@@ -68,20 +76,21 @@ public class XMLAutoRun
 		// edited by hand and experiments are added/removed.
 		NodeList aNodeList = itsDocument.getLastChild().getChildNodes();
 		int aLength = aNodeList.getLength();
-		for(int i = 0; i < aLength; ++i)
-			((Element)aNodeList.item(i)).setAttribute("id", String.valueOf(i));
+		for (int i = 0; i < aLength; i++)
+			((Element) aNodeList.item(i)).setAttribute("id", String.valueOf(i));
 
 		Node anExperimentNode = itsDocument.createElement("experiment");
-		((Element) anExperimentNode).setAttribute("id", String.valueOf(aLength));
+		((Element) anExperimentNode).setAttribute("id",
+													String.valueOf(aLength));
 //		((Element) anExperimentNode).setIdAttribute("id", true);
 
-		for(XMLNode x : XMLNode.values())
-			x.createNode(anExperimentNode, theSearchParameters, theTable);
+		for (XMLNode aNode : XMLNode.values())
+			aNode.createNode(anExperimentNode, theSearchParameters, theTable);
 
 		return anExperimentNode;
 	}
 
-	/**
+	/*
 	 * TODO for PrimaryTarget/SecodaryTarget(s) the index, name, short and type
 	 * can be taken from the table, no need to include them as Nodes.
 	 * TODO Make a Node for MRML?
@@ -99,11 +108,13 @@ public class XMLAutoRun
 
 		public void createNode(Node theExperimentNode, SearchParameters theSearchParameters, Table theTable)
 		{
-			if(this == TARGET_CONCEPT)
-				createTargetConceptNode(theExperimentNode, theSearchParameters.getTargetConcept());
-			else if(this == SEARCH_PARAMETERS)
-				createSearchParametersNode(theExperimentNode, theSearchParameters);
-			else if(this == TABLE)
+			if (this == TARGET_CONCEPT)
+				createTargetConceptNode(theExperimentNode,
+										theSearchParameters.getTargetConcept());
+			else if (this == SEARCH_PARAMETERS)
+				createSearchParametersNode(theExperimentNode,
+											theSearchParameters);
+			else if (this == TABLE)
 				createTableNode(theExperimentNode, theTable);
 /*
 			else

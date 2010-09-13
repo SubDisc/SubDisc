@@ -15,6 +15,7 @@ import nl.liacs.subdisc.Attribute.AttributeType;
 public class FileLoaderARFF implements FileLoaderInterface
 {
 	private Table itsTable = null;
+	private boolean checkDataWithTable = false; // if loaded from XML
 	private int itsNrDataRows = 0;
 	private ArrayList<NominalAttribute> itsNominalAttributes = new ArrayList<NominalAttribute>();	// used to check data declarations
 	public static  ArrayList<String> BOOLEAN_NEGATIVES = new ArrayList<String>(Arrays.asList(new String[] { "0", "false", "F", "no" }));
@@ -30,9 +31,16 @@ public class FileLoaderARFF implements FileLoaderInterface
 
 		private final Pattern text;
 
-		Keyword(String theKeyword) { text = Pattern.compile("^\\s*" + theKeyword + "\\s*", Pattern.CASE_INSENSITIVE); }
+		Keyword(String theKeyword)
+		{
+			text = Pattern.compile("^\\s*" + theKeyword + "\\s*",
+									Pattern.CASE_INSENSITIVE);
+		}
 
-		boolean occursIn(String theString) { return this.text.matcher(theString).find(); }
+		boolean atStartOfLine(String theString)
+		{
+			return this.text.matcher(theString).find();
+		}
 	}
 
 	private class NominalAttribute
@@ -49,10 +57,24 @@ public class FileLoaderARFF implements FileLoaderInterface
 
 	public FileLoaderARFF(File theFile)
 	{
-		if(theFile != null && theFile.exists())
-			loadFile(theFile);
+		if (theFile == null || !theFile.exists())
+			;	// TODO new ErrorDialog(e, ErrorDialog.noSuchFileError);
 		else
-			;	// new ErrorDialog(e, ErrorDialog.noSuchFileError);
+			loadFile(theFile);
+	}
+
+	// TODO
+	public FileLoaderARFF(File theFile, Table theTable)
+	{
+		if(theFile == null || !theFile.exists())
+		{
+			Log.logCommandLine(
+					String.format("FileLoaderXML: can not open File '%s'",
+									theFile));
+			return;
+		}
+		else
+			checkDataWithTable = true;
 	}
 
 	// TODO multiple '@relation' and '@data' declarations should throw error
@@ -70,63 +92,93 @@ public class FileLoaderARFF implements FileLoaderInterface
 			boolean dataFound = false;
 
 			// .toLowerCase()
-			while((aLine = aReader.readLine()) != null)
+			while ((aLine = aReader.readLine()) != null)
 			{
 				aLine.trim();
-				if(Keyword.COMMENT.occursIn(aLine) || aLine.isEmpty())
+				if (Keyword.COMMENT.atStartOfLine(aLine) || aLine.isEmpty())
 					continue;
 
-				if(Keyword.END.occursIn(aLine))
-					break;
-
-				if(!relationFound)
+				else if (Keyword.END.atStartOfLine(aLine))
 				{
-					if(Keyword.RELATION.occursIn(aLine))
+					// TODO check for premature EOF
+					if (!dataFound)
+						;
+					break;
+				}
+
+				else if (Keyword.RELATION.atStartOfLine(aLine))
+				{
+					if (!relationFound)
 					{
-						itsTable = new Table(removeOuterQuotes(aLine.split("\\s", 2)[1]), theFile.getName());
+						// TODO if TableNames don't match that's OK for now
+						if (checkDataWithTable)
+							continue;
+						else
+							itsTable = new Table(removeOuterQuotes(aLine.split("\\s", 2)[1]), theFile.getName());
 //						itsTable.setName();	// TODO use m.end()
-//						itsTable.setSource(theFile.getName());	// TODO without extension? FileType.removeExtension(theFile)
+//						itsTable.setSource(theFile.getName());
 						relationFound = true;
 					}
 					else
 					{
 						// if(otherKeyWordFound) { criticalError(noRelationError); }
-						continue;
+						Log.logCommandLine(
+							String.format(
+								"FileLoaderARFF: multiple '@relation' declarations in File '%s', using: '%s'.",
+								theFile,
+								itsTable.getTableName()));
 					}
 				}
 
-				else if(!attributeFound)
+				else if (Keyword.ATTRIBUTE.atStartOfLine(aLine))
 				{
-					if(Keyword.ATTRIBUTE.occursIn(aLine))
+					//TODO malformed file warning, no table created, abort
+					if (!relationFound)
+					{
+						// malformedFileWarning();
+						break;
+					}
+
+					if (!attributeFound)
 					{
 						Matcher m;
 						int aCount = 0;
 
+						// in do-while because attributeFound is set afterwards
 						do
 						{
-							if(Keyword.COMMENT.occursIn(aLine))
+							if (Keyword.COMMENT.atStartOfLine(aLine) || aLine.isEmpty())
 								continue;
+							else if (Keyword.RELATION.atStartOfLine(aLine))
+							{
+								// malformedFileWarning();
+								continue;	// try to continue
+							}
 
 							m = Keyword.ATTRIBUTE.text.matcher(aLine);
-							if(m.find())
+							if (m.find())
 							{
-								itsTable.getColumns().add(new Column(parseAttribute(aLine.substring(m.end()), aCount), 1000));	// TODO other default? 1000
-								aCount++;
+								itsTable
+								.getColumns()
+								.add(new Column(
+										parseAttribute(aLine.substring(m.end()),
+														aCount++),
+										1000));	// TODO other default?
 							}
-							else if(Keyword.DATA.occursIn(aLine))
+							else if (Keyword.DATA.atStartOfLine(aLine))
 							{
 								dataFound = true;
 								break;
 							}
 						}
-						while((aLine = aReader.readLine()) != null);
+						while ((aLine = aReader.readLine()) != null);
 
 						attributeFound = true;
 					}
 					else
 					{
-						// if(dataKeyWordFound) { criticalError(noAttributeError); }
-						continue;
+							// if(dataKeyWordFound) { criticalError(noAttributeError); }
+							continue;
 					}
 				}
 
@@ -187,7 +239,7 @@ public class FileLoaderARFF implements FileLoaderInterface
 		String aName;
 
 		// get attribute name (not so clean)
-		if(theLine.startsWith("\'"))
+		if (theLine.startsWith("\'"))
 			aName = removeOuterQuotes(theLine);
 		else
 			aName = theLine.split("\\s", 2)[0];
@@ -272,7 +324,7 @@ public class FileLoaderARFF implements FileLoaderInterface
 		}
 
 		if(!theString.isEmpty())
-			if(!Keyword.COMMENT.occursIn(theString))
+			if(!Keyword.COMMENT.atStartOfLine(theString))
 				System.out.println("ERROR: " + theString);
 				// criticalError(toManyArgumentsError);
 

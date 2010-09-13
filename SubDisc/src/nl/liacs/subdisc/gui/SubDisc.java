@@ -1,6 +1,6 @@
 package nl.liacs.subdisc.gui;
 
-import nl.liacs.subdisc.FileHandler;
+import nl.liacs.subdisc.*;
 import nl.liacs.subdisc.FileHandler.Action;
 
 public class SubDisc
@@ -8,12 +8,15 @@ public class SubDisc
 	public static void main(String[] args)
 	{
 		FileHandler aLoader = new FileHandler(Action.OPEN_FILE);
-		if (aLoader.getTable() == null)
+		Table aTable = aLoader.getTable();
+		SearchParameters aSearchParameters = aLoader.getSearchParameters();
+
+		if (aTable == null)
 			new MiningWindow();
-		else if (aLoader.getSearchParameters() == null)
-			new MiningWindow(aLoader.getTable());
+		else if (aSearchParameters == null)
+			new MiningWindow(aTable);
 		else
-			new MiningWindow(aLoader.getTable(), aLoader.getSearchParameters());
+			new MiningWindow(aTable, aSearchParameters);
 	}
 
 }

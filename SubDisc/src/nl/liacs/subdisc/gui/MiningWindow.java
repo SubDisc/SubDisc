@@ -859,8 +859,10 @@ public class MiningWindow extends JFrame
 	private void jMenuItemAboutSubDiscActionPerformed(ActionEvent evt)
 	{
 		// TODO
-		JOptionPane.showMessageDialog(null, "Subgroup Discovery", "About SubDisc",
-				JOptionPane.INFORMATION_MESSAGE);
+		JOptionPane.showMessageDialog(null,
+										"Subgroup Discovery",
+										"About SubDisc",
+										JOptionPane.INFORMATION_MESSAGE);
 	}
 
 	private void jMenuItemExitActionPerformed(ActionEvent evt)

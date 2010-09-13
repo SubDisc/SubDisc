@@ -33,26 +33,46 @@ public class FileHandler extends JFrame
 		}
 	}
 
+	public FileHandler(File theFile)
+	{
+		if (theFile == null || !theFile.exists())
+			return;
+		else
+			itsFile = theFile;
+	}
+
 	private void openFile()
 	{
 		showFileChooser(Action.OPEN_FILE);
 
-		if(itsFile == null)
+		if (itsFile == null || !itsFile.exists())
 			return;
 
-		String aFileName = itsFile.getName().toLowerCase();
-
-		if(aFileName.endsWith(".txt"))
-			itsTable = new FileLoaderTXT(itsFile).getTable();
-		else if(aFileName.endsWith(".arff"))
-			itsTable = new FileLoaderARFF(itsFile).getTable();
-		else if(aFileName.endsWith(".xml"))
+		switch (FileType.getFileType(itsFile))
 		{
-			FileLoaderXML aLoader = new FileLoaderXML(itsFile);
-			itsTable = aLoader.getTable();
-			itsSearchParameters =  aLoader.getSearchParameters();
+			case TXT : itsTable = new FileLoaderTXT(itsFile).getTable(); break;
+			case ARFF :
+			{
+				itsTable = new FileLoaderARFF(itsFile).getTable();
+				break;
+			}
+			case XML :
+			{
+				FileLoaderXML aLoader = new FileLoaderXML(itsFile);
+				itsTable = aLoader.getTable();
+				itsSearchParameters =  aLoader.getSearchParameters();
+				break;
+			}
+			// unknown FileType, log error
+			default :
+			{
+				Log.logCommandLine(
+					String.format(
+								"FileHandler: unknown FileType for File '%s'.",
+								itsFile.getName()));
+				break;
+			}
 		}
-
 //			itsTable.print();	// TODO
 	}
 
@@ -67,11 +87,6 @@ public class FileHandler extends JFrame
 		return itsFile;
 	}
 
-	/**
-	 * Shows a JChooser dialog for opening and saving files.
-	 * @param The file types to be shown, based on extensions.
-	 * @return The selected file if one is chosen, null otherwise.
-	 */
 	private void showFileChooser(Action theAction)
 	{
 		//setIconImage(MiningWindow.ICON)
@@ -79,13 +94,13 @@ public class FileHandler extends JFrame
 		aChooser.addChoosableFileFilter(new FileTypeFilter(FileType.TXT));
 		aChooser.addChoosableFileFilter(new FileTypeFilter(FileType.ARFF));
 		aChooser.addChoosableFileFilter(new FileTypeFilter(FileType.XML));
-		aChooser.setFileFilter (new FileTypeFilter(FileType.ALL_DATA));	// TODO ALL_DATA for now
+		aChooser.setFileFilter (new FileTypeFilter(FileType.ALL_DATA_FILES));
 
 		int theOption = -1;
 
-		if(theAction == Action.OPEN_FILE)
+		if (theAction == Action.OPEN_FILE)
 			theOption = aChooser.showOpenDialog(this);
-		else if(theAction == Action.SAVE)
+		else if (theAction == Action.SAVE)
 			theOption = aChooser.showSaveDialog(this);
 
 		if(theOption == JFileChooser.APPROVE_OPTION)
@@ -96,19 +111,33 @@ public class FileHandler extends JFrame
 	}
 
 	/**
-	 * If a JFileChooser dialog was show and the user selected a file, use this
-	 * method to retrieve it. Return null if the user has not made an approved
-	 * selection.
-	 * @return The last file selected, and approved, by the user.
+	 * If a <code>JFileChooser</code> dialog was shown and a <code>File</code>
+	 * was selected, use this method to retrieve it.
+	 * 
+	 * @return a <code>File</code>, or <code>null</code> if no approved
+	 * selection was made
 	 */
 	public File getFile() { return itsFile; };
 
 	/**
-	 * If the FileHandler has successfully loaded a Table from a file or a
-	 * database this method returns the Table, else it returns null.
-	 * @return itsTable if present, null otherwise
+	 * If this FileHandler successfully loaded a {@link Table Table} from a
+	 * <code>File</code> or a database, use this method to retrieve it.
+	 * 
+	 * @return the <code>Table</code> if present, <code>null</code> otherwise
 	 */
 	public Table getTable() { return itsTable; };
-	public SearchParameters getSearchParameters() { return itsSearchParameters; };
+
+	/**
+	 * If the FileHandler successfully loaded the
+	 * {@link SearchParameters SearchParameters} from a <code>File</code>, use
+	 * this method to retrieve them.
+	 * 
+	 * @return the <code>SearchParameters</code> if present, <code>null</code>
+	 * otherwise
+	 */
+	public SearchParameters getSearchParameters()
+	{
+		return itsSearchParameters;
+	};
 
 }

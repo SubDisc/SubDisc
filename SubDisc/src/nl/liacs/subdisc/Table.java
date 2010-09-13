@@ -64,6 +64,8 @@ public class Table
 			else if ("column".equalsIgnoreCase(aNodeName))
 				itsColumns.add(new Column(aSetting));
 		}
+		// now all columns are know, check if data (Attributes) is valid
+		
 		update();
 	}
 
@@ -82,7 +84,7 @@ public class Table
 		itsNrRows = itsColumns.size() > 0 ? itsColumns.get(0).size() : 0;
 		itsNrColumns = itsColumns.size();	// needed for MiningWindow
 		itsAttributes.clear();	// expensive
-		for(Column c : itsColumns)
+		for (Column c : itsColumns)
 			itsAttributes.add(c.getAttribute());
 	}
 
