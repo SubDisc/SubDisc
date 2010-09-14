@@ -36,7 +36,7 @@ public class FileLoaderXML implements FileLoaderInterface
 		{
 			String aNodeName = aSettings.item(i).getNodeName();
 			if ("table".equalsIgnoreCase(aNodeName))
-				itsTable = new Table(aSettings.item(i));
+				itsTable = new Table(aSettings.item(i), theFile.getParent());
 			else if ("search_parameters".equalsIgnoreCase(aNodeName))
 				itsSearchParameters = new SearchParameters(aSettings.item(i));
 			// NOTE order sensitive, SearchParameters must be set first

@@ -69,6 +69,7 @@ public class Column implements XMLNodeInterface
 			else if ("enabled".equalsIgnoreCase(aNodeName))
 				isEnabled = Boolean.valueOf(aSetting.getTextContent());
 		}
+		setupColumn(DEFAULT_INIT_SIZE);
 	}
 
 	private void setupColumn(int theNrRows)
@@ -428,20 +429,22 @@ public class Column implements XMLNodeInterface
 				case NOMINAL :
 				{
 					for (int i = itsMissing.nextSetBit(0); i >= 0; i = itsMissing.nextSetBit(i + 1))
-						itsNominals.set(i, theNewValue);
+						itsNominals.set(i, itsMissingValue);
 					return true;
 				}
 				case NUMERIC :
 				case ORDINAL :
 				{
-					Float aNewValue = Float.valueOf(theNewValue);
+					Float aNewValue = Float.valueOf(itsMissingValue);
 					for (int i = itsMissing.nextSetBit(0); i >= 0; i = itsMissing.nextSetBit(i + 1))
 						itsFloats.set(i, aNewValue);
 					return true;
 				}
 				case BINARY :
 				{
-					boolean aNewValue = "0".equals(theNewValue);
+					itsMissingValue =
+						(AttributeType.isValidBinaryTrueValue(itsMissingValue) ? "1" : "0");
+					boolean aNewValue = "0".equals(itsMissingValue);
 					for (int i = itsMissing.nextSetBit(0); i >= 0; i = itsMissing.nextSetBit(i + 1))
 						if (aNewValue)
 							itsBinaries.clear(i);
@@ -474,8 +477,8 @@ public class Column implements XMLNodeInterface
 			case BINARY :
 			{
 				// TODO take it out of FileLoaderARFF and put it into ?
-				return (FileLoaderARFF.BOOLEAN_NEGATIVES.contains(theNewValue) ||
-						FileLoaderARFF.BOOLEAN_POSITIVES.contains(theNewValue));
+				return (AttributeType.isValidBinaryTrueValue(theNewValue) ||
+						AttributeType.isValidBinaryFalseValue(theNewValue));
 			}
 			default : logTypeError("Column.isValidValue()"); return false;
 		}

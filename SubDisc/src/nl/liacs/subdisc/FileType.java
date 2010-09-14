@@ -1,7 +1,5 @@
 /**
- * @author marvin
  * This will change and use the FileNameExtensionFilter class.
- * Use only lowercase extensions, filenames will always be set to lowercase.
  */
 package nl.liacs.subdisc;
 

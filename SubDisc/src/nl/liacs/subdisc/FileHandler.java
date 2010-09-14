@@ -3,10 +3,10 @@
  */
 package nl.liacs.subdisc;
 
-import java.io.File;
+import java.io.*;
+import java.util.*;
 
-import javax.swing.JFileChooser;
-import javax.swing.JFrame;
+import javax.swing.*;
 
 public class FileHandler extends JFrame
 {
@@ -26,25 +26,41 @@ public class FileHandler extends JFrame
 	{
 		switch(theAction)
 		{
-			case OPEN_FILE : openFile(); break;
+			case OPEN_FILE :
+			{
+				showFileChooser(Action.OPEN_FILE);
+				openFile();
+				break;
+			}
 			case OPEN_DATABASE : openDatabase(); break;
 			case SAVE : save(); break;
 			default : break;
 		}
 	}
 
-	public FileHandler(File theFile)
+	public FileHandler(File theFile, Table theTable)
 	{
 		if (theFile == null || !theFile.exists())
+		{
+			Log.logCommandLine("FileHandler(): File must exist: " + theFile);
 			return;
+		}
+		else if (theTable == null)
+		{
+			Log.logCommandLine(
+				"FileHandler(): Table is 'null', trying normal loading");
+			openFile();
+		}
 		else
+		{
 			itsFile = theFile;
+			itsTable = theTable;
+			openFile();
+		}
 	}
 
 	private void openFile()
 	{
-		showFileChooser(Action.OPEN_FILE);
-
 		if (itsFile == null || !itsFile.exists())
 			return;
 
@@ -53,7 +69,10 @@ public class FileHandler extends JFrame
 			case TXT : itsTable = new FileLoaderTXT(itsFile).getTable(); break;
 			case ARFF :
 			{
-				itsTable = new FileLoaderARFF(itsFile).getTable();
+				if (itsTable == null )
+					itsTable = new FileLoaderARFF(itsFile).getTable();
+				else
+					new FileLoaderARFF(itsFile, itsTable);
 				break;
 			}
 			case XML :

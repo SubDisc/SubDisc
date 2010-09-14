@@ -1,5 +1,6 @@
 package nl.liacs.subdisc;
 
+import java.io.*;
 import java.util.*;
 
 import nl.liacs.subdisc.Attribute.*;
@@ -9,8 +10,8 @@ import org.w3c.dom.*;
 public class Table
 {
 	// all but Random can be made final
-	private String itsTableName;
 	private String itsSource;
+	private String itsTableName;
 	private int itsNrRows;
 	private int itsNrColumns;
 	private ArrayList<Attribute> itsAttributes = new ArrayList<Attribute>();
@@ -26,23 +27,29 @@ public class Table
 
 //	public String getSeparator() { return itsSeparator; }
 	public Attribute getAttribute(int i) { return itsAttributes.get(i); }
-	public Column getColumn(Attribute theAttribute) { return itsColumns.get(theAttribute.getIndex()); }	// index == null for ARFF/MRML
+	public Column getColumn(Attribute theAttribute)
+	{
+		// index == null for ARFF/MRML
+		return itsColumns.get(theAttribute.getIndex());
+	}
 	public Column getColumn(int theIndex) { return itsColumns.get(theIndex); }
 
 	public ArrayList<Attribute> getAttributes() { return itsAttributes; };
 	public ArrayList<Column> getColumns() { return itsColumns; };
 
 	// TODO some constructors and builder functions, may change
-	public Table(String theTableName, String theSource)
+	// FileLoaderARFF
+	public Table(File theSource, String theTableName)
 	{
+		itsSource = theSource.getName();
 		itsTableName = theTableName;
-		itsSource = theSource;
 	}
 
-	public Table(String theTableName, String theSource, int theNrRows, int theNrColumns)
+	// FileLoaderTXT
+	public Table(File theSource, int theNrRows, int theNrColumns)
 	{
-		itsTableName = theTableName;
-		itsSource = theSource;
+		itsSource = theSource.getName();
+		itsTableName = FileType.removeExtension(theSource);
 		itsNrRows = theNrRows;
 		itsNrColumns = theNrColumns;
 		itsAttributes.ensureCapacity(theNrColumns);
@@ -50,7 +57,8 @@ public class Table
 	}
 
 	// TODO order of nodes is known, when all is stable
-	public Table(Node theTableNode)
+	// FileLoaderXML
+	public Table(Node theTableNode, String theXMLFileDirectory)
 	{
 		NodeList aChildren = theTableNode.getChildNodes();
 		for (int i = 0, j = aChildren.getLength(); i < j; ++i)
@@ -64,8 +72,12 @@ public class Table
 			else if ("column".equalsIgnoreCase(aNodeName))
 				itsColumns.add(new Column(aSetting));
 		}
-		// now all columns are know, check if data (Attributes) is valid
-		
+		/*
+		 * now all columns are know, check if data (Attributes) is valid by
+		 * loading actual data from itsSource
+		 */
+		Log.logCommandLine("Loading actual data...");
+		new FileHandler(new File(theXMLFileDirectory + "/"+ itsSource), this);
 		update();
 	}
 

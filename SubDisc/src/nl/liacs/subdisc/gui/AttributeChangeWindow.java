@@ -204,6 +204,9 @@ public class AttributeChangeWindow extends JFrame implements ActionListener
 				String aType = aNewType.getSelection().getActionCommand();
 				for (int i : jTable.getSelectedRows())
 					itsTable.getColumn(i).setType(aType);
+					// TODO show messageDialog asking to treat first value as
+					// 'true' or 'false' (see Column.toBinary())
+					// TODO failed to change type warning
 			}
 			else if ("missing".equals(aCommand))
 			{

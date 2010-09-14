@@ -1,25 +1,22 @@
+/*
+ * TODO rewrite this class, fileLoading is a mess. Split loadFile() into 
+ * loadFileAndCreateTable() and LoadFileCheckWithXMLTable()
+ */
 package nl.liacs.subdisc;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.io.*;
+import java.util.*;
+import java.util.regex.*;
 
-import nl.liacs.subdisc.Attribute.AttributeType;
+import nl.liacs.subdisc.Attribute.*;
 
 public class FileLoaderARFF implements FileLoaderInterface
 {
 	private Table itsTable = null;
-	private boolean checkDataWithTable = false; // if loaded from XML
+	private boolean checkDataWithXMLTable = false; // if loaded from XML
 	private int itsNrDataRows = 0;
-	private ArrayList<NominalAttribute> itsNominalAttributes = new ArrayList<NominalAttribute>();	// used to check data declarations
-	public static  ArrayList<String> BOOLEAN_NEGATIVES = new ArrayList<String>(Arrays.asList(new String[] { "0", "false", "F", "no" }));
-	public static  ArrayList<String> BOOLEAN_POSITIVES = new ArrayList<String>(Arrays.asList(new String[] { "1", "true", "T", "yes" }));
+	private ArrayList<NominalAttribute> itsNominalAttributes =
+		new ArrayList<NominalAttribute>();	// used to check data declarations
 
 	private static enum Keyword
 	{
@@ -39,7 +36,7 @@ public class FileLoaderARFF implements FileLoaderInterface
 
 		boolean atStartOfLine(String theString)
 		{
-			return this.text.matcher(theString).find();
+			return text.matcher(theString).find();
 		}
 	}
 
@@ -58,27 +55,40 @@ public class FileLoaderARFF implements FileLoaderInterface
 	public FileLoaderARFF(File theFile)
 	{
 		if (theFile == null || !theFile.exists())
-			;	// TODO new ErrorDialog(e, ErrorDialog.noSuchFileError);
+		{
+			// TODO new ErrorDialog(e, ErrorDialog.noSuchFileError);
+			Log.logCommandLine(
+					String.format("FileLoaderXML: can not open File '%s'",
+							theFile));
+			return;
+		}
 		else
 			loadFile(theFile);
 	}
 
-	// TODO
 	public FileLoaderARFF(File theFile, Table theTable)
 	{
 		if(theFile == null || !theFile.exists())
 		{
+			// TODO new ErrorDialog(e, ErrorDialog.noSuchFileError);
 			Log.logCommandLine(
 					String.format("FileLoaderXML: can not open File '%s'",
 									theFile));
 			return;
 		}
+		else if (theTable == null)
+			// TODO warning, try normal loading
+			loadFile(theFile);
 		else
-			checkDataWithTable = true;
+		{
+			checkDataWithXMLTable = true;
+			itsTable = theTable;
+			loadFile(theFile);
+		}
 	}
 
 	// TODO multiple '@relation' and '@data' declarations should throw error
-	// TODO rewrite parser, use keyword check on each line
+	// TODO check for keywords after next keyword already appeared (malformed)
 	private void loadFile(File theFile)
 	{
 		BufferedReader aReader = null;
@@ -88,12 +98,15 @@ public class FileLoaderARFF implements FileLoaderInterface
 			aReader = new BufferedReader(new FileReader(theFile));
 			String aLine;
 			boolean relationFound = false;
-			boolean attributeFound = false;
 			boolean dataFound = false;
+			int anAttributeIndex = 0;	// if > 0, same as attributeFound = true
+			Matcher aMatcher;
+//			int aLineNr = 0;	// TODO use for error reporting
 
 			// .toLowerCase()
 			while ((aLine = aReader.readLine()) != null)
 			{
+//				++aLineNr;
 				aLine.trim();
 				if (Keyword.COMMENT.atStartOfLine(aLine) || aLine.isEmpty())
 					continue;
@@ -110,14 +123,20 @@ public class FileLoaderARFF implements FileLoaderInterface
 				{
 					if (!relationFound)
 					{
-						// TODO if TableNames don't match that's OK for now
-						if (checkDataWithTable)
-							continue;
-						else
-							itsTable = new Table(removeOuterQuotes(aLine.split("\\s", 2)[1]), theFile.getName());
-//						itsTable.setName();	// TODO use m.end()
-//						itsTable.setSource(theFile.getName());
 						relationFound = true;
+						// TODO if TableNames don't match that's OK for now
+						// if Table was provided by 2-argument constructor
+						if (checkDataWithXMLTable)
+						{	
+							continue;
+						}
+						else
+							itsTable =
+								new Table(theFile,
+											removeOuterQuotes(
+													aLine.split("\\s", 2)[1]));
+//							itsTable.setName();	// TODO use m.end()
+//							itsTable.setSource(theFile.getName());
 					}
 					else
 					{
@@ -132,60 +151,77 @@ public class FileLoaderARFF implements FileLoaderInterface
 
 				else if (Keyword.ATTRIBUTE.atStartOfLine(aLine))
 				{
-					//TODO malformed file warning, no table created, abort
 					if (!relationFound)
 					{
 						// malformedFileWarning();
-						break;
+						// if Table was provided by constructor, try to continue
+						if (checkDataWithXMLTable)
+							continue;
+						// no table created yet, abort
+						else
+							break;
+					}
+					else if (dataFound)
+					{
+						// TODO malformedFileWarning(), try to continue
+						// malformedFileWarning();
 					}
 
-					if (!attributeFound)
+					aMatcher = Keyword.ATTRIBUTE.text.matcher(aLine);
+					if (aMatcher.find())
 					{
-						Matcher m;
-						int aCount = 0;
-
-						// in do-while because attributeFound is set afterwards
-						do
+						if (checkDataWithXMLTable)
 						{
-							if (Keyword.COMMENT.atStartOfLine(aLine) || aLine.isEmpty())
+							if (parseAttribute(aLine.substring(aMatcher.end()),
+									anAttributeIndex).getName().equals(itsTable.getColumn(anAttributeIndex).getName()))
+							{
+								++anAttributeIndex;
 								continue;
-							else if (Keyword.RELATION.atStartOfLine(aLine))
-							{
-								// malformedFileWarning();
-								continue;	// try to continue
 							}
-
-							m = Keyword.ATTRIBUTE.text.matcher(aLine);
-							if (m.find())
+							else
 							{
-								itsTable
-								.getColumns()
-								.add(new Column(
-										parseAttribute(aLine.substring(m.end()),
-														aCount++),
-										1000));	// TODO other default?
-							}
-							else if (Keyword.DATA.atStartOfLine(aLine))
-							{
-								dataFound = true;
+								// TODO malformedFileWarning(), abort
 								break;
 							}
 						}
-						while ((aLine = aReader.readLine()) != null);
-
-						attributeFound = true;
-					}
-					else
-					{
-							// if(dataKeyWordFound) { criticalError(noAttributeError); }
-							continue;
+						else
+							itsTable
+							.getColumns()
+							.add(new Column(
+								parseAttribute(aLine.substring(aMatcher.end()),
+												anAttributeIndex++)));
 					}
 				}
-
-				else if(dataFound)
+				else if (Keyword.DATA.atStartOfLine(aLine))
+				{
+					if (!relationFound)
+					{
+						// TODO malformedFileWarning(), no table created yet, abort
+						// malformedFileWarning();
+						break;
+					}
+					else if (anAttributeIndex == 0)
+					{
+						// TODO malformedFileWarning(), no attributes yet, abort
+						// malformedFileWarning();
+						break;
+					}
+					else if (dataFound)
+					{
+						// TODO malformedFileWarning(), try to continue
+						continue;
+					}
+					else
+						dataFound = true;
+				}
+				else if (dataFound)
 				{
 					loadData(aLine);
 					++itsNrDataRows;
+				}
+//				else
+				{
+					// TODO malformedFileWarning(), try to continue
 				}
 			}
 		}
@@ -272,84 +308,114 @@ public class FileLoaderARFF implements FileLoaderInterface
 	}
 
 	// TODO checking of declared nominal classes for @attributes { class1, class2, ..} declarations
-	private String loadData(String theString)
+	private void loadData(String theString)
 	{
-		String s;
-
-		for(int i = 0, j = itsTable.getColumns().size(); i < j; ++i)
+		String aCell;
+		for (int i = 0, j = itsTable.getColumns().size(); i < j; i++)
 		{
 			Column aColumn = itsTable.getColumn(i);
 			int offset = 0;
 
-			if(theString.trim().startsWith("\'"))
+			if (theString.trim().startsWith("\'"))
 			{
-				s = removeOuterQuotes(theString);
+				aCell = removeOuterQuotes(theString);
 				offset = 2;
 			}
 			else
+				aCell= theString.split(",\\s*", 2)[0];
+
+			theString = theString
+						.substring(aCell.length() + offset)
+						.replaceFirst(",\\s*", "");
+
+			if (aCell.equals("?"))
 			{
-				s = theString.split(",\\s*", 2)[0];
-			}
-
-			theString = theString.substring(s.length() + offset).replaceFirst(",\\s*", "");
-
-			if(s.equalsIgnoreCase("?"))
 				aColumn.setMissing(itsNrDataRows);
-
-			//System.out.println(s + " " + itsTable.getAttribute(i).getName() + " " + itsTable.getColumn(itsTable.getAttribute(i)).size());
-			// TODO determine default for missing NUMERIC/ORDINAL/BINARY values
-			// itsTable.getColumn(itsTable.getAttribute(i)).add(s); break;
-			switch(aColumn.getType())
-			{
-				case NOMINAL :
-				{
-					aColumn.add(s);
-					break;
-				}
-				case NUMERIC :
-				case ORDINAL:
-				{
-					if(s.equalsIgnoreCase("?"))
-						aColumn.add(0.0f);
-					else
-						aColumn.add(Float.valueOf(s));
-					break;
-				}
-				case BINARY :
-				{
-					aColumn.add(BOOLEAN_POSITIVES.contains(s.toLowerCase()));
-					break;
-				}
+				addMissingToColumn(aColumn);
 			}
+			else
+				addValueToColumn(aColumn, aCell);
 		}
 
-		if(!theString.isEmpty())
-			if(!Keyword.COMMENT.atStartOfLine(theString))
-				System.out.println("ERROR: " + theString);
-				// criticalError(toManyArgumentsError);
+		if (!theString.isEmpty())
+			if (!Keyword.COMMENT.atStartOfLine(theString))
+				Log.logCommandLine("FileLoaderARFF: " + theString); // TODO
+				// TODO criticalError(toManyArgumentsError);
+	}
 
-		return theString;
+	private void addValueToColumn(Column theColumn, String theCell)
+	{
+		switch (theColumn.getType())
+		{
+			case NOMINAL : theColumn.add(theCell); break;
+			case NUMERIC :
+			case ORDINAL : theColumn.add(Float.parseFloat(theCell)); break;
+			case BINARY :
+			{
+				theColumn.add(AttributeType.isValidBinaryTrueValue(theCell));
+				break;
+			}
+			default : break;	// TODO unknown AttributeType warning
+		}
+	}
+
+	private void addMissingToColumn(Column theColumn)
+	{
+		switch (theColumn.getType())
+		{
+			case NOMINAL :
+			{
+				if (checkDataWithXMLTable)
+					theColumn.add(theColumn.getMissingValue());
+				else
+					theColumn.add(AttributeType.NOMINAL.DEFAULT_MISSING_VALUE);
+				break;
+			}
+			case NUMERIC :
+			{
+				if (checkDataWithXMLTable)
+					theColumn.add(Float.parseFloat(theColumn.getMissingValue()));
+				else
+					theColumn.add(Float.parseFloat(AttributeType.NUMERIC.DEFAULT_MISSING_VALUE));
+				break;
+			}
+			case ORDINAL :
+			{
+				if (checkDataWithXMLTable)
+					theColumn.add(Float.parseFloat(theColumn.getMissingValue()));
+				else
+					theColumn.add(Float.parseFloat(AttributeType.ORDINAL.DEFAULT_MISSING_VALUE));
+				break;
+			}
+			case BINARY :
+			{
+				if (checkDataWithXMLTable)
+					theColumn.add(AttributeType.isValidBinaryTrueValue(theColumn.getMissingValue()));
+				else
+					theColumn.add(AttributeType.isValidBinaryTrueValue(AttributeType.BINARY.DEFAULT_MISSING_VALUE));
+				break;
+			}
+			default : break; // TODO unknown AttributeType warning
+		}
 	}
 
 	// determine attribute type(s), only NUMERIC/NOMINAL for now, not ORDINAL/BINARY
 	private AttributeType declaredType(String theAttributeName, String theString)
 	{
 		String s = theString.toLowerCase();
-//		System.out.println("declaredType: " + s);
 
-		if(s.startsWith("real") || s.startsWith("integer") || s.startsWith("numeric"))
+		if (s.startsWith("real") || s.startsWith("integer") || s.startsWith("numeric"))
 			return AttributeType.NUMERIC;
 
-		else if(s.startsWith("{"))
+		else if (s.startsWith("{"))
 		{
 			theString = theString.substring(1);
 			ArrayList<String> nominalClasses= new ArrayList<String>(10);
 			String aNominalClass;
 
 			// duplicate code
-			while(!theString.startsWith("}"))
+			while (!theString.startsWith("}"))
 			{
-//				System.out.println("String: " + theString);
 				int offset = 0;
 
 				if(theString.startsWith("\'"))
@@ -359,7 +425,7 @@ public class FileLoaderARFF implements FileLoaderInterface
 				}
 				else
 				{
-					if(theString.contains(","))
+					if (theString.contains(","))
 					{
 						aNominalClass = theString.split(",\\s*", 2)[0];
 						offset = 1;
@@ -379,13 +445,16 @@ public class FileLoaderARFF implements FileLoaderInterface
 			itsNominalAttributes.add(new NominalAttribute(itsTable.getAttribute(theAttributeName), nominalClasses));
 
 			// TODO use enum
-			if(nominalClasses.size() == 2)
+			if (nominalClasses.size() == 2)
 			{
-				String a = nominalClasses.get(0).toLowerCase();
-				String b = nominalClasses.get(1).toLowerCase();
+				String a = nominalClasses.get(0);
+				String b = nominalClasses.get(1);
 
-				if((BOOLEAN_NEGATIVES.contains(a) && BOOLEAN_POSITIVES.contains(b)) ||
-					(BOOLEAN_NEGATIVES.contains(b) && BOOLEAN_POSITIVES.contains(a)))
+				if ((AttributeType.isValidBinaryTrueValue(a) &&
+						AttributeType.isValidBinaryFalseValue(b))
+					||
+						(AttributeType.isValidBinaryTrueValue(b) &&
+							AttributeType.isValidBinaryFalseValue(a)))
 					return AttributeType.BINARY;
 			}
 			// TODO present attributeType change dialog to user
@@ -393,20 +462,14 @@ public class FileLoaderARFF implements FileLoaderInterface
 		}
 
 		// TODO parseDate using dateFormat
-		else if(s.startsWith("date"))
+		else if (s.startsWith("date"))
 			return AttributeType.NOMINAL;
 
 		return AttributeType.NOMINAL;
 	}
 
 	// TODO create ErrorDialog class, that also logs the error
-	private static void criticalError()
-	{
-		Log.logCommandLine("ERROR");
-	}
+	private static void criticalError() { Log.logCommandLine("ERROR"); }
 
-	public Table getTable()
-	{
-		return itsTable;
-	}
+	public Table getTable() { return itsTable; }
 }

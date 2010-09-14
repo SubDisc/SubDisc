@@ -1,5 +1,7 @@
 package nl.liacs.subdisc;
 
+import java.util.*;
+
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
@@ -21,10 +23,11 @@ public class Attribute implements XMLNodeInterface
 	private int itsIndex;
 
 	/**
-	 * There are only a limited number of AttributeTypes an
-	 * {@link Attribute Attribute} can have. The AttributeType enum contains
-	 * them all. The <code>public final String DEFAULT_MISSING_VALUE</code>
-	 * gives the default missing value for that AttributeType.
+	 * There is only a limited number of AttributeTypes an
+	 * {@link Attribute Attribute} can have. The AttributeType <code>enum</code>
+	 * contains them all. The
+	 * <code>public final String DEFAULT_MISSING_VALUE</code> gives the default
+	 * missing value for that AttributeType.
 	 */
 	public enum AttributeType
 	{
@@ -32,6 +35,14 @@ public class Attribute implements XMLNodeInterface
 		NUMERIC("0.0"),
 		ORDINAL("0.0"),
 		BINARY("0");
+
+		// used for FileLoading/Column setMissingValue
+		private static final TreeSet<String> BOOLEAN_POSITIVES =
+			new TreeSet<String>(
+					Arrays.asList(new String[] { "1", "true", "t", "yes" }));
+		private static final TreeSet<String> BOOLEAN_NEGATIVES =
+			new TreeSet<String>(
+					Arrays.asList(new String[] { "0", "false", "f", "no" }));
 
 		/*
 		 * NOTE if DEFAULT_MISSING_VALUE is changed for NUMERIC/ORDINAL, check
@@ -68,14 +79,28 @@ public class Attribute implements XMLNodeInterface
 			 * theType cannot be resolved to an AttibuteType. Log error and
 			 * return default.
 			 */
-			Log.logCommandLine(String.format("'%s' is not a valid AttributeType. Returning NOMINAL.", theType));
+			Log.logCommandLine(
+				String.format(
+						"'%s' is not a valid AttributeType. Returning NOMINAL.",
+						theType));
 			return AttributeType.NOMINAL;
+		}
+
+		public static boolean isValidBinaryTrueValue(String theBooleanValue)
+		{
+			return BOOLEAN_POSITIVES.contains(theBooleanValue.toLowerCase());
+		}
+
+		public static boolean isValidBinaryFalseValue(String theBooleanValue)
+		{
+			return BOOLEAN_NEGATIVES.contains(theBooleanValue.toLowerCase());
 		}
 	}
 
 	public Attribute(String theName, String theShort, AttributeType theType, int theIndex)
 	{
-		itsName = (theName == null ? String.valueOf(System.nanoTime()) : theName);	// TODO throw warning
+		itsName =
+			(theName == null ? String.valueOf(System.nanoTime()) : theName);	// TODO throw warning
 		itsShort = (theShort == null ? "" : theShort);
 		itsType = (theType == null ? AttributeType.NOMINAL : theType);
 		itsIndex = theIndex;	// TODO should not be < 0
@@ -84,7 +109,8 @@ public class Attribute implements XMLNodeInterface
 	//MRML
 	public Attribute(String theName, String theShort, AttributeType theType)
 	{
-		itsName = (theName == null ? String.valueOf(System.nanoTime()) : theShort);	// TODO throw warning
+		itsName =
+			(theName == null ? String.valueOf(System.nanoTime()) : theShort);	// TODO throw warning
 		itsShort = (theShort == null ? "" : theShort);
 		itsType = (theType == null ? AttributeType.NOMINAL : theType);
 	}
@@ -113,16 +139,24 @@ public class Attribute implements XMLNodeInterface
 		}
 	}
 
-	public int getIndex() { return itsIndex; }	// TODO check, is null for ARFF/MRML
+	// TODO check, is never set for ARFF/MRML
+	public int getIndex() { return itsIndex; }
 	public AttributeType getType() { return itsType; }
 	public String getName() { return itsName; }
 	public String getShort() { return itsShort; }
 	public boolean hasShort() { return (!itsShort.isEmpty()); }
-	public String getNameAndShort() { return itsName + (hasShort() ? " (" + getShort() + ")" : ""); }
+	public String getNameAndShort()
+	{
+		return itsName + (hasShort() ? " (" + getShort() + ")" : "");
+	}
 	public String getNameOrShort() { return hasShort() ? itsShort : itsName; }
 	public String getTypeName() { return itsType.toString().toLowerCase(); }
 
-	public void print() { Log.logCommandLine(itsIndex + ":" + getNameAndShort() + " " + getTypeName()); }
+	public void print()
+	{
+		Log.logCommandLine(itsIndex + ":" + getNameAndShort() + " " +
+							getTypeName());
+	}
 
 	public boolean isNominalType() { return itsType == AttributeType.NOMINAL; }
 	public boolean isNumericType() { return itsType == AttributeType.NUMERIC; }
