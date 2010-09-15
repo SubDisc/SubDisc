@@ -357,15 +357,15 @@ public class ResultWindow extends JFrame
 			return;
 		}
 
-		String inputValue = JOptionPane.showInputDialog("Number of random subgroups to be used\nfor distribution estimation (> 0) :");
+		String inputValue = JOptionPane.showInputDialog("Number of random subgroups to be used\nfor distribution estimation (> 1) :");
 		int aNrRepetitions;
 		try
 		{
 			aNrRepetitions = Integer.parseInt(inputValue);
-			// TODO more than one?
-			if (aNrRepetitions < 1)
+			// TODO strictly more than one?
+			if (aNrRepetitions <= 1)
 			{
-				JOptionPane.showMessageDialog(null, "Number should be > 0.");
+				JOptionPane.showMessageDialog(null, "Number should be > 1.");
 				return;
 			}
 		}
