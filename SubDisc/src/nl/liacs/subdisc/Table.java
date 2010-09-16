@@ -4,6 +4,7 @@ import java.io.*;
 import java.util.*;
 
 import nl.liacs.subdisc.Attribute.*;
+import nl.liacs.subdisc.gui.*;
 
 import org.w3c.dom.*;
 
@@ -79,7 +80,6 @@ public class Table
 		new FileHandler(new File(theXMLFileDirectory + "/"+ itsSource), this);
 	}
 
-	Table getTable() { return this;}
 	/*
 	 * TODO change this method, goal is to create a lock() function that 'locks'
 	 * the table. itsNrRows/itsNrColumn and itsAttributes/itsColumns.size() do
@@ -87,8 +87,8 @@ public class Table
 	 * be implemented as a HashSet/TreeSet adding would be less of a problem.
 	 */
 	/**
-	 * Update this Table. This means the number of rows and columns are set, and
-	 * this Tables' list of {@link Attribute Attribute}s is updated.
+	 * Updates this Table. This means the number of rows and columns are set,
+	 * and this Tables' list of {@link Attribute Attribute}s is updated.
 	 */
 	public void update()
 	{
@@ -404,14 +404,14 @@ public class Table
 		aSubgroup.setMembers(aSample);
 		return aSubgroup;
 	}
-
+/*
 	public void print()
 	{
 		Log.logCommandLine("Types ===========================================");
 		for (Attribute anAttribute : itsAttributes)
 			anAttribute.print();
 		Log.logCommandLine("Table ===========================================");
-		for (int i=0; i<itsNrRows; i++)
+		for (int i = 0; i < itsNrRows; i++)
 		{
 			String aRow = "Row "+(i+1)+": ";
 			for (int j=0; j<itsNrColumns; j++)
@@ -424,6 +424,30 @@ public class Table
 					aRow += ", ";
 			}
 			Log.logCommandLine(aRow);
+		}
+		Log.logCommandLine("=================================================");
+	}
+*/
+	// also works before Table.update()
+	public void print()
+	{
+		Log.logCommandLine("Types ===========================================");
+		for (Column c : itsColumns)
+			c.getAttribute().print();
+		Log.logCommandLine("Table ===========================================");
+		for (int i = 0, j = itsColumns.get(0).size(); i < j; i++)
+		{
+			StringBuilder aRows = new StringBuilder("Row ");
+			aRows.append(i + 1);
+			aRows.append(": ");
+			for (Column aColumn : itsColumns)
+			{
+				aRows.append(aColumn.getString(i));
+				aRows.append(", ");
+			}
+			Log.logCommandLine(aRows
+								.substring(0, aRows.length() - 2)
+								.toString());
 		}
 		Log.logCommandLine("=================================================");
 	}

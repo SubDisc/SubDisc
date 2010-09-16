@@ -212,7 +212,7 @@ public class Attribute implements XMLNodeInterface
 	}
 
 	/**
-	 * Create an {@link XMLNode XMLNode} representation of this Attribute.
+	 * Creates an {@link XMLNode XMLNode} representation of this Attribute.
 	 * @param theParentNode the Node of which this Node will be a ChildNode
 	 * @return a Node that contains all the information of this Attribute
 	 */

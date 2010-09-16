@@ -4,7 +4,6 @@ import java.awt.*;
 import java.awt.event.*;
 import java.text.*;
 import java.util.*;
-import java.util.List;
 
 import javax.swing.*;
 import javax.swing.border.*;
@@ -60,7 +59,7 @@ public class MiningWindow extends JFrame
 			itsTotalCount = itsTable.getNrRows();
 			initMiningWindow();
 
-			if(theSearchParameters != null)
+			if (theSearchParameters != null)
 				itsTargetConcept = theSearchParameters.getTargetConcept();
 			itsSearchParameters = theSearchParameters;
 			initGuiComponentsFromFile();
@@ -138,16 +137,17 @@ public class MiningWindow extends JFrame
 		initGuiComponentsDataSet();
 
 		// TODO disable all ActionListeners while setting values
-		// TODO some field may be set automatically, order is very important
+		// some fields may be set automatically, order is very important
 
 		// search strategy
 		setSearchStrategyType(SearchParameters.getSearchStrategyName(itsSearchParameters.getSearchStrategy()));
 		setSearchStrategyWidth(String.valueOf(itsSearchParameters.getSearchStrategyWidth()));
 		setNumericStrategy(itsSearchParameters.getNumericStrategy().TEXT);
-		setSearchStrategyNrBins(String.valueOf(itsSearchParameters.getNrBins()));	// TODO use nrBins/splitPoints
+		setSearchStrategyNrBins(String.valueOf(itsSearchParameters.getNrBins()));
 
 		// search conditions
-		// NOTE setSearchStrategyType() calls setSearchCoverageMinimum(), so
+		// setSearchStrategyType() above calls setSearchCoverageMinimum(),
+		// setting a wrong value in the GUI
 		// setSearchCoverageMinimum must be called AFTER setSearchStrategyType
 		setSearchDepthMaximum(String.valueOf(itsSearchParameters.getSearchDepth()));
 		setSearchCoverageMinimum(String.valueOf(itsSearchParameters.getMinimumCoverage()));
@@ -156,14 +156,29 @@ public class MiningWindow extends JFrame
 		setSearchTimeMaximum(String.valueOf(itsSearchParameters.getMaximumTime()));
 
 		// target concept
+		/*
+		 * Remember for later reference, value will be overwritten by both
+		 * setTargetTypeName() and setQualityMeasure()
+		 */
+		float originalMinimum = itsSearchParameters.getQualityMeasureMinimum();
+
 		setTargetTypeName(itsTargetConcept.getTargetType().TEXT);
-		setQualityMeasureMinimum(String.valueOf(itsSearchParameters.getQualityMeasureMinimum()));	// TODO must be called before setQualityMeasure (prevents overwriting)
 		setQualityMeasure(itsSearchParameters.getQualityMeasureString());
-		setQualityMeasureMinimum(String.valueOf(itsSearchParameters.getQualityMeasureMinimum()));	// TODO see above, but needs to be set again
+		// reset original value
+		itsSearchParameters.setQualityMeasureMinimum(originalMinimum);
+		setQualityMeasureMinimum(String.valueOf(itsSearchParameters.getQualityMeasureMinimum()));
 		setTargetAttribute(itsTargetConcept.getPrimaryTarget().getName());
+
+		/*
+		 * Text in jTextFieldSearchCoverageMinimum is overwritten by
+		 * initTargetInfo() which is called through:
+		 * jComboBoxTargetTypeActionPerformed - initTargetAttributeItems.
+		 */
+		setSearchCoverageMinimum(String.valueOf(itsSearchParameters.getMinimumCoverage()));
+
 //		setMiscField(itsTargetConcept.getSecondaryTarget());
 //		setMiscField(itsTargetConcept.getTargetValue());
-		// setSecondaryTargets(); // TODO initialised from primaryTargetList
+//		setSecondaryTargets(); // TODO initialised from primaryTargetList
 	}
 
 	// TODO use separate JLabels for "(x enabled)"
@@ -844,13 +859,24 @@ public class MiningWindow extends JFrame
 	/* MENU ITEMS */
 	private void jMenuItemOpenFileActionPerformed(ActionEvent evt)
 	{
-		Table aTable = new FileHandler(Action.OPEN_FILE).getTable();
+		FileHandler aFileHandler =  new FileHandler(Action.OPEN_FILE);
+		Table aTable = aFileHandler.getTable();
+		SearchParameters aSearchParameters = aFileHandler.getSearchParameters();
+
 		if (aTable != null)
 		{
 			itsTable = aTable;
 			itsTotalCount = itsTable.getNrRows();
 			enableTableDependentComponents(true);
-			initGuiComponents();
+
+			if (aSearchParameters == null)
+				initGuiComponents();
+			else
+			{
+				itsSearchParameters = aSearchParameters;
+				initGuiComponentsFromFile();
+			}
+
 			jComboBoxTargetTypeActionPerformed(null);	// update hack
 		}
 	}

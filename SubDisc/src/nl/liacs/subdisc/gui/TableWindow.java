@@ -1,6 +1,7 @@
 package nl.liacs.subdisc.gui;
 
 import java.awt.*;
+import java.awt.event.*;
 
 import javax.swing.*;
 import javax.swing.table.*;
@@ -36,6 +37,7 @@ public class TableWindow extends JFrame
 	 * Based on Swing tutorial TableRenderDemo.java.
 	 * This method picks column sizes, based on column heads only.
 	 * Could use JTable tables' itsTable for sizes instead (1 less parameter).
+	 * TODO Put in SwingWorker background thread.
 	 */
 	private void initColumnSizes(Table theTable, JTable table)
 	{

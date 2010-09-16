@@ -66,11 +66,6 @@ public class AttributeChangeWindow extends JFrame implements ActionListener
 		JPanel aSetMissingPanel = new JPanel();
 
 		JScrollPane jScrollPane = new JScrollPane(jTable);
-		addWindowListener(new WindowAdapter() {
-			public void windowClosing(WindowEvent evt) {
-				exitForm();
-			}
-		});
 
 //		jPanelSouth.add(Box.createHorizontalGlue());
 
@@ -252,6 +247,4 @@ public class AttributeChangeWindow extends JFrame implements ActionListener
 		}
 	}
 
-	private void exitForm() { dispose(); }
 }
-

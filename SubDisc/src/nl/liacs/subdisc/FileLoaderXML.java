@@ -31,7 +31,8 @@ public class FileLoaderXML implements FileLoaderInterface
 										.getFirstChild()
 										.getChildNodes();
 
-		// order of nodes is known but use fail-safe checking for now 
+		// order of nodes is known but use fail-safe checking for now
+		// also order is important (Table, SearchParameters, TargetConcept)
 		for(int i = aSettings.getLength() - 1; i >= 0; i--)
 		{
 			String aNodeName = aSettings.item(i).getNodeName();
@@ -42,7 +43,7 @@ public class FileLoaderXML implements FileLoaderInterface
 			// NOTE order sensitive, SearchParameters must be set first
 			else if ("target_concept".equalsIgnoreCase(aNodeName))
 				itsSearchParameters
-					.setTargetConcept(new TargetConcept(aSettings.item(i)));
+					.setTargetConcept(new TargetConcept(aSettings.item(i), itsTable));
 		}
 	}
 

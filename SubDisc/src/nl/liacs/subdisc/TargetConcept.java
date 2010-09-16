@@ -87,7 +87,8 @@ public class TargetConcept implements XMLNodeInterface
 		}
 	}
 
-	public TargetConcept(Node theTargetConceptNode)
+	// creation of TargetConcept relies on Table being loaded first
+	public TargetConcept(Node theTargetConceptNode, Table theTable)
 	{
 		if (theTargetConceptNode == null)
 			return;	// TODO throw warning dialog
@@ -102,11 +103,11 @@ public class TargetConcept implements XMLNodeInterface
 			if ("target_type".equalsIgnoreCase(aNodeName))
 				setTargetType(TargetType.getTargetType(aSetting.getTextContent()));
 			else if ("primary_target".equalsIgnoreCase(aNodeName))
-				itsPrimaryTarget = new Attribute(aSetting);	// TODO
+				itsPrimaryTarget = theTable.getAttribute(aSetting.getTextContent());
 			else if ("target_value".equalsIgnoreCase(aNodeName))
 				itsTargetValue = aSetting.getTextContent();
 			else if ("secondary_target".equalsIgnoreCase(aNodeName))
-				itsSecondaryTarget = new Attribute(aSetting);	// TODO
+				itsSecondaryTarget = theTable.getAttribute(aSetting.getTextContent());
 			else if ("multi_targets".equalsIgnoreCase(aNodeName))
 			{
 				itsMultiTargets = new ArrayList<Attribute>();

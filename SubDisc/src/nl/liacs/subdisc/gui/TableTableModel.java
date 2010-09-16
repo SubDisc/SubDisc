@@ -40,6 +40,7 @@ public class TableTableModel extends AbstractTableModel
 			return itsTable.getNrColumns();
 	}
 
+	// TODO Put in SwingWorker background thread.
 	@Override
 	public String getColumnName(int theColumnIndex)
 	{
