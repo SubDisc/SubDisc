@@ -64,38 +64,42 @@ public class QualityMeasure
 	public static final int COVERAGE    = 7;
 	public static final int SPECIFICITY = 8;
 	public static final int SENSITIVITY = 9;
+	public static final int LAPLACE     = 10;
+	public static final int F_MEASURE   = 11;
+	public static final int G_MEASURE   = 12;
+	public static final int CORRELATION = 13;
 	//SINGLE_NUMERIC quality measures
-	public static final int Z_SCORE = 10;
-	public static final int INVERSE_Z_SCORE = 11;
-	public static final int ABS_Z_SCORE = 12;
-	public static final int AVERAGE = 13;
-	public static final int INVERSE_AVERAGE = 14;
-	public static final int MEAN_TEST = 15;
-	public static final int INVERSE_MEAN_TEST = 16;
-	public static final int ABS_MEAN_TEST = 17;
-	public static final int T_TEST = 18;
-	public static final int INVERSE_T_TEST = 19;
-	public static final int ABS_T_TEST = 20;
-	public static final int CHI2_TEST = 21;
+	public static final int Z_SCORE = 14;
+	public static final int INVERSE_Z_SCORE = 15;
+	public static final int ABS_Z_SCORE = 16;
+	public static final int AVERAGE = 17;
+	public static final int INVERSE_AVERAGE = 18;
+	public static final int MEAN_TEST = 19;
+	public static final int INVERSE_MEAN_TEST = 20;
+	public static final int ABS_MEAN_TEST = 21;
+	public static final int T_TEST = 22;
+	public static final int INVERSE_T_TEST = 23;
+	public static final int ABS_T_TEST = 24;
+	public static final int CHI2_TEST = 25;
 	//SINGLE_ORDINAL quality measures
-	public static final int AUC = 22;
-	public static final int WMW_RANKS = 23;
-	public static final int INVERSE_WMW_RANKS = 24;
-	public static final int ABS_WMW_RANKS = 25;
-	public static final int MMAD = 26;
+	public static final int AUC = 26;
+	public static final int WMW_RANKS = 27;
+	public static final int INVERSE_WMW_RANKS = 28;
+	public static final int ABS_WMW_RANKS = 29;
+	public static final int MMAD = 30;
 	//MULTI_LABEL quality measures
-	public static final int WEED = 27;
-	public static final int EDIT_DISTANCE = 28;
+	public static final int WEED = 31;
+	public static final int EDIT_DISTANCE = 32;
 	//DOUBLE_CORRELATION
-	public static final int CORRELATION_R = 29;
-	public static final int CORRELATION_R_NEG = 30;
-	public static final int CORRELATION_R_NEG_SQ = 31;
-	public static final int CORRELATION_R_SQ = 32;
-	public static final int CORRELATION_DISTANCE = 33;
-	public static final int CORRELATION_P = 34;
-	public static final int CORRELATION_ENTROPY = 35;
+	public static final int CORRELATION_R = 33;
+	public static final int CORRELATION_R_NEG = 34;
+	public static final int CORRELATION_R_NEG_SQ = 35;
+	public static final int CORRELATION_R_SQ = 36;
+	public static final int CORRELATION_DISTANCE = 37;
+	public static final int CORRELATION_P = 38;
+	public static final int CORRELATION_ENTROPY = 39;
 	//DOUBLE_REGRESSION
-	public static final int LINEAR_REGRESSION = 36;
+	public static final int LINEAR_REGRESSION = 40;
 
 	//SINGLE =========================================================================================
 
@@ -149,7 +153,7 @@ public class QualityMeasure
 
 		switch(theTargetType)
 		{
-			case SINGLE_NOMINAL		: return SENSITIVITY;
+			case SINGLE_NOMINAL		: return CORRELATION;
 			case SINGLE_NUMERIC		: return CHI2_TEST;
 			case SINGLE_ORDINAL		: return MMAD;
 			case MULTI_LABEL		: return EDIT_DISTANCE;
@@ -205,6 +209,15 @@ public class QualityMeasure
 			case SPECIFICITY: {	returnValue = aCountNotHeadNotBody / ((float)theTotalCoverage - aCountHead);
 								break; }
 			case SENSITIVITY: {	returnValue = aCountHeadBody / aCountHead;
+								break; }
+			case LAPLACE: {		returnValue = (aCountHeadBody+1)/(aCountBody+2);
+								break; }
+			case F_MEASURE: {	returnValue = aCountHeadBody/(aCountHead+aCountBody);
+								break; }
+			case G_MEASURE: {	returnValue = aCountHeadBody/(aCountNotHeadBody+aCountHead);
+								break; }
+			case CORRELATION: {	float aCountNotHead = (float)theTotalCoverage-aCountHead;
+								returnValue = (aCountHeadBody*aCountNotHead - aCountHead*aCountNotHeadBody)/((float)Math.sqrt(aCountHead*aCountNotHead*aCountBody*((float)theTotalCoverage-aCountBody)));
 								break; }
 			case PURITY:
 			{
@@ -362,6 +375,10 @@ public class QualityMeasure
 			case SPECIFICITY: 		{ anEvaluationMinimum = "0.8"; break; }
 			case SENSITIVITY: 		{ anEvaluationMinimum = "0.8"; break; }
 			case PURITY		: 		{ anEvaluationMinimum = "0.8"; break; }
+			case LAPLACE	:		{ anEvaluationMinimum = "0.2"; break; }
+			case F_MEASURE	:		{ anEvaluationMinimum = "0.2"; break; }
+			case G_MEASURE	:		{ anEvaluationMinimum = "0.2"; break; }
+			case CORRELATION:		{ anEvaluationMinimum = "0.1"; break; }
 			//NUMERIC
 			case AVERAGE	: 		{ anEvaluationMinimum = Double.toString(theAverage); break; }
 			case INVERSE_AVERAGE: 	{ anEvaluationMinimum = Double.toString(-theAverage); break; }
@@ -413,6 +430,10 @@ public class QualityMeasure
 			case SPECIFICITY: { anEvaluationMeasure = "Specificity"; break; }
 			case SENSITIVITY: { anEvaluationMeasure = "Sensitivity"; break; }
 			case PURITY		: { anEvaluationMeasure = "Purity"; break; }
+			case LAPLACE	: { anEvaluationMeasure = "Laplace"; break; }
+			case F_MEASURE	: { anEvaluationMeasure = "F-measure"; break; }
+			case G_MEASURE	: { anEvaluationMeasure = "G-measure"; break; }
+			case CORRELATION: { anEvaluationMeasure = "Correlation"; break; }
 			//NUMERIC
 			case AVERAGE	: { anEvaluationMeasure = "Average"; break; }
 			case INVERSE_AVERAGE: { anEvaluationMeasure = "Inverse Average"; break; }
@@ -462,6 +483,10 @@ public class QualityMeasure
 		else if ("specificity".equals(anEvaluationMeasure)) return SPECIFICITY;
 		else if ("sensitivity".equals(anEvaluationMeasure)) return SENSITIVITY;
 		else if ("purity".equals(anEvaluationMeasure)) return PURITY;
+		else if ("laplace".equals(anEvaluationMeasure)) return LAPLACE;
+		else if ("f-measure".equals(anEvaluationMeasure)) return F_MEASURE;
+		else if ("g-measure".equals(anEvaluationMeasure)) return G_MEASURE;
+		else if ("correlation".equals(anEvaluationMeasure)) return CORRELATION;
 		//NUMERIC
 		else if ("average".equals(anEvaluationMeasure)) return AVERAGE;
 		else if ("inverse average".equals(anEvaluationMeasure)) return INVERSE_AVERAGE;
