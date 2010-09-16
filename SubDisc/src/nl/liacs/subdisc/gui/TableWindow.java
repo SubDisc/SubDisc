@@ -27,7 +27,7 @@ public class TableWindow extends JFrame
 		JPanel jPanelMain = new JPanel(new GridLayout(1, 1));
 		jPanelMain.add(new JScrollPane(aJTable));
 		getContentPane().add(jPanelMain);
-		setTitle("Data for: " + theTable.getTableName());
+		setTitle("Data for: " + theTable.getName());
 		pack();
 		setVisible(true);
 	}

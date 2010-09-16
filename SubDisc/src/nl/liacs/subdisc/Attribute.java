@@ -97,6 +97,7 @@ public class Attribute implements XMLNodeInterface
 		}
 	}
 
+	//TXT, ARFF
 	public Attribute(String theName, String theShort, AttributeType theType, int theIndex)
 	{
 		itsName =
@@ -139,8 +140,7 @@ public class Attribute implements XMLNodeInterface
 		}
 	}
 
-	// TODO check, is never set for ARFF/MRML
-	public int getIndex() { return itsIndex; }
+	public int getIndex() { return itsIndex; }	// is never set for MRML
 	public AttributeType getType() { return itsType; }
 	public String getName() { return itsName; }
 	public String getShort() { return itsShort; }

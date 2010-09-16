@@ -11,14 +11,14 @@ public class Table
 {
 	// all but Random can be made final
 	private String itsSource;
-	private String itsTableName;
+	private String itsName;
 	private int itsNrRows;
 	private int itsNrColumns;
 	private ArrayList<Attribute> itsAttributes = new ArrayList<Attribute>();
 	private ArrayList<Column> itsColumns = new ArrayList<Column>();
 	private Random itsRandomNumber = new Random(System.currentTimeMillis());
 
-	public String getTableName() { return itsTableName; }
+	public String getName() { return itsName; }
 	public String getSource() { return itsSource; }
 
 	// NOTE itsNrColumns is not tied to itsColumns.size()
@@ -42,14 +42,14 @@ public class Table
 	public Table(File theSource, String theTableName)
 	{
 		itsSource = theSource.getName();
-		itsTableName = theTableName;
+		itsName = theTableName;
 	}
 
 	// FileLoaderTXT
 	public Table(File theSource, int theNrRows, int theNrColumns)
 	{
 		itsSource = theSource.getName();
-		itsTableName = FileType.removeExtension(theSource);
+		itsName = FileType.removeExtension(theSource);
 		itsNrRows = theNrRows;
 		itsNrColumns = theNrColumns;
 		itsAttributes.ensureCapacity(theNrColumns);
@@ -66,7 +66,7 @@ public class Table
 			Node aSetting = aChildren.item(i);
 			String aNodeName = aSetting.getNodeName();
 			if ("table_name".equalsIgnoreCase(aNodeName))
-				itsTableName = aSetting.getTextContent();
+				itsName = aSetting.getTextContent();
 			else if ("source".equalsIgnoreCase(aNodeName))
 				itsSource = aSetting.getTextContent();
 			else if ("column".equalsIgnoreCase(aNodeName))
@@ -76,11 +76,10 @@ public class Table
 		 * now all columns are know, check if data (Attributes) is valid by
 		 * loading actual data from itsSource
 		 */
-		Log.logCommandLine("Loading actual data...");
 		new FileHandler(new File(theXMLFileDirectory + "/"+ itsSource), this);
-		update();
 	}
 
+	Table getTable() { return this;}
 	/*
 	 * TODO change this method, goal is to create a lock() function that 'locks'
 	 * the table. itsNrRows/itsNrColumn and itsAttributes/itsColumns.size() do
@@ -89,7 +88,7 @@ public class Table
 	 */
 	/**
 	 * Update this Table. This means the number of rows and columns are set, and
-	 * this Tables list of {@link Attribute Attribute}s is updated.
+	 * this Tables' list of {@link Attribute Attribute}s is updated.
 	 */
 	public void update()
 	{
@@ -432,7 +431,7 @@ public class Table
 	public void addNodeTo(Node theParentNode)
 	{
 		Node aNode = XMLNode.addNodeTo(theParentNode, "table");
-		XMLNode.addNodeTo(aNode, "table_name", itsTableName);
+		XMLNode.addNodeTo(aNode, "table_name", itsName);
 		XMLNode.addNodeTo(aNode, "source", itsSource);
 
 		for (int i = 0, j = itsColumns.size(); i < j; ++i)

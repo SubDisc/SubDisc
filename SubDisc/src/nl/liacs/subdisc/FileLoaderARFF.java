@@ -58,8 +58,8 @@ public class FileLoaderARFF implements FileLoaderInterface
 		{
 			// TODO new ErrorDialog(e, ErrorDialog.noSuchFileError);
 			Log.logCommandLine(
-					String.format("FileLoaderXML: can not open File '%s'",
-							theFile));
+					String.format("FileLoaderARFF: can not open File '%s'",
+							theFile.getAbsolutePath()));
 			return;
 		}
 		else
@@ -68,12 +68,12 @@ public class FileLoaderARFF implements FileLoaderInterface
 
 	public FileLoaderARFF(File theFile, Table theTable)
 	{
-		if(theFile == null || !theFile.exists())
+		if (theFile == null || !theFile.exists())
 		{
 			// TODO new ErrorDialog(e, ErrorDialog.noSuchFileError);
 			Log.logCommandLine(
-					String.format("FileLoaderXML: can not open File '%s'",
-									theFile));
+					String.format("FileLoaderARFF: can not open File '%s'",
+									theFile.getAbsolutePath()));
 			return;
 		}
 		else if (theTable == null)
@@ -140,12 +140,12 @@ public class FileLoaderARFF implements FileLoaderInterface
 					}
 					else
 					{
-						// if(otherKeyWordFound) { criticalError(noRelationError); }
+						// if (otherKeyWordFound) { criticalError(noRelationError); }
 						Log.logCommandLine(
 							String.format(
 								"FileLoaderARFF: multiple '@relation' declarations in File '%s', using: '%s'.",
 								theFile,
-								itsTable.getTableName()));
+								itsTable.getName()));
 					}
 				}
 
@@ -242,7 +242,6 @@ public class FileLoaderARFF implements FileLoaderInterface
 				e.printStackTrace();
 			}
 		}
-		itsTable.update();
 	}
 /*
 	private static boolean prematureEOF(File theFile, String theLine, String theSectionToFind)
@@ -269,7 +268,7 @@ public class FileLoaderARFF implements FileLoaderInterface
 	 * each nominal-class is delimited by an unescaped "\\s*,\\s*"
 	 */
 	// TODO we can not handle STRING/DATE appropriately
-	// attribute type(s), only NUMERIC/NOMINAL for now, not ORDINAL/BINARY
+	// attribute type(s), only NUMERIC/NOMINAL/BINARY for now, not ORDINAL
 	private Attribute parseAttribute(String theLine, int theIndex)
 	{
 		String aName;
@@ -282,23 +281,24 @@ public class FileLoaderARFF implements FileLoaderInterface
 
 		theLine = theLine.replaceFirst("\\'?" + aName + "\\'?", "").trim();
 
-		return new Attribute(aName, null, declaredType(aName, theLine), theIndex);	// (aName, theLine) HACK for NominalAttribute
+		// (aName, theLine) HACK for NominalAttribute
+		return new Attribute(aName, "", declaredType(aName, theLine), theIndex);
 	}
 
 	// TODO do this only once for the whole line
-	// TODO catch ArrayIndexOutOfBoounds if i > length (missing closing ')
+	// TODO catch ArrayIndexOutOfBounds if i > length (missing closing ')
 	private static String removeOuterQuotes(String theString)
 	{
-		if(theString.startsWith("\'"))
+		if (theString.startsWith("\'"))
 		{
 			// find first unescaped "'"
 			char[] aCharArray = theString.toCharArray();
 
-			for(int i = 1, j = aCharArray.length; i < j; ++i)
+			for (int i = 1, j = aCharArray.length; i < j; ++i)
 			{
-				if(aCharArray[i] == '\\')	// jump beyond escaped char
+				if (aCharArray[i] == '\\')	// jump beyond escaped char
 					++i;
-				else if(aCharArray[i] == '\'')
+				else if (aCharArray[i] == '\'')
 				{
 					return theString.substring(1, i);
 				}
@@ -313,7 +313,7 @@ public class FileLoaderARFF implements FileLoaderInterface
 		String aCell;
 		for (int i = 0, j = itsTable.getColumns().size(); i < j; i++)
 		{
-			Column aColumn = itsTable.getColumn(i);
+			Column aColumn = itsTable.getColumns().get(i);
 			int offset = 0;
 
 			if (theString.trim().startsWith("\'"))
@@ -418,7 +418,7 @@ public class FileLoaderARFF implements FileLoaderInterface
 			{
 				int offset = 0;
 
-				if(theString.startsWith("\'"))
+				if (theString.startsWith("\'"))
 				{
 					aNominalClass = removeOuterQuotes(theString);
 					offset = 3;
@@ -471,5 +471,6 @@ public class FileLoaderARFF implements FileLoaderInterface
 	// TODO create ErrorDialog class, that also logs the error
 	private static void criticalError() { Log.logCommandLine("ERROR"); }
 
+	@Override
 	public Table getTable() { return itsTable; }
 }

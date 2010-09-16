@@ -4,7 +4,6 @@
 package nl.liacs.subdisc;
 
 import java.io.*;
-import java.util.*;
 
 import javax.swing.*;
 
@@ -64,22 +63,38 @@ public class FileHandler extends JFrame
 		if (itsFile == null || !itsFile.exists())
 			return;
 
-		switch (FileType.getFileType(itsFile))
+		FileType aFileType = FileType.getFileType(itsFile);
+		switch (aFileType)
 		{
-			case TXT : itsTable = new FileLoaderTXT(itsFile).getTable(); break;
+			case TXT :
+			{
+				if (itsTable == null )
+				{
+					itsTable = new FileLoaderTXT(itsFile).getTable();
+					printLoadingInfo();
+				}
+				else
+					new FileLoaderTXT(itsFile, itsTable);
+				break;
+			}
 			case ARFF :
 			{
 				if (itsTable == null )
+				{
 					itsTable = new FileLoaderARFF(itsFile).getTable();
+					printLoadingInfo();
+				}
 				else
 					new FileLoaderARFF(itsFile, itsTable);
 				break;
 			}
 			case XML :
 			{
+				//circular ref to itsTable
 				FileLoaderXML aLoader = new FileLoaderXML(itsFile);
 				itsTable = aLoader.getTable();
-				itsSearchParameters =  aLoader.getSearchParameters();
+				itsSearchParameters = aLoader.getSearchParameters();
+				printLoadingInfo();
 				break;
 			}
 			// unknown FileType, log error
@@ -92,7 +107,6 @@ public class FileHandler extends JFrame
 				break;
 			}
 		}
-//			itsTable.print();	// TODO
 	}
 
 	private void openDatabase()
@@ -127,6 +141,18 @@ public class FileHandler extends JFrame
 			itsFile = aChooser.getSelectedFile();
 			itsLastFileLocation = itsFile.getParent();
 		}
+	}
+
+	public void printLoadingInfo()
+	{
+		itsTable.update();
+
+		Log.logCommandLine(
+			String.format(
+					"Table '%s' has %d columns and %d rows.",
+					itsTable.getName(),
+					itsTable.getNrColumns(),
+					itsTable.getNrRows()));
 	}
 
 	/**

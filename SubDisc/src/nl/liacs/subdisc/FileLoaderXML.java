@@ -17,7 +17,7 @@ public class FileLoaderXML implements FileLoaderInterface
 		{
 			Log.logCommandLine(
 					String.format("FileLoaderXML: can not open File '%s'",
-							theFile));
+							theFile.getAbsolutePath()));
 			return;
 		}
 		else
@@ -36,7 +36,15 @@ public class FileLoaderXML implements FileLoaderInterface
 		{
 			String aNodeName = aSettings.item(i).getNodeName();
 			if ("table".equalsIgnoreCase(aNodeName))
+			{
+
 				itsTable = new Table(aSettings.item(i), theFile.getParent());
+				itsTable.update();
+				for (Column c : itsTable.getColumns())
+					System.out.print(c.size() + " ");
+				System.out.println();
+				itsTable.print();
+			}
 			else if ("search_parameters".equalsIgnoreCase(aNodeName))
 				itsSearchParameters = new SearchParameters(aSettings.item(i));
 			// NOTE order sensitive, SearchParameters must be set first

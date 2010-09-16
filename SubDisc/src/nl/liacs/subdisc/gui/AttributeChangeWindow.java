@@ -36,7 +36,7 @@ public class AttributeChangeWindow extends JFrame implements ActionListener
 			itsTable = theTable;
 			initJTable(itsTable);
 			initComponents();
-			setTitle("Attribute types for: " + itsTable.getTableName());
+			setTitle("Attribute types for: " + itsTable.getName());
 			setLocation(100, 100);
 			setSize(GUI.DEFAULT_WINDOW_DIMENSION);
 			setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -83,7 +83,7 @@ public class AttributeChangeWindow extends JFrame implements ActionListener
 		aSelectionPanel.add(GUI.buildButton("Select All Numeric", 'N', AttributeType.NUMERIC.toString(), this));
 		aSelectionPanel.add(GUI.buildButton("Select All Ordinal", 'O', AttributeType.ORDINAL.toString(), this));
 		aSelectionPanel.add(GUI.buildButton("Select All Binary", 'B', AttributeType.BINARY.toString(), this));
-		aSelectionPanel.add(GUI.buildButton("Invert Selection", 'I', "invert", this));
+//		aSelectionPanel.add(GUI.buildButton("Invert Selection", 'I', "invert", this));
 		aSelectionPanel.add(GUI.buildButton("Clear Selection", 'X', "clear", this));
 		jPanelSouth.add(aSelectionPanel);
 
@@ -96,7 +96,7 @@ public class AttributeChangeWindow extends JFrame implements ActionListener
 
 		aRadioButtonPanel.setLayout(new BoxLayout(aRadioButtonPanel, BoxLayout.Y_AXIS));
 
-		for(AttributeType at : AttributeType.values())
+		for (AttributeType at : AttributeType.values())
 		{
 			String aType = at.toString();
 			JRadioButton aRadioButton = new JRadioButton(aType.toLowerCase());
@@ -104,8 +104,12 @@ public class AttributeChangeWindow extends JFrame implements ActionListener
 			aRadioButtonPanel.add(aRadioButton);
 		}
 
-		for(Component rb : aRadioButtonPanel.getComponents())
+		for (Component rb : aRadioButtonPanel.getComponents())
 			aNewType.add((AbstractButton) rb);
+
+		// for now, disable ORDINAL, will change when implemented
+		aRadioButtonPanel.remove(2);
+		aNewType.remove((AbstractButton) aRadioButtonPanel.getComponent(2));
 
 		aChangeTypePanel.add(aRadioButtonPanel);
 		aChangeTypePanel.add(Box.createVerticalGlue());
@@ -142,7 +146,7 @@ public class AttributeChangeWindow extends JFrame implements ActionListener
 
 //		jPanelSouth.add(Box.createHorizontalGlue());
 
-		itsFeedBackLabel.setText("Attributes loaded for " + itsTable.getTableName());
+		itsFeedBackLabel.setText("Attributes loaded for " + itsTable.getName());
 
 		getContentPane().add(jScrollPane, BorderLayout.CENTER);
 		getContentPane().add(jPanelSouth, BorderLayout.SOUTH);
@@ -170,6 +174,7 @@ public class AttributeChangeWindow extends JFrame implements ActionListener
 
 		if ("all".equals(aCommand))
 			jTable.selectAll();
+/*
 		else if ("invert".equals(aCommand))
 		{
 			for (int i = 0, j = itsTable.getColumns().size(); i < j; ++i)
@@ -180,6 +185,7 @@ public class AttributeChangeWindow extends JFrame implements ActionListener
 					jTable.addRowSelectionInterval(i, i);
 			}
 		}
+*/
 		else if ("clear".equals(aCommand))
 			jTable.clearSelection();
 		else

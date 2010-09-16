@@ -79,6 +79,7 @@ public class MiningWindow extends JFrame
 		// setIconImage(ICON);
 		pack();
 		setSize(700, 600);
+		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setVisible(true);
 
 		// Open log/debug files
@@ -170,7 +171,7 @@ public class MiningWindow extends JFrame
 	{
 		if (itsTable != null)
 		{
-			jLFieldTargetTable.setText(itsTable.getTableName());
+			jLFieldTargetTable.setText(itsTable.getName());
 			jLFieldNrExamples.setText(String.valueOf(itsTotalCount));
 			jLFieldNrColumns.setText(String.valueOf(itsTable.getNrColumns()));
 			int[][] aCounts = itsTable.getTypeCounts();
@@ -797,36 +798,40 @@ public class MiningWindow extends JFrame
 		getContentPane().add(jPanelCenter, BorderLayout.CENTER);
 
 		setFont(DEFAULT_FONT);
+/*
+		use setDefautCloseOperation, code below causes:
+		X Error of failed request:  BadWindow (invalid Window parameter)
+		  Major opcode of failed request:  20 (X_GetProperty)
+		  Resource id in failed request:  0x360008b
+		  Serial number of failed request:  2562
+		  Current serial number in output stream:  2562
 		addWindowListener(new WindowAdapter() {
 			public void windowClosing(WindowEvent evt) {
 				exitForm(evt);
 			}
 		});
-
+*/
 		setJMenuBar(jMiningWindowMenuBar);
 	}
 
 	private void enableTableDependentComponents(boolean theSetting)
 	{
-		List<? extends AbstractButton> dataModelDependentComponents =
-			new ArrayList<AbstractButton>(Arrays.asList(new AbstractButton[]
-														{
-															jMenuItemDataExplorer,
-															jMenuItemBrowseTarget,
-															jMenuItemAttributeTypeChange,
-															jMenuItemSubgroupDiscovery,
-															jMenuItemCreateAutoRunFile,
-															jMenuItemAddToAutoRunFile,
-//															jButtonDataExplorer,	//TODO add when implemented
-															jButtonBrowse,
-															jButtonAttributeTypeChange,
-															jButtonSubgroupDiscovery,
-															jButtonRandomSubgroups,
-															jButtonRandomConditions,
-															jButtonBaseModel
-														}));
+		AbstractButton[] anAbstractButtonArray = 
+			new AbstractButton[] {jMenuItemDataExplorer,
+									jMenuItemBrowseTarget,
+									jMenuItemAttributeTypeChange,
+									jMenuItemSubgroupDiscovery,
+									jMenuItemCreateAutoRunFile,
+									jMenuItemAddToAutoRunFile,
+									//jButtonDataExplorer,	//TODO add when implemented
+									jButtonBrowse,
+									jButtonAttributeTypeChange,
+									jButtonSubgroupDiscovery,
+									jButtonRandomSubgroups,
+									jButtonRandomConditions,
+									jButtonBaseModel};
 
-		for (AbstractButton a : dataModelDependentComponents)
+		for (AbstractButton a : anAbstractButtonArray)
 			a.setEnabled(theSetting);
 	}
 
@@ -899,13 +904,6 @@ public class MiningWindow extends JFrame
 				new AttributeChangeWindow(aParent, itsTable);
 			}
 		});
-	}
-
-	/* Exit application */
-	private void exitForm(WindowEvent evt)
-	{
-		dispose();
-		System.exit(0);
 	}
 
 	private void jComboBoxSearchStrategyTypeActionPerformed(ActionEvent evt)
