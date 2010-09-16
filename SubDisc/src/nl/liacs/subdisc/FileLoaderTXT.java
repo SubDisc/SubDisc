@@ -147,8 +147,14 @@ public class FileLoaderTXT implements FileLoaderInterface
 			int aNrColumns = aHeaders.length;
 			int aNrRows = 0;
 
+			/*
+			 * if read from XML:
+			 * check (number of) Attributes
+			 * check number of columns in each line
+			 */
 			if (checkDataWithXMLTable)
 			{
+				// check if number of columns is equal in XML and File
 				if (aNrColumns != itsTable.getColumns().size())
 				{
 					Log.logCommandLine(
@@ -157,7 +163,9 @@ public class FileLoaderTXT implements FileLoaderInterface
 						theFile.getName() + "'.");
 					return false;
 				}
+				// check if AttributeNames are equal in XML and File
 				else
+				{
 					for (int i = 0; i < aNrColumns; i++)
 					{
 						if (!aHeaders[i].trim().equals(itsTable
@@ -169,74 +177,110 @@ public class FileLoaderTXT implements FileLoaderInterface
 								"At index %d: Attribute '%s' from XML does " +
 								"not match Attribute '%s' from File '%s'.",
 								(i + 1),
-								itsTable.getColumn(i).getName(),
+								itsTable.getColumns().get(i).getName(),
 								aHeaders[i].trim(),
 								theFile.getName()));
-							break;
+							return false;
 						}
 					}
-			}
+				}
 
-			while ((aLine = aReader.readLine()) != null)
-			{
-				++aNrRows;
-
-				String[] aRow = aLine.split(itsSeparator, -1);
-				int aLineNrColumns = aRow.length;
-
-				if (aLineNrColumns != aNrColumns)
+				// check number of columns for each line in the File
+				while ((aLine = aReader.readLine()) != null)
 				{
-					Log.logCommandLine(
-						String.format(
+					++aNrRows;
+
+					String[] aRow = aLine.split(itsSeparator, -1);
+					int aLineNrColumns = aRow.length;
+
+					if (aLineNrColumns != aNrColumns)
+					{
+						Log.logCommandLine(
+							String.format(
 							"Line %d has %d columns instead of the expected %d."
-							, aNrRows, aLineNrColumns, aNrColumns));
-					isWellFormedFile = false;
-					//continues checking to inform about more malformed lines
-				}
-
-				for (int i = 0; i < aLineNrColumns; i++)
-				{
-					String aCell = aRow[i];
-					try
-					{
-						Float.parseFloat(aCell);
-						//numeric could be binary also
-						if (!aCell.equals("0") && !aCell.equals("1"))
-							aNotZeroOne.set(i);
-					}
-					catch (NumberFormatException anException) //if not a float
-					{
-						aNominals.set(i);
+							, (aNrRows + 1), aLineNrColumns, aNrColumns));
+						isWellFormedFile = false;
+						// continue while to inform about more malformed lines
 					}
 				}
 			}
-
-			//assign types
-			itsTable = new Table(theFile, aNrRows, aNrColumns);
-
-			for (int i = 0; i < aNrColumns; i++)
+			/*
+			 * if not read from XML:
+			 * check number of columns in each line
+			 * determine AttributeType of each column
+			 * create Table and Columns
+			 */
+			else
 			{
-				if (aNominals.get(i))
-					itsTable.getColumns()
-					.add(new Column(new Attribute(aHeaders[i].trim(),
-													"",
-													AttributeType.NOMINAL,
-													i)
-									, aNrRows));
-				else if (aNotZeroOne.get(i))
-					itsTable.getColumns()
-					.add(new Column(new Attribute(aHeaders[i].trim(),
-													"",
-													AttributeType.NUMERIC,
-													i)
-									, aNrRows));
-				else
-					itsTable.getColumns()
-					.add(new Column(new Attribute(aHeaders[i].trim(),
-													"",
-													AttributeType.BINARY,
-													i)
-									, aNrRows));
+				while ((aLine = aReader.readLine()) != null)
+				{
+					++aNrRows;
+
+					String[] aRow = aLine.split(itsSeparator, -1);
+					int aLineNrColumns = aRow.length;
+
+					// check number of columns for each line in the File
+					if (aLineNrColumns != aNrColumns)
+					{
+						Log.logCommandLine(
+							String.format(
+							"Line %d has %d columns instead of the expected %d."
+							, (aNrRows + 1), aLineNrColumns, aNrColumns));
+						isWellFormedFile = false;
+						//continue while to inform about more malformed lines
+					}
+
+					/*
+					 * determine AttributeType of each column
+					 * even if !isWellFormedFile
+					 * allows creation of empty Table with all Attributes set
+					 * only first 'aNrColumns' columns are used
+					 */
+					for (int i = 0; i < aNrColumns; i++)
+					{
+						String aCell = aRow[i];
+						try
+						{
+							Float.parseFloat(aCell);
+							//numeric could be binary also
+							if (!aCell.equals("0") && !aCell.equals("1"))
+								aNotZeroOne.set(i);
+						}
+						// if not a float
+						catch (NumberFormatException anException)
+						{
+							aNominals.set(i);
+						}
+					}
+				}
+
+				// create Table and Columns
+				itsTable = new Table(theFile, aNrRows, aNrColumns);
+
+				for (int i = 0; i < aNrColumns; i++)
+				{
+					if (aNominals.get(i))
+						itsTable.getColumns()
+						.add(new Column(new Attribute(aHeaders[i].trim(),
+								"",
+								AttributeType.NOMINAL,
+								i)
+						, aNrRows));
+					else if (aNotZeroOne.get(i))
+						itsTable.getColumns()
+						.add(new Column(new Attribute(aHeaders[i].trim(),
+								"",
+								AttributeType.NUMERIC,
+								i)
+						, aNrRows));
+					else
+						itsTable.getColumns()
+						.add(new Column(new Attribute(aHeaders[i].trim(),
+								"",
+								AttributeType.BINARY,
+								i)
+						, aNrRows));
+				}
 			}
 		}
 		catch (IOException e)
@@ -252,7 +296,7 @@ public class FileLoaderTXT implements FileLoaderInterface
 					"File '" +
 					theFile + 
 					"' is not well-formed,\n i.e. not all records have the " +
-					"same number of attributes.");
+					"same number of Attributes. The Table will be 'dataless'.");
 
 			try
 			{

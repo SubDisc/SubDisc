@@ -90,7 +90,6 @@ public class FileHandler extends JFrame
 			}
 			case XML :
 			{
-				//circular ref to itsTable
 				FileLoaderXML aLoader = new FileLoaderXML(itsFile);
 				itsTable = aLoader.getTable();
 				itsSearchParameters = aLoader.getSearchParameters();
