@@ -226,19 +226,45 @@ public class Validation
 
 		for (int j = 0; j < aDepth; j++) // j conditions
 		{
-			Attribute anAttribute;
-			do
+			Attribute anAttribute = itsTable.getAttribute(theRandom.nextInt(itsTable.getNrColumns())); //TODO afvangen dat dit niet het targetattribuut is
+			int anOperator;
+			Condition aCondition;
+			switch(anAttribute.getType())
 			{
-				anAttribute = itsTable.getAttribute(theRandom.nextInt(itsTable.getNrColumns()));
+				case BINARY :
+				{
+					anOperator = Condition.EQUALS;
+					aCondition = new Condition(anAttribute, anOperator);
+					aCondition.setValue(theRandom.nextBoolean() ? "1" : "0");
+					break;
+				}
+				case NOMINAL :
+				{
+					anOperator = Condition.EQUALS;
+					aCondition = new Condition(anAttribute, anOperator);
+					TreeSet<String> aDomain = itsTable.getColumn(anAttribute).getDomain();
+					int aNrDistinct = aDomain.size();
+					int aRandomIndex = (int) (theRandom.nextDouble()* (double) aNrDistinct);
+					Iterator<String> anIterator = aDomain.iterator();
+					String aValue = anIterator.next();
+					for (int i=0; i<aRandomIndex; i++)
+						aValue = anIterator.next();
+					aCondition.setValue(aValue);
+					break;
+				}
+				case NUMERIC :
+				default :
+				{
+					anOperator = theRandom.nextBoolean() ?
+						Condition.LESS_THAN_OR_EQUAL : Condition.GREATER_THAN_OR_EQUAL;
+					aCondition = new Condition(anAttribute, anOperator);
+					float aMin = itsTable.getColumn(anAttribute).getMin();
+					float aMax = itsTable.getColumn(anAttribute).getMax();
+					aCondition.setValue(
+						Float.toString(aMin + (aMax - aMin) / 4 + (aMax - aMin) * theRandom.nextFloat() / 2));
+					break;
+				}
 			}
-			while (!anAttribute.isNumericType());
-			int anOperator = theRandom.nextBoolean() ?
-					Condition.LESS_THAN_OR_EQUAL : Condition.GREATER_THAN_OR_EQUAL;
-			Condition aCondition = new Condition(anAttribute, anOperator);
-			float aMin = itsTable.getColumn(anAttribute).getMin();
-			float aMax = itsTable.getColumn(anAttribute).getMax();
-			aCondition.setValue(
-				Float.toString(aMin + (aMax - aMin) / 4 + (aMax - aMin) * theRandom.nextFloat() / 2));
 			aCL.addCondition(aCondition);
 		}
 		return aCL;
