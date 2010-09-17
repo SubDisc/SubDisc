@@ -25,7 +25,9 @@ public class Column implements XMLNodeInterface
 	private BitSet itsBinaries;
 	private String itsMissingValue;
 	private BitSet itsMissing = new BitSet();
+	private boolean itsMissingValueIsUnique = true;
 	private int itsSize = 0;
+	private int itsCardinality = 0;
 	private float itsMin = Float.POSITIVE_INFINITY;
 	private float itsMax = Float.NEGATIVE_INFINITY;
 	private boolean isEnabled = true;
@@ -111,7 +113,11 @@ public class Column implements XMLNodeInterface
 			itsBinaries.set(itsSize);
 		itsSize++;
 	}
-	public void add(String theNominal) { itsNominals.add(theNominal); itsSize++; }
+	public void add(String theNominal)
+	{
+		itsNominals.add(theNominal == null ? "" : theNominal);
+		itsSize++;
+	}
 	public int size() { return itsSize; }
 	public Attribute getAttribute() { return itsAttribute; }	// TODO return copy of mutable type
 	public AttributeType getType() { return itsAttribute.getType(); }
@@ -199,9 +205,9 @@ public class Column implements XMLNodeInterface
 	 * Sets a new type for this Column. This is done by changing the
 	 * {@link AttributeType AttributeType} of this Columns'
 	 * {@link Attribute Attribute}.
-	 * @param theType a String with the AttributeType name
+	 * @param theType a <code>String</code> representing the AttributeType name.
 	 * @return <code>true</code> if the change was successful,
-	 * <code>false</code> otherwise
+	 * <code>false</code> otherwise.
 	 */
 	public boolean setType(String theType)
 	{
@@ -231,6 +237,7 @@ public class Column implements XMLNodeInterface
 
 	/*
 	 * The AttributeType of a Column can always be changed to NOMINAL.
+	 * The old itsMissingValue can always be used as itsMissingValue.
 	 */
 	private boolean toNominalType()
 	{
@@ -260,7 +267,7 @@ public class Column implements XMLNodeInterface
 			}
 			default : logTypeError("Column.toNominalType()"); return false;
 		}
-		itsMissingValue = AttributeType.NOMINAL.DEFAULT_MISSING_VALUE;
+
 		return itsAttribute.setType(AttributeType.NOMINAL);
 	}
 
@@ -269,8 +276,11 @@ public class Column implements XMLNodeInterface
 	 * possible, without any other further changes. Changing from a BINARY
 	 * AttributeType is also possible. Changing from a NOMINAL AttributeType is
 	 * only possible if all values in itsNominals can be parsed as Floats.
+	 * The old itsMissingValue can only be used if it can be parsed as Float,
+	 * else itsMissingValue will be set to
+	 * AttributeType.theType.DEFAULT_MISSING_VALUE.
 	 */
-	private boolean toNumericType(AttributeType theType)
+	private boolean toNumericType(AttributeType theNewType)
 	{
 		switch (itsAttribute.getType())
 		{
@@ -313,8 +323,13 @@ public class Column implements XMLNodeInterface
 			}
 			default : logTypeError("Column.toNumericType()"); return false;
 		}
-		itsMissingValue = theType.DEFAULT_MISSING_VALUE;
-		return itsAttribute.setType(theType);
+
+		boolean aReturnValue = itsAttribute.setType(theNewType);
+
+		if (!isValidValue(itsMissingValue))
+			itsMissingValue = itsAttribute.getType().DEFAULT_MISSING_VALUE;
+
+		return aReturnValue;
 	}
 
 	/*
@@ -323,10 +338,16 @@ public class Column implements XMLNodeInterface
 	 * The value of the first value in itsFloats/itsNominals will serve as the
 	 * 'true' case, meaning the bits in the new itsBinary BitSet will be set
 	 * ('true') for all instances having that value, all others will be 'false'.
+	 * The old itsMissingValue can only be used if
+	 * (AttributeType.isValidBinaryTrueValue(itsMissingValue) ||
+	 * AttributeType.isValidBinaryFalseValue(itsMissingValue)) evaluates 'true'.
+	 * In that case the itsMissingValue will be set to the '0'/'1' equivalent of
+	 * itsMissingValue, else itsMissingValue will be set to
+	 * AttributeType.BINARY.DEFAULT_MISSING_VALUE.
 	 */
 	private boolean toBinaryType()
 	{
-		if (getNrDistinct() != 2)
+		if (getCardinality() != 2)
 			return false;
 		else
 		{
@@ -358,8 +379,17 @@ public class Column implements XMLNodeInterface
 				case BINARY : break;	// should not happen
 				default : logTypeError("Column.toBinaryType()"); return false;
 			}
-			itsMissingValue = AttributeType.BINARY.DEFAULT_MISSING_VALUE;
-			return itsAttribute.setType(AttributeType.BINARY);
+
+			boolean aReturnValue = itsAttribute.setType(AttributeType.BINARY);
+
+			if (isValidValue(itsMissingValue))
+				itsMissingValue =
+					AttributeType.isValidBinaryTrueValue(itsMissingValue)
+																	? "1" : "0";
+			else
+				itsMissingValue = AttributeType.BINARY.DEFAULT_MISSING_VALUE;
+
+			return aReturnValue;
 		}
 	}
 
@@ -415,21 +445,25 @@ public class Column implements XMLNodeInterface
 	/**
 	 * Sets the new missing value for this Column. The missing value is used as
 	 * replacement value for all values that where '?' in the original data.
-	 * @param theNewValue the value to use as new missing value
+	 * @param theNewValue the value to use as new missing value.
 	 * @return <code>true</code> if setting the new missing value is successful,
-	 * <code>false</code> otherwise
+	 * <code>false</code> otherwise.
 	 */
 	public boolean setNewMissingValue(String theNewValue)
 	{
-		if (isValidValue(theNewValue))
+		if (itsMissingValue.equals(theNewValue))
+			return true;
+		else if (isValidValue(theNewValue))
 		{
 			itsMissingValue = theNewValue;
+
 			switch (itsAttribute.getType())
 			{
 				case NOMINAL :
 				{
 					for (int i = itsMissing.nextSetBit(0); i >= 0; i = itsMissing.nextSetBit(i + 1))
 						itsNominals.set(i, itsMissingValue);
+					updateCardinality(itsNominals);
 					return true;
 				}
 				case NUMERIC :
@@ -438,6 +472,7 @@ public class Column implements XMLNodeInterface
 					Float aNewValue = Float.valueOf(itsMissingValue);
 					for (int i = itsMissing.nextSetBit(0); i >= 0; i = itsMissing.nextSetBit(i + 1))
 						itsFloats.set(i, aNewValue);
+					updateCardinality(itsFloats);
 					return true;
 				}
 				case BINARY :
@@ -476,7 +511,6 @@ public class Column implements XMLNodeInterface
 			}
 			case BINARY :
 			{
-				// TODO take it out of FileLoaderARFF and put it into ?
 				return (AttributeType.isValidBinaryTrueValue(theNewValue) ||
 						AttributeType.isValidBinaryFalseValue(theNewValue));
 			}
@@ -486,31 +520,92 @@ public class Column implements XMLNodeInterface
 
 	/*
 	 * NOTE This may not be the fastest implementation, but it avoids HashSets'
-	 * hashCode() clashes.
+	 * hashCode() collisions.
 	 */
 	/**
 	 * Counts the number of distinct values, or cardinality, for this Column.
-	 * @return the number of distinct values
+	 * @return the number of distinct values, <code>0</code> when this Column
+	 * contains no data.
 	 */
-	public int getNrDistinct()
+	public int getCardinality()
 	{
-		switch (itsAttribute.getType())
+		if (itsSize == 0 || itsSize == 1)
+			return itsSize;
+		else
 		{
-			case NOMINAL : return new TreeSet<String>(itsNominals).size();
-			case NUMERIC:
-			case ORDINAL : return new TreeSet<Float>(itsFloats).size();
-			case BINARY : return 2;
-			default : logTypeError("Column.getNrDistinct()"); return 0;
+			// not set yet
+			if (itsCardinality == 0)
+			{
+				switch (itsAttribute.getType())
+				{
+					// expect low itsCardinality/itsSize ratio
+					// TODO check JLS, how are TreeSets created from ArrayLists?
+					case NOMINAL :
+					{
+						String[] anArray = itsNominals.toArray(new String[itsSize]);
+						Arrays.sort(anArray);
+
+						// should be safe as (itsSize > 1)
+						String aLastValue = anArray[0];
+						itsCardinality = 1;
+
+						for (String aValue : anArray)
+						{
+							if (!aLastValue.equals(aValue))
+							{
+								aLastValue = (String)aValue;
+								++itsCardinality;
+							}
+						}
+
+						return itsCardinality;
+					}
+					// expect high itsCardinality/itsSize ratio
+					// Arrays.sort = O(n*log(n))
+					case NUMERIC:
+					case ORDINAL : return new TreeSet<Float>(itsFloats).size();
+					case BINARY : return 2;
+					default : logTypeError("Column.getNrDistinct()"); return 0;
+				}
+			}
+			else
+				return itsCardinality;
+		}
+	}
+
+	private void updateCardinality(ArrayList<?> theColumnData)
+	{
+		// not set yet, should not happen
+		if (itsCardinality == 0)
+			getCardinality();
+		else
+		{
+			if (itsMissingValueIsUnique)
+			{
+				if (theColumnData.contains(itsMissingValue))
+				{
+					--itsCardinality;
+					itsMissingValueIsUnique = false;
+				}
+			}
+			else
+			{
+				if (!theColumnData.contains(itsMissingValue))
+				{
+					++itsCardinality;
+					itsMissingValueIsUnique = true;
+				}
+			}
 		}
 	}
 
 	/**
 	 * Creates an {@link XMLNode XMLNode} representation of this Column.
-	 * Note: the value for missing values is included as missing_value, as
-	 * described by itsMissingValue. When data is loaded, '?' values are
-	 * replaced by itsMissingValue by the FileLoader.
-	 * @param theParentNode the Node of which this Node will be a ChildNode
-	 * @return a Node that contains all the information of this column
+	 * Note: the value for missing values is included as missing_value. When
+	 * data is loaded, '?' values are replaced by missing_value by the
+	 * appropriate FileLoader.
+	 * @param theParentNode the Node of which this Node will be a ChildNode.
+	 * @return a Node that contains all the information of this column.
 	 */
 	@Override
 	public void addNodeTo(Node theParentNode)

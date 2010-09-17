@@ -76,7 +76,7 @@ public class AttributeChangeWindow extends JFrame implements ActionListener
 		// TODO could use generic loop over all AttributeTypes
 		aSelectionPanel.add(GUI.buildButton("Select All Nominal", 'L', AttributeType.NOMINAL.toString(), this));
 		aSelectionPanel.add(GUI.buildButton("Select All Numeric", 'N', AttributeType.NUMERIC.toString(), this));
-		aSelectionPanel.add(GUI.buildButton("Select All Ordinal", 'O', AttributeType.ORDINAL.toString(), this));
+//		aSelectionPanel.add(GUI.buildButton("Select All Ordinal", 'O', AttributeType.ORDINAL.toString(), this));
 		aSelectionPanel.add(GUI.buildButton("Select All Binary", 'B', AttributeType.BINARY.toString(), this));
 //		aSelectionPanel.add(GUI.buildButton("Invert Selection", 'I', "invert", this));
 		aSelectionPanel.add(GUI.buildButton("Clear Selection", 'X', "clear", this));
@@ -103,8 +103,8 @@ public class AttributeChangeWindow extends JFrame implements ActionListener
 			aNewType.add((AbstractButton) rb);
 
 		// for now, disable ORDINAL, will change when implemented
-		aRadioButtonPanel.remove(2);
 		aNewType.remove((AbstractButton) aRadioButtonPanel.getComponent(2));
+		aRadioButtonPanel.remove(2);
 
 		aChangeTypePanel.add(aRadioButtonPanel);
 		aChangeTypePanel.add(Box.createVerticalGlue());
@@ -211,7 +211,8 @@ public class AttributeChangeWindow extends JFrame implements ActionListener
 			}
 			else if ("missing".equals(aCommand))
 			{
-				String aNewValue = aNewMissingValue.getText();
+				String aNewValue = aNewMissingValue.getText().trim();
+				aNewMissingValue.setText(aNewValue);
 				ArrayList<Integer> aWrongType = new ArrayList<Integer>(jTable.getSelectedRows().length);
 				for (int i : jTable.getSelectedRows())
 					if (!itsTable.getColumn(i).setNewMissingValue(aNewValue))
@@ -232,7 +233,7 @@ public class AttributeChangeWindow extends JFrame implements ActionListener
 										aColumn.getAttribute().getTypeName());
 					}
 					else
-						anIndicator = "some attributes. They are of an incompatible type.\n See selection.";
+						anIndicator = "some attributes. \nThey are of an incompatible type. See selection.";
 					JOptionPane.showMessageDialog(null,
 										String.format(
 											"'%s' is not a valid value for %s",

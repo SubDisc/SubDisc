@@ -54,7 +54,7 @@ public class TableTableModel extends AbstractTableModel
 			Column aColumn = itsTable.getColumn(theColumnIndex);
 			return String.format("<html><center>%s<br>(%d distinct)</html>",
 									aColumn.getName(),
-									aColumn.getNrDistinct());
+									aColumn.getCardinality());
 		}
 	}
 

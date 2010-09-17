@@ -43,7 +43,8 @@ public class FileLoaderXML implements FileLoaderInterface
 			// NOTE order sensitive, SearchParameters must be set first
 			else if ("target_concept".equalsIgnoreCase(aNodeName))
 				itsSearchParameters
-					.setTargetConcept(new TargetConcept(aSettings.item(i), itsTable));
+					.setTargetConcept(new TargetConcept(aSettings.item(i),
+														itsTable));
 		}
 	}
 

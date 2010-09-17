@@ -62,12 +62,17 @@ public class Attribute implements XMLNodeInterface
 		}
 
 		/**
-		 * Returns the AttributeType corresponding to the String parameter. This
-		 * method is case insensitive. If the corresponding AttributeType can
-		 * not be found, the default AttributeType NOMINAL is returned.
-		 * @param theType the String corresponding to an AtrtibuteType
-		 * @return the AttributeType corresponding to the String parameter, or
-		 * AttributeType NOMINAL if no corresponding AttributeType is found.
+		 * Returns the AttributeType corresponding to the <code>String</code>
+		 * parameter. If the corresponding AttributeType can not be found, the
+		 * default AttributeType NOMINAL is returned. This method is case
+		 * insensitive.
+		 * 
+		 * @param theType the <code>String</code> corresponding to an
+		 * AtrtibuteType.
+		 * 
+		 * @return the AttributeType corresponding to the <code>String</code>
+		 * parameter, or AttributeType NOMINAL if no corresponding AttributeType
+		 * is found.
 		 */
 		public static AttributeType getAttributeType(String theType)
 		{
@@ -170,17 +175,20 @@ public class Attribute implements XMLNodeInterface
 	 * Sets the {@link AttributeType AttributeType} for this Attribute. This is
 	 * used for changing the AttributeType of a {@link Column Column}. The
 	 * Column is responsible for checking whether its AttributeType can be
-	 * changed to this new AttributeType.
+	 * changed to this new AttributeType. This method is case insensitive.
 	 * 
-	 * @return The new AttributeType, or the default AttributeType.NOMINAL if
-	 * the String passed in as a parameter cannot be resolved to a valid
-	 * AttributeType.
+	 * @param theType the <code>String</code> representation of an valid
+	 * AttributeType to set as this Attributes' new AttributeType.
+	 * 
+	 * @return the new AttributeType, or the default AttributeType.NOMINAL if
+	 * the <code>String</code> passed in as a parameter can not be resolved to a
+	 *  valid AttributeType.
 	 */
 	public AttributeType setType(String theType)
 	{
 		for (AttributeType at : AttributeType.values())
 		{
-			if (at.toString().equals(theType))
+			if (at.toString().equalsIgnoreCase(theType))
 			{
 				itsType = at;
 				break;
@@ -197,8 +205,11 @@ public class Attribute implements XMLNodeInterface
 	 * Column is responsible for checking whether its AttributeType can be
 	 * changed to this new AttributeType.
 	 * 
+	 * @param theType the AttibuteType to set as this Attributes' new
+	 * AttributeType.
+	 * 
 	 * @return <code>false</code> if the AttributeType passed in as a parameter
-	 * is <code>null</code>, <code>true</code> otherwise
+	 * is <code>null</code>, <code>true</code> otherwise.
 	 */
 	public boolean setType(AttributeType theType)
 	{
@@ -213,8 +224,8 @@ public class Attribute implements XMLNodeInterface
 
 	/**
 	 * Creates an {@link XMLNode XMLNode} representation of this Attribute.
-	 * @param theParentNode the Node of which this Node will be a ChildNode
-	 * @return a Node that contains all the information of this Attribute
+	 * @param theParentNode the Node of which this Node will be a ChildNode.
+	 * @return a Node that contains all the information of this Attribute.
 	 */
 	@Override
 	public void addNodeTo(Node theParentNode)

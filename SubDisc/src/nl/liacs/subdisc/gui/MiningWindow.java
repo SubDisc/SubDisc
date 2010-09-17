@@ -869,11 +869,18 @@ public class MiningWindow extends JFrame
 			itsTotalCount = itsTable.getNrRows();
 			enableTableDependentComponents(true);
 
+			// loaded from regular file
 			if (aSearchParameters == null)
 				initGuiComponents();
+			// loaded from XML
 			else
 			{
 				itsSearchParameters = aSearchParameters;
+				// should not happen
+				if (itsSearchParameters.getTargetConcept() == null)
+					itsTargetConcept = new TargetConcept();
+				else
+					itsTargetConcept = itsSearchParameters.getTargetConcept();
 				initGuiComponentsFromFile();
 			}
 
