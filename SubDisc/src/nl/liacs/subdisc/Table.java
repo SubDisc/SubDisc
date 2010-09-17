@@ -400,7 +400,7 @@ public class Table
 			else
 				t++;
 		}
-		Subgroup aSubgroup = new Subgroup(0.0d, theSize, 0, null);
+		Subgroup aSubgroup = new Subgroup(0.0, theSize, 0, null);
 		aSubgroup.setMembers(aSample);
 		return aSubgroup;
 	}

@@ -1,7 +1,3 @@
-/**
- * TODO the min and max methods in this class behave exactly the same as
- * Math.min() and Math.max(). They can be removed.
- */
 package nl.liacs.subdisc;
 
 import java.awt.BasicStroke;
@@ -156,24 +152,6 @@ public class VisualArc extends MShape
 //		g2.drawPolygon(tmpPoly);
 		g2.fillPolygon(tmpPoly);
 	}
-/*
-	private int max(int i1, int i2)
-	{
-		if (i1 > i2)
-			return i1;
-		else
-			return i2;
-	}
-
-	private int min(int i1, int i2)
-	{
-		if (i1 < i2)
-			return i1;
-		else
-			return i2;
-	}
-*/
-// UNUSED	private int mean(double i1, double i2) { return (int) ((i1 + i2) / 2); }
 
 	public boolean containsFromShape(MShape aShape)
 	{

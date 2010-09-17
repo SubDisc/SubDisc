@@ -27,6 +27,10 @@ public class ROCCurve extends JPanel
 		setBackground(Color.white);
 
 		ROCList aROCList = theSubgroupSet.getROCList();
+
+		if (aROCList == null)
+			return;
+
 		NumberFormat aFormatter = NumberFormat.getNumberInstance();
 		aFormatter.setMaximumFractionDigits(3);
 		itsAreaUnderCurve = aFormatter.format(aROCList.getAreaUnderCurve());

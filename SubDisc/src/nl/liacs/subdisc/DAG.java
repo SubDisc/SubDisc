@@ -1,7 +1,6 @@
 package nl.liacs.subdisc;
 
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
 
 public class DAG
 {
@@ -54,12 +53,12 @@ public class DAG
 					{
 						break;
 					}
-				 	case 1: //we have i-->j
+					case 1: //we have i-->j
 					{
 						Log.logCommandLine("" + (i+1) + " -> " + (j+1));
 						break;
 					}
-				 	case 2: //we have i<--j
+					case 2: //we have i<--j
 					{
 						Log.logCommandLine("" + (j+1) + " -> " + (i+1));
 						break;
@@ -184,14 +183,14 @@ public class DAG
 								result[x][y]=true;
 						break;
 					}
-				 	case 1: //we have x-->y
+					case 1: //we have x-->y
 					{
 						for (int z=y+1; z<itsSize; z++)
 							if (getNode(z).isConnected(x)==0 && getNode(z).isConnected(y)==2)
 								result[x][z]=true;
 						break;
 					}
-				 	case 2: //we have x<--y
+					case 2: //we have x<--y
 					{
 						for (int z=y+1; z<itsSize; z++)
 							if (getNode(z).isConnected(x)==2 && getNode(z).isConnected(y)==0)

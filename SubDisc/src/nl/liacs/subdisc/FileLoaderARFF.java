@@ -113,9 +113,18 @@ public class FileLoaderARFF implements FileLoaderInterface
 
 				else if (Keyword.END.atStartOfLine(aLine))
 				{
-					// TODO check for premature EOF
+					String aMissing = "";
+
+					if (!relationFound)
+						aMissing += "\nNo '@relation' found.";
+					if (anAttributeIndex == 0)
+						aMissing += "\nNo '@attribute' found.";
 					if (!dataFound)
-						;
+						aMissing += "\nNo '@data' found.";
+
+					Log.logCommandLine(
+						"FileLoaderARFF: premature '@end' declaration in" +
+						" File '" + theFile.getName() + "'." + aMissing);
 					break;
 				}
 
@@ -286,7 +295,6 @@ public class FileLoaderARFF implements FileLoaderInterface
 	}
 
 	// TODO do this only once for the whole line
-	// TODO catch ArrayIndexOutOfBounds if i > length (missing closing ')
 	private static String removeOuterQuotes(String theString)
 	{
 		if (theString.startsWith("\'"))
@@ -294,15 +302,17 @@ public class FileLoaderARFF implements FileLoaderInterface
 			// find first unescaped "'"
 			char[] aCharArray = theString.toCharArray();
 
-			for (int i = 1, j = aCharArray.length; i < j; ++i)
+			for (int i = 1, j = aCharArray.length; i < j; i++)
 			{
 				if (aCharArray[i] == '\\')	// jump beyond escaped char
-					++i;
+					i++;
 				else if (aCharArray[i] == '\'')
-				{
 					return theString.substring(1, i);
-				}
 			}
+			// no closing ' found, log message, return theString asis
+			Log.logCommandLine(
+				"FileLoaderARFF: could not find a closing ' for String:\n\t" +
+				theString + "\nReturning whole String.");
 		}
 		return theString;
 	}
@@ -339,7 +349,8 @@ public class FileLoaderARFF implements FileLoaderInterface
 
 		if (!theString.isEmpty())
 			if (!Keyword.COMMENT.atStartOfLine(theString))
-				Log.logCommandLine("FileLoaderARFF: " + theString); // TODO
+				Log.logCommandLine(
+					"FileLoaderARFF: many arguments at line:\n\t " + theString);
 				// TODO criticalError(toManyArgumentsError);
 	}
 

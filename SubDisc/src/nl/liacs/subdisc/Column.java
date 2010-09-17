@@ -204,7 +204,7 @@ public class Column implements XMLNodeInterface
 	/**
 	 * Sets a new type for this Column. This is done by changing the
 	 * {@link AttributeType AttributeType} of this Columns'
-	 * {@link Attribute Attribute}.
+	 * {@link Attribute Attribute}. This method is case insensitive.
 	 * @param theType a <code>String</code> representing the AttributeType name.
 	 * @return <code>true</code> if the change was successful,
 	 * <code>false</code> otherwise.
@@ -213,8 +213,7 @@ public class Column implements XMLNodeInterface
 	{
 		if (theType == null)
 			return false;
-		// matches only UPPERCASE
-		else if (itsAttribute.toString().equals(theType))
+		else if (itsAttribute.toString().equalsIgnoreCase(theType))
 			return true;
 		else
 		{
@@ -308,7 +307,7 @@ public class Column implements XMLNodeInterface
 				break;
 			}
 			case NUMERIC :
-			case ORDINAL : break;
+			case ORDINAL : break;	// should not happen
 			case BINARY :
 			{
 				/*
@@ -405,14 +404,14 @@ public class Column implements XMLNodeInterface
 	/**
 	 * Returns whether this Column is enabled.
 	 * @return <code>true</code> if this Column is enabled, <code>false</code>
-	 * otherwise
+	 * otherwise.
 	 */
 	public boolean getIsEnabled() { return isEnabled; }
 
 	/**
 	 * Set whether this Column is enabled.
-	 * @param theSetting use <code>true</code> to enable this Column, and <code>
-	 * false</code> to disable it
+	 * @param theSetting use <code>true</code> to enable this Column, and
+	 * <code>false</code> to disable it.
 	 */
 	public void setIsEnabled(boolean theSetting) { isEnabled = theSetting; }
 
@@ -423,19 +422,19 @@ public class Column implements XMLNodeInterface
 	 * NOTE: use {@link #setMissing setMissing} to set missing values. Editing
 	 * on the BitSet retrieved through <code>getMissing</code> has no effect on
 	 * the original missing values BitSet.
-	 * @return a clone of this Columns' itsMissing BitSet
+	 * @return a clone of this Columns' itsMissing BitSet.
 	 */
 	public BitSet getMissing() { return (BitSet) itsMissing.clone(); }
 
 	/**
 	 * Sets the bit at the specified position in the itsMissing BisSet.
-	 * @param theIndex the bit to set in the itsMissing BitSet
+	 * @param theIndex the bit to set in the itsMissing BitSet.
 	 */
 	public void setMissing(int theIndex) { itsMissing.set(theIndex); }
 
 	/**
 	 * Retrieves the value currently set for all missing values.
-	 * @return the value currently set for all missing values
+	 * @return the value currently set for all missing values.
 	 */
 	public String getMissingValue()
 	{
@@ -542,7 +541,8 @@ public class Column implements XMLNodeInterface
 					// TODO check JLS, how are TreeSets created from ArrayLists?
 					case NOMINAL :
 					{
-						String[] anArray = itsNominals.toArray(new String[itsSize]);
+						String[] anArray =
+									itsNominals.toArray(new String[itsSize]);
 						Arrays.sort(anArray);
 
 						// should be safe as (itsSize > 1)

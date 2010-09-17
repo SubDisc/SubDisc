@@ -31,9 +31,9 @@ public class Subgroup implements Comparable<Object>
 	private double itsPValue;
 
 	/*
-	 *  TODO null check ConditionList
 	 * In case no SubgroupSet is provided an empty one is created, this avoids
 	 * extra checks in for example getFalsePositiveRate().
+	 * TODO theMeasureValue = valid, theCoverage > 0, theDepth > 0
 	 */
 	/**
 	 * Creates a Subgroup, this constructor is called by
@@ -58,9 +58,9 @@ public class Subgroup implements Comparable<Object>
 	}
 
 	/*
-	 * TODO null check theConditions
 	 * Most of subgroups' members for which no parameter is supplied are still
 	 * set, this avoids extra checks in for example getFalsePositiveRate().
+	 * TODO theDepth > 0
 	 */
 	 /**
 	 * Creates a Subgroup, this constructor is called by
@@ -72,9 +72,9 @@ public class Subgroup implements Comparable<Object>
 	 */
 	public Subgroup(ConditionList theConditions, BitSet theMembers, int theDepth)
 	{
-		itsConditions = (theConditions == null ? new ConditionList() : theConditions);
+		itsConditions = (theConditions == null ? new ConditionList() : theConditions);	// TODO warning
 		itsMeasureValue = 0.0f;
-		itsMembers = (theMembers == null ? new BitSet(0) : theMembers);
+		itsMembers = (theMembers == null ? new BitSet(0) : theMembers);	// TODO warning
 		itsCoverage = theMembers.cardinality();
 		itsDepth = theDepth;
 		itsDAG = null;	//not set yet
@@ -107,8 +107,14 @@ public class Subgroup implements Comparable<Object>
 
 	public void setMembers(BitSet theMembers)
 	{
-		itsMembers = theMembers;
-		itsCoverage = theMembers.cardinality();
+		if (theMembers == null)
+			Log.logCommandLine("Subgroup.setMembers(theMembers), theMembers " +
+					"can not be 'null'. Not setting theMembers.");
+		else
+		{
+			itsMembers = theMembers;
+			itsCoverage = theMembers.cardinality();
+		}
 	}
 
 	public int getID() { return itsID; }
@@ -251,17 +257,28 @@ public class Subgroup implements Comparable<Object>
 	// TODO not safe for divide by ZERO
 	/**
 	 * Returns the TruePositiveRate for this Subgroup.
-	 * If no itsParentSet was set for this subgroup, or no itsBinaryTarget was
-	 * set for this subgroups' itsParentSet this function returns 0.0f.
+	 * If no itsParentSet was set for this SubGroup, or no itsBinaryTarget was
+	 * set for this SubGroups' itsParentSet this function returns 0.0f.
 	 * @return the TruePositiveRate, also known as TPR.
 	 */
 	public Float getTruePositiveRate()
 	{
-		BitSet tmp = itsParentSet.getBinaryTarget();
-		tmp.and(getMembers());
-		int aHeadBody = tmp.cardinality();
+		BitSet tmp = itsParentSet.getBinaryTargetClone();
 
-		return aHeadBody / itsParentSet.getTotalTargetCoverage();
+		if (tmp == null)
+			return 0.0f;
+		else
+		{
+			tmp.and(itsMembers);
+
+			float aTotalTargetCoverage = itsParentSet.getTotalTargetCoverage();
+
+			if (aTotalTargetCoverage <= 0)
+				return 0.0f;
+			else
+				return tmp.cardinality() / aTotalTargetCoverage;
+			// tmp.cardinality() = aHeadBody
+		}
 	}
 
 	// TODO not safe for divide by ZERO
@@ -273,11 +290,27 @@ public class Subgroup implements Comparable<Object>
 	 */
 	public Float getFalsePositiveRate()
 	{
-		BitSet tmp = itsParentSet.getBinaryTarget();
-		tmp.and(getMembers());
-		int aHeadBody = tmp.cardinality();
+		BitSet tmp = itsParentSet.getBinaryTargetClone();
 
-		return (getCoverage() - aHeadBody) / (itsParentSet.getTotalCoverage() - itsParentSet.getTotalTargetCoverage());
+		if (tmp == null)
+			return 0.0f;
+		else
+		{
+			tmp.and(itsMembers);
+
+			int aTotalCoverage = itsParentSet.getTotalCoverage();
+			float aTotalTargetCoverage = itsParentSet.getTotalTargetCoverage();
+			float aBody = (itsParentSet.getTotalCoverage() -
+							itsParentSet.getTotalTargetCoverage());
+
+			// something is wrong
+			if (aTotalCoverage <= 0 || aTotalTargetCoverage < 0 ||
+				aTotalCoverage < aTotalTargetCoverage || aBody <= 0)
+				return 0.0f;
+			else
+				// tmp.cardinality() = aHeadBody
+				return (itsCoverage - tmp.cardinality()) / aBody;
+		}
 	}
 
 	public double getPValue()

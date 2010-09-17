@@ -57,6 +57,7 @@ public class RegressionMeasure
 
 	public RegressionMeasure(RegressionMeasure theBase)
 	{
+		// TODO this has no effect, assigns class variable to instance variable?
 		itsType = theBase.itsType;
 		itsBase = theBase;
 
