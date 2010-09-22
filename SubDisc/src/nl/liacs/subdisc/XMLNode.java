@@ -13,29 +13,32 @@ public class XMLNode
 	private XMLNode() {}
 
 	/**
-	 * Create and add a Node to theParentNode. The element name is always
+	 * Creates and adds a Node to theParentNode. The element name is always
 	 * converted to lowercase.
-	 * @param theParentNode, the Node to which to add the new Node
-	 * @param theElementName, the name of the new Node
-	 * @return the newly created Node
+	 * @param theParentNode the Node to which to add the new Node.
+	 * @param theElementName the name of the new Node.
+	 * @return the newly created Node.
 	 */
 	public static Node addNodeTo(Node theParentNode, String theElementName)
 	{
-		return theParentNode.appendChild(theParentNode
-											.getOwnerDocument()
-											.createElement(theElementName.toLowerCase()));
+		return theParentNode
+				.appendChild(theParentNode
+								.getOwnerDocument()
+								.createElement(theElementName.toLowerCase()));
 	}
 
 	/**
-	 * Create and add a Node to theParentNode. The element name is always
-	 * converted to lowercase, and for any Object passed in its toString()
-	 * method is used as input string for the setTextContent() method for the
-	 * new Node. This works fine for build in Java types (eg. Float and Double),
-	 * but may cause trouble for self defined Objects. In that case override the
-	 * toString() method for the Object, or pass in a String.
-	 * @param theParentNode, the Node to which to add the new Node
-	 * @param theElementName, the name of the new Node
-	 * @param theTextContent, the text content for the new Node
+	 * Creates and adds a Node to theParentNode. The element name is always
+	 * converted to lowercase, and for any <code>Object</code> passed in as a
+	 * parameter its <code>toString()</code> method is used as input
+	 * <code>String</code> for the <code>setTextContent()</code> method for the
+	 * new Node. This works fine for build in Java types (eg. <code>Float</code>
+	 * and <code>Double</code>), but may cause trouble for self defined
+	 * <Code>Objects</code>. In that case override the <code>toString()</code>
+	 * method for the <code>Object</code>, or pass in a <code>String</code>.
+	 * @param theParentNode the Node to which to add the new Node.
+	 * @param theElementName the name of the new Node.
+	 * @param theTextContent the text content for the new Node.
 	 */
 	public static void addNodeTo(Node theParentNode, String theElementName, Object theTextContent)
 	{

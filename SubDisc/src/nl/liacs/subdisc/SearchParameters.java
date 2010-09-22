@@ -143,7 +143,7 @@ public class SearchParameters implements XMLNodeInterface
 	 * Creates an {@link XMLNode XMLNode} representation of this
 	 * SearchParameters.
 	 * @param theParentNode the Node of which this Node will be a ChildNode
-	 * @return a Node that contains all the information of this SearchParameters
+//	 * @return a Node that contains all the information of this SearchParameters
 	 */
 	@Override
 	public void addNodeTo(Node theParentNode)

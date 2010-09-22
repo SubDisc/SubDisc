@@ -1,7 +1,6 @@
 package nl.liacs.subdisc.gui;
 
 import java.awt.*;
-import java.awt.event.*;
 
 import javax.swing.*;
 import javax.swing.table.*;
@@ -10,9 +9,10 @@ import nl.liacs.subdisc.*;
 
 /**
  * A TableWindow contains a JTable that shows all data in a {@link Table Table},
- * which in turn is read from a file or database. For each {@link Column Column}
- * , the header displays both the name of its {@link Attribute Attribute} and
- * the number of distinct values for that Attribute.
+ * which in turn is read from a <code>File</code> or database. For each
+ * {@link Column Column}, the header displays both the name of its
+ * {@link Attribute Attribute} and the number of distinct values for that
+ * Attribute.
  */
 public class TableWindow extends JFrame
 {

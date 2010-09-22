@@ -4,7 +4,6 @@ import java.io.*;
 import java.util.*;
 
 import nl.liacs.subdisc.Attribute.*;
-import nl.liacs.subdisc.gui.*;
 
 import org.w3c.dom.*;
 
@@ -101,7 +100,7 @@ public class Table
 
 	/**
 	 * Retrieves an array of <code>int[]</code>s, containing the number of
-	 * {@link Columns Columns} for each {@link AttributeType AttributeType}, and
+	 * {@link Column Column}s for each {@link AttributeType AttributeType}, and
 	 * the number of those Columns that are enabled. The <code>int[]</code>s are
 	 * for AttributeTypes: <code>NOMINAL</code>, <code>NUMERIC</code>,
 	 * <code>ORDINAL</code> and <code>BINARY</code>, respectively.

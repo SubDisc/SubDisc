@@ -32,7 +32,7 @@ public class XMLAutoRun
 	// TODO move to FileLoaderXML, method never used
 	/**
 	 * Loads an <code>AutoRun File</code> and creates the
-	 * {@link SearchParameter SearchParameter}s and
+	 * {@link SearchParameters SearchParameter}s and
 	 * {@link Table Table} it describes.
 	 * 
 	 * @param theFile the <code>File</code> to load

@@ -10,9 +10,9 @@ import org.w3c.dom.NodeList;
  * Attribute. Attributes can be used as PrimaryTarget or SecondaryTarget, but
  * only when the {@link AttributeType AttributeType} of the Attribute is
  * appropriate for the {@link TargetConcept TargetConcept}s
- * {@link TargetType TargetType}. All Attribute constructors and setters ensure
- * that its AttributeType is never <code>null</code> (<code>NOMINAL</code> by
- * default).
+ * {@link nl.liacs.subdisc.TargetConcept.TargetType TargetType}. All Attribute constructors and
+ * setters ensure that its AttributeType is never <code>null</code>
+ * (<code>NOMINAL</code> by default).
  */
 public class Attribute implements XMLNodeInterface
 {
@@ -52,7 +52,7 @@ public class Attribute implements XMLNodeInterface
 		/**
 		 * The default missing value for each AttributeType. To set a different
 		 * missing value use
-		 * {@link Column.setNewMissingValue() Column.setNewMissingValue()}.
+		 * {@link Column#setNewMissingValue(String theNewValue) Column.setNewMissingValue()}.
 		 */
 		public final String DEFAULT_MISSING_VALUE;
 
@@ -225,7 +225,7 @@ public class Attribute implements XMLNodeInterface
 	/**
 	 * Creates an {@link XMLNode XMLNode} representation of this Attribute.
 	 * @param theParentNode the Node of which this Node will be a ChildNode.
-	 * @return a Node that contains all the information of this Attribute.
+//	 * @return a Node that contains all the information of this Attribute.
 	 */
 	@Override
 	public void addNodeTo(Node theParentNode)

@@ -6,12 +6,13 @@ import java.util.*;
  * A SubgroupSet is a <code>TreeSet</code> of {@link Subgroup Subgroup}s. If its
  * size is set to <= 0, the SubgroupSet has no maximum size, else the number of
  * Subgroups it can contain is limited by its size. In a nominal target setting
- * ({@link TargetType TargetType}) a {@link ROCList ROCList} can be obtained
- * from this SubgroupSet to create a {@link ROCCurve ROCCurve} in a
- * {@link ROCCurveWindow ROCCurveWindow}.
+ * ({@link nl.liacs.subdisc.TargetConcept.TargetType TargetType}) a
+ * {@link ROCList ROCList} can be obtained from this SubgroupSet to create a
+ * {@link nl.liacs.subdisc.gui.ROCCurve ROCCurve} in a
+ * {@link nl.liacs.subdisc.gui.ROCCurveWindow ROCCurveWindow}.
  * @see ROCList
- * @see ROCCurve
- * @see ROCCurveWindow
+ * @see nl.liacs.subdisc.gui.ROCCurve
+ * @see nl.liacs.subdisc.gui.ROCCurveWindow
  * @see Subgroup
  */
 public class SubgroupSet extends TreeSet<Subgroup>
@@ -44,7 +45,7 @@ public class SubgroupSet extends TreeSet<Subgroup>
 	}
 
 	/**
-	 * Create a SubgroupSet of a certain size, but in a nominal target setting
+	 * Creates a SubgroupSet of a certain size, but in a nominal target setting
 	 * theTotalCoverage and theBinaryTarget should also be set.
 	 * @param theSize the size of this SubgroupSet, use theSize <= 0 for no
 	 * maximum size.
@@ -120,11 +121,12 @@ public class SubgroupSet extends TreeSet<Subgroup>
 	 * TODO update a single ROCList instance?
 	 */
 	/**
-	 * Returns a <b>copy of</b>this SubgroupSets' BinaryTarget
+	 * Returns a <b>copy of</b> this SubgroupSets' BinaryTarget
 	 * <code>BitSet</code>. SubgroupSets only have a BinaryTarget
 	 * <code>BitSet<code> in a nominal target setting, meaning the
-	 * {@link AttributeType AttributeType} of the PrimaryTarget in the
-	 * {@link TargetConcept TargetConcept} is of type AttributeType.NOMINAL.
+	 * {@link nl.liacs.subdisc.Attribute.AttributeType AttributeType} of the
+	 * PrimaryTarget in the {@link TargetConcept TargetConcept} is of type
+	 * AttributeType.NOMINAL.
 	 * 
 	 * @return a clone of this SubgroupSets' BinaryTarget <code>BitSet</code>,
 	 * or <code>null</code> if this SubgroupSet has no BinaryTarget
@@ -141,11 +143,12 @@ public class SubgroupSet extends TreeSet<Subgroup>
 	public float getTotalTargetCoverage() { return itsTotalTargetCoverage; }
 
 	/**
-	 * Returns a new {@link ROCList ROCList}. If Subgroups are removed from this
-	 * SubgroupSet, this new ROCList reflects these changes. This method only
-	 * returns a ROCList in a nominal target setting, meaning the
-	 * {@link AttributeType AttributeType} of the PrimaryTarget in the
-	 * {@link TargetConcept TargetConcept} is of type AttributeType.NOMINAL.
+	 * Returns a new {@link ROCList ROCList}. If {@link Subgroup Subgroup}s are
+	 * removed from this SubgroupSet, this new ROCList reflects these changes.
+	 * This method only returns a ROCList in a nominal target setting, meaning
+	 * the {@link nl.liacs.subdisc.Attribute.AttributeType AttributeType} of the
+	 * PrimaryTarget in the {@link TargetConcept TargetConcept} is of type
+	 * AttributeType.NOMINAL.
 	 * 
 	 * @return a ROCList, or <code>null</code> if not in a nominal target
 	 * setting.

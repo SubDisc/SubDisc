@@ -12,7 +12,7 @@ import java.util.BitSet;
  * @see Condition
  * @see ConditionList
  * @see DAG
- * @see MiningWindow
+ * @see nl.liacs.subdisc.gui.MiningWindow
  * @see SubgroupDiscovery
  * @see SubgroupSet
  * @see Condition
@@ -33,13 +33,12 @@ public class Subgroup implements Comparable<Object>
 	/*
 	 * In case no SubgroupSet is provided an empty one is created, this avoids
 	 * extra checks in for example getFalsePositiveRate().
+	 * This constructor is called by SubgroupDiscovery.Mine(long) and
+	 * Table.getRandomSubgroups(int);
 	 * TODO theMeasureValue = valid, theCoverage > 0, theDepth > 0
 	 */
 	/**
-	 * Creates a Subgroup, this constructor is called by
-	 * {@link SubgroupDiscovery#Mine() Mine} and
-	 * {@link MiningWindow#jButtonRandomSubgroupsActionPerformed()
-	 * jButtonRandomSubgroupsActionPerformed}.
+	 * Creates a Subgroup.
 	 * @param theMeasureValue the value used to create this Subgroup.
 	 * @param theCoverage the number of instances contained in this Subgroup.
 	 * @param theDepth
@@ -60,12 +59,11 @@ public class Subgroup implements Comparable<Object>
 	/*
 	 * Most of subgroups' members for which no parameter is supplied are still
 	 * set, this avoids extra checks in for example getFalsePositiveRate().
+	 * This constructor is called by Validation#RandomConditions(int).
 	 * TODO theDepth > 0
 	 */
 	 /**
-	 * Creates a Subgroup, this constructor is called by
-	 * {@link MiningWindow#jButtonRandomConditionsActionPerformed()
-	 * jButtonRandomConditionsActionPerformed}.
+	 * Creates a Subgroup, but for the Bayesian setting.
 	 * @param theConditions
 	 * @param theMembers
 	 * @param theDepth

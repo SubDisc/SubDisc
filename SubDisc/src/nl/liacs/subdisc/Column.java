@@ -55,7 +55,7 @@ public class Column implements XMLNodeInterface
 
 	/**
 	 * 
-	 * @param theAttribute
+	 * @param theColumnNode
 	 */
 	public Column(Node theColumnNode)
 	{
@@ -605,7 +605,7 @@ public class Column implements XMLNodeInterface
 	 * data is loaded, '?' values are replaced by missing_value by the
 	 * appropriate FileLoader.
 	 * @param theParentNode the Node of which this Node will be a ChildNode.
-	 * @return a Node that contains all the information of this column.
+//	 * @return a Node that contains all the information of this column.
 	 */
 	@Override
 	public void addNodeTo(Node theParentNode)

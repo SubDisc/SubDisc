@@ -18,10 +18,11 @@ public class Function
 	// uninstantiable
 	private Function() {}
 
+	// TODO doc
 	/**
 	 * Both BinaryTable.computeBDeuFaster and CrossCube.getBDeu use this method.
 	 * @param x
-	 * @return
+	 * @return a <code>double</code>
 	 */
 	public static double logGamma(double x)
 	{

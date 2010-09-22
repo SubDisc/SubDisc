@@ -171,7 +171,7 @@ public class TargetConcept implements XMLNodeInterface
 	/**
 	 * Creates an {@link XMLNode XMLNode} representation of this TargetConcept.
 	 * @param theParentNode the Node of which this Node will be a ChildNode
-	 * @return a Node that contains all the information of this TargetConcept
+//	 * @return a Node that contains all the information of this TargetConcept
 	 */
 	@Override
 	public void addNodeTo(Node theParentNode)

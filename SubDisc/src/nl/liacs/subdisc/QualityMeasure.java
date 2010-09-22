@@ -2,34 +2,10 @@ package nl.liacs.subdisc;
 
 import nl.liacs.subdisc.TargetConcept.TargetType;
 
+// TODO put Contigency table here without screwing up package classes layout.
 /**
- * Contingency table:</br>
- * <table border="1" cellpadding="2" cellspacing="0">
- * 	<tr align="center">
- * 		<td></td>
- * 		<td>B</td>
- * 		<td><span style="text-decoration: overline">B</span></td>
- * 		<td></td>
- * 	</tr>
- * 	<tr align="center">
- * 		<td>H</td>
- * 		<td><i>n</i>(HB)</td>
- * 		<td><i>n</i>(H<span style="text-decoration: overline">B</span>)</td>
- * 		<td><i>n</i>(H)</td>
- * 	</tr>
- * 	<tr align="center">
- * 		<td><span style="text-decoration: overline">H</span></td>
- * 		<td><i>n</i>(<span style="text-decoration: overline">H</span>B)</td>
- * 		<td><i>n</i>(<span style="text-decoration: overline">HB</span>)</td>
- * 		<td><i>n</i>(<span style="text-decoration: overline">H</span>)</td>
- * 	</tr>
- * 	<tr align="center">
- * 		<td></td>
- * 		<td><i>n</i>(B)</td>
- * 		<td><i>n</i>(<span style="text-decoration: overline">B</span>)</td>
- * 		<td>N</td>
- * 	</tr>
- * </table> 
+ * The QualityMeasure class includes all quality measures used
+ * ({@link #calculate(int, int) contingency table}).
  */
 public class QualityMeasure
 {
@@ -163,6 +139,35 @@ public class QualityMeasure
 		}
 	}
 
+	/**
+	 * Contingency table:</br>
+	 * <table border="1" cellpadding="2" cellspacing="0">
+	 * 	<tr align="center">
+	 * 		<td></td>
+	 * 		<td>B</td>
+	 * 		<td><span style="text-decoration: overline">B</span></td>
+	 * 		<td></td>
+	 * 	</tr>
+	 * 	<tr align="center">
+	 * 		<td>H</td>
+	 * 		<td><i>n</i>(HB)</td>
+	 * 		<td><i>n</i>(H<span style="text-decoration: overline">B</span>)</td>
+	 * 		<td><i>n</i>(H)</td>
+	 * 	</tr>
+	 * 	<tr align="center">
+	 * 		<td><span style="text-decoration: overline">H</span></td>
+	 * 		<td><i>n</i>(<span style="text-decoration: overline">H</span>B)</td>
+	 * 		<td><i>n</i>(<span style="text-decoration: overline">HB</span>)</td>
+	 * 		<td><i>n</i>(<span style="text-decoration: overline">H</span>)</td>
+	 * 	</tr>
+	 * 	<tr align="center">
+	 * 		<td></td>
+	 * 		<td><i>n</i>(B)</td>
+	 * 		<td><i>n</i>(<span style="text-decoration: overline">B</span>)</td>
+	 * 		<td>N</td>
+	 * 	</tr>
+	 * </table>
+	 */
 	public float calculate(int theCountHeadBody, int theCoverage)
 	{
 		return calculate(itsMeasure, itsNrRecords, itsTotalTargetCoverage, theCountHeadBody, theCoverage);
