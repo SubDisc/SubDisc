@@ -11,7 +11,10 @@ public class FileHandler extends JFrame
 {
 	private static final long serialVersionUID = 1L;
 
-	public static enum Action { OPEN_FILE, OPEN_DATABASE, SAVE };
+	public static enum Action
+	{
+		OPEN_FILE, OPEN_GENE_RANK, OPEN_DATABASE, SAVE
+	};
 
 	// remember the directory of the last used file, defaults to users' 
 	// (platform specific) home directory if the the path cannot be resolved
@@ -27,8 +30,14 @@ public class FileHandler extends JFrame
 		{
 			case OPEN_FILE :
 			{
-				showFileChooser(Action.OPEN_FILE);
+				showFileChooser(theAction);
 				openFile();
+				break;
+			}
+			case OPEN_GENE_RANK :
+			{
+				showFileChooser(theAction);
+				openGeneRank();
 				break;
 			}
 			case OPEN_DATABASE : openDatabase(); break;
@@ -41,13 +50,13 @@ public class FileHandler extends JFrame
 	{
 		if (theFile == null || !theFile.exists())
 		{
-			Log.logCommandLine("FileHandler(): File must exist: " + theFile);
+			ErrorLog.log(theFile, new FileNotFoundException(""));
 			return;
 		}
 		else if (theTable == null)
 		{
 			Log.logCommandLine(
-				"FileHandler(): Table is 'null', trying normal loading");
+				"FileHandler(): Table is 'null', trying normal loading.");
 			openFile();
 		}
 		else
@@ -61,7 +70,10 @@ public class FileHandler extends JFrame
 	private void openFile()
 	{
 		if (itsFile == null || !itsFile.exists())
+		{
+			ErrorLog.log(itsFile, new FileNotFoundException(""));
 			return;
+		}
 
 		FileType aFileType = FileType.getFileType(itsFile);
 		switch (aFileType)
@@ -108,6 +120,18 @@ public class FileHandler extends JFrame
 		}
 	}
 
+	// TODO may be removed and put into openFile()
+	private void openGeneRank()
+	{
+		if (itsFile == null || !itsFile.exists())
+		{
+			ErrorLog.log(itsFile, new FileNotFoundException(""));
+			return;
+		}
+
+		
+	}
+
 	private void openDatabase()
 	{
 
@@ -126,11 +150,12 @@ public class FileHandler extends JFrame
 		aChooser.addChoosableFileFilter(new FileTypeFilter(FileType.TXT));
 		aChooser.addChoosableFileFilter(new FileTypeFilter(FileType.ARFF));
 		aChooser.addChoosableFileFilter(new FileTypeFilter(FileType.XML));
+//		aChooser.addChoosableFileFilter(new FileTypeFilter(FileType.CUI));
 		aChooser.setFileFilter (new FileTypeFilter(FileType.ALL_DATA_FILES));
 
 		int theOption = -1;
 
-		if (theAction == Action.OPEN_FILE)
+		if (theAction == Action.OPEN_FILE || theAction == Action.OPEN_GENE_RANK)
 			theOption = aChooser.showOpenDialog(this);
 		else if (theAction == Action.SAVE)
 			theOption = aChooser.showSaveDialog(this);
@@ -159,7 +184,7 @@ public class FileHandler extends JFrame
 	 * was selected, use this method to retrieve it.
 	 * 
 	 * @return a <code>File</code>, or <code>null</code> if no approved
-	 * selection was made
+	 * selection was made.
 	 */
 	public File getFile() { return itsFile; };
 
@@ -167,17 +192,17 @@ public class FileHandler extends JFrame
 	 * If this FileHandler successfully loaded a {@link Table Table} from a
 	 * <code>File</code> or a database, use this method to retrieve it.
 	 * 
-	 * @return the <code>Table</code> if present, <code>null</code> otherwise
+	 * @return the <code>Table</code> if present, <code>null</code> otherwise.
 	 */
 	public Table getTable() { return itsTable; };
 
 	/**
-	 * If the FileHandler successfully loaded the
+	 * If this FileHandler successfully loaded the
 	 * {@link SearchParameters SearchParameters} from a <code>File</code>, use
 	 * this method to retrieve them.
 	 * 
 	 * @return the <code>SearchParameters</code> if present, <code>null</code>
-	 * otherwise
+	 * otherwise.
 	 */
 	public SearchParameters getSearchParameters()
 	{

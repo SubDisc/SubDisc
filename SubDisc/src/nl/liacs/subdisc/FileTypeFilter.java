@@ -29,8 +29,8 @@ public class FileTypeFilter extends FileFilter
 
 		String aFileName = theFile.getName().toLowerCase();
 
-		for(String s : itsFileType.getExtensions())
-			if(aFileName.endsWith(s))
+		for (String s : itsFileType.getExtensions())
+			if (aFileName.endsWith(s))
 				return true;
 
 		return false;

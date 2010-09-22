@@ -3,11 +3,8 @@
  */
 package nl.liacs.subdisc;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.io.*;
+import java.util.*;
 
 public enum FileType
 {
@@ -36,6 +33,14 @@ public enum FileType
 			return new ArrayList<String>(Collections.singletonList(".xml"));
 		}
 	},
+	CUI("CUI Files")
+	{
+		@Override
+		public List<String> getExtensions()
+		{
+			return new ArrayList<String>(Collections.singletonList(".cui"));
+		}
+	},
 	ALL_DATA_FILES("Data Files")
 	{
 		@Override
@@ -59,14 +64,15 @@ public enum FileType
 	abstract List<String> getExtensions();
 
 	/**
-	 * Returns a String for a File that is equal to File.getName(), but with the
-	 * extension removed (that is everything starting from the last '.').
+	 * Returns a <code>String</code> for a <code>File</code> that is equal to 
+	 * <code>File.getName()</code>, but with the extension removed (that is
+	 * everything starting from the last '.').
 	 * 
-	 * @param theFile the <code>File<code> from which to remove the extension
+	 * @param theFile the <code>File<code> from which to remove the extension.
 	 * 
-	 * @return a String of the <code>File.getName()</code> for the parameter,
-	 * with the extension removed, or the empty Sting if the parameter is
-	 * <code>null</code>
+	 * @return a <code>String</code> of the <code>File.getName()</code> for the
+	 * parameter, with the extension removed, or the empty <code>Sting</code> if
+	 * the parameter is <code>null</code>.
 	 */
 	public static String removeExtension(File theFile)
 	{
@@ -80,19 +86,19 @@ public enum FileType
 	}
 
 	/**
-	 * Return the FileType corresponding to the filename parameter. The filename
-	 * will be checked for its extension, and if the extension is registered
-	 * with a FileType, that FileType will be returned.
+	 * Returns the FileType corresponding to the filename parameter. The
+	 * filename will be checked for its extension, and if the extension is
+	 * registered with a FileType, that FileType will be returned.
 	 * 
-	 * @param theFile the <code>File</code> to get the FileType for
+	 * @param theFile the <code>File</code> to get the FileType for.
 	 * 
 	 * @return the FileType for the parameter, if the parameters' extension is
-	 * known, <code>null</code> otherwise
+	 * known, <code>null</code> otherwise.
 	 */
 	public static FileType getFileType(File theFile)
 	{
 		if (theFile == null || !theFile.exists())
-			return null;
+			ErrorLog.log(theFile, new FileNotFoundException());
 
 		String aFileName = theFile.getName().toLowerCase();
 		String anExtension = aFileName.substring(aFileName.lastIndexOf('.'));
@@ -101,6 +107,7 @@ public enum FileType
 			if (aFileType.getExtensions().contains(anExtension))
 				return aFileType;
 
+		// TODO ErrorLog.log();
 		// FileType not found, log warning, return 'null'
 		Log.logCommandLine(
 			String.format("FileType.getFileType(): The extension '%s' of File" +
