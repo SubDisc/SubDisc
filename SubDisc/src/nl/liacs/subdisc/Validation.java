@@ -20,7 +20,7 @@ public class Validation
 		itsQualityMeasure = theQualityMeasure;
 	}
 
-	public NormalDistribution RandomSubgroups(int theNrRepetitions)
+	public double[] RandomSubgroups(int theNrRepetitions)
 	{
 		double[] aQualities = new double[theNrRepetitions];
 		Random aRandom = new Random(System.currentTimeMillis());
@@ -100,7 +100,7 @@ public class Validation
 				break;
 			}
 		}
-		return new NormalDistribution(aQualities); //return the normal distribution belonging to this random sample
+		return aQualities; //return the qualities of the random sample
 	}
 
 
@@ -108,9 +108,9 @@ public class Validation
 	* Generates a set of random descriptions of subgroups, by randomly combining random conditions on
 	* attributes in the table. The random descriptions adhere to the search parameters.
 	* For each of the subgroups related to the random conditions, the quality is computed.
-	* @return the normal distribution that matches the computed sample.
+	* @return the computed qualities.
 	*/
-	public NormalDistribution RandomConditions(int theNrRepetitions)
+	public double[] RandomConditions(int theNrRepetitions)
 	{
 		double[] aQualities = new double[theNrRepetitions];
 		Random aRandom = new Random(System.currentTimeMillis());
@@ -215,7 +215,56 @@ public class Validation
 				break;
 			}
 		}
-		return new NormalDistribution(aQualities); //return the normal distribution belonging to this random sample
+		return aQualities; //return the qualities belonging to this random sample
+	}
+	
+	public double performRegressionTest(double[] theQualities, int theK, SubgroupSet theSubgroupSet)
+	{
+		// extract average quality of top-k subgroups
+		Iterator<Subgroup> anIterator = theSubgroupSet.iterator();
+		double aTopKQuality = 0.0;
+		for (int i=0; i<theK; i++)
+		{
+			Subgroup aSubgroup = anIterator.next();
+			aTopKQuality += aSubgroup.getMeasureValue();
+		}
+		aTopKQuality /= ((double) theK);
+		
+		// rescale all qualities between 0 and 1
+		// also compute some necessary statistics
+		Arrays.sort(theQualities);
+		int theNrRandomSubgroups = theQualities.length;
+		double aMin = Math.min(theQualities[0], aTopKQuality);
+		double aMax = Math.max(theQualities[theNrRandomSubgroups-1], aTopKQuality);
+		double xBar = 0.5; // given our scaling this always holds
+		double yBar = 0.0; // initial value
+		for (int i=0; i<theNrRandomSubgroups; i++)
+		{
+			theQualities[i] = (theQualities[i]-aMin)/(aMax-aMin);
+			yBar += theQualities[i];
+		}
+		aTopKQuality = (aTopKQuality-aMin)/(aMax-aMin);
+		yBar = (yBar+aTopKQuality)/((double) theNrRandomSubgroups + 1);
+		
+		// perform least squares linear regression on equidistant x-values and computed y-values
+		double xxBar = 0.25; // initial value: this equals the square of (the x-value of our subgroup minus xbar)
+		double xyBar = 0.5 * (aTopKQuality - yBar);
+		double[] anXs = new double[theNrRandomSubgroups];
+		for (int i=0; i<theNrRandomSubgroups; i++)
+			anXs[i] = ((double)i) / ((double)theNrRandomSubgroups); 
+
+		for (int i=0; i<theNrRandomSubgroups; i++)
+		{
+			xxBar += (anXs[i] - xBar) * (anXs[i] - xBar);
+			xyBar += (anXs[i] - xBar) * (theQualities[i] - yBar);
+		}
+		double beta1 = xyBar / xxBar;
+		double beta0 = yBar - beta1 * xBar;
+		// this gives us the regression line y = beta1 * x + beta0
+		Log.logCommandLine("Fitted regression line: y = " + beta1 + " * x + " + beta0);
+		double aScore = aTopKQuality - beta1 - beta0; // the regression test score now equals the average quality of the top-k subgroups, minus the regression value at x=1.
+		Log.logCommandLine("Regression test score: " + aScore);
+		return aScore;   
 	}
 
 	public ConditionList getRandomConditionList(int theDepth, Random theRandom)

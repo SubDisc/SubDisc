@@ -168,6 +168,14 @@ public class ResultWindow extends JFrame
 		});
 		aSubgroupPanel.add(jButtonPValues);
 
+		jButtonRegressionTest = initButton("Regression test", 'R');
+		jButtonRegressionTest.addActionListener(new java.awt.event.ActionListener() {
+			public void actionPerformed(java.awt.event.ActionEvent evt) {
+				jButtonRegressionTestActionPerformed();
+			}
+		});
+		aSubgroupPanel.add(jButtonRegressionTest);
+
 		//possibly disable buttons
 		if (itsSubgroupSet != null) //Subgroup set
 		{
@@ -345,61 +353,103 @@ public class ResultWindow extends JFrame
 	
 	private void jButtonPValuesActionPerformed()
 	{	// Obtain input
+		double[] aQualities = obtainRandomQualities();
+		if (aQualities == null || aQualities[0] == Math.PI)
+			return;
+		NormalDistribution aDistro = new NormalDistribution(aQualities);
+
+		for (Subgroup aSubgroup : itsSubgroupSet)
+			aSubgroup.setPValue(aDistro);
+
+		itsSubgroupTable.repaint();
+	}
+
+	private void jButtonRegressionTestActionPerformed()
+	{	// Obtain input
+		double[] aQualities = obtainRandomQualities();
+		if (aQualities == null || aQualities[0] == Math.PI)
+			return;
+		String inputValue = JOptionPane.showInputDialog("Regression test compares the top-k\nsubgroups with random subgroups.\nWhich k would you like?", 1);
+		int aNrSubgroups;
+		try
+		{
+			aNrSubgroups = Integer.parseInt(inputValue);
+			// TODO more than one?
+			if (aNrSubgroups < 1)
+			{
+				JOptionPane.showMessageDialog(null, "Number should be > 0;\nregression test cannot be performed.");
+				return;
+			}
+			if (aNrSubgroups > itsSubgroupSet.size())
+			{
+				JOptionPane.showMessageDialog(null, "That many subgroups are not available;\nregression test cannot be performed.");
+				return;
+			}
+		}
+		catch (Exception e)
+		{
+			JOptionPane.showMessageDialog(null, "Not a valid number;\nregression test cannot be performed.");
+			return;
+		}
+		Validation aValidation = new Validation(itsSearchParameters, itsTable, itsQualityMeasure);
+		double aRegressionTestScore = aValidation.performRegressionTest(aQualities, aNrSubgroups, itsSubgroupSet);
+		JOptionPane.showMessageDialog(null, "The regression test score equals\n" + aRegressionTestScore);
+	}
+	
+	private double[] obtainRandomQualities()
+	{
+		double[] aPi = {Math.PI};
 		int aMethod = JOptionPane.showOptionDialog(null,
-				"By which method should the p-values be computed?",
+				"By which method should the random qualities be computed?",
 				"Which method?",
 				JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null,
 				new String[] {"Random subgroups", "Random conditions"},
 				"Random subgroups");
 		if (!(aMethod == 0 || aMethod == 1))
 		{
-			JOptionPane.showMessageDialog(null, "No method selected;\np-values cannot be computed.");
-			return;
+			JOptionPane.showMessageDialog(null, "No method selected;\nrandom qualities cannot be computed.");
+			return aPi;
 		}
 
-		String inputValue = JOptionPane.showInputDialog("Number of random subgroups to be used\nfor distribution estimation:", 100);
+		String inputValue = JOptionPane.showInputDialog("Number of random subgroups to be used\nfor random quality estimation:", 100);
 		int aNrRepetitions;
 		try
 		{
 			aNrRepetitions = Integer.parseInt(inputValue);
 			// TODO more than one?
-			if (aNrRepetitions < 1)
+			if (aNrRepetitions <= 1)
 			{
-				JOptionPane.showMessageDialog(null, "Number should be > 0.");
-				return;
+				JOptionPane.showMessageDialog(null, "Number should be > 1;\nrandom qualities cannot be computed.");
+				return aPi;
 			}
 		}
 		catch (Exception e)
 		{
-			JOptionPane.showMessageDialog(null, "Not a valid number.");
-			return;
+			JOptionPane.showMessageDialog(null, "Not a valid number;\nrandom qualities cannot be computed.");
+			return aPi;
 		}
 
-		// Compute p-values
+		// Compute qualities
 		Validation aValidation = new Validation(itsSearchParameters, itsTable, itsQualityMeasure);
-		NormalDistribution aDistro;
+		double[] aQualities;
 		switch (aMethod)
 		{
 			case 0:
 			{
-				aDistro = aValidation.RandomSubgroups(aNrRepetitions);
+				aQualities = aValidation.RandomSubgroups(aNrRepetitions);
 				break;
 			}
 			case 1:
 			{
-				aDistro = aValidation.RandomConditions(aNrRepetitions);
+				aQualities = aValidation.RandomConditions(aNrRepetitions);
 				break;
 			}
 			default:
 			{	// Should never reach this code
-				aDistro = null;
+				aQualities = null;
 			}
 		}
-
-		for (Subgroup aSubgroup : itsSubgroupSet)
-			aSubgroup.setPValue(aDistro);
-
-		itsSubgroupTable.repaint();
+		return aQualities;
 	}
 
 	private void jButtonCloseWindowActionPerformed() { dispose(); }
@@ -410,6 +460,7 @@ public class ResultWindow extends JFrame
 	private javax.swing.JButton jButtonDeleteSubgroups;
 	private javax.swing.JButton jButtonPostprocess;
 	private javax.swing.JButton jButtonPValues;
+	private javax.swing.JButton jButtonRegressionTest;
 	private javax.swing.JButton jButtonROC;
 	private javax.swing.JButton jButtonCloseWindow;
 	private javax.swing.JScrollPane itsScrollPane;

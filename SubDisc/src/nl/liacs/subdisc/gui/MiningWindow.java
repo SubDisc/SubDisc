@@ -1280,7 +1280,7 @@ public class MiningWindow extends JFrame
 			}
 
 			Validation aValidation = new Validation(itsSearchParameters, itsTable, aQualityMeasure);
-			NormalDistribution aDistro = aValidation.RandomSubgroups(aNrRepetitions);
+			NormalDistribution aDistro = new NormalDistribution(aValidation.RandomSubgroups(aNrRepetitions));
 
 			int aMethod = JOptionPane.showOptionDialog(null,
 				"The following quality measure thresholds were computed:\n" +
@@ -1348,7 +1348,7 @@ public class MiningWindow extends JFrame
 		QualityMeasure aQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), aBayesian.getDAG(), itsTotalCount, itsSearchParameters.getAlpha(), itsSearchParameters.getBeta());
 
 		Validation aValidation = new Validation(itsSearchParameters, itsTable, aQualityMeasure);
-		NormalDistribution aDistro = aValidation.RandomConditions(aNrRepetitions);
+		NormalDistribution aDistro = new NormalDistribution(aValidation.RandomConditions(aNrRepetitions));
 
 		int aMethod = JOptionPane.showOptionDialog(null,
 			"The following quality measure thresholds were computed:\n" +
