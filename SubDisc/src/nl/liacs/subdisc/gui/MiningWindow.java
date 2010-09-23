@@ -1342,7 +1342,7 @@ public class MiningWindow extends JFrame
 		double[] aQualities = new double[aNrRepetitions];
 
 		// base model
-		BinaryTable aBaseTable = new BinaryTable(itsTable, itsTargetConcept.getMultiTargets());
+		BinaryTable aBaseTable = new BinaryTable(itsTable, itsTargetConcept.getMultiTargets()); //TODO fix dat dit ook werkt voor de niet-multilabel setting
 		Bayesian aBayesian = new Bayesian(aBaseTable);
 		aBayesian.climb();
 		QualityMeasure aQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), aBayesian.getDAG(), itsTotalCount, itsSearchParameters.getAlpha(), itsSearchParameters.getBeta());

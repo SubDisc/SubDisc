@@ -275,7 +275,11 @@ public class Validation
 
 		for (int j = 0; j < aDepth; j++) // j conditions
 		{
-			Attribute anAttribute = itsTable.getAttribute(theRandom.nextInt(itsTable.getNrColumns())); //TODO afvangen dat dit niet het targetattribuut is
+			Attribute anAttribute = itsTable.getAttribute(theRandom.nextInt(itsTable.getNrColumns()));
+			while (itsTargetConcept.isTargetAttribute(anAttribute))
+			{
+				anAttribute = itsTable.getAttribute(theRandom.nextInt(itsTable.getNrColumns())); 
+			}
 			int anOperator;
 			Condition aCondition;
 			switch(anAttribute.getType())
