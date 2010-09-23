@@ -1,24 +1,46 @@
+/*
+ * TODO this class could internalise (a copy of) the used geneRankFile for
+ * showing which genes are mapped to which/a cui.
+ * TODO this class could hold the geneRankFile and allow choosing another domain
+ * to use for mining.
+ */
 package nl.liacs.subdisc;
 
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.*;
 
 import nl.liacs.subdisc.Attribute.*;
-import nl.liacs.subdisc.FileHandler.*;
 import nl.liacs.subdisc.cui.*;
 import nl.liacs.subdisc.gui.*;
 
-public class FileLoaderGeneRank
+public class FileLoaderGeneRank implements FileLoaderInterface
 {
-	private final static int DEFAULT_SIZE = 10000;
-	private final Map<String, String[]> itsGeneRank;
-	private static final Map<String, String> itsGene2CuiMap = Gene2CuiMap.ENTREZ2CUI.getMap(); // only ENTREZ for now
-	private static Table itsTable;
+	// default size of ranked genes
+	private static final int DEFAULT_SIZE = 10000;
+	private static final Map<String, Integer> itsCui2LineNrMap;
 
-	// TODO for testing only
-	private static Map<String, Integer> itsCui2LineNrMap = new Cui2LineNrMap(new File("/home/marvin/SubDisc/CUI/test_expr2biological_process.txt")).getMap();
-	private static final String SEPARATOR = " ";
+	private final Map<String, String[]> itsGeneRank;
+	private final Map<String, String> itsGene2CuiMap = Gene2CuiMap.ENTREZ2CUI.getMap(); // only ENTREZ for now
+	private final File itsDomainFile;
+	private Table itsTable;
+
+	static
+	{
+		File aFile = new File(CuiMapInterface.EXPRESSION_CUIS);
+
+		if (!aFile.exists())
+		{
+			itsCui2LineNrMap = null;
+			ErrorLog.log(aFile, new FileNotFoundException());
+		}
+		else
+			itsCui2LineNrMap = new Cui2LineNrMap(aFile).getMap();
+	}
+
 /*
+	private static final String SEPARATOR = " ";
+
 	public static void main(String[] args)
 	{
 		long aBegin = System.currentTimeMillis();
@@ -45,6 +67,7 @@ public class FileLoaderGeneRank
 		if (theFile == null || !theFile.exists())
 		{
 			itsGeneRank = null;
+			itsDomainFile = null;
 			ErrorLog.log(theFile, new FileNotFoundException());
 			return;
 		}
@@ -52,11 +75,38 @@ public class FileLoaderGeneRank
 		{
 			itsGeneRank = new LinkedHashMap<String, String[]>(DEFAULT_SIZE);
 
-			itsCui2LineNrMap = new CuiDomainChooser().getMap();
 			if (itsCui2LineNrMap == null)
-				return;	// TODO
+			{
+				itsDomainFile = null;
+				Log.logCommandLine("File: 'expression_cuis.txt' not found.");
+				return;
+			}
 			else
-				parseFile(theFile);
+			{
+				CountDownLatch aDoneSignal = new CountDownLatch(1);
+				CuiDomainChooser aChooser = new CuiDomainChooser(aDoneSignal);
+
+				try
+				{
+					aDoneSignal.await();
+				}
+				catch (InterruptedException e)
+				{
+					//TODO ErrorLog
+					Log.logCommandLine(
+						"FileLoaderGeneRank: CuiDomainChooser Waiting Error.");
+				}
+
+				itsDomainFile = aChooser.getFile();
+
+				if (itsDomainFile == null || !itsDomainFile.exists())
+				{
+					ErrorLog.log(itsDomainFile, new FileNotFoundException());
+					return;
+				}
+				else
+					parseFile(theFile);
+			}
 		}
 	}
 
@@ -86,18 +136,19 @@ public class FileLoaderGeneRank
 					aLineNrs.add(itsCui2LineNrMap.get(itsGene2CuiMap.get(aGene)));
 				}
 			}
+			// TODO print number of found expression-cui mappings?
 
-			// all CUI lineNrs known
+			// all relevant CUI lineNrs known
 			getCuiCorrelationInfo(aLineNrs);
 		}
 		catch (FileNotFoundException e)
 		{
-			Log.logCommandLine("File failure.");	// TODO
+			ErrorLog.log(theFile, e);
 			return;
 		}
 		catch (IOException e)
 		{
-			Log.logCommandLine("Reader failure.");	// TODO
+			ErrorLog.log(theFile, e);
 			return;
 		}
 		finally
@@ -109,8 +160,7 @@ public class FileLoaderGeneRank
 			}
 			catch (IOException e)
 			{
-				e.printStackTrace();
-//				new ErrorDialog(e, ErrorDialog.fileReaderError); // TODO generic
+				ErrorLog.log(theFile, e);
 			}
 		}
 	}
@@ -126,7 +176,7 @@ public class FileLoaderGeneRank
 
 		try
 		{
-			aReader = new BufferedReader(new FileReader("/home/marvin/SubDisc/CUI/expr2biological_process.txt"));
+			aReader = new BufferedReader(new FileReader(itsDomainFile));
 			Iterator<Integer> anIterator = theLineNrSet.iterator();
 
 			// headerLine is used for ColumnNames
@@ -150,12 +200,12 @@ public class FileLoaderGeneRank
 		}
 		catch (FileNotFoundException e)
 		{
-			Log.logCommandLine("File failure.");	// TODO
+			ErrorLog.log(itsDomainFile, e);
 			return;
 		}
 		catch (IOException e)
 		{
-			Log.logCommandLine("Reader failure.");	// TODO
+			ErrorLog.log(itsDomainFile, e);
 			return;
 		}
 		finally
@@ -167,8 +217,7 @@ public class FileLoaderGeneRank
 			}
 			catch (IOException e)
 			{
-				e.printStackTrace();
-//				new ErrorDialog(e, ErrorDialog.fileReaderError); // TODO generic
+				ErrorLog.log(itsDomainFile, e);
 			}
 		}
 	}
@@ -177,13 +226,12 @@ public class FileLoaderGeneRank
 	{
 		String[] aHeaders = theHeaderLine.split(",", -1);
 		int aNrColumns = aHeaders.length;
-		itsTable =  new Table(new File("TMP_NAME"), theNrRows, aNrColumns);
+		itsTable =  new Table(new File("TMP_NAME"), theNrRows, aNrColumns);	// TODO use itsFile
 
-		// uses NUMERIC as hack
 		itsTable.getColumns()
 				.add(new Column(new Attribute("CUI",
 												"CUI",
-												AttributeType.NUMERIC,
+												AttributeType.NOMINAL,
 												0),
 								theNrRows));
 
@@ -198,12 +246,23 @@ public class FileLoaderGeneRank
 		}
 	}
 
-	// TODO
 	private void populateTable()
 	{
 		int aNrColumns = itsTable.getNrColumns();
 		for (String[] aData : itsGeneRank.values())
-			for (int i = 0; i < aNrColumns; i++)
+		{
+			// first is CUI, aData[0] should always exist
+			itsTable.getColumn(0).add(aData[0]);
+			for (int i = 1; i < aNrColumns; i++)
 				itsTable.getColumn(i).add(Float.parseFloat(aData[i]));
+		}
+	}
+
+	@Override
+	public Table getTable()
+	{
+		// TODO for testing
+		itsTable.update();
+		return itsTable;
 	}
 }

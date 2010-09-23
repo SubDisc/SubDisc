@@ -8,11 +8,13 @@ import nl.liacs.subdisc.*;
 /**
  * This class is not part of the public API, as it relies on a correct memory
  * setting, and correct CUI files.
- * This class creates GENE_CUI files for the various CUI-domains. It does not do
- * any checking, as the structure of these files is known. No lineNumeber is
- * written to <code>File</code>, this keeps the files smaller, and during
- * loading the lineNumber for each GENE_CUI can be calculated, as each one is on
- * a new line. NOTE the 
+ * This class creates an expression.cui file for the CUI-domains. It does not do
+ * any checking, as the structure of these files is known. No lineNumber is
+ * written to the resulting <code>File</code>, this keeps the <code>File</code>
+ * smaller, and during loading the lineNumber for each EXPRESSION_CUI can be
+ * calculated, as each one is on a new line. NOTE all domain files use the exact
+ * same EXPRESSION_CUIs (the first Column), so only one expression.cui
+ * <code>File</code> is needed.
  */
 class DomainCuiCreator
 {
@@ -20,25 +22,32 @@ class DomainCuiCreator
 //	private final String itsSeparator= ",";
 	private final String itsLineEnd = "\n";
 
+/*
+	// TODO for testing, all files are identical
 	public static void main(String[] args)
 	{
-		long aBegin = System.currentTimeMillis();
-		new DomainCuiCreator(new File("/home/marvin/SubDisc/CUI/expr2biological_process.txt"));
-		System.out.println((System.currentTimeMillis() - aBegin) / 1000);
+		for (File f : new File("/host/data/cmsb/cui/data/final/20100104").listFiles())
+		{
+			if (f.getName().startsWith("expr2"))
+			{
+				System.out.print(f.getName() + " ");
+				long aBegin = System.currentTimeMillis();
+				new DomainCuiCreator(f);
+				System.out.println((System.currentTimeMillis() - aBegin) / 1000);
+			}
+		}
 	}
-
+*/
 	// TODO return boolean indicating success?
 	DomainCuiCreator(File theFile)
 	{
 		if (theFile == null || !theFile.exists())
 		{
-			Log.logCommandLine("File does not exist.");	// TODO
+			ErrorLog.log(theFile, new FileNotFoundException());
 			return;
 		}
 		else
-		{
 			parseFile(theFile);
-		}
 	}
 
 	/*
@@ -67,12 +76,12 @@ class DomainCuiCreator
 		}
 		catch (FileNotFoundException e)
 		{
-			Log.logCommandLine("File failure.");	// TODO
+			ErrorLog.log(theFile, e);
 			return;
 		}
 		catch (IOException e)
 		{
-			Log.logCommandLine("Reader failure.");	// TODO
+			ErrorLog.log(theFile, e);
 			return;
 		}
 		finally
@@ -84,8 +93,7 @@ class DomainCuiCreator
 			}
 			catch (IOException e)
 			{
-				e.printStackTrace();
-//				new ErrorDialog(e, ErrorDialog.fileReaderError); // TODO generic
+				ErrorLog.log(theFile, e);
 			}
 		}
 
@@ -98,7 +106,7 @@ class DomainCuiCreator
 
 		try
 		{
-			aWriter = new BufferedWriter(new FileWriter(theFile.getAbsolutePath() + ".csv"));
+			aWriter = new BufferedWriter(new FileWriter(theFile.getAbsolutePath() + ".cui"));
 
 //			aWriter.write(itsSeparator);
 //			aWriter.write((++aLineNr));
@@ -110,7 +118,7 @@ class DomainCuiCreator
 		}
 		catch (IOException e)
 		{
-			Log.logCommandLine("Writer failure.");	// TODO
+			ErrorLog.log(theFile, e);
 			return;
 		}
 		finally
@@ -125,8 +133,7 @@ class DomainCuiCreator
 			}
 			catch (IOException e)
 			{
-				e.printStackTrace();
-//				new ErrorDialog(e, ErrorDialog.fileWriterError); // TODO generic
+				ErrorLog.log(theFile, e);
 			}
 		}
 

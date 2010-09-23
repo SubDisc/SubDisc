@@ -71,7 +71,7 @@ public class FileHandler extends JFrame
 	{
 		if (itsFile == null || !itsFile.exists())
 		{
-			ErrorLog.log(itsFile, new FileNotFoundException(""));
+			ErrorLog.log(itsFile, new FileNotFoundException());
 			return;
 		}
 
@@ -125,7 +125,7 @@ public class FileHandler extends JFrame
 	{
 		if (itsFile == null || !itsFile.exists())
 		{
-			ErrorLog.log(itsFile, new FileNotFoundException(""));
+			ErrorLog.log(itsFile, new FileNotFoundException());
 			return;
 		}
 
@@ -150,7 +150,6 @@ public class FileHandler extends JFrame
 		aChooser.addChoosableFileFilter(new FileTypeFilter(FileType.TXT));
 		aChooser.addChoosableFileFilter(new FileTypeFilter(FileType.ARFF));
 		aChooser.addChoosableFileFilter(new FileTypeFilter(FileType.XML));
-//		aChooser.addChoosableFileFilter(new FileTypeFilter(FileType.CUI));
 		aChooser.setFileFilter (new FileTypeFilter(FileType.ALL_DATA_FILES));
 
 		int theOption = -1;

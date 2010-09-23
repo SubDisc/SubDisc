@@ -1,3 +1,7 @@
+/*
+ * TODO there is only one expression_cuis.txt file, and only one map is needed,
+ * make this class to be an enum.
+ */
 package nl.liacs.subdisc.cui;
 
 import java.io.*;
@@ -7,29 +11,16 @@ import nl.liacs.subdisc.*;
 
 public class Cui2LineNrMap
 {
-	// TODO check number of cui in each domain
-	private static final int DEFAULT_SIZE = 50000;
+	// there are 23218 expression cuis
+	private static final int DEFAULT_SIZE = 23218;
 	private final Map<String, Integer> itsCui2LineNrMap;
-
-	public static void main(String[] args)
-	{
-//		long aBegin = System.currentTimeMillis();
-
-//		Cui2LineNrMap aMap = new Cui2LineNrMap(new File("/home/marvin/SubDisc/CUI/entrez2cui.txt"));
-		Map<String, Integer> aMap = new Cui2LineNrMap(new File("/home/marvin/SubDisc/CUI/test_expr2biological_process.txt")).getMap();
-
-//		System.out.println((System.currentTimeMillis() - aBegin) / 1000 + " s.");
-
-//		for (String s : aMap.keySet())
-//			System.out.println(s + " " + aMap.get(s));
-	}
 
 	public Cui2LineNrMap(File theFile)
 	{
 		if (theFile == null || !theFile.exists())
 		{
 			itsCui2LineNrMap = null;
-			ErrorLog.log(theFile, new FileNotFoundException(""));
+			ErrorLog.log(theFile, new FileNotFoundException());
 			return;
 		}
 		else

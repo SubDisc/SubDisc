@@ -33,14 +33,6 @@ public enum FileType
 			return new ArrayList<String>(Collections.singletonList(".xml"));
 		}
 	},
-	CUI("CUI Files")
-	{
-		@Override
-		public List<String> getExtensions()
-		{
-			return new ArrayList<String>(Collections.singletonList(".cui"));
-		}
-	},
 	ALL_DATA_FILES("Data Files")
 	{
 		@Override

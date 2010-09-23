@@ -8,8 +8,8 @@ import nl.liacs.subdisc.*;
 public enum Gene2CuiMap implements CuiMapInterface
 {
 	// entrez2cui = 64870, go2cui = 15879
-	ENTREZ2CUI(CuiMapInterface.ENTREZ2CUI_PATH, CuiMapInterface.NR_ENTREZ_CUI),
-	GO2CUI(CuiMapInterface.GO2CUI_PATH, CuiMapInterface.NR_GO_CUI);
+	ENTREZ2CUI(CuiMapInterface.ENTREZ2CUI, CuiMapInterface.NR_ENTREZ_CUI),
+	GO2CUI(CuiMapInterface.GO2CUI, CuiMapInterface.NR_GO_CUI);
 //	ENSEMBL2CUI(CuiMapInterface.ENSEMBL2CUI_PATH);
 
 	private final Map<String, String> itsGene2CuiMap;
@@ -21,7 +21,7 @@ public enum Gene2CuiMap implements CuiMapInterface
 		if (!aFile.exists())
 		{
 			itsGene2CuiMap = null;
-			ErrorLog.log(aFile, new FileNotFoundException(""));
+			ErrorLog.log(aFile, new FileNotFoundException());
 			return;
 		}
 		else
