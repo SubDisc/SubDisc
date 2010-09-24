@@ -1,6 +1,6 @@
 /*
- * TODO there is only one expression_cuis.txt file, and only one map is needed,
- * make this class to be an enum.
+ * TODO there is only one 'gene_identifier_cuis.txt' file, and only one map is
+ * needed, make this class to be an enum.
  */
 package nl.liacs.subdisc.cui;
 
@@ -11,8 +11,6 @@ import nl.liacs.subdisc.*;
 
 public class Cui2LineNrMap
 {
-	// there are 23218 expression cuis
-	private static final int DEFAULT_SIZE = 23218;
 	private final Map<String, Integer> itsCui2LineNrMap;
 
 	public Cui2LineNrMap(File theFile)
@@ -25,7 +23,8 @@ public class Cui2LineNrMap
 		}
 		else
 		{
-			itsCui2LineNrMap = new HashMap<String, Integer>(DEFAULT_SIZE);
+			itsCui2LineNrMap =
+				new HashMap<String, Integer>(CuiMapInterface.NR_EXPRESSION_CUI);
 			parseFile(theFile);
 		}
 	}
@@ -41,16 +40,7 @@ public class Cui2LineNrMap
 			int aLineNr = 0;
 
 			while ((aLine = aReader.readLine()) != null)
-			{
-				// TODO compare with speed of Scanner();
-//				anIndexMap.put(aLine.split(",")[0], ++aLineNr);
 				itsCui2LineNrMap.put(aLine, ++aLineNr);
-			}
-		}
-		catch (FileNotFoundException e)
-		{
-			ErrorLog.log(theFile, e);
-			return;
 		}
 		catch (IOException e)
 		{

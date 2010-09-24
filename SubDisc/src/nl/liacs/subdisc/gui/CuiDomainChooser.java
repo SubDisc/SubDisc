@@ -52,7 +52,7 @@ public class CuiDomainChooser extends JFrame implements ActionListener
 			itsAvailableDomains =
 								new ArrayList<File>(CuiMapInterface.NR_DOMAINS);
 			for (File f : aCuiDir.listFiles())
-				if (f.getName().startsWith("expr2"))
+				if (f.getName().startsWith(CuiMapInterface.DOMAIN_FILE_PREFIX))
 					itsAvailableDomains.add(f);
 			Collections.sort(itsAvailableDomains);
 

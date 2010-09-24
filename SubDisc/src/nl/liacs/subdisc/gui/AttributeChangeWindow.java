@@ -27,7 +27,7 @@ public class AttributeChangeWindow extends JFrame implements ActionListener
 	{
 		if (theTable == null || theMiningWindow == null)
 		{
-			Log.logCommandLine("To create a Data Editor Window parameters can not be null.");
+			Log.logCommandLine("To create a Data Editor Window parameters can not be 'null'.");
 			return;
 		}
 		else
@@ -101,6 +101,10 @@ public class AttributeChangeWindow extends JFrame implements ActionListener
 
 		for (Component rb : aRadioButtonPanel.getComponents())
 			aNewType.add((AbstractButton) rb);
+
+		if (aRadioButtonPanel.getComponents().length > 0)
+			((JRadioButton) aRadioButtonPanel.getComponent(0))
+			.setSelected(true);
 
 		// for now, disable ORDINAL, will change when implemented
 		aNewType.remove((AbstractButton) aRadioButtonPanel.getComponent(2));

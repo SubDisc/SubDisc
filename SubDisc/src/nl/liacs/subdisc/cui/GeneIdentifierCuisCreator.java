@@ -8,38 +8,39 @@ import nl.liacs.subdisc.*;
 /**
  * This class is not part of the public API, as it relies on a correct memory
  * setting, and correct CUI files.
- * This class creates an expression.cui file for the CUI-domains. It does not do
- * any checking, as the structure of these files is known. No lineNumber is
- * written to the resulting <code>File</code>, this keeps the <code>File</code>
- * smaller, and during loading the lineNumber for each EXPRESSION_CUI can be
- * calculated, as each one is on a new line. NOTE all domain files use the exact
- * same EXPRESSION_CUIs (the first Column), so only one expression.cui
- * <code>File</code> is needed.
+ * This class creates an 'gene_identifier_cuis.txt' <code>File</code> for the
+ * CUI-domains. It does not do any checking, as the structure of these files is
+ * known. No line number is written to the resulting <code>File</code>, this
+ * keeps the <code>File</code> smaller, and during loading the line number for
+ * each GENE_IDENTIFIER_CUI can be calculated, as each one is on a new line.
+ * NOTE: all domain files use the exact same GENE_IDENTIFIER_CUIs (the first
+ * Column), so only one 'gene_identifier_cuis.txt' <code>File</code> is needed.
  */
-class DomainCuiCreator
+class GeneIdentifierCuisCreator
 {
 	// may create setters for this one day
 //	private final String itsSeparator= ",";
 	private final String itsLineEnd = "\n";
 
-/*
+
 	// TODO for testing, all files are identical
 	public static void main(String[] args)
 	{
-		for (File f : new File("/host/data/cmsb/cui/data/final/20100104").listFiles())
+		for (File f : new File(CuiMapInterface.CUI_DIR).listFiles())
 		{
-			if (f.getName().startsWith("expr2"))
+			if (f.getName().startsWith(CuiMapInterface.DOMAIN_FILE_PREFIX))
 			{
 				System.out.print(f.getName() + " ");
 				long aBegin = System.currentTimeMillis();
-				new DomainCuiCreator(f);
-				System.out.println((System.currentTimeMillis() - aBegin) / 1000);
+				new GeneIdentifierCuisCreator(f);
+				System.out.println((System.currentTimeMillis() - aBegin) / 1000 + "s.");
 			}
 		}
 	}
-*/
+
+
 	// TODO return boolean indicating success?
-	DomainCuiCreator(File theFile)
+	GeneIdentifierCuisCreator(File theFile)
 	{
 		if (theFile == null || !theFile.exists())
 		{
@@ -51,33 +52,28 @@ class DomainCuiCreator
 	}
 
 	/*
-	 * Reading and writing on same disk may be relatively slow, GENE_CUI file is
-	 * small enough to completely keep in memory, and only write after whole
-	 * file is read.
+	 * Reading and writing on same disk may be relatively slow. Also, the
+	 * 'gene_identifier_cuis.txt' file is small enough to completely keep in
+	 * memory, and only write after whole file is read.
+	 * The initial size of aList is based on CUI_20100104 expression files.
+	 * TODO could use raw inputStreamReader() as the size of all fields is known
+	 * (all 8 characters long).
 	 */
 	private void parseFile(File theFile)
 	{
 		BufferedReader aReader = null;
-//		Map<String, Integer> anIndexMap = new HashMap<String, Integer>(50000);
-		List<String> aList = new ArrayList<String>(50000);
+		List<String> aList =
+					new ArrayList<String>(CuiMapInterface.NR_EXPRESSION_CUI);
 
 		try
 		{
+			// Scanner() on file is 5x slower than BufferedFeader()
 			aReader = new BufferedReader(new FileReader(theFile));
-			String aLine = aReader.readLine(); // headerLine
-//			int aLineNr = 0;
+			String aLine = aReader.readLine(); // skip headerLine
 
+			// Scanner() is 4x faster than aLine.split()[0]
 			while ((aLine = aReader.readLine()) != null)
-			{
-				// TODO compare with speed of Scanner();
-//				anIndexMap.put(aLine.split(",")[0], ++aLineNr);
-				aList.add(new String(aLine.split(",")[0]));
-			}
-		}
-		catch (FileNotFoundException e)
-		{
-			ErrorLog.log(theFile, e);
-			return;
+				aList.add(new Scanner(aLine).useDelimiter(",").next());
 		}
 		catch (IOException e)
 		{
@@ -106,7 +102,10 @@ class DomainCuiCreator
 
 		try
 		{
-			aWriter = new BufferedWriter(new FileWriter(theFile.getAbsolutePath() + ".cui"));
+			aWriter =
+				new BufferedWriter(
+					new FileWriter(theFile.getParent() +
+							CuiMapInterface.GENE_IDENTIFIER_CUIS.substring(3)));
 
 //			aWriter.write(itsSeparator);
 //			aWriter.write((++aLineNr));
@@ -136,7 +135,6 @@ class DomainCuiCreator
 				ErrorLog.log(theFile, e);
 			}
 		}
-
 	}
 
 /*

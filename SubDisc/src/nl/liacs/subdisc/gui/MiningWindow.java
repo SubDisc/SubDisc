@@ -216,9 +216,10 @@ public class MiningWindow extends JFrame
 		jMiningWindowMenuBar = new JMenuBar();
 		jMenuFile = new JMenu();
 		jMenuItemOpenFile = new JMenuItem();
+		jMenuItemOpenGeneRank = new JMenuItem();
 		jMenuItemDataExplorer = new JMenuItem();
 		jMenuItemBrowseTarget = new JMenuItem();
-		jMenuItemAttributeTypeChange = new JMenuItem();
+		jMenuItemEditData = new JMenuItem();
 		jSeparator2 = new JSeparator();
 		jMenuItemSubgroupDiscovery = new JMenuItem();
 		jSeparator3 = new JSeparator();
@@ -253,8 +254,8 @@ public class MiningWindow extends JFrame
 		jLFieldNrBinaries = new JLabel();
 		// dataset - buttons
 		jPanelRuleTargetButtons = new JPanel();
-		jButtonBrowse = initButton("Browse", 'B');
-		jButtonAttributeTypeChange = initButton("Attribute Type Change", 'A');	// TODO change to 'AttributeChange'
+		jButtonBrowse = new JButton();
+		jButtonEditData = new JButton();
 
 		// target concept
 		jPanelRuleEvaluation = new JPanel();
@@ -339,6 +340,18 @@ public class MiningWindow extends JFrame
 		});
 		jMenuFile.add(jMenuItemOpenFile);
 
+		jMenuItemOpenGeneRank.setFont(DEFAULT_FONT);
+		jMenuItemOpenGeneRank.setText("Open Gene Rank");
+		jMenuItemOpenGeneRank.setMnemonic('G');
+		jMenuItemOpenGeneRank.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_G, InputEvent.CTRL_MASK));
+		jMenuItemOpenGeneRank.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				jMenuItemOpenGeneRankActionPerformed(evt);
+			}
+		});
+		jMenuFile.add(jMenuItemOpenGeneRank);
+/*
+		// TODO add when implemented
 		jMenuItemDataExplorer.setFont(DEFAULT_FONT);
 		jMenuItemDataExplorer.setText("Data Explorer");
 		jMenuItemDataExplorer.setMnemonic('E');
@@ -349,7 +362,7 @@ public class MiningWindow extends JFrame
 			}
 		});
 		jMenuFile.add(jMenuItemDataExplorer);
-
+*/
 		jMenuItemBrowseTarget.setFont(DEFAULT_FONT);
 		jMenuItemBrowseTarget.setText("Browse");
 		jMenuItemBrowseTarget.setMnemonic('B');
@@ -361,16 +374,16 @@ public class MiningWindow extends JFrame
 		});
 		jMenuFile.add(jMenuItemBrowseTarget);
 
-		jMenuItemAttributeTypeChange.setFont(DEFAULT_FONT);
-		jMenuItemAttributeTypeChange.setText("Change Attribute Type");
-		jMenuItemAttributeTypeChange.setMnemonic('A');
-		jMenuItemAttributeTypeChange.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A, InputEvent.CTRL_MASK));
-		jMenuItemAttributeTypeChange.addActionListener(new ActionListener() {
+		jMenuItemEditData.setFont(DEFAULT_FONT);
+		jMenuItemEditData.setText("Data Editor");	// "Edit Data"
+		jMenuItemEditData.setMnemonic('A');
+		jMenuItemEditData.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A, InputEvent.CTRL_MASK));
+		jMenuItemEditData.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
-				AttributeTypeChangeActionPerformed(evt);
+				editDataActionPerformed(evt);
 			}
 		});
-		jMenuFile.add(jMenuItemAttributeTypeChange);
+		jMenuFile.add(jMenuItemEditData);
 
 		jMenuFile.add(jSeparator2);
 
@@ -526,13 +539,13 @@ public class MiningWindow extends JFrame
 		});
 		jPanelRuleTargetButtons.add(jButtonBrowse);
 
-		jButtonAttributeTypeChange = initButton("Attributes", 'A');
-		jButtonAttributeTypeChange.addActionListener(new ActionListener() {
+		jButtonEditData = initButton("Attributes", 'A');
+		jButtonEditData.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
-				AttributeTypeChangeActionPerformed(evt);
+				editDataActionPerformed(evt);
 			}
 		});
-		jPanelRuleTargetButtons.add(jButtonAttributeTypeChange);
+		jPanelRuleTargetButtons.add(jButtonEditData);
 
 		jPanelRuleTarget.add(jPanelRuleTargetButtons, BorderLayout.SOUTH);
 		jPanelCenter.add(jPanelRuleTarget);	// MM
@@ -832,15 +845,15 @@ public class MiningWindow extends JFrame
 	private void enableTableDependentComponents(boolean theSetting)
 	{
 		AbstractButton[] anAbstractButtonArray = 
-			new AbstractButton[] {jMenuItemDataExplorer,
+			new AbstractButton[] {//jMenuItemDataExplorer,	//TODO add when implemented
 									jMenuItemBrowseTarget,
-									jMenuItemAttributeTypeChange,
+									jMenuItemEditData,
 									jMenuItemSubgroupDiscovery,
 									jMenuItemCreateAutoRunFile,
 									jMenuItemAddToAutoRunFile,
 									//jButtonDataExplorer,	//TODO add when implemented
 									jButtonBrowse,
-									jButtonAttributeTypeChange,
+									jButtonEditData,
 									jButtonSubgroupDiscovery,
 									jButtonRandomSubgroups,
 									jButtonRandomConditions,
@@ -888,12 +901,29 @@ public class MiningWindow extends JFrame
 		}
 	}
 
+	// TODO update
+	private void jMenuItemOpenGeneRankActionPerformed(Action evt)
+	{
+		FileHandler aFileHandler = new FileHandler(Action.OPEN_GENE_RANK);
+		Table aTable = aFileHandler.getTable();
+
+		if (aTable != null)
+		{
+			itsTable = aTable;
+			itsTotalCount = itsTable.getNrRows();
+			enableTableDependentComponents(true);
+			initGuiComponents();
+
+			jComboBoxTargetTypeActionPerformed(null);	// update hack
+		}
+	}
+
 	private void jMenuItemAutoRunFileActionPerformed(AutoRun theFileOption)
 	{
 		setupSearchParameters();
 		new XMLAutoRun(itsSearchParameters, itsTable, theFileOption);
 	}
-
+	
 	private void jMenuItemAboutSubDiscActionPerformed(ActionEvent evt)
 	{
 		// TODO
@@ -927,7 +957,7 @@ public class MiningWindow extends JFrame
 		// aDataExplorerWindow.setVisible(true);
 	}
 
-	private void AttributeTypeChangeActionPerformed(ActionEvent evt)
+	private void editDataActionPerformed(ActionEvent evt)
 	{
 		final MiningWindow aParent = this;
 		SwingUtilities.invokeLater(new Runnable()
@@ -1684,33 +1714,27 @@ public class MiningWindow extends JFrame
 	private JMenuBar jMiningWindowMenuBar;
 	private JMenu jMenuFile;
 	private JMenuItem jMenuItemOpenFile;
-//	private JMenuItem jMenuItemShowDataModel;
+	private JMenuItem jMenuItemOpenGeneRank;
 	private JMenuItem jMenuItemDataExplorer;
 	private JMenuItem jMenuItemBrowseTarget;
-	private JMenuItem jMenuItemAttributeTypeChange;
+	private JMenuItem jMenuItemEditData;
 	private JSeparator jSeparator2;
 	private JMenuItem jMenuItemSubgroupDiscovery;
 	private JSeparator jSeparator3;
 	private JMenuItem jMenuItemCreateAutoRunFile;
 	private JMenuItem jMenuItemAddToAutoRunFile;
-//	private JMenuItem jMenuItemLoadAutoRunFile;	//TODO part of jMenuItemOpenFile
 	private JSeparator jSeparator4;
 	private JMenuItem jMenuItemExit;
 	private JMenu jMenuAbout;
 	private JMenuItem jMenuItemAboutSubDisc;
 	private JPanel jPanelSouth;
-//	private JLabel jLabelLayoutFiller0;
-//	private JPanel jPanelLayoutFiller1;
 	private JPanel jPanelMineButtons;
-	// private JButton jButtonDataModel;
 	private JButton jButtonDataExplorer;
 	private JButton jButtonBrowse;
-	private JButton jButtonAttributeTypeChange;
+	private JButton jButtonEditData;
 	private JButton jButtonSubgroupDiscovery;
 	private JButton jButtonRandomSubgroups;
 	private JButton jButtonRandomConditions;
-//	private JPanel jPanelLayoutFiller2;
-//	private JLabel jLabelLayoutFiller3;
 	private JPanel jPanelCenter;
 	private JPanel jPanelRuleTarget;
 	private JPanel jPanelRuleTargetLabels;

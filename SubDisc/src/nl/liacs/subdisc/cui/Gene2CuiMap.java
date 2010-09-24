@@ -7,10 +7,9 @@ import nl.liacs.subdisc.*;
 
 public enum Gene2CuiMap implements CuiMapInterface
 {
-	// entrez2cui = 64870, go2cui = 15879
 	ENTREZ2CUI(CuiMapInterface.ENTREZ2CUI, CuiMapInterface.NR_ENTREZ_CUI),
 	GO2CUI(CuiMapInterface.GO2CUI, CuiMapInterface.NR_GO_CUI);
-//	ENSEMBL2CUI(CuiMapInterface.ENSEMBL2CUI_PATH);
+//	ENSEMBL2CUI(CuiMapInterface.ENSEMBL2CUI, CuiMapInterface.NR_ENSEMBL_CUI);
 
 	private final Map<String, String> itsGene2CuiMap;
 
@@ -44,16 +43,9 @@ public enum Gene2CuiMap implements CuiMapInterface
 			aReader.readLine();	// skip headerLine
 			while ((aLine = aReader.readLine()) != null)
 			{
-				// TODO compare with speed of Scanner().
-//				anIndexMap.put(aLine.split(",")[0], ++aLineNr);
 				aLineArray = aLine.split(",");
 				itsGene2CuiMap.put(aLineArray[0], aLineArray[1]);
 			}
-		}
-		catch (FileNotFoundException e)
-		{
-			ErrorLog.log(theFile, e);
-			return;
 		}
 		catch (IOException e)
 		{
