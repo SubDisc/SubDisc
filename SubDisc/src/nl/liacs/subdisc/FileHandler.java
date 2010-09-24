@@ -129,7 +129,8 @@ public class FileHandler extends JFrame
 			return;
 		}
 
-		
+		itsTable = new FileLoaderGeneRank(itsFile).getTable();
+		printLoadingInfo();
 	}
 
 	private void openDatabase()

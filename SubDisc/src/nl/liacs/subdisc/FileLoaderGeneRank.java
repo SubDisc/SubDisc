@@ -244,8 +244,6 @@ public class FileLoaderGeneRank implements FileLoaderInterface
 	@Override
 	public Table getTable()
 	{
-		// TODO for testing
-		itsTable.update();
 		return itsTable;
 	}
 }

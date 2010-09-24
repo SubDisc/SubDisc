@@ -902,7 +902,7 @@ public class MiningWindow extends JFrame
 	}
 
 	// TODO update
-	private void jMenuItemOpenGeneRankActionPerformed(Action evt)
+	private void jMenuItemOpenGeneRankActionPerformed(ActionEvent evt)
 	{
 		FileHandler aFileHandler = new FileHandler(Action.OPEN_GENE_RANK);
 		Table aTable = aFileHandler.getTable();
