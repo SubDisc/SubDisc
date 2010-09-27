@@ -901,21 +901,26 @@ public class MiningWindow extends JFrame
 		}
 	}
 
-	// TODO update
+	// cannot be run from the Event Dispatching Thread
 	private void jMenuItemOpenGeneRankActionPerformed(ActionEvent evt)
 	{
-		FileHandler aFileHandler = new FileHandler(Action.OPEN_GENE_RANK);
-		Table aTable = aFileHandler.getTable();
-
-		if (aTable != null)
+		Thread aThread = new Thread()
 		{
-			itsTable = aTable;
-			itsTotalCount = itsTable.getNrRows();
-			enableTableDependentComponents(true);
-			initGuiComponents();
+			public void run()
+			{
+				Table aTable = new FileHandler(Action.OPEN_GENE_RANK).getTable();
 
-			jComboBoxTargetTypeActionPerformed(null);	// update hack
-		}
+				if (aTable != null)
+				{
+					itsTable = aTable;
+					itsTotalCount = itsTable.getNrRows();
+					enableTableDependentComponents(true);
+					initGuiComponents();
+					jComboBoxTargetTypeActionPerformed(null);	// update hack
+				}
+			}
+		};
+		aThread.start();
 	}
 
 	private void jMenuItemAutoRunFileActionPerformed(AutoRun theFileOption)

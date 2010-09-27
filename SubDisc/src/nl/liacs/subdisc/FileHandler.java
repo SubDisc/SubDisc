@@ -128,9 +128,14 @@ public class FileHandler extends JFrame
 			ErrorLog.log(itsFile, new FileNotFoundException());
 			return;
 		}
-
-		itsTable = new FileLoaderGeneRank(itsFile).getTable();
-		printLoadingInfo();
+		else
+		{
+			itsTable = new FileLoaderGeneRank(itsFile).getTable();
+			if (itsTable == null)
+				return;
+			else
+				printLoadingInfo();
+		}
 	}
 
 	private void openDatabase()
@@ -160,7 +165,7 @@ public class FileHandler extends JFrame
 		else if (theAction == Action.SAVE)
 			theOption = aChooser.showSaveDialog(this);
 
-		if(theOption == JFileChooser.APPROVE_OPTION)
+		if (theOption == JFileChooser.APPROVE_OPTION)
 		{
 			itsFile = aChooser.getSelectedFile();
 			itsLastFileLocation = itsFile.getParent();
