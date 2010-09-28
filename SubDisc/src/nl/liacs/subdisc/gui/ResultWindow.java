@@ -369,7 +369,7 @@ public class ResultWindow extends JFrame
 		double[] aQualities = obtainRandomQualities();
 		if (aQualities == null || aQualities[0] == Math.PI)
 			return;
-		String inputValue = JOptionPane.showInputDialog("Regression test compares the top-k\nsubgroups with random subgroups.\nWhich k would you like?", 1);
+/*		String inputValue = JOptionPane.showInputDialog("Regression test compares the top-k\nsubgroups with random subgroups.\nWhich k would you like?", 1);
 		int aNrSubgroups;
 		try
 		{
@@ -391,9 +391,11 @@ public class ResultWindow extends JFrame
 			JOptionPane.showMessageDialog(null, "Not a valid number;\nregression test cannot be performed.");
 			return;
 		}
-		Validation aValidation = new Validation(itsSearchParameters, itsTable, itsQualityMeasure);
-		double aRegressionTestScore = aValidation.performRegressionTest(aQualities, aNrSubgroups, itsSubgroupSet);
-		JOptionPane.showMessageDialog(null, "The regression test score equals\n" + aRegressionTestScore);
+*/		Validation aValidation = new Validation(itsSearchParameters, itsTable, itsQualityMeasure);
+//		double aRegressionTestScore = aValidation.performRegressionTest(aQualities, aNrSubgroups, itsSubgroupSet);
+//		JOptionPane.showMessageDialog(null, "The regression test score equals\n" + aRegressionTestScore);
+		double[] aRegressionTestScore = aValidation.performRegressionTest(aQualities, itsSubgroupSet);
+		JOptionPane.showMessageDialog(null, "The regression test score equals\nfor k =  1 : "+aRegressionTestScore[0]+"\nfor k = 10 : "+aRegressionTestScore[1]);
 	}
 	
 	private double[] obtainRandomQualities()

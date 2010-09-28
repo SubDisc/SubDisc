@@ -230,18 +230,23 @@ public class Validation
 		}
 		aTopKQuality /= ((double) theK);
 		
+		// make deep copy of double array
+		int theNrRandomSubgroups = theQualities.length;
+		double[] aCopy = new double[theNrRandomSubgroups];
+		for (int i=0; i<theNrRandomSubgroups; i++)
+			aCopy[i] = theQualities[i];
+		
 		// rescale all qualities between 0 and 1
 		// also compute some necessary statistics
-		Arrays.sort(theQualities);
-		int theNrRandomSubgroups = theQualities.length;
-		double aMin = Math.min(theQualities[0], aTopKQuality);
-		double aMax = Math.max(theQualities[theNrRandomSubgroups-1], aTopKQuality);
+		Arrays.sort(aCopy);
+		double aMin = Math.min(aCopy[0], aTopKQuality);
+		double aMax = Math.max(aCopy[theNrRandomSubgroups-1], aTopKQuality);
 		double xBar = 0.5; // given our scaling this always holds
 		double yBar = 0.0; // initial value
 		for (int i=0; i<theNrRandomSubgroups; i++)
 		{
-			theQualities[i] = (theQualities[i]-aMin)/(aMax-aMin);
-			yBar += theQualities[i];
+			aCopy[i] = (aCopy[i]-aMin)/(aMax-aMin);
+			yBar += aCopy[i];
 		}
 		aTopKQuality = (aTopKQuality-aMin)/(aMax-aMin);
 		yBar = (yBar+aTopKQuality)/((double) theNrRandomSubgroups + 1);
@@ -256,7 +261,7 @@ public class Validation
 		for (int i=0; i<theNrRandomSubgroups; i++)
 		{
 			xxBar += (anXs[i] - xBar) * (anXs[i] - xBar);
-			xyBar += (anXs[i] - xBar) * (theQualities[i] - yBar);
+			xyBar += (anXs[i] - xBar) * (aCopy[i] - yBar);
 		}
 		double beta1 = xyBar / xxBar;
 		double beta0 = yBar - beta1 * xBar;
@@ -267,6 +272,14 @@ public class Validation
 		return aScore;   
 	}
 
+	public double[] performRegressionTest(double[] theQualities, SubgroupSet theSubgroupSet)
+	{
+		double aOne = performRegressionTest(theQualities, 1, theSubgroupSet);
+		double aTen = performRegressionTest(theQualities, 10, theSubgroupSet);
+		double[] aResult = {aOne, aTen};
+		return aResult;
+	}
+	
 	public ConditionList getRandomConditionList(int theDepth, Random theRandom)
 	{
 		ConditionList aCL = new ConditionList();
