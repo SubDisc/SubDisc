@@ -225,7 +225,6 @@ public class MiningWindow extends JFrame
 		jSeparator3 = new JSeparator();
 		jMenuItemCreateAutoRunFile = new JMenuItem();
 		jMenuItemAddToAutoRunFile = new JMenuItem();
-//		jMenuItemLoadAutoRunFile = new JMenuItem();
 		jSeparator4 = new JSeparator();
 		jMenuItemExit = new JMenuItem();
 		jMenuAbout = new JMenu();
@@ -354,7 +353,7 @@ public class MiningWindow extends JFrame
 		// TODO add when implemented
 		jMenuItemDataExplorer.setFont(DEFAULT_FONT);
 		jMenuItemDataExplorer.setText("Data Explorer");
-		jMenuItemDataExplorer.setMnemonic('E');
+//		jMenuItemDataExplorer.setMnemonic('');
 		jMenuItemDataExplorer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_E, InputEvent.CTRL_MASK));
 		jMenuItemDataExplorer.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
@@ -375,8 +374,8 @@ public class MiningWindow extends JFrame
 		jMenuFile.add(jMenuItemBrowseTarget);
 
 		jMenuItemEditData.setFont(DEFAULT_FONT);
-		jMenuItemEditData.setText("Data Editor");	// "Edit Data"
-		jMenuItemEditData.setMnemonic('A');
+		jMenuItemEditData.setText("Edit Data");
+		jMenuItemEditData.setMnemonic('E');
 		jMenuItemEditData.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A, InputEvent.CTRL_MASK));
 		jMenuItemEditData.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
@@ -421,18 +420,7 @@ public class MiningWindow extends JFrame
 			}
 		});
 		jMenuFile.add(jMenuItemAddToAutoRunFile);
-/*
-		jMenuItemLoadAutoRunFile.setFont(DEFAULT_FONT);
-		jMenuItemLoadAutoRunFile.setText("Load Autorun File");
-//		jMenuItemLoadAutoRunFile.setMnemonic();
-//		jMenuItemLoadAutoRunFile.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A, InputEvent.CTRL_MASK));
-		jMenuItemLoadAutoRunFile.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent evt) {
-				jMenuItemAutoRunFileActionPerformed(AutoRun.LOAD);
-			}
-		});
-		jMenuFile.add(jMenuItemLoadAutoRunFile);
-*/
+
 		jMenuFile.add(jSeparator4);
 
 		jMenuItemExit.setFont(DEFAULT_FONT);
@@ -523,14 +511,16 @@ public class MiningWindow extends JFrame
 		jPanelRuleTarget.add(jPanelRuleTargetFields, BorderLayout.CENTER);
 
 		jPanelRuleTargetButtons.setLayout(new BoxLayout(jPanelRuleTargetButtons , BoxLayout.X_AXIS));
-//		jButtonDataExplorer = initButton("Data Explorer", 'E');
-//		jButtonDataExplorer.addActionListener(new ActionListener() {
-//			public void actionPerformed(ActionEvent evt) {
-//				DataExplorerActionPerformed(evt);
-//			}
-//		});
-//		jPanelRuleTargetButtons.add(jButtonDataExplorer);
-
+/*
+		// TODO add when implemented
+		jButtonDataExplorer = initButton("Data Explorer", '');
+		jButtonDataExplorer.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				DataExplorerActionPerformed(evt);
+			}
+		});
+		jPanelRuleTargetButtons.add(jButtonDataExplorer);
+*/
 		jButtonBrowse = initButton("Browse", 'B');
 		jButtonBrowse.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
@@ -539,7 +529,7 @@ public class MiningWindow extends JFrame
 		});
 		jPanelRuleTargetButtons.add(jButtonBrowse);
 
-		jButtonEditData = initButton("Attributes", 'A');
+		jButtonEditData = initButton("Edit Data ...", 'E');
 		jButtonEditData.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
 				editDataActionPerformed(evt);
@@ -785,13 +775,7 @@ public class MiningWindow extends JFrame
 
 		// setting up - mining buttons =========================================
 		jPanelSouth.setFont(DEFAULT_FONT);
-/*
-		jLabelLayoutFiller0.setPreferredSize(new Dimension(0, 40));
-		jLabelLayoutFiller0.setMinimumSize(new Dimension(0, 40));
-		jPanelSouth.add(jLabelLayoutFiller0);
 
-		jPanelSouth.add(jPanelLayoutFiller1);
-*/
 		jPanelMineButtons.setMinimumSize(new Dimension(0, 40));
 
 		jButtonSubgroupDiscovery = initButton("Subgroup Discovery", 'S');
@@ -819,8 +803,6 @@ public class MiningWindow extends JFrame
 		jPanelMineButtons.add(jButtonRandomConditions);
 
 		jPanelSouth.add(jPanelMineButtons);
-//		jPanelSouth.add(jPanelLayoutFiller2);
-//		jPanelSouth.add(jLabelLayoutFiller3);
 
 		getContentPane().add(jPanelSouth, BorderLayout.SOUTH);
 		getContentPane().add(jPanelCenter, BorderLayout.CENTER);
@@ -872,7 +854,66 @@ public class MiningWindow extends JFrame
 	/* MENU ITEMS */
 	private void jMenuItemOpenFileActionPerformed(ActionEvent evt)
 	{
+		jMenuItemOpenHelper(Action.OPEN_FILE);
+/*
 		FileHandler aFileHandler =  new FileHandler(Action.OPEN_FILE);
+		Table aTable = aFileHandler.getTable();
+		SearchParameters aSearchParameters = aFileHandler.getSearchParameters();
+
+		if (aTable != null)
+		{
+			itsTable = aTable;
+			itsTotalCount = itsTable.getNrRows();
+			enableTableDependentComponents(true);
+
+			// loaded from regular file
+			if (aSearchParameters == null)
+				initGuiComponents();
+			// loaded from XML
+			else
+			{
+				itsSearchParameters = aSearchParameters;
+				// should not happen
+				if (itsSearchParameters.getTargetConcept() == null)
+					itsTargetConcept = new TargetConcept();
+				else
+					itsTargetConcept = itsSearchParameters.getTargetConcept();
+				initGuiComponentsFromFile();
+			}
+
+			jComboBoxTargetTypeActionPerformed(null);	// update hack
+		}
+*/
+	}
+
+	// cannot be run from the Event Dispatching Thread
+	private void jMenuItemOpenGeneRankActionPerformed(ActionEvent evt)
+	{
+		Thread aThread = new Thread()
+		{
+			public void run()
+			{
+				jMenuItemOpenHelper(Action.OPEN_GENE_RANK);
+/*
+				Table aTable = new FileHandler(Action.OPEN_GENE_RANK).getTable();
+
+				if (aTable != null)
+				{
+					itsTable = aTable;
+					itsTotalCount = itsTable.getNrRows();
+					enableTableDependentComponents(true);
+					initGuiComponents();
+					jComboBoxTargetTypeActionPerformed(null);	// update hack
+				}
+*/
+			}
+		};
+		aThread.start();
+	}
+
+	private void jMenuItemOpenHelper(Action theFileAction)
+	{
+		FileHandler aFileHandler =  new FileHandler(theFileAction);
 		Table aTable = aFileHandler.getTable();
 		SearchParameters aSearchParameters = aFileHandler.getSearchParameters();
 
@@ -901,34 +942,13 @@ public class MiningWindow extends JFrame
 		}
 	}
 
-	// cannot be run from the Event Dispatching Thread
-	private void jMenuItemOpenGeneRankActionPerformed(ActionEvent evt)
-	{
-		Thread aThread = new Thread()
-		{
-			public void run()
-			{
-				Table aTable = new FileHandler(Action.OPEN_GENE_RANK).getTable();
-
-				if (aTable != null)
-				{
-					itsTable = aTable;
-					itsTotalCount = itsTable.getNrRows();
-					enableTableDependentComponents(true);
-					initGuiComponents();
-					jComboBoxTargetTypeActionPerformed(null);	// update hack
-				}
-			}
-		};
-		aThread.start();
-	}
-
+	// TODO not on EDT
 	private void jMenuItemAutoRunFileActionPerformed(AutoRun theFileOption)
 	{
 		setupSearchParameters();
 		new XMLAutoRun(itsSearchParameters, itsTable, theFileOption);
 	}
-	
+
 	private void jMenuItemAboutSubDiscActionPerformed(ActionEvent evt)
 	{
 		// TODO
@@ -946,6 +966,7 @@ public class MiningWindow extends JFrame
 	}
 
 	/* DATASET BUTTONS */
+	// TODO not on EDT
 	private void BrowseActionPerformed(ActionEvent evt)
 	{
 		new TableWindow(itsTable);
@@ -1118,6 +1139,7 @@ public class MiningWindow extends JFrame
 		initTargetInfo();
 	}
 
+	// TODO remove duplicate ModelWindow code
 	private void jButtonBaseModelActionPerformed(ActionEvent evt)
 	{
 		try
@@ -1125,7 +1147,7 @@ public class MiningWindow extends JFrame
 			setupSearchParameters();
 
 			ModelWindow aWindow;
-			switch(itsTargetConcept.getTargetType())
+			switch (itsTargetConcept.getTargetType())
 			{
 				case DOUBLE_REGRESSION :
 				{
@@ -1455,7 +1477,7 @@ public class MiningWindow extends JFrame
 			theSearchParameters.setAlpha(0.0f);
 		else
 			theSearchParameters.setAlpha(0.5f);
-		theSearchParameters.setBeta(1f);
+		theSearchParameters.setBeta(1.0f);
 	}
 
 	// Obsolete, this info is already up to date through *ActionPerformed methods
@@ -1465,7 +1487,7 @@ public class MiningWindow extends JFrame
 		itsTargetConcept.setPrimaryTarget(aTarget);
 
 		// target value
-		switch(itsTargetConcept.getTargetType())
+		switch (itsTargetConcept.getTargetType())
 		{
 			case SINGLE_NOMINAL	:
 			case MULTI_BINARY_CLASSIFICATION :
@@ -1557,14 +1579,18 @@ public class MiningWindow extends JFrame
 	private void initTargetValueItems()
 	{
 		removeAllMiscFieldItems();
-		if (jComboBoxTargetAttribute.getItemCount() == 0) // no attributes for selected target concept type?
+		// no attributes for selected target concept type?
+		if (jComboBoxTargetAttribute.getItemCount() == 0)
 			return;
 
 		// single target attribute
 		// if(!TargetConcept.isEMM(getTargetTypeName()))
 		// {
-		Attribute aTarget = itsTable.getAttribute(getTargetAttributeName());
-		TreeSet<String> aValues = itsTable.getDomain(aTarget.getIndex());
+//		Attribute aTarget = itsTable.getAttribute(getTargetAttributeName());
+//		TreeSet<String> aValues = itsTable.getDomain(aTarget.getIndex());
+		TreeSet<String> aValues =
+			itsTable.getDomain(
+				itsTable.getIndex(getTargetAttributeName()));
 		for (String aValue : aValues)
 			addMiscFieldItem(aValue);
 		// }
@@ -1572,14 +1598,18 @@ public class MiningWindow extends JFrame
 
 	private void initTargetInfo()
 	{
-		switch(itsTargetConcept.getTargetType())
+		switch (itsTargetConcept.getTargetType())
 		{
 			case SINGLE_NOMINAL :
 			{
-				Attribute aTarget = itsTable.getAttribute(getTargetAttributeName());
-				String aSelectedTargetValue = getMiscFieldName();
-				itsPositiveCount = itsTable.countValues(aTarget.getIndex(), aSelectedTargetValue);
-				float aPercentage = ((float) itsPositiveCount * 100f) / (float) itsTotalCount;
+//				Attribute aTarget = itsTable.getAttribute(getTargetAttributeName());
+//				String aSelectedTargetValue = getMiscFieldName();
+//				itsPositiveCount = itsTable.countValues(aTarget.getIndex(), aSelectedTargetValue);
+				itsPositiveCount =
+					itsTable.countValues(
+						itsTable.getIndex(getTargetAttributeName()),
+									getMiscFieldName());
+				float aPercentage = ((float) itsPositiveCount * 100.0f) / (float) itsTotalCount;
 				NumberFormat aFormatter = NumberFormat.getNumberInstance();
 				aFormatter.setMaximumFractionDigits(1);
 				jLFieldTargetInfo.setText(itsPositiveCount + " (" + aFormatter.format(aPercentage) + " %)");
@@ -1588,8 +1618,11 @@ public class MiningWindow extends JFrame
 			}
 			case SINGLE_NUMERIC :
 			{
-				Attribute aTarget = itsTable.getAttribute(getTargetAttributeName());
-				itsTargetAverage = itsTable.getAverage(aTarget.getIndex());
+//				Attribute aTarget = itsTable.getAttribute(getTargetAttributeName());
+//				itsTargetAverage = itsTable.getAverage(aTarget.getIndex());
+				itsTargetAverage =
+					itsTable.getAverage(
+						itsTable.getIndex(getTargetAttributeName()));
 				jLabelTargetInfo.setText(" average");
 				jLFieldTargetInfo.setText(String.valueOf(itsTargetAverage));
 				break;
@@ -1630,7 +1663,7 @@ public class MiningWindow extends JFrame
 		removeAllQualityMeasureItems();
 		TargetType aTargetType = itsTargetConcept.getTargetType();
 
-		for(int i = QualityMeasure.getFirstEvaluationMesure(aTargetType); i <= QualityMeasure.getLastEvaluationMesure(aTargetType); i++)
+		for (int i = QualityMeasure.getFirstEvaluationMesure(aTargetType); i <= QualityMeasure.getLastEvaluationMesure(aTargetType); i++)
 			addQualityMeasureItem(QualityMeasure.getMeasureString(i));
 		initEvaluationMinimum();
 	}

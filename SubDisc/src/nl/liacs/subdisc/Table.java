@@ -27,11 +27,7 @@ public class Table
 
 //	public String getSeparator() { return itsSeparator; }
 	public Attribute getAttribute(int i) { return itsAttributes.get(i); }
-	public Column getColumn(Attribute theAttribute)
-	{
-		// index == null for ARFF/MRML
-		return itsColumns.get(theAttribute.getIndex());
-	}
+	public Column getColumn(Attribute theAttribute) { return itsColumns.get(theAttribute.getIndex()); }
 	public Column getColumn(int theIndex) { return itsColumns.get(theIndex); }
 
 	public ArrayList<Attribute> getAttributes() { return itsAttributes; };
@@ -249,6 +245,15 @@ public class Table
 				return anAttribute;
 		}
 		return null; //not found
+	}
+
+	// TODO replace getAttribute
+	public int getIndex(String theName)
+	{
+		for (Column c : itsColumns)
+			if (c.getName().equals(theName))
+				return c.getAttribute().getIndex();
+		return -1; // not found (causes ArrayIndexOutOfBounds)
 	}
 
 	public Condition getFirstCondition()
