@@ -181,28 +181,64 @@ public class MiningWindow extends JFrame
 //		setSecondaryTargets(); // TODO initialised from primaryTargetList
 	}
 
-	// TODO use separate JLabels for "(x enabled)"
 	private void initGuiComponentsDataSet()
 	{
 		if (itsTable != null)
 		{
 			jLFieldTargetTable.setText(itsTable.getName());
 			jLFieldNrExamples.setText(String.valueOf(itsTotalCount));
-			jLFieldNrColumns.setText(String.valueOf(itsTable.getNrColumns()));
+//			jLFieldNrColumns.setText(String.valueOf(itsTable.getNrColumns()));
+//			jLFieldNrColumnsEnabled.setText("(" + aTotalEnabled + " enabled)");
+
 			int[][] aCounts = itsTable.getTypeCounts();
+			int[] aTotals = new int[] { itsTable.getNrColumns(), 0 };
+			for (int[] ia : aCounts)
+				aTotals[1] += ia[1];
+			jLFieldNrColumns.setText(initGuiComponentsDataSetHelper(aTotals));
 			jLFieldNrNominals.setText(initGuiComponentsDataSetHelper(aCounts[0]));
 			jLFieldNrNumerics.setText(initGuiComponentsDataSetHelper(aCounts[1]));
 //			jLFieldNrOrdinals.setText(initGuiComponentsDataSetHelper(aCounts[2]));
 			jLFieldNrBinaries.setText(initGuiComponentsDataSetHelper(aCounts[3]));
+/*
+			String[] aTypeCount = initGuiComponentsDataSetHelper(aCounts[0]);
+			jLFieldNrNominals.setText(aTypeCount[0]);
+			jLFieldNrNominalsEnabled.setText(aTypeCount[1]);
+
+			aTypeCount = initGuiComponentsDataSetHelper(aCounts[1]);
+			jLFieldNrNumerics.setText(aTypeCount[0]);
+			jLFieldNrNumericsEnabled.setText(aTypeCount[1]);
+			aTypeCount = initGuiComponentsDataSetHelper(aCounts[2]);
+			jLFieldNrOrdinals.setText(aTypeCount[0]);
+			jLFieldNrOrdinalsEnabled.setText(aTypeCount[1]);
+			aTypeCount = initGuiComponentsDataSetHelper(aCounts[3]);
+			jLFieldNrBinaries.setText(aTypeCount[0]);
+			jLFieldNrBinariesEnabled.setText(aTypeCount[1]);
+ */
 		}
 	}
 
-	// TODO use separate JLabels for "(x enabled)"
+	/*
+	private String[] initGuiComponentsDataSetHelper(int[] theCounts)
+	{
+		if (theCounts[0] == 0)
+			return new String[] { "", "" };
+		else
+		{
+			return new String[] { String.valueOf(theCounts[0]),
+									"(" +theCounts[1] + " enabled)\t"};
+		}
+	}
+*/
+
 	private String initGuiComponentsDataSetHelper(int[] theCounts)
 	{
 		int aCount = theCounts[0];
-		String aNrEnabled = (aCount == 0 ? "" : "    (" + theCounts[1] + " enabled)");
-		return String.format("%d%s", aCount, aNrEnabled);
+		String aNrEnabled = (aCount == 0 ? "" : " (" + theCounts[1] + " enabled)");
+		String aSpacer = "          ";
+		int i = 0;
+		while ((aCount /= 10) > 0)
+			i+=2;
+		return String.format("%d%s%s", theCounts[0], aSpacer.substring(i), aNrEnabled);
 	}
 
 	/**
@@ -217,7 +253,7 @@ public class MiningWindow extends JFrame
 		jMenuFile = new JMenu();
 		jMenuItemOpenFile = new JMenuItem();
 		jMenuItemOpenGeneRank = new JMenuItem();
-		jMenuItemDataExplorer = new JMenuItem();
+//		jMenuItemDataExplorer = new JMenuItem();
 		jMenuItemBrowseTarget = new JMenuItem();
 		jMenuItemEditData = new JMenuItem();
 		jSeparator2 = new JSeparator();
@@ -251,6 +287,12 @@ public class MiningWindow extends JFrame
 		jLFieldNrNominals = new JLabel();
 		jLFieldNrNumerics = new JLabel();
 		jLFieldNrBinaries = new JLabel();
+		// dataset - number enabled fields
+		jPanelRuleTargetFieldsEnabled = new JPanel();
+		jLFieldNrColumnsEnabled = new JLabel();
+		jLFieldNrNominalsEnabled = new JLabel();
+		jLFieldNrNumericsEnabled = new JLabel();
+		jLFieldNrBinariesEnabled = new JLabel();
 		// dataset - buttons
 		jPanelRuleTargetButtons = new JPanel();
 		jButtonBrowse = new JButton();
@@ -312,14 +354,10 @@ public class MiningWindow extends JFrame
 		jTextFieldSearchStrategyNrBins = new JTextField();
 
 		// mining buttons
-//		jLabelLayoutFiller0 = new JLabel();
-//		jPanelLayoutFiller1 = new JPanel();
 		jPanelMineButtons = new JPanel();
 		jButtonSubgroupDiscovery = new JButton();
 		jButtonRandomSubgroups = new JButton();
 		jButtonRandomConditions = new JButton();
-//		jPanelLayoutFiller2 = new JPanel();
-//		jLabelLayoutFiller3 = new JLabel();
 
 		// setting up - menu items
 		jMiningWindowMenuBar.setFont(DEFAULT_FONT);
@@ -482,6 +520,7 @@ public class MiningWindow extends JFrame
 
 		jPanelRuleTarget.add(jPanelRuleTargetLabels, BorderLayout.WEST);
 
+		// number of instances per AttributeType
 		jPanelRuleTargetFields.setLayout(new GridLayout(7, 1));
 
 		jLFieldTargetTable.setForeground(Color.black);
@@ -510,7 +549,35 @@ public class MiningWindow extends JFrame
 
 		jPanelRuleTarget.add(jPanelRuleTargetFields, BorderLayout.CENTER);
 
-		jPanelRuleTargetButtons.setLayout(new BoxLayout(jPanelRuleTargetButtons , BoxLayout.X_AXIS));
+		// number of enabled instances per AttributeType
+		jPanelRuleTargetFieldsEnabled.setLayout(new GridLayout(7, 1));
+
+		jPanelRuleTargetFieldsEnabled.add(new JLabel(""));
+		jPanelRuleTargetFieldsEnabled.add(new JLabel(""));
+
+		jLFieldNrColumnsEnabled.setForeground(Color.black);
+		jLFieldNrColumnsEnabled.setFont(DEFAULT_FONT);
+		jLFieldNrColumnsEnabled.setHorizontalAlignment(SwingConstants.LEFT);
+		jPanelRuleTargetFieldsEnabled.add(jLFieldNrColumnsEnabled);
+
+		jLFieldNrNominalsEnabled.setForeground(Color.black);
+		jLFieldNrNominalsEnabled.setFont(DEFAULT_FONT);
+		jLFieldNrNominalsEnabled.setHorizontalAlignment(SwingConstants.LEFT);
+		jPanelRuleTargetFieldsEnabled.add(jLFieldNrNominalsEnabled);
+
+		jLFieldNrNumericsEnabled.setForeground(Color.black);
+		jLFieldNrNumericsEnabled.setFont(DEFAULT_FONT);
+		jLFieldNrNumericsEnabled.setHorizontalAlignment(SwingConstants.LEFT);
+		jPanelRuleTargetFieldsEnabled.add(jLFieldNrNumericsEnabled);
+
+		jLFieldNrBinariesEnabled.setForeground(Color.black);
+		jLFieldNrBinariesEnabled.setFont(DEFAULT_FONT);
+		jLFieldNrBinariesEnabled.setHorizontalAlignment(SwingConstants.LEFT);
+		jPanelRuleTargetFieldsEnabled.add(jLFieldNrBinariesEnabled);
+
+		jPanelRuleTarget.add(jPanelRuleTargetFieldsEnabled, BorderLayout.EAST);
+
+//		jPanelRuleTargetButtons.setLayout(new BoxLayout(jPanelRuleTargetButtons , BoxLayout.X_AXIS));
 /*
 		// TODO add when implemented
 		jButtonDataExplorer = initButton("Data Explorer", '');
@@ -1123,11 +1190,11 @@ public class MiningWindow extends JFrame
 //			aList.add(itsTable.getAttribute(itsTable.getBinaryIndex(anIndex)));
 		int aNrBinary = jListSecondaryTargets.getSelectedIndices().length;
 		ArrayList<Attribute> aList = new ArrayList<Attribute>(aNrBinary);
-		for (Attribute a : itsTable.getAttributes())
+		for (Column c : itsTable.getColumns())
 		{
-			if (a.isBinaryType())
+			if (c.getAttribute().isBinaryType())
 			{
-				aList.add(a);
+				aList.add(c.getAttribute());
 				if (--aNrBinary == 0)
 					break;
 			}
@@ -1564,11 +1631,21 @@ public class MiningWindow extends JFrame
 		if (aTargetType == TargetType.MULTI_LABEL && jListSecondaryTargets.getSelectedIndices().length == 0)
 		{
 			int aCount = 0;
+/*
 			for (Attribute anAttribute : itsTable.getAttributes())
 			{
 				if (anAttribute.isBinaryType())
 				{
 					addSecondaryTargetsItem(anAttribute.getName());
+					aCount++;
+				}
+			}
+*/
+			for (Column c: itsTable.getColumns())
+			{
+				if (c.getAttribute().isBinaryType())
+				{
+					addSecondaryTargetsItem(c.getName());
 					aCount++;
 				}
 			}
@@ -1753,7 +1830,7 @@ public class MiningWindow extends JFrame
 	private JMenu jMenuFile;
 	private JMenuItem jMenuItemOpenFile;
 	private JMenuItem jMenuItemOpenGeneRank;
-	private JMenuItem jMenuItemDataExplorer;
+//	private JMenuItem jMenuItemDataExplorer;
 	private JMenuItem jMenuItemBrowseTarget;
 	private JMenuItem jMenuItemEditData;
 	private JSeparator jSeparator2;
@@ -1767,7 +1844,7 @@ public class MiningWindow extends JFrame
 	private JMenuItem jMenuItemAboutSubDisc;
 	private JPanel jPanelSouth;
 	private JPanel jPanelMineButtons;
-	private JButton jButtonDataExplorer;
+//	private JButton jButtonDataExplorer;
 	private JButton jButtonBrowse;
 	private JButton jButtonEditData;
 	private JButton jButtonSubgroupDiscovery;
@@ -1788,6 +1865,7 @@ public class MiningWindow extends JFrame
 	private JLabel jLabelNrBinaries;
 	private JLabel jLabelTargetInfo;
 	private JPanel jPanelRuleTargetFields;
+	private JPanel jPanelRuleTargetFieldsEnabled;
 	private JLabel jLFieldTargetTable;
 	private JComboBox jComboBoxTargetAttribute;
 	private JComboBox jComboBoxMiscField;
@@ -1795,9 +1873,13 @@ public class MiningWindow extends JFrame
 	private JScrollPane SecondaryTargets;
 	private JLabel jLFieldNrExamples;
 	private JLabel jLFieldNrColumns;
+	private JLabel jLFieldNrColumnsEnabled;
 	private JLabel jLFieldNrNominals;
+	private JLabel jLFieldNrNominalsEnabled;
 	private JLabel jLFieldNrNumerics;
+	private JLabel jLFieldNrNumericsEnabled;
 	private JLabel jLFieldNrBinaries;
+	private JLabel jLFieldNrBinariesEnabled;
 	private JLabel jLFieldTargetInfo;
 	private JButton jButtonBaseModel;
 	private JPanel jPanelRuleEvaluation;

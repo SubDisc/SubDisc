@@ -14,7 +14,7 @@ public class Table
 	private String itsName;
 	private int itsNrRows;
 	private int itsNrColumns;
-	private ArrayList<Attribute> itsAttributes = new ArrayList<Attribute>();
+//	private ArrayList<Attribute> itsAttributes = new ArrayList<Attribute>();
 	private ArrayList<Column> itsColumns = new ArrayList<Column>();
 	private Random itsRandomNumber = new Random(System.currentTimeMillis());
 
@@ -26,11 +26,12 @@ public class Table
 	public int getNrColumns() { return itsNrColumns; } //just the descriptors
 
 //	public String getSeparator() { return itsSeparator; }
-	public Attribute getAttribute(int i) { return itsAttributes.get(i); }
+//	public Attribute getAttribute(int i) { return itsAttributes.get(i); }
+	public Attribute getAttribute(int i) { return itsColumns.get(i).getAttribute(); }
 	public Column getColumn(Attribute theAttribute) { return itsColumns.get(theAttribute.getIndex()); }
 	public Column getColumn(int theIndex) { return itsColumns.get(theIndex); }
 
-	public ArrayList<Attribute> getAttributes() { return itsAttributes; };
+//	public ArrayList<Attribute> getAttributes() { return itsAttributes; };
 	public ArrayList<Column> getColumns() { return itsColumns; };
 
 	// TODO some constructors and builder functions, may change
@@ -48,7 +49,7 @@ public class Table
 		itsName = FileType.removeExtension(theSource);
 		itsNrRows = theNrRows;
 		itsNrColumns = theNrColumns;
-		itsAttributes.ensureCapacity(theNrColumns);
+//		itsAttributes.ensureCapacity(theNrColumns);
 		itsColumns.ensureCapacity(theNrColumns);
 	}
 
@@ -89,9 +90,12 @@ public class Table
 	{
 		itsNrRows = itsColumns.size() > 0 ? itsColumns.get(0).size() : 0;
 		itsNrColumns = itsColumns.size();	// needed for MiningWindow
-		itsAttributes.clear();	// expensive
+//		itsAttributes.clear();	// expensive
 		for (Column c : itsColumns)
-			itsAttributes.add(c.getAttribute());
+		{
+			c.getCardinality();
+//			itsAttributes.add(c.getAttribute());
+		}
 	}
 
 	/**
@@ -164,7 +168,6 @@ public class Table
 		Column aColumn = itsColumns.get(anIndex);
 		for (int j=0; j<itsNrRows; j++)
 		{
-
 			if (anAttribute.isBinaryType())
 			{
 				if (theCondition.evaluate(aColumn.getBinary(j)))
@@ -236,7 +239,7 @@ public class Table
 */
 
 	//Data Model ===========================================================================
-
+/*
 	public Attribute getAttribute(String theName)
 	{
 		for (Attribute anAttribute : itsAttributes)
@@ -246,8 +249,17 @@ public class Table
 		}
 		return null; //not found
 	}
+*/
+	public Attribute getAttribute(String theName)
+	{
+		for (Column c : itsColumns)
+		{
+			if (c.getName().equals(theName))
+				return c.getAttribute();
+		}
+		return null; //not found
+	}
 
-	// TODO replace getAttribute
 	public int getIndex(String theName)
 	{
 		for (Column c : itsColumns)
@@ -258,7 +270,8 @@ public class Table
 
 	public Condition getFirstCondition()
 	{
-		return new Condition(itsAttributes.get(0));
+//		return new Condition(itsAttributes.get(0));
+		return new Condition(itsColumns.get(0).getAttribute());
 	}
 
 	public Condition getNextCondition(Condition theCurrentCondition)
@@ -273,7 +286,8 @@ public class Table
 			if (anIndex == itsNrColumns-1) // No more attributes
 				aCondition = null;
 			else
-				aCondition = new Condition(itsAttributes.get(anIndex + 1));
+//				aCondition = new Condition(itsAttributes.get(anIndex + 1));
+				aCondition = new Condition(itsColumns.get(anIndex + 1).getAttribute());
 //			{
 //				Attribute anAttribute = itsAttributes.get(anIndex+1);
 //				if (anAttribute.isNumericType())
