@@ -438,12 +438,12 @@ public class ResultWindow extends JFrame
 		{
 			case 0:
 			{
-				aQualities = aValidation.RandomSubgroups(aNrRepetitions);
+				aQualities = aValidation.randomSubgroups(aNrRepetitions);
 				break;
 			}
 			case 1:
 			{
-				aQualities = aValidation.RandomConditions(aNrRepetitions);
+				aQualities = aValidation.randomConditions(aNrRepetitions);
 				break;
 			}
 			default:

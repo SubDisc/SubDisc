@@ -20,10 +20,12 @@ public class Validation
 		itsQualityMeasure = theQualityMeasure;
 	}
 
-	public double[] RandomSubgroups(int theNrRepetitions)
+	public double[] randomSubgroups(int theNrRepetitions)
 	{
 		double[] aQualities = new double[theNrRepetitions];
 		Random aRandom = new Random(System.currentTimeMillis());
+		int aNrRows  =itsTable.getNrRows();
+		int aMinimumCoverage = itsSearchParameters.getMinimumCoverage();
 		int aSubgroupSize;
 
 		switch(itsTargetConcept.getTargetType())
@@ -38,8 +40,8 @@ public class Validation
 				for (int i=0; i<theNrRepetitions; i++)
 				{
 					do
-						aSubgroupSize = (int) (aRandom.nextDouble() * itsTable.getNrRows());
-					while (aSubgroupSize < itsSearchParameters.getMinimumCoverage());
+						aSubgroupSize = (int) (aRandom.nextDouble() * aNrRows);
+					while (aSubgroupSize < aMinimumCoverage);
 					Subgroup aSubgroup = itsTable.getRandomSubgroup(aSubgroupSize);
 
 					BitSet aColumnTarget = (BitSet) aBinaryTarget.clone();
@@ -59,8 +61,8 @@ public class Validation
 				for (int i=0; i<theNrRepetitions; i++)
 				{
 					do
-						aSubgroupSize = (int) (aRandom.nextDouble() * itsTable.getNrRows());
-					while (aSubgroupSize < itsSearchParameters.getMinimumCoverage());
+						aSubgroupSize = (int) (aRandom.nextDouble() * aNrRows);
+					while (aSubgroupSize < aMinimumCoverage);
 					Subgroup aSubgroup = itsTable.getRandomSubgroup(aSubgroupSize);
 
 					// build model
@@ -85,13 +87,13 @@ public class Validation
 				for (int i=0; i<theNrRepetitions; i++)
 				{
 					do
-						aSubgroupSize = (int) (aRandom.nextDouble() * itsTable.getNrRows());
-					while (aSubgroupSize < itsSearchParameters.getMinimumCoverage());
+						aSubgroupSize = (int) (aRandom.nextDouble() * aNrRows);
+					while (aSubgroupSize < aMinimumCoverage);
 					Subgroup aSubgroup = itsTable.getRandomSubgroup(aSubgroupSize);
 
 					CorrelationMeasure aCM = new CorrelationMeasure(itsBaseCM);
 
-					for (int j=0; j<itsTable.getNrRows(); j++)
+					for (int j=0; j<aNrRows; j++)
 						if (aSubgroup.getMembers().get(j))
 							aCM.addObservation(aPrimaryColumn.getFloat(j), aSecondaryColumn.getFloat(j));
 
@@ -110,10 +112,12 @@ public class Validation
 	* For each of the subgroups related to the random conditions, the quality is computed.
 	* @return the computed qualities.
 	*/
-	public double[] RandomConditions(int theNrRepetitions)
+	public double[] randomConditions(int theNrRepetitions)
 	{
 		double[] aQualities = new double[theNrRepetitions];
 		Random aRandom = new Random(System.currentTimeMillis());
+		int aDepth = itsSearchParameters.getSearchDepth();
+		int aMinimumCoverage = itsSearchParameters.getMinimumCoverage();
 
 		switch(itsTargetConcept.getTargetType())
 		{
@@ -124,8 +128,6 @@ public class Validation
 				aCondition.setValue(itsTargetConcept.getTargetValue());
 				BitSet aBinaryTarget = itsTable.evaluate(aCondition);
 
-				int aDepth = itsSearchParameters.getSearchDepth();
-				int aMinimumCoverage = itsSearchParameters.getMinimumCoverage();
 				for (int i=0; i<theNrRepetitions; i++)
 				{
 					ConditionList aCL;
@@ -153,8 +155,6 @@ public class Validation
 				Bayesian aBayesian = new Bayesian(aBaseTable);
 				aBayesian.climb();
 
-				int aDepth = itsSearchParameters.getSearchDepth();
-				int aMinimumCoverage = itsSearchParameters.getMinimumCoverage();
 				for (int i = 0; i < theNrRepetitions; i++) // random conditions
 				{
 					ConditionList aCL;
@@ -189,8 +189,6 @@ public class Validation
 				CorrelationMeasure itsBaseCM =
 					new CorrelationMeasure(itsSearchParameters.getQualityMeasure(), aPrimaryColumn, aSecondaryColumn);
 
-				int aDepth = itsSearchParameters.getSearchDepth();
-				int aMinimumCoverage = itsSearchParameters.getMinimumCoverage();
 				for (int i=0; i<theNrRepetitions; i++)
 				{
 					ConditionList aCL;
@@ -217,7 +215,7 @@ public class Validation
 		}
 		return aQualities; //return the qualities belonging to this random sample
 	}
-	
+
 	public double performRegressionTest(double[] theQualities, int theK, SubgroupSet theSubgroupSet)
 	{
 		// extract average quality of top-k subgroups
@@ -229,13 +227,13 @@ public class Validation
 			aTopKQuality += aSubgroup.getMeasureValue();
 		}
 		aTopKQuality /= ((double) theK);
-		
+
 		// make deep copy of double array
 		int theNrRandomSubgroups = theQualities.length;
 		double[] aCopy = new double[theNrRandomSubgroups];
 		for (int i=0; i<theNrRandomSubgroups; i++)
 			aCopy[i] = theQualities[i];
-		
+
 		// rescale all qualities between 0 and 1
 		// also compute some necessary statistics
 		Arrays.sort(aCopy);
@@ -250,7 +248,7 @@ public class Validation
 		}
 		aTopKQuality = (aTopKQuality-aMin)/(aMax-aMin);
 		yBar = (yBar+aTopKQuality)/((double) theNrRandomSubgroups + 1);
-		
+
 		// perform least squares linear regression on equidistant x-values and computed y-values
 		double xxBar = 0.25; // initial value: this equals the square of (the x-value of our subgroup minus xbar)
 		double xyBar = 0.5 * (aTopKQuality - yBar);
@@ -279,20 +277,28 @@ public class Validation
 		double[] aResult = {aOne, aTen};
 		return aResult;
 	}
-	
+
 	public ConditionList getRandomConditionList(int theDepth, Random theRandom)
 	{
 		ConditionList aCL = new ConditionList();
 
 		int aDepth = 1+theRandom.nextInt(theDepth); //random nr between 1 and theDepth (incl)
+		int aNrColumns = itsTable.getNrColumns();
 
 		for (int j = 0; j < aDepth; j++) // j conditions
 		{
-			Attribute anAttribute = itsTable.getAttribute(theRandom.nextInt(itsTable.getNrColumns()));
+/*
+			Attribute anAttribute = itsTable.getAttribute(theRandom.nextInt(aNrColumns));
 			while (itsTargetConcept.isTargetAttribute(anAttribute))
 			{
-				anAttribute = itsTable.getAttribute(theRandom.nextInt(itsTable.getNrColumns())); 
+				anAttribute = itsTable.getAttribute(theRandom.nextInt(aNrColumns)); 
 			}
+*/
+			Attribute anAttribute;
+			do
+				anAttribute = itsTable.getAttribute(theRandom.nextInt(aNrColumns));
+			while (itsTargetConcept.isTargetAttribute(anAttribute));
+
 			int anOperator;
 			Condition aCondition;
 			switch(anAttribute.getType())
