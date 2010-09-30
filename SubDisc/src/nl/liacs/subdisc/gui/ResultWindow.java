@@ -413,7 +413,7 @@ public class ResultWindow extends JFrame
 			return aPi;
 		}
 
-		String inputValue = JOptionPane.showInputDialog("Number of random subgroups to be used\nfor random quality estimation:", 100);
+		String inputValue = JOptionPane.showInputDialog("Number of random subgroups to be used\nfor random quality estimation:", 1000);
 		int aNrRepetitions;
 		try
 		{

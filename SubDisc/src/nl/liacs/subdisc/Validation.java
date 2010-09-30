@@ -41,7 +41,7 @@ public class Validation
 				{
 					do
 						aSubgroupSize = (int) (aRandom.nextDouble() * aNrRows);
-					while (aSubgroupSize < aMinimumCoverage);
+					while (aSubgroupSize < aMinimumCoverage  || aSubgroupSize==aNrRows);
 					Subgroup aSubgroup = itsTable.getRandomSubgroup(aSubgroupSize);
 
 					BitSet aColumnTarget = (BitSet) aBinaryTarget.clone();
@@ -62,7 +62,7 @@ public class Validation
 				{
 					do
 						aSubgroupSize = (int) (aRandom.nextDouble() * aNrRows);
-					while (aSubgroupSize < aMinimumCoverage);
+					while (aSubgroupSize < aMinimumCoverage  || aSubgroupSize==aNrRows);
 					Subgroup aSubgroup = itsTable.getRandomSubgroup(aSubgroupSize);
 
 					// build model
@@ -88,7 +88,7 @@ public class Validation
 				{
 					do
 						aSubgroupSize = (int) (aRandom.nextDouble() * aNrRows);
-					while (aSubgroupSize < aMinimumCoverage);
+					while (aSubgroupSize < aMinimumCoverage  || aSubgroupSize==aNrRows);
 					Subgroup aSubgroup = itsTable.getRandomSubgroup(aSubgroupSize);
 
 					CorrelationMeasure aCM = new CorrelationMeasure(itsBaseCM);
@@ -118,6 +118,7 @@ public class Validation
 		Random aRandom = new Random(System.currentTimeMillis());
 		int aDepth = itsSearchParameters.getSearchDepth();
 		int aMinimumCoverage = itsSearchParameters.getMinimumCoverage();
+		int aNrRows = itsTable.getNrRows();
 
 		switch(itsTargetConcept.getTargetType())
 		{
@@ -137,8 +138,8 @@ public class Validation
 						aCL = getRandomConditionList(aDepth, aRandom);
 						aMembers = itsTable.evaluate(aCL);
 					}
-					while (aMembers.cardinality() < aMinimumCoverage);
-					Log.logCommandLine(aCL.toString());
+					while (aMembers.cardinality() < aMinimumCoverage || aMembers.cardinality()==aNrRows);
+//					Log.logCommandLine(aCL.toString());
 					Subgroup aSubgroup = new Subgroup(aCL, aMembers, aCL.size());
 
 					BitSet aColumnTarget = (BitSet) aBinaryTarget.clone();
@@ -164,7 +165,7 @@ public class Validation
 						aCL = getRandomConditionList(aDepth, aRandom);
 						aMembers = itsTable.evaluate(aCL);
 					}
-					while (aMembers.cardinality() < aMinimumCoverage);
+					while (aMembers.cardinality() < aMinimumCoverage || aMembers.cardinality()==aNrRows);
 					Log.logCommandLine(aCL.toString());
 					Subgroup aSubgroup = new Subgroup(aCL, aMembers, aCL.size());
 
@@ -198,13 +199,13 @@ public class Validation
 						aCL = getRandomConditionList(aDepth, aRandom);
 						aMembers = itsTable.evaluate(aCL);
 					}
-					while (aMembers.cardinality() < aMinimumCoverage);
+					while (aMembers.cardinality() < aMinimumCoverage || aMembers.cardinality()==aNrRows);
 					Log.logCommandLine(aCL.toString());
 					Subgroup aSubgroup = new Subgroup(aCL, aMembers, aCL.size());
 
 					CorrelationMeasure aCM = new CorrelationMeasure(itsBaseCM);
 
-					for (int j=0; j<itsTable.getNrRows(); j++)
+					for (int j=0; j<aNrRows; j++)
 						if (aSubgroup.getMembers().get(j))
 							aCM.addObservation(aPrimaryColumn.getFloat(j), aSecondaryColumn.getFloat(j));
 
@@ -273,7 +274,9 @@ public class Validation
 	public double[] performRegressionTest(double[] theQualities, SubgroupSet theSubgroupSet)
 	{
 		double aOne = performRegressionTest(theQualities, 1, theSubgroupSet);
-		double aTen = performRegressionTest(theQualities, 10, theSubgroupSet);
+		double aTen = Math.PI;
+		if (theSubgroupSet.size()>=10)
+			aTen = performRegressionTest(theQualities, 10, theSubgroupSet);
 		double[] aResult = {aOne, aTen};
 		return aResult;
 	}
