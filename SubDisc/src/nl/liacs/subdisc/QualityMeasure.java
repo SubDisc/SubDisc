@@ -281,8 +281,22 @@ public class QualityMeasure
 		return (float)((-1 * pj * Math.log(pj)/Math.log(2)) - ((1 - pj) * Math.log(1 - pj)/Math.log(2)));
 	}
 
-	public static float calculateConditionalEntropy(float totalSupport, float headSupport, float bodySupport, float bodyHeadSupport)
+	/**
+	 * Calculates the ConditionalEntropy. Both the <code>bodySupport</code> and
+	 * <code>bodyHeadSupport</code> can not be <code>0</code>. Also they can not
+	 * be equal to each other. In any of these cases
+	 * <code>Float.NEGATIVE_INFINITY</code> is returned.
+	 * 
+	 * @param bodySupport
+	 * @param bodyHeadSupport
+	 * @return the conditional entropy for given the two parameters, or
+	 * <code>Float.NEGATIVE_INFINITY</code> if any parameter is <code>0</code>,
+	 * or they are equal.
+	 */
+	public static float calculateConditionalEntropy(float bodySupport, float bodyHeadSupport)
 	{
+		if (bodySupport == 0 || bodyHeadSupport == 0 || bodySupport == bodyHeadSupport)
+			return Float.NEGATIVE_INFINITY;
 		float Phb = bodyHeadSupport/bodySupport; //P(H|B)
 		float Pnhb = (bodySupport - bodyHeadSupport)/bodySupport; //P(H|B)
 		float quality = (float)(-1 * ((Phb * Math.log(Phb)/Math.log(2)) + (Pnhb * Math.log(Pnhb)/Math.log(2))));
@@ -291,7 +305,7 @@ public class QualityMeasure
 
 	public static float calculateInformationGain(float totalSupport, float headSupport, float bodySupport, float headBodySupport)
 	{
-		return calculateEntropy(totalSupport, headSupport) - calculateConditionalEntropy(totalSupport, headSupport, bodySupport, headBodySupport);
+		return calculateEntropy(totalSupport, headSupport) - calculateConditionalEntropy(bodySupport, headBodySupport);
 	}
 
 
