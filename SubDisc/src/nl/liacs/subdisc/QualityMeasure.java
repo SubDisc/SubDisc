@@ -273,33 +273,45 @@ public class QualityMeasure
 		return totalSupport * (bodySupport / totalSupport) * (headSupport / totalSupport);
 	}
 
+	/**
+	 * Computes the 2-log of p.
+	 */
+	private static float lg(float p)
+	{
+		return ((float) Math.log(p))/(float)Math.log(2);
+	}
+
 	public static float calculateEntropy(float bodySupport, float headBodySupport)
 	{
+		if (bodySupport == 0)
+			return 0.0f; //special case that should never occur
+
 		if (headBodySupport==0 || bodySupport==headBodySupport)
-			return 0;
+			return 0.0f; // by definition
+
 		float pj = headBodySupport/bodySupport;
-		return (float)((-1 * pj * Math.log(pj)/Math.log(2)) - ((1 - pj) * Math.log(1 - pj)/Math.log(2)));
+		return -1.0f*pj*lg(pj) - (1-pj)*lg(1-pj);
 	}
 
 	/**
-	 * Calculates the ConditionalEntropy. Both the <code>bodySupport</code> and
-	 * <code>bodyHeadSupport</code> can not be <code>0</code>. Also they can not
-	 * be equal to each other. In any of these cases
-	 * <code>Float.NEGATIVE_INFINITY</code> is returned.
-	 * 
+	 * Calculates the ConditionalEntropy.
+	 * By definition, 0*lg(0) is 0, such that any boundary cases return 0.
+	 *
 	 * @param bodySupport
 	 * @param bodyHeadSupport
-	 * @return the conditional entropy for given the two parameters, or
-	 * <code>Float.NEGATIVE_INFINITY</code> if any parameter is <code>0</code>,
-	 * or they are equal.
+	 * @return the conditional entropy for given the two parameters.
 	 */
 	public static float calculateConditionalEntropy(float bodySupport, float bodyHeadSupport)
 	{
-		if (bodySupport == 0 || bodyHeadSupport == 0 || bodySupport == bodyHeadSupport)
-			return Float.NEGATIVE_INFINITY;
+		if (bodySupport == 0)
+			return 0.0f; //special case that should never occur
+
 		float Phb = bodyHeadSupport/bodySupport; //P(H|B)
 		float Pnhb = (bodySupport - bodyHeadSupport)/bodySupport; //P(H|B)
-		float quality = (float)(-1 * ((Phb * Math.log(Phb)/Math.log(2)) + (Pnhb * Math.log(Pnhb)/Math.log(2))));
+		if (Phb == 0 || Pnhb == 0)
+			return 0.0f; //by definition
+
+		float quality = -1.0f*Phb*lg(Phb) + Pnhb*lg(Pnhb);
 		return quality;
 	}
 
@@ -560,7 +572,7 @@ public class QualityMeasure
 	{
 		switch (itsMeasure)
 		{
-			case WEED : 
+			case WEED :
 				return (float) Math.pow(calculateEntropy(itsNrRecords, theSubgroup.getCoverage()), itsAlpha) *
 						(float) Math.pow(calculateEditDistance(theSubgroup.getDAG()), itsBeta);
 			case EDIT_DISTANCE :

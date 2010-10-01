@@ -90,9 +90,9 @@ public class NormalDistribution
 	public double getSigma() { return itsSigma; }
 	public double getVariance() { return itsSigma * itsSigma; }
 
-	public double getOnePercentSignificance() {return itsMu + 2.326348*itsSigma; }
-	public double getFivePercentSignificance() {return itsMu + 1.6448537*itsSigma; }
-	public double getTenPercentSignificance() {return itsMu + 1.2815517*itsSigma; }
+	public float getOnePercentSignificance() {return (float) (itsMu + 2.326348*itsSigma); }
+	public float getFivePercentSignificance() {return (float) (itsMu + 1.6448537*itsSigma); }
+	public float getTenPercentSignificance() {return (float) (itsMu + 1.2815517*itsSigma); }
 
 	public void printStatistics()
 	{

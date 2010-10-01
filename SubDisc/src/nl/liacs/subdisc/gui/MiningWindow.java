@@ -893,7 +893,7 @@ public class MiningWindow extends JFrame
 
 	private void enableTableDependentComponents(boolean theSetting)
 	{
-		AbstractButton[] anAbstractButtonArray = 
+		AbstractButton[] anAbstractButtonArray =
 			new AbstractButton[] {//jMenuItemDataExplorer,	//TODO add when implemented
 									jMenuItemBrowseTarget,
 									jMenuItemEditData,
@@ -1364,7 +1364,7 @@ public class MiningWindow extends JFrame
 		{
 			setupSearchParameters();
 
-			String inputValue = JOptionPane.showInputDialog("Number of random subgroups to be used\nfor distribution estimation:");
+			String inputValue = JOptionPane.showInputDialog("Number of random subgroups to be used\nfor distribution estimation:", 1000);
 			int aNrRepetitions;
 			try
 			{
@@ -1420,17 +1420,17 @@ public class MiningWindow extends JFrame
 			{
 				case 0:
 				{
-					setQualityMeasureMinimum(Double.toString(aDistro.getOnePercentSignificance()));
+					setQualityMeasureMinimum(Float.toString(aDistro.getOnePercentSignificance()));
 					break;
 				}
 				case 1:
 				{
-					setQualityMeasureMinimum(Double.toString(aDistro.getFivePercentSignificance()));
+					setQualityMeasureMinimum(Float.toString(aDistro.getFivePercentSignificance()));
 					break;
 				}
 				case 2:
 				{
-					setQualityMeasureMinimum(Double.toString(aDistro.getTenPercentSignificance()));
+					setQualityMeasureMinimum(Float.toString(aDistro.getTenPercentSignificance()));
 					break;
 				}
 				case 3:
@@ -1452,7 +1452,7 @@ public class MiningWindow extends JFrame
 	{
 		setupSearchParameters();
 
-		String inputValue = JOptionPane.showInputDialog("Number of random conditions to be used\nfor distribution estimation:");
+		String inputValue = JOptionPane.showInputDialog("Number of random conditions to be used\nfor distribution estimation:", 1000);
 		int aNrRepetitions;
 		try
 		{
@@ -1488,17 +1488,17 @@ public class MiningWindow extends JFrame
 		{
 			case 0:
 			{
-				setQualityMeasureMinimum(Double.toString(aDistro.getOnePercentSignificance()));
+				setQualityMeasureMinimum(Float.toString(aDistro.getOnePercentSignificance()));
 				break;
 			}
 			case 1:
 			{
-				setQualityMeasureMinimum(Double.toString(aDistro.getFivePercentSignificance()));
+				setQualityMeasureMinimum(Float.toString(aDistro.getFivePercentSignificance()));
 				break;
 			}
 			case 2:
 			{
-				setQualityMeasureMinimum(Double.toString(aDistro.getTenPercentSignificance()));
+				setQualityMeasureMinimum(Float.toString(aDistro.getTenPercentSignificance()));
 				break;
 			}
 			case 3:
