@@ -596,7 +596,7 @@ public class MiningWindow extends JFrame
 		});
 		jPanelRuleTargetButtons.add(jButtonBrowse);
 
-		jButtonEditData = initButton("Edit Data ...", 'E');
+		jButtonEditData = initButton("Edit Data...", 'E');
 		jButtonEditData.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
 				editDataActionPerformed(evt);

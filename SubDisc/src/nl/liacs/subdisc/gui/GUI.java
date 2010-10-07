@@ -8,23 +8,23 @@
 
 package nl.liacs.subdisc.gui;
 
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.event.ActionListener;
-import java.awt.event.ItemListener;
+import java.awt.*;
+import java.awt.event.*;
 
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JLabel;
-import javax.swing.border.BevelBorder;
+import javax.swing.*;
+import javax.swing.border.*;
 
 public class GUI
 {
 	// TODO remove DEFAULT_
 	public static final Font DEFAULT_TEXT_FONT = new Font ("Dialog", 0, 10);
 	public static final Font DEFAULT_BUTTON_FONT = new Font ("Dialog", 1, 11);
-	public static final Dimension DEFAULT_TEXT_FIELD_DIMENSION = new Dimension (86, 22);
-	public static final Dimension DEFAULT_WINDOW_DIMENSION = new Dimension (1024, 700);
+	public static final Dimension TEXT_FIELD_DEFAULT_SIZE = new Dimension (86, 22);
+	public static final Dimension WINDOW_DEFAULT_SIZE = new Dimension (1024, 700);
+	// button
+	public static final Dimension BUTTON_DEFAULT_SIZE = new Dimension(110, 25);
+	public static final Dimension BUTTON_MINIMUM_SIZE = new Dimension(82, 25);
+	public static final Dimension BUTTON_MAXIMUM_SIZE = new Dimension(110, 25);
 
 	public enum Event
 	{
@@ -34,15 +34,15 @@ public class GUI
 		CHANGE_MISSING;
 	}
 
-	private GUI() {}; // ininstantiable class
+	private GUI() {}; // uninstantiable class
 
 	public static JButton buildButton(String theName, int theMnemonic, String theActionCommand, ActionListener theClass)
 	{
 		JButton aButton = new JButton();
-		aButton.setPreferredSize(new Dimension(110, 25));
+		aButton.setPreferredSize(BUTTON_DEFAULT_SIZE);
 		aButton.setBorder(new BevelBorder(0));
-		aButton.setMinimumSize(new Dimension(82, 25));
-		aButton.setMaximumSize(new Dimension(110, 25));
+		aButton.setMinimumSize(BUTTON_MINIMUM_SIZE);
+		aButton.setMaximumSize(BUTTON_MAXIMUM_SIZE);
 		aButton.setFont(DEFAULT_BUTTON_FONT);
 		aButton.setText(theName);
 		aButton.setMnemonic(theMnemonic);
@@ -54,10 +54,10 @@ public class GUI
 	public static JButton buildButton(String theName, String theActionCommand, ActionListener theClass)
 	{
 		JButton aButton = new JButton();
-		aButton.setPreferredSize(new Dimension(110, 25));
+		aButton.setPreferredSize(BUTTON_DEFAULT_SIZE);
 		aButton.setBorder(new BevelBorder(0));
-		aButton.setMinimumSize(new Dimension(82, 25));
-		aButton.setMaximumSize(new Dimension(110, 25));
+		aButton.setMinimumSize(BUTTON_MINIMUM_SIZE);
+		aButton.setMaximumSize(BUTTON_MAXIMUM_SIZE);
 		aButton.setFont(DEFAULT_BUTTON_FONT);
 		aButton.setText(theName);
 		aButton.setActionCommand(theActionCommand);
@@ -80,4 +80,10 @@ public class GUI
 		return aJLable;
 	}
 
+	// no need for null check
+	public static Border buildBorder(String theTitle)
+	{
+		return new TitledBorder(
+				new EtchedBorder(), theTitle, 4, 2, DEFAULT_BUTTON_FONT);
+	}
 }

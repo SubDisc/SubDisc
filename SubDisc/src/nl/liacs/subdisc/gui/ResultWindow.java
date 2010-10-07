@@ -191,9 +191,9 @@ public class ResultWindow extends JFrame
 		//close button
 		jButtonCloseWindow = initButton("Close", 'C');
 		jButtonCloseWindow.addActionListener(new java.awt.event.ActionListener() {
-		 	public void actionPerformed(java.awt.event.ActionEvent evt) {
+			public void actionPerformed(java.awt.event.ActionEvent evt) {
 				jButtonCloseWindowActionPerformed();
-		  	}
+			}
 		});
 
 		aSubgroupSetPanel.add(jButtonCloseWindow);

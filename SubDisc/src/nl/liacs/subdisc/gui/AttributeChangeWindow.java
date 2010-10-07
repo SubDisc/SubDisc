@@ -1,5 +1,7 @@
 /*
  * TODO if changes are made also update other opened windows, eg. BrowseWindow
+ * TODO all methods should update itsFeedBackLabel on failure/success
+ * TODO include getCardinality() column
  */
 package nl.liacs.subdisc.gui;
 
@@ -27,7 +29,7 @@ public class AttributeChangeWindow extends JFrame implements ActionListener
 	{
 		if (theTable == null || theMiningWindow == null)
 		{
-			Log.logCommandLine("To create a Data Editor Window parameters can not be 'null'.");
+			Log.logCommandLine("MetaDataWindow Constructor: parameters can not be 'null'.");
 			return;
 		}
 		else
@@ -36,10 +38,11 @@ public class AttributeChangeWindow extends JFrame implements ActionListener
 			itsTable = theTable;
 			initJTable(itsTable);
 			initComponents();
-			setTitle("Attribute types for: " + itsTable.getName());
+			setTitle("Meta Data for: " + itsTable.getName());
 			setLocation(100, 100);
-			setSize(GUI.DEFAULT_WINDOW_DIMENSION);
+			setSize(GUI.WINDOW_DEFAULT_SIZE);
 			setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+//			pack();
 			setVisible(true);
 		}
 	}
@@ -47,7 +50,7 @@ public class AttributeChangeWindow extends JFrame implements ActionListener
 	private void initJTable(Table theTable)
 	{
 		jTable = new JTable(new AttributeTableModel(theTable));
-		jTable.setPreferredScrollableViewportSize(new Dimension(GUI.DEFAULT_WINDOW_DIMENSION));
+		jTable.setPreferredScrollableViewportSize(GUI.WINDOW_DEFAULT_SIZE);
 		jTable.setFillsViewportHeight(true);
 /*
 		jTable.getColumnModel().getColumn(0).setPreferredWidth(50);
@@ -58,7 +61,8 @@ public class AttributeChangeWindow extends JFrame implements ActionListener
 
 	private void initComponents()
 	{
-		JPanel jPanelSouth = new JPanel(new GridLayout(1, 4));
+		JPanel aSouthPanel = new JPanel();
+		JPanel anActionPanel = new JPanel(new GridLayout(1, 4));
 		JPanel aSelectionPanel = new JPanel();
 		JPanel aDisablePanel = new JPanel();
 		JPanel aRadioButtonPanel = new JPanel();
@@ -67,29 +71,26 @@ public class AttributeChangeWindow extends JFrame implements ActionListener
 
 		JScrollPane jScrollPane = new JScrollPane(jTable);
 
-//		jPanelSouth.add(Box.createHorizontalGlue());
-
 		// selection buttons
-		aSelectionPanel.setLayout(new BoxLayout(aSelectionPanel, BoxLayout.Y_AXIS));
+		aSelectionPanel.setBorder(GUI.buildBorder("Select"));
+		aSelectionPanel.setLayout(new BoxLayout(aSelectionPanel, BoxLayout.PAGE_AXIS));
 
-		aSelectionPanel.add(GUI.buildButton("Select All", 'A', "all", this));
+		addCentered(aSelectionPanel, GUI.buildButton("All", 'A', "all", this));
 		// TODO could use generic loop over all AttributeTypes
-		aSelectionPanel.add(GUI.buildButton("Select All Nominal", 'L', AttributeType.NOMINAL.toString(), this));
-		aSelectionPanel.add(GUI.buildButton("Select All Numeric", 'N', AttributeType.NUMERIC.toString(), this));
-//		aSelectionPanel.add(GUI.buildButton("Select All Ordinal", 'O', AttributeType.ORDINAL.toString(), this));
-		aSelectionPanel.add(GUI.buildButton("Select All Binary", 'B', AttributeType.BINARY.toString(), this));
-//		aSelectionPanel.add(GUI.buildButton("Invert Selection", 'I', "invert", this));
-		aSelectionPanel.add(GUI.buildButton("Clear Selection", 'X', "clear", this));
-		jPanelSouth.add(aSelectionPanel);
+		addCentered(aSelectionPanel, GUI.buildButton("All Nominal", 'N', AttributeType.NOMINAL.toString(), this));
+		addCentered(aSelectionPanel, GUI.buildButton("All Numeric", 'U', AttributeType.NUMERIC.toString(), this));
+//		addCentered(aSelectionPanel, GUI.buildButton("All Ordinal", 'O', AttributeType.ORDINAL.toString(), this));
+		addCentered(aSelectionPanel, GUI.buildButton("All Binary", 'B', AttributeType.BINARY.toString(), this));
+//		addCentered(aSelectionPanel, GUI.buildButton("Invert Selection", 'I', "invert", this));
+		addCentered(aSelectionPanel, GUI.buildButton("Clear Selection", 'X', "clear", this));
+		anActionPanel.add(aSelectionPanel);
 
 		// change type
-		aChangeTypePanel.setLayout(new BoxLayout(aChangeTypePanel, BoxLayout.Y_AXIS));
-		JLabel aNewTypeLabel = new JLabel("New type:");
-		aNewTypeLabel.setFont(GUI.DEFAULT_BUTTON_FONT);
-		aChangeTypePanel.add(aNewTypeLabel);
+		aChangeTypePanel.setBorder(GUI.buildBorder("Set Type"));
+		aChangeTypePanel.setLayout(new BoxLayout(aChangeTypePanel, BoxLayout.PAGE_AXIS));
 		aChangeTypePanel.add(Box.createVerticalGlue());
 
-		aRadioButtonPanel.setLayout(new BoxLayout(aRadioButtonPanel, BoxLayout.Y_AXIS));
+		aRadioButtonPanel.setLayout(new BoxLayout(aRadioButtonPanel, BoxLayout.PAGE_AXIS));
 
 		for (AttributeType at : AttributeType.values())
 		{
@@ -103,55 +104,67 @@ public class AttributeChangeWindow extends JFrame implements ActionListener
 			aNewType.add((AbstractButton) rb);
 
 		if (aRadioButtonPanel.getComponents().length > 0)
-			((JRadioButton) aRadioButtonPanel.getComponent(0))
-			.setSelected(true);
+			((JRadioButton) aRadioButtonPanel.getComponent(0)).setSelected(true);
 
-		// for now, disable ORDINAL, will change when implemented
+		// TODO for now, disable ORDINAL, will change when implemented
 		aNewType.remove((AbstractButton) aRadioButtonPanel.getComponent(2));
 		aRadioButtonPanel.remove(2);
 
-		aChangeTypePanel.add(aRadioButtonPanel);
+		addCentered(aChangeTypePanel, aRadioButtonPanel);
 		aChangeTypePanel.add(Box.createVerticalGlue());
-		aChangeTypePanel.add(GUI.buildButton("Change Type", 'C', "type", this));
-		jPanelSouth.add(aChangeTypePanel);
+		addCentered(aChangeTypePanel, GUI.buildButton("Change Type", 'C', "type", this));
+		anActionPanel.add(aChangeTypePanel);
 
-		// enable / disable
-		JLabel aDisableLable = new JLabel("Disable/Enable Selected:");
-		aDisableLable.setFont(GUI.DEFAULT_BUTTON_FONT);
-		aDisablePanel.add(aDisableLable);
-		aDisablePanel.setLayout(new BoxLayout(aDisablePanel, BoxLayout.Y_AXIS));
+		// disable / enable
+		aDisablePanel.setBorder(GUI.buildBorder("Set Disabled/Enabled"));
+		aDisablePanel.setLayout(new BoxLayout(aDisablePanel, BoxLayout.PAGE_AXIS));
 		aDisablePanel.add(Box.createVerticalGlue());
-		aDisablePanel.add(GUI.buildButton("Disable Selected", 'D', "disable", this));
+		addCentered(aDisablePanel, GUI.buildButton("Disable Selected", 'D', "disable", this));
 		aDisablePanel.add(Box.createVerticalGlue());
-		aDisablePanel.add(GUI.buildButton("Enable Selected", 'E', "enable", this));
+		addCentered(aDisablePanel, GUI.buildButton("Enable Selected", 'E', "enable", this));
 		aDisablePanel.add(Box.createVerticalGlue());
-		aDisablePanel.add(GUI.buildButton("Toggle Selected", 'T', "toggle", this));
-		aDisablePanel.add(Box.createVerticalGlue());
-		jPanelSouth.add(aDisablePanel);
+		addCentered(aDisablePanel, GUI.buildButton("Toggle Selected", 'T', "toggle", this));
+//		aDisablePanel.add(Box.createVerticalGlue());
+		anActionPanel.add(aDisablePanel);
 
 		// set missing
-		aSetMissingPanel.setLayout(new BoxLayout(aSetMissingPanel, BoxLayout.Y_AXIS));
-		aSetMissingPanel.add(Box.createRigidArea(new Dimension(0, 20)));
-		JLabel aSetMissingLabel = new JLabel("Set value for missing elements:");
-		aSetMissingLabel.setFont(GUI.DEFAULT_BUTTON_FONT);
-		aSetMissingPanel.add(aSetMissingLabel);
-		aSetMissingPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+		aSetMissingPanel.setBorder(GUI.buildBorder("Set Missing Value"));
+		aSetMissingPanel.setLayout(new BoxLayout(aSetMissingPanel, BoxLayout.PAGE_AXIS));
 
-		aNewMissingValue.setMaximumSize(new Dimension(220, 60));
-		aSetMissingPanel.add(aNewMissingValue);
-		aSetMissingPanel.add(Box.createRigidArea(new Dimension(0, 10)));
-		aSetMissingPanel.add(GUI.buildButton("Change Missing", 'M', "missing", this));
-		jPanelSouth.add(aSetMissingPanel);
+		aSetMissingPanel.add(Box.createVerticalGlue());
+		aNewMissingValue.setMaximumSize(GUI.BUTTON_MAXIMUM_SIZE);
+		addCentered(aSetMissingPanel, aNewMissingValue);
+		aSetMissingPanel.add(Box.createVerticalGlue());
+		addCentered(aSetMissingPanel, GUI.buildButton("Change Missing", 'M', "missing", this));
+//		aSetMissingPanel.add(Box.createVerticalGlue());
+		anActionPanel.add(aSetMissingPanel);
 
-//		jPanelSouth.add(Box.createHorizontalGlue());
+		anActionPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
 
-		itsFeedBackLabel.setText("Attributes loaded for " + itsTable.getName());
+		// Y_AXIS
+		aSouthPanel.setLayout(new BoxLayout(aSouthPanel, BoxLayout.Y_AXIS));
+		aSouthPanel.add(anActionPanel);
+
+		// close button
+		addCentered(aSouthPanel, GUI.buildButton("Close", 'C', "close", this));
+
+		// feedback label
+		Box aFeedBackBox = Box.createHorizontalBox();
+		aFeedBackBox.add(GUI.buildLabel("Last Action: "));
+		itsFeedBackLabel.setText("Meta Data loaded for " + itsTable.getName());
+		itsFeedBackLabel.setFont(GUI.DEFAULT_TEXT_FONT);
+		aFeedBackBox.add(itsFeedBackLabel);
+		aFeedBackBox.add(Box.createHorizontalGlue());
+		aSouthPanel.add(aFeedBackBox);
 
 		getContentPane().add(jScrollPane, BorderLayout.CENTER);
-		getContentPane().add(jPanelSouth, BorderLayout.SOUTH);
-//		getContentPane().add(itsFeedBackLabel);
+		getContentPane().add(aSouthPanel, BorderLayout.SOUTH);
+	}
 
-		pack();
+	private void addCentered(JPanel thePanel, JComponent theComponent)
+	{
+		theComponent.setAlignmentX(CENTER_ALIGNMENT);
+		thePanel.add(theComponent);
 	}
 
 	// TODO use GUI.Event enums
@@ -187,6 +200,8 @@ public class AttributeChangeWindow extends JFrame implements ActionListener
 */
 		else if ("clear".equals(aCommand))
 			jTable.clearSelection();
+		else if ("close".equals(aCommand))
+			dispose();
 		else
 		{
 			if ("disable".equals(aCommand) || "enable".equals(aCommand))

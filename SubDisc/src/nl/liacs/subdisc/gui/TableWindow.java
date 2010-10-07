@@ -1,6 +1,7 @@
 package nl.liacs.subdisc.gui;
 
 import java.awt.*;
+import java.awt.event.*;
 
 import javax.swing.*;
 import javax.swing.table.*;
@@ -14,23 +15,44 @@ import nl.liacs.subdisc.*;
  * {@link Attribute Attribute} and the number of distinct values for that
  * Attribute.
  */
-public class TableWindow extends JFrame
+public class TableWindow extends JFrame implements ActionListener
 {
 	private static final long serialVersionUID = 1L;
 
 	public TableWindow(Table theTable)
 	{
+		if (theTable == null)
+		{
+			Log.logCommandLine(
+					"TableWindow Constructor: parameter can not be 'null'.");
+			return;
+		}
+		else
+		{
+			initComponents(theTable);
+			setTitle("Data for: " + theTable.getName());
+			setLocation(100, 100);
+			setSize(GUI.WINDOW_DEFAULT_SIZE);
+			setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+//			pack();
+			setVisible(true);
+		}
+	}
+
+	private void initComponents(Table theTable)
+	{
+		// JTable viewport for theTable
 		JTable aJTable = new JTable(new TableTableModel(theTable));
-		aJTable.setPreferredScrollableViewportSize(GUI.DEFAULT_WINDOW_DIMENSION);
+		aJTable.setPreferredScrollableViewportSize(GUI.WINDOW_DEFAULT_SIZE);
 		initColumnSizes(theTable, aJTable);
 		aJTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
 		aJTable.setFillsViewportHeight(true);
-		JPanel jPanelMain = new JPanel(new GridLayout(1, 1));
-		jPanelMain.add(new JScrollPane(aJTable));
-		getContentPane().add(jPanelMain);
-		setTitle("Data for: " + theTable.getName());
-		pack();
-		setVisible(true);
+		getContentPane().add(new JScrollPane(aJTable), BorderLayout.CENTER);
+
+		// close button
+		JPanel aCloseButtonPanel = new JPanel();
+		aCloseButtonPanel.add(GUI.buildButton("Close", 'C', "close", this));
+		getContentPane().add(aCloseButtonPanel, BorderLayout.SOUTH);
 	}
 
 	/*
@@ -39,22 +61,29 @@ public class TableWindow extends JFrame
 	 * Could use JTable tables' itsTable for sizes instead (1 less parameter).
 	 * TODO Put in SwingWorker background thread.
 	 */
-	private void initColumnSizes(Table theTable, JTable table)
+	private void initColumnSizes(Table theDataTable, JTable theJTable)
 	{
 		int aHeaderWidth = 0;
 
-		TableCellRenderer aRenderer = table.getTableHeader().getDefaultRenderer();
+		TableCellRenderer aRenderer = theJTable.getTableHeader().getDefaultRenderer();
 
-		for (int i = 0, j = table.getColumnModel().getColumnCount(); i < j; i++)
+		for (int i = 0, j = theJTable.getColumnModel().getColumnCount(); i < j; i++)
 		{
 			// 91 is width of "(999 distinct)"
 			aHeaderWidth = Math.max(aRenderer.getTableCellRendererComponent(
-									null, theTable.getAttribute(i).getName(),
+									null, theDataTable.getAttribute(i).getName(),
 									false, false, 0, 0).getPreferredSize().width,
 									91);
 
-			table.getColumnModel().getColumn(i).setPreferredWidth(aHeaderWidth);
+			theJTable.getColumnModel().getColumn(i).setPreferredWidth(aHeaderWidth);
 		}
+	}
+
+	@Override
+	public void actionPerformed(ActionEvent theEvent)
+	{
+		if ("close".equals(theEvent.getActionCommand()))
+			dispose();
 	}
 
 }
