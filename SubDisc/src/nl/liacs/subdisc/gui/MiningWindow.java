@@ -1340,7 +1340,7 @@ public class MiningWindow extends JFrame
 				}
 			}
 			aResultWindow.setLocation(0, 0);
-			aResultWindow.setSize(1200, 900);
+			aResultWindow.setSize(1000, 800);
 			aResultWindow.setVisible(true);
 
 			long anEnd = System.currentTimeMillis();

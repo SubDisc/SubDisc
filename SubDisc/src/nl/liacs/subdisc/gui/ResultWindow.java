@@ -236,9 +236,9 @@ public class ResultWindow extends JFrame
 						{
 							if (aCount == aSelectionIndex[i])
 							{
-								ModelWindow aWindow = new ModelWindow(s.getDAG(), 1200, 900);
+								ModelWindow aWindow = new ModelWindow(s.getDAG(), 1000, 800);
 								aWindow.setLocation(0, 0);
-								aWindow.setSize(1200, 900);
+								aWindow.setSize(1000, 800);
 								aWindow.setVisible(true);
 								aWindow.setTitle("Bayesian net induced from subgroup " + (aSelectionIndex[i]+1));
 							}
@@ -350,7 +350,7 @@ public class ResultWindow extends JFrame
 		aResultWindow.setVisible(true);
 		jButtonCloseWindowActionPerformed();
 	}
-	
+
 	private void jButtonPValuesActionPerformed()
 	{	// Obtain input
 		double[] aQualities = obtainRandomQualities();
@@ -397,7 +397,7 @@ public class ResultWindow extends JFrame
 		double[] aRegressionTestScore = aValidation.performRegressionTest(aQualities, itsSubgroupSet);
 		JOptionPane.showMessageDialog(null, "The regression test score equals\nfor k =  1 : "+aRegressionTestScore[0]+"\nfor k = 10 : "+aRegressionTestScore[1]);
 	}
-	
+
 	private double[] obtainRandomQualities()
 	{
 		double[] aPi = {Math.PI};
