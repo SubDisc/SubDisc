@@ -219,6 +219,9 @@ public class Validation
 
 	public double performRegressionTest(double[] theQualities, int theK, SubgroupSet theSubgroupSet)
 	{
+for (int i=0; i<theQualities.length; i++)
+	Log.logCommandLine("theQualities["+ i + "]: " + theQualities[i]);
+
 		// extract average quality of top-k subgroups
 		Iterator<Subgroup> anIterator = theSubgroupSet.iterator();
 		double aTopKQuality = 0.0;
@@ -228,6 +231,8 @@ public class Validation
 			aTopKQuality += aSubgroup.getMeasureValue();
 		}
 		aTopKQuality /= ((double) theK);
+Log.logCommandLine("k: " + theK);
+Log.logCommandLine("aTopKQuality: " + aTopKQuality);
 
 		// make deep copy of double array
 		int theNrRandomSubgroups = theQualities.length;
@@ -238,10 +243,13 @@ public class Validation
 		// rescale all qualities between 0 and 1
 		// also compute some necessary statistics
 		Arrays.sort(aCopy);
+
 		double aMin = Math.min(aCopy[0], aTopKQuality);
 		double aMax = Math.max(aCopy[theNrRandomSubgroups-1], aTopKQuality);
 		double xBar = 0.5; // given our scaling this always holds
 		double yBar = 0.0; // initial value
+Log.logCommandLine("Min: " + aMin);
+Log.logCommandLine("Max: " + aMax);
 		for (int i=0; i<theNrRandomSubgroups; i++)
 		{
 			aCopy[i] = (aCopy[i]-aMin)/(aMax-aMin);
@@ -255,7 +263,7 @@ public class Validation
 		double xyBar = 0.5 * (aTopKQuality - yBar);
 		double[] anXs = new double[theNrRandomSubgroups];
 		for (int i=0; i<theNrRandomSubgroups; i++)
-			anXs[i] = ((double)i) / ((double)theNrRandomSubgroups); 
+			anXs[i] = ((double)i) / ((double)theNrRandomSubgroups);
 
 		for (int i=0; i<theNrRandomSubgroups; i++)
 		{
@@ -268,7 +276,7 @@ public class Validation
 		Log.logCommandLine("Fitted regression line: y = " + beta1 + " * x + " + beta0);
 		double aScore = aTopKQuality - beta1 - beta0; // the regression test score now equals the average quality of the top-k subgroups, minus the regression value at x=1.
 		Log.logCommandLine("Regression test score: " + aScore);
-		return aScore;   
+		return aScore;
 	}
 
 	public double[] performRegressionTest(double[] theQualities, SubgroupSet theSubgroupSet)
@@ -294,7 +302,7 @@ public class Validation
 			Attribute anAttribute = itsTable.getAttribute(theRandom.nextInt(aNrColumns));
 			while (itsTargetConcept.isTargetAttribute(anAttribute))
 			{
-				anAttribute = itsTable.getAttribute(theRandom.nextInt(aNrColumns)); 
+				anAttribute = itsTable.getAttribute(theRandom.nextInt(aNrColumns));
 			}
 */
 			Attribute anAttribute;

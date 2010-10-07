@@ -2,7 +2,7 @@ package nl.liacs.subdisc;
 
 public class CorrelationMeasure
 {
-	private double itsSampleSize; //gives the size of this sample
+	private int itsSampleSize; //gives the size of this sample
 	private double itsXSum;
 	private double itsYSum;
 	private double itsXYSum;
@@ -110,7 +110,8 @@ public class CorrelationMeasure
 	 */
 	private double computeCorrelation()
 	{
-		itsCorrelation = (itsSampleSize*itsXYSum - itsXSum*itsYSum)/Math.sqrt((itsSampleSize*itsXSquaredSum - itsXSum*itsXSum) * (itsSampleSize*itsYSquaredSum - itsYSum*itsYSum));
+		itsCorrelation = (itsSampleSize*itsXYSum - itsXSum*itsYSum)/
+			Math.sqrt((itsSampleSize*itsXSquaredSum - itsXSum*itsXSum) * (itsSampleSize*itsYSquaredSum - itsYSum*itsYSum));
 		itsCorrelationIsOutdated = false; //set flag to false, so subsequent calls to getCorrelation don't need anymore computation.
 		return itsCorrelation;
 	}
@@ -122,10 +123,15 @@ public class CorrelationMeasure
 	 */
 	public double computeCorrelationDistance()
 	{
-		return Math.abs(getComplementCorrelation() - getCorrelation());
+		int aSize = getSampleSize();
+		int aComplementSize = itsBase.getSampleSize() - getSampleSize();
+		if (aSize <= 2 || aComplementSize <=2) // either sample is too small
+			return 0;
+		else
+			return Math.abs(getComplementCorrelation() - getCorrelation());
 	}
 
-	public double getSampleSize() { return itsSampleSize; }
+	public int getSampleSize() { return itsSampleSize; }
 	public double getXSum()	{ return itsXSum; }
 	public double getYSum()	{ return itsYSum; }
 	public double getXYSum() { return itsXYSum; }
@@ -158,9 +164,9 @@ public class CorrelationMeasure
 			case QualityMeasure.CORRELATION_R_NEG: 		{ return -aCorrelation; }
 			case QualityMeasure.CORRELATION_R_SQ: 		{ return aCorrelation*aCorrelation;}
 			case QualityMeasure.CORRELATION_R_NEG_SQ: 	{ return -1*(aCorrelation*aCorrelation); }
-			case QualityMeasure.CORRELATION_DISTANCE: 	{	return computeCorrelationDistance(); }
+			case QualityMeasure.CORRELATION_DISTANCE: 	{ return computeCorrelationDistance(); }
 			case QualityMeasure.CORRELATION_P: 			{ return getPValue(); }
-			case QualityMeasure.CORRELATION_ENTROPY: 	{return computeEntropy(); }
+			case QualityMeasure.CORRELATION_ENTROPY: 	{ return computeEntropy(); }
 		}
 		return aCorrelation;
 	}
@@ -226,6 +232,11 @@ public class CorrelationMeasure
 	 */
 	public double getPValue()
 	{
+		int aSize = getSampleSize();
+		int aComplementSize = itsBase.getSampleSize() - getSampleSize();
+		if (aSize <= 2 || aComplementSize <=2) // either sample is too small
+			return 0;
+
 		NormalDistribution aNormalDistro = new NormalDistribution();
 		double aComplementSampleSize = itsBase.getSampleSize() - getSampleSize();;
 		double aSubgroupDeviation = 1 / Math.sqrt(getSampleSize() - 3);
@@ -253,9 +264,12 @@ public class CorrelationMeasure
 	 */
 	public double computeEntropy()
 	{
+		double aCorrelation = computeCorrelationDistance();
+		if (aCorrelation == 0)
+			return 0;
 		double aFraction;
-		aFraction = itsBase!=null ? itsSampleSize / itsBase.getSampleSize() : 1;
+		aFraction = itsBase!=null ? itsSampleSize / (double) itsBase.getSampleSize() : 1;
 		double aWeight = -1 * aFraction * Math.log(aFraction) / Math.log(2);
-		return aWeight * this.computeCorrelationDistance();
+		return aWeight * aCorrelation;
 	}
 }

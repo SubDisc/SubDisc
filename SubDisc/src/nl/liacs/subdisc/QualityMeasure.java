@@ -433,13 +433,13 @@ public class QualityMeasure
 			case WEED		: 		{ anEvaluationMinimum = "0"; break; }
 			case EDIT_DISTANCE: 	{ anEvaluationMinimum = "0"; break; }
 			//DOUBLE_CORRELATION
-			case CORRELATION_R : 	{ anEvaluationMinimum = "0.8"; break; }
-			case CORRELATION_R_NEG :{ anEvaluationMinimum = "0.8"; break; }
-			case CORRELATION_R_NEG_SQ :	{ anEvaluationMinimum = "0.8"; break; }
-			case CORRELATION_R_SQ :	{ anEvaluationMinimum = "0.8"; break; }
+			case CORRELATION_R : 	{ anEvaluationMinimum = "0.2"; break; }
+			case CORRELATION_R_NEG :{ anEvaluationMinimum = "0.2"; break; }
+			case CORRELATION_R_NEG_SQ :	{ anEvaluationMinimum = "0.2"; break; }
+			case CORRELATION_R_SQ :	{ anEvaluationMinimum = "0.2"; break; }
 			case CORRELATION_DISTANCE: { anEvaluationMinimum = "0.0"; break; }
 			case CORRELATION_P : 	{ anEvaluationMinimum = "0.0"; break; }
-			case CORRELATION_ENTROPY : 	{ anEvaluationMinimum = "0.8"; break; }
+			case CORRELATION_ENTROPY : 	{ anEvaluationMinimum = "0.0"; break; }
 			case LINEAR_REGRESSION :{ anEvaluationMinimum = "0.0"; break; }
 		}
 		return anEvaluationMinimum;
