@@ -5,8 +5,8 @@ import javax.swing.table.*;
 import nl.liacs.subdisc.*;
 
 /**
- * TableTableModel is the Model for a <code>JTable<code> containing all data
- * from a {@link Table Table}. TableTableModel extends
+ * BrowseTableModel is the Model for a <code>JTable<code> containing all data
+ * from a {@link Table Table}. BrowseTableModel extends
  * <code>AbstractTableModel</code> and all methods it overrides are
  * straightforward. The only noteworthy change is the return <code>String</code>
  * for the {@link #getColumnName(int) getColumnName()} method, which returns a
@@ -14,16 +14,16 @@ import nl.liacs.subdisc.*;
  * {@link Attribute Attribute} of that {@link Column Column}, and the number of
  * distinct values for that Attribute.
   */
-public class TableTableModel extends AbstractTableModel
+public class BrowseTableModel extends AbstractTableModel
 {
 	private static final long serialVersionUID = 1L;
 	private Table itsTable;
 
-	public TableTableModel(Table theTable)
+	public BrowseTableModel(Table theTable)
 	{
 		if (theTable == null)
 		{
-			Log.logCommandLine(" Constructor()");
+			Log.logCommandLine("BrowseTableModel Constructor()");
 			return;
 		}
 		else

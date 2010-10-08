@@ -9,22 +9,22 @@ import javax.swing.table.*;
 import nl.liacs.subdisc.*;
 
 /**
- * A TableWindow contains a JTable that shows all data in a {@link Table Table},
- * which in turn is read from a <code>File</code> or database. For each
+ * A BrowseWindow contains a JTable that shows all data in a {@link Table Table}
+ * , which in turn is read from a <code>File</code> or database. For each
  * {@link Column Column}, the header displays both the name of its
  * {@link Attribute Attribute} and the number of distinct values for that
  * Attribute.
  */
-public class TableWindow extends JFrame implements ActionListener
+public class BrowseWindow extends JFrame implements ActionListener
 {
 	private static final long serialVersionUID = 1L;
 
-	public TableWindow(Table theTable)
+	public BrowseWindow(Table theTable)
 	{
 		if (theTable == null)
 		{
 			Log.logCommandLine(
-					"TableWindow Constructor: parameter can not be 'null'.");
+					"BrowseWindow Constructor: parameter can not be 'null'.");
 			return;
 		}
 		else
@@ -42,7 +42,7 @@ public class TableWindow extends JFrame implements ActionListener
 	private void initComponents(Table theTable)
 	{
 		// JTable viewport for theTable
-		JTable aJTable = new JTable(new TableTableModel(theTable));
+		JTable aJTable = new JTable(new BrowseTableModel(theTable));
 		aJTable.setPreferredScrollableViewportSize(GUI.WINDOW_DEFAULT_SIZE);
 		initColumnSizes(theTable, aJTable);
 		aJTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);

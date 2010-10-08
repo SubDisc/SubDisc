@@ -13,8 +13,9 @@ import javax.swing.*;
 
 import nl.liacs.subdisc.*;
 import nl.liacs.subdisc.Attribute.*;
+import nl.liacs.subdisc.gui.MetaDataTableModel.*;
 
-public class AttributeChangeWindow extends JFrame implements ActionListener
+public class MetaDataWindow extends JFrame implements ActionListener
 {
 	private static final long serialVersionUID = 1L;
 	private Table itsTable;
@@ -25,7 +26,7 @@ public class AttributeChangeWindow extends JFrame implements ActionListener
 	private JLabel itsFeedBackLabel = new JLabel();
 	private MiningWindow itsMiningWindow;
 
-	public AttributeChangeWindow(MiningWindow theMiningWindow, Table theTable)
+	public MetaDataWindow(MiningWindow theMiningWindow, Table theTable)
 	{
 		if (theTable == null || theMiningWindow == null)
 		{
@@ -49,14 +50,19 @@ public class AttributeChangeWindow extends JFrame implements ActionListener
 
 	private void initJTable(Table theTable)
 	{
-		jTable = new JTable(new AttributeTableModel(theTable));
+		jTable = new JTable(new MetaDataTableModel(theTable));
 		jTable.setPreferredScrollableViewportSize(GUI.WINDOW_DEFAULT_SIZE);
 		jTable.setFillsViewportHeight(true);
-/*
-		jTable.getColumnModel().getColumn(0).setPreferredWidth(50);
-		jTable.getColumnModel().getColumn(1).setPreferredWidth(50);
-		jTable.getColumnModel().getColumn(2).setPreferredWidth(50);
-*/
+
+		float aScalar = 0.3f;
+		int anAttributeWidth = (int)(aScalar * GUI.WINDOW_DEFAULT_SIZE.width);
+		int anOtherWidth = (int)((1.0f - aScalar / MetaDataTableHeader.values().length -1) * GUI.WINDOW_DEFAULT_SIZE.width);
+
+		jTable.getColumnModel().getColumn(MetaDataTableHeader.ATTRIBUTE.columnNr).setPreferredWidth(anAttributeWidth);
+		jTable.getColumnModel().getColumn(MetaDataTableHeader.CARDINALITY.columnNr).setPreferredWidth(anOtherWidth);
+		jTable.getColumnModel().getColumn(MetaDataTableHeader.TYPE.columnNr).setPreferredWidth(anOtherWidth);
+		jTable.getColumnModel().getColumn(MetaDataTableHeader.ENABLED.columnNr).setPreferredWidth(anOtherWidth);
+		jTable.getColumnModel().getColumn(MetaDataTableHeader.MISSING.columnNr).setPreferredWidth(anOtherWidth);
 	}
 
 	private void initComponents()

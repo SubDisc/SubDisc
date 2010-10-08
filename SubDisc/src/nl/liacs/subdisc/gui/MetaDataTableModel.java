@@ -4,23 +4,24 @@ import javax.swing.table.*;
 
 import nl.liacs.subdisc.*;
 
-public class AttributeTableModel extends AbstractTableModel
+public class MetaDataTableModel extends AbstractTableModel
 {
 	private static final long serialVersionUID = 1L;
 
 	private Table itsTable;
 
-	public enum AttributeTableHeader
+	public enum MetaDataTableHeader
 	{
 		ATTRIBUTE(0, "Attribute"),
-		TYPE(1, "Type"),
-		ENABLED(2, "Enabled"),
-		MISSING(3, "Missing Value");
+		CARDINALITY(1, "Cardinality"),
+		TYPE(2, "Type"),
+		ENABLED(3, "Enabled"),
+		MISSING(4, "Missing Value");
 
 		public final int columnNr;
 		public final String guiText;
 
-		private AttributeTableHeader(int theColumnNr, String theGuiText)
+		private MetaDataTableHeader(int theColumnNr, String theGuiText)
 		{
 			columnNr = theColumnNr;
 			guiText = theGuiText;
@@ -28,7 +29,7 @@ public class AttributeTableModel extends AbstractTableModel
 
 		public static String getColumnName(int theColumnIndex)
 		{
-			for (AttributeTableHeader h : AttributeTableHeader.values())
+			for (MetaDataTableHeader h : MetaDataTableHeader.values())
 				if (h.columnNr == theColumnIndex)
 						return h.guiText;
 			Log.logCommandLine(
@@ -38,7 +39,7 @@ public class AttributeTableModel extends AbstractTableModel
 		}
 	};
 
-	public AttributeTableModel(Table theTable)
+	public MetaDataTableModel(Table theTable)
 	{
 		if (theTable == null)
 		{
@@ -50,12 +51,12 @@ public class AttributeTableModel extends AbstractTableModel
 	}
 
 	@Override
-	public int getColumnCount() { return AttributeTableHeader.values().length; }
+	public int getColumnCount() { return MetaDataTableHeader.values().length; }
 
 	@Override
 	public String getColumnName(int theColumnIndex)
 	{
-		return AttributeTableHeader.getColumnName(theColumnIndex);
+		return MetaDataTableHeader.getColumnName(theColumnIndex);
 	}
 
 	@Override
@@ -80,13 +81,15 @@ public class AttributeTableModel extends AbstractTableModel
 		}
 		else
 		{
-			if (col == AttributeTableHeader.ATTRIBUTE.columnNr)
+			if (col == MetaDataTableHeader.ATTRIBUTE.columnNr)
 				return itsTable.getColumns().get(row).getAttribute().getName();
-			else if (col == AttributeTableHeader.TYPE.columnNr)
+			else if (col == MetaDataTableHeader.CARDINALITY.columnNr)
+				return itsTable.getColumns().get(row).getCardinality();
+			else if (col == MetaDataTableHeader.TYPE.columnNr)
 				return itsTable.getColumns().get(row).getAttribute().getTypeName();
-			else if (col == AttributeTableHeader.ENABLED.columnNr)
+			else if (col == MetaDataTableHeader.ENABLED.columnNr)
 				return itsTable.getColumns().get(row).getIsEnabled() ? "yes" : "no";
-			else if (col == AttributeTableHeader.MISSING.columnNr)
+			else if (col == MetaDataTableHeader.MISSING.columnNr)
 				return itsTable.getColumns().get(row).getMissingValue();
 			else
 			{
