@@ -495,7 +495,7 @@ public class MiningWindow extends JFrame
 		// setting up - dataset ================================================
 		jPanelRuleTarget.setLayout(new BorderLayout(40, 0));
 		jPanelRuleTarget.setBorder(new TitledBorder(new EtchedBorder(),
-				"dataset", 4, 2, new Font("Dialog", 1, 11)));
+				"Dataset", 4, 2, new Font("Dialog", 1, 11)));
 		jPanelRuleTarget.setFont(new Font("Dialog", 1, 12));
 
 		jPanelRuleTargetLabels.setLayout(new GridLayout(7, 1));
@@ -610,7 +610,7 @@ public class MiningWindow extends JFrame
 		// setting up - target concept - labels ================================
 		jPanelRuleEvaluation.setLayout(new BoxLayout(jPanelRuleEvaluation, 0));
 		jPanelRuleEvaluation.setBorder(new TitledBorder(new EtchedBorder(),
-				"target concept", 4, 2, new Font("Dialog", 1, 11)));
+				"Target Concept", 4, 2, new Font("Dialog", 1, 11)));
 		jPanelRuleEvaluation.setFont(new Font("Dialog", 1, 12));
 
 		jPanelEvaluationLabels.setLayout(new GridLayout(8, 1));
@@ -717,7 +717,7 @@ public class MiningWindow extends JFrame
 		// setting up - search conditions ======================================
 		jPanelSearchParameters.setLayout(new BoxLayout(jPanelSearchParameters, 0));
 		jPanelSearchParameters.setBorder(new TitledBorder(new EtchedBorder(),
-				"search conditions", 4, 2, new Font("Dialog", 1, 11)));
+				"Search Conditions", 4, 2, new Font("Dialog", 1, 11)));
 		jPanelSearchParameters.setFont(new Font("Dialog", 1, 12));
 
 		jPanelSearchParameterLabels.setLayout(new GridLayout(7, 1));
@@ -782,7 +782,7 @@ public class MiningWindow extends JFrame
 		// setting up - search strategy ========================================
 		jPanelSearchStrategy.setLayout(new BoxLayout(jPanelSearchStrategy, 0));
 		jPanelSearchStrategy.setBorder(new TitledBorder(
-			new EtchedBorder(), "search strategy", 4, 2, new Font("Dialog", 1, 11)));
+			new EtchedBorder(), "Search Strategy", 4, 2, new Font("Dialog", 1, 11)));
 		jPanelSearchStrategy.setFont(new Font("Dialog", 1, 12));
 
 		jPanelSearchStrategyLabels.setLayout(new GridLayout(7, 1));

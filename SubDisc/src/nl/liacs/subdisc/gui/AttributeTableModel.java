@@ -12,22 +12,25 @@ public class AttributeTableModel extends AbstractTableModel
 
 	public enum AttributeTableHeader
 	{
-		ATTRIBUTE(0),
-		TYPE(1),
-		ENABLED(2),
-		MISSING(3);
+		ATTRIBUTE(0, "Attribute"),
+		TYPE(1, "Type"),
+		ENABLED(2, "Enabled"),
+		MISSING(3, "Missing Value");
 
 		public final int columnNr;
-		private AttributeTableHeader(int theColumnNr) { columnNr = theColumnNr; }
+		public final String guiText;
+
+		private AttributeTableHeader(int theColumnNr, String theGuiText)
+		{
+			columnNr = theColumnNr;
+			guiText = theGuiText;
+		}
 
 		public static String getColumnName(int theColumnIndex)
 		{
 			for (AttributeTableHeader h : AttributeTableHeader.values())
 				if (h.columnNr == theColumnIndex)
-					if(h == MISSING)
-						return "MISSING VALUE";
-					else
-						return h.toString();
+						return h.guiText;
 			Log.logCommandLine(
 				"Error in AttributeTableHeader.getColumnName(): invalid index '"
 				+ theColumnIndex + "'.");
