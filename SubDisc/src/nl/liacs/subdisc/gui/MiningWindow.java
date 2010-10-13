@@ -28,7 +28,7 @@ public class MiningWindow extends JFrame
 
 	// target info
 	private int itsPositiveCount; // nominal target
-	private double itsTargetAverage; // numeric target
+	private float itsTargetAverage; // numeric target
 
 	// TODO there should be at most 1 MiningWindow();
 	private SearchParameters itsSearchParameters = new SearchParameters();
@@ -1033,7 +1033,6 @@ public class MiningWindow extends JFrame
 			(aTargetType == TargetType.SINGLE_NOMINAL ||
 				aTargetType == TargetType.MULTI_BINARY_CLASSIFICATION))
 		{
-			Log.logCommandLine("init");	// TODO every time SINGLE_NOMINAL is selected
 			initTargetValueItems();
 		}
 
@@ -1069,6 +1068,10 @@ public class MiningWindow extends JFrame
 								aTargetType == TargetType.DOUBLE_REGRESSION ||
 								aTargetType == TargetType.MULTI_LABEL);
 		jButtonBaseModel.setEnabled(hasBaseModel);
+
+		//update misc field? Other types are updated through action listeners
+		if (aTargetType == TargetType.SINGLE_NUMERIC)
+			initTargetInfo();
 	}
 
 	private void jComboBoxTargetTypeActionPerformed(ActionEvent evt)
@@ -1235,6 +1238,14 @@ public class MiningWindow extends JFrame
 				{
 					aSubgroupDiscovery = new SubgroupDiscovery(itsSearchParameters, itsTable, itsPositiveCount);
 					break;
+				}
+
+				case SINGLE_NUMERIC:
+				{
+					//TODO
+					//aSubgroupDiscovery = new SubgroupDiscovery(itsSearchParameters, itsTable, itsTargetAverage);
+					return;
+					//break;
 				}
 				case MULTI_LABEL :
 				{
@@ -1596,14 +1607,13 @@ public class MiningWindow extends JFrame
 
 	private void initTargetInfo()
 	{
+
 		switch (itsTargetConcept.getTargetType())
 		{
 			case SINGLE_NOMINAL :
 			{
 				itsPositiveCount =
-					itsTable.countValues(
-						itsTable.getIndex(getTargetAttributeName()),
-									getMiscFieldName());
+					itsTable.countValues(itsTable.getIndex(getTargetAttributeName()), getMiscFieldName());
 				float aPercentage = ((float) itsPositiveCount * 100.0f) / (float) itsTotalCount;
 				NumberFormat aFormatter = NumberFormat.getNumberInstance();
 				aFormatter.setMaximumFractionDigits(1);
@@ -1613,11 +1623,13 @@ public class MiningWindow extends JFrame
 			}
 			case SINGLE_NUMERIC :
 			{
-				itsTargetAverage =
-					itsTable.getAverage(
-						itsTable.getIndex(getTargetAttributeName()));
-				jLabelTargetInfo.setText(" average");
-				jLFieldTargetInfo.setText(String.valueOf(itsTargetAverage));
+				String aTarget = getTargetAttributeName();
+				if (aTarget != null) //initTargetInfo might be called before item is actually selected
+				{
+					itsTargetAverage = itsTable.getAverage(itsTable.getIndex(aTarget));
+					jLabelTargetInfo.setText(" average");
+					jLFieldTargetInfo.setText(String.valueOf(itsTargetAverage));
+				}
 				break;
 			}
 			case SINGLE_ORDINAL :

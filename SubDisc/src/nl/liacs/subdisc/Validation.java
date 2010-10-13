@@ -219,9 +219,6 @@ public class Validation
 
 	public double performRegressionTest(double[] theQualities, int theK, SubgroupSet theSubgroupSet)
 	{
-for (int i=0; i<theQualities.length; i++)
-	Log.logCommandLine("theQualities["+ i + "]: " + theQualities[i]);
-
 		// extract average quality of top-k subgroups
 		Iterator<Subgroup> anIterator = theSubgroupSet.iterator();
 		double aTopKQuality = 0.0;
@@ -231,8 +228,6 @@ for (int i=0; i<theQualities.length; i++)
 			aTopKQuality += aSubgroup.getMeasureValue();
 		}
 		aTopKQuality /= ((double) theK);
-Log.logCommandLine("k: " + theK);
-Log.logCommandLine("aTopKQuality: " + aTopKQuality);
 
 		// make deep copy of double array
 		int theNrRandomSubgroups = theQualities.length;
@@ -248,8 +243,6 @@ Log.logCommandLine("aTopKQuality: " + aTopKQuality);
 		double aMax = Math.max(aCopy[theNrRandomSubgroups-1], aTopKQuality);
 		double xBar = 0.5; // given our scaling this always holds
 		double yBar = 0.0; // initial value
-Log.logCommandLine("Min: " + aMin);
-Log.logCommandLine("Max: " + aMax);
 		for (int i=0; i<theNrRandomSubgroups; i++)
 		{
 			aCopy[i] = (aCopy[i]-aMin)/(aMax-aMin);
@@ -263,7 +256,10 @@ Log.logCommandLine("Max: " + aMax);
 		double xyBar = 0.5 * (aTopKQuality - yBar);
 		double[] anXs = new double[theNrRandomSubgroups];
 		for (int i=0; i<theNrRandomSubgroups; i++)
+		{
 			anXs[i] = ((double)i) / ((double)theNrRandomSubgroups);
+			Log.logCommandLine("" + anXs[i] + "\t" + aCopy[i]);
+		}
 
 		for (int i=0; i<theNrRandomSubgroups; i++)
 		{
