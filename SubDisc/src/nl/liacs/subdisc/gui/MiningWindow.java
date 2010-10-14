@@ -1242,10 +1242,8 @@ public class MiningWindow extends JFrame
 
 				case SINGLE_NUMERIC:
 				{
-					//TODO
-					//aSubgroupDiscovery = new SubgroupDiscovery(itsSearchParameters, itsTable, itsTargetAverage);
-					return;
-					//break;
+					aSubgroupDiscovery = new SubgroupDiscovery(itsSearchParameters, itsTable, itsTargetAverage);
+					break;
 				}
 				case MULTI_LABEL :
 				{

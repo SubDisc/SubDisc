@@ -270,7 +270,6 @@ public class Table
 
 	public Condition getFirstCondition()
 	{
-//		return new Condition(itsAttributes.get(0));
 		return new Condition(itsColumns.get(0).getAttribute());
 	}
 
@@ -286,15 +285,7 @@ public class Table
 			if (anIndex == itsNrColumns-1) // No more attributes
 				aCondition = null;
 			else
-//				aCondition = new Condition(itsAttributes.get(anIndex + 1));
 				aCondition = new Condition(itsColumns.get(anIndex + 1).getAttribute());
-//			{
-//				Attribute anAttribute = itsAttributes.get(anIndex+1);
-//				if (anAttribute.isNumericType())
-//					aCondition = new Condition(anAttribute, Condition.FIRST_NUMERIC_OPERATOR);
-//				else
-//					aCondition = new Condition(anAttribute, Condition.FIRST_NOMINAL_OPERATOR);
-//			}
 		}
 
 		return aCondition;
@@ -311,16 +302,7 @@ public class Table
 		for (int i = 0, j = 0; i < itsNrRows; i++)
 			if (theSubset.get(i))
 				aResult[j++] = aColumn.getFloat(i);
-/*
-		for (int i=0; i<itsNrRows; i++)
-		{
-			if (theSubset.get(i))
-			{
-				aResult[k] = aColumn.getFloat(i);
-				k++;
-			}
-		}
-*/
+
 		Arrays.sort(aResult);
 		return aResult;
 	}

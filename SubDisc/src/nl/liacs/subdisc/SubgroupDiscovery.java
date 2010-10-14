@@ -13,6 +13,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 
 	//target concept type-specific information, including base models
 	private BitSet itsBinaryTarget;		//SINGLE_NOMINAL
+	private Column itsNumericTarget;	//SINGLE_NUMERIC
 	private Column itsPrimaryColumn;	//DOUBLE_CORRELATION / DOUBLE_REGRESSION
 	private Column itsSecondaryColumn;	//DOUBLE_CORRELATION / DOUBLE_REGRESSION
 	private CorrelationMeasure itsBaseCM;	//DOUBLE_CORRELATION
@@ -34,6 +35,25 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		itsBinaryTarget = itsTable.evaluate(aCondition);
 
 		itsResult = new SubgroupSet(itsSearchParameters.getMaximumSubgroups(), itsMaximumCoverage, itsBinaryTarget);
+	}
+
+	//SINGLE_NUMERIC
+	public SubgroupDiscovery(SearchParameters theSearchParameters, Table theTable, float theAverage)
+	{
+		super(theSearchParameters);
+		itsTable = theTable;
+		itsMaximumCoverage = itsTable.getNrRows();
+		TargetConcept aTC = itsSearchParameters.getTargetConcept();
+		itsNumericTarget = itsTable.getColumn(aTC.getPrimaryTarget());
+		NumericDomain aDomain = new NumericDomain(itsNumericTarget);
+
+		itsQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), itsMaximumCoverage,
+			aDomain.computeSum(0, itsMaximumCoverage),
+			aDomain.computeSumSquaredDeviations(0, itsMaximumCoverage),
+			aDomain.computeMedian(0, itsMaximumCoverage),
+			aDomain.computeMedianAD(0, itsMaximumCoverage));
+
+		itsResult = new SubgroupSet(itsSearchParameters.getMaximumSubgroups(), itsMaximumCoverage, null); //TODO
 	}
 
 	//DOUBLE_CORRELATION and DOUBLE_REGRESSION
@@ -277,6 +297,17 @@ public class SubgroupDiscovery extends MiningAlgorithm
 				aTarget.and(theSubgroup.getMembers());
 				int aCountHeadBody = aTarget.cardinality();
 				aQuality = itsQualityMeasure.calculate(aCountHeadBody, theSubgroup.getCoverage());
+				break;
+			}
+			case SINGLE_NUMERIC :
+			{
+				NumericDomain aDomain = new NumericDomain(itsNumericTarget, theSubgroup.getMembers());
+				aQuality = itsQualityMeasure.calculate(theSubgroup.getCoverage(),
+					aDomain.computeSum(0, theSubgroup.getCoverage()),
+					aDomain.computeSumSquaredDeviations(0, theSubgroup.getCoverage()),
+					aDomain.computeMedian(0, theSubgroup.getCoverage()),
+					aDomain.computeMedianAD(0, theSubgroup.getCoverage()),
+					null); //TODO fix this parameter. only used by X2
 				break;
 			}
 			case DOUBLE_REGRESSION :
