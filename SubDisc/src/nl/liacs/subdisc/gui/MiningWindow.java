@@ -1391,61 +1391,91 @@ public class MiningWindow extends JFrame
 
 	private void jButtonRandomConditionsActionPerformed(ActionEvent evt)
 	{
-		setupSearchParameters();
-
-		String inputValue = JOptionPane.showInputDialog("Number of random conditions to be used\nfor distribution estimation:", 1000);
-		int aNrRepetitions;
 		try
-		{
-			aNrRepetitions = Integer.parseInt(inputValue);
+		{		
+			setupSearchParameters();
+	
+			String inputValue = JOptionPane.showInputDialog("Number of random conditions to be used\nfor distribution estimation:", 1000);
+			int aNrRepetitions;
+			try
+			{
+				aNrRepetitions = Integer.parseInt(inputValue);
+			}
+			catch (Exception e)
+			{
+				JOptionPane.showMessageDialog(null, "Not a valid number.");
+				return;
+			}
+
+			QualityMeasure aQualityMeasure;
+			switch(itsTargetConcept.getTargetType())
+			{
+				case SINGLE_NOMINAL :
+				{
+					aQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), itsTable.getNrRows(), itsPositiveCount);
+					break;
+				}
+				case MULTI_LABEL :
+				{
+					// base model
+					BinaryTable aBaseTable = new BinaryTable(itsTable, itsTargetConcept.getMultiTargets());
+					Bayesian aBayesian = new Bayesian(aBaseTable);
+					aBayesian.climb();
+					aQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), aBayesian.getDAG(), itsTotalCount, itsSearchParameters.getAlpha(), itsSearchParameters.getBeta());
+					break;
+				}
+				case DOUBLE_REGRESSION :
+				case DOUBLE_CORRELATION :
+				{
+					//base model
+					aQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), itsTable.getNrRows(), 100); //TODO fix 100, is useless?
+					break;
+				}
+				default : return; // TODO should never get here
+			}
+
+			Validation aValidation = new Validation(itsSearchParameters, itsTable, aQualityMeasure);
+			NormalDistribution aDistro = new NormalDistribution(aValidation.randomConditions(aNrRepetitions));
+
+			int aMethod = JOptionPane.showOptionDialog(null,
+				"The following quality measure thresholds were computed:\n" +
+				"1% significance level: " + aDistro.getOnePercentSignificance() + "\n" +
+				"5% significance level: " + aDistro.getFivePercentSignificance() + "\n" +
+				"10% significance level: " + aDistro.getTenPercentSignificance() + "\n" +
+				"Would you like to keep one of these thresholds as search constraint?",
+				"Keep quality measure threshold?",
+				JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null,
+				new String[] {"1% significance", "5% significance", "10% significance", "Ignore statistics"},
+				"1% significance");
+			switch (aMethod)
+			{
+				case 0:
+				{
+					setQualityMeasureMinimum(Float.toString(aDistro.getOnePercentSignificance()));
+					break;
+				}
+				case 1:
+				{
+					setQualityMeasureMinimum(Float.toString(aDistro.getFivePercentSignificance()));
+					break;
+				}
+				case 2:
+				{
+					setQualityMeasureMinimum(Float.toString(aDistro.getTenPercentSignificance()));
+					break;
+				}
+				case 3:
+				{
+					break; //discard statistics
+				}
+			}
 		}
 		catch (Exception e)
 		{
-			JOptionPane.showMessageDialog(null, "Not a valid number.");
-			return;
-		}
-		double[] aQualities = new double[aNrRepetitions];
-
-		// base model
-		BinaryTable aBaseTable = new BinaryTable(itsTable, itsTargetConcept.getMultiTargets()); //TODO fix dat dit ook werkt voor de niet-multilabel setting
-		Bayesian aBayesian = new Bayesian(aBaseTable);
-		aBayesian.climb();
-		QualityMeasure aQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), aBayesian.getDAG(), itsTotalCount, itsSearchParameters.getAlpha(), itsSearchParameters.getBeta());
-
-		Validation aValidation = new Validation(itsSearchParameters, itsTable, aQualityMeasure);
-		NormalDistribution aDistro = new NormalDistribution(aValidation.randomConditions(aNrRepetitions));
-
-		int aMethod = JOptionPane.showOptionDialog(null,
-			"The following quality measure thresholds were computed:\n" +
-			"1% significance level: " + aDistro.getOnePercentSignificance() + "\n" +
-			"5% significance level: " + aDistro.getFivePercentSignificance() + "\n" +
-			"10% significance level: " + aDistro.getTenPercentSignificance() + "\n" +
-			"Would you like to keep one of these thresholds as search constraint?",
-			"Keep quality measure threshold?",
-			JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null,
-			new String[] {"1% significance", "5% significance", "10% significance", "Ignore statistics"},
-			"1% significance");
-		switch (aMethod)
-		{
-			case 0:
-			{
-				setQualityMeasureMinimum(Float.toString(aDistro.getOnePercentSignificance()));
-				break;
-			}
-			case 1:
-			{
-				setQualityMeasureMinimum(Float.toString(aDistro.getFivePercentSignificance()));
-				break;
-			}
-			case 2:
-			{
-				setQualityMeasureMinimum(Float.toString(aDistro.getTenPercentSignificance()));
-				break;
-			}
-			case 3:
-			{
-				break; //discard statistics
-			}
+			e.printStackTrace();
+			ErrorWindow aWindow = new ErrorWindow(e);
+			aWindow.setLocation(200, 200);
+			aWindow.setVisible(true);
 		}
 	}
 
