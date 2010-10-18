@@ -912,6 +912,8 @@ public class MiningWindow extends JFrame
 
 		if (aTable != null)
 		{
+			removeAllSecondaryTargetsItems(); // hack for now
+
 			itsTable = aTable;
 			itsTotalCount = itsTable.getNrRows();
 			enableTableDependentComponents(true);
@@ -1734,8 +1736,9 @@ public class MiningWindow extends JFrame
 	private void removeAllMiscFieldItems() { jComboBoxMiscField.removeAllItems(); }
 	private String getMiscFieldName() { return (String) jComboBoxMiscField.getSelectedItem(); }
 
+	// target type - jList secondary targets
 	private void addSecondaryTargetsItem(String theItem) { ((DefaultListModel) jListSecondaryTargets.getModel()).addElement(theItem); }
-	private void removeAllSecondaryTargetsItems() { jListSecondaryTargets.removeAll(); }
+	private void removeAllSecondaryTargetsItems() { ((DefaultListModel) jListSecondaryTargets.getModel()).clear(); }
 
 
 
