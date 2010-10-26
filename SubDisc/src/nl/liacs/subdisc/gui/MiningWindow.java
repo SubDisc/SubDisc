@@ -1163,7 +1163,7 @@ public class MiningWindow extends JFrame
 						aPrimaryColumn, aSecondaryColumn, null);
 
 					aWindow = new ModelWindow(aPrimaryColumn, aSecondaryColumn,
-							aPrimaryTarget.getName(), aSecondaryTarget.getName(), anRM);
+						aPrimaryTarget.getName(), aSecondaryTarget.getName(), anRM, null); //trendline, no subset
 					aWindow.setLocation(50, 50);
 					aWindow.setSize(700, 700);
 					aWindow.setVisible(true);
@@ -1178,7 +1178,7 @@ public class MiningWindow extends JFrame
 					Column aSecondaryColumn = itsTable.getColumn(aSecondaryTarget);
 
 					aWindow = new ModelWindow(aPrimaryColumn, aSecondaryColumn,
-							aPrimaryTarget.getName(), aSecondaryTarget.getName(), null); //no trendline
+						aPrimaryTarget.getName(), aSecondaryTarget.getName(), null, null); //no trendline, no subset
 					aWindow.setLocation(50, 50);
 					aWindow.setSize(700, 700);
 					aWindow.setVisible(true);
@@ -1394,9 +1394,9 @@ public class MiningWindow extends JFrame
 	private void jButtonRandomConditionsActionPerformed(ActionEvent evt)
 	{
 		try
-		{		
+		{
 			setupSearchParameters();
-	
+
 			String inputValue = JOptionPane.showInputDialog("Number of random conditions to be used\nfor distribution estimation:", 1000);
 			int aNrRepetitions;
 			try

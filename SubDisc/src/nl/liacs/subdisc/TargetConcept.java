@@ -70,7 +70,7 @@ public class TargetConcept implements XMLNodeInterface
 			{
 				case SINGLE_NOMINAL :
 				case SINGLE_NUMERIC :
-				case DOUBLE_REGRESSION :
+//				case DOUBLE_REGRESSION : //not implemented yet
 				case DOUBLE_CORRELATION :
 				case MULTI_LABEL : return true;
 				default : return false;

@@ -220,37 +220,60 @@ public class ResultWindow extends JFrame
 	private void jButtonShowModelActionPerformed()
 	{
 		int[] aSelectionIndex = itsSubgroupTable.getSelectedRows();
+		if (aSelectionIndex.length == 0)
+			return;
 
 		switch (itsSearchParameters.getTargetType())
 		{
-			case MULTI_LABEL :
+			case DOUBLE_CORRELATION :
 			{
-				if (aSelectionIndex.length>0)
+				int aCount = 0;
+				for (Subgroup aSubgroup : itsSubgroupSet)
 				{
-					int i = 0;
-					while (i < aSelectionIndex.length)
+					if (aCount == aSelectionIndex[0]) //just the first selection gets a window
 					{
-						Log.logCommandLine("subgroup " + (aSelectionIndex[i]+1));
-						int aCount = 0;
-						for (Subgroup s : itsSubgroupSet)
-						{
-							if (aCount == aSelectionIndex[i])
-							{
-								ModelWindow aWindow = new ModelWindow(s.getDAG(), 1000, 800);
-								aWindow.setLocation(0, 0);
-								aWindow.setSize(1000, 800);
-								aWindow.setVisible(true);
-								aWindow.setTitle("Bayesian net induced from subgroup " + (aSelectionIndex[i]+1));
-							}
-							aCount++;
-						}
+						TargetConcept aTargetConcept = itsSearchParameters.getTargetConcept();
+						Attribute aPrimaryTarget = aTargetConcept.getPrimaryTarget();
+						Column aPrimaryColumn = itsTable.getColumn(aPrimaryTarget);
+						Attribute aSecondaryTarget = aTargetConcept.getSecondaryTarget();
+						Column aSecondaryColumn = itsTable.getColumn(aSecondaryTarget);
 
-						i++;
+						ModelWindow aWindow = new ModelWindow(aPrimaryColumn, aSecondaryColumn,
+							aPrimaryTarget.getName(), aSecondaryTarget.getName(), null, aSubgroup); //no trendline
+						aWindow.setLocation(50, 50);
+						aWindow.setSize(700, 700);
+						aWindow.setVisible(true);
+						aWindow.setTitle("Subgroup " + (aCount+1));
+						break;
 					}
+					aCount++;
 				}
 				break;
 			}
-			case DOUBLE_CORRELATION : //TODO show window at all?
+			case MULTI_LABEL :
+			{
+				int i = 0;
+				while (i < aSelectionIndex.length)
+				{
+					Log.logCommandLine("subgroup " + (aSelectionIndex[i]+1));
+					int aCount = 0;
+					for (Subgroup s : itsSubgroupSet)
+					{
+						if (aCount == aSelectionIndex[i])
+						{
+							ModelWindow aWindow = new ModelWindow(s.getDAG(), 1000, 800);
+							aWindow.setLocation(0, 0);
+							aWindow.setSize(1000, 800);
+							aWindow.setVisible(true);
+							aWindow.setTitle("Bayesian net induced from subgroup " + (aSelectionIndex[i]+1));
+						}
+						aCount++;
+					}
+
+					i++;
+				}
+				break;
+			}
 			case DOUBLE_REGRESSION :
 				//TODO implement modelwindow with scatterplot and line
 				break;

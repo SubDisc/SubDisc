@@ -2,20 +2,14 @@ package nl.liacs.subdisc.gui;
 
 import java.awt.*;
 import java.awt.geom.Rectangle2D;
-
-import javax.swing.JButton;
-import javax.swing.JFrame;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
+import java.util.*;
+import javax.swing.*;
 
 import nl.liacs.subdisc.*;
 
 import org.jfree.chart.*;
-import org.jfree.chart.JFreeChart;
-import org.jfree.chart.plot.PlotOrientation;
-import org.jfree.chart.plot.XYPlot;
-import org.jfree.data.xy.XYSeries;
-import org.jfree.data.xy.XYSeriesCollection;
+import org.jfree.chart.plot.*;
+import org.jfree.data.xy.*;
 import org.jfree.chart.renderer.xy.StandardXYItemRenderer;
 
 public class ModelWindow extends JFrame
@@ -29,17 +23,19 @@ public class ModelWindow extends JFrame
 
 	//correlation and regression ===============================
 
-	public ModelWindow(Column theXColumn, Column theYColumn, String theX, String theY, RegressionMeasure theRM)
+	public ModelWindow(Column theXColumn, Column theYColumn, String theX, String theY, RegressionMeasure theRM, Subgroup theSubgroup)
 	{
 		initComponents();
-		String aName = "model";
+		String aName = "2D distribution";
 		if (theRM != null)
 			aName = "y = " + (float)theRM.getIntercept() + " + " + (float)theRM.getSlope() + " * x";
 
 		//data
+		BitSet aMembers = (theSubgroup == null) ? null : theSubgroup.getMembers();
 		XYSeries aSeries = new XYSeries("data");
 		for (int i = 0; i < theXColumn.size(); i++)
-			aSeries.add(theXColumn.getFloat(i), theYColumn.getFloat(i));
+			if (theSubgroup ==null || aMembers.get(i)) //if complete database, or i is a member of the specified subgroup
+				aSeries.add(theXColumn.getFloat(i), theYColumn.getFloat(i));
 		XYSeriesCollection aDataSet = new XYSeriesCollection();
 		aDataSet.addSeries(aSeries);
 
