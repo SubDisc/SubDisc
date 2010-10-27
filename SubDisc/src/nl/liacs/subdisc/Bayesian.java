@@ -14,7 +14,7 @@ public class Bayesian
 	{
 		itsDAG = new DAG(theTable.getNrColumns(), theNames);
 		itsTable = theTable;
-		itsRandom = new Random(System.currentTimeMillis()); // truely random
+		itsRandom = new Random(System.currentTimeMillis()); // truly random
 //		itsRandom = new Random(12345); // random, but always the same
 	}
 
@@ -22,7 +22,7 @@ public class Bayesian
 	{
 		itsDAG = new DAG(theTable.getNrColumns());
 		itsTable = theTable;
-		itsRandom = new Random(System.currentTimeMillis()); // truely random
+		itsRandom = new Random(System.currentTimeMillis()); // truly random
 //		itsRandom = new Random(12345); // random, but always the same
 	}
 
