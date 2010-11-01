@@ -48,7 +48,7 @@ public class CrossValidation{
 		
 		// fill the test sets by looping over the BitSets and setting the bit corresponding to the next element of the random permutation
 		for (int i=0; i<itsSize; i++)
-			aResult[i % theK].set(aRandomPermutation[i]);
+			aResult[i % theK].set(aRandomPermutation[i]-1);
 		
 		return aResult;
 	}
