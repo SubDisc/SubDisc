@@ -306,7 +306,7 @@ public class QualityMeasure
 		if (Phb == 0 || Pnhb == 0)
 			return 0.0f; //by definition
 
-		float quality = -1.0f*Phb*lg(Phb) + Pnhb*lg(Pnhb);
+		float quality = -1.0f*Phb*lg(Phb) - Pnhb*lg(Pnhb);
 		return quality;
 	}
 
