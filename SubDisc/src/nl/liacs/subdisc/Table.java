@@ -464,5 +464,48 @@ public class Table
 			((Element)aNode.getLastChild()).setAttribute("nr", String.valueOf(i));
 		}
 	}
+	
+	public Table project(BitSet theBitSet)
+	{
+		Table aTable = this;
+		ArrayList<Column> aColumns = new ArrayList<Column>();
+		for (Column c : itsColumns)
+		{
+			Column aNewColumn = new Column(c.getAttribute(), theBitSet.cardinality());
+			int j=0;
+			
+			if (c.isNominalType())
+				for (int i=0; i<c.size(); i++)
+					if (theBitSet.get(i))
+					{
+						aNewColumn.add(c.getNominal(i));
+						j++;
+					}
+			if (c.isNumericType())
+				for (int i=0; i<c.size(); i++)
+					if (theBitSet.get(i))
+					{
+						aNewColumn.add(c.getFloat(i));
+						j++;
+					}
+			if (c.isOrdinalType())
+				for (int i=0; i<c.size(); i++)
+					if (theBitSet.get(i))
+					{
+						aNewColumn.add(c.getNominal(i)); //TODO make some ordinal variant or something? This ain't right...
+						j++;
+					}
+			if (c.isBinaryType())
+				for (int i=0; i<c.size(); i++)
+					if (theBitSet.get(i))
+					{
+						aNewColumn.add(c.getBinary(i));
+						j++;
+					}
+			aColumns.add(c);
+		}
+		aTable.itsColumns = aColumns;
+		return aTable;
+	}
 
 }
