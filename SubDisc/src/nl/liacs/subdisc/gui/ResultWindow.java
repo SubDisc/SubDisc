@@ -151,6 +151,14 @@ public class ResultWindow extends JFrame
 		});
 		aSubgroupPanel.add(jButtonDeleteSubgroups);
 
+		jButtonDumpPatterns = initButton("Dump Patterns", 'U');
+		jButtonDumpPatterns.addActionListener(new java.awt.event.ActionListener() {
+			public void actionPerformed(java.awt.event.ActionEvent evt) {
+				jButtonDumpPatternsActionPerformed();
+			}
+		});
+		aSubgroupPanel.add(jButtonDumpPatterns);
+
 		jButtonPostprocess = initButton("Repeated modeling", 'M');
 		jButtonPostprocess.addActionListener(new java.awt.event.ActionListener() {
 			public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -314,6 +322,25 @@ public class ResultWindow extends JFrame
 			jButtonDeleteSubgroups.setEnabled(false);
 	}
 
+	private void jButtonDumpPatternsActionPerformed()
+	{
+		StringBuffer aStringBuffer = new StringBuffer();
+		aStringBuffer.append("\n\nnr,coverage,measure,conditionlist\n");
+		Iterator<Subgroup> anIterator = itsSubgroupSet.iterator();
+		while (anIterator.hasNext())
+		{
+			Subgroup aSubgroup = anIterator.next();
+
+			aStringBuffer.append(aSubgroup.getID() + ","
+									+ aSubgroup.getCoverage() + ","
+									+ aSubgroup.getMeasureValue() + ","
+									+ aSubgroup.getConditions().toString()
+									+ "\n");
+		}
+
+		Log.toUniqueFile("patterns", aStringBuffer.toString());
+	}
+	
 	private void jButtonPostprocessActionPerformed()
 	{
 		String inputValue = JOptionPane.showInputDialog("# DAGs fitted to each subgroup.");
@@ -483,6 +510,7 @@ public class ResultWindow extends JFrame
 	private javax.swing.JPanel jPanelSouth;
 	private javax.swing.JButton jButtonShowModel;
 	private javax.swing.JButton jButtonDeleteSubgroups;
+	private javax.swing.JButton jButtonDumpPatterns;
 	private javax.swing.JButton jButtonPostprocess;
 	private javax.swing.JButton jButtonPValues;
 	private javax.swing.JButton jButtonRegressionTest;
