@@ -1,6 +1,6 @@
 /*
  * TODO rewrite this class, fileLoading is a mess. Split loadFile() into 
- * loadFileAndCreateTable() and LoadFileCheckWithXMLTable()
+ * loadFileAndCreateTable() and loadFileCheckWithXMLTable()
  */
 package nl.liacs.subdisc;
 
@@ -153,7 +153,7 @@ public class FileLoaderARFF implements FileLoaderInterface
 						Log.logCommandLine(
 							String.format(
 								"FileLoaderARFF: multiple '@relation' declarations in File '%s', using: '%s'.",
-								theFile,
+								theFile.getName(),
 								itsTable.getName()));
 					}
 				}
@@ -421,7 +421,7 @@ public class FileLoaderARFF implements FileLoaderInterface
 		else if (s.startsWith("{"))
 		{
 			theString = theString.substring(1);
-			ArrayList<String> nominalClasses= new ArrayList<String>(10);
+			ArrayList<String> nominalClasses = new ArrayList<String>(10);
 			String aNominalClass;
 
 			// duplicate code
@@ -453,7 +453,8 @@ public class FileLoaderARFF implements FileLoaderInterface
 				theString = theString.substring(aNominalClass.length() + offset).replaceFirst(",\\s*", "");
 			}
 
-			itsNominalAttributes.add(new NominalAttribute(itsTable.getAttribute(theAttributeName), nominalClasses));
+//			itsNominalAttributes.add(new NominalAttribute(itsTable.getAttribute(theAttributeName), nominalClasses));
+
 
 			// TODO use enum
 			if (nominalClasses.size() == 2)

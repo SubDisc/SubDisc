@@ -93,12 +93,12 @@ public class Attribute implements XMLNodeInterface
 
 		public static boolean isValidBinaryTrueValue(String theBooleanValue)
 		{
-			return BOOLEAN_POSITIVES.contains(theBooleanValue.toLowerCase());
+			return BOOLEAN_POSITIVES.contains(theBooleanValue.toLowerCase().trim());
 		}
 
 		public static boolean isValidBinaryFalseValue(String theBooleanValue)
 		{
-			return BOOLEAN_NEGATIVES.contains(theBooleanValue.toLowerCase());
+			return BOOLEAN_NEGATIVES.contains(theBooleanValue.toLowerCase().trim());
 		}
 	}
 
