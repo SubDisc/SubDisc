@@ -75,7 +75,7 @@ public class MiningWindow extends JFrame
 		initComponents();
 		initStaticGuiComponents();
 		enableTableDependentComponents(itsTable != null);
-		setTitle("Subgroup Discovery");
+		setTitle("C O R T A N A: Subgroup Discovery Tool");
 		// setIconImage(ICON);
 		initJMenuGui();
 		pack();
@@ -948,7 +948,7 @@ public class MiningWindow extends JFrame
 	{
 		// TODO
 		JOptionPane.showMessageDialog(null,
-										"Subgroup Discovery",
+										"Cortana: Subgroup Discovery Tool",
 										"About Cortana",
 										JOptionPane.INFORMATION_MESSAGE);
 	}
