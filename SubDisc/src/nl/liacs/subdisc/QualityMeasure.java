@@ -312,7 +312,12 @@ public class QualityMeasure
 
 	public static float calculateInformationGain(float totalSupport, float headSupport, float bodySupport, float headBodySupport)
 	{
-		return calculateEntropy(totalSupport, headSupport) - calculateConditionalEntropy(bodySupport, headBodySupport);
+		float aFraction = bodySupport/totalSupport;
+		float aNotBodySupport = totalSupport-bodySupport;
+		float aHeadNotBodySupport = headSupport-headBodySupport;
+		return calculateEntropy(totalSupport, headSupport)
+			- aFraction*calculateConditionalEntropy(bodySupport, headBodySupport) //inside the subgroup
+			- (1-aFraction)*calculateConditionalEntropy(aNotBodySupport, aHeadNotBodySupport); //the complement
 	}
 
 
