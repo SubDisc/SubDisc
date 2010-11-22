@@ -346,7 +346,7 @@ public class Column implements XMLNodeInterface
 	 */
 	private boolean toBinaryType()
 	{
-		if (getCardinality() != 2)
+		if (getCardinality() < 0 || getCardinality() > 2)
 			return false;
 		else
 		{
@@ -463,18 +463,18 @@ public class Column implements XMLNodeInterface
 			{
 				case NOMINAL :
 				{
+					updateCardinality(itsNominals);	// hack
 					for (int i = itsMissing.nextSetBit(0); i >= 0; i = itsMissing.nextSetBit(i + 1))
 						itsNominals.set(i, itsMissingValue);
-					updateCardinality(itsNominals);
 					return true;
 				}
 				case NUMERIC :
 				case ORDINAL :
 				{
+					updateCardinality(itsFloats);	// hack
 					Float aNewValue = Float.valueOf(itsMissingValue);
 					for (int i = itsMissing.nextSetBit(0); i >= 0; i = itsMissing.nextSetBit(i + 1))
 						itsFloats.set(i, aNewValue);
-					updateCardinality(itsFloats);
 					return true;
 				}
 				case BINARY :
@@ -567,7 +567,21 @@ public class Column implements XMLNodeInterface
 					// Arrays.sort = O(n*log(n))
 					case NUMERIC:
 					case ORDINAL : return new TreeSet<Float>(itsFloats).size();
-					case BINARY : return 2;
+					case BINARY :
+					{
+						// if first bit is 0, if there is a set bit (1) return 2
+						if (!itsBinaries.get(0))
+							return itsBinaries.nextSetBit(1) != -1 ? 2 : 1;
+						else
+						{
+							// BitSet is n*64 bits long, unused bits always 0
+							int i = itsBinaries.nextClearBit(1);
+							if (i != -1 || i >= itsSize)
+								return 1;
+							else
+								return 2;
+						}
+					}
 					default : logTypeError("Column.getNrDistinct()"); return 0;
 				}
 			}
@@ -585,6 +599,8 @@ public class Column implements XMLNodeInterface
 		{
 			if (itsMissingValueIsUnique)
 			{
+				// TODO fails if old and new itsMissingValue are unique
+				// hacked update/setting order in setNewMissingValue()
 				if (theColumnData.contains(itsMissingValue))
 				{
 					--itsCardinality;
