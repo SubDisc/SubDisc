@@ -438,7 +438,10 @@ public class Column implements XMLNodeInterface
 	 */
 	public String getMissingValue()
 	{
-		return itsMissingValue;
+		if (itsMissing.cardinality() == 0)
+			return itsMissingValue + " (no missing values)";
+		else
+			return itsMissingValue;
 	}
 
 	/**
