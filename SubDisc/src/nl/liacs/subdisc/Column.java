@@ -204,16 +204,16 @@ public class Column implements XMLNodeInterface
 	/**
 	 * Sets a new type for this Column. This is done by changing the
 	 * {@link AttributeType AttributeType} of this Columns'
-	 * {@link Attribute Attribute}. This method is case insensitive.
-	 * @param theType a <code>String</code> representing the AttributeType name.
+	 * {@link Attribute Attribute}.
+	 * @param theAttributeType a valid AttributeType.
 	 * @return <code>true</code> if the change was successful,
 	 * <code>false</code> otherwise.
 	 */
-	public boolean setType(String theType)
+	public boolean setType(AttributeType theAttributeType)
 	{
-		if (theType == null)
+		if (theAttributeType == null)
 			return false;
-		else if (itsAttribute.toString().equalsIgnoreCase(theType))
+		else if (itsAttribute.getType().equals(theAttributeType))
 			return true;
 		else
 		{
@@ -222,12 +222,11 @@ public class Column implements XMLNodeInterface
 			 * theType cannot be resolved. So null checks are not needed in the
 			 * (private) toNewType() methods.
 			 */
-			AttributeType aNewType = AttributeType.getAttributeType(theType);
-			switch (aNewType)
+			switch (theAttributeType)
 			{
 				case NOMINAL : return toNominalType();
 				case NUMERIC :
-				case ORDINAL : return toNumericType(aNewType);
+				case ORDINAL : return toNumericType(theAttributeType);
 				case BINARY : return toBinaryType();
 				default : logTypeError("Column.setType()"); return false;
 			}
@@ -288,7 +287,9 @@ public class Column implements XMLNodeInterface
 				itsFloats = new ArrayList<Float>(itsNominals.size());
 				for (String s : itsNominals)
 				{
-					try { Float.valueOf(s); }
+					// TODO '?' could be caught here and replaced by DEFAULT_MISSING_VALUE
+					// complicates cardinality logic
+					try { itsFloats.add(Float.valueOf(s)); }
 					catch (NumberFormatException e)
 					{
 						/*
@@ -304,6 +305,11 @@ public class Column implements XMLNodeInterface
 				 * itsNominals.size() == 0). Cleanup (for GarbageCollector).
 				 */
 				itsNominals = null;
+
+				if (itsMissing.cardinality() == 0 && !isValidValue(theNewType, itsMissingValue))
+					itsMissingValue = theNewType.DEFAULT_MISSING_VALUE;
+				// else old ArrayList<?> contained only valid Floats
+				// also for missing values, so we can keep itsMissingValue
 				break;
 			}
 			case NUMERIC :
@@ -323,12 +329,7 @@ public class Column implements XMLNodeInterface
 			default : logTypeError("Column.toNumericType()"); return false;
 		}
 
-		boolean aReturnValue = itsAttribute.setType(theNewType);
-
-		if (!isValidValue(itsMissingValue))
-			itsMissingValue = itsAttribute.getType().DEFAULT_MISSING_VALUE;
-
-		return aReturnValue;
+		return itsAttribute.setType(theNewType);
 	}
 
 	/*
@@ -346,32 +347,48 @@ public class Column implements XMLNodeInterface
 	 */
 	private boolean toBinaryType()
 	{
-		if (getCardinality() < 0 || getCardinality() > 2)
+		if (getCardinality() > 2 || getCardinality() < 0)
 			return false;
 		else
 		{
 			switch (itsAttribute.getType())
 			{
+				// TODO NOMINAL case can have '?' (+ possibly another value)
+				// this is an awkward case that needs to be fixed
+				// if itsNominals.get(0) == "?" the bit will be '1'
+				// however the DEFAULT_MISSING_VALUE = '0'
+				// Also, better use AttributeType.isValidBinaryTrueValue()
+				// to determine setting of '0' and '1' 
 				case NOMINAL :
 				{
-					itsBinaries = new BitSet(itsNominals.size());
-					String aTrue = itsNominals.get(0);
-					// All false initially, only set 'true' bits.
-					for (int i = 0, j = itsNominals.size(); i < j; i++)
-						if (aTrue.equals(itsNominals.get(i)))
-								itsBinaries.set(i);
+					int aSize = itsNominals.size();
+					itsBinaries = new BitSet(aSize);
+
+					if (aSize > 0)
+					{
+						String aTrue = itsNominals.get(0);	// TODO ask user which value to use as 'true'
+						// All false initially, only set 'true' bits.
+						for (int i = 0; i < aSize; i++)
+							if (aTrue.equals(itsNominals.get(i)))
+									itsBinaries.set(i);
+					}
 					itsNominals = null;
 					break;
 				}
 				case NUMERIC :
 				case ORDINAL :
 				{
-					itsBinaries = new BitSet(itsFloats.size());
-					Float aTrue = itsFloats.get(0);
-					// All false initially, only set 'true' bits.
-					for (int i = 0, j = itsFloats.size(); i < j; i++)
-						if (aTrue == itsFloats.get(i))
-							itsBinaries.set(i);
+					int aSize = itsFloats.size();
+					itsBinaries = new BitSet(aSize);
+
+					if (aSize > 0)
+					{
+						Float aTrue = itsFloats.get(0);	// TODO ask user which value to use as 'true'
+						// All false initially, only set 'true' bits.
+						for (int i = 0; i < aSize; i++)
+							if (aTrue == itsFloats.get(i))
+								itsBinaries.set(i);
+					}
 					itsFloats = null;
 					break;
 				}
@@ -379,16 +396,14 @@ public class Column implements XMLNodeInterface
 				default : logTypeError("Column.toBinaryType()"); return false;
 			}
 
-			boolean aReturnValue = itsAttribute.setType(AttributeType.BINARY);
-
-			if (isValidValue(itsMissingValue))
+			if (isValidValue(AttributeType.BINARY, itsMissingValue))
 				itsMissingValue =
 					AttributeType.isValidBinaryTrueValue(itsMissingValue)
 																	? "1" : "0";
 			else
 				itsMissingValue = AttributeType.BINARY.DEFAULT_MISSING_VALUE;
 
-			return aReturnValue;
+			return itsAttribute.setType(AttributeType.BINARY);
 		}
 	}
 
@@ -455,7 +470,7 @@ public class Column implements XMLNodeInterface
 	{
 		if (itsMissingValue.equals(theNewValue))
 			return true;
-		else if (isValidValue(theNewValue))
+		else if (isValidValue(itsAttribute.getType(), theNewValue))
 		{
 			itsMissingValue = theNewValue;
 
@@ -463,7 +478,7 @@ public class Column implements XMLNodeInterface
 			{
 				case NOMINAL :
 				{
-					updateCardinality(itsNominals);	// hack
+					updateCardinality(itsNominals);
 					for (int i = itsMissing.nextSetBit(0); i >= 0; i = itsMissing.nextSetBit(i + 1))
 						itsNominals.set(i, itsMissingValue);
 					return true;
@@ -471,7 +486,7 @@ public class Column implements XMLNodeInterface
 				case NUMERIC :
 				case ORDINAL :
 				{
-					updateCardinality(itsFloats);	// hack
+					updateCardinality(itsFloats);
 					Float aNewValue = Float.valueOf(itsMissingValue);
 					for (int i = itsMissing.nextSetBit(0); i >= 0; i = itsMissing.nextSetBit(i + 1))
 						itsFloats.set(i, aNewValue);
@@ -479,6 +494,8 @@ public class Column implements XMLNodeInterface
 				}
 				case BINARY :
 				{
+					updateCardinality();
+
 					itsMissingValue =
 						(AttributeType.isValidBinaryTrueValue(itsMissingValue) ? "1" : "0");
 					boolean aNewValue = "0".equals(itsMissingValue);
@@ -500,19 +517,21 @@ public class Column implements XMLNodeInterface
 			return false;
 	}
 
-	private boolean isValidValue(String theNewValue)
+	private boolean isValidValue(AttributeType theAttributeType, String theNewValue)
 	{
-		switch(itsAttribute.getType())
+		switch(theAttributeType)
 		{
 			case NOMINAL : return true;
 			case NUMERIC :
 			case ORDINAL :
 			{
+				// TODO could allow '?'
 				try { Float.parseFloat(theNewValue); return true; }
 				catch (NumberFormatException anException) { return false; }
 			}
 			case BINARY :
 			{
+				// TODO could allow '?'
 				return (AttributeType.isValidBinaryTrueValue(theNewValue) ||
 						AttributeType.isValidBinaryFalseValue(theNewValue));
 			}
@@ -592,15 +611,13 @@ public class Column implements XMLNodeInterface
 
 	private void updateCardinality(ArrayList<?> theColumnData)
 	{
-		// not set yet, should not happen
+		// not set yet, or no data
 		if (itsCardinality == 0)
 			getCardinality();
 		else
 		{
 			if (itsMissingValueIsUnique)
 			{
-				// TODO fails if old and new itsMissingValue are unique
-				// hacked update/setting order in setNewMissingValue()
 				if (theColumnData.contains(itsMissingValue))
 				{
 					--itsCardinality;
@@ -616,6 +633,34 @@ public class Column implements XMLNodeInterface
 				}
 			}
 		}
+	}
+
+	private void updateCardinality()
+	{
+		// not set yet, or no data
+		if (itsCardinality == 0)
+			getCardinality();
+/*
+		else
+		{
+			if (itsMissingValueIsUnique)
+			{
+				if (theColumnData.contains(itsMissingValue))
+				{
+					--itsCardinality;
+					itsMissingValueIsUnique = false;
+				}
+			}
+			else
+			{
+				if (!theColumnData.contains(itsMissingValue))
+				{
+					++itsCardinality;
+					itsMissingValueIsUnique = true;
+				}
+			}
+		}
+ */
 	}
 
 	/**
