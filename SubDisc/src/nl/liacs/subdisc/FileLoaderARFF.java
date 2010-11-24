@@ -363,6 +363,7 @@ public class FileLoaderARFF implements FileLoaderInterface
 			case ORDINAL : theColumn.add(Float.parseFloat(theCell)); break;
 			case BINARY :
 			{
+				// TODO any other value is accepted as 'false'
 				theColumn.add(AttributeType.isValidBinaryTrueValue(theCell));
 				break;
 			}
