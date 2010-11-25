@@ -8,7 +8,6 @@ import java.util.*;
 import javax.swing.*;
 import javax.swing.UIManager.*;
 import javax.swing.border.*;
-import javax.swing.event.*;
 
 import nl.liacs.subdisc.*;
 import nl.liacs.subdisc.FileHandler.Action;
@@ -75,7 +74,7 @@ public class MiningWindow extends JFrame
 		initComponents();
 		initStaticGuiComponents();
 		enableTableDependentComponents(itsTable != null);
-		setTitle("C O R T A N A: Subgroup Discovery Tool");
+		setTitle("CORTANA: Subgroup Discovery Tool");
 		// setIconImage(ICON);
 		initJMenuGui();
 		pack();
@@ -148,9 +147,11 @@ public class MiningWindow extends JFrame
 		setSearchStrategyNrBins(String.valueOf(itsSearchParameters.getNrBins()));
 
 		// search conditions
-		// setSearchStrategyType() above calls setSearchCoverageMinimum(),
-		// setting a wrong value in the GUI
-		// setSearchCoverageMinimum must be called AFTER setSearchStrategyType
+		/*
+		 * setSearchStrategyType() above calls setSearchCoverageMinimum(),
+		 * setting a wrong value in the GUI
+		 * setSearchCoverageMinimum must be called AFTER setSearchStrategyType
+		 */
 		setSearchDepthMaximum(String.valueOf(itsSearchParameters.getSearchDepth()));
 		setSearchCoverageMinimum(String.valueOf(itsSearchParameters.getMinimumCoverage()));
 		setSearchCoverageMaximum(String.valueOf(itsSearchParameters.getMaximumCoverage()));
@@ -227,7 +228,7 @@ public class MiningWindow extends JFrame
 		jMenuItemOpenGeneRank = new JMenuItem();
 		jMenuItemBrowse = new JMenuItem();
 		jMenuItemMetaData = new JMenuItem();
-//		jMenuItemDataExplorer = new JMenuItem();
+//		jMenuItemDataExplorer = new JMenuItem();	// TODO add when implemented
 		jSeparator2 = new JSeparator();
 		jMenuItemSubgroupDiscovery = new JMenuItem();
 		jSeparator3 = new JSeparator();
@@ -289,8 +290,8 @@ public class MiningWindow extends JFrame
 		jTextFieldQualityMeasureMinimum = new JTextField();
 		jComboBoxTargetAttribute = new JComboBox();
 		jComboBoxMiscField = new JComboBox(); // used for target value or secondary target
-		jListSecondaryTargets = new JList(new DefaultListModel());
-		SecondaryTargets = new JScrollPane(jListSecondaryTargets);
+		jButtonSecondaryTargets = new JButton();	// shows jListSecondaryTargets
+		jListSecondaryTargets = new JList(new DefaultListModel());	// permanently maintained
 		jLFieldTargetInfo = new JLabel();
 		jButtonBaseModel = new JButton();
 
@@ -665,7 +666,7 @@ public class MiningWindow extends JFrame
 			}
 		});
 		jPanelEvaluationFields.add(jComboBoxMiscField);
-
+/*
 		jListSecondaryTargets.setPreferredSize(new Dimension(86, 30));
 		jListSecondaryTargets.setMinimumSize(new Dimension(86, 22));
 		jListSecondaryTargets.setFont(GUI.DEFAULT_TEXT_FONT);
@@ -675,6 +676,14 @@ public class MiningWindow extends JFrame
 			}
 		});
 		jPanelEvaluationFields.add(jListSecondaryTargets);
+*/
+		jButtonSecondaryTargets = initButton("Secondary Targets", 'T');
+		jButtonSecondaryTargets.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				jButtonSecondaryTargetsActionPerformed(evt);
+			}
+		});
+		jPanelEvaluationFields.add(jButtonSecondaryTargets);
 
 		jLFieldTargetInfo.setForeground(Color.black);
 		jLFieldTargetInfo.setFont(GUI.DEFAULT_TEXT_FONT);
@@ -1057,8 +1066,7 @@ public class MiningWindow extends JFrame
 		boolean hasSecondaryTargets = (aTargetType == TargetType.MULTI_LABEL ||
 										aTargetType == TargetType.MULTI_BINARY_CLASSIFICATION);
 		jLabelSecondaryTargets.setVisible(hasSecondaryTargets);
-		jListSecondaryTargets.setVisible(hasSecondaryTargets);
-		SecondaryTargets.setVisible(hasSecondaryTargets);
+		jButtonSecondaryTargets.setVisible(hasSecondaryTargets);
 
 		// has target attribute?
 		boolean hasTargetAttribute = (aTargetType != TargetType.MULTI_LABEL);
@@ -1118,6 +1126,7 @@ public class MiningWindow extends JFrame
 	 * Also, this is much more efficient, looping over all Attributes only (max)
 	 * once, and stopping when all BINARY typed Attributes have been found.
 	 */
+/*
 	private void jListSecondaryTargetsActionPerformed(ListSelectionEvent evt)
 	{
 		// compute selected targets and update TargetConcept
@@ -1141,6 +1150,18 @@ public class MiningWindow extends JFrame
 
 		//update GUI
 		initTargetInfo();
+	}
+*/
+
+	private void jButtonSecondaryTargetsActionPerformed(ActionEvent evt)
+	{
+		SwingUtilities.invokeLater(new Runnable()
+		{
+			public void run()
+			{
+				new SecondaryTargetsWindow(jListSecondaryTargets);
+			}
+		});
 	}
 
 	// TODO remove duplicate ModelWindow code
@@ -1601,13 +1622,21 @@ public class MiningWindow extends JFrame
 			removeAllMiscFieldItems();
 
 		// multi targets =======================================
-		if (aTargetType == TargetType.MULTI_LABEL && jListSecondaryTargets.getSelectedIndices().length == 0)
+		if (aTargetType == TargetType.MULTI_LABEL)
 		{
+			/*
+			 *  TODO expensive recreation of up-to-date list for now
+			 * reflects changes for columns if type/isEnabled is changed
+			 * Needs changes to Table and MetaDataWindow for efficient code
+			 * where changes are immediately pushed to underlying Table
+			 * (which holds a secondaryTargets member).
+			 */
+			((DefaultListModel) jListSecondaryTargets.getModel()).clear();
 			int aCount = 0;
 
 			for (Column c: itsTable.getColumns())
 			{
-				if (c.getAttribute().isBinaryType())
+				if (c.getAttribute().isBinaryType() && c.getIsEnabled())
 				{
 					addSecondaryTargetsItem(c.getName());
 					aCount++;
@@ -1677,8 +1706,7 @@ public class MiningWindow extends JFrame
 			}
 			case MULTI_LABEL :
 			{
-				int[] aSelection = jListSecondaryTargets.getSelectedIndices();
-				jLFieldTargetInfo.setText(String.valueOf(aSelection.length));
+				jLFieldTargetInfo.setText(String.valueOf(jListSecondaryTargets.getSelectedIndices().length));
 				jLabelTargetInfo.setText(" binary targets");
 				break;
 			}
@@ -1829,8 +1857,8 @@ public class MiningWindow extends JFrame
 	private JLabel jLFieldTargetTable;
 	private JComboBox jComboBoxTargetAttribute;
 	private JComboBox jComboBoxMiscField;
+	private JButton jButtonSecondaryTargets;
 	private JList jListSecondaryTargets;
-	private JScrollPane SecondaryTargets;
 	private JLabel jLFieldNrExamples;
 	private JLabel jLFieldNrColumns;
 	private JLabel jLFieldNrColumnsEnabled;
@@ -1905,6 +1933,7 @@ public class MiningWindow extends JFrame
 		EXIT('X'),
 		ABOUT('A'),	// 2x (no accelerator)
 		ABOUT_CORTANA('I'),
+		SECONDARY_TARGETS('T'),
 		BASE_MODEL('B'),	// 2x (no accelerator)
 		RANDOM_SUBGROUPS('R'),
 		RANDOM_CONDITIONS('C');	// 2x (no accelerator)

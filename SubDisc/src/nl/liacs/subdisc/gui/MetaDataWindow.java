@@ -156,7 +156,7 @@ public class MetaDataWindow extends JFrame implements ActionListener
 
 		// feedback label
 		Box aFeedBackBox = Box.createHorizontalBox();
-		aFeedBackBox.add(GUI.buildLabel("Last Action: "));
+		aFeedBackBox.add(GUI.buildLabel(" Last Action: "));
 		itsFeedBackLabel.setText("Meta Data loaded for " + itsTable.getName());
 		itsFeedBackLabel.setFont(GUI.DEFAULT_TEXT_FONT);
 		aFeedBackBox.add(itsFeedBackLabel);
