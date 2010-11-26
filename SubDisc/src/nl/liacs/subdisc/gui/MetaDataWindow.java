@@ -18,16 +18,19 @@ import nl.liacs.subdisc.gui.MetaDataTableModel.*;
 public class MetaDataWindow extends JFrame implements ActionListener
 {
 	private static final long serialVersionUID = 1L;
-	private Table itsTable;
-	private JTable jTable;
+	private final MiningWindow itsMiningWindow;
+	private final Table itsTable;
+	private JTable itsJTable;
 	private ButtonGroup aNewType = new ButtonGroup();
 	private JTextField aNewMissingValue =
 		new JTextField(AttributeType.NOMINAL.DEFAULT_MISSING_VALUE);
 	private JLabel itsFeedBackLabel = new JLabel();
-	private MiningWindow itsMiningWindow;
 
 	public MetaDataWindow(MiningWindow theMiningWindow, Table theTable)
 	{
+		itsMiningWindow = theMiningWindow;
+		itsTable = theTable;
+
 		if (theTable == null || theMiningWindow == null)
 		{
 			Log.logCommandLine("MetaDataWindow Constructor: parameters can not be 'null'.");
@@ -35,8 +38,6 @@ public class MetaDataWindow extends JFrame implements ActionListener
 		}
 		else
 		{
-			itsMiningWindow = theMiningWindow;
-			itsTable = theTable;
 			initJTable(itsTable);
 			initComponents();
 			setTitle("Meta Data for: " + itsTable.getName());
@@ -50,19 +51,19 @@ public class MetaDataWindow extends JFrame implements ActionListener
 
 	private void initJTable(Table theTable)
 	{
-		jTable = new JTable(new MetaDataTableModel(theTable));
-		jTable.setPreferredScrollableViewportSize(GUI.WINDOW_DEFAULT_SIZE);
-		jTable.setFillsViewportHeight(true);
+		itsJTable = new JTable(new MetaDataTableModel(theTable));
+		itsJTable.setPreferredScrollableViewportSize(GUI.WINDOW_DEFAULT_SIZE);
+		itsJTable.setFillsViewportHeight(true);
 
 		float aScalar = 0.3f;
 		int anAttributeWidth = (int)(aScalar * GUI.WINDOW_DEFAULT_SIZE.width);
 		int anOtherWidth = (int)((1.0f - aScalar / MetaDataTableHeader.values().length -1) * GUI.WINDOW_DEFAULT_SIZE.width);
 
-		jTable.getColumnModel().getColumn(MetaDataTableHeader.ATTRIBUTE.columnNr).setPreferredWidth(anAttributeWidth);
-		jTable.getColumnModel().getColumn(MetaDataTableHeader.CARDINALITY.columnNr).setPreferredWidth(anOtherWidth);
-		jTable.getColumnModel().getColumn(MetaDataTableHeader.TYPE.columnNr).setPreferredWidth(anOtherWidth);
-		jTable.getColumnModel().getColumn(MetaDataTableHeader.ENABLED.columnNr).setPreferredWidth(anOtherWidth);
-		jTable.getColumnModel().getColumn(MetaDataTableHeader.MISSING.columnNr).setPreferredWidth(anOtherWidth);
+		itsJTable.getColumnModel().getColumn(MetaDataTableHeader.ATTRIBUTE.columnNr).setPreferredWidth(anAttributeWidth);
+		itsJTable.getColumnModel().getColumn(MetaDataTableHeader.CARDINALITY.columnNr).setPreferredWidth(anOtherWidth);
+		itsJTable.getColumnModel().getColumn(MetaDataTableHeader.TYPE.columnNr).setPreferredWidth(anOtherWidth);
+		itsJTable.getColumnModel().getColumn(MetaDataTableHeader.ENABLED.columnNr).setPreferredWidth(anOtherWidth);
+		itsJTable.getColumnModel().getColumn(MetaDataTableHeader.MISSING.columnNr).setPreferredWidth(anOtherWidth);
 	}
 
 	private void initComponents()
@@ -75,7 +76,7 @@ public class MetaDataWindow extends JFrame implements ActionListener
 		JPanel aChangeTypePanel = new JPanel();
 		JPanel aSetMissingPanel = new JPanel();
 
-		JScrollPane jScrollPane = new JScrollPane(jTable);
+		JScrollPane jScrollPane = new JScrollPane(itsJTable);
 
 		// selection buttons
 		aSelectionPanel.setBorder(GUI.buildBorder("Select"));
@@ -185,13 +186,13 @@ public class MetaDataWindow extends JFrame implements ActionListener
 			{
 				for (int i = 0, j = itsTable.getColumns().size(); i < j; i++)
 					if (itsTable.getColumn(i).getType() == at)
-						jTable.addRowSelectionInterval(i, i);
+						itsJTable.addRowSelectionInterval(i, i);
 				return;
 			}
 		}
 
 		if ("all".equals(aCommand))
-			jTable.selectAll();
+			itsJTable.selectAll();
 /*
 		else if ("invert".equals(aCommand))
 		{
@@ -205,7 +206,7 @@ public class MetaDataWindow extends JFrame implements ActionListener
 		}
 */
 		else if ("clear".equals(aCommand))
-			jTable.clearSelection();
+			itsJTable.clearSelection();
 		else if ("close".equals(aCommand))
 			dispose();
 		else
@@ -213,13 +214,13 @@ public class MetaDataWindow extends JFrame implements ActionListener
 			if ("disable".equals(aCommand) || "enable".equals(aCommand))
 			{
 				boolean enable = "enable".equals(aCommand);
-				for (int i : jTable.getSelectedRows())
+				for (int i : itsJTable.getSelectedRows())
 					itsTable.getColumn(i).setIsEnabled(enable);
 			}
 			else if ("toggle".equals(aCommand))
 			{
 				Column aColumn = null;
-				for (int i : jTable.getSelectedRows())
+				for (int i : itsJTable.getSelectedRows())
 				{
 					aColumn = itsTable.getColumn(i);
 					aColumn.setIsEnabled(!aColumn.getIsEnabled());
@@ -227,7 +228,7 @@ public class MetaDataWindow extends JFrame implements ActionListener
 			}
 			else if ("type".equals(aCommand))
 			{
-				for (int i : jTable.getSelectedRows())
+				for (int i : itsJTable.getSelectedRows())
 					itsTable.getColumn(i).setType(AttributeType.getAttributeType(aNewType.getSelection().getActionCommand()));
 					// TODO show messageDialog asking to treat first value as
 					// 'true' or 'false' (see Column.toBinary())
@@ -237,16 +238,16 @@ public class MetaDataWindow extends JFrame implements ActionListener
 			{
 				String aNewValue = aNewMissingValue.getText().trim();
 				aNewMissingValue.setText(aNewValue);
-				ArrayList<Integer> aWrongType = new ArrayList<Integer>(jTable.getSelectedRows().length);
-				for (int i : jTable.getSelectedRows())
+				ArrayList<Integer> aWrongType = new ArrayList<Integer>(itsJTable.getSelectedRows().length);
+				for (int i : itsJTable.getSelectedRows())
 					if (!itsTable.getColumn(i).setNewMissingValue(aNewValue))
 						aWrongType.add(i);
 
 				if (aWrongType.size() > 0)
 				{
-					jTable.getSelectionModel().clearSelection();
+					itsJTable.getSelectionModel().clearSelection();
 					for (int i : aWrongType)
-						jTable.addRowSelectionInterval(i, i);
+						itsJTable.addRowSelectionInterval(i, i);
 
 					String anIndicator;
 					if (aWrongType.size() == 1)
@@ -267,7 +268,7 @@ public class MetaDataWindow extends JFrame implements ActionListener
 										JOptionPane.ERROR_MESSAGE);
 				}
 			}
-			jTable.repaint();
+			itsJTable.repaint();
 			itsMiningWindow.update();
 		}
 	}

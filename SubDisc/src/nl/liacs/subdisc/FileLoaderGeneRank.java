@@ -77,7 +77,7 @@ public class FileLoaderGeneRank implements FileLoaderInterface
 					Log.logCommandLine(
 						"FileLoaderGeneRank: CuiDomainChooser Waiting Error.");
 				}
-
+				// TODO pass as parameter
 				itsDomainFile = aChooser.getFile();
 
 				if (itsDomainFile == null || !itsDomainFile.exists())

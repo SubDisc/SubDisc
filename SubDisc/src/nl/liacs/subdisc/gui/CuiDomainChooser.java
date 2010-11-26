@@ -16,22 +16,29 @@ public class CuiDomainChooser extends JFrame implements ActionListener
 {
 	private static final long serialVersionUID = 1L;
 
-	private CountDownLatch itsDoneSignal;
+	private final CountDownLatch itsDoneSignal;
 	private List<File> itsAvailableDomains;
 	private File itsDomainFile;
 	private ButtonGroup itsDomainButtons = new ButtonGroup();
 
-	public CuiDomainChooser(CountDownLatch aDoneSignal)
+	public CuiDomainChooser(CountDownLatch theDoneSignal)
 	{
-		super("CUI Domain Chooser");
-		super.setLayout(new BoxLayout(getContentPane(), BoxLayout.PAGE_AXIS));
-		itsDoneSignal = aDoneSignal;
-		initComponents();
-		setLocation(100, 100);
-//		setSize(GUI.DEFAULT_WINDOW_DIMENSION);	// TODO
-//		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-		pack();
-		setVisible(true);
+		itsDoneSignal = theDoneSignal;
+
+		// TODO ErrorLog
+		if (itsDoneSignal == null)
+			Log.logCommandLine(
+			"SecondaryTargetsWindow Constructor: parameter can not be 'null'.");
+		else
+		{
+			setTitle("CUI Domain Chooser");
+			setLocation(100, 100);
+			initComponents();
+	//		setSize(GUI.DEFAULT_WINDOW_DIMENSION);	// TODO
+	//		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+			pack();
+			setVisible(true);
+		}
 	}
 
 	private void initComponents()
@@ -39,6 +46,8 @@ public class CuiDomainChooser extends JFrame implements ActionListener
 		JPanel aRadioButtonPanel = new JPanel();
 		JPanel aButtonPanel = new JPanel();
 		JRadioButton aRadioButton;
+
+		setLayout(new BoxLayout(getContentPane(), BoxLayout.PAGE_AXIS));
 
 		File aCuiDir = new File(CuiMapInterface.CUI_DIR);
 
@@ -84,7 +93,7 @@ public class CuiDomainChooser extends JFrame implements ActionListener
 		addWindowListener(new WindowAdapter()
 		{
 			@Override
-			public void windowClosing(WindowEvent e) { CountDownAndDispose(); }
+			public void windowClosing(WindowEvent e) { countDownAndDispose(); }
 		});
 	}
 
@@ -102,18 +111,19 @@ public class CuiDomainChooser extends JFrame implements ActionListener
 		{
 			itsDomainFile =
 				new File(itsDomainButtons.getSelection().getActionCommand());
-			CountDownAndDispose();
+			countDownAndDispose();
 		}
 		else if ("cancel".equals(aCommand))
-			CountDownAndDispose();
+			countDownAndDispose();
 	}
 
-	private void CountDownAndDispose()
+	private void countDownAndDispose()
 	{
 		itsDoneSignal.countDown();
 		dispose();
 	}
 
+	// TODO pass in File as parameter
 	public File getFile()
 	{
 		return itsDomainFile;

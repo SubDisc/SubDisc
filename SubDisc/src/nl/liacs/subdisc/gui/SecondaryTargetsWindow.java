@@ -2,26 +2,29 @@ package nl.liacs.subdisc.gui;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.util.*;
 
 import javax.swing.*;
-import javax.swing.table.*;
 
 import nl.liacs.subdisc.*;
 
-public class SecondaryTargetsWindow extends JFrame implements ActionListener//, ListSelectionListener
+public class SecondaryTargetsWindow extends JDialog implements ActionListener//, ListSelectionListener
 {
 	private static final long serialVersionUID = 1L;
 
 	private final JList itsJList;
-	private int itsJListSize = 0;
+	private int itsJListSize = 0;	// not safe, even though modality blocks other windows
+	private Object[] itsLastSelection;
 	private JLabel itsFeedBackLabel = new JLabel();
 
 	public SecondaryTargetsWindow(JList theJList)
 	{
+		super.setModalityType(Dialog.DEFAULT_MODALITY_TYPE);
 		itsJList = theJList;
 
 		if (itsJList == null)
 		{
+			// TODO ErrorLog
 			Log.logCommandLine(
 				"SecondaryTargetsWindow Constructor: parameter can not be 'null'.");
 			return;
@@ -29,11 +32,12 @@ public class SecondaryTargetsWindow extends JFrame implements ActionListener//, 
 		else
 		{
 			itsJListSize = itsJList.getModel().getSize();
+			itsLastSelection = itsJList.getSelectedValues();
 			initComponents(itsJList);
 			setTitle("Secondary Targets");
 			setLocation(100, 100);
 			setSize(GUI.WINDOW_DEFAULT_SIZE);	// TODO
-			setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+//			setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 			pack();
 			setVisible(true);
 		}
@@ -61,7 +65,6 @@ public class SecondaryTargetsWindow extends JFrame implements ActionListener//, 
 
 		// feedback label
 		Box aFeedBackBox = Box.createHorizontalBox();
-//		aFeedBackBox.add(GUI.buildLabel("Last Action: "));
 		itsFeedBackLabel.setText(getFeedBackText());
 		itsFeedBackLabel.setFont(GUI.DEFAULT_TEXT_FONT);
 		aFeedBackBox.add(itsFeedBackLabel);
@@ -69,31 +72,13 @@ public class SecondaryTargetsWindow extends JFrame implements ActionListener//, 
 		aButtonPanel.add(aFeedBackBox);
 
 		getContentPane().add(aButtonPanel, BorderLayout.SOUTH);
-	}
 
-	// TODO for size? not needs with 3 buttons panel
-	/*
-	 * Based on Swing tutorial TableRenderDemo.java.
-	 * This method picks column sizes, based on column heads only.
-	 * Could use JTable tables' itsTable for sizes instead (1 less parameter).
-	 * TODO Put in SwingWorker background thread.
-	 */
-	private void initColumnSizes(Table theDataTable, JTable theJTable)
-	{
-		int aHeaderWidth = 0;
-
-		TableCellRenderer aRenderer = theJTable.getTableHeader().getDefaultRenderer();
-
-		for (int i = 0, j = theJTable.getColumnModel().getColumnCount(); i < j; i++)
+		addWindowListener(new WindowAdapter()
 		{
-			// 91 is width of "(999 distinct)"
-			aHeaderWidth = Math.max(aRenderer.getTableCellRendererComponent(
-									null, theDataTable.getAttribute(i).getName(),
-									false, false, 0, 0).getPreferredSize().width,
-									91);
+			@Override
+			public void windowClosing(WindowEvent e) { disposeUndoChanges(); }
+		});
 
-			theJTable.getColumnModel().getColumn(i).setPreferredWidth(aHeaderWidth);
-		}
 	}
 
 	private String getFeedBackText()
@@ -104,13 +89,15 @@ public class SecondaryTargetsWindow extends JFrame implements ActionListener//, 
 	@Override
 	public void actionPerformed(ActionEvent theEvent)
 	{
-		if ("all".equals(theEvent.getActionCommand()))
+		String anAction = theEvent.getActionCommand();
+
+		if ("all".equals(anAction))
 			itsJList.setSelectionInterval(0, itsJListSize - 1);
-		else if ("none".equals(theEvent.getActionCommand()))
+		else if ("none".equals(anAction))
 			itsJList.clearSelection();
-		else if ("invert".equals(theEvent.getActionCommand()))
+		else if ("invert".equals(anAction))
 		{
-			// not efficient, but easy
+			// TODO use isSelected()
 			int[] aSelection = itsJList.getSelectedIndices();
 			itsJList.clearSelection();
 
@@ -125,13 +112,44 @@ public class SecondaryTargetsWindow extends JFrame implements ActionListener//, 
 			if (i < itsJListSize)
 				itsJList.addSelectionInterval(i, itsJListSize - 1);
 		}
-		else if ("use".equals(theEvent.getActionCommand()))
+		else if ("use".equals(anAction))
+		{
+			itsLastSelection = itsJList.getSelectedValues();
 			dispose();
-		else if ("close".equals(theEvent.getActionCommand()))
-			dispose();
+		}
+		else if ("close".equals(anAction))
+			disposeUndoChanges();
 
 		itsFeedBackLabel.setText(getFeedBackText());
 	}
+
+	private void disposeUndoChanges()
+	{
+		itsJList.clearSelection();
+
+		// Columns might be disabled/re-typed since last time (order is same)
+		// could be faster
+		int aCurrentSize = itsJList.getModel().getSize();
+		ArrayList<Object> aCurrentList = new ArrayList<Object>(aCurrentSize);
+
+		for (int i = 0; i < aCurrentSize; i++)
+			aCurrentList.add(itsJList.getModel().getElementAt(i));
+
+		int aLastSize = itsLastSelection.length;
+
+		for (int i = 0, j = -1; i < aLastSize && aCurrentSize > 0; i++)
+		{
+			if ((j = aCurrentList.indexOf(itsLastSelection[i])) != -1)
+			{
+				itsJList.addSelectionInterval(j, j);
+				aCurrentSize--;
+			}
+		}
+
+		dispose();
+	}
+
+	// TODO update feedBackLabel on mouseSelections
 /*
 	@Override
 	public void valueChanged(ListSelectionEvent theEvent)

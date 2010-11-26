@@ -30,6 +30,7 @@ public class MiningWindow extends JFrame
 	private float itsTargetAverage; // numeric target
 
 	// TODO there should be at most 1 MiningWindow();
+	private final MiningWindow masterWindow = this;
 	private SearchParameters itsSearchParameters = new SearchParameters();
 	private TargetConcept itsTargetConcept = new TargetConcept();
 
@@ -384,7 +385,7 @@ public class MiningWindow extends JFrame
 		});
 		jMenuFile.add(jMenuItemMetaData);
 
-		/*
+/*
 		// TODO add when implemented
 		jMenuItemDataExplorer.setFont(GUI.DEFAULT_TEXT_FONT);
 		jMenuItemDataExplorer.setText("Data Explorer");
@@ -396,7 +397,7 @@ public class MiningWindow extends JFrame
 			}
 		});
 		jMenuFile.add(jMenuItemDataExplorer);
-		 */
+*/
 
 		jMenuFile.add(jSeparator2);
 
@@ -666,17 +667,7 @@ public class MiningWindow extends JFrame
 			}
 		});
 		jPanelEvaluationFields.add(jComboBoxMiscField);
-/*
-		jListSecondaryTargets.setPreferredSize(new Dimension(86, 30));
-		jListSecondaryTargets.setMinimumSize(new Dimension(86, 22));
-		jListSecondaryTargets.setFont(GUI.DEFAULT_TEXT_FONT);
-		jListSecondaryTargets.addListSelectionListener(new ListSelectionListener() {
-			public void valueChanged(ListSelectionEvent evt) {
-				jListSecondaryTargetsActionPerformed(evt);
-			}
-		});
-		jPanelEvaluationFields.add(jListSecondaryTargets);
-*/
+
 		jButtonSecondaryTargets = initButton("Secondary Targets", 'T');
 		jButtonSecondaryTargets.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
@@ -995,12 +986,11 @@ public class MiningWindow extends JFrame
 
 	private void metaDataActionPerformed(ActionEvent evt)
 	{
-		final MiningWindow aParent = this;
 		SwingUtilities.invokeLater(new Runnable()
 		{
 			public void run()
 			{
-				new MetaDataWindow(aParent, itsTable);
+				new MetaDataWindow(masterWindow, itsTable);
 			}
 		});
 	}
@@ -1120,48 +1110,28 @@ public class MiningWindow extends JFrame
 			initTargetInfo();
 	}
 
-	/*
-	 * This method now completely bypasses Table.getBinaryIndex(), making that
-	 * method obsolete.
-	 * Also, this is much more efficient, looping over all Attributes only (max)
-	 * once, and stopping when all BINARY typed Attributes have been found.
-	 */
-/*
-	private void jListSecondaryTargetsActionPerformed(ListSelectionEvent evt)
+	private void jButtonSecondaryTargetsActionPerformed(ActionEvent evt)
 	{
-		// compute selected targets and update TargetConcept
-//		int[] aSelection = jListSecondaryTargets.getSelectedIndices();
-//		ArrayList<Attribute> aList = new ArrayList<Attribute>(aSelection.length);
-//		for (int anIndex : aSelection)
-//			aList.add(itsTable.getAttribute(itsTable.getBinaryIndex(anIndex)));
-		int aNrBinary = jListSecondaryTargets.getSelectedIndices().length;
+		// is modal, blocks all input to other windows until closed
+		new SecondaryTargetsWindow(jListSecondaryTargets);
+
+		Object[] aSelection = jListSecondaryTargets.getSelectedValues();
+		int aNrBinary = aSelection.length;
 		ArrayList<Attribute> aList = new ArrayList<Attribute>(aNrBinary);
-		for (Column c : itsTable.getColumns())
+
+		// aSelection is in order and names are always present in itsColumns
+		for (int i = 0, j = 0; i < aNrBinary; j++)
 		{
-			if (c.getAttribute().isBinaryType())
+			if (aSelection[i].equals(itsTable.getColumn(j).getName()))
 			{
-				aList.add(c.getAttribute());
-				if (--aNrBinary == 0)
-					break;
+				aList.add(itsTable.getColumn(j).getAttribute());
+				i++;
 			}
 		}
 
 		itsTargetConcept.setMultiTargets(aList);
-
 		//update GUI
 		initTargetInfo();
-	}
-*/
-
-	private void jButtonSecondaryTargetsActionPerformed(ActionEvent evt)
-	{
-		SwingUtilities.invokeLater(new Runnable()
-		{
-			public void run()
-			{
-				new SecondaryTargetsWindow(jListSecondaryTargets);
-			}
-		});
 	}
 
 	// TODO remove duplicate ModelWindow code
@@ -1632,17 +1602,12 @@ public class MiningWindow extends JFrame
 			 * (which holds a secondaryTargets member).
 			 */
 			((DefaultListModel) jListSecondaryTargets.getModel()).clear();
-			int aCount = 0;
 
 			for (Column c: itsTable.getColumns())
-			{
 				if (c.getAttribute().isBinaryType() && c.getIsEnabled())
-				{
 					addSecondaryTargetsItem(c.getName());
-					aCount++;
-				}
-			}
-			jListSecondaryTargets.setSelectionInterval(0, aCount - 1);
+
+			jListSecondaryTargets.setSelectionInterval(0, jListSecondaryTargets.getModel().getSize() - 1);
 		}
 	}
 
@@ -1706,7 +1671,7 @@ public class MiningWindow extends JFrame
 			}
 			case MULTI_LABEL :
 			{
-				jLFieldTargetInfo.setText(String.valueOf(jListSecondaryTargets.getSelectedIndices().length));
+				jLFieldTargetInfo.setText(String.valueOf(itsTargetConcept.getMultiTargets().size()));
 				jLabelTargetInfo.setText(" binary targets");
 				break;
 			}
