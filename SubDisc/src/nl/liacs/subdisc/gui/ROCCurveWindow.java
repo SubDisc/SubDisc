@@ -22,7 +22,7 @@ public class ROCCurveWindow extends JFrame
 //		setIconImage(MiningWindow.ICON);
 		pack();
 		setLocation(100, 100);
-		setSize(400, 400);
+		setSize(GUI.WINDOW_DEFAULT_SIZE);
 		setVisible(true);
 	}
 

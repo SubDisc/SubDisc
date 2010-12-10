@@ -352,16 +352,17 @@ public class MiningWindow extends JFrame
 		});
 		jMenuFile.add(jMenuItemOpenFile);
 
-		jMenuItemOpenGeneRank.setFont(GUI.DEFAULT_TEXT_FONT);
-		jMenuItemOpenGeneRank.setText("Open Gene Rank");
-		jMenuItemOpenGeneRank.setMnemonic('G');
-		jMenuItemOpenGeneRank.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_G, InputEvent.CTRL_MASK));
-		jMenuItemOpenGeneRank.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent evt) {
-				jMenuItemOpenGeneRankActionPerformed(evt);
-			}
-		});
-		jMenuFile.add(jMenuItemOpenGeneRank);
+		//TODO enable when correctly implemented
+//		jMenuItemOpenGeneRank.setFont(GUI.DEFAULT_TEXT_FONT);
+//		jMenuItemOpenGeneRank.setText("Open Gene Rank");
+//		jMenuItemOpenGeneRank.setMnemonic('G');
+//		jMenuItemOpenGeneRank.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_G, InputEvent.CTRL_MASK));
+//		jMenuItemOpenGeneRank.addActionListener(new ActionListener() {
+//			public void actionPerformed(ActionEvent evt) {
+//				jMenuItemOpenGeneRankActionPerformed(evt);
+//			}
+//		});
+//		jMenuFile.add(jMenuItemOpenGeneRank);
 
 		jMenuItemBrowse.setFont(GUI.DEFAULT_TEXT_FONT);
 		jMenuItemBrowse.setText("Browse");
@@ -468,10 +469,10 @@ public class MiningWindow extends JFrame
 		jMiningWindowMenuBar.add(jMenuAbout);
 
 		// TODO for testing only
-		jMenuGui.setFont(GUI.DEFAULT_TEXT_FONT);
-		jMenuGui.setText("Gui");
-		jMenuGui.setMnemonic('G');
-		jMiningWindowMenuBar.add(jMenuGui);
+//		jMenuGui.setFont(GUI.DEFAULT_TEXT_FONT);
+//		jMenuGui.setText("Gui");
+//		jMenuGui.setMnemonic('G');
+//		jMiningWindowMenuBar.add(jMenuGui);
 
 		jPanelCenter.setLayout(new GridLayout(2, 2));
 
@@ -623,7 +624,7 @@ public class MiningWindow extends JFrame
 		jLabelMiscField = initJLabel("");
 		jPanelEvaluationLabels.add(jLabelMiscField);
 
-		jLabelSecondaryTargets = initJLabel(" secondary targets");
+		jLabelSecondaryTargets = initJLabel(" binary targets");
 		jPanelEvaluationLabels.add(jLabelSecondaryTargets);
 
 		jLabelTargetInfo = initJLabel("");;
@@ -668,7 +669,7 @@ public class MiningWindow extends JFrame
 		});
 		jPanelEvaluationFields.add(jComboBoxMiscField);
 
-		jButtonSecondaryTargets = initButton("Secondary Targets", 'T');
+		jButtonSecondaryTargets = initButton("Select Targets", 'T');
 		jButtonSecondaryTargets.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
 				jButtonSecondaryTargetsActionPerformed(evt);
@@ -1050,7 +1051,15 @@ public class MiningWindow extends JFrame
 			aTargetType == TargetType.MULTI_BINARY_CLASSIFICATION)
 			jLabelMiscField.setText(" target value");
 		else
-			jLabelMiscField.setText(" secondary target");
+		{
+			jLabelTargetInfo.setText(" # binary targets");
+			//TODO: this is a hack
+			int aCount = 0;
+			for (Column c: itsTable.getColumns())
+				if (c.getAttribute().isBinaryType() && c.getIsEnabled())
+					aCount++;
+			jLFieldTargetInfo.setText(String.valueOf(aCount));
+		}
 
 		// has secondary targets (JList)?
 		boolean hasSecondaryTargets = (aTargetType == TargetType.MULTI_LABEL ||
@@ -1156,7 +1165,7 @@ public class MiningWindow extends JFrame
 					aWindow = new ModelWindow(aPrimaryColumn, aSecondaryColumn,
 						aPrimaryTarget.getName(), aSecondaryTarget.getName(), anRM, null); //trendline, no subset
 					aWindow.setLocation(50, 50);
-					aWindow.setSize(700, 700);
+					aWindow.setSize(GUI.WINDOW_DEFAULT_SIZE);
 					aWindow.setVisible(true);
 					aWindow.setTitle("Base Model");
 					break;
@@ -1171,7 +1180,7 @@ public class MiningWindow extends JFrame
 					aWindow = new ModelWindow(aPrimaryColumn, aSecondaryColumn,
 						aPrimaryTarget.getName(), aSecondaryTarget.getName(), null, null); //no trendline, no subset
 					aWindow.setLocation(50, 50);
-					aWindow.setSize(700, 700);
+					aWindow.setSize(GUI.WINDOW_DEFAULT_SIZE);
 					aWindow.setVisible(true);
 					aWindow.setTitle("Base Model");
 					break;
@@ -1273,8 +1282,8 @@ public class MiningWindow extends JFrame
 					aResultWindow = new ResultWindow(aPreliminaryResults, itsSearchParameters, null, itsTable, aSubgroupDiscovery.getQualityMeasure(), itsTotalCount);
 				}
 			}
-			aResultWindow.setLocation(0, 0);
-			aResultWindow.setSize(1000, 800);
+			aResultWindow.setLocation(100, 100);
+			aResultWindow.setSize(GUI.WINDOW_DEFAULT_SIZE);
 			aResultWindow.setVisible(true);
 
 			long anEnd = System.currentTimeMillis();
@@ -1672,7 +1681,7 @@ public class MiningWindow extends JFrame
 			case MULTI_LABEL :
 			{
 				jLFieldTargetInfo.setText(String.valueOf(itsTargetConcept.getMultiTargets().size()));
-				jLabelTargetInfo.setText(" binary targets");
+				jLabelTargetInfo.setText(" # binary targets");
 				break;
 			}
 			case MULTI_BINARY_CLASSIFICATION :

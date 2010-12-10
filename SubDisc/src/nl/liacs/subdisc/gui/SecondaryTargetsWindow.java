@@ -59,7 +59,7 @@ public class SecondaryTargetsWindow extends JDialog implements ActionListener//,
 
 		// confirm and cancel buttons
 		JPanel aClosePanel = new JPanel();
-		aClosePanel.add(GUI.buildButton("Use Selected", 'U', "use", this));
+		aClosePanel.add(GUI.buildButton("OK", 'O', "ok", this));
 		aClosePanel.add(GUI.buildButton("Cancel", 'C', "close", this));
 		aButtonPanel.add(aClosePanel);
 
@@ -112,7 +112,7 @@ public class SecondaryTargetsWindow extends JDialog implements ActionListener//,
 			if (i < itsJListSize)
 				itsJList.addSelectionInterval(i, itsJListSize - 1);
 		}
-		else if ("use".equals(anAction))
+		else if ("ok".equals(anAction))
 		{
 			itsLastSelection = itsJList.getSelectedValues();
 			dispose();
@@ -176,5 +176,5 @@ public class SecondaryTargetsWindow extends JDialog implements ActionListener//,
 		//update GUI
 		initTargetInfo();
 	}
-*/	
+*/
 }

@@ -159,7 +159,7 @@ public class ResultWindow extends JFrame
 		});
 		aSubgroupPanel.add(jButtonDumpPatterns);
 
-		jButtonPostprocess = initButton("Repeated modeling", 'M');
+		jButtonPostprocess = initButton("Post-process", 'O');
 		jButtonPostprocess.addActionListener(new java.awt.event.ActionListener() {
 			public void actionPerformed(java.awt.event.ActionEvent evt) {
 				jButtonPostprocessActionPerformed();
@@ -168,7 +168,7 @@ public class ResultWindow extends JFrame
 		aSubgroupPanel.add(jButtonPostprocess);
 		jButtonPostprocess.setVisible(itsSearchParameters.getTargetType() == TargetType.MULTI_LABEL);
 
-		jButtonPValues = initButton("Compute p-values", 'P');
+		jButtonPValues = initButton("Compute p-Values", 'P');
 		jButtonPValues.addActionListener(new java.awt.event.ActionListener() {
 			public void actionPerformed(java.awt.event.ActionEvent evt) {
 				jButtonPValuesActionPerformed();
@@ -176,7 +176,7 @@ public class ResultWindow extends JFrame
 		});
 		aSubgroupPanel.add(jButtonPValues);
 
-		jButtonRegressionTest = initButton("Regression test", 'R');
+		jButtonRegressionTest = initButton("Regression Test", 'R');
 		jButtonRegressionTest.addActionListener(new java.awt.event.ActionListener() {
 			public void actionPerformed(java.awt.event.ActionEvent evt) {
 				jButtonRegressionTestActionPerformed();
@@ -249,7 +249,7 @@ public class ResultWindow extends JFrame
 						ModelWindow aWindow = new ModelWindow(aPrimaryColumn, aSecondaryColumn,
 							aPrimaryTarget.getName(), aSecondaryTarget.getName(), null, aSubgroup); //no trendline
 						aWindow.setLocation(50, 50);
-						aWindow.setSize(700, 700);
+						aWindow.setSize(GUI.WINDOW_DEFAULT_SIZE);
 						aWindow.setVisible(true);
 						aWindow.setTitle("Subgroup " + (aCount+1));
 						break;
@@ -340,7 +340,7 @@ public class ResultWindow extends JFrame
 
 		Log.toUniqueFile("patterns", aStringBuffer.toString());
 	}
-	
+
 	private void jButtonPostprocessActionPerformed()
 	{
 		String inputValue = JOptionPane.showInputDialog("# DAGs fitted to each subgroup.");

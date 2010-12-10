@@ -20,7 +20,7 @@ public class GUI
 	public static final Font DEFAULT_TEXT_FONT = new Font ("Dialog", 0, 10);
 	public static final Font DEFAULT_BUTTON_FONT = new Font ("Dialog", 1, 11);
 	public static final Dimension TEXT_FIELD_DEFAULT_SIZE = new Dimension (86, 22);
-	public static final Dimension WINDOW_DEFAULT_SIZE = new Dimension (750, 700);
+	public static final Dimension WINDOW_DEFAULT_SIZE = new Dimension (1000, 600);
 	// button
 	public static final Dimension BUTTON_DEFAULT_SIZE = new Dimension(120, 25);
 	public static final Dimension BUTTON_MINIMUM_SIZE = new Dimension(82, 25);
@@ -64,7 +64,7 @@ public class GUI
 		aButton.addActionListener(theClass);
 		return aButton;
 	}
-	
+
 	public static JCheckBox buildCheckBox(String theName, ItemListener theClass)
 	{
 		JCheckBox aCheckBox = new JCheckBox(theName);
