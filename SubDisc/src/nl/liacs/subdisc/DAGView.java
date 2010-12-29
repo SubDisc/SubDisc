@@ -33,8 +33,8 @@ public class DAGView extends JPanel implements Serializable, MouseListener
 		super();
 		itsDAG = theDAG;
 		itsDAGSize = itsDAG.getSize();
-//		itsRandom = new Random((long) System.currentTimeMillis()); // truely random
-		itsRandom = new Random(12345); // random, but always the same
+		itsRandom = new Random((long) System.currentTimeMillis()); // truly random
+//		itsRandom = new Random(12345); // random, but always the same
 		propertySupport = new PropertyChangeSupport(this);
 		setBackground(Color.white);
 		addMouseListener(this);

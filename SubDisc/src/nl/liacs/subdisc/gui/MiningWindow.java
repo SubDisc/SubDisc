@@ -1053,12 +1053,13 @@ public class MiningWindow extends JFrame
 		else
 		{
 			jLabelTargetInfo.setText(" # binary targets");
+
 			//TODO: this is a hack
-			int aCount = 0;
-			for (Column c: itsTable.getColumns())
-				if (c.getAttribute().isBinaryType() && c.getIsEnabled())
-					aCount++;
-			jLFieldTargetInfo.setText(String.valueOf(aCount));
+//			int aCount = 0;
+//			for (Column c: itsTable.getColumns())
+//				if (c.getAttribute().isBinaryType() && c.getIsEnabled())
+//					aCount++;
+//			jLFieldTargetInfo.setText(String.valueOf(aCount));
 		}
 
 		// has secondary targets (JList)?
@@ -1612,11 +1613,18 @@ public class MiningWindow extends JFrame
 			 */
 			((DefaultListModel) jListSecondaryTargets.getModel()).clear();
 
+			int aCount = 0;
+			ArrayList<Attribute> aList = new ArrayList<Attribute>();
 			for (Column c: itsTable.getColumns())
 				if (c.getAttribute().isBinaryType() && c.getIsEnabled())
+				{
 					addSecondaryTargetsItem(c.getName());
-
+					aList.add(c.getAttribute());
+					aCount++;
+				}
+			itsTargetConcept.setMultiTargets(aList);
 			jListSecondaryTargets.setSelectionInterval(0, jListSecondaryTargets.getModel().getSize() - 1);
+			jLFieldTargetInfo.setText(String.valueOf(aCount));
 		}
 	}
 

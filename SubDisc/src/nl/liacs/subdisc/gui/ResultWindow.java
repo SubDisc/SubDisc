@@ -176,7 +176,7 @@ public class ResultWindow extends JFrame
 		});
 		aSubgroupPanel.add(jButtonPValues);
 
-		jButtonRegressionTest = initButton("Regression Test", 'R');
+		jButtonRegressionTest = initButton("Regression Test", 'T');
 		jButtonRegressionTest.addActionListener(new java.awt.event.ActionListener() {
 			public void actionPerformed(java.awt.event.ActionEvent evt) {
 				jButtonRegressionTestActionPerformed();

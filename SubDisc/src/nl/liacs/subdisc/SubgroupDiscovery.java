@@ -19,6 +19,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 	private CorrelationMeasure itsBaseCM;	//DOUBLE_CORRELATION
 	private RegressionMeasure itsBaseRM;	//DOUBLE_REGRESSION
 	private BinaryTable itsBinaryTable;	//MULTI_LABEL
+	private String[] itsTargets;	//MULTI_LABEL
 //	private DAG itsBaseDAG;				//MULTI_LABEL
 
 	//SINGLE_NOMINAL
@@ -83,8 +84,12 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		itsMaximumCoverage = itsTable.getNrRows();
 
 		//compute base model
-		itsBinaryTable = new BinaryTable(itsTable, itsSearchParameters.getTargetConcept().getMultiTargets());
-		Bayesian aBayesian = new Bayesian(itsBinaryTable);
+		ArrayList<Attribute> anAttributes = itsSearchParameters.getTargetConcept().getMultiTargets();
+		itsBinaryTable = new BinaryTable(itsTable, anAttributes);
+		itsTargets = new String[anAttributes.size()];
+		for (int i=0; i<anAttributes.size(); i++)
+			itsTargets[i] = anAttributes.get(i).getName();
+		Bayesian aBayesian = new Bayesian(itsBinaryTable, itsTargets);
 		aBayesian.climb();
 		//TODO fix alpha, beta
 		itsQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(),
@@ -343,7 +348,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 	private float weightedEntropyEditDistance(Subgroup theSubgroup)
 	{
 		BinaryTable aBinaryTable = itsBinaryTable.selectRows(theSubgroup.getMembers());
-		Bayesian aBayesian = new Bayesian(aBinaryTable);
+		Bayesian aBayesian = new Bayesian(aBinaryTable, itsTargets);
 		aBayesian.climb(); //induce DAG
 		DAG aDAG = aBayesian.getDAG();
 		theSubgroup.setDAG(aDAG); //store DAG with subgroup for later use
