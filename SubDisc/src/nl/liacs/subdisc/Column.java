@@ -38,7 +38,7 @@ public class Column implements XMLNodeInterface
 	private static final String trueInteger = "[-+]?\\d+(\\.0+)?";
 
 	/**
-	 * 
+	 *
 	 * @param theAttribute
 	 */
 	public Column(Attribute theAttribute)
@@ -48,7 +48,7 @@ public class Column implements XMLNodeInterface
 	}
 
 	/**
-	 * 
+	 *
 	 * @param theAttribute
 	 */
 
@@ -59,7 +59,7 @@ public class Column implements XMLNodeInterface
 	}
 
 	/**
-	 * 
+	 *
 	 * @param theColumnNode
 	 */
 	public Column(Node theColumnNode)
@@ -172,6 +172,42 @@ public class Column implements XMLNodeInterface
 				if (aValue < itsMin)
 					itsMin = aValue;
 			}
+	}
+
+	public void permute(int[] thePermutation)
+	{
+		int n = thePermutation.length;
+		switch (itsAttribute.getType())
+		{
+			case NOMINAL :
+				ArrayList<String> aNominals = new ArrayList<String>(n);
+				for (int i=0; i<n; i++)
+				{
+					String aValue = itsNominals.get(thePermutation[i]);
+					aNominals.add(aValue);
+				}
+				itsNominals = aNominals;
+				break;
+			case NUMERIC :
+			case ORDINAL :
+				ArrayList<Float> aFloats = new ArrayList<Float>(n);
+				for (int i=0; i<n; i++)
+				{
+					Float aValue = itsFloats.get(thePermutation[i]);
+					aFloats.add(aValue);
+				}
+				itsFloats = aFloats;
+				break;
+			case BINARY :
+				BitSet aBinaries = new BitSet(n);
+				for (int i=0; i<n; i++)
+				{
+					boolean aValue = itsBinaries.get(thePermutation[i]);
+					aBinaries.set(i, aValue);
+				}
+				itsBinaries = aBinaries;
+				break;
+		}
 	}
 
 	public void print()
@@ -333,11 +369,11 @@ public class Column implements XMLNodeInterface
 				{
 					itsMissingValue = theNewType.DEFAULT_MISSING_VALUE;
 					// check could be done in for-loop above
-					itsMissingValueIsUnique = !itsFloats.contains(Float.valueOf(itsMissingValue)); 
+					itsMissingValueIsUnique = !itsFloats.contains(Float.valueOf(itsMissingValue));
 				}
 				/*
 				 * else old ArrayList<?> contained only valid Floats, also for
-				 * missing values, we a Float version of itsMissingValue 
+				 * missing values, we a Float version of itsMissingValue
 				 */
 				else
 					itsMissingValue = Float.valueOf(itsMissingValue).toString();
@@ -367,7 +403,7 @@ public class Column implements XMLNodeInterface
 	}
 
 	/*
-	 * If there are only two distinct values for a Column with a 
+	 * If there are only two distinct values for a Column with a
 	 * NUMERIC/ORDINAL/NOMINAL AttributeType, its type can be changed to BINARY.
 	 * If the values in the old Column evaluate to 'true' for
 	 * (AttributeType.isValidBinaryTrueValue(itsMissingValue) ||

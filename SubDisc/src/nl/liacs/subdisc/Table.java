@@ -14,7 +14,6 @@ public class Table
 	private String itsName;
 	private int itsNrRows;
 	private int itsNrColumns;
-//	private ArrayList<Attribute> itsAttributes = new ArrayList<Attribute>();
 	private ArrayList<Column> itsColumns = new ArrayList<Column>();
 	private Random itsRandomNumber = new Random(System.currentTimeMillis());
 
@@ -25,13 +24,10 @@ public class Table
 	public int getNrRows() { return itsNrRows; }
 	public int getNrColumns() { return itsNrColumns; } //just the descriptors
 
-//	public String getSeparator() { return itsSeparator; }
-//	public Attribute getAttribute(int i) { return itsAttributes.get(i); }
 	public Attribute getAttribute(int i) { return itsColumns.get(i).getAttribute(); }
 	public Column getColumn(Attribute theAttribute) { return itsColumns.get(theAttribute.getIndex()); }
 	public Column getColumn(int theIndex) { return itsColumns.get(theIndex); }
 
-//	public ArrayList<Attribute> getAttributes() { return itsAttributes; };
 	public ArrayList<Column> getColumns() { return itsColumns; };
 
 	// TODO some constructors and builder functions, may change
@@ -49,7 +45,6 @@ public class Table
 		itsName = FileType.removeExtension(theSource);
 		itsNrRows = theNrRows;
 		itsNrColumns = theNrColumns;
-//		itsAttributes.ensureCapacity(theNrColumns);
 		itsColumns.ensureCapacity(theNrColumns);
 	}
 
@@ -464,7 +459,7 @@ public class Table
 			((Element)aNode.getLastChild()).setAttribute("nr", String.valueOf(i));
 		}
 	}
-	
+
 	public Table project(BitSet theBitSet)
 	{
 		Table aTable = this;
@@ -473,7 +468,7 @@ public class Table
 		{
 			Column aNewColumn = new Column(c.getAttribute(), theBitSet.cardinality());
 			int j=0;
-			
+
 			if (c.isNominalType())
 				for (int i=0; i<c.size(); i++)
 					if (theBitSet.get(i))
@@ -508,4 +503,48 @@ public class Table
 		return aTable;
 	}
 
+	public void swapRandomizeTarget(TargetConcept theTC)
+	{
+		ArrayList<Attribute> aTargets = new ArrayList<Attribute>(2);
+
+		//find all targets
+		switch (theTC.getTargetType())
+		{
+			case DOUBLE_REGRESSION:
+			case DOUBLE_CORRELATION:
+				aTargets.add(theTC.getSecondaryTarget());
+				//no break
+			case SINGLE_NOMINAL:
+			case SINGLE_NUMERIC:
+				aTargets.add(theTC.getPrimaryTarget());
+				break;
+			case MULTI_LABEL:
+				aTargets = theTC.getMultiTargets();
+		}
+
+		int n = getNrRows();
+		//start with regular order
+		int[] aPermutation = new int[n];
+		for (int i=0; i<n; i++)
+			aPermutation[i] = i;
+
+		//randomize
+		for (int i=0; i<n-1; i++)
+		{
+			int aFirst = i;
+			int aSecond = i+itsRandomNumber.nextInt(n-i);
+
+			//swap first and second
+			int aSwap = aPermutation[aFirst];
+			aPermutation[aFirst] = aPermutation[aSecond];
+			aPermutation[aSecond] = aSwap;
+		}
+
+		//execute permutation on all targets
+		for (Attribute anAttribute : aTargets)
+		{
+			Log.logCommandLine("permuting " + anAttribute.getName());
+			getColumn(anAttribute).permute(aPermutation);
+		}
+	}
 }

@@ -272,6 +272,7 @@ public class MiningWindow extends JFrame
 		jPanelRuleTargetButtons = new JPanel();
 		jButtonBrowse = new JButton();
 		jButtonMetaData = new JButton();
+		jButtonSwapRandomize = new JButton();
 
 		// target concept
 		jPanelRuleEvaluation = new JPanel();
@@ -834,6 +835,14 @@ public class MiningWindow extends JFrame
 		});
 		jPanelMineButtons.add(jButtonSubgroupDiscovery);
 
+		jButtonSwapRandomize = initButton("Swap Randomize", 'R');
+		jButtonSwapRandomize.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				swapRandomizeActionPerformed(evt);
+			}
+		});
+		jPanelMineButtons.add(jButtonSwapRandomize);
+
 		jButtonRandomSubgroups = initButton("Random Subgroups", 'R');
 		jButtonRandomSubgroups.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
@@ -870,6 +879,7 @@ public class MiningWindow extends JFrame
 									jMenuItemAddToAutoRunFile,
 									jButtonBrowse,
 									jButtonMetaData,
+									jButtonSwapRandomize,
 									//jButtonDataExplorer,	//TODO add when implemented
 									jButtonSubgroupDiscovery,
 									jButtonRandomSubgroups,
@@ -994,6 +1004,12 @@ public class MiningWindow extends JFrame
 				new MetaDataWindow(masterWindow, itsTable);
 			}
 		});
+	}
+
+	private void swapRandomizeActionPerformed(ActionEvent evt)
+	{
+		itsTable.swapRandomizeTarget(itsTargetConcept);
+		JOptionPane.showMessageDialog(null, "Target column(s) have been swap-randomized.");
 	}
 
 	private void jComboBoxSearchStrategyTypeActionPerformed(ActionEvent evt)
@@ -1816,6 +1832,7 @@ public class MiningWindow extends JFrame
 	private JPanel jPanelMineButtons;
 	private JButton jButtonBrowse;
 	private JButton jButtonMetaData;
+	private JButton jButtonSwapRandomize;
 //	private JButton jButtonDataExplorer;
 	private JButton jButtonSubgroupDiscovery;
 	private JButton jButtonRandomSubgroups;
@@ -1901,7 +1918,7 @@ public class MiningWindow extends JFrame
 	}
 
 	// TODO include accelerator
-	private enum Mnomic
+	private enum Mnemonic
 	{
 		FILE('F'),	// (no accelerator)
 		OPEN_FILE('O'),
@@ -1920,8 +1937,8 @@ public class MiningWindow extends JFrame
 		RANDOM_SUBGROUPS('R'),
 		RANDOM_CONDITIONS('C');	// 2x (no accelerator)
 
-		final int mnomic;
-		private Mnomic(int theMnomic) { mnomic = theMnomic; }
+		final int mnemonic;
+		private Mnemonic(int theMnemonic) { mnemonic = theMnemonic; }
 	}
 
 	private static JLabel initJLabel(String theName)
