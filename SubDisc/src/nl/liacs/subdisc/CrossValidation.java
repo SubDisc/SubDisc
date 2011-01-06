@@ -3,25 +3,32 @@ package nl.liacs.subdisc;
 import java.util.Random;
 import java.util.BitSet;
 
-public class CrossValidation{
+public class CrossValidation
+{
 	private int itsSize;
+	private int itsK;
 	private static Random itsRandom;
-	
-	public CrossValidation(int theSize)
+	private int[] itsSets;
+
+	public CrossValidation(int theSize, int theK)
 	{
 		itsSize = theSize;
+		itsK = theK;
 		itsRandom = new Random(System.currentTimeMillis());
+		createTestSets();
 	}
-	
-	// returns a random permutation of the integers [1,...,itsSize]. To be used for cross-validation.
+
+	/**
+	* returns a random permutation of the integers [1,...,itsSize]. To be used for cross-validation.
+	*/
 	public int[] getRandomPermutation()
 	{
 		int[] result = new int[itsSize];
-		
+
 		// initialize result array to be [1,2,...,itsSize]
 		for (int i=0; i<itsSize; i++)
 			result[i] = i+1;
-		
+
 		// Knuth shuffle
 		// notice i>1 in for-loop; for i=1 we will always swap the first element with itself, hence we can skip this step
 		for (int i=itsSize; i>1; i--)
@@ -31,41 +38,48 @@ public class CrossValidation{
 			result[aSwitchIndex] = result[i-1];
 			result[i-1] = aTemp;
 		}
-		
+
 		return result;
 	}
-	
-	// generates k test sets for cross-validation
-	public BitSet[] getKTestSets(int theK)
+
+	/**
+	* Generates k test sets for cross-validation. Used by constructor, but can also be used to recompute random testsets.
+	*/
+	public void createTestSets()
 	{
 		// generate the random permutation on basis of which the k test sets will be filled
 		int[] aRandomPermutation = getRandomPermutation();
-		
-		// initialize the test sets as k empty BitSets in an array
-		BitSet[] aResult = new BitSet[theK];
-		for (int i=0; i<theK; i++)
-			aResult[i] = new BitSet(itsSize);
-		
-		// fill the test sets by looping over the BitSets and setting the bit corresponding to the next element of the random permutation
+		itsSets = new int[itsSize];
+
 		for (int i=0; i<itsSize; i++)
-			aResult[i % theK].set(aRandomPermutation[i]-1);
-		
-		return aResult;
+			itsSets[aRandomPermutation[i]-1] = i % itsK;
 	}
-	
-	// given k test sets, generates the corresponding training sets
-	public BitSet[] getKTrainingSets(int theK, BitSet[] theTestSets)
+
+	public boolean isInTestSet(int theIndex, int theTestSet)
 	{
-		// initialize result
-		BitSet[] aResult = new BitSet[theK];
-		
-		// clone and logical NOT on the test sets
-		for (int i=0; i<theK; i++)
+		return (itsSets[theIndex] == theTestSet);
+	}
+
+	public int getTestSetNumber(int theIndex)
+	{
+		return itsSets[theIndex];
+	}
+
+	/**
+	* Produces a BitSet based on the different folds computed.
+	* @param theInvert determines whether you want the (small) testset (false), or the inverse (large) trainingset (true).
+	* Typical value in Cortana is "false".
+	*/
+	public BitSet getSet(int theTestSet, boolean theInvert)
+	{
+		BitSet aResult = new BitSet(itsSize);
+
+		for (int i=0; i<itsSize; i++)
 		{
-			aResult[i] = (BitSet) theTestSets[i].clone();
-			aResult[i].flip(0,itsSize);
+			boolean aWithin = ((isInTestSet(i, theTestSet)) != theInvert);
+			aResult.set(i, aWithin);
 		}
-		
+
 		return aResult;
 	}
 }

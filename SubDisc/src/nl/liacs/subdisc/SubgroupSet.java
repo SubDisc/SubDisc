@@ -68,7 +68,7 @@ public class SubgroupSet extends TreeSet<Subgroup>
 		if (itsBinaryTarget == null)
 		{
 			itsTotalTargetCoverage = -1.0f;
-			Log.logCommandLine("SubgroupSet constructor() ERROR");	// TODO
+			Log.logCommandLine("SubgroupSet constructor() ERROR");	// TODO this gives an error when running SINGLE_NUMERIC
 		}
 		else
 			itsTotalTargetCoverage = (float)theBinaryTarget.cardinality();
@@ -93,7 +93,7 @@ public class SubgroupSet extends TreeSet<Subgroup>
 			boolean aResult = super.add(theSubgroup);
 			if ((itsMaximumSize > 0) && (size() > itsMaximumSize))
 				remove(last());
-	
+
 			return aResult;
 		}
 	}
@@ -127,7 +127,7 @@ public class SubgroupSet extends TreeSet<Subgroup>
 	 * {@link nl.liacs.subdisc.Attribute.AttributeType AttributeType} of the
 	 * PrimaryTarget in the {@link TargetConcept TargetConcept} is of type
 	 * AttributeType.NOMINAL.
-	 * 
+	 *
 	 * @return a clone of this SubgroupSets' BinaryTarget <code>BitSet</code>,
 	 * or <code>null</code> if this SubgroupSet has no BinaryTarget
 	 * <code>BitSet</code>.
@@ -149,7 +149,7 @@ public class SubgroupSet extends TreeSet<Subgroup>
 	 * the {@link nl.liacs.subdisc.Attribute.AttributeType AttributeType} of the
 	 * PrimaryTarget in the {@link TargetConcept TargetConcept} is of type
 	 * AttributeType.NOMINAL.
-	 * 
+	 *
 	 * @return a ROCList, or <code>null</code> if not in a nominal target
 	 * setting.
 	 */

@@ -273,6 +273,7 @@ public class MiningWindow extends JFrame
 		jButtonBrowse = new JButton();
 		jButtonMetaData = new JButton();
 		jButtonSwapRandomize = new JButton();
+		jButtonCrossValidate = new JButton();
 
 		// target concept
 		jPanelRuleEvaluation = new JPanel();
@@ -843,6 +844,14 @@ public class MiningWindow extends JFrame
 		});
 		jPanelMineButtons.add(jButtonSwapRandomize);
 
+		jButtonCrossValidate = initButton("Cross-Validate", 'V');
+		jButtonCrossValidate.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				crossValidateActionPerformed(evt);
+			}
+		});
+		jPanelMineButtons.add(jButtonCrossValidate);
+
 		jButtonRandomSubgroups = initButton("Random Subgroups", 'R');
 		jButtonRandomSubgroups.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
@@ -880,6 +889,7 @@ public class MiningWindow extends JFrame
 									jButtonBrowse,
 									jButtonMetaData,
 									jButtonSwapRandomize,
+									jButtonCrossValidate,
 									//jButtonDataExplorer,	//TODO add when implemented
 									jButtonSubgroupDiscovery,
 									jButtonRandomSubgroups,
@@ -1010,6 +1020,20 @@ public class MiningWindow extends JFrame
 	{
 		itsTable.swapRandomizeTarget(itsTargetConcept);
 		JOptionPane.showMessageDialog(null, "Target column(s) have been swap-randomized.");
+	}
+
+	private void crossValidateActionPerformed(ActionEvent evt)
+	{
+		int aK = 10; //TODO set k from GUI
+		CrossValidation aCV = new CrossValidation(itsTable.getNrRows(), aK);
+		for (int i=0; i<aK; i++)
+		{
+			BitSet aSet = aCV.getSet(i, true);
+			Log.logCommandLine("size: " + aSet.cardinality());
+			Table aTable = itsTable.select(aSet);
+
+			runSubgroupDiscovery(aTable);
+		}
 	}
 
 	private void jComboBoxSearchStrategyTypeActionPerformed(ActionEvent evt)
@@ -1237,7 +1261,8 @@ public class MiningWindow extends JFrame
 	}
 
 	/* MINING BUTTONS */
-	private void jButtonSubgroupDiscoveryActionPerformed(ActionEvent evt)
+
+	private void runSubgroupDiscovery(Table aTable)
 	{
 		try
 		{
@@ -1251,32 +1276,40 @@ public class MiningWindow extends JFrame
 			long aBegin = System.currentTimeMillis();
 
 			SubgroupDiscovery aSubgroupDiscovery;
+			String aTarget = getTargetAttributeName();
+
 			switch(itsTargetConcept.getTargetType())
 			{
 				case SINGLE_NOMINAL :
 				{
-					aSubgroupDiscovery = new SubgroupDiscovery(itsSearchParameters, itsTable, itsPositiveCount);
+					//recompute this number, as we may be dealing with cross-validation here, and hence a smaller number
+					itsPositiveCount = aTable.countValues(aTable.getIndex(aTarget), getMiscFieldName());
+					Log.logCommandLine("positive count: " + itsPositiveCount);
+					aSubgroupDiscovery = new SubgroupDiscovery(itsSearchParameters, aTable, itsPositiveCount);
 					break;
 				}
 
 				case SINGLE_NUMERIC:
 				{
-					aSubgroupDiscovery = new SubgroupDiscovery(itsSearchParameters, itsTable, itsTargetAverage);
+					//recompute this number, as we may be dealing with cross-validation here, and hence a different value
+					itsTargetAverage = itsTable.getAverage(itsTable.getIndex(aTarget));
+					Log.logCommandLine("average: " + itsTargetAverage);
+					aSubgroupDiscovery = new SubgroupDiscovery(itsSearchParameters, aTable, itsTargetAverage);
 					break;
 				}
 				case MULTI_LABEL :
 				{
-					aSubgroupDiscovery = new SubgroupDiscovery(itsSearchParameters, itsTable);
+					aSubgroupDiscovery = new SubgroupDiscovery(itsSearchParameters, aTable);
 					break;
 				}
 				case DOUBLE_REGRESSION :
 				{
-					aSubgroupDiscovery = new SubgroupDiscovery(itsSearchParameters, itsTable, true);
+					aSubgroupDiscovery = new SubgroupDiscovery(itsSearchParameters, aTable, true);
 					break;
 				}
 				case DOUBLE_CORRELATION :
 				{
-					aSubgroupDiscovery = new SubgroupDiscovery(itsSearchParameters, itsTable, false);
+					aSubgroupDiscovery = new SubgroupDiscovery(itsSearchParameters, aTable, false);
 					break;
 				}
 				default : return; // TODO should never get here, throw warning
@@ -1290,13 +1323,13 @@ public class MiningWindow extends JFrame
 			{
 				case MULTI_LABEL :
 				{
-					BinaryTable aBinaryTable = new BinaryTable(itsTable, itsTargetConcept.getMultiTargets());
+					BinaryTable aBinaryTable = new BinaryTable(aTable, itsTargetConcept.getMultiTargets());
 					aResultWindow = new ResultWindow(aPreliminaryResults, itsSearchParameters, null, itsTable, aBinaryTable, aSubgroupDiscovery.getQualityMeasure(), itsTotalCount);
 					break;
 				}
 				default :
 				{
-					aResultWindow = new ResultWindow(aPreliminaryResults, itsSearchParameters, null, itsTable, aSubgroupDiscovery.getQualityMeasure(), itsTotalCount);
+					aResultWindow = new ResultWindow(aPreliminaryResults, itsSearchParameters, null, aTable, aSubgroupDiscovery.getQualityMeasure(), itsTotalCount);
 				}
 			}
 			aResultWindow.setLocation(100, 100);
@@ -1316,6 +1349,12 @@ public class MiningWindow extends JFrame
 			aWindow.setLocation(200, 200);
 			aWindow.setVisible(true);
 		}
+
+	}
+
+	private void jButtonSubgroupDiscoveryActionPerformed(ActionEvent evt)
+	{
+		runSubgroupDiscovery(itsTable);
 	}
 
 	private void jButtonRandomSubgroupsActionPerformed(ActionEvent evt)
@@ -1833,6 +1872,7 @@ public class MiningWindow extends JFrame
 	private JButton jButtonBrowse;
 	private JButton jButtonMetaData;
 	private JButton jButtonSwapRandomize;
+	private JButton jButtonCrossValidate;
 //	private JButton jButtonDataExplorer;
 	private JButton jButtonSubgroupDiscovery;
 	private JButton jButtonRandomSubgroups;

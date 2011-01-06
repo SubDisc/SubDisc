@@ -31,6 +31,13 @@ public class Table
 	public ArrayList<Column> getColumns() { return itsColumns; };
 
 	// TODO some constructors and builder functions, may change
+
+	// Empty table, meant for creating a copy with a subset of data. See select().
+	public Table(String theTableName)
+	{
+		itsName = theTableName;
+	}
+
 	// FileLoaderARFF
 	public Table(File theSource, String theTableName)
 	{
@@ -399,31 +406,7 @@ public class Table
 		aSubgroup.setMembers(aSample);
 		return aSubgroup;
 	}
-/*
-	public void print()
-	{
-		Log.logCommandLine("Types ===========================================");
-		for (Attribute anAttribute : itsAttributes)
-			anAttribute.print();
-		Log.logCommandLine("Table ===========================================");
-		for (int i = 0; i < itsNrRows; i++)
-		{
-			String aRow = "Row "+(i+1)+": ";
-			for (int j=0; j<itsNrColumns; j++)
-			{
-				Column aColumn = itsColumns.get(j);
 
-				String aValue = aColumn.getString(i);
-				aRow += aValue;
-				if (j<itsNrColumns-1)
-					aRow += ", ";
-			}
-			Log.logCommandLine(aRow);
-		}
-		Log.logCommandLine("=================================================");
-	}
-*/
-	// also works before Table.update()
 	public void print()
 	{
 		Log.logCommandLine("Types ===========================================");
@@ -501,6 +484,23 @@ public class Table
 		}
 		aTable.itsColumns = aColumns;
 		return aTable;
+	}
+
+	public Table select(BitSet theSet)
+	{
+		Table aResult = new Table(itsName);
+		aResult.itsSource = itsSource;
+		aResult.itsNrColumns = itsNrColumns;
+		aResult.itsNrRows = theSet.cardinality();
+
+		//copy each column, while leaving out some of the data
+		for (Column aColumn : itsColumns)
+		{
+			Column aNewColumn = aColumn.select(theSet);
+			aResult.itsColumns.add(aNewColumn);
+		}
+
+		return aResult;
 	}
 
 	public void swapRandomizeTarget(TargetConcept theTC)

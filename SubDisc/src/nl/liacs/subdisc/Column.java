@@ -58,6 +58,51 @@ public class Column implements XMLNodeInterface
 		setupColumn(theNrRows);
 	}
 
+
+	/** Creates a copy of the current column with some records removed.
+	*/
+	public Column select(BitSet theSet)
+	{
+		Column aColumn = new Column(itsAttribute, itsSize);
+		aColumn.itsSize = theSet.cardinality();
+
+		switch(itsAttribute.getType())
+		{
+			case NOMINAL :
+			{
+				aColumn.itsNominals = new ArrayList<String>(itsSize);
+				for (int i=0; i<itsSize; i++)
+					if (theSet.get(i))
+						aColumn.itsNominals.add(getNominal(i));
+				break;
+			}
+			case NUMERIC :
+			case ORDINAL :
+			{
+				aColumn.itsFloats = new ArrayList<Float>(itsSize);
+				for (int i=0; i<itsSize; i++)
+					if (theSet.get(i))
+						aColumn.itsFloats.add(getFloat(i));
+				break;
+			}
+			case BINARY :
+			{
+				aColumn.itsBinaries = new BitSet(itsSize);
+				int aCount = 0;
+				for (int i=0; i<itsSize; i++)
+				{
+					if (theSet.get(i))
+					{
+						aColumn.itsBinaries.set(aCount, getBinary(i));
+						aCount++;
+					}
+				}
+				break;
+			}
+		}
+		return aColumn;
+	}
+
 	/**
 	 *
 	 * @param theColumnNode
@@ -163,8 +208,8 @@ public class Column implements XMLNodeInterface
 
 	private void updateMinMax()
 	{
-		if(itsMax == Float.NEGATIVE_INFINITY) //never computed?
-			for(int i=0; i<itsSize; i++)
+		if (itsMax == Float.NEGATIVE_INFINITY) //never computed yet?
+			for (int i=0; i<itsSize; i++)
 			{
 				float aValue = getFloat(i);
 				if (aValue > itsMax)
