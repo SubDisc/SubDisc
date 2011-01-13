@@ -100,7 +100,7 @@ public class QualityMeasure
 
 //	public void setTotalTargetCoverage(int theCount) { itsTotalTargetCoverage = theCount; }
 
-	public static int getFirstEvaluationMesure(TargetType theTargetType)
+	public static int getFirstEvaluationMeasure(TargetType theTargetType)
 	{
 		if(theTargetType == null)
 			return NOVELTY;	// MM TODO for now

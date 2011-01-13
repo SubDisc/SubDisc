@@ -1032,7 +1032,7 @@ public class MiningWindow extends JFrame
 			Log.logCommandLine("size: " + aSet.cardinality());
 			Table aTable = itsTable.select(aSet);
 
-			runSubgroupDiscovery(aTable);
+			runSubgroupDiscovery(aTable, (i+1), aSet);
 		}
 	}
 
@@ -1262,7 +1262,7 @@ public class MiningWindow extends JFrame
 
 	/* MINING BUTTONS */
 
-	private void runSubgroupDiscovery(Table aTable)
+	private void runSubgroupDiscovery(Table aTable, int theFold, BitSet theBitSet)
 	{
 		try
 		{
@@ -1324,12 +1324,12 @@ public class MiningWindow extends JFrame
 				case MULTI_LABEL :
 				{
 					BinaryTable aBinaryTable = new BinaryTable(aTable, itsTargetConcept.getMultiTargets());
-					aResultWindow = new ResultWindow(aPreliminaryResults, itsSearchParameters, null, itsTable, aBinaryTable, aSubgroupDiscovery.getQualityMeasure(), itsTotalCount);
+					aResultWindow = new ResultWindow(aPreliminaryResults, itsSearchParameters, null, itsTable, aBinaryTable, aSubgroupDiscovery.getQualityMeasure(), itsTotalCount, theFold, theBitSet);
 					break;
 				}
 				default :
 				{
-					aResultWindow = new ResultWindow(aPreliminaryResults, itsSearchParameters, null, aTable, aSubgroupDiscovery.getQualityMeasure(), itsTotalCount);
+					aResultWindow = new ResultWindow(aPreliminaryResults, itsSearchParameters, null, aTable, aSubgroupDiscovery.getQualityMeasure(), itsTotalCount, theFold, theBitSet);
 				}
 			}
 			aResultWindow.setLocation(100, 100);
@@ -1354,7 +1354,9 @@ public class MiningWindow extends JFrame
 
 	private void jButtonSubgroupDiscoveryActionPerformed(ActionEvent evt)
 	{
-		runSubgroupDiscovery(itsTable);
+		BitSet aBitSet = new BitSet(itsTable.getNrRows());
+		aBitSet.set(0,itsTable.getNrRows());
+		runSubgroupDiscovery(itsTable, 0, aBitSet);
 	}
 
 	private void jButtonRandomSubgroupsActionPerformed(ActionEvent evt)
@@ -1763,7 +1765,7 @@ public class MiningWindow extends JFrame
 		removeAllQualityMeasureItems();
 		TargetType aTargetType = itsTargetConcept.getTargetType();
 
-		for (int i = QualityMeasure.getFirstEvaluationMesure(aTargetType); i <= QualityMeasure.getLastEvaluationMesure(aTargetType); i++)
+		for (int i = QualityMeasure.getFirstEvaluationMeasure(aTargetType); i <= QualityMeasure.getLastEvaluationMesure(aTargetType); i++)
 			addQualityMeasureItem(QualityMeasure.getMeasureString(i));
 		initEvaluationMinimum();
 	}

@@ -23,8 +23,10 @@ public class ResultWindow extends JFrame
 	private BinaryTable itsBinaryTable;
 	private QualityMeasure itsQualityMeasure;
 	private int itsNrRecords;
+	private int itsFold;
+	private BitSet itsBitSet;
 
-	public ResultWindow(SubgroupSet theSubgroupSet, SearchParameters theSearchParameters, DAGView theDAGView, Table theTable, QualityMeasure theQualityMeasure, int theNrRecords)
+	public ResultWindow(SubgroupSet theSubgroupSet, SearchParameters theSearchParameters, DAGView theDAGView, Table theTable, QualityMeasure theQualityMeasure, int theNrRecords, int theFold, BitSet theBitSet)
 	{
 
 		itsSubgroupSet = theSubgroupSet;
@@ -34,23 +36,22 @@ public class ResultWindow extends JFrame
 		itsSubgroupTable = new JTable(itsResultTableModel);
 		if (!itsSubgroupSet.isEmpty())
 			itsSubgroupTable.addRowSelectionInterval(0, 0);
-
-		initComponents ();
-//		setIconImage(ICON);
-		initialise();
-
-		if (itsSubgroupSet.isEmpty())
-			setTitle("No subgroups found that match the set criterion");
-		else
-			setTitle(itsSubgroupSet.size() + " subgroups found");
 
 		itsTable = theTable;
 		itsBinaryTable = null;
 		itsQualityMeasure = theQualityMeasure;
 		itsNrRecords = theNrRecords;
-	}
+		itsFold = theFold;
+		itsBitSet = theBitSet;
 
-	public ResultWindow(SubgroupSet theSubgroupSet, SearchParameters theSearchParameters, DAGView theDAGView, Table theTable, BinaryTable theBinaryTable, QualityMeasure theQualityMeasure, int theNrRecords)
+		initComponents ();
+//		setIconImage(ICON);
+		initialise();
+		
+		setTitle();
+	}
+	
+	public ResultWindow(SubgroupSet theSubgroupSet, SearchParameters theSearchParameters, DAGView theDAGView, Table theTable, BinaryTable theBinaryTable, QualityMeasure theQualityMeasure, int theNrRecords, int theFold, BitSet theBitSet)
 	{
 
 		itsSubgroupSet = theSubgroupSet;
@@ -65,15 +66,29 @@ public class ResultWindow extends JFrame
 //		setIconImage(ICON);
 		initialise();
 
-		if (itsSubgroupSet.isEmpty())
-			setTitle("No subgroups found that match the set criterion");
-		else
-			setTitle(itsSubgroupSet.size() + " subgroups found");
-
 		itsTable = theTable;
 		itsBinaryTable = theBinaryTable;
 		itsQualityMeasure = theQualityMeasure;
 		itsNrRecords = theNrRecords;
+		itsFold = theFold;
+		itsBitSet = theBitSet;
+
+		setTitle();
+	}
+
+	public void setTitle()
+	{
+		String s;
+		if (itsSubgroupSet.isEmpty())
+			s = "No subgroups found that match the set criterion";
+		else
+			s = itsSubgroupSet.size() + " subgroups found"; 
+		s += ";  quality measure = " + QualityMeasure.getMeasureString(itsSearchParameters.getQualityMeasure());
+		if (itsSearchParameters.getTargetType() != TargetType.MULTI_LABEL)
+			s += ";  target value = " + itsSearchParameters.getTargetConcept().getTargetValue();
+		if (itsFold != 0)
+			s += ";  fold = " + itsFold;
+		setTitle(s);
 	}
 
 	public void initialise()
@@ -183,6 +198,15 @@ public class ResultWindow extends JFrame
 			}
 		});
 		aSubgroupPanel.add(jButtonRegressionTest);
+		
+		jButtonFold = initButton("Fold members", 'F');
+		jButtonFold.addActionListener(new java.awt.event.ActionListener() {
+			public void actionPerformed(java.awt.event.ActionEvent evt) {
+				jButtonFoldActionPerformed();
+			}
+		});
+		aSubgroupPanel.add(jButtonFold);
+		jButtonFold.setVisible(itsFold != 0);
 
 		//possibly disable buttons
 		if (itsSubgroupSet != null) //Subgroup set
@@ -394,7 +418,7 @@ public class ResultWindow extends JFrame
 		aNewSubgroupSet.setIDs();
 
 		// Display postprocessed results
-		ResultWindow aResultWindow = new ResultWindow(aNewSubgroupSet, itsSearchParameters, null, itsTable, itsBinaryTable, itsQualityMeasure, itsNrRecords);
+		ResultWindow aResultWindow = new ResultWindow(aNewSubgroupSet, itsSearchParameters, null, itsTable, itsBinaryTable, itsQualityMeasure, itsNrRecords, itsFold, itsBitSet);
 		aResultWindow.setLocation(0, 0);
 		aResultWindow.setSize(1200, 900);
 		aResultWindow.setVisible(true);
@@ -446,6 +470,12 @@ public class ResultWindow extends JFrame
 //		JOptionPane.showMessageDialog(null, "The regression test score equals\n" + aRegressionTestScore);
 		double[] aRegressionTestScore = aValidation.performRegressionTest(aQualities, itsSubgroupSet);
 		JOptionPane.showMessageDialog(null, "The regression test score equals\nfor k =  1 : "+aRegressionTestScore[0]+"\nfor k = 10 : "+aRegressionTestScore[1]);
+	}
+	
+	private void jButtonFoldActionPerformed()
+	{
+		Log.logCommandLine("Members of the training set of fold " + itsFold);
+		Log.logCommandLine(itsBitSet.toString());
 	}
 
 	private double[] obtainRandomQualities()
@@ -511,6 +541,7 @@ public class ResultWindow extends JFrame
 	private javax.swing.JButton jButtonShowModel;
 	private javax.swing.JButton jButtonDeleteSubgroups;
 	private javax.swing.JButton jButtonDumpPatterns;
+	private javax.swing.JButton jButtonFold;
 	private javax.swing.JButton jButtonPostprocess;
 	private javax.swing.JButton jButtonPValues;
 	private javax.swing.JButton jButtonRegressionTest;
