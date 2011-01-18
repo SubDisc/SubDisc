@@ -163,7 +163,7 @@ public class FileLoaderGeneRank implements FileLoaderInterface
 
 			int aCurrentLine = 0;
 			int aNeededLine;
-			int aNrColumns = itsTable.getNrColumns();
+			int aNrColumns = itsTable.getNrColumns() - 1;	// TODO PB hack
 			// NOTE: (aLine = aReader.readLine()) != null) should not happen
 			while (anIterator.hasNext())
 			{
@@ -183,6 +183,7 @@ public class FileLoaderGeneRank implements FileLoaderInterface
 				// this maintains order of geneRanking
 				itsGeneRank.put(aLineArray[0], anotherLineArray);
 			}
+
 			// all data available
 			populateTable();
 		}
@@ -209,13 +210,21 @@ public class FileLoaderGeneRank implements FileLoaderInterface
 	{
 		String[] aHeaders = theHeaderLine.split(",", -1);
 		int aNrColumns = aHeaders.length;
-		itsTable =  new Table(theFile, theNrRows, aNrColumns);
+		itsTable =  new Table(theFile, theNrRows, aNrColumns + 1);
+
+		// TODO remove PB hack
+		itsTable.getColumns()
+		.add(new Column(new Attribute("RANK",
+										"RANK",
+										AttributeType.NUMERIC,
+										0),
+						theNrRows));
 
 		itsTable.getColumns()
 				.add(new Column(new Attribute("CUI",
 												"CUI",
 												AttributeType.NOMINAL,
-												0),
+												1),
 								theNrRows));
 
 		for (int i = 1; i < aNrColumns; i++)
@@ -224,7 +233,7 @@ public class FileLoaderGeneRank implements FileLoaderInterface
 					.add(new Column(new Attribute(aHeaders[i],
 													"",
 													AttributeType.NUMERIC,
-													i),
+													i + 1),	// TODO remove PB hack
 									theNrRows));
 		}
 	}
@@ -232,12 +241,17 @@ public class FileLoaderGeneRank implements FileLoaderInterface
 	private void populateTable()
 	{
 		int aNrColumns = itsTable.getNrColumns();
+		float rank = 1.0f;
+
 		for (float[] aData : itsGeneRank.values())
 		{
+			// PB hack
+			itsTable.getColumn(0).add(rank++);
+
 			// first is CUI, aData[0] should always exist
-			itsTable.getColumn(0).add(String.valueOf((int) aData[0]));
-			for (int i = 1; i < aNrColumns; i++)
-				itsTable.getColumn(i).add(aData[i]);
+			itsTable.getColumn(1).add(String.valueOf((int) aData[0]));
+			for (int i = 2; i < aNrColumns; i++)
+				itsTable.getColumn(i).add(aData[i-1]);
 		}
 	}
 

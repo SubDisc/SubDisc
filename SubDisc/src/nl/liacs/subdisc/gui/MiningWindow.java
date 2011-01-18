@@ -354,17 +354,17 @@ public class MiningWindow extends JFrame
 		});
 		jMenuFile.add(jMenuItemOpenFile);
 
-		//TODO enable when correctly implemented
-//		jMenuItemOpenGeneRank.setFont(GUI.DEFAULT_TEXT_FONT);
-//		jMenuItemOpenGeneRank.setText("Open Gene Rank");
-//		jMenuItemOpenGeneRank.setMnemonic('G');
-//		jMenuItemOpenGeneRank.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_G, InputEvent.CTRL_MASK));
-//		jMenuItemOpenGeneRank.addActionListener(new ActionListener() {
-//			public void actionPerformed(ActionEvent evt) {
-//				jMenuItemOpenGeneRankActionPerformed(evt);
-//			}
-//		});
-//		jMenuFile.add(jMenuItemOpenGeneRank);
+		//TODO enable when CUI setting is correctly implemented
+		jMenuItemOpenGeneRank.setFont(GUI.DEFAULT_TEXT_FONT);
+		jMenuItemOpenGeneRank.setText("Open Gene Rank");
+		jMenuItemOpenGeneRank.setMnemonic('G');
+		jMenuItemOpenGeneRank.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_G, InputEvent.CTRL_MASK));
+		jMenuItemOpenGeneRank.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				jMenuItemOpenGeneRankActionPerformed(evt);
+			}
+		});
+		jMenuFile.add(jMenuItemOpenGeneRank);
 
 		jMenuItemBrowse.setFont(GUI.DEFAULT_TEXT_FONT);
 		jMenuItemBrowse.setText("Browse");
