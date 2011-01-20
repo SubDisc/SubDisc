@@ -51,13 +51,11 @@ public class Column implements XMLNodeInterface
 	 *
 	 * @param theAttribute
 	 */
-
 	public Column(Attribute theAttribute, int theNrRows)
 	{
 		itsAttribute = theAttribute;
 		setupColumn(theNrRows);
 	}
-
 
 	/** Creates a copy of the current column with some records removed.
 	*/
@@ -167,6 +165,14 @@ public class Column implements XMLNodeInterface
 	{
 		itsNominals.add(theNominal == null ? "" : theNominal);
 		itsSize++;
+	}
+	// TODO this will be generalised to all types + made more safe
+	// This is a CUI hack for now
+	// throws IndexOutOfBoundsException
+	// should be used only on NUMERIC/ORDINAL type
+	public void set(int theIndex, float theValue)
+	{
+		itsFloats.set(theIndex, theValue);
 	}
 	public int size() { return itsSize; }
 	public Attribute getAttribute() { return itsAttribute; }	// TODO return copy of mutable type
