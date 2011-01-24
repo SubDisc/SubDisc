@@ -13,7 +13,7 @@ public class FileHandler extends JFrame
 
 	public static enum Action
 	{
-		OPEN_FILE, OPEN_GENE_RANK, OPEN_DATABASE, SAVE
+		OPEN_FILE, OPEN_DATABASE, SAVE
 	};
 
 	// remember the directory of the last used file, defaults to users' 
@@ -24,6 +24,7 @@ public class FileHandler extends JFrame
 	private SearchParameters itsSearchParameters;
 	private File itsFile;
 
+	// Main FileHandler
 	public FileHandler(Action theAction)
 	{
 		switch(theAction)
@@ -34,18 +35,29 @@ public class FileHandler extends JFrame
 				openFile();
 				break;
 			}
-			case OPEN_GENE_RANK :
-			{
-				showFileChooser(theAction);
-				openGeneRank();
-				break;
-			}
 			case OPEN_DATABASE : openDatabase(); break;
 			case SAVE : save(); break;
 			default : break;
 		}
 	}
 
+	// Add CUI domain to existing Table
+	public FileHandler(Table theTable)
+	{
+		if (theTable == null)
+		{
+			Log.logCommandLine(
+				"FileHandler Constructor: parameter can not be 'null'.");
+			openFile();
+		}
+		else
+		{
+			itsTable = new FileLoaderGeneRank(theTable).getTable();
+			printLoadingInfo();
+		}
+	}
+
+	// Populate Table from XML file
 	public FileHandler(File theFile, Table theTable)
 	{
 		if (theFile == null || !theFile.exists())
@@ -56,7 +68,7 @@ public class FileHandler extends JFrame
 		else if (theTable == null)
 		{
 			Log.logCommandLine(
-				"FileHandler(): Table is 'null', trying normal loading.");
+				"FileHandler Constructor: Table is 'null', trying normal loading.");
 			openFile();
 		}
 		else
@@ -120,24 +132,6 @@ public class FileHandler extends JFrame
 		}
 	}
 
-	// TODO may be removed and put into openFile()
-	private void openGeneRank()
-	{
-		if (itsFile == null || !itsFile.exists())
-		{
-			ErrorLog.log(itsFile, new FileNotFoundException());
-			return;
-		}
-		else
-		{
-			itsTable = new FileLoaderGeneRank(itsFile).getTable();
-			if (itsTable == null)
-				return;
-			else
-				printLoadingInfo();
-		}
-	}
-
 	private void openDatabase()
 	{
 
@@ -160,7 +154,7 @@ public class FileHandler extends JFrame
 
 		int theOption = -1;
 
-		if (theAction == Action.OPEN_FILE || theAction == Action.OPEN_GENE_RANK)
+		if (theAction == Action.OPEN_FILE)
 			theOption = aChooser.showOpenDialog(this);
 		else if (theAction == Action.SAVE)
 			theOption = aChooser.showSaveDialog(this);

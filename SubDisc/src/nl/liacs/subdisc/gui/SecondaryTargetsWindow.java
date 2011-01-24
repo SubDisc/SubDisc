@@ -13,7 +13,7 @@ public class SecondaryTargetsWindow extends JDialog implements ActionListener//,
 	private static final long serialVersionUID = 1L;
 
 	private final JList itsJList;
-	private int itsJListSize = 0;	// not safe, even though modality blocks other windows
+	private int itsJListSize = 0;	// not safe, modality only blocks other WINDOWS
 	private Object[] itsLastSelection;
 	private JLabel itsFeedBackLabel = new JLabel();
 
@@ -29,9 +29,16 @@ public class SecondaryTargetsWindow extends JDialog implements ActionListener//,
 				"SecondaryTargetsWindow Constructor: parameter can not be 'null'.");
 			return;
 		}
+		else if ((itsJListSize = itsJList.getModel().getSize()) == 0)
+		{
+			// TODO ErrorLog
+			Log.logCommandLine(
+			"SecondaryTargetsWindow Constructor: the list can not be empty.");
+			return;
+		}
 		else
 		{
-			itsJListSize = itsJList.getModel().getSize();
+//			itsJListSize = itsJList.getModel().getSize();
 			itsLastSelection = itsJList.getSelectedValues();
 			initComponents(itsJList);
 			setTitle("Secondary Targets");
@@ -123,6 +130,7 @@ public class SecondaryTargetsWindow extends JDialog implements ActionListener//,
 		itsFeedBackLabel.setText(getFeedBackText());
 	}
 
+	// constructor guarantees itsJListSize > 0
 	private void disposeUndoChanges()
 	{
 		itsJList.clearSelection();
@@ -142,7 +150,7 @@ public class SecondaryTargetsWindow extends JDialog implements ActionListener//,
 			if ((j = aCurrentList.indexOf(itsLastSelection[i])) != -1)
 			{
 				itsJList.addSelectionInterval(j, j);
-				aCurrentSize--;
+				--aCurrentSize;
 			}
 		}
 

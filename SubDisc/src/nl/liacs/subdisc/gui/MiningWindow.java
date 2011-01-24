@@ -226,16 +226,16 @@ public class MiningWindow extends JFrame
 		jMiningWindowMenuBar = new JMenuBar();
 		jMenuFile = new JMenu();
 		jMenuItemOpenFile = new JMenuItem();
-		jMenuItemOpenGeneRank = new JMenuItem();
+		jMenuItemAddCuiDomain = new JMenuItem();
 		jMenuItemBrowse = new JMenuItem();
 		jMenuItemMetaData = new JMenuItem();
 //		jMenuItemDataExplorer = new JMenuItem();	// TODO add when implemented
-		jSeparator2 = new JSeparator();
+//		jSeparator2 = new JSeparator();
 		jMenuItemSubgroupDiscovery = new JMenuItem();
-		jSeparator3 = new JSeparator();
+//		jSeparator3 = new JSeparator();
 		jMenuItemCreateAutoRunFile = new JMenuItem();
 		jMenuItemAddToAutoRunFile = new JMenuItem();
-		jSeparator4 = new JSeparator();
+//		jSeparator4 = new JSeparator();
 		jMenuItemExit = new JMenuItem();
 		jMenuAbout = new JMenu();
 		jMenuItemAboutCortana = new JMenuItem();
@@ -349,22 +349,22 @@ public class MiningWindow extends JFrame
 		jMenuItemOpenFile.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, InputEvent.CTRL_MASK));
 		jMenuItemOpenFile.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
-				jMenuItemOpenFileActionPerformed(evt);
+				jMenuItemOpenFileActionPerformed();
 			}
 		});
 		jMenuFile.add(jMenuItemOpenFile);
 
 		//TODO enable when CUI setting is correctly implemented
-		jMenuItemOpenGeneRank.setFont(GUI.DEFAULT_TEXT_FONT);
-		jMenuItemOpenGeneRank.setText("Open Gene Rank");
-		jMenuItemOpenGeneRank.setMnemonic('G');
-		jMenuItemOpenGeneRank.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_G, InputEvent.CTRL_MASK));
-		jMenuItemOpenGeneRank.addActionListener(new ActionListener() {
+		jMenuItemAddCuiDomain.setFont(GUI.DEFAULT_TEXT_FONT);
+		jMenuItemAddCuiDomain.setText("Add CUI Domain");
+		jMenuItemAddCuiDomain.setMnemonic('D');
+		jMenuItemAddCuiDomain.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_D, InputEvent.CTRL_MASK));
+		jMenuItemAddCuiDomain.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
-				jMenuItemOpenGeneRankActionPerformed(evt);
+				jMenuItemAddCuiDomainActionPerformed();
 			}
 		});
-		jMenuFile.add(jMenuItemOpenGeneRank);
+		jMenuFile.add(jMenuItemAddCuiDomain);
 
 		jMenuItemBrowse.setFont(GUI.DEFAULT_TEXT_FONT);
 		jMenuItemBrowse.setText("Browse");
@@ -372,7 +372,7 @@ public class MiningWindow extends JFrame
 		jMenuItemBrowse.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_B, InputEvent.CTRL_MASK));
 		jMenuItemBrowse.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
-				browseActionPerformed(evt);
+				browseActionPerformed();
 			}
 		});
 		jMenuFile.add(jMenuItemBrowse);
@@ -383,7 +383,7 @@ public class MiningWindow extends JFrame
 		jMenuItemMetaData.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_M, InputEvent.CTRL_MASK));
 		jMenuItemMetaData.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
-				metaDataActionPerformed(evt);
+				metaDataActionPerformed();
 			}
 		});
 		jMenuFile.add(jMenuItemMetaData);
@@ -392,17 +392,18 @@ public class MiningWindow extends JFrame
 		// TODO add when implemented
 		jMenuItemDataExplorer.setFont(GUI.DEFAULT_TEXT_FONT);
 		jMenuItemDataExplorer.setText("Data Explorer");
-		jMenuItemDataExplorer.setMnemonic('D');
-		jMenuItemDataExplorer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_D, InputEvent.CTRL_MASK));
+		jMenuItemDataExplorer.setMnemonic('E');
+		jMenuItemDataExplorer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_E, InputEvent.CTRL_MASK));
 		jMenuItemDataExplorer.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
-				dataExplorerActionPerformed(evt);
+				dataExplorerActionPerformed();
 			}
 		});
 		jMenuFile.add(jMenuItemDataExplorer);
 */
 
-		jMenuFile.add(jSeparator2);
+		jMenuFile.addSeparator();
+//		jMenuFile.add(jSeparator2);
 
 		jMenuItemSubgroupDiscovery.setFont(GUI.DEFAULT_TEXT_FONT);
 		jMenuItemSubgroupDiscovery.setText("Subgroup Discovery");
@@ -410,12 +411,13 @@ public class MiningWindow extends JFrame
 		jMenuItemSubgroupDiscovery.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_MASK));
 		jMenuItemSubgroupDiscovery.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
-				jButtonSubgroupDiscoveryActionPerformed(evt);
+				jButtonSubgroupDiscoveryActionPerformed();
 			}
 		});
 		jMenuFile.add(jMenuItemSubgroupDiscovery);
 
-		jMenuFile.add(jSeparator3);
+		jMenuFile.addSeparator();
+//		jMenuFile.add(jSeparator3);
 
 		jMenuItemCreateAutoRunFile.setFont(GUI.DEFAULT_TEXT_FONT);
 		jMenuItemCreateAutoRunFile.setText("Create Autorun File");
@@ -439,7 +441,8 @@ public class MiningWindow extends JFrame
 		});
 		jMenuFile.add(jMenuItemAddToAutoRunFile);
 
-		jMenuFile.add(jSeparator4);
+		jMenuFile.addSeparator();
+//		jMenuFile.add(jSeparator4);
 
 		jMenuItemExit.setFont(GUI.DEFAULT_TEXT_FONT);
 		jMenuItemExit.setText("Exit");
@@ -447,7 +450,7 @@ public class MiningWindow extends JFrame
 		jMenuItemExit.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q, InputEvent.CTRL_MASK));
 		jMenuItemExit.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
-				jMenuItemExitActionPerformed(evt);
+				jMenuItemExitActionPerformed();
 			}
 		});
 		jMenuFile.add(jMenuItemExit);
@@ -463,7 +466,7 @@ public class MiningWindow extends JFrame
 		jMenuItemAboutCortana.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_I, InputEvent.CTRL_MASK));
 		jMenuItemAboutCortana.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
-				jMenuItemAboutCortanaActionPerformed(evt);
+				jMenuItemAboutCortanaActionPerformed();
 			}
 		});
 		jMenuAbout.add(jMenuItemAboutCortana);
@@ -569,7 +572,7 @@ public class MiningWindow extends JFrame
 		jButtonDataExplorer = initButton("Data Explorer", 'D');
 		jButtonDataExplorer.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
-				dataExplorerActionPerformed(evt);
+				dataExplorerActionPerformed();
 			}
 		});
 		jPanelRuleTargetButtons.add(jButtonDataExplorer);
@@ -577,7 +580,7 @@ public class MiningWindow extends JFrame
 		jButtonBrowse = initButton("Browse", 'B');
 		jButtonBrowse.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
-				browseActionPerformed(evt);
+				browseActionPerformed();
 			}
 		});
 		jPanelRuleTargetButtons.add(jButtonBrowse);
@@ -585,7 +588,7 @@ public class MiningWindow extends JFrame
 		jButtonMetaData = initButton("Meta Data...", 'M');
 		jButtonMetaData.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
-				metaDataActionPerformed(evt);
+				metaDataActionPerformed();
 			}
 		});
 		jPanelRuleTargetButtons.add(jButtonMetaData);
@@ -606,7 +609,7 @@ public class MiningWindow extends JFrame
 		jComboBoxTargetType.setFont(GUI.DEFAULT_TEXT_FONT);
 		jComboBoxTargetType.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
-				jComboBoxTargetTypeActionPerformed(evt);
+				jComboBoxTargetTypeActionPerformed();
 			}
 		});
 		jPanelEvaluationFields.add(jComboBoxTargetType);
@@ -641,7 +644,7 @@ public class MiningWindow extends JFrame
 		jComboBoxQualityMeasure.setFont(GUI.DEFAULT_TEXT_FONT);
 		jComboBoxQualityMeasure.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
-				jComboBoxQualityMeasureActionPerformed(evt);
+				jComboBoxQualityMeasureActionPerformed();
 			}
 		});
 		jPanelEvaluationFields.add(jComboBoxQualityMeasure);
@@ -658,7 +661,7 @@ public class MiningWindow extends JFrame
 		jComboBoxTargetAttribute.setFont(GUI.DEFAULT_TEXT_FONT);
 		jComboBoxTargetAttribute.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
-				jComboBoxTargetAttributeActionPerformed(evt);
+				jComboBoxTargetAttributeActionPerformed();
 			}
 		});
 		jPanelEvaluationFields.add(jComboBoxTargetAttribute);
@@ -666,7 +669,7 @@ public class MiningWindow extends JFrame
 		jComboBoxMiscField.setFont(GUI.DEFAULT_TEXT_FONT);
 		jComboBoxMiscField.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
-				jComboBoxMiscFieldActionPerformed(evt);
+				jComboBoxMiscFieldActionPerformed();
 			}
 		});
 		jPanelEvaluationFields.add(jComboBoxMiscField);
@@ -674,7 +677,7 @@ public class MiningWindow extends JFrame
 		jButtonSecondaryTargets = initButton("Select Targets", 'T');
 		jButtonSecondaryTargets.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
-				jButtonSecondaryTargetsActionPerformed(evt);
+				jButtonSecondaryTargetsActionPerformed();
 			}
 		});
 		jPanelEvaluationFields.add(jButtonSecondaryTargets);
@@ -689,7 +692,7 @@ public class MiningWindow extends JFrame
 		jButtonBaseModel = initButton("Base Model", 'B');
 		jButtonBaseModel.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
-				jButtonBaseModelActionPerformed(evt);
+				jButtonBaseModelActionPerformed();
 			}
 		});
 		jPanelEvaluationFields.add(jButtonBaseModel);
@@ -791,7 +794,7 @@ public class MiningWindow extends JFrame
 		jComboBoxSearchStrategyType.setFont(GUI.DEFAULT_TEXT_FONT);
 		jComboBoxSearchStrategyType.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
-				jComboBoxSearchStrategyTypeActionPerformed(evt);
+				jComboBoxSearchStrategyTypeActionPerformed();
 			}
 		});
 		jPanelSearchStrategyFields.add(jComboBoxSearchStrategyType);
@@ -808,7 +811,7 @@ public class MiningWindow extends JFrame
 		jComboBoxSearchStrategyNumeric.setFont(GUI.DEFAULT_TEXT_FONT);
 		jComboBoxSearchStrategyNumeric.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
-				jComboBoxSearchStrategyNumericActionPerformed(evt);
+				jComboBoxSearchStrategyNumericActionPerformed();
 			}
 		});
 		jPanelSearchStrategyFields.add(jComboBoxSearchStrategyNumeric);
@@ -831,7 +834,7 @@ public class MiningWindow extends JFrame
 		jButtonSubgroupDiscovery = initButton("Subgroup Discovery", 'S');
 		jButtonSubgroupDiscovery.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
-				jButtonSubgroupDiscoveryActionPerformed(evt);
+				jButtonSubgroupDiscoveryActionPerformed();
 			}
 		});
 		jPanelMineButtons.add(jButtonSubgroupDiscovery);
@@ -839,7 +842,7 @@ public class MiningWindow extends JFrame
 		jButtonSwapRandomize = initButton("Swap Randomize", 'R');
 		jButtonSwapRandomize.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
-				swapRandomizeActionPerformed(evt);
+				swapRandomizeActionPerformed();
 			}
 		});
 		jPanelMineButtons.add(jButtonSwapRandomize);
@@ -847,7 +850,7 @@ public class MiningWindow extends JFrame
 		jButtonCrossValidate = initButton("Cross-Validate", 'V');
 		jButtonCrossValidate.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
-				crossValidateActionPerformed(evt);
+				crossValidateActionPerformed();
 			}
 		});
 		jPanelMineButtons.add(jButtonCrossValidate);
@@ -855,7 +858,7 @@ public class MiningWindow extends JFrame
 		jButtonRandomSubgroups = initButton("Random Subgroups", 'R');
 		jButtonRandomSubgroups.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
-				jButtonRandomSubgroupsActionPerformed(evt);
+				jButtonRandomSubgroupsActionPerformed();
 			}
 		});
 		jPanelMineButtons.add(jButtonRandomSubgroups);
@@ -863,7 +866,7 @@ public class MiningWindow extends JFrame
 		jButtonRandomConditions = initButton("Random Conditions", 'C');
 		jButtonRandomConditions.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
-				jButtonRandomConditionsActionPerformed(evt);
+				jButtonRandomConditionsActionPerformed();
 			}
 		});
 		jPanelMineButtons.add(jButtonRandomConditions);
@@ -880,7 +883,9 @@ public class MiningWindow extends JFrame
 	private void enableTableDependentComponents(boolean theSetting)
 	{
 		AbstractButton[] anAbstractButtonArray =
-			new AbstractButton[] {jMenuItemBrowse,
+			new AbstractButton[] {
+									jMenuItemAddCuiDomain,
+									jMenuItemBrowse,
 									jMenuItemMetaData,
 									//jMenuItemDataExplorer,	//TODO add when implemented
 									jMenuItemSubgroupDiscovery,
@@ -894,40 +899,25 @@ public class MiningWindow extends JFrame
 									jButtonSubgroupDiscovery,
 									jButtonRandomSubgroups,
 									jButtonRandomConditions,
+									jButtonSecondaryTargets,
 									jButtonBaseModel};
 
 		for (AbstractButton a : anAbstractButtonArray)
 			a.setEnabled(theSetting);
 	}
 
+	// used if Table already exists, but is changed
 	public void update()
 	{
 		initGuiComponentsDataSet();
-		jComboBoxTargetTypeActionPerformed(null);	// update hack
+		jComboBoxTargetTypeActionPerformed();	// update hack
 	}
 
 	/* MENU ITEMS */
-	private void jMenuItemOpenFileActionPerformed(ActionEvent evt)
+	private void jMenuItemOpenFileActionPerformed()
 	{
-		jMenuItemOpenHelper(Action.OPEN_FILE);
-	}
+		FileHandler aFileHandler =  new FileHandler(Action.OPEN_FILE);
 
-	// cannot be run from the Event Dispatching Thread
-	private void jMenuItemOpenGeneRankActionPerformed(ActionEvent evt)
-	{
-		Thread aThread = new Thread()
-		{
-			public void run()
-			{
-				jMenuItemOpenHelper(Action.OPEN_GENE_RANK);
-			}
-		};
-		aThread.start();
-	}
-
-	private void jMenuItemOpenHelper(Action theFileAction)
-	{
-		FileHandler aFileHandler =  new FileHandler(theFileAction);
 		Table aTable = aFileHandler.getTable();
 		SearchParameters aSearchParameters = aFileHandler.getSearchParameters();
 
@@ -954,8 +944,22 @@ public class MiningWindow extends JFrame
 				initGuiComponentsFromFile();
 			}
 
-			jComboBoxTargetTypeActionPerformed(null);	// update hack
+			jComboBoxTargetTypeActionPerformed();	// update hack
 		}
+	}
+
+	// cannot be run from the Event Dispatching Thread
+	private void jMenuItemAddCuiDomainActionPerformed()
+	{
+		Thread aThread = new Thread()
+		{
+			public void run()
+			{
+				new FileHandler(itsTable);
+				update();
+			}
+		};
+		aThread.start();
 	}
 
 	// TODO not on EDT
@@ -965,7 +969,7 @@ public class MiningWindow extends JFrame
 		new XMLAutoRun(itsSearchParameters, itsTable, theFileOption);
 	}
 
-	private void jMenuItemAboutCortanaActionPerformed(ActionEvent evt)
+	private void jMenuItemAboutCortanaActionPerformed()
 	{
 		// TODO
 		JOptionPane.showMessageDialog(null,
@@ -974,7 +978,7 @@ public class MiningWindow extends JFrame
 										JOptionPane.INFORMATION_MESSAGE);
 	}
 
-	private void jMenuItemExitActionPerformed(ActionEvent evt)
+	private void jMenuItemExitActionPerformed()
 	{
 		Log.logCommandLine("exit");
 		dispose();
@@ -982,7 +986,7 @@ public class MiningWindow extends JFrame
 	}
 
 	/* DATASET BUTTONS */
-	private void browseActionPerformed(ActionEvent evt)
+	private void browseActionPerformed()
 	{
 		SwingUtilities.invokeLater(new Runnable()
 		{
@@ -994,7 +998,7 @@ public class MiningWindow extends JFrame
 	}
 
 	// TODO not on EDT
-	private void dataExplorerActionPerformed(ActionEvent evt)
+	private void dataExplorerActionPerformed()
 	{
 		// TODO
 		// DataExplorerWindow aDataExplorerWindow = new
@@ -1005,7 +1009,7 @@ public class MiningWindow extends JFrame
 		// aDataExplorerWindow.setVisible(true);
 	}
 
-	private void metaDataActionPerformed(ActionEvent evt)
+	private void metaDataActionPerformed()
 	{
 		SwingUtilities.invokeLater(new Runnable()
 		{
@@ -1016,13 +1020,13 @@ public class MiningWindow extends JFrame
 		});
 	}
 
-	private void swapRandomizeActionPerformed(ActionEvent evt)
+	private void swapRandomizeActionPerformed()
 	{
 		itsTable.swapRandomizeTarget(itsTargetConcept);
 		JOptionPane.showMessageDialog(null, "Target column(s) have been swap-randomized.");
 	}
 
-	private void crossValidateActionPerformed(ActionEvent evt)
+	private void crossValidateActionPerformed()
 	{
 		int aK = 10; //TODO set k from GUI
 		CrossValidation aCV = new CrossValidation(itsTable.getNrRows(), aK);
@@ -1036,7 +1040,7 @@ public class MiningWindow extends JFrame
 		}
 	}
 
-	private void jComboBoxSearchStrategyTypeActionPerformed(ActionEvent evt)
+	private void jComboBoxSearchStrategyTypeActionPerformed()
 	{
 		String aName = getSearchStrategyName();
 		if (aName != null)
@@ -1047,7 +1051,7 @@ public class MiningWindow extends JFrame
 		}
 	}
 
-	private void jComboBoxSearchStrategyNumericActionPerformed(ActionEvent evt)
+	private void jComboBoxSearchStrategyNumericActionPerformed()
 	{
 		String aName = getNumericStrategy();
 		if (aName != null)
@@ -1058,13 +1062,13 @@ public class MiningWindow extends JFrame
 		}
 	}
 
-	private void jComboBoxQualityMeasureActionPerformed(ActionEvent evt)
+	private void jComboBoxQualityMeasureActionPerformed()
 	{
 		itsSearchParameters.setQualityMeasureMinimum(getQualityMeasureMinimum());
 		initEvaluationMinimum();
 	}
 
-	private void jComboBoxTargetAttributeActionPerformed(ActionEvent evt)
+	private void jComboBoxTargetAttributeActionPerformed()
 	{
 		itsTargetConcept.setPrimaryTarget(itsTable.getAttribute(getTargetAttributeName()));
 		itsSearchParameters.setTargetConcept(itsTargetConcept);
@@ -1107,6 +1111,10 @@ public class MiningWindow extends JFrame
 										aTargetType == TargetType.MULTI_BINARY_CLASSIFICATION);
 		jLabelSecondaryTargets.setVisible(hasSecondaryTargets);
 		jButtonSecondaryTargets.setVisible(hasSecondaryTargets);
+		// disable if no binary attributes TODO should be itsTable.field
+		boolean hasBinaryAttributes = "0".equalsIgnoreCase(jLFieldNrBinaries.getText().trim());
+		jLabelSecondaryTargets.setEnabled(!hasBinaryAttributes);
+		jButtonSecondaryTargets.setEnabled(!hasBinaryAttributes);
 
 		// has target attribute?
 		boolean hasTargetAttribute = (aTargetType != TargetType.MULTI_LABEL);
@@ -1124,7 +1132,7 @@ public class MiningWindow extends JFrame
 			initTargetInfo();
 	}
 
-	private void jComboBoxTargetTypeActionPerformed(ActionEvent evt)
+	private void jComboBoxTargetTypeActionPerformed()
 	{
 		if (itsTable == null)
 			return;
@@ -1136,7 +1144,7 @@ public class MiningWindow extends JFrame
 		initTargetAttributeItems();
 	}
 
-	private void jComboBoxMiscFieldActionPerformed(ActionEvent evt)
+	private void jComboBoxMiscFieldActionPerformed()
 	{
 		switch(itsTargetConcept.getTargetType())
 		{
@@ -1160,7 +1168,7 @@ public class MiningWindow extends JFrame
 			initTargetInfo();
 	}
 
-	private void jButtonSecondaryTargetsActionPerformed(ActionEvent evt)
+	private void jButtonSecondaryTargetsActionPerformed()
 	{
 		// is modal, blocks all input to other windows until closed
 		new SecondaryTargetsWindow(jListSecondaryTargets);
@@ -1178,14 +1186,13 @@ public class MiningWindow extends JFrame
 				i++;
 			}
 		}
-
 		itsTargetConcept.setMultiTargets(aList);
-		//update GUI
+		//update GUI, relies on disabling "Select Targets" if nrBinaries == 0
 		initTargetInfo();
 	}
 
 	// TODO remove duplicate ModelWindow code
-	private void jButtonBaseModelActionPerformed(ActionEvent evt)
+	private void jButtonBaseModelActionPerformed()
 	{
 		try
 		{
@@ -1352,14 +1359,14 @@ public class MiningWindow extends JFrame
 
 	}
 
-	private void jButtonSubgroupDiscoveryActionPerformed(ActionEvent evt)
+	private void jButtonSubgroupDiscoveryActionPerformed()
 	{
 		BitSet aBitSet = new BitSet(itsTable.getNrRows());
 		aBitSet.set(0,itsTable.getNrRows());
 		runSubgroupDiscovery(itsTable, 0, aBitSet);
 	}
 
-	private void jButtonRandomSubgroupsActionPerformed(ActionEvent evt)
+	private void jButtonRandomSubgroupsActionPerformed()
 	{
 		try
 		{
@@ -1449,7 +1456,7 @@ public class MiningWindow extends JFrame
 		}
 	}
 
-	private void jButtonRandomConditionsActionPerformed(ActionEvent evt)
+	private void jButtonRandomConditionsActionPerformed()
 	{
 		try
 		{
@@ -1855,16 +1862,16 @@ public class MiningWindow extends JFrame
 	private JMenuBar jMiningWindowMenuBar;
 	private JMenu jMenuFile;
 	private JMenuItem jMenuItemOpenFile;
-	private JMenuItem jMenuItemOpenGeneRank;
+	private JMenuItem jMenuItemAddCuiDomain;
 	private JMenuItem jMenuItemBrowse;
 	private JMenuItem jMenuItemMetaData;
 //	private JMenuItem jMenuItemDataExplorer;
-	private JSeparator jSeparator2;
+//	private JSeparator jSeparator2;
 	private JMenuItem jMenuItemSubgroupDiscovery;
-	private JSeparator jSeparator3;
+//	private JSeparator jSeparator3;
 	private JMenuItem jMenuItemCreateAutoRunFile;
 	private JMenuItem jMenuItemAddToAutoRunFile;
-	private JSeparator jSeparator4;
+//	private JSeparator jSeparator4;
 	private JMenuItem jMenuItemExit;
 	private JMenu jMenuAbout;
 	private JMenuItem jMenuItemAboutCortana;
