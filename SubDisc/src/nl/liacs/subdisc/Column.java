@@ -59,6 +59,7 @@ public class Column implements XMLNodeInterface
 
 	/** Creates a copy of the current column with some records removed.
 	*/
+/*
 	public Column select(BitSet theSet)
 	{
 		Column aColumn = new Column(itsAttribute, itsSize);
@@ -95,6 +96,40 @@ public class Column implements XMLNodeInterface
 						aCount++;
 					}
 				}
+				break;
+			}
+		}
+		return aColumn;
+	}
+*/
+	public Column select(BitSet theSet)
+	{
+		int aColumnsSize = theSet.cardinality();
+		Column aColumn = new Column(itsAttribute, aColumnsSize);
+
+		switch(itsAttribute.getType())
+		{
+			case NOMINAL :
+			{
+				aColumn.itsNominals = new ArrayList<String>(aColumnsSize);
+				//preferred way to loop over BitSet (itsSize for safety)
+				for (int i = theSet.nextSetBit(0); i >= 0 && i < itsSize; i = theSet.nextSetBit(i + 1))
+					aColumn.itsNominals.add(getNominal(i));
+				break;
+			}
+			case NUMERIC :
+			case ORDINAL :
+			{
+				aColumn.itsFloats = new ArrayList<Float>(aColumnsSize);
+				for (int i = theSet.nextSetBit(0); i >= 0 && i < itsSize; i = theSet.nextSetBit(i + 1))
+					aColumn.itsFloats.add(getFloat(i));
+				break;
+			}
+			case BINARY :
+			{
+				aColumn.itsBinaries = new BitSet(itsSize);
+				for (int i = theSet.nextSetBit(0), j = 0; i >= 0 && i < itsSize; i = theSet.nextSetBit(i + 1))
+					aColumn.itsBinaries.set(j++ , getBinary(i));
 				break;
 			}
 		}
@@ -232,6 +267,9 @@ public class Column implements XMLNodeInterface
 		{
 			case NOMINAL :
 				ArrayList<String> aNominals = new ArrayList<String>(n);
+// TODO use following succinct code for all cases
+//				for (int i : thePermutation)
+//					aNominals.add(itsNominals.get(i));
 				for (int i=0; i<n; i++)
 				{
 					String aValue = itsNominals.get(thePermutation[i]);

@@ -220,38 +220,8 @@ public class Table
 		return itsColumns.get(i).getBinaries();
 	}
 
-	// Obsolete, see MiningWindow.jListSecondaryTargetsActionPerformed()
-	//returns the index of the theIndex'th binary column
-/*
-	public int getBinaryIndex(int theIndex) throws ArrayIndexOutOfBoundsException
-	{
-		int anIndex = 0;
-		for (int i=0; i<itsNrColumns; i++)
-		{
-			Attribute anAttribute = itsAttributes.get(i);
-			if (anAttribute.isBinaryType())
-			{
-				if (anIndex == theIndex)
-					return i;
-				anIndex++; //found one binary column, but not the right one.
-			}
-		}
-		throw(new ArrayIndexOutOfBoundsException("trying to acces index " + theIndex));
-	}
-*/
-
 	//Data Model ===========================================================================
-/*
-	public Attribute getAttribute(String theName)
-	{
-		for (Attribute anAttribute : itsAttributes)
-		{
-			if (anAttribute.getName().equals(theName))
-				return anAttribute;
-		}
-		return null; //not found
-	}
-*/
+
 	public Attribute getAttribute(String theName)
 	{
 		for (Column c : itsColumns)
@@ -309,6 +279,9 @@ public class Table
 		return aResult;
 	}
 
+	// TODO aResult[aDomain.length] can be filled in 1 pass
+	// adding all floats that are unique then return a subArray[aCount]
+	// does not handle float.NaN well, but neither does the rest of the code
 	//returns the unique, sorted domain
 	public float[] getUniqueNumericDomain(int theColumn, BitSet theSubset)
 	{
@@ -318,7 +291,7 @@ public class Table
 		//count uniques
 		float aCurrent = aDomain[0];
 		int aCount = 1;
-		for (Float aFloat : aDomain)
+		for (float aFloat : aDomain)
 			if (aFloat != aCurrent)
 			{
 				aCurrent = aFloat;
@@ -329,7 +302,7 @@ public class Table
 		aCurrent = aDomain[0];
 		aCount = 1;
 		aResult[0] = aDomain[0];
-		for (Float aFloat : aDomain)
+		for (float aFloat : aDomain)
 			if (aFloat != aCurrent)
 			{
 				aCurrent = aFloat;
@@ -361,6 +334,41 @@ public class Table
 		int aResult = 0;
 		Column aColumn = itsColumns.get(theColumn);
 
+		switch (aColumn.getType())
+		{
+			case NOMINAL :
+			{
+				for (int i=0, j = aColumn.size(); i < j; ++i)
+					if (aColumn.getNominal(i).equals(theValue))
+						++aResult;
+				break;
+			}
+			case BINARY :
+			{
+				for (int i=0, j = aColumn.size(); i < j; ++i)
+					if (aColumn.getBinary(i)=="1".equals(theValue))
+						++aResult;
+				break;
+			}
+			default :
+			{
+				Log.logCommandLine("Do not use a Column of type '" +
+									aColumn.getType().toString() +
+									"' with Table.countValues(). Please use NOMINAL or BINARY."
+						);
+				break;
+			}
+		}
+
+		return aResult;
+	}
+/*
+	//only works for nominals and binary
+	public int countValues(int theColumn, String theValue)
+	{
+		int aResult = 0;
+		Column aColumn = itsColumns.get(theColumn);
+
 		for (int i=0, j = aColumn.size(); i < j; i++)
 		{
 			if (aColumn.isNominalType() && aColumn.getNominal(i).equals(theValue))
@@ -370,7 +378,7 @@ public class Table
 		}
 		return aResult;
 	}
-
+*/
 	public float getAverage(int theColumn)
 	{
 		float aResult = 0;
@@ -443,49 +451,6 @@ public class Table
 		}
 	}
 
-	public Table project(BitSet theBitSet)
-	{
-		Table aTable = this;
-		ArrayList<Column> aColumns = new ArrayList<Column>();
-		for (Column c : itsColumns)
-		{
-			Column aNewColumn = new Column(c.getAttribute(), theBitSet.cardinality());
-			int j=0;
-
-			if (c.isNominalType())
-				for (int i=0; i<c.size(); i++)
-					if (theBitSet.get(i))
-					{
-						aNewColumn.add(c.getNominal(i));
-						j++;
-					}
-			if (c.isNumericType())
-				for (int i=0; i<c.size(); i++)
-					if (theBitSet.get(i))
-					{
-						aNewColumn.add(c.getFloat(i));
-						j++;
-					}
-			if (c.isOrdinalType())
-				for (int i=0; i<c.size(); i++)
-					if (theBitSet.get(i))
-					{
-						aNewColumn.add(c.getNominal(i)); //TODO make some ordinal variant or something? This ain't right...
-						j++;
-					}
-			if (c.isBinaryType())
-				for (int i=0; i<c.size(); i++)
-					if (theBitSet.get(i))
-					{
-						aNewColumn.add(c.getBinary(i));
-						j++;
-					}
-			aColumns.add(c);
-		}
-		aTable.itsColumns = aColumns;
-		return aTable;
-	}
-
 	public Table select(BitSet theSet)
 	{
 		Table aResult = new Table(itsName);
@@ -495,10 +460,7 @@ public class Table
 
 		//copy each column, while leaving out some of the data
 		for (Column aColumn : itsColumns)
-		{
-			Column aNewColumn = aColumn.select(theSet);
-			aResult.itsColumns.add(aNewColumn);
-		}
+			aResult.itsColumns.add(aColumn.select(theSet));
 
 		return aResult;
 	}

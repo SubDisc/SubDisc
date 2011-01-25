@@ -33,8 +33,9 @@ public class BinaryTable
 
 	public BitSet getRow(int theIndex)
 	{
-		BitSet aBitSet = new BitSet(itsColumns.size());
-		for (int i = 0; i < itsColumns.size(); i++)
+		int itsColumnsSize = itsColumns.size();
+		BitSet aBitSet = new BitSet(itsColumnsSize);
+		for (int i = 0; i < itsColumnsSize; i++)
 			aBitSet.set(i, itsColumns.get(i).get(theIndex));
 
 		return aBitSet;
@@ -151,12 +152,15 @@ public class BinaryTable
 
 	public void print()
 	{
-		for (int i=0; i<getNrRecords(); i++)
+		int nrColumns = getNrColumns();
+		StringBuilder aStringBuilder;
+
+		for (int i = 0, j = getNrRecords(); i < j; i++)
 		{
-			String aRow = "";
-			for (int j=0; j<getNrColumns(); j++)
-				aRow += getColumn(j).get(i)?"1":"0";
-			Log.logCommandLine(aRow);
+			aStringBuilder = new StringBuilder(nrColumns);
+			for (BitSet b : itsColumns)
+				aStringBuilder.append(b.get(i) ? "1" : "0");
+			Log.logCommandLine(aStringBuilder.toString());
 		}
 	}
 

@@ -87,7 +87,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		ArrayList<Attribute> anAttributes = itsSearchParameters.getTargetConcept().getMultiTargets();
 		itsBinaryTable = new BinaryTable(itsTable, anAttributes);
 		itsTargets = new String[anAttributes.size()];
-		for (int i=0; i<anAttributes.size(); i++)
+		for (int i = 0, j = anAttributes.size(); i < j; ++i)
 			itsTargets[i] = anAttributes.get(i).getName();
 		Bayesian aBayesian = new Bayesian(itsBinaryTable, itsTargets);
 		aBayesian.climb();
