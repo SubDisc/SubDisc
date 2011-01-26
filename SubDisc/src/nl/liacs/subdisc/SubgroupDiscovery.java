@@ -109,10 +109,53 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		aBitSet.set(0,itsMaximumCoverage);
 		aStart.setMembers(aBitSet);
 
+		itsCandidateQueue = new CandidateQueue(itsSearchParameters, new Candidate(aStart, 0.0f));
+		itsCandidateCount = 0;
+
+		int aSearchDepth = itsSearchParameters.getSearchDepth();
+		long theEndTime = theBeginTime + (long)(itsSearchParameters.getMaximumTime()*60*1000);
+		// TODO can itsCandidateQueue ever become null?
+		while ((itsCandidateQueue != null && itsCandidateQueue.size() > 0 ) && (System.currentTimeMillis() <= theEndTime))
+		{
+			Candidate aCandidate = itsCandidateQueue.removeFirst(); // take off first Candidate from Queue
+			Subgroup aSubgroup = aCandidate.getSubgroup();
+
+			if (aSubgroup.getDepth() < aSearchDepth)
+			{
+				RefinementList aRefinementList = new RefinementList(aSubgroup, itsTable, itsSearchParameters.getTargetConcept());
+
+				for (int i = 0, j = aRefinementList.size(); i < j; i++)
+				{
+					if (System.currentTimeMillis() > theEndTime)
+						break;
+
+					Refinement aRefinement = aRefinementList.get(i);
+					if (aRefinement.getCondition().getAttribute().isNumericType())
+						evaluateNumericRefinements(theBeginTime, aSubgroup, aRefinement);
+					else
+						evaluateNominalBinaryRefinements(theBeginTime, aSubgroup, aRefinement);
+				}
+			}
+		}
+		Log.logCommandLine("number of candidates: " + itsCandidateCount);
+		Log.logCommandLine("number of subgroups: " + getNumberOfSubgroups());
+
+		itsResult.setIDs(); //assign 1 to n to subgroups, for future reference in subsets
+	}
+/*
+	public void Mine(long theBeginTime)
+	{
+		//make subgroup to start with, containing all elements
+		Subgroup aStart = new Subgroup(0.0, itsMaximumCoverage, 0, itsResult);
+		BitSet aBitSet = new BitSet(itsMaximumCoverage);
+		aBitSet.set(0,itsMaximumCoverage);
+		aStart.setMembers(aBitSet);
+
 		Mine(theBeginTime, aStart);
 		itsResult.setIDs(); //assign 1 to n to subgroups, for future reference in subsets
 	}
 
+	//what Exception can be thrown, requiring this to be in a try block?
 	public void Mine(long theBeginTime, Subgroup theStart)
 	{
 		try
@@ -158,7 +201,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 			e.printStackTrace();
 		}
 	}
-
+*/
 	private void evaluateNumericRefinements(long theBeginTime, Subgroup theSubgroup, Refinement theRefinement)
 	{
 		int anAttributeIndex = theRefinement.getCondition().getAttribute().getIndex();
@@ -360,4 +403,5 @@ public class SubgroupDiscovery extends MiningAlgorithm
 	public SubgroupSet getResult() { return itsResult; }
 	public BitSet getBinaryTarget() { return (BitSet)itsBinaryTarget.clone(); }
 	public QualityMeasure getQualityMeasure() { return itsQualityMeasure; }
+	public SearchParameters getSearchParameters() { return itsSearchParameters; }
 }

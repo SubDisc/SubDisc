@@ -38,7 +38,11 @@ public class FileLoaderGeneRank implements FileLoaderInterface
 	public FileLoaderGeneRank(Table theTable)
 	{
 		if (theTable == null)
-			return;	// TODO Error
+		{
+			Log.logCommandLine(
+			"FileLoaderGeneRank Constructor: parameter can not be 'null'.");
+			return;
+		}
 		else
 		{
 			itsTable = theTable;

@@ -16,6 +16,8 @@ public class Table
 	private int itsNrColumns;
 	private ArrayList<Column> itsColumns = new ArrayList<Column>();
 	private Random itsRandomNumber = new Random(System.currentTimeMillis());
+	private List<String> itsDomains;
+	private List<Integer> itsDomainIndices;
 
 	public String getName() { return itsName; }
 	public String getSource() { return itsSource; }
@@ -76,6 +78,43 @@ public class Table
 		 * loading actual data from itsSource
 		 */
 		new FileHandler(new File(theXMLFileDirectory + "/"+ itsSource), this);
+	}
+
+	// TODO maintaining itsNrColumns becomes more difficult now
+	// complete new Column functionality to be implemented
+	// add CUI Domain, relies on caller for Table.update()
+	void addDomain(File theDomainName)
+	{
+		if (itsDomains == null)
+		{
+			itsDomains = new ArrayList<String>();
+			itsDomainIndices = new ArrayList<Integer>();
+		}
+		itsDomains.add(FileType.removeExtension(theDomainName));
+		itsDomainIndices.add(itsColumns.size());
+	}
+
+	// TODO add in MiningWindow
+	void removeDomain(String theDomain)
+	{
+		int aDomainIndex = itsDomains.indexOf(theDomain);
+		itsDomains.remove(aDomainIndex);
+		int aStartIndex = itsDomainIndices.remove(aDomainIndex);
+		int anEndIndex; // check whether it is the last domain
+
+		if (aDomainIndex == itsDomainIndices.size())
+			anEndIndex = itsColumns.size();
+		else
+			anEndIndex = itsDomainIndices.get(aDomainIndex);
+
+		for (int i = aStartIndex; i < anEndIndex; ++i)
+			itsColumns.remove(i);
+
+		int aNrDeletedColumns = anEndIndex - aStartIndex;
+		for (int i = aDomainIndex, j = itsDomainIndices.size(); i < j; ++i)
+			itsDomainIndices.set(i, itsDomainIndices.get(i) - aNrDeletedColumns);
+
+		update(); // to expensive, only updating nrColumns would do
 	}
 
 	/*

@@ -16,15 +16,15 @@ public class CandidateQueue
 	private TreeSet<Candidate> itsNextQueue;
 	private int itsMaximumQueueSize = 1000;
 
-	public CandidateQueue(int theSearchStrategy, int theMaximumQueueSize, Candidate theRootCandidate)
+	public CandidateQueue(SearchParameters theSearchParameters, Candidate theRootCandidate)
 	{
-		itsSearchStrategy = theSearchStrategy;
-		if (theSearchStrategy == BEAM)
+		itsSearchStrategy = theSearchParameters.getSearchStrategy();
+		if (itsSearchStrategy == BEAM)
 			itsNextQueue = new TreeSet<Candidate>();
 		itsQueue = new TreeSet<Candidate>();
 		itsQueue.add(theRootCandidate);
 
-		itsMaximumQueueSize = theMaximumQueueSize;
+		itsMaximumQueueSize = theSearchParameters.getSearchStrategyWidth();
 	}
 
 	public boolean add(Candidate theCandidate)
@@ -48,6 +48,8 @@ public class CandidateQueue
 			itsQueue = itsNextQueue;
 			itsNextQueue = new TreeSet<Candidate>();
 		}
+//		Candidate aFirstCandidate = itsQueue.iterator().next();
+//		itsQueue.remove(aFirstCandidate);
 		Candidate aFirstCandidate = itsQueue.first();
 		Iterator<Candidate> anIterator = itsQueue.iterator();
 		anIterator.next();
@@ -91,6 +93,8 @@ public class CandidateQueue
 			return 0;
 	}
 
+	// TODO just remove (itsQueue.size() - itsMaximumQueueSize) elements using
+	// Iterator<Candidate> anIterator = itsNextQueue.descendingIterator();
 	public void trimQueue()
 	{
 		if (itsSearchStrategy == BEAM)

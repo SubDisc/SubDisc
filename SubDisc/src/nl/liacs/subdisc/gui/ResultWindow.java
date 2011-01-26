@@ -5,6 +5,7 @@ import java.awt.event.*;
 import java.util.*;
 
 import javax.swing.*;
+import javax.swing.border.*;
 
 import nl.liacs.subdisc.*;
 import nl.liacs.subdisc.TargetConcept.*;
@@ -18,7 +19,7 @@ public class ResultWindow extends JFrame
 	private ResultTableModel itsResultTableModel;
 	private JTable itsSubgroupTable;
 	private SubgroupSet itsSubgroupSet;
-	private DAGView itsDAGView; //layout of the graph on the whole database
+//	private DAGView itsDAGView; //layout of the graph on the whole database
 	private Table itsTable;
 	private BinaryTable itsBinaryTable;
 	private QualityMeasure itsQualityMeasure;
@@ -26,13 +27,66 @@ public class ResultWindow extends JFrame
 	private int itsFold;
 	private BitSet itsBitSet;
 
+//	public ResultWindow(Table theTable, SubgroupDiscovery theSubgroupDiscovery, DAGView theDAGView, BinaryTable theBinaryTable, int theFold, BitSet theBitSet)
+	public ResultWindow(Table theTable, SubgroupDiscovery theSubgroupDiscovery, BinaryTable theBinaryTable, int theFold, BitSet theBitSet)
+	{
+		if (theTable == null ||theSubgroupDiscovery == null)
+			return;	// TODO
+		else
+		{
+			itsTable = theTable;
+			itsNrRecords = itsTable.getNrRows();
+			itsSubgroupSet = theSubgroupDiscovery.getResult();
+			itsSearchParameters = theSubgroupDiscovery.getSearchParameters();
+			itsQualityMeasure = theSubgroupDiscovery.getQualityMeasure();
+//			itsDAGView = theDAGView;
+			itsBinaryTable = theBinaryTable;
+			itsFold = theFold;
+			itsBitSet = theBitSet;
+
+			itsResultTableModel = new ResultTableModel(itsSubgroupSet);
+			itsSubgroupTable = new JTable(itsResultTableModel);
+			if (!itsSubgroupSet.isEmpty())
+				itsSubgroupTable.addRowSelectionInterval(0, 0);
+
+			initComponents ();
+//			setIconImage(ICON);
+			initialise();
+			setTitle();
+		}
+	}
+
+	//only used for post-processing
+	private ResultWindow(Table theTable, SubgroupSet theSubgroupSet, SearchParameters theSearchParameters, QualityMeasure theQualityMeasure, BinaryTable theBinaryTable, int theFold, BitSet theBitSet)
+	{
+		itsTable = theTable;
+		itsNrRecords = itsTable.getNrRows();
+		itsSubgroupSet = theSubgroupSet;
+		itsSearchParameters = theSearchParameters;
+		itsQualityMeasure = theQualityMeasure;
+//		itsDAGView = theDAGView;
+		itsBinaryTable = theBinaryTable;
+		itsFold = theFold;
+		itsBitSet = theBitSet;
+
+		itsResultTableModel = new ResultTableModel(itsSubgroupSet);
+		itsSubgroupTable = new JTable(itsResultTableModel);
+		if (!itsSubgroupSet.isEmpty())
+			itsSubgroupTable.addRowSelectionInterval(0, 0);
+
+		initComponents ();
+//			setIconImage(ICON);
+		initialise();
+		setTitle();
+	}
+
+/*
 	public ResultWindow(SubgroupSet theSubgroupSet, SearchParameters theSearchParameters, DAGView theDAGView, Table theTable, QualityMeasure theQualityMeasure, int theNrRecords, int theFold, BitSet theBitSet)
 	{
-
 		itsSubgroupSet = theSubgroupSet;
 		itsSearchParameters = theSearchParameters;
 		itsDAGView = theDAGView;
-		itsResultTableModel = new ResultTableModel(itsSubgroupSet, itsSearchParameters);
+		itsResultTableModel = new ResultTableModel(itsSubgroupSet);
 		itsSubgroupTable = new JTable(itsResultTableModel);
 		if (!itsSubgroupSet.isEmpty())
 			itsSubgroupTable.addRowSelectionInterval(0, 0);
@@ -50,14 +104,13 @@ public class ResultWindow extends JFrame
 		
 		setTitle();
 	}
-	
+
 	public ResultWindow(SubgroupSet theSubgroupSet, SearchParameters theSearchParameters, DAGView theDAGView, Table theTable, BinaryTable theBinaryTable, QualityMeasure theQualityMeasure, int theNrRecords, int theFold, BitSet theBitSet)
 	{
-
 		itsSubgroupSet = theSubgroupSet;
 		itsSearchParameters = theSearchParameters;
 		itsDAGView = theDAGView;
-		itsResultTableModel = new ResultTableModel(itsSubgroupSet, itsSearchParameters);
+		itsResultTableModel = new ResultTableModel(itsSubgroupSet);
 		itsSubgroupTable = new JTable(itsResultTableModel);
 		if (!itsSubgroupSet.isEmpty())
 			itsSubgroupTable.addRowSelectionInterval(0, 0);
@@ -75,20 +128,24 @@ public class ResultWindow extends JFrame
 
 		setTitle();
 	}
+*/
 
 	public void setTitle()
 	{
-		String s;
+		StringBuilder s = new StringBuilder(150);
 		if (itsSubgroupSet.isEmpty())
-			s = "No subgroups found that match the set criterion";
+			s.append("No subgroups found that match the set criterion");
 		else
-			s = itsSubgroupSet.size() + " subgroups found"; 
-		s += ";  quality measure = " + QualityMeasure.getMeasureString(itsSearchParameters.getQualityMeasure());
+			s.append(itsSubgroupSet.size() + " subgroups found"); 
+
+		s.append(";  quality measure = ");
+		s.append(QualityMeasure.getMeasureString(itsSearchParameters.getQualityMeasure()));
+
 		if (itsSearchParameters.getTargetType() != TargetType.MULTI_LABEL)
-			s += ";  target value = " + itsSearchParameters.getTargetConcept().getTargetValue();
+			s.append(";  target value = " + itsSearchParameters.getTargetConcept().getTargetValue());
 		if (itsFold != 0)
-			s += ";  fold = " + itsFold;
-		setTitle(s);
+			s.append(";  fold = " + itsFold);
+		setTitle(s.toString());
 	}
 
 	public void initialise()
@@ -107,9 +164,9 @@ public class ResultWindow extends JFrame
 		itsSubgroupTable.setColumnSelectionAllowed(false);
 		itsSubgroupTable.getSelectionModel().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
-		itsSubgroupTable.addKeyListener(new java.awt.event.KeyListener()
+		itsSubgroupTable.addKeyListener(new KeyListener()
 		{
-			public void keyPressed(java.awt.event.KeyEvent key)
+			public void keyPressed(KeyEvent key)
 			{
 				if (key.getKeyCode() == KeyEvent.VK_ENTER)
 					if (itsSubgroupTable.getRowCount() > 0 && itsSearchParameters.getTargetType() != TargetType.SINGLE_NOMINAL)
@@ -119,9 +176,9 @@ public class ResultWindow extends JFrame
 						jButtonDeleteSubgroupsActionPerformed();
 			}
 
-			public void keyReleased(java.awt.event.KeyEvent key) {	}
+			public void keyReleased(KeyEvent key) {	}
 
-			public void keyTyped(java.awt.event.KeyEvent key) {	}
+			public void keyTyped(KeyEvent key) {	}
 		});
 
 		pack ();
@@ -133,16 +190,16 @@ public class ResultWindow extends JFrame
 		JPanel aSubgroupPanel = new JPanel();
 		JPanel aSubgroupSetPanel = new JPanel();
 
-		itsScrollPane = new javax.swing.JScrollPane();
-		addWindowListener(new java.awt.event.WindowAdapter() {
-			public void windowClosing(java.awt.event.WindowEvent evt) {
+		itsScrollPane = new JScrollPane();
+		addWindowListener(new WindowAdapter() {
+			public void windowClosing(WindowEvent evt) {
 				exitForm();
 			}
 		});
 
 		jButtonShowModel = initButton("Show Model", 'S');
-		jButtonShowModel.addActionListener(new java.awt.event.ActionListener() {
-			public void actionPerformed(java.awt.event.ActionEvent evt) {
+		jButtonShowModel.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
 				jButtonShowModelActionPerformed();
 			}
 		});
@@ -150,8 +207,8 @@ public class ResultWindow extends JFrame
 		jButtonShowModel.setVisible(itsSearchParameters.getTargetType() != TargetType.SINGLE_NOMINAL);
 
 		jButtonROC = initButton("ROC", 'R');
-		jButtonROC.addActionListener(new java.awt.event.ActionListener() {
-			public void actionPerformed(java.awt.event.ActionEvent evt) {
+		jButtonROC.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
 				jButtonROCActionPerformed();
 			}
 		});
@@ -159,24 +216,24 @@ public class ResultWindow extends JFrame
 		jButtonROC.setVisible(itsSearchParameters.getTargetType() == TargetType.SINGLE_NOMINAL);
 
 		jButtonDeleteSubgroups = initButton("Delete Pattern", 'D');
-		jButtonDeleteSubgroups.addActionListener(new java.awt.event.ActionListener() {
-			public void actionPerformed(java.awt.event.ActionEvent evt) {
+		jButtonDeleteSubgroups.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
 				jButtonDeleteSubgroupsActionPerformed();
 			}
 		});
 		aSubgroupPanel.add(jButtonDeleteSubgroups);
 
 		jButtonDumpPatterns = initButton("Dump Patterns", 'U');
-		jButtonDumpPatterns.addActionListener(new java.awt.event.ActionListener() {
-			public void actionPerformed(java.awt.event.ActionEvent evt) {
+		jButtonDumpPatterns.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
 				jButtonDumpPatternsActionPerformed();
 			}
 		});
 		aSubgroupPanel.add(jButtonDumpPatterns);
 
 		jButtonPostprocess = initButton("Post-process", 'O');
-		jButtonPostprocess.addActionListener(new java.awt.event.ActionListener() {
-			public void actionPerformed(java.awt.event.ActionEvent evt) {
+		jButtonPostprocess.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
 				jButtonPostprocessActionPerformed();
 			}
 		});
@@ -184,24 +241,24 @@ public class ResultWindow extends JFrame
 		jButtonPostprocess.setVisible(itsSearchParameters.getTargetType() == TargetType.MULTI_LABEL);
 
 		jButtonPValues = initButton("Compute p-Values", 'P');
-		jButtonPValues.addActionListener(new java.awt.event.ActionListener() {
-			public void actionPerformed(java.awt.event.ActionEvent evt) {
+		jButtonPValues.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
 				jButtonPValuesActionPerformed();
 			}
 		});
 		aSubgroupPanel.add(jButtonPValues);
 
 		jButtonRegressionTest = initButton("Regression Test", 'T');
-		jButtonRegressionTest.addActionListener(new java.awt.event.ActionListener() {
-			public void actionPerformed(java.awt.event.ActionEvent evt) {
+		jButtonRegressionTest.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
 				jButtonRegressionTestActionPerformed();
 			}
 		});
 		aSubgroupPanel.add(jButtonRegressionTest);
-		
+
 		jButtonFold = initButton("Fold members", 'F');
-		jButtonFold.addActionListener(new java.awt.event.ActionListener() {
-			public void actionPerformed(java.awt.event.ActionEvent evt) {
+		jButtonFold.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
 				jButtonFoldActionPerformed();
 			}
 		});
@@ -209,22 +266,19 @@ public class ResultWindow extends JFrame
 		jButtonFold.setVisible(itsFold != 0);
 
 		//possibly disable buttons
-		if (itsSubgroupSet != null) //Subgroup set
+		if (itsSubgroupSet.isEmpty())
 		{
-			if (itsSubgroupSet.isEmpty())
-			{
-				jButtonShowModel.setEnabled(false);
-				jButtonROC.setEnabled(false);
-				jButtonDeleteSubgroups.setEnabled(false);
-				jButtonPostprocess.setEnabled(false);
-			}
+			jButtonShowModel.setEnabled(false);
+			jButtonROC.setEnabled(false);
+			jButtonDeleteSubgroups.setEnabled(false);
+			jButtonPostprocess.setEnabled(false);
 		}
 
 		//close button
 		jButtonCloseWindow = initButton("Close", 'C');
-		jButtonCloseWindow.addActionListener(new java.awt.event.ActionListener() {
-			public void actionPerformed(java.awt.event.ActionEvent evt) {
-				jButtonCloseWindowActionPerformed();
+		jButtonCloseWindow.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				exitForm();
 			}
 		});
 
@@ -232,18 +286,18 @@ public class ResultWindow extends JFrame
 
 		jPanelSouth.add(aSubgroupPanel);
 		jPanelSouth.add(aSubgroupSetPanel);
-		getContentPane().add(jPanelSouth, java.awt.BorderLayout.SOUTH);
-		getContentPane().add(itsScrollPane, java.awt.BorderLayout.CENTER);
+		getContentPane().add(jPanelSouth, BorderLayout.SOUTH);
+		getContentPane().add(itsScrollPane, BorderLayout.CENTER);
 	}
 
 	private JButton initButton(String theName, int theMnemonic)
 	{
-		JButton aButton = new javax.swing.JButton();
-		aButton.setPreferredSize(new java.awt.Dimension(110, 25));
-		aButton.setBorder(new javax.swing.border.BevelBorder(0));
-		aButton.setMinimumSize(new java.awt.Dimension(82, 25));
-		aButton.setMaximumSize(new java.awt.Dimension(110, 25));
-		aButton.setFont(new java.awt.Font ("Dialog", 1, 11));
+		JButton aButton = new JButton();
+		aButton.setPreferredSize(new Dimension(110, 25));
+		aButton.setBorder(new BevelBorder(0));
+		aButton.setMinimumSize(new Dimension(82, 25));
+		aButton.setMaximumSize(new Dimension(110, 25));
+		aButton.setFont(new Font ("Dialog", 1, 11));
 		aButton.setText(theName);
 		aButton.setMnemonic(theMnemonic);
 		return aButton;
@@ -418,11 +472,11 @@ public class ResultWindow extends JFrame
 		aNewSubgroupSet.setIDs();
 
 		// Display postprocessed results
-		ResultWindow aResultWindow = new ResultWindow(aNewSubgroupSet, itsSearchParameters, null, itsTable, itsBinaryTable, itsQualityMeasure, itsNrRecords, itsFold, itsBitSet);
+		ResultWindow aResultWindow = new ResultWindow(itsTable, aNewSubgroupSet, itsSearchParameters, itsQualityMeasure, itsBinaryTable, itsFold, itsBitSet);
 		aResultWindow.setLocation(0, 0);
 		aResultWindow.setSize(1200, 900);
 		aResultWindow.setVisible(true);
-		jButtonCloseWindowActionPerformed();
+		exitForm();
 	}
 
 	private void jButtonPValuesActionPerformed()
@@ -534,8 +588,7 @@ public class ResultWindow extends JFrame
 		return aQualities;
 	}
 
-	private void jButtonCloseWindowActionPerformed() { dispose(); }
-	private void exitForm() {	dispose(); }
+	private void exitForm() { dispose(); }
 
 	private javax.swing.JPanel jPanelSouth;
 	private javax.swing.JButton jButtonShowModel;

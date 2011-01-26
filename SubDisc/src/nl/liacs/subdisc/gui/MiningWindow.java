@@ -1268,10 +1268,10 @@ public class MiningWindow extends JFrame
 	}
 
 	/* MINING BUTTONS */
-
+	//TODO find out what could throw the Exception
 	private void runSubgroupDiscovery(Table aTable, int theFold, BitSet theBitSet)
 	{
-		try
+//		try
 		{
 			setupSearchParameters();
 
@@ -1323,40 +1323,42 @@ public class MiningWindow extends JFrame
 			}
 			aSubgroupDiscovery.Mine(System.currentTimeMillis());
 
+			long anEnd = System.currentTimeMillis();
+			if (anEnd > aBegin + (long)(itsSearchParameters.getMaximumTime()*60*1000))
+				JOptionPane.showMessageDialog(null, "Mining process ended prematurely due to time limit.",
+												"Time Limit", JOptionPane.INFORMATION_MESSAGE);
+			else
+				echoMiningEnd(anEnd - aBegin, aSubgroupDiscovery.getNumberOfSubgroups());
+
 			//ResultWindow
-			SubgroupSet aPreliminaryResults = aSubgroupDiscovery.getResult();
+//			SubgroupSet aPreliminaryResults = aSubgroupDiscovery.getResult();
 			ResultWindow aResultWindow;
 			switch (itsTargetConcept.getTargetType())
 			{
 				case MULTI_LABEL :
 				{
 					BinaryTable aBinaryTable = new BinaryTable(aTable, itsTargetConcept.getMultiTargets());
-					aResultWindow = new ResultWindow(aPreliminaryResults, itsSearchParameters, null, itsTable, aBinaryTable, aSubgroupDiscovery.getQualityMeasure(), itsTotalCount, theFold, theBitSet);
+//					aResultWindow = new ResultWindow(aPreliminaryResults, itsSearchParameters, null, itsTable, aBinaryTable, aSubgroupDiscovery.getQualityMeasure(), itsTotalCount, theFold, theBitSet);
+					aResultWindow = new ResultWindow(itsTable, aSubgroupDiscovery, aBinaryTable, theFold, theBitSet);
 					break;
 				}
 				default :
 				{
-					aResultWindow = new ResultWindow(aPreliminaryResults, itsSearchParameters, null, aTable, aSubgroupDiscovery.getQualityMeasure(), itsTotalCount, theFold, theBitSet);
+//					aResultWindow = new ResultWindow(aPreliminaryResults, itsSearchParameters, null, aTable, aSubgroupDiscovery.getQualityMeasure(), itsTotalCount, theFold, theBitSet);
+					aResultWindow = new ResultWindow( aTable, aSubgroupDiscovery, null, theFold, theBitSet);
 				}
 			}
 			aResultWindow.setLocation(100, 100);
 			aResultWindow.setSize(GUI.WINDOW_DEFAULT_SIZE);
 			aResultWindow.setVisible(true);
-
-			long anEnd = System.currentTimeMillis();
-			if (anEnd > aBegin + (long)(itsSearchParameters.getMaximumTime()*60*1000))
-				JOptionPane.showMessageDialog(null, "Mining process ended prematurely due to time limit.",
-												"Time Limit", JOptionPane.INFORMATION_MESSAGE);
-
 		}
-		catch (Exception e)
-		{
-			e.printStackTrace();
-			ErrorWindow aWindow = new ErrorWindow(e);
-			aWindow.setLocation(200, 200);
-			aWindow.setVisible(true);
-		}
-
+//		catch (Exception e)
+//		{
+//			e.printStackTrace();
+//			ErrorWindow aWindow = new ErrorWindow(e);
+//			aWindow.setLocation(200, 200);
+//			aWindow.setVisible(true);
+//		}
 	}
 
 	private void jButtonSubgroupDiscoveryActionPerformed()

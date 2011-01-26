@@ -48,7 +48,6 @@ public class FileHandler extends JFrame
 		{
 			Log.logCommandLine(
 				"FileHandler Constructor: parameter can not be 'null'.");
-			openFile();
 		}
 		else
 		{

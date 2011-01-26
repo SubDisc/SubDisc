@@ -1,21 +1,24 @@
 package nl.liacs.subdisc.gui;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.text.NumberFormat;
-import java.util.Iterator;
+import java.io.*;
+import java.text.*;
+import java.util.*;
 
-import javax.swing.table.AbstractTableModel;
+import javax.swing.table.*;
 
-import nl.liacs.subdisc.SearchParameters;
-import nl.liacs.subdisc.Subgroup;
-import nl.liacs.subdisc.SubgroupSet;
+import nl.liacs.subdisc.*;
 
 public class ResultTableModel extends AbstractTableModel
 {
 	private static final long serialVersionUID = 1L;
 
 	private SubgroupSet itsSubgroupSet;
+
+	public ResultTableModel(SubgroupSet theSubgroupSet)
+	{
+		itsSubgroupSet = theSubgroupSet;
+	}
+/*
 	private SearchParameters itsSearchParameters;
 
 	public ResultTableModel(SubgroupSet theSubgroupSet, SearchParameters theSearchParameters)
@@ -25,7 +28,7 @@ public class ResultTableModel extends AbstractTableModel
 	}
 
 	public SearchParameters getSearchParameters() { return itsSearchParameters; }
-
+*/
 	public int getRowCount()
 	{
 		return itsSubgroupSet.size();
