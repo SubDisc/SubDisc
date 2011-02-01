@@ -909,8 +909,14 @@ public class MiningWindow extends JFrame
 	// used if Table already exists, but is changed
 	public void update()
 	{
+		// hack on hack, prevent resetting of primary target/measure minimum
+		String aPrimaryTarget = getTargetAttributeName();
+		float aMeasureMinimum = getQualityMeasureMinimum();
+
 		initGuiComponentsDataSet();
 		jComboBoxTargetTypeActionPerformed();	// update hack
+		setTargetAttribute(aPrimaryTarget);
+		setQualityMeasureMinimum(String.valueOf(aMeasureMinimum));
 	}
 
 	/* MENU ITEMS */
@@ -1268,97 +1274,87 @@ public class MiningWindow extends JFrame
 	}
 
 	/* MINING BUTTONS */
-	//TODO find out what could throw the Exception
 	private void runSubgroupDiscovery(Table aTable, int theFold, BitSet theBitSet)
 	{
-//		try
+		setupSearchParameters();
+		TargetType aTargetType = itsTargetConcept.getTargetType();
+
+		//TODO other types not implemented yet
+		if (!aTargetType.isImplemented())
+			return;
+
+		echoMiningStart();
+		long aBegin = System.currentTimeMillis();
+
+		SubgroupDiscovery aSubgroupDiscovery;
+		String aTarget = getTargetAttributeName();
+
+		switch(aTargetType)
 		{
-			setupSearchParameters();
-
-			//TODO other types not implemented yet
-			if (!itsTargetConcept.getTargetType().isImplemented())
-				return;
-
-			echoMiningStart();
-			long aBegin = System.currentTimeMillis();
-
-			SubgroupDiscovery aSubgroupDiscovery;
-			String aTarget = getTargetAttributeName();
-
-			switch(itsTargetConcept.getTargetType())
+			case SINGLE_NOMINAL :
 			{
-				case SINGLE_NOMINAL :
-				{
-					//recompute this number, as we may be dealing with cross-validation here, and hence a smaller number
-					itsPositiveCount = aTable.countValues(aTable.getIndex(aTarget), getMiscFieldName());
-					Log.logCommandLine("positive count: " + itsPositiveCount);
-					aSubgroupDiscovery = new SubgroupDiscovery(itsSearchParameters, aTable, itsPositiveCount);
-					break;
-				}
-
-				case SINGLE_NUMERIC:
-				{
-					//recompute this number, as we may be dealing with cross-validation here, and hence a different value
-					itsTargetAverage = itsTable.getAverage(itsTable.getIndex(aTarget));
-					Log.logCommandLine("average: " + itsTargetAverage);
-					aSubgroupDiscovery = new SubgroupDiscovery(itsSearchParameters, aTable, itsTargetAverage);
-					break;
-				}
-				case MULTI_LABEL :
-				{
-					aSubgroupDiscovery = new SubgroupDiscovery(itsSearchParameters, aTable);
-					break;
-				}
-				case DOUBLE_REGRESSION :
-				{
-					aSubgroupDiscovery = new SubgroupDiscovery(itsSearchParameters, aTable, true);
-					break;
-				}
-				case DOUBLE_CORRELATION :
-				{
-					aSubgroupDiscovery = new SubgroupDiscovery(itsSearchParameters, aTable, false);
-					break;
-				}
-				default : return; // TODO should never get here, throw warning
+				//recompute this number, as we may be dealing with cross-validation here, and hence a smaller number
+				itsPositiveCount = aTable.countValues(aTable.getIndex(aTarget), getMiscFieldName());
+				Log.logCommandLine("positive count: " + itsPositiveCount);
+				aSubgroupDiscovery = new SubgroupDiscovery(itsSearchParameters, aTable, itsPositiveCount);
+				break;
 			}
-			aSubgroupDiscovery.Mine(System.currentTimeMillis());
 
-			long anEnd = System.currentTimeMillis();
-			if (anEnd > aBegin + (long)(itsSearchParameters.getMaximumTime()*60*1000))
-				JOptionPane.showMessageDialog(null, "Mining process ended prematurely due to time limit.",
-												"Time Limit", JOptionPane.INFORMATION_MESSAGE);
-			else
-				echoMiningEnd(anEnd - aBegin, aSubgroupDiscovery.getNumberOfSubgroups());
-
-			//ResultWindow
-//			SubgroupSet aPreliminaryResults = aSubgroupDiscovery.getResult();
-			ResultWindow aResultWindow;
-			switch (itsTargetConcept.getTargetType())
+			case SINGLE_NUMERIC:
 			{
-				case MULTI_LABEL :
-				{
-					BinaryTable aBinaryTable = new BinaryTable(aTable, itsTargetConcept.getMultiTargets());
-//					aResultWindow = new ResultWindow(aPreliminaryResults, itsSearchParameters, null, itsTable, aBinaryTable, aSubgroupDiscovery.getQualityMeasure(), itsTotalCount, theFold, theBitSet);
-					aResultWindow = new ResultWindow(itsTable, aSubgroupDiscovery, aBinaryTable, theFold, theBitSet);
-					break;
-				}
-				default :
-				{
-//					aResultWindow = new ResultWindow(aPreliminaryResults, itsSearchParameters, null, aTable, aSubgroupDiscovery.getQualityMeasure(), itsTotalCount, theFold, theBitSet);
-					aResultWindow = new ResultWindow( aTable, aSubgroupDiscovery, null, theFold, theBitSet);
-				}
+				//recompute this number, as we may be dealing with cross-validation here, and hence a different value
+				itsTargetAverage = itsTable.getAverage(itsTable.getIndex(aTarget));
+				Log.logCommandLine("average: " + itsTargetAverage);
+				aSubgroupDiscovery = new SubgroupDiscovery(itsSearchParameters, aTable, itsTargetAverage);
+				break;
 			}
-			aResultWindow.setLocation(100, 100);
-			aResultWindow.setSize(GUI.WINDOW_DEFAULT_SIZE);
-			aResultWindow.setVisible(true);
+			case MULTI_LABEL :
+			{
+				aSubgroupDiscovery = new SubgroupDiscovery(itsSearchParameters, aTable);
+				break;
+			}
+			case DOUBLE_REGRESSION :
+			{
+				aSubgroupDiscovery = new SubgroupDiscovery(itsSearchParameters, aTable, true);
+				break;
+			}
+			case DOUBLE_CORRELATION :
+			{
+				aSubgroupDiscovery = new SubgroupDiscovery(itsSearchParameters, aTable, false);
+				break;
+			}
+			default : return; // TODO should never get here, throw warning
 		}
-//		catch (Exception e)
-//		{
-//			e.printStackTrace();
-//			ErrorWindow aWindow = new ErrorWindow(e);
-//			aWindow.setLocation(200, 200);
-//			aWindow.setVisible(true);
-//		}
+		aSubgroupDiscovery.Mine(System.currentTimeMillis());
+
+		long anEnd = System.currentTimeMillis();
+		if (anEnd > aBegin + (long)(itsSearchParameters.getMaximumTime()*60*1000))
+			JOptionPane.showMessageDialog(null, "Mining process ended prematurely due to time limit.",
+											"Time Limit", JOptionPane.INFORMATION_MESSAGE);
+		else
+			echoMiningEnd(anEnd - aBegin, aSubgroupDiscovery.getNumberOfSubgroups());
+
+		//ResultWindow
+//			SubgroupSet aPreliminaryResults = aSubgroupDiscovery.getResult();
+		ResultWindow aResultWindow;
+		switch (aTargetType)
+		{
+			case MULTI_LABEL :
+			{
+				BinaryTable aBinaryTable = new BinaryTable(aTable, itsTargetConcept.getMultiTargets());
+//					aResultWindow = new ResultWindow(aPreliminaryResults, itsSearchParameters, null, itsTable, aBinaryTable, aSubgroupDiscovery.getQualityMeasure(), itsTotalCount, theFold, theBitSet);
+				aResultWindow = new ResultWindow(itsTable, aSubgroupDiscovery, aBinaryTable, theFold, theBitSet);
+				break;
+			}
+			default :
+			{
+//					aResultWindow = new ResultWindow(aPreliminaryResults, itsSearchParameters, null, aTable, aSubgroupDiscovery.getQualityMeasure(), itsTotalCount, theFold, theBitSet);
+				aResultWindow = new ResultWindow( aTable, aSubgroupDiscovery, null, theFold, theBitSet);
+			}
+		}
+		aResultWindow.setLocation(100, 100);
+		aResultWindow.setSize(GUI.WINDOW_DEFAULT_SIZE);
+		aResultWindow.setVisible(true);
 	}
 
 	private void jButtonSubgroupDiscoveryActionPerformed()

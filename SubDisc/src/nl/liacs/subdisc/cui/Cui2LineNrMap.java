@@ -9,7 +9,7 @@ import java.util.*;
 
 import nl.liacs.subdisc.*;
 
-public class Cui2LineNrMap
+public class Cui2LineNrMap implements CuiMapInterface
 {
 	private final Map<String, Integer> itsCui2LineNrMap;
 
@@ -67,6 +67,7 @@ public class Cui2LineNrMap
 	 * @return the <code>Map<String, Integer></code> for this Cui2LineNrMap, or
 	 * <code>null</code> if there is none.
 	 */
+	@Override
 	public Map<String, Integer> getMap()
 	{
 		if (itsCui2LineNrMap == null)

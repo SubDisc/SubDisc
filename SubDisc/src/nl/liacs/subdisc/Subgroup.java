@@ -3,7 +3,7 @@ package nl.liacs.subdisc;
 import java.util.BitSet;
 
 /**
- * A Subgroup contains a number of instances form the original data. Subgroups
+ * A Subgroup contains a number of instances from the original data. Subgroups
  * are formed by, a number of, {@link Condition Condition}s. Its members include
  * : a {@link ConditionList ConditionList}, a BitSet representing the instances
  * included in this Subgroup, the number of instances in this Subgroup (its
@@ -126,8 +126,8 @@ public class Subgroup implements Comparable<Object>
 
 	public int getCoverage() { return itsCoverage; }
 
-	public ConditionList getConditions() { return itsConditions;  }
-	public int getNrConditions() { return itsConditions.size();  }
+	public ConditionList getConditions() { return itsConditions; }
+	public int getNrConditions() { return itsConditions.size(); }
 
 	public int getDepth() { return itsDepth; }
 

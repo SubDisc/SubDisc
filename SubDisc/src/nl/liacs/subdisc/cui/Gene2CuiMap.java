@@ -43,7 +43,7 @@ public enum Gene2CuiMap implements CuiMapInterface
 			aReader.readLine();	// skip headerLine
 			while ((aLine = aReader.readLine()) != null)
 			{
-				aLineArray = aLine.split(",");
+				aLineArray = aLine.split("\t");
 				itsGene2CuiMap.put(aLineArray[0], aLineArray[1]);
 			}
 		}

@@ -89,6 +89,7 @@ public class Condition
 		return anAggregateString;
 	}
 
+	// this is used by ConditionList.toString()
 	public String toString()
 	{
 		return itsAttribute.getName() + " " + getOperatorString() + " '" + itsValue + "'";

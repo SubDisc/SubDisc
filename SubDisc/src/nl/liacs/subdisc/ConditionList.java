@@ -26,8 +26,11 @@ public class ConditionList
 	{
 		StringBuilder aResult = new StringBuilder(itsConditions.size() * 25);
 		for(Condition aCondition : itsConditions)
-			aResult.append(aCondition + " AND ");
-		return aResult.replace(aResult.length() - 5, aResult.length(), "").toString();
+		{
+			aResult.append(aCondition);
+			aResult.append(" AND ");
+		}
+		return aResult.substring(0, aResult.length() - 5);
 	}
 
 	//this method computes logical equivalence. This means that the actual number of conditions or the order may differ.

@@ -18,17 +18,7 @@ public class ResultTableModel extends AbstractTableModel
 	{
 		itsSubgroupSet = theSubgroupSet;
 	}
-/*
-	private SearchParameters itsSearchParameters;
 
-	public ResultTableModel(SubgroupSet theSubgroupSet, SearchParameters theSearchParameters)
-	{
-		itsSubgroupSet = theSubgroupSet;
-		itsSearchParameters = theSearchParameters;
-	}
-
-	public SearchParameters getSearchParameters() { return itsSearchParameters; }
-*/
 	public int getRowCount()
 	{
 		return itsSubgroupSet.size();
@@ -38,26 +28,21 @@ public class ResultTableModel extends AbstractTableModel
 
 	public String getColumnName(int theColumnIndex)
 	{
-		String aColumnName = new String();
 		switch(theColumnIndex)
 		{
-			case 0	: { aColumnName = "Nr."; break; }
-			case 1  : { aColumnName = "Depth"; break; }
-			case 2	: { aColumnName = "Coverage"; break; }
-			case 3	: { aColumnName = "Measure"; break; }
-			case 4	: { aColumnName = "p-value"; break; }
-			case 5	: { aColumnName = "Conditions"; break; }
+			case 0 : return "Nr.";
+			case 1 : return "Depth";
+			case 2 : return "Coverage";
+			case 3 : return "Measure";
+			case 4 : return "p-value";
+			case 5 : return "Conditions";
+			default : return "";
 		}
-		return aColumnName;
 	}
 
 	public Object getValueAt(int theRowIndex, int theColumnIndex)
 	{
-		NumberFormat aFormatter = NumberFormat.getNumberInstance();
-
-		String aString = new String("---");
-		Iterator<Subgroup> anIterator;
-		anIterator = itsSubgroupSet.iterator();
+		Iterator<Subgroup> anIterator = itsSubgroupSet.iterator();
 
 		// Good way to walk trough sorted list?
 		for (int i = 0 ; i < theRowIndex; i++)
@@ -68,33 +53,26 @@ public class ResultTableModel extends AbstractTableModel
 
 		switch(theColumnIndex)
 		{
-			case 0:	{	aString = Integer.toString(aSubgroup.getID());
-						break; }
-			case 1:	{	aString = Integer.toString(aSubgroup.getNrConditions());
-						break; }
-			case 2:	{	aString = Integer.toString(aSubgroup.getCoverage());
-						break; }
+			case 0: return aSubgroup.getID();
+			case 1: return aSubgroup.getNrConditions();
+			case 2: return aSubgroup.getCoverage();
 			case 3: {
+						NumberFormat aFormatter = NumberFormat.getNumberInstance();
 						aFormatter.setMaximumFractionDigits(6);
-						aString = aFormatter.format(aSubgroup.getMeasureValue());
-						break; }
+						return aFormatter.format(aSubgroup.getMeasureValue());
+					}
 			case 4: {
+//						NumberFormat aFormatter = NumberFormat.getNumberInstance();
 //						aFormatter.setMaximumFractionDigits(6);
-						if (aSubgroup.getPValue() == Math.PI)
-							aString = "  -";
-						else
-							aString = Double.toString(aSubgroup.getPValue());
-//							aString = aFormatter.format(aSubgroup.getPValue());
-						break;
+						double aPValue = aSubgroup.getPValue();
+						return ((aPValue == Math.PI) ? "  -" : aPValue);
 					}
-			case 5: {
-						aString = aSubgroup.getConditions().toString();
-						break;
-					}
+			case 5: return aSubgroup.getConditions().toString();
+			default : return "---";
 		}
-		return aString;
 	}
 
+	// TODO unused
 	public void toUniqueFile(String theFileName)
 	{
 			boolean errorMade = false;

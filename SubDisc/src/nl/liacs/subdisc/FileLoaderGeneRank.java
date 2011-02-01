@@ -16,6 +16,7 @@ import nl.liacs.subdisc.gui.*;
 public class FileLoaderGeneRank implements FileLoaderInterface
 {
 	private static final Map<String, Integer> itsCui2LineNrMap;
+	private static final Map<String, String> itsCui2NameMap;
 
 	private Map<String, String> itsGene2CuiMap;
 	private Table itsTable;
@@ -24,15 +25,27 @@ public class FileLoaderGeneRank implements FileLoaderInterface
 
 	static
 	{
-		File aFile = new File(CuiMapInterface.GENE_IDENTIFIER_CUIS);
+		// TODO merge into one?
+		File aCui2LineNrFile = new File(CuiMapInterface.GENE_IDENTIFIER_CUIS);
+		File aCui2NameFile = new File(CuiMapInterface.CUI2NAME);
 
-		if (!aFile.exists())
+		if (!aCui2LineNrFile.exists())
 		{
 			itsCui2LineNrMap = null;
-			ErrorLog.log(aFile, new FileNotFoundException());
+			itsCui2NameMap = null;
+			ErrorLog.log(aCui2LineNrFile, new FileNotFoundException());
+		}
+		else if (!aCui2NameFile.exists())
+		{
+			itsCui2LineNrMap = null;
+			itsCui2NameMap = null;
+			ErrorLog.log(aCui2NameFile, new FileNotFoundException());
 		}
 		else
-			itsCui2LineNrMap = new Cui2LineNrMap(aFile).getMap();
+		{
+			itsCui2LineNrMap = new Cui2LineNrMap(aCui2LineNrFile).getMap();
+			itsCui2NameMap = new Cui2NameMap(aCui2NameFile).getMap();
+		}
 	}
 
 	public FileLoaderGeneRank(Table theTable)
@@ -111,7 +124,8 @@ public class FileLoaderGeneRank implements FileLoaderInterface
 			String aString = null;
 
 			// get essential information about the existing Table
-			for (int i = 0; i < aNrDataColumns; i++)
+			// if a CUI column already exist, still create new ones
+			for (int i = 0; i < aNrDataColumns; ++i)
 			{
 				aString = aColumns.get(i).getName();
 
@@ -135,6 +149,9 @@ public class FileLoaderGeneRank implements FileLoaderInterface
 			if (identifierColumn == -1)
 				return;	// TODO show dialog to determine identifierColumn
 
+			// disable by default
+			aColumns.get(identifierColumn).setIsEnabled(false);
+
 			aColumns.ensureCapacity(aNrDataColumns + aNrCUIColumns+ (hasRankColumn ? 0 : 1));
 
 			if (!hasRankColumn)
@@ -148,14 +165,26 @@ public class FileLoaderGeneRank implements FileLoaderInterface
 				for (float f = 1.0f, nrRows = (float)aNrRows; f <= nrRows; ++f)
 					aRankColumn.add(f);	// relatively expensive, see comment XXX
 
+				aRankColumn.setIsEnabled(false);	// TODO for now disable by default
 				aColumns.add(aRankColumn);
 			}
 			// CUI is treated as NUMERIC (smaller size)
-			// no cui2Name(aCUIHeaderArray[i]) yet
-			for (int i = 0; i < aNrCUIColumns; i++)
+			// TODO like CuiDomainChooser.cleanFileName(), will change when all
+			// biosemantics files are read as is.
+			aColumns.add(new Column(new Attribute("Domain: " + FileType.removeExtension(theCUIFile).substring(5).replace("_", " "),
+													"CUI",
+													AttributeType.NUMERIC,
+													aNrDataColumns++),
+										aNrRows));
+
+			// disable CUI column
+			aColumns.get(aNrDataColumns - 1).setIsEnabled(false);
+
+			for (int i = 1; i < aNrCUIColumns; i++)
 			{
-				aColumns.add(new Column(new Attribute(aCUIHeaderArray[i],
-														"",
+				// Note: Browse~/ReasultWindow use normal name, not short name
+				aColumns.add(new Column(new Attribute(itsCui2NameMap.get(aCUIHeaderArray[i]),
+														aCUIHeaderArray[i],
 														AttributeType.NUMERIC,
 														aNrDataColumns++),
 										aNrRows));
@@ -190,12 +219,12 @@ public class FileLoaderGeneRank implements FileLoaderInterface
 
 			// populate the new CUI columns for identifiers mapped to CUIs
 			int aCurrentLineNr = 1;	// headerLine read already
-			int aNeededLineNr = 0;	// could be combined into 1 int
+			int aNeededLineNr = 0;
 			for (Map.Entry<Integer, Integer> anEntry: aLineNrMap.entrySet())
 			{
 				aNeededLineNr = anEntry.getKey().intValue();
 				// no EOF check, lineNrs should always be in file
-				while (aCurrentLineNr++ < aNeededLineNr)
+				while (++aCurrentLineNr <= aNeededLineNr)
 					aReader.readLine();
 
 				/*
@@ -208,7 +237,7 @@ public class FileLoaderGeneRank implements FileLoaderInterface
 				for (int j = aNrCUIColumns - 1, k = itsTable.getColumns().size(); j >= 0; --j)
 					itsTable.getColumn(--k).set(anEntry.getValue(), Float.valueOf(anArray[j]));
 			}
-
+			
 		}
 		// TODO
 		catch (FileNotFoundException e) {}
