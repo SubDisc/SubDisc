@@ -152,9 +152,7 @@ public class FileLoaderGeneRank implements FileLoaderInterface
 			{
 				IdentifierChooser aChooser = new IdentifierChooser(aColumns);
 				identifierColumn = aChooser.getIdentifierColumnIndex();
-				if ((identifierColumn == -1))
-					return;
-				else if (aChooser.getIdentifierType() == null)
+				if ((identifierColumn == -1) || (aChooser.getIdentifierType() == null))
 					return;
 				else
 					createGene2CuiMap(aChooser.getIdentifierType());
@@ -179,10 +177,10 @@ public class FileLoaderGeneRank implements FileLoaderInterface
 				aRankColumn.setIsEnabled(false);	// TODO for now disable by default
 				aColumns.add(aRankColumn);
 			}
-			// CUI is treated as NUMERIC (smaller size)
+
 			aColumns.add(new Column(new Attribute("Domain: " + FileType.removeExtension(theCUIFile),
 													"CUI",
-													AttributeType.NUMERIC,
+													AttributeType.NOMINAL,
 													aNrDataColumns++),
 										aNrRows));
 
@@ -212,19 +210,24 @@ public class FileLoaderGeneRank implements FileLoaderInterface
 			 */
 			Map<Integer, Integer> aLineNrMap = new TreeMap<Integer, Integer>();
 			Column idColumn = aColumns.get(identifierColumn);
+			int aNrColumns = itsTable.getColumns().size();
+			Column aDomainColumn = itsTable.getColumn(aNrColumns - aNrCUIColumns);
+
 			for (int i = 0; i < aNrRows; i++)
 			{
 				// always set all association scores to 0.0f, update CUIs later
 				// TODO XXX new constructor/method using name(ArrayList<Float>().nCopies(anrRows, 0.0f))
-				for (int j = aNrCUIColumns, k = itsTable.getColumns().size(); j > 0; --j)
+				for (int j = aNrCUIColumns - 1, k = aNrColumns; j > 0; --j)
 					itsTable.getColumn(--k).add(0.0f);
 
 				// if CUI exists, put it in Map<cuiLineNr, identifierRowNr>
 				String anIdentifier = String.valueOf(Float.valueOf(idColumn.getString(i)).intValue()); // TODO removes '.0' :)
-
 				Integer aLineNr = itsCui2LineNrMap.get(itsGene2CuiMap.get(anIdentifier));
 				if (aLineNr != null)
 					aLineNrMap.put(aLineNr, i);
+
+				// map cui2name
+				aDomainColumn.add(itsCui2NameMap.get(itsGene2CuiMap.get(anIdentifier)));
 			}
 
 			// populate the new CUI columns for identifiers mapped to CUIs
@@ -244,10 +247,9 @@ public class FileLoaderGeneRank implements FileLoaderInterface
 				 * CUI-Domain files.
 				 */
 				String[] anArray = aReader.readLine().split("\t", -1);
-				for (int j = aNrCUIColumns - 1, k = itsTable.getColumns().size(); j >= 0; --j)
+				for (int j = aNrCUIColumns - 1, k = aNrColumns; j > 0; --j)
 					itsTable.getColumn(--k).set(anEntry.getValue(), Float.valueOf(anArray[j]));
 			}
-			
 		}
 		// TODO
 		catch (FileNotFoundException e) {}
@@ -256,7 +258,6 @@ public class FileLoaderGeneRank implements FileLoaderInterface
 
 	private void createGene2CuiMap(String theIdentifierType)
 	{
-		System.out.println("'" + theIdentifierType + "'");
 		if ("entrez".equals(theIdentifierType))
 			itsGene2CuiMap = Gene2CuiMap.ENTREZ2CUI.getMap();
 		else if ("go".equalsIgnoreCase(theIdentifierType))

@@ -1,6 +1,8 @@
 /*
  * TODO there is only one 'gene_identifier_cuis.txt' file, and only one map is
  * needed, make this class to be an enum.
+ * TODO this class can be made obsolete. Every domain file that is loaded can be
+ * used to make a Cui2LineNrMap, as all have the same first column.
  */
 package nl.liacs.subdisc.cui;
 

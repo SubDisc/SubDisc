@@ -68,7 +68,7 @@ public enum FileType
 	 */
 	public static String removeExtension(File theFile)
 	{
-		if (theFile == null || !theFile.exists())
+		if (theFile == null || !theFile.exists() || !theFile.isFile())
 			return "";
 		else
 		{
