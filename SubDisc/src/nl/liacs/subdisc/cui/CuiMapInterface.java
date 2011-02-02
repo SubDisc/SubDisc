@@ -9,7 +9,7 @@ public interface CuiMapInterface
 	final static String CUI2NAME = "CUI/conceptID2name.txt";
 	final static String GENE_IDENTIFIER_CUIS = "CUI/gene_identifier_cuis.txt";
 	final static String ENTREZ2CUI = "CUI/entrezGeneToConceptID.txt";
-	final static String GO2CUI = "CUI/GO2ConceptID.txt";
+	final static String GO2CUI = "CUI/GO2conceptID.txt";
 //	final static String ENSEMBL2CUI = "CUI/ensembl2cui.txt";
 	final static String DOMAIN_FILE_PREFIX = "expr2";
 

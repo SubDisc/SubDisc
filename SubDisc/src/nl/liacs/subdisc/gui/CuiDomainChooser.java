@@ -15,11 +15,45 @@ import nl.liacs.subdisc.cui.*;
 public class CuiDomainChooser extends JFrame implements ActionListener
 {
 	private static final long serialVersionUID = 1L;
+	private static final Set<String> KNOWN_DOMAINS =
+								new HashSet<String>(CuiMapInterface.NR_DOMAINS);
 
 	private final CountDownLatch itsDoneSignal;
 	private List<File> itsAvailableDomains;
 	private File itsDomainFile;
 	private ButtonGroup itsDomainButtons = new ButtonGroup();
+
+	static
+	{
+		KNOWN_DOMAINS.add("Acquired Abnormality");
+		KNOWN_DOMAINS.add("Anatomical Abnormality");
+		KNOWN_DOMAINS.add("Anatomical Structure");
+		KNOWN_DOMAINS.add("Anatomy");
+		KNOWN_DOMAINS.add("Biological Process"); // GO
+		KNOWN_DOMAINS.add("Body Location or Region");
+		KNOWN_DOMAINS.add("Body Part, Organ, or Organ Component");
+		KNOWN_DOMAINS.add("Body Space or Junction");
+		KNOWN_DOMAINS.add("Body Substance");
+		KNOWN_DOMAINS.add("Body System");
+		KNOWN_DOMAINS.add("Cell Component");
+		KNOWN_DOMAINS.add("Cell or Molecular Dysfunction");
+		KNOWN_DOMAINS.add("Cell");
+		KNOWN_DOMAINS.add("Cellular Component"); // GO
+		KNOWN_DOMAINS.add("Congenital Abnormality");
+		KNOWN_DOMAINS.add("Disease or Syndrome");
+		KNOWN_DOMAINS.add("Disorders");
+		KNOWN_DOMAINS.add("drugbank");
+		KNOWN_DOMAINS.add("Embryonic Structure");
+		KNOWN_DOMAINS.add("Fully Formed Anatomical Structure");
+		KNOWN_DOMAINS.add("Genes");
+		KNOWN_DOMAINS.add("GO"); // GO
+		KNOWN_DOMAINS.add("Mental or Behavioral Dysfunction");
+		KNOWN_DOMAINS.add("Molecular Function"); // GO
+		KNOWN_DOMAINS.add("Neoplastic Process");
+		KNOWN_DOMAINS.add("Pathologic Function");
+		KNOWN_DOMAINS.add("Sign or Symptom");
+		KNOWN_DOMAINS.add("Tissue");
+	}
 
 	public CuiDomainChooser(CountDownLatch theDoneSignal)
 	{
@@ -60,8 +94,9 @@ public class CuiDomainChooser extends JFrame implements ActionListener
 		{
 			itsAvailableDomains =
 								new ArrayList<File>(CuiMapInterface.NR_DOMAINS);
+			// TODO this will be checked recursively
 			for (File f : aCuiDir.listFiles())
-				if (f.getName().startsWith(CuiMapInterface.DOMAIN_FILE_PREFIX))
+				if (KNOWN_DOMAINS.contains(FileType.removeExtension(f)))
 					itsAvailableDomains.add(f);
 			Collections.sort(itsAvailableDomains);
 
@@ -70,7 +105,7 @@ public class CuiDomainChooser extends JFrame implements ActionListener
 
 			for (File f : itsAvailableDomains)
 			{
-				aRadioButton = new JRadioButton(cleanFileName(f));
+				aRadioButton = new JRadioButton(FileType.removeExtension(f));
 				aRadioButton.setActionCommand(f.getAbsolutePath());
 				aRadioButtonPanel.add(aRadioButton);
 			}
@@ -95,11 +130,6 @@ public class CuiDomainChooser extends JFrame implements ActionListener
 			@Override
 			public void windowClosing(WindowEvent e) { countDownAndDispose(); }
 		});
-	}
-
-	private String cleanFileName(File theFile)
-	{
-		return FileType.removeExtension(theFile).substring(5).replace("_", " ");
 	}
 
 	@Override
@@ -128,5 +158,4 @@ public class CuiDomainChooser extends JFrame implements ActionListener
 	{
 		return itsDomainFile;
 	}
-
 }

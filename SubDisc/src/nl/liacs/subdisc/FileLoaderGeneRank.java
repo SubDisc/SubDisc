@@ -2,6 +2,7 @@
  * NOTE: this class may need a lot of memory. Use the virtual machine command
  * line parameter '-Xms1600m' and/or '-Xmx1600m' (or another suitable amount of
  * memory).
+ * TODO split foo() into multiple methods and rename
  */
 package nl.liacs.subdisc;
 
@@ -86,7 +87,12 @@ public class FileLoaderGeneRank implements FileLoaderInterface
 				// TODO pass itsDomainFile as parameter
 				File itsDomainFile = aChooser.getFile();
 
-				if (itsDomainFile == null || !itsDomainFile.exists())
+				if (itsDomainFile == null)
+				{
+					Log.logCommandLine("No domain file selected.");
+					return;
+				}
+				else if (!itsDomainFile.exists())
 				{
 					ErrorLog.log(itsDomainFile, new FileNotFoundException());
 					return;
@@ -119,26 +125,22 @@ public class FileLoaderGeneRank implements FileLoaderInterface
 			int aNrDataColumns = aColumns.size();	// safer than itsTable.getNrColumns()
 			//int aNrDataColumns = itsTable.getNrColumns(); // relies on correct itsNrColumn/update
 			int aNrRows = itsTable.getNrRows();
-			String[] aCUIHeaderArray = aReader.readLine().split(",", -1);	// TODO fails if file is empty
+			String[] aCUIHeaderArray = aReader.readLine().split("\t", -1);	// TODO fails if file is empty
 			int aNrCUIColumns = aCUIHeaderArray.length;
 			String aString = null;
 
+			// TODO only when it is not already known (previous domain addition)
 			// get essential information about the existing Table
 			// if a CUI column already exist, still create new ones
 			for (int i = 0; i < aNrDataColumns; ++i)
 			{
-				aString = aColumns.get(i).getName();
+				aString = aColumns.get(i).getName().toLowerCase();
 
-				if (aString.equalsIgnoreCase("rank"))
+				if ("rank".equals(aString))
 					hasRankColumn = true;
-				else if (aString.equalsIgnoreCase("entrez"))
+				else if ("entrez".equals(aString) || "go".equals(aString))
 				{
-					itsGene2CuiMap = Gene2CuiMap.ENTREZ2CUI.getMap();
-					identifierColumn = i;
-				}
-				else if (aString.equalsIgnoreCase("go"))
-				{
-					itsGene2CuiMap = Gene2CuiMap.GO2CUI.getMap();
+					createGene2CuiMap(aString);
 					identifierColumn = i;
 				}
 
@@ -147,7 +149,16 @@ public class FileLoaderGeneRank implements FileLoaderInterface
 			}
 
 			if (identifierColumn == -1)
-				return;	// TODO show dialog to determine identifierColumn
+			{
+				IdentifierChooser aChooser = new IdentifierChooser(aColumns);
+				identifierColumn = aChooser.getIdentifierColumnIndex();
+				if ((identifierColumn == -1))
+					return;
+				else if (aChooser.getIdentifierType() == null)
+					return;
+				else
+					createGene2CuiMap(aChooser.getIdentifierType());
+			}
 
 			// disable by default
 			aColumns.get(identifierColumn).setIsEnabled(false);
@@ -169,9 +180,7 @@ public class FileLoaderGeneRank implements FileLoaderInterface
 				aColumns.add(aRankColumn);
 			}
 			// CUI is treated as NUMERIC (smaller size)
-			// TODO like CuiDomainChooser.cleanFileName(), will change when all
-			// biosemantics files are read as is.
-			aColumns.add(new Column(new Attribute("Domain: " + FileType.removeExtension(theCUIFile).substring(5).replace("_", " "),
+			aColumns.add(new Column(new Attribute("Domain: " + FileType.removeExtension(theCUIFile),
 													"CUI",
 													AttributeType.NUMERIC,
 													aNrDataColumns++),
@@ -212,6 +221,7 @@ public class FileLoaderGeneRank implements FileLoaderInterface
 
 				// if CUI exists, put it in Map<cuiLineNr, identifierRowNr>
 				String anIdentifier = String.valueOf(Float.valueOf(idColumn.getString(i)).intValue()); // TODO removes '.0' :)
+
 				Integer aLineNr = itsCui2LineNrMap.get(itsGene2CuiMap.get(anIdentifier));
 				if (aLineNr != null)
 					aLineNrMap.put(aLineNr, i);
@@ -233,7 +243,7 @@ public class FileLoaderGeneRank implements FileLoaderInterface
 				 * Does not test for NumberFormatException, assumes well-formed
 				 * CUI-Domain files.
 				 */
-				String[] anArray = aReader.readLine().split(",", -1);
+				String[] anArray = aReader.readLine().split("\t", -1);
 				for (int j = aNrCUIColumns - 1, k = itsTable.getColumns().size(); j >= 0; --j)
 					itsTable.getColumn(--k).set(anEntry.getValue(), Float.valueOf(anArray[j]));
 			}
@@ -242,6 +252,15 @@ public class FileLoaderGeneRank implements FileLoaderInterface
 		// TODO
 		catch (FileNotFoundException e) {}
 		catch (IOException e) {}
+	}
+
+	private void createGene2CuiMap(String theIdentifierType)
+	{
+		System.out.println("'" + theIdentifierType + "'");
+		if ("entrez".equals(theIdentifierType))
+			itsGene2CuiMap = Gene2CuiMap.ENTREZ2CUI.getMap();
+		else if ("go".equalsIgnoreCase(theIdentifierType))
+			itsGene2CuiMap = Gene2CuiMap.GO2CUI.getMap();
 	}
 
 	@Override
