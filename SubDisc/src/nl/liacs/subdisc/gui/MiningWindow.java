@@ -14,6 +14,7 @@ import nl.liacs.subdisc.FileHandler.Action;
 import nl.liacs.subdisc.SearchParameters.*;
 import nl.liacs.subdisc.TargetConcept.*;
 import nl.liacs.subdisc.XMLAutoRun.*;
+import nl.liacs.subdisc.cui.*;
 
 public class MiningWindow extends JFrame
 {
@@ -226,17 +227,20 @@ public class MiningWindow extends JFrame
 		jMiningWindowMenuBar = new JMenuBar();
 		jMenuFile = new JMenu();
 		jMenuItemOpenFile = new JMenuItem();
-		jMenuItemAddCuiDomain = new JMenuItem();
 		jMenuItemBrowse = new JMenuItem();
 		jMenuItemMetaData = new JMenuItem();
 //		jMenuItemDataExplorer = new JMenuItem();	// TODO add when implemented
-//		jSeparator2 = new JSeparator();
 		jMenuItemSubgroupDiscovery = new JMenuItem();
-//		jSeparator3 = new JSeparator();
 		jMenuItemCreateAutoRunFile = new JMenuItem();
 		jMenuItemAddToAutoRunFile = new JMenuItem();
-//		jSeparator4 = new JSeparator();
 		jMenuItemExit = new JMenuItem();
+
+		jMenuEnrichment = new JMenu();
+		jMenuItemAddCuiEnrichmentSource = new JMenuItem();
+		jMenuItemAddGoEnrichmentSource = new JMenuItem();
+		jMenuItemAddCustomEnrichmentSource = new JMenuItem();
+		jMenuItemRemoveEnrichmentSource = new JMenuItem();
+
 		jMenuAbout = new JMenu();
 		jMenuItemAboutCortana = new JMenuItem();
 		jMenuGui = new JMenu();
@@ -354,18 +358,6 @@ public class MiningWindow extends JFrame
 		});
 		jMenuFile.add(jMenuItemOpenFile);
 
-		//TODO enable when CUI setting is correctly implemented
-		jMenuItemAddCuiDomain.setFont(GUI.DEFAULT_TEXT_FONT);
-		jMenuItemAddCuiDomain.setText("Add CUI Domain");
-		jMenuItemAddCuiDomain.setMnemonic('D');
-		jMenuItemAddCuiDomain.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_D, InputEvent.CTRL_MASK));
-		jMenuItemAddCuiDomain.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent evt) {
-				jMenuItemAddCuiDomainActionPerformed();
-			}
-		});
-		jMenuFile.add(jMenuItemAddCuiDomain);
-
 		jMenuItemBrowse.setFont(GUI.DEFAULT_TEXT_FONT);
 		jMenuItemBrowse.setText("Browse");
 		jMenuItemBrowse.setMnemonic('B');
@@ -455,6 +447,56 @@ public class MiningWindow extends JFrame
 		});
 		jMenuFile.add(jMenuItemExit);
 		jMiningWindowMenuBar.add(jMenuFile);
+
+		jMenuEnrichment.setFont(GUI.DEFAULT_TEXT_FONT);
+		jMenuEnrichment.setText("Enrichment");
+		jMenuEnrichment.setMnemonic('E');
+
+		jMenuItemAddCuiEnrichmentSource.setFont(GUI.DEFAULT_TEXT_FONT);
+		jMenuItemAddCuiEnrichmentSource.setText("Add CUI Domain");
+		jMenuItemAddCuiEnrichmentSource.setMnemonic('C');
+//		jMenuItemAddCuiEnrichmentSource.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.CTRL_MASK));
+		jMenuItemAddCuiEnrichmentSource.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				jMenuItemAddEnrichmentSourceActionPerformed(EnrichmentType.CUI);
+			}
+		});
+		jMenuEnrichment.add(jMenuItemAddCuiEnrichmentSource);
+
+		jMenuItemAddGoEnrichmentSource.setFont(GUI.DEFAULT_TEXT_FONT);
+		jMenuItemAddGoEnrichmentSource.setText("Add GO Domain");
+		jMenuItemAddGoEnrichmentSource.setMnemonic('G');
+//		jMenuItemAddGoEnrichmentSource.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_G, InputEvent.CTRL_MASK));
+		jMenuItemAddGoEnrichmentSource.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				jMenuItemAddEnrichmentSourceActionPerformed(EnrichmentType.GO);
+			}
+		});
+		jMenuEnrichment.add(jMenuItemAddGoEnrichmentSource);
+
+		jMenuItemAddCustomEnrichmentSource.setFont(GUI.DEFAULT_TEXT_FONT);
+		jMenuItemAddCustomEnrichmentSource.setText("Add Custom Source");
+		jMenuItemAddCustomEnrichmentSource.setMnemonic('U');
+//		jMenuItemAddCustomEnrichmentSource.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_U, InputEvent.CTRL_MASK));
+		jMenuItemAddCustomEnrichmentSource.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				jMenuItemAddEnrichmentSourceActionPerformed(EnrichmentType.CUSTOM);
+			}
+		});
+		jMenuEnrichment.add(jMenuItemAddCustomEnrichmentSource);
+
+		jMenuItemRemoveEnrichmentSource.setFont(GUI.DEFAULT_TEXT_FONT);
+		jMenuItemRemoveEnrichmentSource.setText("Remove Enrichment Source");
+		jMenuItemRemoveEnrichmentSource.setMnemonic('R');
+//		jMenuItemRemoveEnrichmentSource.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, InputEvent.CTRL_MASK));
+		jMenuItemRemoveEnrichmentSource.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				jMenuItemRemoveEnrichmentSourceActionPerformed();
+			}
+		});
+		jMenuEnrichment.add(jMenuItemRemoveEnrichmentSource);
+
+		jMiningWindowMenuBar.add(jMenuEnrichment);
 
 		jMenuAbout.setFont(GUI.DEFAULT_TEXT_FONT);
 		jMenuAbout.setText("About");
@@ -883,14 +925,16 @@ public class MiningWindow extends JFrame
 	private void enableTableDependentComponents(boolean theSetting)
 	{
 		AbstractButton[] anAbstractButtonArray =
-			new AbstractButton[] {
-									jMenuItemAddCuiDomain,
-									jMenuItemBrowse,
+			new AbstractButton[] {	jMenuItemBrowse,
 									jMenuItemMetaData,
 									//jMenuItemDataExplorer,	//TODO add when implemented
 									jMenuItemSubgroupDiscovery,
 									jMenuItemCreateAutoRunFile,
 									jMenuItemAddToAutoRunFile,
+									jMenuItemAddCuiEnrichmentSource,
+									jMenuItemAddGoEnrichmentSource,
+									jMenuItemAddCustomEnrichmentSource,
+									jMenuItemRemoveEnrichmentSource,
 									jButtonBrowse,
 									jButtonMetaData,
 									jButtonSwapRandomize,
@@ -954,26 +998,36 @@ public class MiningWindow extends JFrame
 		}
 	}
 
-	// cannot be run from the Event Dispatching Thread
-	private void jMenuItemAddCuiDomainActionPerformed()
-	{
-		Thread aThread = new Thread()
-		{
-			public void run()
-			{
-				new FileHandler(itsTable);
-				update();
-			}
-		};
-		aThread.start();
-	}
-
 	// TODO not on EDT
 	private void jMenuItemAutoRunFileActionPerformed(AutoRun theFileOption)
 	{
 		setupSearchParameters();
 		new XMLAutoRun(itsSearchParameters, itsTable, theFileOption);
 	}
+
+	private void jMenuItemExitActionPerformed()
+	{
+		Log.logCommandLine("exit");
+		dispose();
+		System.exit(0);
+	}
+
+	// cannot be run from the Event Dispatching Thread
+	private void jMenuItemAddEnrichmentSourceActionPerformed(final EnrichmentType theType)
+	{
+		Thread aThread = new Thread()
+		{
+			public void run()
+			{
+				new FileHandler(itsTable, theType);
+				update();
+			}
+		};
+		aThread.start();
+	}
+
+	// TODO
+	private void jMenuItemRemoveEnrichmentSourceActionPerformed() {}
 
 	private void jMenuItemAboutCortanaActionPerformed()
 	{
@@ -982,13 +1036,6 @@ public class MiningWindow extends JFrame
 										"Cortana: Subgroup Discovery Tool",
 										"About Cortana",
 										JOptionPane.INFORMATION_MESSAGE);
-	}
-
-	private void jMenuItemExitActionPerformed()
-	{
-		Log.logCommandLine("exit");
-		dispose();
-		System.exit(0);
 	}
 
 	/* DATASET BUTTONS */
@@ -1860,17 +1907,18 @@ public class MiningWindow extends JFrame
 	private JMenuBar jMiningWindowMenuBar;
 	private JMenu jMenuFile;
 	private JMenuItem jMenuItemOpenFile;
-	private JMenuItem jMenuItemAddCuiDomain;
 	private JMenuItem jMenuItemBrowse;
 	private JMenuItem jMenuItemMetaData;
 //	private JMenuItem jMenuItemDataExplorer;
-//	private JSeparator jSeparator2;
 	private JMenuItem jMenuItemSubgroupDiscovery;
-//	private JSeparator jSeparator3;
 	private JMenuItem jMenuItemCreateAutoRunFile;
 	private JMenuItem jMenuItemAddToAutoRunFile;
-//	private JSeparator jSeparator4;
 	private JMenuItem jMenuItemExit;
+	private JMenu jMenuEnrichment;
+	private JMenuItem jMenuItemAddCuiEnrichmentSource;
+	private JMenuItem jMenuItemAddGoEnrichmentSource;
+	private JMenuItem jMenuItemAddCustomEnrichmentSource;
+	private JMenuItem jMenuItemRemoveEnrichmentSource;
 	private JMenu jMenuAbout;
 	private JMenuItem jMenuItemAboutCortana;
 	private JMenu jMenuGui;	// TODO for testing only

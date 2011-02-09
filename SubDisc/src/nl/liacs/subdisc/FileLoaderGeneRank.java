@@ -8,38 +8,86 @@ package nl.liacs.subdisc;
 
 import java.io.*;
 import java.util.*;
-import java.util.concurrent.*;
 
 import nl.liacs.subdisc.Attribute.*;
 import nl.liacs.subdisc.cui.*;
 import nl.liacs.subdisc.gui.*;
 
+// TODO rename this class to generic FileLoaderRank
 public class FileLoaderGeneRank implements FileLoaderInterface
 {
-	private static final Map<String, Integer> itsCui2LineNrMap;
-	private static final Map<String, String> itsCui2NameMap;
+	private static Map<String, Integer> itsCui2LineNrMap;	// TODO generify
+	private static Map<String, String> itsCui2NameMap;	// TODO generify
 
+	// TODO make static
 	private Map<String, String> itsGene2CuiMap;
+
+	private File itsEnrichmentSource = null;
 	private Table itsTable;
 	private int identifierColumn = -1;
 	private boolean hasRankColumn = false;
 
-	static
+	public FileLoaderGeneRank(Table theTable, EnrichmentType theType)
 	{
-		// TODO merge into one?
+		if (theTable == null || theType == null)
+		{
+			Log.logCommandLine(
+			"FileLoaderRank Constructor: parameter(s) can not be 'null'.");
+			return;
+		}
+		else
+		{
+			itsTable = theTable;
+			checkEnrichmentType(theType);
+
+			if (itsEnrichmentSource == null)
+			{
+				Log.logCommandLine("No enrichment source file selected.");
+				return;
+			}
+			else if (!itsEnrichmentSource.exists())
+			{
+				ErrorLog.log(itsEnrichmentSource, new FileNotFoundException());
+				return;
+			}
+			else
+			{
+				// TODO remove debug only
+				System.gc();
+				long freePre = Runtime.getRuntime().freeMemory();
+				long start = System.currentTimeMillis();
+				foo();
+				System.gc();
+				System.out.println((freePre - Runtime.getRuntime().freeMemory())/1048576 + "MB used after adding domain info.");
+				System.out.println((System.currentTimeMillis() - start)/1000 + "s. for loading of domain file.");
+				
+			}
+		}
+	}
+
+	private void checkEnrichmentType(EnrichmentType theType)
+	{
+		switch (theType)
+		{
+			case CUI : setupCuiMaps(); break;
+			case GO : setupGoMaps() ; break;
+			case CUSTOM : setupCustomMaps() ; break;
+			default :
+				Log.logCommandLine("Unknown EnrichmentType: " + theType); break;
+		}
+	}
+
+	private void setupCuiMaps()
+	{
 		File aCui2LineNrFile = new File(CuiMapInterface.GENE_IDENTIFIER_CUIS);
 		File aCui2NameFile = new File(CuiMapInterface.CUI2NAME);
 
 		if (!aCui2LineNrFile.exists())
 		{
-			itsCui2LineNrMap = null;
-			itsCui2NameMap = null;
 			ErrorLog.log(aCui2LineNrFile, new FileNotFoundException());
 		}
 		else if (!aCui2NameFile.exists())
 		{
-			itsCui2LineNrMap = null;
-			itsCui2NameMap = null;
 			ErrorLog.log(aCui2NameFile, new FileNotFoundException());
 		}
 		else
@@ -47,79 +95,42 @@ public class FileLoaderGeneRank implements FileLoaderInterface
 			itsCui2LineNrMap = new Cui2LineNrMap(aCui2LineNrFile).getMap();
 			itsCui2NameMap = new Cui2NameMap(aCui2NameFile).getMap();
 		}
-	}
 
-	public FileLoaderGeneRank(Table theTable)
-	{
-		if (theTable == null)
+		/*
+		 * Note: the CuiMapInterface.GENE_IDENTIFIER_CUIS file is not strictly
+		 * needed to create a mapping. Instead, the same map can be build by
+		 * reading the selected cui-domain file twice.
+		 * Once to build the cui2lineNrMap, using the first column only (while
+		 * avoiding duplicates).
+		 * Another time to populate Table.
+		 */
+		if (itsCui2LineNrMap == null)
 		{
-			Log.logCommandLine(
-			"FileLoaderGeneRank Constructor: parameter can not be 'null'.");
+			Log.logCommandLine(String.format("File: '%s' not found.", 
+										CuiMapInterface.GENE_IDENTIFIER_CUIS));
 			return;
 		}
-		else
-		{
-			itsTable = theTable;
 
-			if (itsCui2LineNrMap == null)
-			{
-//				itsDomainFile = null;
-				Log.logCommandLine(
-					String.format("File: '%s' not found.",
-									CuiMapInterface.GENE_IDENTIFIER_CUIS));
-				return;
-			}
-			else
-			{
-				CountDownLatch aDoneSignal = new CountDownLatch(1);
-				CuiDomainChooser aChooser = new CuiDomainChooser(aDoneSignal);
-
-				try
-				{
-					aDoneSignal.await();
-				}
-				catch (InterruptedException e)
-				{
-					//TODO ErrorLog
-					Log.logCommandLine(
-						"FileLoaderGeneRank: CuiDomainChooser Waiting Error.");
-				}
-				// TODO pass itsDomainFile as parameter
-				File itsDomainFile = aChooser.getFile();
-
-				if (itsDomainFile == null)
-				{
-					Log.logCommandLine("No domain file selected.");
-					return;
-				}
-				else if (!itsDomainFile.exists())
-				{
-					ErrorLog.log(itsDomainFile, new FileNotFoundException());
-					return;
-				}
-				else
-				{
-					// TODO remove debug only
-					System.gc();
-					long freePre = Runtime.getRuntime().freeMemory();
-					long start = System.currentTimeMillis();
-					foo(itsDomainFile);
-					System.gc();
-					System.out.println((freePre - Runtime.getRuntime().freeMemory())/1048576 + "MB used after adding domain info.");
-					System.out.println((System.currentTimeMillis() - start)/1000 + "s. for loading of domain file.");
-					
-				}
-			}
-		}
+		itsEnrichmentSource = new CuiDomainChooser().getFile();
 	}
 
-	private void foo(File theCUIFile)
+	private void setupGoMaps()
+	{
+		
+	}
+
+	private void setupCustomMaps()
+	{
+		
+	}
+
+	private void foo()
 	{
 		BufferedReader aReader = null;
 
 		try
 		{
-			aReader = new BufferedReader(new FileReader(theCUIFile));
+			aReader = new BufferedReader(new FileReader(itsEnrichmentSource));
 
 			ArrayList<Column> aColumns = itsTable.getColumns();
 			int aNrDataColumns = aColumns.size();	// safer than itsTable.getNrColumns()
@@ -178,7 +189,7 @@ public class FileLoaderGeneRank implements FileLoaderInterface
 				aColumns.add(aRankColumn);
 			}
 
-			aColumns.add(new Column(new Attribute("Domain: " + FileType.removeExtension(theCUIFile),
+			aColumns.add(new Column(new Attribute("Domain: " + FileType.removeExtension(itsEnrichmentSource),
 													"CUI",
 													AttributeType.NOMINAL,
 													aNrDataColumns++),

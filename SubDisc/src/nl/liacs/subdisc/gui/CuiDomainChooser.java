@@ -5,24 +5,23 @@ import java.awt.event.*;
 import java.io.*;
 import java.util.*;
 import java.util.List;
-import java.util.concurrent.*;
 
 import javax.swing.*;
 
 import nl.liacs.subdisc.*;
 import nl.liacs.subdisc.cui.*;
 
-public class CuiDomainChooser extends JFrame implements ActionListener
+public class CuiDomainChooser extends JDialog implements ActionListener
 {
 	private static final long serialVersionUID = 1L;
 	private static final Set<String> KNOWN_DOMAINS =
 								new HashSet<String>(CuiMapInterface.NR_DOMAINS);
 
-	private final CountDownLatch itsDoneSignal;
 	private List<File> itsAvailableDomains;
 	private File itsDomainFile;
 	private ButtonGroup itsDomainButtons = new ButtonGroup();
 
+	// TODO discuss with CMSB to find another way (eg. release.info file)
 	static
 	{
 		KNOWN_DOMAINS.add("Acquired Abnormality");
@@ -55,24 +54,16 @@ public class CuiDomainChooser extends JFrame implements ActionListener
 		KNOWN_DOMAINS.add("Tissue");
 	}
 
-	public CuiDomainChooser(CountDownLatch theDoneSignal)
+	public CuiDomainChooser()
 	{
-		itsDoneSignal = theDoneSignal;
-
-		// TODO ErrorLog
-		if (itsDoneSignal == null)
-			Log.logCommandLine(
-			"SecondaryTargetsWindow Constructor: parameter can not be 'null'.");
-		else
-		{
-			setTitle("CUI Domain Chooser");
-			setLocation(100, 100);
-			initComponents();
-	//		setSize(GUI.DEFAULT_WINDOW_DIMENSION);	// TODO
-	//		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-			pack();
-			setVisible(true);
-		}
+		super.setModalityType(Dialog.DEFAULT_MODALITY_TYPE);
+		super.setTitle("CUI Domain Chooser");
+		super.setLocation(100, 100);
+		initComponents();
+//		setSize(GUI.DEFAULT_WINDOW_DIMENSION);	// TODO
+		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		pack();
+		setVisible(true);
 	}
 
 	private void initComponents()
@@ -124,12 +115,6 @@ public class CuiDomainChooser extends JFrame implements ActionListener
 		}
 		getContentPane().add(aRadioButtonPanel);
 		getContentPane().add(aButtonPanel);
-
-		addWindowListener(new WindowAdapter()
-		{
-			@Override
-			public void windowClosing(WindowEvent e) { countDownAndDispose(); }
-		});
 	}
 
 	@Override
@@ -141,19 +126,12 @@ public class CuiDomainChooser extends JFrame implements ActionListener
 		{
 			itsDomainFile =
 				new File(itsDomainButtons.getSelection().getActionCommand());
-			countDownAndDispose();
+			dispose();
 		}
 		else if ("cancel".equals(aCommand))
-			countDownAndDispose();
+			dispose();
 	}
 
-	private void countDownAndDispose()
-	{
-		itsDoneSignal.countDown();
-		dispose();
-	}
-
-	// TODO pass in File as parameter
 	public File getFile()
 	{
 		return itsDomainFile;

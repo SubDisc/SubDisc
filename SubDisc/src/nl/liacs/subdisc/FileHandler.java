@@ -7,6 +7,8 @@ import java.io.*;
 
 import javax.swing.*;
 
+import nl.liacs.subdisc.cui.*;
+
 public class FileHandler extends JFrame
 {
 	private static final long serialVersionUID = 1L;
@@ -42,7 +44,7 @@ public class FileHandler extends JFrame
 	}
 
 	// Add CUI domain to existing Table
-	public FileHandler(Table theTable)
+	public FileHandler(Table theTable, EnrichmentType theType)
 	{
 		if (theTable == null)
 		{
@@ -51,7 +53,7 @@ public class FileHandler extends JFrame
 		}
 		else
 		{
-			itsTable = new FileLoaderGeneRank(theTable).getTable();
+			itsTable = new FileLoaderGeneRank(theTable, theType).getTable();
 			printLoadingInfo();
 		}
 	}
