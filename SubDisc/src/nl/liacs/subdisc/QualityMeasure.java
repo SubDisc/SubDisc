@@ -1,7 +1,5 @@
 package nl.liacs.subdisc;
 
-import nl.liacs.subdisc.TargetConcept.TargetType;
-
 // TODO put Contigency table here without screwing up package classes layout.
 /**
  * The QualityMeasure class includes all quality measures used
@@ -88,7 +86,7 @@ public class QualityMeasure
 	}
 
 	//SINGLE_NUMERIC
-	public QualityMeasure(int theMeasure, int theTotalCoverage,	float theTotalSum, float theTotalSSD, float theTotalMedian,	float theTotalMedianAD)
+	public QualityMeasure(int theMeasure, int theTotalCoverage, float theTotalSum, float theTotalSSD, float theTotalMedian, float theTotalMedianAD)
 	{
 		itsMeasure = theMeasure;
 		itsNrRecords = theTotalCoverage;
@@ -609,14 +607,14 @@ public class QualityMeasure
 
 	//Baysian ========================================================================================
 
-	public QualityMeasure(int theMeasure, DAG theDAG, int theNrRecords, float theAlpha, float theBeta)
+	public QualityMeasure(SearchParameters theSearchParameters, DAG theDAG, int theNrRecords)
 	{
-		itsMeasure = theMeasure;
+		itsMeasure = theSearchParameters.getQualityMeasure();
 		itsNrRecords = theNrRecords;
 		itsDAG = theDAG;
 		itsNrNodes = itsDAG.getSize();
-		itsAlpha = theAlpha;
-		itsBeta = theBeta;
+		itsAlpha = theSearchParameters.getAlpha();
+		itsBeta = theSearchParameters.getBeta();
 		itsVStructures = itsDAG.determineVStructures();
 	}
 
@@ -630,7 +628,7 @@ public class QualityMeasure
 			case EDIT_DISTANCE :
 				return calculateEditDistance(theSubgroup.getDAG());
 			default : Log.logCommandLine("QualityMeasure not WEED or EDIT_DISTANCE.");
-						return 0f; // TODO throw warning
+						return 0.0f; // TODO throw warning
 		}
 	}
 

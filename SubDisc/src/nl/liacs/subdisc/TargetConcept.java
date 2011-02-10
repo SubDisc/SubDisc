@@ -24,68 +24,10 @@ public class TargetConcept implements XMLNodeInterface
 	private Attribute	itsSecondaryTarget;
 	private ArrayList<Attribute> itsMultiTargets;
 
-	public enum TargetType
+	
+	public TargetConcept()
 	{
-		SINGLE_NOMINAL("single nominal"),
-		SINGLE_NUMERIC("single numeric"),
-		SINGLE_ORDINAL("single ordinal"),
-		DOUBLE_REGRESSION("double regression"),
-		DOUBLE_CORRELATION("double correlation"),
-		MULTI_LABEL("multi-label"),
-		MULTI_BINARY_CLASSIFICATION("multi binary classification");
-
-		public final String TEXT;
-
-		private TargetType(String theText) { TEXT = theText; }
-
-		public static TargetType getTargetType(String theType)
-		{
-			for (TargetType t : TargetType.values())
-				if (t.TEXT.equals(theType))
-					return t;
-
-			/*
-			 * theType cannot be resolved to a TargetType. Log error and return
-			 * default.
-			 */
-			Log.logCommandLine(String.format("'%s' is not a valid TargetType. Returning SINGLE_NOMINAL.", theType));
-			return TargetType.SINGLE_NOMINAL;
-		}
-
-		public boolean isEMM()
-		{
-			switch (this)
-			{
-				case DOUBLE_REGRESSION :
-				case DOUBLE_CORRELATION :
-				case MULTI_LABEL :
-				case MULTI_BINARY_CLASSIFICATION : return true;
-				default : return false;
-			}
-		}
-
-		public boolean isImplemented()
-		{
-			switch (this)
-			{
-				case SINGLE_NOMINAL :
-				case SINGLE_NUMERIC :
-//				case DOUBLE_REGRESSION : //not implemented yet
-				case DOUBLE_CORRELATION :
-				case MULTI_LABEL : return true;
-				default : return false;
-			}
-		}
-
-		public boolean hasSecondaryTarget()
-		{
-			switch (this)
-			{
-				case DOUBLE_REGRESSION :
-				case DOUBLE_CORRELATION : return true;
-				default : return false;
-			}
-		}
+		itsTargetType = TargetType.getDefaultType();
 	}
 
 	// creation of TargetConcept relies on Table being loaded first
@@ -118,11 +60,6 @@ public class TargetConcept implements XMLNodeInterface
 			else
 				;	// TODO throw warning dialog
 		}
-	}
-
-	public TargetConcept()
-	{
-		itsTargetType = TargetType.SINGLE_NOMINAL;
 	}
 
 	// member methods

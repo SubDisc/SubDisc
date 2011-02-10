@@ -130,7 +130,7 @@ public enum XMLNodeTargetConcept
 			@Override
 			public String getValueFromData(TargetConcept theTargetConcept)
 			{
-				return theTargetConcept.getTargetType().hasSecondaryTarget() ?
+				return TargetType.hasSecondaryTarget(theTargetConcept.getTargetType()) ?
 						String.valueOf(theTargetConcept.getSecondaryTarget().getIndex())
 						: "";
 			}
@@ -145,7 +145,7 @@ public enum XMLNodeTargetConcept
 			@Override
 			public String getValueFromData(TargetConcept theTargetConcept)
 			{
-				return theTargetConcept.getTargetType().hasSecondaryTarget() ?
+				return TargetType.hasSecondaryTarget(theTargetConcept.getTargetType()) ?
 						String.valueOf(theTargetConcept.getSecondaryTarget().getName())
 						: "";
 			}
@@ -160,7 +160,7 @@ public enum XMLNodeTargetConcept
 			@Override
 			public String getValueFromData(TargetConcept theTargetConcept)
 			{
-				return theTargetConcept.getTargetType().hasSecondaryTarget() ?
+				return TargetType.hasSecondaryTarget(theTargetConcept.getTargetType()) ?
 						String.valueOf(theTargetConcept.getSecondaryTarget().getShort())
 						: "";
 			}
@@ -175,7 +175,7 @@ public enum XMLNodeTargetConcept
 			@Override
 			public String getValueFromData(TargetConcept theTargetConcept)
 			{
-				return theTargetConcept.getTargetType().hasSecondaryTarget() ?
+				return TargetType.hasSecondaryTarget(theTargetConcept.getTargetType()) ?
 						String.valueOf(theTargetConcept.getSecondaryTarget().getType().toString())
 						: "";
 

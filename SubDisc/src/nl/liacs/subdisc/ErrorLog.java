@@ -7,6 +7,7 @@ public class ErrorLog
 	public enum Error
 	{
 		ATTRIBUTE_TYPE_UNKNOWN("AttributeType unknown"),
+		TARGET_TYPE_UNKNOWN("TargetType unknown"),
 		FILE_NOT_FOUND("File not found"),
 		IOEXCEPTION("IOException");
 

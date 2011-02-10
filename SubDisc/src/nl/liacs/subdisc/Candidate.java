@@ -11,6 +11,11 @@ public class Candidate implements Comparable<Object>
 		itsPriority = thePriority;
 	}
 
+	/*
+	 * TODO this implementation is to narrow. This prevents CandidateQueue's
+	 * internal TreeSet<Candidate> .remove(Object o) from working correctly.
+	 */
+	@Override
 	public int compareTo(Object theObject)
 	{
 		if (itsPriority > ((Candidate)theObject).itsPriority)

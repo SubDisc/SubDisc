@@ -16,7 +16,8 @@ public class MetaDataTableModel extends AbstractTableModel
 		CARDINALITY(1, "Cardinality"),
 		TYPE(2, "Type"),
 		ENABLED(3, "Enabled"),
-		MISSING(4, "Missing Value");
+		HAS_MISSING(4, "Values Missing"),
+		MISSING_VALUE(5, "Value for Missing");
 
 		public final int columnNr;
 		public final String guiText;
@@ -33,7 +34,7 @@ public class MetaDataTableModel extends AbstractTableModel
 				if (h.columnNr == theColumnIndex)
 						return h.guiText;
 			Log.logCommandLine(
-				"Error in AttributeTableHeader.getColumnName(): invalid index '"
+				"Error in MetaDataTableHeader.getColumnName(): invalid index '"
 				+ theColumnIndex + "'.");
 			return "Incorrect column index.";
 		}
@@ -89,13 +90,15 @@ public class MetaDataTableModel extends AbstractTableModel
 				return itsTable.getColumns().get(row).getAttribute().getTypeName();
 			else if (col == MetaDataTableHeader.ENABLED.columnNr)
 				return itsTable.getColumns().get(row).getIsEnabled() ? "yes" : "no";
-			else if (col == MetaDataTableHeader.MISSING.columnNr)
+			else if (col == MetaDataTableHeader.HAS_MISSING.columnNr)
+				return itsTable.getColumns().get(row).getHasMissingValues() ? "yes" : "no";
+			else if (col == MetaDataTableHeader.MISSING_VALUE.columnNr)
 				return itsTable.getColumns().get(row).getMissingValue();
 			else
 			{
 				Log.logCommandLine(
-					"Error in AttributeTableModel.getValueAt(): " +
-					"invalid index: '" + col + "' for AttributeTableHeader.");
+					"Error in MetaDataTableModel.getValueAt(): " +
+					"invalid index: '" + col + "' for MetaDataTableHeader.");
 				return null;
 			}
 		}
@@ -107,7 +110,7 @@ public class MetaDataTableModel extends AbstractTableModel
 	private void LogError(String theMethod)
 	{
 		Log.logCommandLine(
-			"Error in AttributeTableWindow" + theMethod + ": Table is 'null'.");
+			"Error in MetaDataTableWindow" + theMethod + ": Table is 'null'.");
 	}
 /*
 	@Override

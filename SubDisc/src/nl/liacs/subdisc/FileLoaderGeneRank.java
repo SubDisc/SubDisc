@@ -177,10 +177,10 @@ public class FileLoaderGeneRank implements FileLoaderInterface
 			if (!hasRankColumn)
 			{
 				Column aRankColumn = new Column(new Attribute("RANK",
-																"RANK",
+																null,
 																AttributeType.NUMERIC,
 																aNrDataColumns++),
-																aNrRows);
+												aNrRows);
 
 				for (float f = 1.0f, nrRows = (float)aNrRows; f <= nrRows; ++f)
 					aRankColumn.add(f);	// relatively expensive, see comment XXX
@@ -190,10 +190,10 @@ public class FileLoaderGeneRank implements FileLoaderInterface
 			}
 
 			aColumns.add(new Column(new Attribute("Domain: " + FileType.removeExtension(itsEnrichmentSource),
-													"CUI",
+													null,
 													AttributeType.NOMINAL,
 													aNrDataColumns++),
-										aNrRows));
+									aNrRows));
 
 			// disable CUI column
 			aColumns.get(aNrDataColumns - 1).setIsEnabled(false);

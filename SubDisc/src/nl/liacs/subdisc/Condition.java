@@ -74,8 +74,6 @@ public class Condition
 		itsValue = theValue;
 	}
 
-//	public String getAttributeName() { return itsAttribute.getName(); }
-
 	public Attribute getAttribute() { return itsAttribute; }
 
 	public String getAggregateString()

@@ -26,7 +26,7 @@ public class CandidateQueue
 
 		itsMaximumQueueSize = theSearchParameters.getSearchStrategyWidth();
 	}
-
+/*
 	public boolean add(Candidate theCandidate)
 	{
 		boolean aResult;
@@ -40,7 +40,34 @@ public class CandidateQueue
 
 		return aResult;
 	}
+*/
+	public boolean add(Candidate theCandidate)
+	{
+		if (itsSearchStrategy == BEAM)
+			return addToQueue(itsNextQueue, theCandidate);
+		else
+			return addToQueue(itsQueue, theCandidate);
+	}
 
+	private boolean addToQueue(TreeSet<Candidate> theQueue, Candidate theCandidate)
+	{
+		boolean isAdded = theQueue.add(theCandidate);
+
+		if (isAdded && (theQueue.size() > itsMaximumQueueSize))
+		{
+//			itsQueue.remove(itsQueue.last());	// see comment removeFirst below
+			Iterator<Candidate> anIterator = theQueue.descendingIterator();
+			anIterator.next();
+			anIterator.remove();
+		}
+
+		return isAdded;
+	}
+
+	/*
+	 * TODO itsQueue.remove(aFirstCandidate) does not work properly because of
+	 * the incomplete Candicate.compareTo() method.
+	 */
 	public Candidate removeFirst()
 	{
 		if ((itsSearchStrategy == BEAM) && (itsQueue.size() == 0))
@@ -48,9 +75,8 @@ public class CandidateQueue
 			itsQueue = itsNextQueue;
 			itsNextQueue = new TreeSet<Candidate>();
 		}
-//		Candidate aFirstCandidate = itsQueue.iterator().next();
-//		itsQueue.remove(aFirstCandidate);
 		Candidate aFirstCandidate = itsQueue.first();
+//		itsQueue.remove(aFirstCandidate);
 		Iterator<Candidate> anIterator = itsQueue.iterator();
 		anIterator.next();
 		anIterator.remove();
@@ -92,7 +118,7 @@ public class CandidateQueue
 		else
 			return 0;
 	}
-
+/*
 	// TODO just remove (itsQueue.size() - itsMaximumQueueSize) elements using
 	// Iterator<Candidate> anIterator = itsNextQueue.descendingIterator();
 	public void trimQueue()
@@ -114,7 +140,7 @@ public class CandidateQueue
 				anIterator.remove();
 			}
 	}
-
+*/
 	public int size()
 	{
 		if (itsSearchStrategy == BEAM)

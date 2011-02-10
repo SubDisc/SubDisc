@@ -1,7 +1,6 @@
 /*
  * TODO if changes are made also update other opened windows, eg. BrowseWindow
  * TODO all methods should update itsFeedBackLabel on failure/success
- * TODO include getCardinality() column
  */
 package nl.liacs.subdisc.gui;
 
@@ -23,7 +22,7 @@ public class MetaDataWindow extends JFrame implements ActionListener
 	private JTable itsJTable;
 	private ButtonGroup aNewType = new ButtonGroup();
 	private JTextField aNewMissingValue =
-		new JTextField(AttributeType.NOMINAL.DEFAULT_MISSING_VALUE);
+		new JTextField(AttributeType.getDefaultType().DEFAULT_MISSING_VALUE);
 	private JLabel itsFeedBackLabel = new JLabel();
 
 	public MetaDataWindow(MiningWindow theMiningWindow, Table theTable)
@@ -63,7 +62,8 @@ public class MetaDataWindow extends JFrame implements ActionListener
 		itsJTable.getColumnModel().getColumn(MetaDataTableHeader.CARDINALITY.columnNr).setPreferredWidth(anOtherWidth);
 		itsJTable.getColumnModel().getColumn(MetaDataTableHeader.TYPE.columnNr).setPreferredWidth(anOtherWidth);
 		itsJTable.getColumnModel().getColumn(MetaDataTableHeader.ENABLED.columnNr).setPreferredWidth(anOtherWidth);
-		itsJTable.getColumnModel().getColumn(MetaDataTableHeader.MISSING.columnNr).setPreferredWidth(anOtherWidth);
+		itsJTable.getColumnModel().getColumn(MetaDataTableHeader.HAS_MISSING.columnNr).setPreferredWidth(anOtherWidth);
+		itsJTable.getColumnModel().getColumn(MetaDataTableHeader.MISSING_VALUE.columnNr).setPreferredWidth(anOtherWidth);
 	}
 
 	private void initComponents()
@@ -135,14 +135,14 @@ public class MetaDataWindow extends JFrame implements ActionListener
 		anActionPanel.add(aDisablePanel);
 
 		// set missing
-		aSetMissingPanel.setBorder(GUI.buildBorder("Set Missing Value"));
+		aSetMissingPanel.setBorder(GUI.buildBorder("Set Value for Missing"));
 		aSetMissingPanel.setLayout(new BoxLayout(aSetMissingPanel, BoxLayout.PAGE_AXIS));
 
 		aSetMissingPanel.add(Box.createVerticalGlue());
 		aNewMissingValue.setMaximumSize(GUI.BUTTON_MAXIMUM_SIZE);
 		addCentered(aSetMissingPanel, aNewMissingValue);
 		aSetMissingPanel.add(Box.createVerticalGlue());
-		addCentered(aSetMissingPanel, GUI.buildButton("Change Missing", 'M', "missing", this));
+		addCentered(aSetMissingPanel, GUI.buildButton("Change Value", 'M', "missing", this));
 //		aSetMissingPanel.add(Box.createVerticalGlue());
 		anActionPanel.add(aSetMissingPanel);
 
@@ -240,8 +240,11 @@ public class MetaDataWindow extends JFrame implements ActionListener
 				aNewMissingValue.setText(aNewValue);
 				ArrayList<Integer> aWrongType = new ArrayList<Integer>(itsJTable.getSelectedRows().length);
 				for (int i : itsJTable.getSelectedRows())
-					if (!itsTable.getColumn(i).setNewMissingValue(aNewValue))
+				{
+					if (itsTable.getColumn(i).getHasMissingValues() &&
+						!itsTable.getColumn(i).setNewMissingValue(aNewValue))
 						aWrongType.add(i);
+				}
 
 				if (aWrongType.size() > 0)
 				{

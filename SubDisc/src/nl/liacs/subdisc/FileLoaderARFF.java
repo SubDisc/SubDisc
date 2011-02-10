@@ -291,7 +291,7 @@ public class FileLoaderARFF implements FileLoaderInterface
 		theLine = theLine.replaceFirst("\\'?" + aName + "\\'?", "").trim();
 
 		// (aName, theLine) HACK for NominalAttribute
-		return new Attribute(aName, "", declaredType(aName, theLine), theIndex);
+		return new Attribute(aName, null, declaredType(aName, theLine), theIndex);
 	}
 
 	// TODO do this only once for the whole line

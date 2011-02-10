@@ -8,7 +8,6 @@ import javax.swing.*;
 import javax.swing.border.*;
 
 import nl.liacs.subdisc.*;
-import nl.liacs.subdisc.TargetConcept.*;
 
 public class ResultWindow extends JFrame
 {
@@ -141,8 +140,16 @@ public class ResultWindow extends JFrame
 		s.append(";  quality measure = ");
 		s.append(QualityMeasure.getMeasureString(itsSearchParameters.getQualityMeasure()));
 
-		if (itsSearchParameters.getTargetType() != TargetType.MULTI_LABEL)
-			s.append(";  target value = " + itsSearchParameters.getTargetConcept().getTargetValue());
+		TargetType aTargetType = itsSearchParameters.getTargetType();
+		if (TargetType.hasTargetValue(aTargetType))
+		{
+			s.append(";  target value = ");
+			if (aTargetType == TargetType.SINGLE_NOMINAL)
+				s.append(itsSearchParameters.getTargetConcept().getTargetValue());
+			// else DOUBLE_REGRESSION or DOUBLE_CORRELATION
+			else
+				s.append(itsSearchParameters.getTargetConcept().getSecondaryTarget().getName());
+		}
 		if (itsFold != 0)
 			s.append(";  fold = " + itsFold);
 		setTitle(s.toString());
@@ -439,14 +446,13 @@ public class ResultWindow extends JFrame
 		Log.logCommandLine("Creating quality measures.");
 		int aPostProcessingCount = itsSearchParameters.getPostProcessingCount();
 		double aPostProcessingCountSquare = Math.pow(aPostProcessingCount, 2);
-		int aQualityMeasure = itsSearchParameters.getQualityMeasure();
 
 		QualityMeasure[] aQMs = new QualityMeasure[aPostProcessingCount];
 		for (int i = 0; i < aPostProcessingCount; i++)
 		{
 			Bayesian aGlobalBayesian = new Bayesian(itsBinaryTable);
 			aGlobalBayesian.climb();
-			aQMs[i] = new QualityMeasure(aQualityMeasure, aGlobalBayesian.getDAG(), itsNrRecords, itsSearchParameters.getAlpha(), itsSearchParameters.getBeta());
+			aQMs[i] = new QualityMeasure(itsSearchParameters, aGlobalBayesian.getDAG(), itsNrRecords);
 		}
 
 		// Iterate over subgroups

@@ -132,6 +132,7 @@ public class Column implements XMLNodeInterface
 					aColumn.itsBinaries.set(j++ , getBinary(i));
 				break;
 			}
+			default : logTypeError("Column.select()"); break;
 		}
 		return aColumn;
 	}
@@ -226,7 +227,8 @@ public class Column implements XMLNodeInterface
 			case NUMERIC :
 			case ORDINAL : return itsFloats.get(theIndex).toString();
 			case BINARY : return getBinary(theIndex)?"1":"0";
-			default : return ("Unknown type: " + itsAttribute.getTypeName());
+			default : logTypeError("Column.getString()");
+						return ("Unknown type: " + itsAttribute.getTypeName());
 		}
 	}
 	public BitSet getBinaries() { return (BitSet) itsBinaries.clone(); }
@@ -263,40 +265,29 @@ public class Column implements XMLNodeInterface
 
 	public void permute(int[] thePermutation)
 	{
-		int n = thePermutation.length;
 		switch (itsAttribute.getType())
 		{
 			case NOMINAL :
-				ArrayList<String> aNominals = new ArrayList<String>(n);
-// TODO use following succinct code for all cases
-//				for (int i : thePermutation)
-//					aNominals.add(itsNominals.get(i));
-				for (int i=0; i<n; i++)
-				{
-					String aValue = itsNominals.get(thePermutation[i]);
-					aNominals.add(aValue);
-				}
+				ArrayList<String> aNominals = new ArrayList<String>(thePermutation.length);
+				for (int i : thePermutation)
+					aNominals.add(itsNominals.get(i));
 				itsNominals = aNominals;
 				break;
 			case NUMERIC :
 			case ORDINAL :
-				ArrayList<Float> aFloats = new ArrayList<Float>(n);
-				for (int i=0; i<n; i++)
-				{
-					Float aValue = itsFloats.get(thePermutation[i]);
-					aFloats.add(aValue);
-				}
+				ArrayList<Float> aFloats = new ArrayList<Float>(thePermutation.length);
+				for (int i : thePermutation)
+					aFloats.add(itsFloats.get(i));
 				itsFloats = aFloats;
 				break;
 			case BINARY :
+				int n = thePermutation.length;
 				BitSet aBinaries = new BitSet(n);
 				for (int i=0; i<n; i++)
-				{
-					boolean aValue = itsBinaries.get(thePermutation[i]);
-					aBinaries.set(i, aValue);
-				}
+					aBinaries.set(i, itsBinaries.get(thePermutation[i]));
 				itsBinaries = aBinaries;
 				break;
+			default : logTypeError("Column.permute()"); break;
 		}
 	}
 
@@ -710,6 +701,14 @@ public class Column implements XMLNodeInterface
 	public void setIsEnabled(boolean theSetting) { isEnabled = theSetting; }
 
 	/**
+	 * Returns whether this Column is has missing values or not.
+	 * 
+	 * @return <code>true</code> if this Column has missing values
+	 * <code>false</code> otherwise.
+	 */
+	public boolean getHasMissingValues() { return itsMissing.cardinality() > 0; }
+
+	/**
 	 * Returns a <b>copy of</b> a BitSet representing the missing values for
 	 * this Column. Members of this BitSet are set for those values that where
 	 * '?' in the original data.
@@ -733,7 +732,7 @@ public class Column implements XMLNodeInterface
 	public String getMissingValue()
 	{
 		if (itsMissing.cardinality() == 0)
-			return itsMissingValue + " (no missing values)";
+			return "";
 		else
 			return itsMissingValue;
 	}

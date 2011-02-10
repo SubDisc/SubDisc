@@ -1,9 +1,6 @@
 package nl.liacs.subdisc;
 
-import nl.liacs.subdisc.TargetConcept.TargetType;
-
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
+import org.w3c.dom.*;
 
 /**
  * SearchParameters contains all search parameters for an experiment.

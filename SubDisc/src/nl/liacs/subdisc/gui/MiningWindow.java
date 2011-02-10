@@ -12,7 +12,6 @@ import javax.swing.border.*;
 import nl.liacs.subdisc.*;
 import nl.liacs.subdisc.FileHandler.Action;
 import nl.liacs.subdisc.SearchParameters.*;
-import nl.liacs.subdisc.TargetConcept.*;
 import nl.liacs.subdisc.XMLAutoRun.*;
 import nl.liacs.subdisc.cui.*;
 
@@ -53,6 +52,7 @@ public class MiningWindow extends JFrame
 			initMiningWindow();
 	}
 
+	// loaded from XML
 	public MiningWindow(Table theTable, SearchParameters theSearchParameters)
 	{
 		if (theTable != null)
@@ -95,7 +95,7 @@ public class MiningWindow extends JFrame
 //		boolean hasTable = (itsTable != null);
 		// Add all implemented TargetTypes
 		for (TargetType t : TargetType.values())
-			if (t.isImplemented())
+			if (TargetType.isImplemented(t))
 				jComboBoxTargetType.addItem(t.TEXT);
 //		jComboBoxTargetType.setEnabled(hasTable);
 
@@ -110,22 +110,18 @@ public class MiningWindow extends JFrame
 //		jComboBoxSearchStrategyNumeric.setEnabled(hasTable);
 	}
 
+	// only called when Table is present, so using itsTotalCount is safe
 	private void initGuiComponents()
 	{
 		//dataset
 		initGuiComponentsDataSet();
 
 		// target concept
-		switch(itsTargetConcept.getTargetType())
-		{
-			case DOUBLE_CORRELATION :
-			case DOUBLE_REGRESSION	:
-			case MULTI_LABEL		: break;
-			default : jButtonBaseModel.setEnabled(false); break;
-		}
+		jButtonBaseModel.setEnabled(TargetType.hasBaseModel(itsTargetConcept.getTargetType()));
 
 		// search conditions
 		setSearchDepthMaximum("1");
+		setSearchCoverageMinimum(String.valueOf(itsTotalCount / 10));
 		setSearchCoverageMaximum("1.0");
 		setSubgroupsMaximum("50");
 		setSearchTimeMaximum("1.0");
@@ -395,7 +391,6 @@ public class MiningWindow extends JFrame
 */
 
 		jMenuFile.addSeparator();
-//		jMenuFile.add(jSeparator2);
 
 		jMenuItemSubgroupDiscovery.setFont(GUI.DEFAULT_TEXT_FONT);
 		jMenuItemSubgroupDiscovery.setText("Subgroup Discovery");
@@ -409,7 +404,6 @@ public class MiningWindow extends JFrame
 		jMenuFile.add(jMenuItemSubgroupDiscovery);
 
 		jMenuFile.addSeparator();
-//		jMenuFile.add(jSeparator3);
 
 		jMenuItemCreateAutoRunFile.setFont(GUI.DEFAULT_TEXT_FONT);
 		jMenuItemCreateAutoRunFile.setText("Create Autorun File");
@@ -434,7 +428,6 @@ public class MiningWindow extends JFrame
 		jMenuFile.add(jMenuItemAddToAutoRunFile);
 
 		jMenuFile.addSeparator();
-//		jMenuFile.add(jSeparator4);
 
 		jMenuItemExit.setFont(GUI.DEFAULT_TEXT_FONT);
 		jMenuItemExit.setText("Exit");
@@ -514,13 +507,13 @@ public class MiningWindow extends JFrame
 		jMenuAbout.add(jMenuItemAboutCortana);
 
 		jMiningWindowMenuBar.add(jMenuAbout);
-
+/*
 		// TODO for testing only
-//		jMenuGui.setFont(GUI.DEFAULT_TEXT_FONT);
-//		jMenuGui.setText("Gui");
-//		jMenuGui.setMnemonic('G');
-//		jMiningWindowMenuBar.add(jMenuGui);
-
+		jMenuGui.setFont(GUI.DEFAULT_TEXT_FONT);
+		jMenuGui.setText("Gui");
+		jMenuGui.setMnemonic('G');
+		jMiningWindowMenuBar.add(jMenuGui);
+*/
 		jPanelCenter.setLayout(new GridLayout(2, 2));
 
 		// setting up - dataset ================================================
@@ -955,12 +948,12 @@ public class MiningWindow extends JFrame
 	{
 		// hack on hack, prevent resetting of primary target/measure minimum
 		String aPrimaryTarget = getTargetAttributeName();
-		float aMeasureMinimum = getQualityMeasureMinimum();
+		String aMeasureMinimum = jTextFieldQualityMeasureMinimum.getText();
 
 		initGuiComponentsDataSet();
 		jComboBoxTargetTypeActionPerformed();	// update hack
 		setTargetAttribute(aPrimaryTarget);
-		setQualityMeasureMinimum(String.valueOf(aMeasureMinimum));
+		setQualityMeasureMinimum(aMeasureMinimum);
 	}
 
 	/* MENU ITEMS */
@@ -1135,12 +1128,8 @@ public class MiningWindow extends JFrame
 			initTargetValueItems();
 		}
 
-		// TODO these test could be member functions in TargetType?
 		// has MiscField?
-		boolean hasMiscField = (aTargetType == TargetType.SINGLE_NOMINAL ||
-								aTargetType == TargetType.DOUBLE_REGRESSION ||
-								aTargetType == TargetType.DOUBLE_CORRELATION ||
-								aTargetType == TargetType.MULTI_BINARY_CLASSIFICATION);
+		boolean hasMiscField = TargetType.hasMiscField(aTargetType);
 		jComboBoxMiscField.setVisible(hasMiscField);
 		jLabelMiscField.setVisible(hasMiscField);
 
@@ -1160,8 +1149,7 @@ public class MiningWindow extends JFrame
 		}
 
 		// has secondary targets (JList)?
-		boolean hasSecondaryTargets = (aTargetType == TargetType.MULTI_LABEL ||
-										aTargetType == TargetType.MULTI_BINARY_CLASSIFICATION);
+		boolean hasSecondaryTargets = TargetType.hasSecondaryTargets(aTargetType);
 		jLabelSecondaryTargets.setVisible(hasSecondaryTargets);
 		jButtonSecondaryTargets.setVisible(hasSecondaryTargets);
 		// disable if no binary attributes TODO should be itsTable.field
@@ -1170,15 +1158,12 @@ public class MiningWindow extends JFrame
 		jButtonSecondaryTargets.setEnabled(!hasBinaryAttributes);
 
 		// has target attribute?
-		boolean hasTargetAttribute = (aTargetType != TargetType.MULTI_LABEL);
+		boolean hasTargetAttribute = TargetType.hasTargetAttribute(aTargetType);
 		jLabelTargetAttribute.setVisible(hasTargetAttribute);
 		jComboBoxTargetAttribute.setVisible(hasTargetAttribute);
 
 		// has base model?
-		boolean hasBaseModel = (aTargetType == TargetType.DOUBLE_CORRELATION ||
-								aTargetType == TargetType.DOUBLE_REGRESSION ||
-								aTargetType == TargetType.MULTI_LABEL);
-		jButtonBaseModel.setEnabled(hasBaseModel);
+		jButtonBaseModel.setEnabled(TargetType.hasBaseModel(aTargetType));
 
 		//update misc field? Other types are updated through action listeners
 		if (aTargetType == TargetType.SINGLE_NUMERIC)
@@ -1327,7 +1312,7 @@ public class MiningWindow extends JFrame
 		TargetType aTargetType = itsTargetConcept.getTargetType();
 
 		//TODO other types not implemented yet
-		if (!aTargetType.isImplemented())
+		if (!TargetType.isImplemented(aTargetType))
 			return;
 
 		echoMiningStart();
@@ -1443,7 +1428,7 @@ public class MiningWindow extends JFrame
 					BinaryTable aBaseTable = new BinaryTable(itsTable, itsTargetConcept.getMultiTargets());
 					Bayesian aBayesian = new Bayesian(aBaseTable);
 					aBayesian.climb();
-					aQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), aBayesian.getDAG(), itsTotalCount, itsSearchParameters.getAlpha(), itsSearchParameters.getBeta());
+					aQualityMeasure = new QualityMeasure(itsSearchParameters, aBayesian.getDAG(), itsTotalCount);
 					break;
 				}
 				case DOUBLE_REGRESSION :
@@ -1533,7 +1518,7 @@ public class MiningWindow extends JFrame
 					BinaryTable aBaseTable = new BinaryTable(itsTable, itsTargetConcept.getMultiTargets());
 					Bayesian aBayesian = new Bayesian(aBaseTable);
 					aBayesian.climb();
-					aQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), aBayesian.getDAG(), itsTotalCount, itsSearchParameters.getAlpha(), itsSearchParameters.getBeta());
+					aQualityMeasure = new QualityMeasure(itsSearchParameters, aBayesian.getDAG(), itsTotalCount);
 					break;
 				}
 				case DOUBLE_REGRESSION :
@@ -1808,8 +1793,6 @@ public class MiningWindow extends JFrame
 				break;
 			}
 		}
-
-		setSearchCoverageMinimum(Integer.toString(itsTotalCount / 10));
 	}
 
 	private void initQualityMeasure()

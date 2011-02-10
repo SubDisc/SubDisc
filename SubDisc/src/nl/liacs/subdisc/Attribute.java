@@ -86,9 +86,10 @@ public class Attribute implements XMLNodeInterface
 			 */
 			Log.logCommandLine(
 				String.format(
-						"'%s' is not a valid AttributeType. Returning NOMINAL.",
-						theType));
-			return AttributeType.NOMINAL;
+						"'%s' is not a valid AttributeType. Returning '%s'.",
+						theType,
+						AttributeType.getDefaultType()));
+			return AttributeType.getDefaultType();
 		}
 
 		public static boolean isValidBinaryTrueValue(String theBooleanValue)
@@ -100,25 +101,32 @@ public class Attribute implements XMLNodeInterface
 		{
 			return BOOLEAN_NEGATIVES.contains(theBooleanValue.toLowerCase().trim());
 		}
+
+		public static AttributeType getDefaultType()
+		{
+			return AttributeType.NOMINAL;
+		}
 	}
 
 	//TXT, ARFF
 	public Attribute(String theName, String theShort, AttributeType theType, int theIndex)
 	{
-		itsName =
-			(theName == null ? String.valueOf(System.nanoTime()) : theName);	// TODO throw warning
-		itsShort = (theShort == null ? "" : theShort);
-		itsType = (theType == null ? AttributeType.NOMINAL : theType);
-		itsIndex = theIndex;	// TODO should not be < 0
+		if (!isValidIndex(theIndex))
+			return;
+		else
+			itsIndex = theIndex;
+
+		checkAndSetName(theName);
+		itsShort = theShort;
+		checkAndSetType(theType);
 	}
 
 	//MRML
 	public Attribute(String theName, String theShort, AttributeType theType)
 	{
-		itsName =
-			(theName == null ? String.valueOf(System.nanoTime()) : theShort);	// TODO throw warning
-		itsShort = (theShort == null ? "" : theShort);
-		itsType = (theType == null ? AttributeType.NOMINAL : theType);
+		checkAndSetName(theName);
+		itsShort = theShort;
+		checkAndSetType(theType);
 	}
 
 	/**
@@ -127,7 +135,11 @@ public class Attribute implements XMLNodeInterface
 	public Attribute(Node theAttributeNode)
 	{
 		if (theAttributeNode == null)
-			return;	// TODO throw warning dialog
+		{
+			Log.logCommandLine(
+			"Attribute Constructor: parameter can not be 'null'. Nothing set.");
+			return;
+		}
 
 		NodeList aChildren = theAttributeNode.getChildNodes();
 		for (int i = 0, j = aChildren.getLength(); i < j; ++i)
@@ -135,21 +147,85 @@ public class Attribute implements XMLNodeInterface
 			Node aSetting = aChildren.item(i);
 			String aNodeName = aSetting.getNodeName();
 			if ("name".equalsIgnoreCase(aNodeName))
-				itsName = aSetting.getTextContent();
+			{
+				checkAndSetName(aSetting.getTextContent());
+			}
 			else if ("short".equalsIgnoreCase(aNodeName))
-				itsShort = aSetting.getTextContent();
+			{
+				itsShort = aSetting.getTextContent().isEmpty() ?
+											null : aSetting.getTextContent();
+			}
 			else if ("type".equalsIgnoreCase(aNodeName))
-				itsType = setType(aSetting.getTextContent());
+			{
+				itsType =
+					AttributeType.getAttributeType(aSetting.getTextContent());
+			}
 			else if ("index".equalsIgnoreCase(aNodeName))
-				itsIndex = Integer.parseInt(aSetting.getTextContent());
+			{
+				int tempInt = -1;
+				try
+				{
+					tempInt = Integer.parseInt(aSetting.getTextContent());
+				}
+				catch (NumberFormatException ex)
+				{
+					constructorErrorLog("'" + aSetting.getTextContent() + "'",
+										" can not be parsed as 'int'");
+				}
+				// defaults to 0 otherwise
+				if (isValidIndex(tempInt))
+					itsIndex = tempInt;
+			}
 		}
+	}
+
+	private boolean isValidIndex(int theIndex)
+	{
+		boolean isValid = (theIndex >= 0);
+
+		if (!isValid)
+			Log.logCommandLine(
+				"Attribute Constructor: index can not be < 0. Index not set.");
+
+		return isValid;
+	}
+
+	private void checkAndSetName(String theName)
+	{
+		if (theName == null || theName.isEmpty())
+		{
+			itsName = String.valueOf(System.nanoTime());
+			constructorErrorLog("name can not be 'null' or empty. Using: ",
+								itsName);
+		}
+		else
+			itsName = theName;
+	}
+
+	private void checkAndSetType(AttributeType theType)
+	{
+		if (theType == null)
+		{
+			itsType = AttributeType.getDefaultType();
+			constructorErrorLog("type can not be 'null'. Using: ",
+								itsType.toString());
+		}
+		else
+			itsType = theType;
+	}
+
+	private void constructorErrorLog(String theMessage, String theAlternative)
+	{
+		Log.logCommandLine("Attribute Constructor: " +
+							theMessage +
+							theAlternative);
 	}
 
 	public int getIndex() { return itsIndex; }	// is never set for MRML
 	public AttributeType getType() { return itsType; }
 	public String getName() { return itsName; }
-	public String getShort() { return itsShort; }
-	public boolean hasShort() { return (!itsShort.isEmpty()); }
+	public String getShort() { return hasShort() ? itsShort : ""; }
+	public boolean hasShort() { return (itsShort != null) ; }
 	public String getNameAndShort()
 	{
 		return itsName + (hasShort() ? " (" + getShort() + ")" : "");
@@ -169,36 +245,9 @@ public class Attribute implements XMLNodeInterface
 	public boolean isBinaryType() { return itsType == AttributeType.BINARY; }
 
 	/*
-	 * TODO this method should be made obsolete.
+	 * AttributeType can never be 'null', guaranteed by constructor, or become
+	 * 'null', guaranteed here.
 	 */
-	/**
-	 * Sets the {@link AttributeType AttributeType} for this Attribute. This is
-	 * used for changing the AttributeType of a {@link Column Column}. The
-	 * Column is responsible for checking whether its AttributeType can be
-	 * changed to this new AttributeType. This method is case insensitive.
-	 * 
-	 * @param theType the <code>String</code> representation of an valid
-	 * AttributeType to set as this Attributes' new AttributeType.
-	 * 
-	 * @return the new AttributeType, or the default AttributeType.NOMINAL if
-	 * the <code>String</code> passed in as a parameter can not be resolved to a
-	 *  valid AttributeType.
-	 */
-	public AttributeType setType(String theType)
-	{
-		for (AttributeType at : AttributeType.values())
-		{
-			if (at.toString().equalsIgnoreCase(theType))
-			{
-				itsType = at;
-				break;
-			}
-		}
-		return (itsType == null ? AttributeType.NOMINAL : itsType);
-	}
-
-	// TODO this method should replace setType(String theType), and ensure an
-	// AttributeType is always set (if itsType == null > AttributeType.NOMINAL).
 	/**
 	 * Sets the {@link AttributeType AttributeType} for this Attribute. This is
 	 * used for changing the AttributeType of a {@link Column Column}. The
@@ -224,15 +273,17 @@ public class Attribute implements XMLNodeInterface
 
 	/**
 	 * Creates an {@link XMLNode XMLNode} representation of this Attribute.
+	 * 
 	 * @param theParentNode the Node of which this Node will be a ChildNode.
-//	 * @return a Node that contains all the information of this Attribute.
+	 * 
+	 * @return a Node that contains all the information of this Attribute.
 	 */
 	@Override
 	public void addNodeTo(Node theParentNode)
 	{
 		Node aNode = XMLNode.addNodeTo(theParentNode, "attribute");
 		XMLNode.addNodeTo(aNode, "name", itsName);
-		XMLNode.addNodeTo(aNode, "short", itsShort);
+		XMLNode.addNodeTo(aNode, "short", (itsShort == null ? "" : itsShort));
 		XMLNode.addNodeTo(aNode, "type", itsType);
 		XMLNode.addNodeTo(aNode, "index", itsIndex);
 	}

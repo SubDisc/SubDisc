@@ -91,12 +91,10 @@ public class SubgroupDiscovery extends MiningAlgorithm
 			itsTargets[i] = anAttributes.get(i).getName();
 		Bayesian aBayesian = new Bayesian(itsBinaryTable, itsTargets);
 		aBayesian.climb();
-		//TODO fix alpha, beta
-		itsQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(),
+
+		itsQualityMeasure = new QualityMeasure(itsSearchParameters,
 												aBayesian.getDAG(),
-												itsMaximumCoverage,
-												itsSearchParameters.getAlpha(),
-												itsSearchParameters.getBeta());
+												itsMaximumCoverage);
 
 		itsResult = new SubgroupSet(itsSearchParameters.getMaximumSubgroups());
 	}
@@ -114,8 +112,8 @@ public class SubgroupDiscovery extends MiningAlgorithm
 
 		int aSearchDepth = itsSearchParameters.getSearchDepth();
 		long theEndTime = theBeginTime + (long)(itsSearchParameters.getMaximumTime()*60*1000);
-		// TODO can itsCandidateQueue ever become null?
-		while ((itsCandidateQueue != null && itsCandidateQueue.size() > 0 ) && (System.currentTimeMillis() <= theEndTime))
+
+		while ((itsCandidateQueue.size() > 0 ) && (System.currentTimeMillis() <= theEndTime))
 		{
 			Candidate aCandidate = itsCandidateQueue.removeFirst(); // take off first Candidate from Queue
 			Subgroup aSubgroup = aCandidate.getSubgroup();
@@ -143,6 +141,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		itsResult.setIDs(); //assign 1 to n to subgroups, for future reference in subsets
 	}
 /*
+	// Obsolete
 	public void Mine(long theBeginTime)
 	{
 		//make subgroup to start with, containing all elements
@@ -155,6 +154,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		itsResult.setIDs(); //assign 1 to n to subgroups, for future reference in subsets
 	}
 
+	// Obsolete
 	//what Exception can be thrown, requiring this to be in a try block?
 	public void Mine(long theBeginTime, Subgroup theStart)
 	{
@@ -395,7 +395,6 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		aBayesian.climb(); //induce DAG
 		DAG aDAG = aBayesian.getDAG();
 		theSubgroup.setDAG(aDAG); //store DAG with subgroup for later use
-//		return itsQualityMeasure.calculateEDIT_DISTANCE(theSubgroup);
 		return itsQualityMeasure.calculate(theSubgroup);
 	}
 
