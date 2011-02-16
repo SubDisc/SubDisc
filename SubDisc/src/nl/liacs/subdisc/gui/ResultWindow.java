@@ -100,7 +100,7 @@ public class ResultWindow extends JFrame
 		initComponents ();
 //		setIconImage(ICON);
 		initialise();
-		
+
 		setTitle();
 	}
 
@@ -135,7 +135,7 @@ public class ResultWindow extends JFrame
 		if (itsSubgroupSet.isEmpty())
 			s.append("No subgroups found that match the set criterion");
 		else
-			s.append(itsSubgroupSet.size() + " subgroups found"); 
+			s.append(itsSubgroupSet.size() + " subgroups found");
 
 		s.append(";  quality measure = ");
 		s.append(QualityMeasure.getMeasureString(itsSearchParameters.getQualityMeasure()));
@@ -262,6 +262,14 @@ public class ResultWindow extends JFrame
 			}
 		});
 		aSubgroupPanel.add(jButtonRegressionTest);
+
+		jButtonEmpirical = initButton("Empirical p-Values", 'E');
+		jButtonEmpirical.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				jButtonEmpiricalActionPerformed();
+			}
+		});
+		aSubgroupPanel.add(jButtonEmpirical);
 
 		jButtonFold = initButton("Fold members", 'F');
 		jButtonFold.addActionListener(new ActionListener() {
@@ -486,7 +494,8 @@ public class ResultWindow extends JFrame
 	}
 
 	private void jButtonPValuesActionPerformed()
-	{	// Obtain input
+	{
+		// Obtain input
 		double[] aQualities = obtainRandomQualities();
 		if (aQualities == null || aQualities[0] == Math.PI)
 			return;
@@ -499,39 +508,30 @@ public class ResultWindow extends JFrame
 	}
 
 	private void jButtonRegressionTestActionPerformed()
-	{	// Obtain input
+	{
+		// Obtain input
 		double[] aQualities = obtainRandomQualities();
 		if (aQualities == null || aQualities[0] == Math.PI)
 			return;
-/*		String inputValue = JOptionPane.showInputDialog("Regression test compares the top-k\nsubgroups with random subgroups.\nWhich k would you like?", 1);
-		int aNrSubgroups;
-		try
-		{
-			aNrSubgroups = Integer.parseInt(inputValue);
-			// TODO more than one?
-			if (aNrSubgroups < 1)
-			{
-				JOptionPane.showMessageDialog(null, "Number should be > 0;\nregression test cannot be performed.");
-				return;
-			}
-			if (aNrSubgroups > itsSubgroupSet.size())
-			{
-				JOptionPane.showMessageDialog(null, "That many subgroups are not available;\nregression test cannot be performed.");
-				return;
-			}
-		}
-		catch (Exception e)
-		{
-			JOptionPane.showMessageDialog(null, "Not a valid number;\nregression test cannot be performed.");
-			return;
-		}
-*/		Validation aValidation = new Validation(itsSearchParameters, itsTable, itsQualityMeasure);
+		Validation aValidation = new Validation(itsSearchParameters, itsTable, itsQualityMeasure);
 //		double aRegressionTestScore = aValidation.performRegressionTest(aQualities, aNrSubgroups, itsSubgroupSet);
 //		JOptionPane.showMessageDialog(null, "The regression test score equals\n" + aRegressionTestScore);
 		double[] aRegressionTestScore = aValidation.performRegressionTest(aQualities, itsSubgroupSet);
 		JOptionPane.showMessageDialog(null, "The regression test score equals\nfor k =  1 : "+aRegressionTestScore[0]+"\nfor k = 10 : "+aRegressionTestScore[1]);
 	}
-	
+
+	private void jButtonEmpiricalActionPerformed()
+	{
+		// Obtain input
+		double[] aQualities = obtainRandomQualities();
+		if (aQualities == null || aQualities[0] == Math.PI)
+			return;
+
+		Validation aValidation = new Validation(itsSearchParameters, itsTable, itsQualityMeasure);
+		double aPValue = aValidation.computeEmpiricalPValue(aQualities, itsSubgroupSet);
+		JOptionPane.showMessageDialog(null, "The empirical p-value is p = " + aPValue);
+	}
+
 	private void jButtonFoldActionPerformed()
 	{
 		Log.logCommandLine("Members of the training set of fold " + itsFold);
@@ -604,6 +604,7 @@ public class ResultWindow extends JFrame
 	private javax.swing.JButton jButtonPostprocess;
 	private javax.swing.JButton jButtonPValues;
 	private javax.swing.JButton jButtonRegressionTest;
+	private javax.swing.JButton jButtonEmpirical;
 	private javax.swing.JButton jButtonROC;
 	private javax.swing.JButton jButtonCloseWindow;
 	private javax.swing.JScrollPane itsScrollPane;

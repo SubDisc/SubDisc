@@ -285,6 +285,34 @@ public class Validation
 		return aResult;
 	}
 
+	public double computeEmpiricalPValue(double[] theQualities, SubgroupSet theSubgroupSet)
+	{
+		//hardcoded
+		int aK = 1;
+
+		// extract average quality of top-k subgroups
+		Iterator<Subgroup> anIterator = theSubgroupSet.iterator();
+		double aTopKQuality = 0.0;
+		for (int i=0; i<aK; i++)
+		{
+			Subgroup aSubgroup = anIterator.next();
+			aTopKQuality += aSubgroup.getMeasureValue();
+		}
+		aTopKQuality /= aK;
+
+		int aCount = 0;
+		for (double aQuality : theQualities)
+			if (aQuality > aTopKQuality)
+				aCount++;
+
+		Arrays.sort(theQualities);
+		Log.logCommandLine("Empirical p-value: " + aCount/(double)theQualities.length);
+		Log.logCommandLine("score at alpha = 1%: " + theQualities[theQualities.length-theQualities.length/100]);
+		Log.logCommandLine("score at alpha = 5%: " + theQualities[theQualities.length-theQualities.length/20]);
+		Log.logCommandLine("score at alpha = 10%: " + theQualities[theQualities.length-theQualities.length/10]);
+		return aCount/(double)theQualities.length;
+	}
+
 	public ConditionList getRandomConditionList(int theDepth, Random theRandom)
 	{
 		ConditionList aCL = new ConditionList();
