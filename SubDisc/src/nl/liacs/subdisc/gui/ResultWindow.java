@@ -530,6 +530,11 @@ public class ResultWindow extends JFrame
 		Validation aValidation = new Validation(itsSearchParameters, itsTable, itsQualityMeasure);
 		double aPValue = aValidation.computeEmpiricalPValue(aQualities, itsSubgroupSet);
 		JOptionPane.showMessageDialog(null, "The empirical p-value is p = " + aPValue);
+		
+		for (Subgroup aSubgroup : itsSubgroupSet)
+			aSubgroup.setEmpiricalPValue(aQualities);
+		
+		itsSubgroupTable.repaint();
 	}
 
 	private void jButtonFoldActionPerformed()

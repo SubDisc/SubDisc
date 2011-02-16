@@ -318,10 +318,23 @@ public class Subgroup implements Comparable<Object>
 		else return itsPValue;
 	}
 	
-	public void setPValue(NormalDistribution aDistro)
+	public void setPValue(NormalDistribution theDistro)
 	{
 		isPValueComputed = true;
-		itsPValue = 1 - aDistro.calcCDF(itsMeasureValue);
+		itsPValue = 1 - theDistro.calcCDF(itsMeasureValue);
+	}
+	
+	public void setEmpiricalPValue(double[] theQualities)
+	{
+		isPValueComputed = true;
+		int aLength = theQualities.length;
+		double aP = 0.0;
+		for (int i=0; i<aLength; i++)
+		{
+			if (theQualities[i]>=itsMeasureValue)
+				aP++;
+		}
+		itsPValue = aP/aLength;
 	}
 	
 	public void renouncePValue()
