@@ -131,6 +131,8 @@ public class Attribute implements XMLNodeInterface
 
 	/**
 	 * Create an Attribute from an XML AttributeNode.
+	 * 
+	 * @param theAttributeNode
 	 */
 	public Attribute(Node theAttributeNode)
 	{
@@ -269,6 +271,12 @@ public class Attribute implements XMLNodeInterface
 		}
 		else
 			return false;
+	}
+
+	//called after removing (domain) columns from Table
+	void setIndex(int theIndex)
+	{
+		itsIndex = theIndex;
 	}
 
 	/**

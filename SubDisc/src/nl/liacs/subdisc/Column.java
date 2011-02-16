@@ -57,43 +57,6 @@ public class Column implements XMLNodeInterface
 		setupColumn(theNrRows);
 	}
 
-	/** Creates a copy of the current column with some records removed.
-	*/
-	public Column select(BitSet theSet)
-	{
-		int aColumnsSize = theSet.cardinality();
-		Column aColumn = new Column(itsAttribute, aColumnsSize);
-
-		switch(itsAttribute.getType())
-		{
-			case NOMINAL :
-			{
-				aColumn.itsNominals = new ArrayList<String>(aColumnsSize);
-				//preferred way to loop over BitSet (itsSize for safety)
-				for (int i = theSet.nextSetBit(0); i >= 0 && i < itsSize; i = theSet.nextSetBit(i + 1))
-					aColumn.itsNominals.add(getNominal(i));
-				break;
-			}
-			case NUMERIC :
-			case ORDINAL :
-			{
-				aColumn.itsFloats = new ArrayList<Float>(aColumnsSize);
-				for (int i = theSet.nextSetBit(0); i >= 0 && i < itsSize; i = theSet.nextSetBit(i + 1))
-					aColumn.itsFloats.add(getFloat(i));
-				break;
-			}
-			case BINARY :
-			{
-				aColumn.itsBinaries = new BitSet(itsSize);
-				for (int i = theSet.nextSetBit(0), j = 0; i >= 0 && i < itsSize; i = theSet.nextSetBit(i + 1))
-					aColumn.itsBinaries.set(j++ , getBinary(i));
-				break;
-			}
-			default : logTypeError("Column.select()"); break;
-		}
-		return aColumn;
-	}
-
 	/**
 	 *
 	 * @param theColumnNode
@@ -145,6 +108,45 @@ public class Column implements XMLNodeInterface
 			}
 			default : logTypeError("Column() Constructor"); break;
 		}
+	}
+
+	/**
+	 * Creates a copy of the current column with some records removed.
+	 * @param theSet
+	*/
+	public Column select(BitSet theSet)
+	{
+		int aColumnsSize = theSet.cardinality();
+		Column aColumn = new Column(itsAttribute, aColumnsSize);
+
+		switch(itsAttribute.getType())
+		{
+			case NOMINAL :
+			{
+				aColumn.itsNominals = new ArrayList<String>(aColumnsSize);
+				//preferred way to loop over BitSet (itsSize for safety)
+				for (int i = theSet.nextSetBit(0); i >= 0 && i < itsSize; i = theSet.nextSetBit(i + 1))
+					aColumn.itsNominals.add(getNominal(i));
+				break;
+			}
+			case NUMERIC :
+			case ORDINAL :
+			{
+				aColumn.itsFloats = new ArrayList<Float>(aColumnsSize);
+				for (int i = theSet.nextSetBit(0); i >= 0 && i < itsSize; i = theSet.nextSetBit(i + 1))
+					aColumn.itsFloats.add(getFloat(i));
+				break;
+			}
+			case BINARY :
+			{
+				aColumn.itsBinaries = new BitSet(itsSize);
+				for (int i = theSet.nextSetBit(0), j = 0; i >= 0 && i < itsSize; i = theSet.nextSetBit(i + 1))
+					aColumn.itsBinaries.set(j++ , getBinary(i));
+				break;
+			}
+			default : logTypeError("Column.select()"); break;
+		}
+		return aColumn;
 	}
 
 	public void add(float theFloat) { itsFloats.add(new Float(theFloat)); itsSize++; }

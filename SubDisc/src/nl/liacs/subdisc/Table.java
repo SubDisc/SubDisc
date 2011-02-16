@@ -17,7 +17,7 @@ public class Table
 	private ArrayList<Column> itsColumns = new ArrayList<Column>();
 	private Random itsRandomNumber = new Random(System.currentTimeMillis());
 	private List<String> itsDomains;
-	private List<Integer> itsDomainIndices;
+	private List<Integer> itsDomainIndices; //allows for much faster removal
 
 	public String getName() { return itsName; }
 	public String getSource() { return itsSource; }
@@ -31,8 +31,6 @@ public class Table
 	public Column getColumn(int theIndex) { return itsColumns.get(theIndex); }
 
 	public ArrayList<Column> getColumns() { return itsColumns; };
-
-	// TODO some constructors and builder functions, may change
 
 	// Empty table, meant for creating a copy with a subset of data. See select().
 	public Table(String theTableName)
@@ -80,41 +78,101 @@ public class Table
 		new FileHandler(new File(theXMLFileDirectory + "/"+ itsSource), this);
 	}
 
-	// TODO maintaining itsNrColumns becomes more difficult now
-	// complete new Column functionality to be implemented
-	// add CUI Domain, relies on caller for Table.update()
-	void addDomain(File theDomainName)
+	/*
+	 * TODO maintaining itsNrColumns becomes more difficult now
+	 * complete new Column functionality to be implemented later
+	 * TODO throw dialog on duplicate domain?
+	 * add CUI Domain, relies on caller for Table.update()
+	 * FileHandler.printLoadingInfo calls Table.update();
+	 */
+	boolean addDomain(String theDomainName)
 	{
+//not public
+//		if (theDomainName == null)
+//			return false;
+
 		if (itsDomains == null)
 		{
 			itsDomains = new ArrayList<String>();
 			itsDomainIndices = new ArrayList<Integer>();
 		}
-		itsDomains.add(FileType.removeExtension(theDomainName));
-		itsDomainIndices.add(itsColumns.size());
+
+		if (itsDomains.contains(theDomainName))
+		{
+			Log.logCommandLine(
+				String.format(
+					"A domain with the name '%s' is already present.",
+					theDomainName));
+			return false;
+		}
+		else
+		{
+			itsDomains.add(theDomainName);
+
+			/*
+			 * a rank column will be inserted if it is not present
+			 * offset ensures it will not be removed when the first
+			 * domain is removed from the Table
+			 */
+			if (itsDomainIndices.size() == 0)
+			{
+				int offset = 1;
+				for (Column c : itsColumns)
+				{
+					if (c.getName().equalsIgnoreCase("rank"))
+					{
+						--offset;
+						break;
+					}
+				}
+				itsDomainIndices.add(itsColumns.size() + offset);
+			}
+			else
+				itsDomainIndices.add(itsColumns.size());
+
+			return true;
+		}
 	}
 
-	// TODO add in MiningWindow
-	void removeDomain(String theDomain)
+	//FileHandler.printLoadingInfo calls Table.update();
+	public void removeDomain(String theDomainName)
 	{
-		int aDomainIndex = itsDomains.indexOf(theDomain);
+
+		int aDomainIndex = itsDomains.indexOf(theDomainName);
+		if (aDomainIndex == -1)
+		{
+			Log.logCommandLine(String.format("Domain '%s' not found.",
+								theDomainName));
+			return;
+		}
+
 		itsDomains.remove(aDomainIndex);
-		int aStartIndex = itsDomainIndices.remove(aDomainIndex);
-		int anEndIndex; // check whether it is the last domain
+		int aStartIndex = itsDomainIndices.remove(aDomainIndex).intValue();
+		int anEndIndex; //check whether it is the last domain
 
 		if (aDomainIndex == itsDomainIndices.size())
 			anEndIndex = itsColumns.size();
 		else
 			anEndIndex = itsDomainIndices.get(aDomainIndex);
 
-		for (int i = aStartIndex; i < anEndIndex; ++i)
+		/*
+		 * removing from ArrayList backwards avoids expensive arrayCopy
+		 * if domain is at the end
+		 */
+		for (int i = anEndIndex - 1; i >= aStartIndex ; --i)
 			itsColumns.remove(i);
 
 		int aNrDeletedColumns = anEndIndex - aStartIndex;
 		for (int i = aDomainIndex, j = itsDomainIndices.size(); i < j; ++i)
 			itsDomainIndices.set(i, itsDomainIndices.get(i) - aNrDeletedColumns);
 
-		update(); // to expensive, only updating nrColumns would do
+		itsNrColumns = itsColumns.size();
+		itsColumns.trimToSize();
+
+		//reset indices for all Columns after removed domain
+		if (aStartIndex < itsNrColumns)
+			for (int i = aStartIndex; i < itsNrColumns; ++i)
+				itsColumns.get(i).getAttribute().setIndex(i);
 	}
 
 	/*
@@ -131,12 +189,9 @@ public class Table
 	{
 		itsNrRows = itsColumns.size() > 0 ? itsColumns.get(0).size() : 0;
 		itsNrColumns = itsColumns.size();	// needed for MiningWindow
-//		itsAttributes.clear();	// expensive
+
 		for (Column c : itsColumns)
-		{
 			c.getCardinality();
-//			itsAttributes.add(c.getAttribute());
-		}
 	}
 
 	/**
@@ -318,15 +373,13 @@ public class Table
 		return aResult;
 	}
 
-	// TODO aResult[aDomain.length] can be filled in 1 pass
-	// adding all floats that are unique then return a subArray[aCount]
 	// does not handle float.NaN well, but neither does the rest of the code
 	//returns the unique, sorted domain
 	public float[] getUniqueNumericDomain(int theColumn, BitSet theSubset)
 	{
 		//get domain including doubles
 		float[] aDomain = getNumericDomain(theColumn, theSubset);
-
+/*
 		//count uniques
 		float aCurrent = aDomain[0];
 		int aCount = 1;
@@ -348,6 +401,22 @@ public class Table
 				aResult[aCount] = aFloat;
 				aCount++;
 			}
+ */
+		int aCount = itsColumns.get(theColumn).getCardinality();
+		float[] aResult = new float[aCount];
+		float aCurrent = aResult[0] = aDomain[0];
+
+		for (int i = 1, j = aDomain.length, k = 1; i < j ; ++i)
+		{
+			float aFloat = aDomain[i];
+			if (aFloat != aCurrent)
+			{
+				aResult[k] = aCurrent = aFloat;
+
+				if (++k == aCount)
+					break;
+			}
+		}
 
 		return aResult;
 	}

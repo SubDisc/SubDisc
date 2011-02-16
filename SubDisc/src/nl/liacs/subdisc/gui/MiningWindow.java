@@ -1005,7 +1005,7 @@ public class MiningWindow extends JFrame
 		System.exit(0);
 	}
 
-	// cannot be run from the Event Dispatching Thread
+	//cannot be run from the Event Dispatching Thread
 	private void jMenuItemAddEnrichmentSourceActionPerformed(final EnrichmentType theType)
 	{
 		Thread aThread = new Thread()
@@ -1019,16 +1019,22 @@ public class MiningWindow extends JFrame
 		aThread.start();
 	}
 
-	// TODO
-	private void jMenuItemRemoveEnrichmentSourceActionPerformed() {}
+	//TODO only present list of domains to remove
+	private void jMenuItemRemoveEnrichmentSourceActionPerformed()
+	{
+		//TODO only works on all.txt
+		String aDomainName = itsTable.getColumn(6).getName().substring(8);
+		itsTable.removeDomain(aDomainName);
+		update();
+	}
 
 	private void jMenuItemAboutCortanaActionPerformed()
 	{
 		// TODO
 		JOptionPane.showMessageDialog(null,
-										"Cortana: Subgroup Discovery Tool",
-										"About Cortana",
-										JOptionPane.INFORMATION_MESSAGE);
+						"Cortana: Subgroup Discovery Tool",
+						"About Cortana",
+						JOptionPane.INFORMATION_MESSAGE);
 	}
 
 	/* DATASET BUTTONS */
@@ -1363,8 +1369,8 @@ public class MiningWindow extends JFrame
 		if (anEnd > aBegin + (long)(itsSearchParameters.getMaximumTime()*60*1000))
 			JOptionPane.showMessageDialog(null, "Mining process ended prematurely due to time limit.",
 											"Time Limit", JOptionPane.INFORMATION_MESSAGE);
-		else
-			echoMiningEnd(anEnd - aBegin, aSubgroupDiscovery.getNumberOfSubgroups());
+
+		echoMiningEnd(anEnd - aBegin, aSubgroupDiscovery.getNumberOfSubgroups());
 
 		//ResultWindow
 //			SubgroupSet aPreliminaryResults = aSubgroupDiscovery.getResult();
