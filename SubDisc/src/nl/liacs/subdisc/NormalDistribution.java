@@ -86,6 +86,11 @@ public class NormalDistribution
 			return -aResult;
 	}
 
+	public double zTransform(double theValue)
+	{
+		return (theValue-itsMu)/itsSigma;
+	}
+
 	public double getMu() { return itsMu; }
 	public double getSigma() { return itsSigma; }
 	public double getVariance() { return itsSigma * itsSigma; }

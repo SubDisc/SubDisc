@@ -1448,7 +1448,15 @@ public class MiningWindow extends JFrame
 			}
 
 			Validation aValidation = new Validation(itsSearchParameters, itsTable, aQualityMeasure);
-			NormalDistribution aDistro = new NormalDistribution(aValidation.randomSubgroups(aNrRepetitions));
+			double[] aQualities = aValidation.randomSubgroups(aNrRepetitions);
+			NormalDistribution aDistro = new NormalDistribution(aQualities);
+			Arrays.sort(aQualities);
+			for (double aQuality : aQualities)
+			{
+				Log.logCommandLine("" + aDistro.zTransform(aQuality));
+			}
+			Log.logCommandLine("mu: " + aDistro.getMu());
+			Log.logCommandLine("sigma: " + aDistro.getSigma());
 
 			int aMethod = JOptionPane.showOptionDialog(null,
 				"The following quality measure thresholds were computed:\n" +
