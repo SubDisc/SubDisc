@@ -333,18 +333,24 @@ public class ResultWindow extends JFrame
 				{
 					if (aCount == aSelectionIndex[0]) //just the first selection gets a window
 					{
+						/*
 						TargetConcept aTargetConcept = itsSearchParameters.getTargetConcept();
 						Attribute aPrimaryTarget = aTargetConcept.getPrimaryTarget();
 						Column aPrimaryColumn = itsTable.getColumn(aPrimaryTarget);
 						Attribute aSecondaryTarget = aTargetConcept.getSecondaryTarget();
 						Column aSecondaryColumn = itsTable.getColumn(aSecondaryTarget);
 
-						ModelWindow aWindow = new ModelWindow(aPrimaryColumn, aSecondaryColumn,
-							aPrimaryTarget.getName(), aSecondaryTarget.getName(), null, aSubgroup); //no trendline
-						aWindow.setLocation(50, 50);
-						aWindow.setSize(GUI.WINDOW_DEFAULT_SIZE);
-						aWindow.setVisible(true);
-						aWindow.setTitle("Subgroup " + (aCount+1));
+						//no trendline
+						new ModelWindow(aPrimaryColumn, aSecondaryColumn, aPrimaryTarget.getName(), aSecondaryTarget.getName(), null, aSubgroup).setTitle("Subgroup " + (aCount+1));
+						break;
+						*/
+						TargetConcept aTargetConcept = itsSearchParameters.getTargetConcept();
+
+						//no trendline
+						new ModelWindow(itsTable.getColumn(aTargetConcept.getPrimaryTarget()),
+										itsTable.getColumn(aTargetConcept.getSecondaryTarget()),
+										null,
+										aSubgroup).setTitle("Subgroup " + (aCount + 1));
 						break;
 					}
 					aCount++;
@@ -361,13 +367,10 @@ public class ResultWindow extends JFrame
 					for (Subgroup s : itsSubgroupSet)
 					{
 						if (aCount == aSelectionIndex[i])
-						{
-							ModelWindow aWindow = new ModelWindow(s.getDAG(), 1000, 800);
-							aWindow.setLocation(0, 0);
-							aWindow.setSize(1000, 800);
-							aWindow.setVisible(true);
-							aWindow.setTitle("Bayesian net induced from subgroup " + (aSelectionIndex[i]+1));
-						}
+							new ModelWindow(s.getDAG(), 1000, 800)
+								.setTitle("Bayesian net induced from subgroup " +
+											(aSelectionIndex[i]+1));
+
 						aCount++;
 					}
 

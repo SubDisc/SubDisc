@@ -1,29 +1,31 @@
 package nl.liacs.subdisc.gui;
 
 import java.awt.*;
-import java.awt.geom.Rectangle2D;
+import java.awt.event.*;
+import java.awt.geom.*;
 import java.util.*;
+
 import javax.swing.*;
 
 import nl.liacs.subdisc.*;
 
 import org.jfree.chart.*;
 import org.jfree.chart.plot.*;
+import org.jfree.chart.renderer.xy.*;
 import org.jfree.data.xy.*;
-import org.jfree.chart.renderer.xy.StandardXYItemRenderer;
 
-public class ModelWindow extends JFrame
+public class ModelWindow extends JFrame implements ActionListener
 {
-	private JPanel jPanel;
-	private JButton jButton;
-	private JScrollPane jScrollPaneCenter;
 	private static final long serialVersionUID = 1L;
 
+	private JScrollPane itsJScrollPaneCenter = new JScrollPane();
 	private DAGView itsDAGView;
 
 	//correlation and regression ===============================
 
-	public ModelWindow(Column theXColumn, Column theYColumn, String theX, String theY, RegressionMeasure theRM, Subgroup theSubgroup)
+	//TODO There should never be this much code in a constructor
+//	public ModelWindow(Column theXColumn, Column theYColumn, String theX, String theY, RegressionMeasure theRM, Subgroup theSubgroup)
+	public ModelWindow(Column theXColumn, Column theYColumn, RegressionMeasure theRM, Subgroup theSubgroup)
 	{
 		initComponents();
 		String aName = "2D distribution";
@@ -41,7 +43,8 @@ public class ModelWindow extends JFrame
 
 		// create the chart
 		JFreeChart aChart =
-			ChartFactory.createScatterPlot(aName, theX, theY,	aDataSet, PlotOrientation.VERTICAL, false, true, false);
+//			ChartFactory.createScatterPlot(aName, theX, theY,	aDataSet, PlotOrientation.VERTICAL, false, true, false);
+			ChartFactory.createScatterPlot(aName, theXColumn.getName(), theYColumn.getName(), aDataSet, PlotOrientation.VERTICAL, false, true, false);
 		aChart.setAntiAlias(true);
 		XYPlot plot = aChart.getXYPlot();
 		plot.setBackgroundPaint(Color.white);
@@ -65,13 +68,15 @@ public class ModelWindow extends JFrame
 		}
 
 		ChartPanel aChartPanel = new ChartPanel(aChart);
-		jScrollPaneCenter.setViewportView(aChartPanel);
+		itsJScrollPaneCenter.setViewportView(aChartPanel);
 
 //		setIconImage(MiningWindow.ICON);
+		setTitle("Base Model");
+		setLocation(50, 50);
+		setSize(GUI.WINDOW_DEFAULT_SIZE);
 		pack();
+		setVisible(true);
 	}
-
-
 
 	//DAG ==================================================
 
@@ -81,11 +86,18 @@ public class ModelWindow extends JFrame
 		itsDAGView = new DAGView(theDAG);
 		itsDAGView.setDAGArea(theDAGWidth, theDAGHeight);
 		itsDAGView.drawDAG();
-		jScrollPaneCenter.setViewportView(itsDAGView);
-//		setIconImage(MiningWindow.ICON);
-		pack();
-	}
+		itsJScrollPaneCenter.setViewportView(itsDAGView);
 
+//		setIconImage(MiningWindow.ICON);
+		setTitle("Base Model: Bayesian Network");
+		setLocation(0, 0);
+		setSize(theDAGWidth, theDAGHeight);
+		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		pack();
+		setVisible(true);
+	}
+/*
+	//never used yet
 	//create window with the same layout of nodes as the one in theDAGView
 	public ModelWindow(DAG theDAG, int theDAGWidth, int theDAGHeight, DAGView theDAGView)
 	{
@@ -97,51 +109,20 @@ public class ModelWindow extends JFrame
 //		setIconImage(MiningWindow.ICON);
 		pack();
 	}
-
+*/
 	private void initComponents()
 	{
-		jPanel = new javax.swing.JPanel();
-		jButton = new javax.swing.JButton();
-		jScrollPaneCenter = new javax.swing.JScrollPane();
-		addWindowListener(
-			new java.awt.event.WindowAdapter()
-			{
-				public void windowClosing(java.awt.event.WindowEvent evt)
-				{
-					exitForm(evt);
-				}
-			}
-		);
+		JPanel aPanel = new JPanel();
 
-		jButton.setPreferredSize(new java.awt.Dimension(80, 25));
-		jButton.setBorder(new javax.swing.border.BevelBorder(0));
-		jButton.setMaximumSize(new java.awt.Dimension(80, 25));
-		jButton.setFont(new java.awt.Font ("Dialog", 1, 11));
-		jButton.setText("Close");
-		jButton.setMnemonic('C');
-		jButton.setMinimumSize(new java.awt.Dimension(80, 25));
-		jButton.addActionListener(
-			new java.awt.event.ActionListener()
-			{
-				public void actionPerformed(java.awt.event.ActionEvent evt)
-				{
-					jButtonActionPerformed(evt);
-				}
-			}
-		);
-
-		jPanel.add(jButton);
-		getContentPane().add(jScrollPaneCenter, java.awt.BorderLayout.CENTER);
-		getContentPane().add(jPanel, java.awt.BorderLayout.SOUTH);
+		aPanel.add(GUI.buildButton("Close", 'C', "close", this));
+		getContentPane().add(itsJScrollPaneCenter, BorderLayout.CENTER);
+		getContentPane().add(aPanel, BorderLayout.SOUTH);
 	}
 
-	private void jButtonActionPerformed(java.awt.event.ActionEvent evt)
+	@Override
+	public void actionPerformed(ActionEvent theEvent)
 	{
-		dispose();
-	}
-
-	private void exitForm(java.awt.event.WindowEvent evt)
-	{
-		dispose();
+		if ("close".equals(theEvent.getActionCommand()))
+			dispose();
 	}
 }

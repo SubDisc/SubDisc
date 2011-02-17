@@ -3,6 +3,8 @@ package nl.liacs.subdisc;
 import java.io.*;
 import java.util.*;
 
+import javax.swing.*;
+
 import nl.liacs.subdisc.Attribute.*;
 
 import org.w3c.dom.*;
@@ -135,25 +137,23 @@ public class Table
 	}
 
 	//FileHandler.printLoadingInfo calls Table.update();
-	public void removeDomain(String theDomainName)
+	//TODO removeDomains(int[] theDomainIndices)
+	public void removeDomain(int theDomainIndex)
 	{
-
-		int aDomainIndex = itsDomains.indexOf(theDomainName);
-		if (aDomainIndex == -1)
+		if (itsDomains == null || theDomainIndex < 0 || theDomainIndex > itsDomains.size() - 1)
 		{
-			Log.logCommandLine(String.format("Domain '%s' not found.",
-								theDomainName));
+			Log.logCommandLine(String.format("Domain '%s' not found."));
 			return;
 		}
 
-		itsDomains.remove(aDomainIndex);
-		int aStartIndex = itsDomainIndices.remove(aDomainIndex).intValue();
+		itsDomains.remove(theDomainIndex);
+		int aStartIndex = itsDomainIndices.remove(theDomainIndex).intValue();
 		int anEndIndex; //check whether it is the last domain
 
-		if (aDomainIndex == itsDomainIndices.size())
+		if (theDomainIndex == itsDomainIndices.size())
 			anEndIndex = itsColumns.size();
 		else
-			anEndIndex = itsDomainIndices.get(aDomainIndex);
+			anEndIndex = itsDomainIndices.get(theDomainIndex);
 
 		/*
 		 * removing from ArrayList backwards avoids expensive arrayCopy
@@ -163,16 +163,29 @@ public class Table
 			itsColumns.remove(i);
 
 		int aNrDeletedColumns = anEndIndex - aStartIndex;
-		for (int i = aDomainIndex, j = itsDomainIndices.size(); i < j; ++i)
+		for (int i = theDomainIndex, j = itsDomainIndices.size(); i < j; ++i)
 			itsDomainIndices.set(i, itsDomainIndices.get(i) - aNrDeletedColumns);
 
 		itsNrColumns = itsColumns.size();
 		itsColumns.trimToSize();
 
 		//reset indices for all Columns after removed domain
+		//inefficient if multiple domains are removed at once
 		if (aStartIndex < itsNrColumns)
 			for (int i = aStartIndex; i < itsNrColumns; ++i)
 				itsColumns.get(i).getAttribute().setIndex(i);
+	}
+
+	public JList getDomainList()
+	{
+		/*
+		 * MiningWindow should guarantee 'Remove' is only available when
+		 * itsDomains is not null/empty
+		 */
+		if (itsDomains == null)
+			return null;
+		else
+			return new JList(itsDomains.toArray());
 	}
 
 	/*

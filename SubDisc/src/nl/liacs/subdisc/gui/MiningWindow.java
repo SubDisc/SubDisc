@@ -1019,12 +1019,18 @@ public class MiningWindow extends JFrame
 		aThread.start();
 	}
 
-	//TODO only present list of domains to remove
 	private void jMenuItemRemoveEnrichmentSourceActionPerformed()
 	{
-		//TODO only works on all.txt
-		String aDomainName = itsTable.getColumn(6).getName().substring(8);
-		itsTable.removeDomain(aDomainName);
+		JList aDomainList = itsTable.getDomainList();
+		new RemoveDomainWindow(aDomainList);
+
+		if ((aDomainList == null) || (aDomainList.getModel().getSize() == 0))
+			return;
+		else
+			for (int i = 0, j = aDomainList.getModel().getSize(); i < j; ++i)
+				if (aDomainList.isSelectedIndex(i))
+					itsTable.removeDomain(i);
+
 		update();
 	}
 
@@ -1038,6 +1044,7 @@ public class MiningWindow extends JFrame
 	}
 
 	/* DATASET BUTTONS */
+	//not on Event Dispatching Thread, may take a long time to load
 	private void browseActionPerformed()
 	{
 		SwingUtilities.invokeLater(new Runnable()
@@ -1061,6 +1068,7 @@ public class MiningWindow extends JFrame
 		// aDataExplorerWindow.setVisible(true);
 	}
 
+	//not on Event Dispatching Thread, may take a long time to load
 	private void metaDataActionPerformed()
 	{
 		SwingUtilities.invokeLater(new Runnable()
@@ -1222,12 +1230,12 @@ public class MiningWindow extends JFrame
 		ArrayList<Attribute> aList = new ArrayList<Attribute>(aNrBinary);
 
 		// aSelection is in order and names are always present in itsColumns
-		for (int i = 0, j = 0; i < aNrBinary; j++)
+		for (int i = 0, j = 0; i < aNrBinary; ++j)
 		{
 			if (aSelection[i].equals(itsTable.getColumn(j).getName()))
 			{
 				aList.add(itsTable.getColumn(j).getAttribute());
-				i++;
+				++i;
 			}
 		}
 		itsTargetConcept.setMultiTargets(aList);
@@ -1235,79 +1243,75 @@ public class MiningWindow extends JFrame
 		initTargetInfo();
 	}
 
-	// TODO remove duplicate ModelWindow code
 	private void jButtonBaseModelActionPerformed()
 	{
-		try
-		{
-			setupSearchParameters();
+		setupSearchParameters();
 
-			ModelWindow aWindow;
-			switch (itsTargetConcept.getTargetType())
+		switch (itsTargetConcept.getTargetType())
+		{
+			case DOUBLE_REGRESSION :
 			{
-				case DOUBLE_REGRESSION :
-				{
-					Attribute aPrimaryTarget = itsTargetConcept.getPrimaryTarget();
-					Column aPrimaryColumn = itsTable.getColumn(aPrimaryTarget);
-					Attribute aSecondaryTarget = itsTargetConcept.getSecondaryTarget();
-					Column aSecondaryColumn = itsTable.getColumn(aSecondaryTarget);
-					RegressionMeasure anRM = new RegressionMeasure(itsSearchParameters.getQualityMeasure(),
-						aPrimaryColumn, aSecondaryColumn, null);
+				/*
+				Attribute aPrimaryTarget = itsTargetConcept.getPrimaryTarget();
+				Column aPrimaryColumn = itsTable.getColumn(aPrimaryTarget);
+				Attribute aSecondaryTarget = itsTargetConcept.getSecondaryTarget();
+				Column aSecondaryColumn = itsTable.getColumn(aSecondaryTarget);
+				RegressionMeasure anRM = new RegressionMeasure(itsSearchParameters.getQualityMeasure(),
+					aPrimaryColumn, aSecondaryColumn, null);
 
-					aWindow = new ModelWindow(aPrimaryColumn, aSecondaryColumn,
-						aPrimaryTarget.getName(), aSecondaryTarget.getName(), anRM, null); //trendline, no subset
-					aWindow.setLocation(50, 50);
-					aWindow.setSize(GUI.WINDOW_DEFAULT_SIZE);
-					aWindow.setVisible(true);
-					aWindow.setTitle("Base Model");
-					break;
-				}
-				case DOUBLE_CORRELATION :
-				{
-					Attribute aPrimaryTarget = itsTargetConcept.getPrimaryTarget();
-					Column aPrimaryColumn = itsTable.getColumn(aPrimaryTarget);
-					Attribute aSecondaryTarget = itsTargetConcept.getSecondaryTarget();
-					Column aSecondaryColumn = itsTable.getColumn(aSecondaryTarget);
+				new ModelWindow(aPrimaryColumn, aSecondaryColumn,
+					aPrimaryTarget.getName(), aSecondaryTarget.getName(), anRM, null); //trendline, no subset
+				break;
+				*/
+				Column aPrimaryColumn = itsTable.getColumn(itsTargetConcept.getPrimaryTarget().getIndex());
+				Column aSecondaryColumn = itsTable.getColumn(itsTargetConcept.getSecondaryTarget().getIndex());
 
-					aWindow = new ModelWindow(aPrimaryColumn, aSecondaryColumn,
-						aPrimaryTarget.getName(), aSecondaryTarget.getName(), null, null); //no trendline, no subset
-					aWindow.setLocation(50, 50);
-					aWindow.setSize(GUI.WINDOW_DEFAULT_SIZE);
-					aWindow.setVisible(true);
-					aWindow.setTitle("Base Model");
-					break;
-				}
-				case MULTI_LABEL :
-				{
-					ArrayList<Attribute> aList = itsTargetConcept.getMultiTargets();
-					String[] aNames = new String[aList.size()];
-					int aCount = 0;
-					for (Attribute anAttribute : aList)
-					{
-						aNames[aCount] = anAttribute.getName();
-						aCount++;
-					}
+				RegressionMeasure anRM = new RegressionMeasure(itsSearchParameters.getQualityMeasure(),
+																aPrimaryColumn, aSecondaryColumn, null);
 
-					// compute base model
-					Bayesian aBayesian =
-						new Bayesian(new BinaryTable(itsTable, aList), aNames);
-					aBayesian.climb();
-					DAG aBaseDAG = aBayesian.getDAG();
-					aBaseDAG.print();
-
-					aWindow = new ModelWindow(aBaseDAG, 1200, 900);
-					aWindow.setLocation(0, 0);
-					aWindow.setSize(1200, 900);
-					aWindow.setVisible(true);
-					aWindow.setTitle("Base Model: Bayesian Network");
-					break;
-				}
-				default: return; // TODO other types not implemented yet
+				new ModelWindow(aPrimaryColumn, aSecondaryColumn, anRM, null); //trendline, no subset
+				break;
 			}
-		}
-		catch (Exception e)
-		{
-			e.printStackTrace();
+			case DOUBLE_CORRELATION :
+			{
+				/*
+				Attribute aPrimaryTarget = itsTargetConcept.getPrimaryTarget();
+				Column aPrimaryColumn = itsTable.getColumn(aPrimaryTarget);
+				Attribute aSecondaryTarget = itsTargetConcept.getSecondaryTarget();
+				Column aSecondaryColumn = itsTable.getColumn(aSecondaryTarget);
+
+				new ModelWindow(aPrimaryColumn, aSecondaryColumn,
+					aPrimaryTarget.getName(), aSecondaryTarget.getName(), null, null); //no trendline, no subset
+				break;
+				*/
+				new ModelWindow(itsTable.getColumn(itsTargetConcept.getPrimaryTarget().getIndex()),
+								itsTable.getColumn(itsTargetConcept.getSecondaryTarget().getIndex()),
+								null,
+								null); //no trendline, no subset
+				break;
+			}
+			case MULTI_LABEL :
+			{
+				ArrayList<Attribute> aList = itsTargetConcept.getMultiTargets();
+				String[] aNames = new String[aList.size()];
+				int aCount = 0;
+				for (Attribute anAttribute : aList)
+				{
+					aNames[aCount] = anAttribute.getName();
+					aCount++;
+				}
+
+				// compute base model
+				Bayesian aBayesian =
+					new Bayesian(new BinaryTable(itsTable, aList), aNames);
+				aBayesian.climb();
+				DAG aBaseDAG = aBayesian.getDAG();
+				aBaseDAG.print();
+
+				new ModelWindow(aBaseDAG, 1200, 900);
+				break;
+			}
+			default: return; // TODO other types not implemented yet
 		}
 	}
 

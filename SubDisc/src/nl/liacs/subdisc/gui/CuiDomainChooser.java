@@ -68,6 +68,7 @@ public class CuiDomainChooser extends JDialog implements ActionListener
 
 	private void initComponents()
 	{
+		// TODO put in scrollpane, there can be many domains
 		JPanel aRadioButtonPanel = new JPanel();
 		JPanel aButtonPanel = new JPanel();
 		JRadioButton aRadioButton;
