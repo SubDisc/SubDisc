@@ -20,7 +20,7 @@ public class MiningWindow extends JFrame
 	static final long serialVersionUID = 1L;
 
 	// TODO get image
-	public static final Image ICON = Toolkit.getDefaultToolkit().getImage(MiningWindow.class.getResource("/icon.gif"));
+	public static final ImageIcon ICON = new ImageIcon(Toolkit.getDefaultToolkit().getImage(MiningWindow.class.getResource("/icon.jpg")));
 
 	private Table itsTable;
 	private int itsTotalCount;
@@ -664,7 +664,7 @@ public class MiningWindow extends JFrame
 		jLabelMiscField = initJLabel("");
 		jPanelEvaluationLabels.add(jLabelMiscField);
 
-		jLabelSecondaryTargets = initJLabel(" binary targets");
+		jLabelSecondaryTargets = initJLabel(" targets and settings");
 		jPanelEvaluationLabels.add(jLabelSecondaryTargets);
 
 		jLabelTargetInfo = initJLabel("");;
@@ -1223,7 +1223,7 @@ public class MiningWindow extends JFrame
 	private void jButtonSecondaryTargetsActionPerformed()
 	{
 		// is modal, blocks all input to other windows until closed
-		new SecondaryTargetsWindow(jListSecondaryTargets);
+		new SecondaryTargetsWindow(jListSecondaryTargets, itsSearchParameters);
 
 		Object[] aSelection = jListSecondaryTargets.getSelectedValues();
 		int aNrBinary = aSelection.length;
@@ -1394,9 +1394,6 @@ public class MiningWindow extends JFrame
 				aResultWindow = new ResultWindow( aTable, aSubgroupDiscovery, null, theFold, theBitSet);
 			}
 		}
-		aResultWindow.setLocation(100, 100);
-		aResultWindow.setSize(GUI.WINDOW_DEFAULT_SIZE);
-		aResultWindow.setVisible(true);
 	}
 
 	private void jButtonSubgroupDiscoveryActionPerformed()
@@ -1406,6 +1403,7 @@ public class MiningWindow extends JFrame
 		runSubgroupDiscovery(itsTable, 0, aBitSet);
 	}
 
+	// TODO update using new RandomQualityWindow(RANDOM_SUBGROUPS).getSettings()
 	private void jButtonRandomSubgroupsActionPerformed()
 	{
 		try
@@ -1462,6 +1460,7 @@ public class MiningWindow extends JFrame
 			Log.logCommandLine("mu: " + aDistro.getMu());
 			Log.logCommandLine("sigma: " + aDistro.getSigma());
 
+			// TODO remove duplicate code
 			int aMethod = JOptionPane.showOptionDialog(null,
 				"The following quality measure thresholds were computed:\n" +
 				"1% significance level: " + aDistro.getOnePercentSignificance() + "\n" +
@@ -1504,6 +1503,8 @@ public class MiningWindow extends JFrame
 		}
 	}
 
+	// TODO update using new RandomQualityWindow(RANDOM_SUBGROUPS).getSettings()
+	// TODO what could throw exception, probably nothing
 	private void jButtonRandomConditionsActionPerformed()
 	{
 		try
@@ -1552,6 +1553,7 @@ public class MiningWindow extends JFrame
 			Validation aValidation = new Validation(itsSearchParameters, itsTable, aQualityMeasure);
 			NormalDistribution aDistro = new NormalDistribution(aValidation.randomConditions(aNrRepetitions));
 
+			// TODO remove duplicate code
 			int aMethod = JOptionPane.showOptionDialog(null,
 				"The following quality measure thresholds were computed:\n" +
 				"1% significance level: " + aDistro.getOnePercentSignificance() + "\n" +

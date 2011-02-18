@@ -23,7 +23,7 @@ public class MetaDataWindow extends JFrame implements ActionListener
 	private ButtonGroup aNewType = new ButtonGroup();
 	private JTextField aNewMissingValue =
 		new JTextField(AttributeType.getDefaultType().DEFAULT_MISSING_VALUE);
-	private JLabel itsFeedBackLabel = new JLabel();
+	private JLabel itsFeedBackLabel;
 
 	public MetaDataWindow(MiningWindow theMiningWindow, Table theTable)
 	{
@@ -157,9 +157,8 @@ public class MetaDataWindow extends JFrame implements ActionListener
 
 		// feedback label
 		Box aFeedBackBox = Box.createHorizontalBox();
-		aFeedBackBox.add(GUI.buildLabel(" Last Action: "));
-		itsFeedBackLabel.setText("Meta Data loaded for " + itsTable.getName());
-		itsFeedBackLabel.setFont(GUI.DEFAULT_TEXT_FONT);
+		aFeedBackBox.add(GUI.buildLabel(" Last Action: ", null));
+		itsFeedBackLabel = GUI.buildLabel("Meta Data loaded for " + itsTable.getName(), null);
 		aFeedBackBox.add(itsFeedBackLabel);
 		aFeedBackBox.add(Box.createHorizontalGlue());
 		aSouthPanel.add(aFeedBackBox);

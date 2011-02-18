@@ -3,13 +3,13 @@ package nl.liacs.subdisc.gui;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
+import java.util.List;
 
 import javax.swing.*;
-import javax.swing.border.*;
 
 import nl.liacs.subdisc.*;
 
-public class ResultWindow extends JFrame
+public class ResultWindow extends JFrame implements ActionListener
 {
 	private static final long serialVersionUID = 1L;
 //	public static final Image ICON = Toolkit.getDefaultToolkit().getImage(ResultWindow.class.getResource("/Safarii.gif"));
@@ -49,9 +49,12 @@ public class ResultWindow extends JFrame
 				itsSubgroupTable.addRowSelectionInterval(0, 0);
 
 			initComponents ();
-//			setIconImage(ICON);
 			initialise();
 			setTitle();
+			setLocation(100, 100);
+			setSize(GUI.WINDOW_DEFAULT_SIZE);
+			pack ();
+			setVisible(true);
 		}
 	}
 
@@ -74,9 +77,12 @@ public class ResultWindow extends JFrame
 			itsSubgroupTable.addRowSelectionInterval(0, 0);
 
 		initComponents ();
-//			setIconImage(ICON);
 		initialise();
 		setTitle();
+		setLocation(100, 100);
+		setSize(GUI.WINDOW_DEFAULT_SIZE);
+		pack ();
+		setVisible(true);
 	}
 
 /*
@@ -183,12 +189,10 @@ public class ResultWindow extends JFrame
 						jButtonDeleteSubgroupsActionPerformed();
 			}
 
-			public void keyReleased(KeyEvent key) {	}
+			public void keyReleased(KeyEvent key) {}
 
-			public void keyTyped(KeyEvent key) {	}
+			public void keyTyped(KeyEvent key) {}
 		});
-
-		pack ();
 	}
 
 	private void initComponents()
@@ -198,87 +202,40 @@ public class ResultWindow extends JFrame
 		JPanel aSubgroupSetPanel = new JPanel();
 
 		itsScrollPane = new JScrollPane();
-		addWindowListener(new WindowAdapter() {
-			public void windowClosing(WindowEvent evt) {
-				exitForm();
-			}
-		});
 
-		jButtonShowModel = initButton("Show Model", 'S');
-		jButtonShowModel.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent evt) {
-				jButtonShowModelActionPerformed();
-			}
-		});
+		jButtonShowModel = GUI.buildButton("Show Model", 'S', "model", this);
 		aSubgroupPanel.add(jButtonShowModel);
 		jButtonShowModel.setVisible(itsSearchParameters.getTargetType() != TargetType.SINGLE_NOMINAL);
 
-		jButtonROC = initButton("ROC", 'R');
-		jButtonROC.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent evt) {
-				jButtonROCActionPerformed();
-			}
-		});
+		jButtonROC = GUI.buildButton("ROC", 'R', "roc", this);
 		aSubgroupPanel.add(jButtonROC);
 		jButtonROC.setVisible(itsSearchParameters.getTargetType() == TargetType.SINGLE_NOMINAL);
 
-		jButtonDeleteSubgroups = initButton("Delete Pattern", 'D');
-		jButtonDeleteSubgroups.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent evt) {
-				jButtonDeleteSubgroupsActionPerformed();
-			}
-		});
+		jButtonDeleteSubgroups = GUI.buildButton("Delete Pattern", 'D', "delete", this);
 		aSubgroupPanel.add(jButtonDeleteSubgroups);
 
-		jButtonDumpPatterns = initButton("Dump Patterns", 'U');
-		jButtonDumpPatterns.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent evt) {
-				jButtonDumpPatternsActionPerformed();
-			}
-		});
+		jButtonDumpPatterns = GUI.buildButton("Dump Patterns", 'U', "dump", this);
 		aSubgroupPanel.add(jButtonDumpPatterns);
 
-		jButtonPostprocess = initButton("Post-process", 'O');
-		jButtonPostprocess.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent evt) {
-				jButtonPostprocessActionPerformed();
-			}
-		});
+		jButtonPostprocess = GUI.buildButton("Post-process", 'O', "post_process", this);
 		aSubgroupPanel.add(jButtonPostprocess);
 		jButtonPostprocess.setVisible(itsSearchParameters.getTargetType() == TargetType.MULTI_LABEL);
 
-		jButtonPValues = initButton("Compute p-Values", 'P');
-		jButtonPValues.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent evt) {
-				jButtonPValuesActionPerformed();
-			}
-		});
+		jButtonPValues = GUI.buildButton("Compute p-Values", 'P', "compute_p", this);
 		aSubgroupPanel.add(jButtonPValues);
 
-		jButtonRegressionTest = initButton("Regression Test", 'T');
-		jButtonRegressionTest.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent evt) {
-				jButtonRegressionTestActionPerformed();
-			}
-		});
+		jButtonRegressionTest = GUI.buildButton("Regression Test", 'T', "regression", this);
 		aSubgroupPanel.add(jButtonRegressionTest);
 
-		jButtonEmpirical = initButton("Empirical p-Values", 'E');
-		jButtonEmpirical.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent evt) {
-				jButtonEmpiricalActionPerformed();
-			}
-		});
+		jButtonEmpirical = GUI.buildButton("Empirical p-Values", 'E', "empirical_p", this);
 		aSubgroupPanel.add(jButtonEmpirical);
 
-		jButtonFold = initButton("Fold members", 'F');
-		jButtonFold.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent evt) {
-				jButtonFoldActionPerformed();
-			}
-		});
+		jButtonFold = GUI.buildButton("Fold members", 'F', "fold", this);
 		aSubgroupPanel.add(jButtonFold);
 		jButtonFold.setVisible(itsFold != 0);
+
+		jButtonCloseWindow = GUI.buildButton("Close", 'C', "close", this);
+		aSubgroupSetPanel.add(jButtonCloseWindow);
 
 		//possibly disable buttons
 		if (itsSubgroupSet.isEmpty())
@@ -289,33 +246,36 @@ public class ResultWindow extends JFrame
 			jButtonPostprocess.setEnabled(false);
 		}
 
-		//close button
-		jButtonCloseWindow = initButton("Close", 'C');
-		jButtonCloseWindow.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent evt) {
-				exitForm();
-			}
-		});
-
-		aSubgroupSetPanel.add(jButtonCloseWindow);
-
 		jPanelSouth.add(aSubgroupPanel);
 		jPanelSouth.add(aSubgroupSetPanel);
 		getContentPane().add(jPanelSouth, BorderLayout.SOUTH);
 		getContentPane().add(itsScrollPane, BorderLayout.CENTER);
 	}
 
-	private JButton initButton(String theName, int theMnemonic)
+	@Override
+	public void actionPerformed(ActionEvent theEvent)
 	{
-		JButton aButton = new JButton();
-		aButton.setPreferredSize(new Dimension(110, 25));
-		aButton.setBorder(new BevelBorder(0));
-		aButton.setMinimumSize(new Dimension(82, 25));
-		aButton.setMaximumSize(new Dimension(110, 25));
-		aButton.setFont(new Font ("Dialog", 1, 11));
-		aButton.setText(theName);
-		aButton.setMnemonic(theMnemonic);
-		return aButton;
+		String aCommand = theEvent.getActionCommand();
+		if ("model".equals(aCommand))
+			jButtonShowModelActionPerformed();
+		else if ("roc".equals(aCommand))
+			jButtonROCActionPerformed();
+		else if ("delete".equals(aCommand))
+			jButtonDeleteSubgroupsActionPerformed();
+		else if ("dump".equals(aCommand))
+			jButtonDumpPatternsActionPerformed();
+		else if ("post_process".equals(aCommand))
+			jButtonPostprocessActionPerformed();
+		else if ("compute_p".equals(aCommand))
+			jButtonPValuesActionPerformed();
+		else if ("regression".equals(aCommand))
+			jButtonRegressionTestActionPerformed();
+		else if ("emperical_p".equals(aCommand))
+			jButtonEmpiricalActionPerformed();
+		else if ("fold".equals(aCommand))
+			jButtonFoldActionPerformed();
+		else if ("close".equals(aCommand))
+			dispose();
 	}
 
 	private void jButtonShowModelActionPerformed()
@@ -488,19 +448,21 @@ public class ResultWindow extends JFrame
 		}
 		aNewSubgroupSet.setIDs();
 
+		//why is it bigger and re-located?
 		// Display postprocessed results
-		ResultWindow aResultWindow = new ResultWindow(itsTable, aNewSubgroupSet, itsSearchParameters, itsQualityMeasure, itsBinaryTable, itsFold, itsBitSet);
-		aResultWindow.setLocation(0, 0);
-		aResultWindow.setSize(1200, 900);
-		aResultWindow.setVisible(true);
-		exitForm();
+//		ResultWindow aResultWindow = new ResultWindow(itsTable, aNewSubgroupSet, itsSearchParameters, itsQualityMeasure, itsBinaryTable, itsFold, itsBitSet);
+//		aResultWindow.setLocation(0, 0);
+//		aResultWindow.setSize(1200, 900);
+//		aResultWindow.setVisible(true);
+		new ResultWindow(itsTable, aNewSubgroupSet, itsSearchParameters, itsQualityMeasure, itsBinaryTable, itsFold, itsBitSet);
+		dispose();
 	}
 
 	private void jButtonPValuesActionPerformed()
 	{
 		// Obtain input
 		double[] aQualities = obtainRandomQualities();
-		if (aQualities == null || aQualities[0] == Math.PI)
+		if (aQualities[0] == Math.PI)
 			return;
 		NormalDistribution aDistro = new NormalDistribution(aQualities);
 
@@ -514,29 +476,29 @@ public class ResultWindow extends JFrame
 	{
 		// Obtain input
 		double[] aQualities = obtainRandomQualities();
-		if (aQualities == null || aQualities[0] == Math.PI)
+		if (aQualities[0] == Math.PI)
 			return;
 		Validation aValidation = new Validation(itsSearchParameters, itsTable, itsQualityMeasure);
 //		double aRegressionTestScore = aValidation.performRegressionTest(aQualities, aNrSubgroups, itsSubgroupSet);
 //		JOptionPane.showMessageDialog(null, "The regression test score equals\n" + aRegressionTestScore);
 		double[] aRegressionTestScore = aValidation.performRegressionTest(aQualities, itsSubgroupSet);
-		JOptionPane.showMessageDialog(null, "The regression test score equals\nfor k =  1 : "+aRegressionTestScore[0]+"\nfor k = 10 : "+aRegressionTestScore[1]);
+		JOptionPane.showMessageDialog(this, "The regression test score equals\nfor k =  1 : "+aRegressionTestScore[0]+"\nfor k = 10 : "+aRegressionTestScore[1]);
 	}
 
 	private void jButtonEmpiricalActionPerformed()
 	{
 		// Obtain input
 		double[] aQualities = obtainRandomQualities();
-		if (aQualities == null || aQualities[0] == Math.PI)
+		if ( aQualities[0] == Math.PI)
 			return;
 
 		Validation aValidation = new Validation(itsSearchParameters, itsTable, itsQualityMeasure);
 		double aPValue = aValidation.computeEmpiricalPValue(aQualities, itsSubgroupSet);
-		JOptionPane.showMessageDialog(null, "The empirical p-value is p = " + aPValue);
-		
+		JOptionPane.showMessageDialog(this, "The empirical p-value is p = " + aPValue);
+
 		for (Subgroup aSubgroup : itsSubgroupSet)
 			aSubgroup.setEmpiricalPValue(aQualities);
-		
+
 		itsSubgroupTable.repaint();
 	}
 
@@ -548,16 +510,42 @@ public class ResultWindow extends JFrame
 
 	private double[] obtainRandomQualities()
 	{
+		double[] aPi = { Math.PI };
+
+		String[] aSettings = new RandomQualitiesWindow(null).getSettings();
+		String aMethod = aSettings[0];
+		String aNrRepetitions = aSettings[1];
+
+		int aNr = Integer.parseInt(aNrRepetitions);
+		if (aMethod == null || Integer.parseInt(aNrRepetitions) <= 1)
+			return aPi;
+		else
+		{
+			// Compute qualities
+			Validation aValidation = new Validation(itsSearchParameters, itsTable, itsQualityMeasure);
+			if (RandomQualitiesWindow.RANDOM_SUBGROUPS.equals(aMethod))
+				return aValidation.randomSubgroups(aNr);
+			else if (RandomQualitiesWindow.RANDOM_CONDITIONS.equals(aMethod))
+				return aValidation.randomConditions(aNr);
+			else
+				return aPi;
+		}
+	}
+
+/*
+	private double[] obtainRandomQualities()
+	{
 		double[] aPi = {Math.PI};
-		int aMethod = JOptionPane.showOptionDialog(null,
+		int aMethod = JOptionPane.showOptionDialog(this,
 				"By which method should the random qualities be computed?",
 				"Which method?",
-				JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null,
+				JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE,
+				null,
 				new String[] {"Random subgroups", "Random conditions"},
 				"Random subgroups");
 		if (!(aMethod == 0 || aMethod == 1))
 		{
-			JOptionPane.showMessageDialog(null, "No method selected;\nrandom qualities cannot be computed.");
+			JOptionPane.showMessageDialog(this, "No method selected;\nrandom qualities cannot be computed.");
 			return aPi;
 		}
 
@@ -566,16 +554,15 @@ public class ResultWindow extends JFrame
 		try
 		{
 			aNrRepetitions = Integer.parseInt(inputValue);
-			// TODO more than one?
 			if (aNrRepetitions <= 1)
 			{
-				JOptionPane.showMessageDialog(null, "Number should be > 1;\nrandom qualities cannot be computed.");
+				JOptionPane.showMessageDialog(this, "Number should be > 1;\nrandom qualities cannot be computed.");
 				return aPi;
 			}
 		}
 		catch (Exception e)
 		{
-			JOptionPane.showMessageDialog(null, "Not a valid number;\nrandom qualities cannot be computed.");
+			JOptionPane.showMessageDialog(this, "Not a valid number;\nrandom qualities cannot be computed.");
 			return aPi;
 		}
 
@@ -601,19 +588,17 @@ public class ResultWindow extends JFrame
 		}
 		return aQualities;
 	}
-
-	private void exitForm() { dispose(); }
-
-	private javax.swing.JPanel jPanelSouth;
-	private javax.swing.JButton jButtonShowModel;
-	private javax.swing.JButton jButtonDeleteSubgroups;
-	private javax.swing.JButton jButtonDumpPatterns;
-	private javax.swing.JButton jButtonFold;
-	private javax.swing.JButton jButtonPostprocess;
-	private javax.swing.JButton jButtonPValues;
-	private javax.swing.JButton jButtonRegressionTest;
-	private javax.swing.JButton jButtonEmpirical;
-	private javax.swing.JButton jButtonROC;
-	private javax.swing.JButton jButtonCloseWindow;
-	private javax.swing.JScrollPane itsScrollPane;
+*/
+	private JPanel jPanelSouth;
+	private JButton jButtonShowModel;
+	private JButton jButtonDeleteSubgroups;
+	private JButton jButtonDumpPatterns;
+	private JButton jButtonFold;
+	private JButton jButtonPostprocess;
+	private JButton jButtonPValues;
+	private JButton jButtonRegressionTest;
+	private JButton jButtonEmpirical;
+	private JButton jButtonROC;
+	private JButton jButtonCloseWindow;
+	private JScrollPane itsScrollPane;
 }

@@ -74,11 +74,35 @@ public class GUI
 		return aCheckBox;
 	}
 
-	public static JLabel buildLabel(String theName)
+	public static JComboBox buildComboBox(Object[] theItems)
+	{
+		JComboBox aComboBox = new JComboBox();
+		aComboBox.setPreferredSize(TEXT_FIELD_DEFAULT_SIZE);
+		aComboBox.setMinimumSize(TEXT_FIELD_DEFAULT_SIZE);
+		aComboBox.setFont(DEFAULT_TEXT_FONT);
+
+		for (Object o : theItems)
+			aComboBox.addItem(o);
+		return aComboBox;
+	}
+
+	public static JLabel buildLabel(String theName, Component theComponent)
 	{
 		JLabel aJLable = new JLabel(theName);
 		aJLable.setFont(DEFAULT_TEXT_FONT);
+		aJLable.setLabelFor(theComponent);
 		return aJLable;
+	}
+
+	public static JTextField buildTextField(String theText)
+	{
+		JTextField aTextField = new JTextField();
+		aTextField.setPreferredSize(TEXT_FIELD_DEFAULT_SIZE);
+		aTextField.setFont(GUI.DEFAULT_TEXT_FONT);
+		aTextField.setText(theText);
+		aTextField.setHorizontalAlignment(SwingConstants.RIGHT);
+		aTextField.setMinimumSize(TEXT_FIELD_DEFAULT_SIZE);
+		return aTextField;
 	}
 
 	// no need for null check

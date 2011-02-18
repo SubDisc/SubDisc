@@ -1,5 +1,6 @@
 /*
  * TODO this class does not remove quotes: 'value'
+ * TODO skip empty lines before/within/after data
  */
 package nl.liacs.subdisc;
 
@@ -197,7 +198,7 @@ public class FileLoaderTXT implements FileLoaderInterface
 					{
 						Log.logCommandLine(
 							String.format(
-							"Line %d has %d columns instead of the expected %d."
+							"Line %d has %d columns instead of the expected %d." // TODO  1 ? column(s)
 							, (aNrRows + 1), aLineNrColumns, aNrColumns));
 						isWellFormedFile = false;
 						// continue while to inform about more malformed lines

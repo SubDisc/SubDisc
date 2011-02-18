@@ -1,27 +1,42 @@
 package nl.liacs.subdisc.gui;
 
+import java.awt.*;
 import java.awt.event.*;
+import java.text.*;
 import java.util.*;
+import java.util.List;
 
 import javax.swing.*;
+
+import nl.liacs.subdisc.*;
 
 public class SecondaryTargetsWindow extends BasicJListWindow implements ActionListener//, ListSelectionListener
 {
 	private static final long serialVersionUID = 1L;
+	//alpha = '\u03B1' '&#x3b1' beta =  '\u03B2' '&#x3b2' 
+	private static final String ERROR =
+		"Fields with invalid input: %d.\nAlpha and Beta must be '0 <= x <= 1'.\nAmount must be 'x > 1'.";
 
 	private Object[] itsOriginalSelection;
+	private SearchParameters itsSearchParameters;
+	private JTextField itsAlphaField;
+	private JTextField itsBetaField;
+	private JComboBox itsPostProcessBox =
+		GUI.buildComboBox(new Object[] { "No","Subgroups", "Conditions" });
+	private JTextField itsAmountField = GUI.buildTextField(RandomQualitiesWindow.DEFAULT_NR);
 
-	public SecondaryTargetsWindow(JList theJList)
+	public SecondaryTargetsWindow(JList theJList, SearchParameters theSearchParameters)
 	{
 		super(theJList);
 
-		if (theJList == null)
+		if (theJList == null || theSearchParameters == null)
 			constructorWarning("SecondaryTargetsWindow", true);
 		else if (itsJList.getModel().getSize() == 0)
 			constructorWarning("SecondaryTargetsWindow", false);
 		else
 		{
 			itsOriginalSelection = itsJList.getSelectedValues();
+			itsSearchParameters = theSearchParameters;
 			addAdditionalComponents();
 			display("Secondary Targets");
 		}
@@ -29,7 +44,73 @@ public class SecondaryTargetsWindow extends BasicJListWindow implements ActionLi
 
 	private void addAdditionalComponents()
 	{
-		// TODO add alpha, beta, post processing count
+		JPanel aPanel = new JPanel();
+
+		aPanel.setLayout(new GridLayout(4, 2));
+		aPanel.add(GUI.buildLabel("Alpha", itsAlphaField));
+		aPanel.add(itsAlphaField = GUI.buildTextField(String.valueOf(itsSearchParameters.getAlpha())));
+		aPanel.add(GUI.buildLabel("Beta", itsBetaField));
+		aPanel.add(itsBetaField = GUI.buildTextField(String.valueOf(itsSearchParameters.getBeta())));
+		aPanel.add(GUI.buildLabel("Post process", itsPostProcessBox));
+		aPanel.add(itsPostProcessBox);
+		aPanel.add(GUI.buildLabel("Amount", itsAmountField));
+		aPanel.add(itsAmountField);
+
+		getContentPane().add(aPanel, BorderLayout.NORTH);
+	}
+
+	private void showErrorDialog(String theMessage)
+	{
+		JOptionPane.showMessageDialog(this, theMessage,"Invalid input", JOptionPane.ERROR_MESSAGE);
+	}
+
+	@Override
+	protected void disposeOk()
+	{
+		NumberFormat aFormat = NumberFormat.getNumberInstance();
+		try
+		{
+			byte aNrInvalid = 0;
+
+			float anAlpha = aFormat.parse(itsAlphaField.getText()).floatValue();
+			if (anAlpha < 0.0f || anAlpha > 1.0f)
+			{
+				itsAlphaField.selectAll();
+				++aNrInvalid;
+			}
+			else
+				itsSearchParameters.setAlpha(anAlpha);
+
+			float aBeta = aFormat.parse(itsBetaField.getText()).floatValue();
+			if (aBeta < 0.0f || aBeta > 1.0f)
+			{
+				itsBetaField.selectAll();
+				++aNrInvalid;
+			}
+			else
+				itsSearchParameters.setBeta(aBeta);
+
+			int anAmount = aFormat.parse(itsAmountField.getText()).intValue();
+			if (anAmount <= 1) // (amount > itsSearchParameters.getMaximumSubgroups())
+			{
+				itsAmountField.selectAll();
+				++aNrInvalid;
+			}
+			else
+			{
+//				itsSearchParameters.setPostProcessingType(itsPostProcessBox.getSelectedItem());
+//				itsSearchParameters.setPostProcessing(anAmount);
+			}
+
+			if (aNrInvalid == 0)
+				dispose();
+			else
+				showErrorDialog(String.format(ERROR, aNrInvalid));
+		}
+		catch (ParseException e)
+		{
+			showErrorDialog(e.getMessage());
+		}
 	}
 
 	// constructor guarantees itsJListSize > 0
@@ -41,12 +122,11 @@ public class SecondaryTargetsWindow extends BasicJListWindow implements ActionLi
 		// Columns might be disabled/re-typed since last time (order is same)
 		// could be faster
 		int aCurrentSize = itsJList.getModel().getSize();
-		ArrayList<Object> aCurrentList = new ArrayList<Object>(aCurrentSize);
+		List<Object> aCurrentList = new ArrayList<Object>(aCurrentSize);
 
-		for (int i = 0; i < aCurrentSize; i++)
+		for (int i = 0; i < aCurrentSize; ++i)
 			aCurrentList.add(itsJList.getModel().getElementAt(i));
 
-		
 		int aLastSize = itsOriginalSelection.length;
 
 		for (int i = 0, j = -1; i < aLastSize && aCurrentSize > 0; i++)

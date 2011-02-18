@@ -115,11 +115,16 @@ public class BasicJListWindow extends JDialog implements ActionListener {
 				itsJList.addSelectionInterval(i, itsJListSize - 1);
 		}
 		else if ("ok".equals(anAction))
-			dispose();
+			disposeOk();
 		else if ("cancel".equals(anAction))
 			disposeCancel();
 
 		itsFeedBackLabel.setText(getFeedBackText());
+	}
+
+	protected void disposeOk()
+	{
+		dispose();
 	}
 
 	protected void disposeCancel()
