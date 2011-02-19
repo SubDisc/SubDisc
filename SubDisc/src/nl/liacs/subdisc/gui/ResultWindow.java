@@ -3,7 +3,6 @@ package nl.liacs.subdisc.gui;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
-import java.util.List;
 
 import javax.swing.*;
 
@@ -237,13 +236,18 @@ public class ResultWindow extends JFrame implements ActionListener
 		jButtonCloseWindow = GUI.buildButton("Close", 'C', "close", this);
 		aSubgroupSetPanel.add(jButtonCloseWindow);
 
-		//possibly disable buttons
+		//disable result dependent buttons
 		if (itsSubgroupSet.isEmpty())
 		{
 			jButtonShowModel.setEnabled(false);
 			jButtonROC.setEnabled(false);
 			jButtonDeleteSubgroups.setEnabled(false);
+			jButtonDumpPatterns.setEnabled(false);
 			jButtonPostprocess.setEnabled(false);
+//			jButtonPValues.setEnabled(false);
+			jButtonRegressionTest.setEnabled(false);
+			jButtonEmpirical.setEnabled(false);
+			jButtonFold.setEnabled(false);
 		}
 
 		jPanelSouth.add(aSubgroupPanel);
@@ -462,7 +466,7 @@ public class ResultWindow extends JFrame implements ActionListener
 	{
 		// Obtain input
 		double[] aQualities = obtainRandomQualities();
-		if (aQualities[0] == Math.PI)
+		if (aQualities == null)
 			return;
 		NormalDistribution aDistro = new NormalDistribution(aQualities);
 
@@ -476,7 +480,7 @@ public class ResultWindow extends JFrame implements ActionListener
 	{
 		// Obtain input
 		double[] aQualities = obtainRandomQualities();
-		if (aQualities[0] == Math.PI)
+		if (aQualities == null)
 			return;
 		Validation aValidation = new Validation(itsSearchParameters, itsTable, itsQualityMeasure);
 //		double aRegressionTestScore = aValidation.performRegressionTest(aQualities, aNrSubgroups, itsSubgroupSet);
@@ -489,7 +493,7 @@ public class ResultWindow extends JFrame implements ActionListener
 	{
 		// Obtain input
 		double[] aQualities = obtainRandomQualities();
-		if ( aQualities[0] == Math.PI)
+		if ( aQualities == null)
 			return;
 
 		Validation aValidation = new Validation(itsSearchParameters, itsTable, itsQualityMeasure);
@@ -510,25 +514,24 @@ public class ResultWindow extends JFrame implements ActionListener
 
 	private double[] obtainRandomQualities()
 	{
-		double[] aPi = { Math.PI };
-
 		String[] aSettings = new RandomQualitiesWindow(null).getSettings();
 		String aMethod = aSettings[0];
-		String aNrRepetitions = aSettings[1];
+		String aNrRepetitionsString = aSettings[1];
+		int aNrRepetitions = 0;
 
-		int aNr = Integer.parseInt(aNrRepetitions);
-		if (aMethod == null || Integer.parseInt(aNrRepetitions) <= 1)
-			return aPi;
+		if (aMethod == null || aNrRepetitionsString == null ||
+			((aNrRepetitions = Integer.parseInt(aNrRepetitionsString)) <= 1))
+			return null;
 		else
 		{
 			// Compute qualities
 			Validation aValidation = new Validation(itsSearchParameters, itsTable, itsQualityMeasure);
 			if (RandomQualitiesWindow.RANDOM_SUBGROUPS.equals(aMethod))
-				return aValidation.randomSubgroups(aNr);
+				return aValidation.randomSubgroups(aNrRepetitions);
 			else if (RandomQualitiesWindow.RANDOM_CONDITIONS.equals(aMethod))
-				return aValidation.randomConditions(aNr);
+				return aValidation.randomConditions(aNrRepetitions);
 			else
-				return aPi;
+				return null;
 		}
 	}
 
