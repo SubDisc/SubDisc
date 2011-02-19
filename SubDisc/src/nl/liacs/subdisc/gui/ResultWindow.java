@@ -244,7 +244,7 @@ public class ResultWindow extends JFrame implements ActionListener
 			jButtonDeleteSubgroups.setEnabled(false);
 			jButtonDumpPatterns.setEnabled(false);
 			jButtonPostprocess.setEnabled(false);
-//			jButtonPValues.setEnabled(false);
+			jButtonPValues.setEnabled(false);
 			jButtonRegressionTest.setEnabled(false);
 			jButtonEmpirical.setEnabled(false);
 			jButtonFold.setEnabled(false);
