@@ -24,13 +24,14 @@ public class BrowseWindow extends JFrame implements ActionListener
 		if (theTable == null)
 		{
 			Log.logCommandLine(
-					"BrowseWindow Constructor: parameter can not be 'null'.");
+				"BrowseWindow Constructor: parameter can not be 'null'.");
 			return;
 		}
 		else
 		{
 			initComponents(theTable);
 			setTitle("Data for: " + theTable.getName());
+			setIconImage(MiningWindow.ICON);
 			setLocation(100, 100);
 			setSize(GUI.WINDOW_DEFAULT_SIZE);
 			setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -50,9 +51,24 @@ public class BrowseWindow extends JFrame implements ActionListener
 		getContentPane().add(new JScrollPane(aJTable), BorderLayout.CENTER);
 
 		// close button
-		JPanel aCloseButtonPanel = new JPanel();
-		aCloseButtonPanel.add(GUI.buildButton("Close", 'C', "close", this));
-		getContentPane().add(aCloseButtonPanel, BorderLayout.SOUTH);
+		final JPanel aButtonPanel = new JPanel();
+
+		// bioinformatics setting
+		if (theTable.getDomainList() != null)
+			aButtonPanel.add(GUI.buildButton("Save Table", 'S', "save", this));
+
+		final JButton aCloseButton = GUI.buildButton("Close", 'C', "close", this);
+		aButtonPanel.add(aCloseButton);
+		getContentPane().add(aButtonPanel, BorderLayout.SOUTH);
+
+		addWindowListener(new WindowAdapter()
+		{
+			@Override
+			public void windowOpened(WindowEvent e)
+			{
+				aCloseButton.requestFocusInWindow();
+			}
+		});
 	}
 
 	/*
@@ -82,7 +98,9 @@ public class BrowseWindow extends JFrame implements ActionListener
 	@Override
 	public void actionPerformed(ActionEvent theEvent)
 	{
-		if ("close".equals(theEvent.getActionCommand()))
+		if ("save".equals(theEvent.getActionCommand()))
+			; // TODO save aggregated table to file 
+		else if ("close".equals(theEvent.getActionCommand()))
 			dispose();
 	}
 

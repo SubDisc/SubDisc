@@ -31,14 +31,17 @@ public class BasicJListWindow extends JDialog implements ActionListener {
 	protected void constructorWarning(String theClass, boolean isNullWarning)
 	{
 		if (isNullWarning)
-			Log.logCommandLine(theClass + " Constructor: parameter can not be 'null'.");
+			Log.logCommandLine(theClass +
+				" Constructor: parameter can not be 'null'.");
 		else
-			Log.logCommandLine(theClass + " Constructor: the list can not be empty.");
+			Log.logCommandLine(theClass +
+				" Constructor: the list can not be empty.");
 	}
 
 	protected void display(String theTitle)
 	{
 		setTitle(theTitle);
+		setIconImage(MiningWindow.ICON);
 		setLocation(100, 100);
 //		setSize(GUI.WINDOW_DEFAULT_SIZE);
 //		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -48,7 +51,11 @@ public class BasicJListWindow extends JDialog implements ActionListener {
 
 	private void initComponents(JList theJList)
 	{
-		getContentPane().add(new JScrollPane(theJList), BorderLayout.CENTER);
+		JPanel aMasterPanel = new JPanel();
+		aMasterPanel.setLayout(new BoxLayout(aMasterPanel, BoxLayout.Y_AXIS));
+		aMasterPanel.setBorder(GUI.buildBorder("Select"));
+
+		aMasterPanel.add(new JScrollPane(theJList), BorderLayout.CENTER);
 
 		JPanel aButtonPanel = new JPanel();
 		aButtonPanel.setLayout(new BoxLayout(aButtonPanel, BoxLayout.Y_AXIS));
@@ -61,10 +68,13 @@ public class BasicJListWindow extends JDialog implements ActionListener {
 		aButtonPanel.add(aSelectPanel);
 
 		// confirm and cancel buttons
-		JPanel aClosePanel = new JPanel();
+		final JPanel aClosePanel = new JPanel();
 		aClosePanel.add(GUI.buildButton("OK", 'O', "ok", this));
 		aClosePanel.add(GUI.buildButton("Cancel", 'C', "cancel", this));
 		aButtonPanel.add(aClosePanel);
+
+		aMasterPanel.add(aButtonPanel, BorderLayout.SOUTH);
+		getContentPane().add(aMasterPanel, BorderLayout.CENTER);
 
 		// feedback label
 		Box aFeedBackBox = Box.createHorizontalBox();
@@ -72,20 +82,29 @@ public class BasicJListWindow extends JDialog implements ActionListener {
 		itsFeedBackLabel.setFont(GUI.DEFAULT_TEXT_FONT);
 		aFeedBackBox.add(itsFeedBackLabel);
 		aFeedBackBox.add(Box.createHorizontalGlue());
-		aButtonPanel.add(aFeedBackBox);
-
-		getContentPane().add(aButtonPanel, BorderLayout.SOUTH);
+		getContentPane().add(aFeedBackBox, BorderLayout.SOUTH);
 
 		addWindowListener(new WindowAdapter()
 		{
 			@Override
-			public void windowClosing(WindowEvent e) { disposeCancel(); }
+			public void windowOpened(WindowEvent e)
+			{
+				aClosePanel.getComponent(0).requestFocusInWindow();
+			}
+
+			@Override
+			public void windowClosing(WindowEvent e)
+			{
+				disposeCancel();
+			}
 		});
 	}
 
 	private String getFeedBackText()
 	{
-		return String.format(" %d of %d selected", itsJList.getSelectedIndices().length, itsJListSize);
+		return String.format(" %d of %d selected",
+					itsJList.getSelectedIndices().length,
+					itsJListSize);
 	}
 
 	@Override
@@ -99,7 +118,6 @@ public class BasicJListWindow extends JDialog implements ActionListener {
 			itsJList.clearSelection();
 		else if ("invert".equals(anAction))
 		{
-			// TODO use isSelected()
 			int[] aSelection = itsJList.getSelectedIndices();
 			itsJList.clearSelection();
 
@@ -109,7 +127,7 @@ public class BasicJListWindow extends JDialog implements ActionListener {
 				if (i == aSelection[j])
 					++j;
 				else
-					itsJList.addSelectionInterval(i, i);
+					itsJList.setSelectedIndex(i);
 			}
 			if (i < itsJListSize)
 				itsJList.addSelectionInterval(i, itsJListSize - 1);

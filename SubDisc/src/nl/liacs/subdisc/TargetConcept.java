@@ -24,7 +24,6 @@ public class TargetConcept implements XMLNodeInterface
 	private Attribute	itsSecondaryTarget;
 	private ArrayList<Attribute> itsMultiTargets;
 
-	
 	public TargetConcept()
 	{
 		itsTargetType = TargetType.getDefaultType();

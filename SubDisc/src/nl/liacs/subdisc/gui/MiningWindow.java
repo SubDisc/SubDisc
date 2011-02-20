@@ -19,8 +19,7 @@ public class MiningWindow extends JFrame
 {
 	static final long serialVersionUID = 1L;
 
-	// TODO get image
-	public static final ImageIcon ICON = new ImageIcon(Toolkit.getDefaultToolkit().getImage(MiningWindow.class.getResource("/icon.jpg")));
+	public static final Image ICON = new ImageIcon(Toolkit.getDefaultToolkit().getImage(MiningWindow.class.getResource("/icon.jpg"))).getImage();
 
 	private Table itsTable;
 	private int itsTotalCount;
@@ -77,9 +76,10 @@ public class MiningWindow extends JFrame
 		initStaticGuiComponents();
 		enableTableDependentComponents(itsTable != null);
 		setTitle("CORTANA: Subgroup Discovery Tool");
-		// setIconImage(ICON);
+		setIconImage(ICON);
 		initJMenuGui();
 		pack();
+		setLocation(100, 100);
 		setSize(700, 600);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setVisible(true);
@@ -117,7 +117,7 @@ public class MiningWindow extends JFrame
 		initGuiComponentsDataSet();
 
 		// target concept
-		jButtonBaseModel.setEnabled(TargetType.hasBaseModel(itsTargetConcept.getTargetType()));
+		enableBaseModelButtonCheck();
 
 		// search conditions
 		setSearchDepthMaximum("1");
@@ -284,7 +284,7 @@ public class MiningWindow extends JFrame
 		jLabelEvaluationTreshold = new JLabel();
 		jLabelTargetAttribute = new JLabel();
 		jLabelMiscField = new JLabel(); // used for target value or secondary target
-		jLabelSecondaryTargets = new JLabel();
+		jLabelMultiTargets = new JLabel();
 		jLabelTargetInfo = new JLabel();
 		// target concept - fields
 		jPanelEvaluationFields = new JPanel();
@@ -293,8 +293,8 @@ public class MiningWindow extends JFrame
 		jTextFieldQualityMeasureMinimum = new JTextField();
 		jComboBoxTargetAttribute = new JComboBox();
 		jComboBoxMiscField = new JComboBox(); // used for target value or secondary target
-		jButtonSecondaryTargets = new JButton();	// shows jListSecondaryTargets
-		jListSecondaryTargets = new JList(new DefaultListModel());	// permanently maintained
+		jButtonMultiTargets = new JButton();	// shows jListMultiTargets
+		jListMultiTargets = new JList(new DefaultListModel());	// permanently maintained
 		jLFieldTargetInfo = new JLabel();
 		jButtonBaseModel = new JButton();
 
@@ -664,8 +664,8 @@ public class MiningWindow extends JFrame
 		jLabelMiscField = initJLabel("");
 		jPanelEvaluationLabels.add(jLabelMiscField);
 
-		jLabelSecondaryTargets = initJLabel(" targets and settings");
-		jPanelEvaluationLabels.add(jLabelSecondaryTargets);
+		jLabelMultiTargets = initJLabel(" targets and settings");
+		jPanelEvaluationLabels.add(jLabelMultiTargets);
 
 		jLabelTargetInfo = initJLabel("");;
 		jPanelEvaluationLabels.add(jLabelTargetInfo);
@@ -709,13 +709,13 @@ public class MiningWindow extends JFrame
 		});
 		jPanelEvaluationFields.add(jComboBoxMiscField);
 
-		jButtonSecondaryTargets = initButton("Select Targets", 'T');
-		jButtonSecondaryTargets.addActionListener(new ActionListener() {
+		jButtonMultiTargets = initButton("Targets and Settings", 'T');
+		jButtonMultiTargets.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
-				jButtonSecondaryTargetsActionPerformed();
+				jButtonMultiTargetsActionPerformed();
 			}
 		});
-		jPanelEvaluationFields.add(jButtonSecondaryTargets);
+		jPanelEvaluationFields.add(jButtonMultiTargets);
 
 		jLFieldTargetInfo.setForeground(Color.black);
 		jLFieldTargetInfo.setFont(GUI.DEFAULT_TEXT_FONT);
@@ -893,7 +893,8 @@ public class MiningWindow extends JFrame
 		jButtonRandomSubgroups = initButton("Random Subgroups", 'R');
 		jButtonRandomSubgroups.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
-				jButtonRandomSubgroupsActionPerformed();
+//				jButtonRandomSubgroupsActionPerformed();
+				jButtonRandomQualitiesActionPerformed(RandomQualitiesWindow.RANDOM_SUBGROUPS);
 			}
 		});
 		jPanelMineButtons.add(jButtonRandomSubgroups);
@@ -901,7 +902,8 @@ public class MiningWindow extends JFrame
 		jButtonRandomConditions = initButton("Random Conditions", 'C');
 		jButtonRandomConditions.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
-				jButtonRandomConditionsActionPerformed();
+//				jButtonRandomConditionsActionPerformed();
+				jButtonRandomQualitiesActionPerformed(RandomQualitiesWindow.RANDOM_CONDITIONS);
 			}
 		});
 		jPanelMineButtons.add(jButtonRandomConditions);
@@ -936,8 +938,8 @@ public class MiningWindow extends JFrame
 									jButtonSubgroupDiscovery,
 									jButtonRandomSubgroups,
 									jButtonRandomConditions,
-									jButtonSecondaryTargets,
-									jButtonBaseModel};
+									jButtonMultiTargets};
+		enableBaseModelButtonCheck();
 
 		for (AbstractButton a : anAbstractButtonArray)
 			a.setEnabled(theSetting);
@@ -966,7 +968,7 @@ public class MiningWindow extends JFrame
 
 		if (aTable != null)
 		{
-			removeAllSecondaryTargetsItems(); // hack for now
+			removeAllMultiTargetsItems(); // hack for now
 
 			itsTable = aTable;
 			itsTotalCount = itsTable.getNrRows();
@@ -991,11 +993,16 @@ public class MiningWindow extends JFrame
 		}
 	}
 
-	// TODO not on EDT
-	private void jMenuItemAutoRunFileActionPerformed(AutoRun theFileOption)
+	private void jMenuItemAutoRunFileActionPerformed(final AutoRun theFileOption)
 	{
 		setupSearchParameters();
-		new XMLAutoRun(itsSearchParameters, itsTable, theFileOption);
+		SwingUtilities.invokeLater(new Runnable()
+		{
+			public void run()
+			{
+				new XMLAutoRun(itsSearchParameters, itsTable, theFileOption);
+			}
+		});
 	}
 
 	private void jMenuItemExitActionPerformed()
@@ -1008,30 +1015,35 @@ public class MiningWindow extends JFrame
 	//cannot be run from the Event Dispatching Thread
 	private void jMenuItemAddEnrichmentSourceActionPerformed(final EnrichmentType theType)
 	{
-		Thread aThread = new Thread()
+		SwingUtilities.invokeLater(new Runnable()
 		{
 			public void run()
 			{
 				new FileHandler(itsTable, theType);
 				update();
 			}
-		};
-		aThread.start();
+		});
 	}
 
 	private void jMenuItemRemoveEnrichmentSourceActionPerformed()
 	{
-		JList aDomainList = itsTable.getDomainList();
-		new RemoveDomainWindow(aDomainList);
+		SwingUtilities.invokeLater(new Runnable()
+		{
+			public void run()
+			{
+				JList aDomainList = itsTable.getDomainList();
+				new RemoveDomainWindow(aDomainList);
 
-		if ((aDomainList == null) || (aDomainList.getModel().getSize() == 0))
-			return;
-		else
-			for (int i = 0, j = aDomainList.getModel().getSize(); i < j; ++i)
-				if (aDomainList.isSelectedIndex(i))
-					itsTable.removeDomain(i);
+				if ((aDomainList == null) || (aDomainList.getModel().getSize() == 0))
+					return;
+				else
+					for (int i = 0, j = aDomainList.getModel().getSize(); i < j; ++i)
+						if (aDomainList.isSelectedIndex(i))
+							itsTable.removeDomain(i);
 
-		update();
+				update();
+			}
+		});
 	}
 
 	private void jMenuItemAboutCortanaActionPerformed()
@@ -1163,21 +1175,19 @@ public class MiningWindow extends JFrame
 		}
 
 		// has secondary targets (JList)?
-		boolean hasSecondaryTargets = TargetType.hasSecondaryTargets(aTargetType);
-		jLabelSecondaryTargets.setVisible(hasSecondaryTargets);
-		jButtonSecondaryTargets.setVisible(hasSecondaryTargets);
+		boolean hasMultiTargets = TargetType.hasMultiTargets(aTargetType);
+		jLabelMultiTargets.setVisible(hasMultiTargets);
+		jButtonMultiTargets.setVisible(hasMultiTargets);
 		// disable if no binary attributes TODO should be itsTable.field
-		boolean hasBinaryAttributes = "0".equalsIgnoreCase(jLFieldNrBinaries.getText().trim());
-		jLabelSecondaryTargets.setEnabled(!hasBinaryAttributes);
-		jButtonSecondaryTargets.setEnabled(!hasBinaryAttributes);
+		jButtonMultiTargets.setEnabled(jListMultiTargets.getSelectedIndices().length != 0);
+
+		// has base model?
+		enableBaseModelButtonCheck();
 
 		// has target attribute?
 		boolean hasTargetAttribute = TargetType.hasTargetAttribute(aTargetType);
 		jLabelTargetAttribute.setVisible(hasTargetAttribute);
 		jComboBoxTargetAttribute.setVisible(hasTargetAttribute);
-
-		// has base model?
-		jButtonBaseModel.setEnabled(TargetType.hasBaseModel(aTargetType));
 
 		//update misc field? Other types are updated through action listeners
 		if (aTargetType == TargetType.SINGLE_NUMERIC)
@@ -1220,12 +1230,12 @@ public class MiningWindow extends JFrame
 			initTargetInfo();
 	}
 
-	private void jButtonSecondaryTargetsActionPerformed()
+	private void jButtonMultiTargetsActionPerformed()
 	{
 		// is modal, blocks all input to other windows until closed
-		new SecondaryTargetsWindow(jListSecondaryTargets, itsSearchParameters);
+		new SecondaryTargetsWindow(jListMultiTargets, itsSearchParameters);
 
-		Object[] aSelection = jListSecondaryTargets.getSelectedValues();
+		Object[] aSelection = jListMultiTargets.getSelectedValues();
 		int aNrBinary = aSelection.length;
 		ArrayList<Attribute> aList = new ArrayList<Attribute>(aNrBinary);
 
@@ -1378,20 +1388,19 @@ public class MiningWindow extends JFrame
 
 		//ResultWindow
 //			SubgroupSet aPreliminaryResults = aSubgroupDiscovery.getResult();
-		ResultWindow aResultWindow;
 		switch (aTargetType)
 		{
 			case MULTI_LABEL :
 			{
 				BinaryTable aBinaryTable = new BinaryTable(aTable, itsTargetConcept.getMultiTargets());
 //					aResultWindow = new ResultWindow(aPreliminaryResults, itsSearchParameters, null, itsTable, aBinaryTable, aSubgroupDiscovery.getQualityMeasure(), itsTotalCount, theFold, theBitSet);
-				aResultWindow = new ResultWindow(itsTable, aSubgroupDiscovery, aBinaryTable, theFold, theBitSet);
+				new ResultWindow(itsTable, aSubgroupDiscovery, aBinaryTable, theFold, theBitSet);
 				break;
 			}
 			default :
 			{
 //					aResultWindow = new ResultWindow(aPreliminaryResults, itsSearchParameters, null, aTable, aSubgroupDiscovery.getQualityMeasure(), itsTotalCount, theFold, theBitSet);
-				aResultWindow = new ResultWindow( aTable, aSubgroupDiscovery, null, theFold, theBitSet);
+				new ResultWindow( aTable, aSubgroupDiscovery, null, theFold, theBitSet);
 			}
 		}
 	}
@@ -1402,8 +1411,9 @@ public class MiningWindow extends JFrame
 		aBitSet.set(0,itsTable.getNrRows());
 		runSubgroupDiscovery(itsTable, 0, aBitSet);
 	}
-
+/*
 	// TODO update using new RandomQualityWindow(RANDOM_SUBGROUPS).getSettings()
+	// TODO what could throw exception, probably nothing
 	private void jButtonRandomSubgroupsActionPerformed()
 	{
 		try
@@ -1595,44 +1605,147 @@ public class MiningWindow extends JFrame
 			aWindow.setVisible(true);
 		}
 	}
+*/
+	private void jButtonRandomQualitiesActionPerformed(String theMethod)
+	{
+		boolean aSubgroupAction;
+		if (RandomQualitiesWindow.RANDOM_SUBGROUPS.equals(theMethod))
+			aSubgroupAction = true;
+		else if (RandomQualitiesWindow.RANDOM_CONDITIONS.equals(theMethod))
+			aSubgroupAction = false;
+		else	
+			return;
+
+		String aNrRepetitionsString = new RandomQualitiesWindow(theMethod).getSettings()[1];
+		int aNrRepetitions = 0;
+		// null if RandomQualitiesWindow was cancelled/closed
+		// else RandomQualitiesWindow ensured parseInt succeeds
+		if (aNrRepetitionsString == null )
+			return;
+		else if ((aNrRepetitions = Integer.parseInt(aNrRepetitionsString)) <= 1)
+			return;
+
+		setupSearchParameters();
+
+		QualityMeasure aQualityMeasure;
+		switch(itsTargetConcept.getTargetType())
+		{
+			case SINGLE_NOMINAL :
+			{
+				aQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), itsTable.getNrRows(), itsPositiveCount);
+				break;
+			}
+			case MULTI_LABEL :
+			{
+				// base model
+				BinaryTable aBaseTable = new BinaryTable(itsTable, itsTargetConcept.getMultiTargets());
+				Bayesian aBayesian = new Bayesian(aBaseTable);
+				aBayesian.climb();
+				aQualityMeasure = new QualityMeasure(itsSearchParameters, aBayesian.getDAG(), itsTotalCount);
+				break;
+			}
+			case DOUBLE_REGRESSION :
+			case DOUBLE_CORRELATION :
+			{
+				//base model
+				aQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), itsTable.getNrRows(), 100); //TODO fix 100, is useless?
+				break;
+			}
+			default :
+			{
+				Log.logCommandLine("Unable to compute random qualities for " +
+							itsTargetConcept.getTargetType().TEXT);
+				return; // TODO also throw JDialog?
+			}
+		}
+
+		Validation aValidation = new Validation(itsSearchParameters, itsTable, aQualityMeasure);
+		double[] aQualities;
+
+		if (aSubgroupAction)
+			aQualities = aValidation.randomSubgroups(aNrRepetitions);
+		else
+			aQualities = aValidation.randomConditions(aNrRepetitions);
+
+		NormalDistribution aDistro = new NormalDistribution(aQualities);
+
+		int aMethod = JOptionPane.showOptionDialog(null,
+			"The following quality measure thresholds were computed:\n" +
+			"1% significance level: " + aDistro.getOnePercentSignificance() + "\n" +
+			"5% significance level: " + aDistro.getFivePercentSignificance() + "\n" +
+			"10% significance level: " + aDistro.getTenPercentSignificance() + "\n" +
+			"Would you like to keep one of these thresholds as search constraint?",
+			"Keep quality measure threshold?",
+			JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null,
+			new String[] {"1% significance", "5% significance", "10% significance", "Ignore statistics"},
+			"1% significance");
+		switch (aMethod)
+		{
+			case 0:
+			{
+				setQualityMeasureMinimum(Float.toString(aDistro.getOnePercentSignificance()));
+				break;
+			}
+			case 1:
+			{
+				setQualityMeasureMinimum(Float.toString(aDistro.getFivePercentSignificance()));
+				break;
+			}
+			case 2:
+			{
+				setQualityMeasureMinimum(Float.toString(aDistro.getTenPercentSignificance()));
+				break;
+			}
+			case 3:
+			{
+				break; //discard statistics
+			}
+		}
+
+		// may take long, do this after window is shown
+		Arrays.sort(aQualities);
+		for (double aQuality : aQualities)
+			Log.logCommandLine("" + aDistro.zTransform(aQuality));
+		Log.logCommandLine("mu: " + aDistro.getMu());
+		Log.logCommandLine("sigma: " + aDistro.getSigma());
+	}
 
 	private void setupSearchParameters()
 	{
-		initSearchParameters(itsSearchParameters);
+		initSearchParameters();
 		initTargetConcept();
 	}
 
-	// TODO can do without theSearchParameters, there is only itsSearchParameters
-	private void initSearchParameters(SearchParameters theSearchParameters)
+	private void initSearchParameters()
 	{
 		// theSearchParameters.setTarget(itsTable.getAttribute(getTargetAttributeName()));
 		// theSearchParameters.setTargetAttributeShort(getTargetAttributeName());
 		// theSearchParameters.setTargetValue(getMiscFieldName()); //only makes
 		// sense for certain target concepts
 
-		theSearchParameters.setQualityMeasure(getQualityMeasureName());
-		theSearchParameters.setQualityMeasureMinimum(getQualityMeasureMinimum());
+		itsSearchParameters.setQualityMeasure(getQualityMeasureName());
+		itsSearchParameters.setQualityMeasureMinimum(getQualityMeasureMinimum());
 
-		theSearchParameters.setSearchDepth(getSearchDepthMaximum());
-		theSearchParameters.setMinimumCoverage(getSearchCoverageMinimum());
-		theSearchParameters.setMaximumCoverage(getSearchCoverageMaximum());
-		theSearchParameters.setMaximumSubgroups(getSubgroupsMaximum());
-		theSearchParameters.setMaximumTime(getSearchTimeMaximum());
+		itsSearchParameters.setSearchDepth(getSearchDepthMaximum());
+		itsSearchParameters.setMinimumCoverage(getSearchCoverageMinimum());
+		itsSearchParameters.setMaximumCoverage(getSearchCoverageMaximum());
+		itsSearchParameters.setMaximumSubgroups(getSubgroupsMaximum());
+		itsSearchParameters.setMaximumTime(getSearchTimeMaximum());
 
-		theSearchParameters.setSearchStrategy(getSearchStrategyName());
-		theSearchParameters.setSearchStrategyWidth(getSearchStrategyWidth());
-		theSearchParameters.setNumericStrategy(getNumericStrategy());
-		theSearchParameters.setNrBins(getSearchStrategyNrBins());
+		itsSearchParameters.setSearchStrategy(getSearchStrategyName());
+		itsSearchParameters.setSearchStrategyWidth(getSearchStrategyWidth());
+		itsSearchParameters.setNumericStrategy(getNumericStrategy());
+		itsSearchParameters.setNrBins(getSearchStrategyNrBins());
 
-		theSearchParameters.setPostProcessingCount(20);
-		theSearchParameters.setMaximumPostProcessingSubgroups(100);
+		itsSearchParameters.setPostProcessingCount(20);
+		itsSearchParameters.setMaximumPostProcessingSubgroups(100);
 
 		// Bayesian stuff
 		if (QualityMeasure.getMeasureString(QualityMeasure.EDIT_DISTANCE).equals(getQualityMeasureName()))
-			theSearchParameters.setAlpha(0.0f);
+			itsSearchParameters.setAlpha(0.0f);
 		else
-			theSearchParameters.setAlpha(0.5f);
-		theSearchParameters.setBeta(1.0f);
+			itsSearchParameters.setAlpha(0.5f);
+		itsSearchParameters.setBeta(1.0f);
 	}
 
 	// Obsolete, this info is already up to date through *ActionPerformed methods
@@ -1725,19 +1838,19 @@ public class MiningWindow extends JFrame
 			 * where changes are immediately pushed to underlying Table
 			 * (which holds a secondaryTargets member).
 			 */
-			((DefaultListModel) jListSecondaryTargets.getModel()).clear();
+			((DefaultListModel) jListMultiTargets.getModel()).clear();
 
 			int aCount = 0;
 			ArrayList<Attribute> aList = new ArrayList<Attribute>();
 			for (Column c: itsTable.getColumns())
 				if (c.getAttribute().isBinaryType() && c.getIsEnabled())
 				{
-					addSecondaryTargetsItem(c.getName());
+					addMultiTargetsItem(c.getName());
 					aList.add(c.getAttribute());
 					aCount++;
 				}
 			itsTargetConcept.setMultiTargets(aList);
-			jListSecondaryTargets.setSelectionInterval(0, jListSecondaryTargets.getModel().getSize() - 1);
+			jListMultiTargets.setSelectionInterval(0, jListMultiTargets.getModel().getSize() - 1);
 			jLFieldTargetInfo.setText(String.valueOf(aCount));
 		}
 	}
@@ -1859,8 +1972,8 @@ public class MiningWindow extends JFrame
 	private String getMiscFieldName() { return (String) jComboBoxMiscField.getSelectedItem(); }
 
 	// target type - jList secondary targets
-	private void addSecondaryTargetsItem(String theItem) { ((DefaultListModel) jListSecondaryTargets.getModel()).addElement(theItem); }
-	private void removeAllSecondaryTargetsItems() { ((DefaultListModel) jListSecondaryTargets.getModel()).clear(); }
+	private void addMultiTargetsItem(String theItem) { ((DefaultListModel) jListMultiTargets.getModel()).addElement(theItem); }
+	private void removeAllMultiTargetsItems() { ((DefaultListModel) jListMultiTargets.getModel()).clear(); }
 
 
 
@@ -1907,6 +2020,13 @@ public class MiningWindow extends JFrame
 		return aValue;
 	}
 
+	private void enableBaseModelButtonCheck()
+	{
+		jButtonBaseModel.setEnabled(
+			(TargetType.hasBaseModel(itsTargetConcept.getTargetType()) &&
+			(jListMultiTargets.getSelectedIndices().length != 0)));
+	}
+
 	private JMenuBar jMiningWindowMenuBar;
 	private JMenu jMenuFile;
 	private JMenuItem jMenuItemOpenFile;
@@ -1942,7 +2062,7 @@ public class MiningWindow extends JFrame
 	private JLabel jLabelTargetTable;
 	private JLabel jLabelTargetAttribute;
 	private JLabel jLabelMiscField;
-	private JLabel jLabelSecondaryTargets;
+	private JLabel jLabelMultiTargets;
 	private JLabel jLabelNrExamples;
 	private JLabel jLabelNrColumns;
 	private JLabel jLabelNrNominals;
@@ -1954,8 +2074,8 @@ public class MiningWindow extends JFrame
 	private JLabel jLFieldTargetTable;
 	private JComboBox jComboBoxTargetAttribute;
 	private JComboBox jComboBoxMiscField;
-	private JButton jButtonSecondaryTargets;
-	private JList jListSecondaryTargets;
+	private JButton jButtonMultiTargets;
+	private JList jListMultiTargets;
 	private JLabel jLFieldNrExamples;
 	private JLabel jLFieldNrColumns;
 	private JLabel jLFieldNrColumnsEnabled;

@@ -80,7 +80,7 @@ public enum TargetType
 	}
 
 	// used by MiningWindow.jComboBoxTargetAttributeActionPerformed()
-	public static boolean hasSecondaryTargets(TargetType theType)
+	public static boolean hasMultiTargets(TargetType theType)
 	{
 		switch (theType)
 		{
@@ -93,7 +93,7 @@ public enum TargetType
 			case MULTI_BINARY_CLASSIFICATION	: return true;
 			default :
 			{
-				unknownTargetType("TargetType.hasSecondaryTargets: " , theType);
+				unknownTargetType("TargetType.hasMultiTargets: " , theType);
 				return false;
 			}
 		}

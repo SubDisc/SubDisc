@@ -40,6 +40,7 @@ public class MetaDataWindow extends JFrame implements ActionListener
 			initJTable(itsTable);
 			initComponents();
 			setTitle("Meta Data for: " + itsTable.getName());
+			setIconImage(MiningWindow.ICON);
 			setLocation(100, 100);
 			setSize(GUI.WINDOW_DEFAULT_SIZE);
 			setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -68,7 +69,7 @@ public class MetaDataWindow extends JFrame implements ActionListener
 
 	private void initComponents()
 	{
-		JPanel aSouthPanel = new JPanel();
+		final JPanel aSouthPanel = new JPanel();
 		JPanel anActionPanel = new JPanel(new GridLayout(1, 4));
 		JPanel aSelectionPanel = new JPanel();
 		JPanel aDisablePanel = new JPanel();
@@ -165,6 +166,15 @@ public class MetaDataWindow extends JFrame implements ActionListener
 
 		getContentPane().add(jScrollPane, BorderLayout.CENTER);
 		getContentPane().add(aSouthPanel, BorderLayout.SOUTH);
+
+		addWindowListener(new WindowAdapter()
+		{
+			@Override
+			public void windowOpened(WindowEvent e)
+			{
+				aSouthPanel.getComponent(1).requestFocusInWindow();
+			}
+		});
 	}
 
 	private void addCentered(JPanel thePanel, JComponent theComponent)
@@ -173,7 +183,6 @@ public class MetaDataWindow extends JFrame implements ActionListener
 		thePanel.add(theComponent);
 	}
 
-	// TODO use GUI.Event enums
 	@Override
 	public void actionPerformed(ActionEvent theEvent)
 	{

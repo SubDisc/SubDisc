@@ -174,6 +174,12 @@ public class Table
 		if (aStartIndex < itsNrColumns)
 			for (int i = aStartIndex; i < itsNrColumns; ++i)
 				itsColumns.get(i).getAttribute().setIndex(i);
+
+		if (itsDomains.isEmpty())
+		{
+			itsDomains = null;
+			itsDomainIndices = null;
+		}
 	}
 
 	public JList getDomainList()
@@ -434,6 +440,7 @@ public class Table
 		return aResult;
 	}
 
+	// TODO check for out of range
 	public TreeSet<String> getDomain(int theColumn)
 	{
 		Column aColumn = itsColumns.get(theColumn);

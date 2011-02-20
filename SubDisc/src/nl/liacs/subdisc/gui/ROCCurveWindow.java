@@ -18,8 +18,8 @@ public class ROCCurveWindow extends JFrame
 
 		ROCCurve aROCCurve = new ROCCurve(theSubgroupSet, theSearchParameters);
 		setTitle("ROC Curve (area under curve: " + aROCCurve.getAreaUnderCurve() + ")");
+		setIconImage(MiningWindow.ICON);
 		jScrollPaneCenter.setViewportView(aROCCurve);
-//		setIconImage(MiningWindow.ICON);
 		pack();
 		setLocation(100, 100);
 		setSize(GUI.ROC_WINDOW_DEFAULT_SIZE);

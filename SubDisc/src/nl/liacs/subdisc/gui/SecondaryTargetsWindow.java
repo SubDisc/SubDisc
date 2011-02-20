@@ -23,7 +23,8 @@ public class SecondaryTargetsWindow extends BasicJListWindow implements ActionLi
 	private JTextField itsBetaField;
 	private JComboBox itsPostProcessBox =
 		GUI.buildComboBox(new Object[] { "No","Subgroups", "Conditions" });
-	private JTextField itsAmountField = GUI.buildTextField(RandomQualitiesWindow.DEFAULT_NR);
+	private JTextField itsNrRepetitionsField =
+		GUI.buildTextField(RandomQualitiesWindow.DEFAULT_NR_REPETITIONS);
 
 	public SecondaryTargetsWindow(JList theJList, SearchParameters theSearchParameters)
 	{
@@ -45,6 +46,7 @@ public class SecondaryTargetsWindow extends BasicJListWindow implements ActionLi
 	private void addAdditionalComponents()
 	{
 		JPanel aPanel = new JPanel();
+		aPanel.setBorder(GUI.buildBorder("Settings"));
 
 		aPanel.setLayout(new GridLayout(4, 2));
 		aPanel.add(GUI.buildLabel("Alpha", itsAlphaField));
@@ -53,15 +55,18 @@ public class SecondaryTargetsWindow extends BasicJListWindow implements ActionLi
 		aPanel.add(itsBetaField = GUI.buildTextField(String.valueOf(itsSearchParameters.getBeta())));
 		aPanel.add(GUI.buildLabel("Post process", itsPostProcessBox));
 		aPanel.add(itsPostProcessBox);
-		aPanel.add(GUI.buildLabel("Amount", itsAmountField));
-		aPanel.add(itsAmountField);
+		aPanel.add(GUI.buildLabel("Number of repetitions", itsNrRepetitionsField));
+		aPanel.add(itsNrRepetitionsField);
 
 		getContentPane().add(aPanel, BorderLayout.NORTH);
 	}
 
 	private void showErrorDialog(String theMessage)
 	{
-		JOptionPane.showMessageDialog(this, theMessage,"Invalid input", JOptionPane.ERROR_MESSAGE);
+		JOptionPane.showMessageDialog(this,
+						theMessage,
+						"Invalid input",
+						JOptionPane.ERROR_MESSAGE);
 	}
 
 	@Override
@@ -90,10 +95,10 @@ public class SecondaryTargetsWindow extends BasicJListWindow implements ActionLi
 			else
 				itsSearchParameters.setBeta(aBeta);
 
-			int anAmount = aFormat.parse(itsAmountField.getText()).intValue();
+			int anAmount = aFormat.parse(itsNrRepetitionsField.getText()).intValue();
 			if (anAmount <= 1) // (amount > itsSearchParameters.getMaximumSubgroups())
 			{
-				itsAmountField.selectAll();
+				itsNrRepetitionsField.selectAll();
 				++aNrInvalid;
 			}
 			else
@@ -133,7 +138,7 @@ public class SecondaryTargetsWindow extends BasicJListWindow implements ActionLi
 		{
 			if ((j = aCurrentList.indexOf(itsOriginalSelection[i])) != -1)
 			{
-				itsJList.addSelectionInterval(j, j);
+				itsJList.setSelectedIndex(j);
 				--aCurrentSize;
 			}
 		}

@@ -11,10 +11,10 @@ public class RandomQualitiesWindow extends JDialog implements ActionListener
 
 	public static final String RANDOM_SUBGROUPS = "Random subgroups";
 	public static final String RANDOM_CONDITIONS = "Random condition";
-	public static final String DEFAULT_NR = "1000";
+	public static final String DEFAULT_NR_REPETITIONS = "1000";
 
 	private ButtonGroup itsMethods;
-	private JTextField itsAmountField;
+	private JTextField itsNrRepetitionsField;
 	private String[] itsSettings;
 
 	public RandomQualitiesWindow(String theSetting)
@@ -23,6 +23,7 @@ public class RandomQualitiesWindow extends JDialog implements ActionListener
 		itsSettings = new String[] { theSetting, null };
 		initComponents();
 		setTitle("Which method?");
+		setIconImage(MiningWindow.ICON);
 		setLocation(100, 100);
 		setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 		pack();
@@ -33,31 +34,56 @@ public class RandomQualitiesWindow extends JDialog implements ActionListener
 	{
 		itsMethods = new ButtonGroup();
 
-		setLayout(new BoxLayout(getContentPane(), BoxLayout.PAGE_AXIS));
+		setLayout(new BoxLayout(getContentPane(), BoxLayout.Y_AXIS));
+
+		JPanel aMasterPanel = new JPanel();
+		aMasterPanel.setLayout(new BoxLayout(aMasterPanel, BoxLayout.Y_AXIS));
+		aMasterPanel.setBorder(GUI.buildBorder("Method to compute random qualities"));
+
 		JPanel aRadioButtonPanel = new JPanel();
-		aRadioButtonPanel.setLayout(new BoxLayout(aRadioButtonPanel, BoxLayout.PAGE_AXIS));
-		aRadioButtonPanel.add(GUI.buildLabel("By which method should the\nrandom qualities be computed?", null));
+		aRadioButtonPanel.setLayout(new BoxLayout(aRadioButtonPanel, BoxLayout.Y_AXIS));
 
 		JRadioButton aRadioButton = new JRadioButton(RANDOM_SUBGROUPS);
 		aRadioButton.setActionCommand(RANDOM_SUBGROUPS);
-		aRadioButton.setSelected(true);
 		aRadioButtonPanel.add(aRadioButton);
 		itsMethods.add(aRadioButton);
+
 		aRadioButton = new JRadioButton(RANDOM_CONDITIONS);
 		aRadioButton.setActionCommand(RANDOM_CONDITIONS);
 		aRadioButtonPanel.add(aRadioButton);
 		itsMethods.add(aRadioButton);
-		getContentPane().add(aRadioButtonPanel);
+		aMasterPanel.add(aRadioButtonPanel);
 
 		JPanel aNumberPanel = new JPanel();
-		aNumberPanel.add(GUI.buildLabel("Amount", itsAmountField));
-		aNumberPanel.add(itsAmountField = GUI.buildTextField(DEFAULT_NR));
-		getContentPane().add(aNumberPanel);
+		aNumberPanel.add(GUI.buildLabel("Number of repetitions", itsNrRepetitionsField));
+		aNumberPanel.add(Box.createHorizontalStrut(50));
+		aNumberPanel.add(itsNrRepetitionsField = GUI.buildTextField(DEFAULT_NR_REPETITIONS));
+		aNumberPanel.setAlignmentX(LEFT_ALIGNMENT);
+		aMasterPanel.add(aNumberPanel);
 
-		JPanel aButtonPanel = new JPanel();
+		getContentPane().add(aMasterPanel);
+
+		final JPanel aButtonPanel = new JPanel();
 		aButtonPanel.add(GUI.buildButton("OK", 'O', "ok", this));
 		aButtonPanel.add(GUI.buildButton("Cancel", 'C', "cancel", this));
+		aButtonPanel.setAlignmentX(LEFT_ALIGNMENT);
+
 		getContentPane().add(aButtonPanel);
+
+		// select appropriate radio button, focus itsNrRepetitionsField
+		if (RANDOM_CONDITIONS.equals(itsSettings[0]))
+			((JRadioButton) aRadioButtonPanel.getComponent(1)).setSelected(true);
+		else
+			((JRadioButton) aRadioButtonPanel.getComponent(0)).setSelected(true);
+
+		addWindowListener(new WindowAdapter()
+		{
+			@Override
+			public void windowOpened(WindowEvent e)
+			{
+				aButtonPanel.getComponent(0).requestFocusInWindow();
+			}
+		});
 	}
 
 	@Override
@@ -69,12 +95,12 @@ public class RandomQualitiesWindow extends JDialog implements ActionListener
 			NumberFormat aFormat = NumberFormat.getNumberInstance();
 			try
 			{
-				if (aFormat.parse(itsAmountField.getText()).intValue() <= 1)
-					showErrorDialog("Amount must be 'x > 1'.");
+				if (aFormat.parse(itsNrRepetitionsField.getText()).intValue() <= 1)
+					showErrorDialog("Number of repetitions must be > 1.");
 				else
 				{
 					itsSettings[0] = itsMethods.getSelection().getActionCommand();
-					itsSettings[1] = itsAmountField.getText();
+					itsSettings[1] = itsNrRepetitionsField.getText();
 					dispose();
 				}
 			}

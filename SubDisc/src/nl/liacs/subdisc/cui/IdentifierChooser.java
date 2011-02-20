@@ -30,6 +30,7 @@ public class IdentifierChooser extends JDialog implements ActionListener
 		else
 		{
 			setTitle("Identifier Chooser");
+			setIconImage(MiningWindow.ICON);
 			setLocation(100, 100);
 			setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 			initComponents(theColumns);
@@ -38,7 +39,6 @@ public class IdentifierChooser extends JDialog implements ActionListener
 		}
 	}
 
-	// TODO aColumnsPanel needs to go into a scrollPane
 	private void initComponents(List<Column> theColumns)
 	{
 		JPanel aColumnsPanel = new JPanel();
@@ -46,14 +46,14 @@ public class IdentifierChooser extends JDialog implements ActionListener
 		JPanel aButtonPanel = new JPanel();
 		JRadioButton aRadioButton;
 
-		setLayout(new BoxLayout(getContentPane(), BoxLayout.PAGE_AXIS));
+		setLayout(new BoxLayout(getContentPane(), BoxLayout.Y_AXIS));
 
 		if (theColumns.size() ==  0)
 			aColumnsPanel.add(new JLabel("No Column Headers Found"));
 		else
 		{
 			aColumnsPanel.setLayout(new BoxLayout(aColumnsPanel,
-														BoxLayout.PAGE_AXIS));
+								BoxLayout.PAGE_AXIS));
 
 			for (int i = 0, j = theColumns.size(); i < j; ++i)
 			{
@@ -74,8 +74,7 @@ public class IdentifierChooser extends JDialog implements ActionListener
 			aRadioButton.setActionCommand("go");
 			anIdentifierTypePanel.add(aRadioButton);
 
-			((JRadioButton) anIdentifierTypePanel.getComponent(0))
-															.setSelected(true);
+			((JRadioButton) anIdentifierTypePanel.getComponent(0)).setSelected(true);
 
 			for (Component c : anIdentifierTypePanel.getComponents())
 				itsIdentifierTypeButtons.add((AbstractButton) c);
@@ -87,7 +86,7 @@ public class IdentifierChooser extends JDialog implements ActionListener
 		}
 		getContentPane().add(new JLabel("Select the identifier column:"));
 		getContentPane().add(Box.createVerticalStrut(5));
-		getContentPane().add(aColumnsPanel);
+		getContentPane().add(new JScrollPane(aColumnsPanel));
 		getContentPane().add(Box.createVerticalStrut(10));
 		getContentPane().add(new JLabel("Select the identifier type:"));
 		getContentPane().add(anIdentifierTypePanel);
@@ -103,11 +102,11 @@ public class IdentifierChooser extends JDialog implements ActionListener
 		{
 			itsIdentifierColumnIndex =
 				Integer.parseInt(itsHeaderButtons
-									.getSelection()
-									.getActionCommand());
+							.getSelection()
+							.getActionCommand());
 			itsIdentifierType = itsIdentifierTypeButtons
-								.getSelection()
-								.getActionCommand();
+						.getSelection()
+						.getActionCommand();
 			dispose();
 		}
 		else if ("cancel".equals(aCommand))

@@ -72,8 +72,10 @@ public class ModelWindow extends JFrame implements ActionListener
 
 //		setIconImage(MiningWindow.ICON);
 		setTitle("Base Model");
+		setIconImage(MiningWindow.ICON);
 		setLocation(50, 50);
 		setSize(GUI.WINDOW_DEFAULT_SIZE);
+		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		pack();
 		setVisible(true);
 	}
@@ -90,6 +92,7 @@ public class ModelWindow extends JFrame implements ActionListener
 
 //		setIconImage(MiningWindow.ICON);
 		setTitle("Base Model: Bayesian Network");
+		setIconImage(MiningWindow.ICON);
 		setLocation(0, 0);
 		setSize(theDAGWidth, theDAGHeight);
 		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);

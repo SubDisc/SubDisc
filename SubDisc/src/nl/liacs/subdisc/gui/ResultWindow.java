@@ -29,7 +29,11 @@ public class ResultWindow extends JFrame implements ActionListener
 	public ResultWindow(Table theTable, SubgroupDiscovery theSubgroupDiscovery, BinaryTable theBinaryTable, int theFold, BitSet theBitSet)
 	{
 		if (theTable == null ||theSubgroupDiscovery == null)
-			return;	// TODO
+		{
+			Log.logCommandLine("ResultWindow Constructor: parameter(s) can not be 'null'.");
+			
+			return;
+		}
 		else
 		{
 			itsTable = theTable;
@@ -50,6 +54,7 @@ public class ResultWindow extends JFrame implements ActionListener
 			initComponents ();
 			initialise();
 			setTitle();
+			setIconImage(MiningWindow.ICON);
 			setLocation(100, 100);
 			setSize(GUI.WINDOW_DEFAULT_SIZE);
 			pack ();
@@ -78,6 +83,7 @@ public class ResultWindow extends JFrame implements ActionListener
 		initComponents ();
 		initialise();
 		setTitle();
+		setIconImage(MiningWindow.ICON);
 		setLocation(100, 100);
 		setSize(GUI.WINDOW_DEFAULT_SIZE);
 		pack ();

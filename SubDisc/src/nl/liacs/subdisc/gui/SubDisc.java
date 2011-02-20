@@ -18,15 +18,11 @@ public class SubDisc
 		Table aTable = aLoader.getTable();
 		SearchParameters aSearchParameters = aLoader.getSearchParameters();
 
-		MiningWindow aWindow;
 		if (aTable == null)
-			aWindow = new MiningWindow();
+			new MiningWindow();
 		else if (aSearchParameters == null)
-			aWindow = new MiningWindow(aTable);
+			new MiningWindow(aTable);
 		else
-			aWindow = new MiningWindow(aTable, aSearchParameters);
-
-		aWindow.setLocation(100, 100);
+			new MiningWindow(aTable, aSearchParameters);
 	}
-
 }

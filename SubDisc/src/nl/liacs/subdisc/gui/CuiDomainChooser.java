@@ -15,7 +15,7 @@ public class CuiDomainChooser extends JDialog implements ActionListener
 {
 	private static final long serialVersionUID = 1L;
 	private static final Set<String> KNOWN_DOMAINS =
-								new HashSet<String>(CuiMapInterface.NR_DOMAINS);
+				new HashSet<String>(CuiMapInterface.NR_DOMAINS);
 
 	private List<File> itsAvailableDomains;
 	private File itsDomainFile;
@@ -58,6 +58,7 @@ public class CuiDomainChooser extends JDialog implements ActionListener
 	{
 		super.setModalityType(Dialog.DEFAULT_MODALITY_TYPE);
 		super.setTitle("CUI Domain Chooser");
+		super.setIconImage(MiningWindow.ICON);
 		super.setLocation(100, 100);
 		initComponents();
 //		setSize(GUI.DEFAULT_WINDOW_DIMENSION);	// TODO
@@ -68,12 +69,14 @@ public class CuiDomainChooser extends JDialog implements ActionListener
 
 	private void initComponents()
 	{
-		// TODO put in scrollpane, there can be many domains
+		JPanel aMasterPanel = new JPanel();
 		JPanel aRadioButtonPanel = new JPanel();
-		JPanel aButtonPanel = new JPanel();
+		final JPanel aButtonPanel = new JPanel();
 		JRadioButton aRadioButton;
 
-		setLayout(new BoxLayout(getContentPane(), BoxLayout.PAGE_AXIS));
+		setLayout(new BoxLayout(getContentPane(), BoxLayout.Y_AXIS));
+		aMasterPanel.setLayout(new BoxLayout(aMasterPanel, BoxLayout.Y_AXIS));
+		aRadioButtonPanel.setBorder(GUI.buildBorder("Select CUI Domain"));
 
 		File aCuiDir = new File(CuiMapInterface.CUI_DIR);
 
@@ -85,7 +88,7 @@ public class CuiDomainChooser extends JDialog implements ActionListener
 		else
 		{
 			itsAvailableDomains =
-								new ArrayList<File>(CuiMapInterface.NR_DOMAINS);
+				new ArrayList<File>(CuiMapInterface.NR_DOMAINS);
 			// TODO this will be checked recursively
 			for (File f : aCuiDir.listFiles())
 				if (KNOWN_DOMAINS.contains(FileType.removeExtension(f)))
@@ -93,7 +96,7 @@ public class CuiDomainChooser extends JDialog implements ActionListener
 			Collections.sort(itsAvailableDomains);
 
 			aRadioButtonPanel.setLayout(new BoxLayout(aRadioButtonPanel,
-														BoxLayout.PAGE_AXIS));
+									BoxLayout.Y_AXIS));
 
 			for (File f : itsAvailableDomains)
 			{
@@ -113,9 +116,21 @@ public class CuiDomainChooser extends JDialog implements ActionListener
 				GUI.buildButton("Use Domain", KeyEvent.VK_U, "domain", this));
 			aButtonPanel.add(
 				GUI.buildButton("Cancel", KeyEvent.VK_C, "cancel", this));
+	
+			addWindowListener(new WindowAdapter()
+			{
+				@Override
+				public void windowOpened(WindowEvent e)
+				{
+					aButtonPanel.getComponent(0).requestFocusInWindow();
+				}
+			});
 		}
-		getContentPane().add(aRadioButtonPanel);
-		getContentPane().add(aButtonPanel);
+		aMasterPanel.add(aRadioButtonPanel);
+//		aMasterPanel.add(new JScrollPane(aRadioButtonPanel));
+		aButtonPanel.setAlignmentX(LEFT_ALIGNMENT);
+		aMasterPanel.add(aButtonPanel);
+		getContentPane().add(aMasterPanel);
 	}
 
 	@Override
