@@ -42,8 +42,8 @@ public class ResultWindow extends JFrame implements ActionListener
 			itsQualityMeasure = theSubgroupDiscovery.getQualityMeasure();
 //			itsDAGView = theDAGView;
 			itsBinaryTable = theBinaryTable;
-			itsFold = theFold;
-			itsBitSet = theBitSet;
+			itsFold = theFold; // only used in MULTI_LABEL setting for now
+			itsBitSet = theBitSet; // only used in MULTI_LABEL setting for now
 
 			itsResultTableModel = new ResultTableModel(itsSubgroupSet);
 			itsSubgroupTable = new JTable(itsResultTableModel);

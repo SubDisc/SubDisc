@@ -15,7 +15,7 @@ public class MultiTargetsWindow extends BasicJListWindow implements ActionListen
 	private static final long serialVersionUID = 1L;
 	//alpha = '\u03B1' '&#x3b1' beta =  '\u03B2' '&#x3b2' 
 	private static final String ERROR =
-		"Fields with invalid input: %d.\nAlpha and Beta must be '0 <= x <= 1'.\nAmount must be 'x > 1'.";
+		"Fields with invalid input: %d.\nAlpha and Beta must be '0 <= x <= 1'.\nNumber of repetitions must be 'x > 1'.";
 
 	private Object[] itsOriginalSelection;
 	private SearchParameters itsSearchParameters;
