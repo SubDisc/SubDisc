@@ -35,7 +35,6 @@ public class BrowseWindow extends JFrame implements ActionListener
 			setLocation(100, 100);
 			setSize(GUI.WINDOW_DEFAULT_SIZE);
 			setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-//			pack();
 			setVisible(true);
 		}
 	}

@@ -18,7 +18,7 @@ public class GUI
 {
 	// TODO remove DEFAULT_
 	public static final Font DEFAULT_TEXT_FONT = new Font ("Dialog", 0, 10);
-	public static final Font DEFAULT_BUTTON_FONT = new Font ("Dialog", 1, 10);
+	public static final Font DEFAULT_BUTTON_FONT = new Font ("Dialog", 1, 11);
 	public static final Dimension TEXT_FIELD_DEFAULT_SIZE = new Dimension (86, 22);
 	public static final Dimension WINDOW_DEFAULT_SIZE = new Dimension (1000, 600);
 	public static final Dimension ROC_WINDOW_DEFAULT_SIZE = new Dimension (600, 600);

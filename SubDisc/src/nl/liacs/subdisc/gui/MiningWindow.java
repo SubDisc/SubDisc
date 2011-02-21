@@ -77,11 +77,10 @@ public class MiningWindow extends JFrame
 		enableTableDependentComponents(itsTable != null);
 		setTitle("CORTANA: Subgroup Discovery Tool");
 		setIconImage(ICON);
-		initJMenuGui();
-		pack();
 		setLocation(100, 100);
 		setSize(700, 600);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		initJMenuGui(); // XXX for GUI testing only
 		setVisible(true);
 
 		// Open log/debug files
@@ -1233,7 +1232,7 @@ public class MiningWindow extends JFrame
 	private void jButtonMultiTargetsActionPerformed()
 	{
 		// is modal, blocks all input to other windows until closed
-		new SecondaryTargetsWindow(jListMultiTargets, itsSearchParameters);
+		new MultiTargetsWindow(jListMultiTargets, itsSearchParameters);
 
 		Object[] aSelection = jListMultiTargets.getSelectedValues();
 		int aNrBinary = aSelection.length;

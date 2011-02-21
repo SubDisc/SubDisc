@@ -43,8 +43,6 @@ public class BasicJListWindow extends JDialog implements ActionListener {
 		setTitle(theTitle);
 		setIconImage(MiningWindow.ICON);
 		setLocation(100, 100);
-//		setSize(GUI.WINDOW_DEFAULT_SIZE);
-//		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		pack();
 		setVisible(true);
 	}

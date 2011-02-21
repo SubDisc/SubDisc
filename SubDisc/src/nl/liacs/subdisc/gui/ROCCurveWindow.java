@@ -1,64 +1,47 @@
 package nl.liacs.subdisc.gui;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.WindowEvent;
+import java.awt.*;
+import java.awt.event.*;
 
-import javax.swing.JFrame;
+import javax.swing.*;
 
-import nl.liacs.subdisc.SearchParameters;
-import nl.liacs.subdisc.SubgroupSet;
+import nl.liacs.subdisc.*;
 
-public class ROCCurveWindow extends JFrame
+public class ROCCurveWindow extends JFrame implements ActionListener
 {
 	private static final long serialVersionUID = 1L;
+
+	private JScrollPane itsROCScrollPane;
 
 	public ROCCurveWindow(SubgroupSet theSubgroupSet, SearchParameters theSearchParameters)
 	{
 		initComponents();
 
 		ROCCurve aROCCurve = new ROCCurve(theSubgroupSet, theSearchParameters);
+		itsROCScrollPane.setViewportView(aROCCurve);
+
 		setTitle("ROC Curve (area under curve: " + aROCCurve.getAreaUnderCurve() + ")");
 		setIconImage(MiningWindow.ICON);
-		jScrollPaneCenter.setViewportView(aROCCurve);
-		pack();
 		setLocation(100, 100);
 		setSize(GUI.ROC_WINDOW_DEFAULT_SIZE);
+		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		setVisible(true);
 	}
 
 	private void initComponents()
 	{
-		jPanel1 = new javax.swing.JPanel();
-		jButtonClose = new javax.swing.JButton();
-		jScrollPaneCenter = new javax.swing.JScrollPane();
-		addWindowListener(new java.awt.event.WindowAdapter() {
-			public void windowClosing(java.awt.event.WindowEvent evt) {
-				exitForm(evt);
-			}
-		});
+		itsROCScrollPane = new JScrollPane();
+		JPanel aClosePanel = new JPanel();
+		aClosePanel.add(GUI.buildButton("Close", 'C', "close", this));
 
-		jButtonClose.setPreferredSize(new java.awt.Dimension(80, 25));
-		jButtonClose.setBorder(new javax.swing.border.BevelBorder(0));
-		jButtonClose.setMaximumSize(new java.awt.Dimension(80, 25));
-		jButtonClose.setFont(new java.awt.Font ("Dialog", 1, 11));
-		jButtonClose.setText("Close");
-		jButtonClose.setMnemonic('C');
-		jButtonClose.setMinimumSize(new java.awt.Dimension(80, 25));
-		jButtonClose.addActionListener(new java.awt.event.ActionListener() {
-			public void actionPerformed(java.awt.event.ActionEvent evt) {
-				jButtonCloseActionPerformed(evt);
-			}
-		});
-		jPanel1.add(jButtonClose);
-
-		getContentPane().add(jPanel1, java.awt.BorderLayout.SOUTH);
-		getContentPane().add(jScrollPaneCenter, java.awt.BorderLayout.CENTER);
+		getContentPane().add(itsROCScrollPane, BorderLayout.CENTER);
+		getContentPane().add(aClosePanel, BorderLayout.SOUTH);
 	}
 
-	private void jButtonCloseActionPerformed(ActionEvent evt) { dispose(); }
-	private void exitForm(WindowEvent evt) { dispose(); }
-
-	private javax.swing.JPanel jPanel1;
-	private javax.swing.JButton jButtonClose;
-	private javax.swing.JScrollPane jScrollPaneCenter;
+	@Override
+	public void actionPerformed(ActionEvent theEvent)
+	{
+		if ("close".equals(theEvent.getActionCommand()))
+			dispose();
+	}
 }

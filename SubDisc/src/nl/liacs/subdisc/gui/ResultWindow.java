@@ -11,7 +11,6 @@ import nl.liacs.subdisc.*;
 public class ResultWindow extends JFrame implements ActionListener
 {
 	private static final long serialVersionUID = 1L;
-//	public static final Image ICON = Toolkit.getDefaultToolkit().getImage(ResultWindow.class.getResource("/Safarii.gif"));
 
 	private SearchParameters itsSearchParameters;
 	private ResultTableModel itsResultTableModel;
@@ -57,7 +56,7 @@ public class ResultWindow extends JFrame implements ActionListener
 			setIconImage(MiningWindow.ICON);
 			setLocation(100, 100);
 			setSize(GUI.WINDOW_DEFAULT_SIZE);
-			pack ();
+			setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 			setVisible(true);
 		}
 	}
@@ -86,7 +85,7 @@ public class ResultWindow extends JFrame implements ActionListener
 		setIconImage(MiningWindow.ICON);
 		setLocation(100, 100);
 		setSize(GUI.WINDOW_DEFAULT_SIZE);
-		pack ();
+		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		setVisible(true);
 	}
 
@@ -168,12 +167,15 @@ public class ResultWindow extends JFrame implements ActionListener
 
 	public void initialise()
 	{
-		itsSubgroupTable.getColumnModel().getColumn(0).setPreferredWidth(10);
-		itsSubgroupTable.getColumnModel().getColumn(1).setPreferredWidth(10);
-		itsSubgroupTable.getColumnModel().getColumn(2).setPreferredWidth(20);
-		itsSubgroupTable.getColumnModel().getColumn(3).setPreferredWidth(50);
-		itsSubgroupTable.getColumnModel().getColumn(4).setPreferredWidth(90);
-		itsSubgroupTable.getColumnModel().getColumn(5).setPreferredWidth(600);
+		// NOTE scaling is based on the assumption of 6 columns being present
+		int aUnitWidth = (int)(0.05f * GUI.WINDOW_DEFAULT_SIZE.width);
+
+		itsSubgroupTable.getColumnModel().getColumn(0).setPreferredWidth(aUnitWidth);
+		itsSubgroupTable.getColumnModel().getColumn(1).setPreferredWidth(aUnitWidth);
+		itsSubgroupTable.getColumnModel().getColumn(2).setPreferredWidth((int)(1.5f * aUnitWidth));
+		itsSubgroupTable.getColumnModel().getColumn(3).setPreferredWidth((int)(1.5f * aUnitWidth));
+		itsSubgroupTable.getColumnModel().getColumn(4).setPreferredWidth(3 * aUnitWidth);
+		itsSubgroupTable.getColumnModel().getColumn(5).setPreferredWidth(12 * aUnitWidth);
 
 		itsScrollPane.add(itsSubgroupTable);
 		itsScrollPane.setViewportView(itsSubgroupTable);
