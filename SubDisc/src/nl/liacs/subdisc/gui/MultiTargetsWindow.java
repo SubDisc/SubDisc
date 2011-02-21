@@ -72,7 +72,7 @@ public class MultiTargetsWindow extends BasicJListWindow implements ActionListen
 	@Override
 	protected void disposeOk()
 	{
-		NumberFormat aFormat = NumberFormat.getNumberInstance();
+		NumberFormat aFormat = NumberFormat.getNumberInstance(Locale.US);
 		try
 		{
 			byte aNrInvalid = 0;
@@ -95,8 +95,8 @@ public class MultiTargetsWindow extends BasicJListWindow implements ActionListen
 			else
 				itsSearchParameters.setBeta(aBeta);
 
-			int anAmount = aFormat.parse(itsNrRepetitionsField.getText()).intValue();
-			if (anAmount <= 1) // (amount > itsSearchParameters.getMaximumSubgroups())
+			int aNrRepetitions = aFormat.parse(itsNrRepetitionsField.getText()).intValue();
+			if (aNrRepetitions <= 1) // (amount > itsSearchParameters.getMaximumSubgroups())
 			{
 				itsNrRepetitionsField.selectAll();
 				++aNrInvalid;
