@@ -10,7 +10,7 @@ import javax.swing.*;
 
 import nl.liacs.subdisc.*;
 
-public class SecondaryTargetsWindow extends BasicJListWindow implements ActionListener//, ListSelectionListener
+public class MultiTargetsWindow extends BasicJListWindow implements ActionListener//, ListSelectionListener
 {
 	private static final long serialVersionUID = 1L;
 	//alpha = '\u03B1' '&#x3b1' beta =  '\u03B2' '&#x3b2' 
@@ -26,14 +26,14 @@ public class SecondaryTargetsWindow extends BasicJListWindow implements ActionLi
 	private JTextField itsNrRepetitionsField =
 		GUI.buildTextField(RandomQualitiesWindow.DEFAULT_NR_REPETITIONS);
 
-	public SecondaryTargetsWindow(JList theJList, SearchParameters theSearchParameters)
+	public MultiTargetsWindow(JList theJList, SearchParameters theSearchParameters)
 	{
 		super(theJList);
 
 		if (theJList == null || theSearchParameters == null)
-			constructorWarning("SecondaryTargetsWindow", true);
+			constructorWarning("MultiTargetsWindow", true);
 		else if (itsJList.getModel().getSize() == 0)
-			constructorWarning("SecondaryTargetsWindow", false);
+			constructorWarning("MultiTargetsWindow", false);
 		else
 		{
 			itsOriginalSelection = itsJList.getSelectedValues();
