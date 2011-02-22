@@ -2,8 +2,6 @@ package nl.liacs.subdisc;
 
 import java.util.*;
 
-import nl.liacs.subdisc.Attribute.*;
-
 import org.w3c.dom.*;
 
 /**

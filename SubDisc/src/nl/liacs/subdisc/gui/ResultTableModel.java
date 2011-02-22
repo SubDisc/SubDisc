@@ -65,7 +65,7 @@ public class ResultTableModel extends AbstractTableModel
 //						NumberFormat aFormatter = NumberFormat.getNumberInstance();
 //						aFormatter.setMaximumFractionDigits(6);
 						double aPValue = aSubgroup.getPValue();
-						return ((aPValue == Math.PI) ? "  -" : aPValue);
+						return ((Double.isNaN(aPValue)) ? "  -" : (float)aPValue);
 					}
 			case 5: return aSubgroup.getConditions().toString();
 			default : return "---";

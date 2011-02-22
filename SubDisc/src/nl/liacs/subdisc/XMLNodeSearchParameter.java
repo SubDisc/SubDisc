@@ -98,7 +98,7 @@ public enum XMLNodeSearchParameter
 		@Override
 		public String getValueFromData(SearchParameters theSearchParameters)
 		{
-			return SearchParameters.getSearchStrategyName(theSearchParameters.getSearchStrategy());
+			return theSearchParameters.getSearchStrategy().GUI_TEXT;
 		}
 
 		@Override
@@ -189,7 +189,8 @@ public enum XMLNodeSearchParameter
 		@Override
 		public String getValueFromData(SearchParameters theSearchParameters)
 		{
-			return String.valueOf(theSearchParameters.getMaximumPostProcessingSubgroups());
+//			return String.valueOf(theSearchParameters.getMaximumPostProcessingSubgroups()); // TODO not used
+			return String.valueOf("");
 		}
 
 		@Override

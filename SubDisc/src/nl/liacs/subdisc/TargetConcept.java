@@ -26,7 +26,7 @@ public class TargetConcept implements XMLNodeInterface
 
 	public TargetConcept()
 	{
-		itsTargetType = TargetType.getDefaultType();
+		itsTargetType = TargetType.getDefault();
 	}
 
 	// creation of TargetConcept relies on Table being loaded first
@@ -116,7 +116,7 @@ public class TargetConcept implements XMLNodeInterface
 	{
 		Node aNode = XMLNode.addNodeTo(theParentNode, "target_concept");
 		XMLNode.addNodeTo(aNode, "nr_target_attributes", itsNrTargetAttributes);
-		XMLNode.addNodeTo(aNode, "target_type", itsTargetType.TEXT);
+		XMLNode.addNodeTo(aNode, "target_type", itsTargetType.GUI_TEXT);
 		XMLNode.addNodeTo(aNode, "primary_target", itsPrimaryTarget.getName());
 		XMLNode.addNodeTo(aNode, "target_value", itsTargetValue);
 		if (itsSecondaryTarget == null)

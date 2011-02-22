@@ -411,6 +411,9 @@ public class ResultWindow extends JFrame implements ActionListener
 
 	private void jButtonPostprocessActionPerformed()
 	{
+		if (itsSubgroupSet.isEmpty())
+			return;
+
 		String inputValue = JOptionPane.showInputDialog("# DAGs fitted to each subgroup.");
 		try
 		{
@@ -421,9 +424,6 @@ public class ResultWindow extends JFrame implements ActionListener
 			JOptionPane.showMessageDialog(null, "Your input is unsound.");
 			return;
 		}
-
-		if (itsSubgroupSet.isEmpty())
-			return;
 
 		// Create quality measures on whole dataset
 		Log.logCommandLine("Creating quality measures.");
@@ -534,9 +534,9 @@ public class ResultWindow extends JFrame implements ActionListener
 		{
 			// Compute qualities
 			Validation aValidation = new Validation(itsSearchParameters, itsTable, itsQualityMeasure);
-			if (RandomQualitiesWindow.RANDOM_SUBGROUPS.equals(aMethod))
+			if (RandomQualitiesWindow.RANDOM_SUBSETS.equals(aMethod))
 				return aValidation.randomSubgroups(aNrRepetitions);
-			else if (RandomQualitiesWindow.RANDOM_CONDITIONS.equals(aMethod))
+			else if (RandomQualitiesWindow.RANDOM_DESCRIPTIONS.equals(aMethod))
 				return aValidation.randomConditions(aNrRepetitions);
 			else
 				return null;

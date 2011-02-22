@@ -18,7 +18,7 @@ public class SearchParameters implements XMLNodeInterface
 	private int				itsMaximumSubgroups;
 	private float			itsMaximumTime;
 
-	private int				itsSearchStrategy;
+	private SearchStrategy	itsSearchStrategy;
 	private int				itsSearchStrategyWidth;
 	private NumericStrategy	itsNumericStrategy;
 
@@ -26,24 +26,7 @@ public class SearchParameters implements XMLNodeInterface
 	private float			itsAlpha;
 	private float			itsBeta;
 	private int				itsPostProcessingCount;
-	private int				itsMaximumPostProcessingSubgroups;
-
-	public static enum NumericStrategy
-	{
-		NUMERIC_BINS("bins"), NUMERIC_BEST("best"), NUMERIC_ALL("all");
-
-		public final String TEXT;
-
-		private NumericStrategy(String theText) { TEXT = theText; }
-
-		public static NumericStrategy getNumericStrategy(String theString)
-		{
-			for(NumericStrategy n : NumericStrategy.values())
-				if(n.TEXT.equalsIgnoreCase(theString))
-					return n;
-			return NUMERIC_BINS;
-		}
-	}
+//	private int				itsMaximumPostProcessingSubgroups; // TODO not used
 
 	public SearchParameters(Node theSearchParametersNode)
 	{
@@ -78,8 +61,8 @@ public class SearchParameters implements XMLNodeInterface
 	public void setMaximumTime(float theMaximumTime) { itsMaximumTime = theMaximumTime; }
 
 	/* SEARCH STRATEGY */
-	public int getSearchStrategy() { return itsSearchStrategy; }
-
+	public SearchStrategy getSearchStrategy() { return itsSearchStrategy; }
+/*
 	public static String getSearchStrategyName(int theSearchStrategy)
 	{
 		switch(theSearchStrategy)
@@ -104,6 +87,11 @@ public class SearchParameters implements XMLNodeInterface
 			itsSearchStrategy = CandidateQueue.BEAM;
 		else
 			itsSearchStrategy = CandidateQueue.BESTFIRST; // default TODO warning dialog
+	}
+ */
+	public void setSearchStrategy(String theSearchStrategyName)
+	{
+		itsSearchStrategy = SearchStrategy.get(theSearchStrategyName);
 	}
 
 	public NumericStrategy getNumericStrategy() { return itsNumericStrategy; }
@@ -133,8 +121,8 @@ public class SearchParameters implements XMLNodeInterface
 	public void setBeta(float theBeta)		{ itsBeta = theBeta; }
 	public int getPostProcessingCount()		{ return itsPostProcessingCount; }
 	public void setPostProcessingCount(int theNr)	{ itsPostProcessingCount = theNr; }
-	public int getMaximumPostProcessingSubgroups()	{ return itsMaximumPostProcessingSubgroups; }
-	public void setMaximumPostProcessingSubgroups(int theNr)	{ itsMaximumPostProcessingSubgroups = theNr; }
+//	public int getMaximumPostProcessingSubgroups()	{ return itsMaximumPostProcessingSubgroups; } // TODO not used
+//	public void setMaximumPostProcessingSubgroups(int theNr)	{ itsMaximumPostProcessingSubgroups = theNr; } // TODO not used
 
 	/**
 	 * Creates an {@link XMLNode XMLNode} representation of this
@@ -153,14 +141,15 @@ public class SearchParameters implements XMLNodeInterface
 		XMLNode.addNodeTo(aNode, "maximum_coverage", getMaximumCoverage());
 		XMLNode.addNodeTo(aNode, "maximum_subgroups", getMaximumSubgroups());
 		XMLNode.addNodeTo(aNode, "maximum_time", getMaximumTime());
-		XMLNode.addNodeTo(aNode, "search_strategy", getSearchStrategyName(getSearchStrategy()));
+		XMLNode.addNodeTo(aNode, "search_strategy", getSearchStrategy());
 		XMLNode.addNodeTo(aNode, "search_strategy_width", getSearchStrategyWidth());
-		XMLNode.addNodeTo(aNode, "numeric_strategy", getNumericStrategy().TEXT);
+		XMLNode.addNodeTo(aNode, "numeric_strategy", getNumericStrategy().GUI_TEXT);
 		XMLNode.addNodeTo(aNode, "nr_bins", getNrBins());
 		XMLNode.addNodeTo(aNode, "alpha", getAlpha());
 		XMLNode.addNodeTo(aNode, "beta", getBeta());
 		XMLNode.addNodeTo(aNode, "post_processing_count", getPostProcessingCount());
-		XMLNode.addNodeTo(aNode, "maximum_post_processing_subgroups", getMaximumPostProcessingSubgroups());
+//		XMLNode.addNodeTo(aNode, "maximum_post_processing_subgroups", getMaximumPostProcessingSubgroups()); // TODO not used
+		XMLNode.addNodeTo(aNode, "maximum_post_processing_subgroups", "");
 	}
 
 	private void loadData(Node theSearchParametersNode)
@@ -199,7 +188,8 @@ public class SearchParameters implements XMLNodeInterface
 			else if("post_processing_count".equalsIgnoreCase(aNodeName))
 				itsPostProcessingCount = Integer.parseInt(aSetting.getTextContent());
 			else if("maximum_post_processing_subgroups".equalsIgnoreCase(aNodeName))
-				itsMaximumPostProcessingSubgroups = Integer.parseInt(aSetting.getTextContent());
+//				itsMaximumPostProcessingSubgroups = Integer.parseInt(aSetting.getTextContent());
+				;
 			else
 				;	// TODO throw warning dialog
 		}

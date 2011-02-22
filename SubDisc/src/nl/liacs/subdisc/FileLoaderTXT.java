@@ -4,13 +4,8 @@
  */
 package nl.liacs.subdisc;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.BitSet;
-
-import nl.liacs.subdisc.Attribute.AttributeType;
+import java.io.*;
+import java.util.*;
 
 public class FileLoaderTXT implements FileLoaderInterface
 {

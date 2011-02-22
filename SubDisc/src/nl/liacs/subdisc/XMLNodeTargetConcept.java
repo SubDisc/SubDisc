@@ -186,7 +186,7 @@ public enum XMLNodeTargetConcept
 			{
 			}
 		},
-		SECONDARY_TARGETS
+		MULTI_TARGETS
 		{
 			@Override
 			public String getValueFromData(TargetConcept theTargetConcept)

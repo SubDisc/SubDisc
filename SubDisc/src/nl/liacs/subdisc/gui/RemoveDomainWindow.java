@@ -1,10 +1,8 @@
 package nl.liacs.subdisc.gui;
 
-import java.awt.event.*;
-
 import javax.swing.*;
 
-public class RemoveDomainWindow extends BasicJListWindow implements ActionListener//, ListSelectionListener
+public class RemoveDomainWindow extends BasicJListWindow// implements ActionListener//, ListSelectionListener
 {
 	private static final long serialVersionUID = 1L;
 

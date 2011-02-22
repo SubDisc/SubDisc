@@ -1,6 +1,9 @@
 package nl.liacs.subdisc;
 
-public enum TargetType
+/**
+ * TargetType contains all available TargetTypes.
+ */
+public enum TargetType implements EnumInterface
 {
 	/*
 	 * When implementing/adding TargetTypes, all static methods should be
@@ -14,14 +17,32 @@ public enum TargetType
 	MULTI_LABEL("multi-label"),
 	MULTI_BINARY_CLASSIFICATION("multi binary classification");
 
-	public final String TEXT;
+	/**
+	 * For each TargetType, this is the text that will be used in the GUI.
+	 * This is also the <code>String</code> that will be returned by the
+	 * toString() method.
+	 */
+	public final String GUI_TEXT;
 
-	private TargetType(String theText) { TEXT = theText; }
+	private TargetType(String theGuiText)
+	{
+		GUI_TEXT = theGuiText;
+	}
 
+	/**
+	 * Returns the TargetType corresponding to the <code>String</code>
+	 * parameter. This method is case insensitive.
+	 * 
+	 * @param theType the <code>String</code> corresponding to a SearchStrategy.
+	 * 
+	 * @return the TargetType corresponding to the <code>String</code>
+	 * parameter, or the default TargetType <code>SINGLE_NOMINAL</code> if no
+	 * corresponding TargetType can not be found.
+	 */
 	public static TargetType getTargetType(String theType)
 	{
 		for (TargetType t : TargetType.values())
-			if (t.TEXT.equalsIgnoreCase(theType))
+			if (t.GUI_TEXT.equalsIgnoreCase(theType))
 				return t;
 
 		/*
@@ -31,13 +52,25 @@ public enum TargetType
 		Log.logCommandLine(
 			String.format("'%s' is not a valid TargetType. Returning '%s'.",
 							theType,
-							TargetType.getDefaultType().TEXT));
-		return TargetType.getDefaultType();
+							TargetType.getDefault().GUI_TEXT));
+		return TargetType.getDefault();
 	}
 
-	public static TargetType getDefaultType()
+	/**
+	 * Returns the default TargetType.
+	 * 
+	 * @return the default TargetType.
+	 */
+	public static TargetType getDefault()
 	{
 		return TargetType.SINGLE_NOMINAL;
+	}
+
+	// uses Javadoc from EnumInterface
+	@Override
+	public String toString()
+	{
+		return GUI_TEXT;
 	}
 
 	public static boolean isImplemented(TargetType theType)
@@ -53,7 +86,7 @@ public enum TargetType
 			case MULTI_BINARY_CLASSIFICATION	: return false;
 			default :
 			{
-				unknownTargetType("TargetType.isImplemented: " , theType);
+				unknownTargetType("isImplemented", theType.GUI_TEXT);
 				return false;
 			}
 		}
@@ -73,7 +106,7 @@ public enum TargetType
 			case MULTI_BINARY_CLASSIFICATION	: return false;
 			default :
 			{
-				unknownTargetType("TargetType.hasSecondaryTarget: " , theType);
+				unknownTargetType("hasSecondaryTarget", theType.GUI_TEXT);
 				return false;
 			}
 		}
@@ -93,7 +126,7 @@ public enum TargetType
 			case MULTI_BINARY_CLASSIFICATION	: return true;
 			default :
 			{
-				unknownTargetType("TargetType.hasMultiTargets: " , theType);
+				unknownTargetType("hasMultiTargets", theType.GUI_TEXT);
 				return false;
 			}
 		}
@@ -113,7 +146,7 @@ public enum TargetType
 			case MULTI_BINARY_CLASSIFICATION	: return true;	// TODO true?
 			default :
 			{
-				unknownTargetType("TargetType.hasMiscField: " , theType);
+				unknownTargetType("hasMiscField", theType.GUI_TEXT);
 				return false;
 			}
 		}
@@ -133,7 +166,7 @@ public enum TargetType
 			case MULTI_BINARY_CLASSIFICATION	: return false;	// TODO true?
 			default :
 			{
-				unknownTargetType("TargetType.hasTargetAttribute: " , theType);
+				unknownTargetType("hasTargetAttribute", theType.GUI_TEXT);
 				return false;
 			}
 		}
@@ -153,7 +186,7 @@ public enum TargetType
 			case MULTI_BINARY_CLASSIFICATION	: return false;	// TODO true?
 			default :
 			{
-				unknownTargetType("TargetType.hasTargetValue: " , theType);
+				unknownTargetType("hasTargetValue", theType.GUI_TEXT);
 				return false;
 			}
 		}
@@ -173,7 +206,7 @@ public enum TargetType
 			case MULTI_BINARY_CLASSIFICATION	: return false;	// TODO true?
 			default :
 			{
-				unknownTargetType("TargetType.hasBaseModel: " , theType);
+				unknownTargetType("hasBaseModel", theType.GUI_TEXT);
 				return false;
 			}
 		}
@@ -192,16 +225,18 @@ public enum TargetType
 			case MULTI_BINARY_CLASSIFICATION	: return true;
 			default :
 			{
-				unknownTargetType("TargetType.isEMM: " , theType);
+				unknownTargetType("isEMM", theType.GUI_TEXT);
 				return false;
 			}
 		}
 	}
 */
-	private static void unknownTargetType(String theSource, TargetType theType)
+	private static void unknownTargetType(String theSource, String theType)
 	{
 		Log.logCommandLine(
-				String.format(theSource + "unknown TargetType '%s'", theType));
+					String.format("TargetType.%s(): unknown TargetType '%s'",
+									theSource,
+									theType));
 	}
 }
 

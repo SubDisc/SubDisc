@@ -17,6 +17,10 @@ public class Table
 	private int itsNrRows;
 	private int itsNrColumns;
 	private ArrayList<Column> itsColumns = new ArrayList<Column>();
+//	private int itsNrNominals = 0;
+//	private int itsNrNumerics = 0;
+//	private int itsNrOrdinals = 0;
+//	private int itsNrBinaries = 0;
 	private Random itsRandomNumber = new Random(System.currentTimeMillis());
 	private List<String> itsDomains;
 	private List<Integer> itsDomainIndices; //allows for much faster removal

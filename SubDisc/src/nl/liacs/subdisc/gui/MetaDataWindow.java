@@ -11,7 +11,6 @@ import java.util.*;
 import javax.swing.*;
 
 import nl.liacs.subdisc.*;
-import nl.liacs.subdisc.Attribute.*;
 import nl.liacs.subdisc.gui.MetaDataTableModel.*;
 
 public class MetaDataWindow extends JFrame implements ActionListener
@@ -22,7 +21,7 @@ public class MetaDataWindow extends JFrame implements ActionListener
 	private JTable itsJTable;
 	private ButtonGroup aNewType = new ButtonGroup();
 	private JTextField aNewMissingValue =
-		new JTextField(AttributeType.getDefaultType().DEFAULT_MISSING_VALUE);
+		new JTextField(AttributeType.getDefault().DEFAULT_MISSING_VALUE);
 	private JLabel itsFeedBackLabel;
 
 	public MetaDataWindow(MiningWindow theMiningWindow, Table theTable)

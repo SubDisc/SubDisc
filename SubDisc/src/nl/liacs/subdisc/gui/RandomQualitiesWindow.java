@@ -9,12 +9,12 @@ public class RandomQualitiesWindow extends JDialog implements ActionListener
 {
 	private static final long serialVersionUID = 1L;
 
-	public static final String RANDOM_SUBGROUPS = "Random subgroups";
-	public static final String RANDOM_CONDITIONS = "Random condition";
-	public static final String DEFAULT_NR_REPETITIONS = "1000";
+	public static final String RANDOM_SUBSETS = "Random subsets";
+	public static final String RANDOM_DESCRIPTIONS = "Random descriptions";
+	public static final String DEFAULT_AMOUNT = "1000";
 
 	private ButtonGroup itsMethods;
-	private JTextField itsNrRepetitionsField;
+	private JTextField itsAmountField;
 	private String[] itsSettings;
 
 	public RandomQualitiesWindow(String theSetting)
@@ -43,21 +43,21 @@ public class RandomQualitiesWindow extends JDialog implements ActionListener
 		JPanel aRadioButtonPanel = new JPanel();
 		aRadioButtonPanel.setLayout(new BoxLayout(aRadioButtonPanel, BoxLayout.Y_AXIS));
 
-		JRadioButton aRadioButton = new JRadioButton(RANDOM_SUBGROUPS);
-		aRadioButton.setActionCommand(RANDOM_SUBGROUPS);
+		JRadioButton aRadioButton = new JRadioButton(RANDOM_SUBSETS);
+		aRadioButton.setActionCommand(RANDOM_SUBSETS);
 		aRadioButtonPanel.add(aRadioButton);
 		itsMethods.add(aRadioButton);
 
-		aRadioButton = new JRadioButton(RANDOM_CONDITIONS);
-		aRadioButton.setActionCommand(RANDOM_CONDITIONS);
+		aRadioButton = new JRadioButton(RANDOM_DESCRIPTIONS);
+		aRadioButton.setActionCommand(RANDOM_DESCRIPTIONS);
 		aRadioButtonPanel.add(aRadioButton);
 		itsMethods.add(aRadioButton);
 		aMasterPanel.add(aRadioButtonPanel);
 
 		JPanel aNumberPanel = new JPanel();
-		aNumberPanel.add(GUI.buildLabel("Number of repetitions", itsNrRepetitionsField));
+		aNumberPanel.add(GUI.buildLabel("Amount", itsAmountField));
 		aNumberPanel.add(Box.createHorizontalStrut(50));
-		aNumberPanel.add(itsNrRepetitionsField = GUI.buildTextField(DEFAULT_NR_REPETITIONS));
+		aNumberPanel.add(itsAmountField = GUI.buildTextField(DEFAULT_AMOUNT));
 		aNumberPanel.setAlignmentX(LEFT_ALIGNMENT);
 		aMasterPanel.add(aNumberPanel);
 
@@ -70,8 +70,8 @@ public class RandomQualitiesWindow extends JDialog implements ActionListener
 
 		getContentPane().add(aButtonPanel);
 
-		// select appropriate radio button, focus itsNrRepetitionsField
-		if (RANDOM_CONDITIONS.equals(itsSettings[0]))
+		// select appropriate radio button, focus itsAmountField
+		if (RANDOM_DESCRIPTIONS.equals(itsSettings[0]))
 			((JRadioButton) aRadioButtonPanel.getComponent(1)).setSelected(true);
 		else
 			((JRadioButton) aRadioButtonPanel.getComponent(0)).setSelected(true);
@@ -95,12 +95,12 @@ public class RandomQualitiesWindow extends JDialog implements ActionListener
 			NumberFormat aFormat = NumberFormat.getNumberInstance();
 			try
 			{
-				if (aFormat.parse(itsNrRepetitionsField.getText()).intValue() <= 1)
-					showErrorDialog("Number of repetitions must be > 1.");
+				if (aFormat.parse(itsAmountField.getText()).intValue() <= 1)
+					showErrorDialog("Amount must be > 1.");
 				else
 				{
 					itsSettings[0] = itsMethods.getSelection().getActionCommand();
-					itsSettings[1] = itsNrRepetitionsField.getText();
+					itsSettings[1] = itsAmountField.getText();
 					dispose();
 				}
 			}

@@ -1,17 +1,16 @@
 package nl.liacs.subdisc;
 
-import java.util.Iterator;
-import java.util.TreeSet;
+import java.util.*;
 
 public class CandidateQueue
 {
-	public static final int BEAM	= 0;
-	public static final int BESTFIRST 		= 1;
-	public static final int DFS 		= 2;
-	public static final int BFS		= 3;
-	public static final int LAST_SEARCH_STRATEGY = BFS;
+//	public static final int BEAM	= 0;
+//	public static final int BESTFIRST 		= 1;
+//	public static final int DFS 		= 2;
+//	public static final int BFS		= 3;
+//	public static final int LAST_SEARCH_STRATEGY = BFS;
 
-	private int	itsSearchStrategy;
+	private SearchStrategy itsSearchStrategy;
 	private TreeSet<Candidate> itsQueue;
 	private TreeSet<Candidate> itsNextQueue;
 	private int itsMaximumQueueSize = 1000;
@@ -19,7 +18,7 @@ public class CandidateQueue
 	public CandidateQueue(SearchParameters theSearchParameters, Candidate theRootCandidate)
 	{
 		itsSearchStrategy = theSearchParameters.getSearchStrategy();
-		if (itsSearchStrategy == BEAM)
+		if (itsSearchStrategy == SearchStrategy.BEAM)
 			itsNextQueue = new TreeSet<Candidate>();
 		itsQueue = new TreeSet<Candidate>();
 		itsQueue.add(theRootCandidate);
@@ -43,7 +42,7 @@ public class CandidateQueue
 */
 	public boolean add(Candidate theCandidate)
 	{
-		if (itsSearchStrategy == BEAM)
+		if (itsSearchStrategy == SearchStrategy.BEAM)
 			return addToQueue(itsNextQueue, theCandidate);
 		else
 			return addToQueue(itsQueue, theCandidate);
@@ -70,7 +69,7 @@ public class CandidateQueue
 	 */
 	public Candidate removeFirst()
 	{
-		if ((itsSearchStrategy == BEAM) && (itsQueue.size() == 0))
+		if ((itsSearchStrategy == SearchStrategy.BEAM) && (itsQueue.size() == 0))
 		{
 			itsQueue = itsNextQueue;
 			itsNextQueue = new TreeSet<Candidate>();
@@ -87,7 +86,7 @@ public class CandidateQueue
 	{
 		if (size() > 0)
 		{
-			if (itsSearchStrategy == BEAM)
+			if (itsSearchStrategy == SearchStrategy.BEAM)
 			{
 				if (itsQueue.last().getPriorityLevel() > itsNextQueue.last().getPriorityLevel())
 					return itsNextQueue.last().getPriorityLevel();
@@ -105,7 +104,7 @@ public class CandidateQueue
 	{
 		if (size() > 0)
 		{
-			if (itsSearchStrategy == BEAM)
+			if (itsSearchStrategy == SearchStrategy.BEAM)
 			{
 				if (itsQueue.first().getPriorityLevel() < itsNextQueue.first().getPriorityLevel())
 					return itsNextQueue.first().getPriorityLevel();
@@ -143,7 +142,7 @@ public class CandidateQueue
 */
 	public int size()
 	{
-		if (itsSearchStrategy == BEAM)
+		if (itsSearchStrategy == SearchStrategy.BEAM)
 			return itsQueue.size() + itsNextQueue.size();
 		else
 			return itsQueue.size();

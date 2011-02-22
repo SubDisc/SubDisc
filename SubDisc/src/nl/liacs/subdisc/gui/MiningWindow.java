@@ -95,17 +95,17 @@ public class MiningWindow extends JFrame
 		// Add all implemented TargetTypes
 		for (TargetType t : TargetType.values())
 			if (TargetType.isImplemented(t))
-				jComboBoxTargetType.addItem(t.TEXT);
+				jComboBoxTargetType.addItem(t.GUI_TEXT);
 //		jComboBoxTargetType.setEnabled(hasTable);
 
 		// Add all SearchStrategies
-		for (int i = 0; i <= CandidateQueue.LAST_SEARCH_STRATEGY; i++)
-			jComboBoxSearchStrategyType.addItem(SearchParameters.getSearchStrategyName(i));
+		for (SearchStrategy s : SearchStrategy.values())
+			jComboBoxSearchStrategyType.addItem(s.GUI_TEXT);
 //		jComboBoxSearchStrategyType.setEnabled(hasTable);
 
 		// Add all Numeric Strategies
-		for (NumericStrategy n : SearchParameters.NumericStrategy.values())
-			jComboBoxSearchStrategyNumeric.addItem(n.TEXT);
+		for (NumericStrategy n : NumericStrategy.values())
+			jComboBoxSearchStrategyNumeric.addItem(n.GUI_TEXT);
 //		jComboBoxSearchStrategyNumeric.setEnabled(hasTable);
 	}
 
@@ -138,9 +138,9 @@ public class MiningWindow extends JFrame
 		// some fields may be set automatically, order is very important
 
 		// search strategy
-		setSearchStrategyType(SearchParameters.getSearchStrategyName(itsSearchParameters.getSearchStrategy()));
+		setSearchStrategyType(itsSearchParameters.getSearchStrategy().GUI_TEXT);
 		setSearchStrategyWidth(String.valueOf(itsSearchParameters.getSearchStrategyWidth()));
-		setNumericStrategy(itsSearchParameters.getNumericStrategy().TEXT);
+		setNumericStrategy(itsSearchParameters.getNumericStrategy().GUI_TEXT);
 		setSearchStrategyNrBins(String.valueOf(itsSearchParameters.getNrBins()));
 
 		// search conditions
@@ -162,7 +162,7 @@ public class MiningWindow extends JFrame
 		 */
 		float originalMinimum = itsSearchParameters.getQualityMeasureMinimum();
 
-		setTargetTypeName(itsTargetConcept.getTargetType().TEXT);
+		setTargetTypeName(itsTargetConcept.getTargetType().GUI_TEXT);
 		setQualityMeasure(itsSearchParameters.getQualityMeasureString());
 		// reset original value
 		itsSearchParameters.setQualityMeasureMinimum(originalMinimum);
@@ -893,7 +893,7 @@ public class MiningWindow extends JFrame
 		jButtonRandomSubgroups.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
 //				jButtonRandomSubgroupsActionPerformed();
-				jButtonRandomQualitiesActionPerformed(RandomQualitiesWindow.RANDOM_SUBGROUPS);
+				jButtonRandomQualitiesActionPerformed(RandomQualitiesWindow.RANDOM_SUBSETS);
 			}
 		});
 		jPanelMineButtons.add(jButtonRandomSubgroups);
@@ -902,7 +902,7 @@ public class MiningWindow extends JFrame
 		jButtonRandomConditions.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
 //				jButtonRandomConditionsActionPerformed();
-				jButtonRandomQualitiesActionPerformed(RandomQualitiesWindow.RANDOM_CONDITIONS);
+				jButtonRandomQualitiesActionPerformed(RandomQualitiesWindow.RANDOM_DESCRIPTIONS);
 			}
 		});
 		jPanelMineButtons.add(jButtonRandomConditions);
@@ -1096,9 +1096,8 @@ public class MiningWindow extends JFrame
 		String aName = getSearchStrategyName();
 		if (aName != null)
 		{
-			boolean aBestFirst = SearchParameters.getSearchStrategyName(CandidateQueue.BESTFIRST).equalsIgnoreCase(aName);
 			itsSearchParameters.setSearchStrategy(aName);
-			jTextFieldSearchStrategyWidth.setEnabled(!aBestFirst);
+			jTextFieldSearchStrategyWidth.setEnabled(!SearchStrategy.BEST_FIRST.GUI_TEXT.equalsIgnoreCase(aName));
 		}
 	}
 
@@ -1581,9 +1580,9 @@ public class MiningWindow extends JFrame
 	private void jButtonRandomQualitiesActionPerformed(String theMethod)
 	{
 		boolean aSubgroupAction;
-		if (RandomQualitiesWindow.RANDOM_SUBGROUPS.equals(theMethod))
+		if (RandomQualitiesWindow.RANDOM_SUBSETS.equals(theMethod))
 			aSubgroupAction = true;
-		else if (RandomQualitiesWindow.RANDOM_CONDITIONS.equals(theMethod))
+		else if (RandomQualitiesWindow.RANDOM_DESCRIPTIONS.equals(theMethod))
 			aSubgroupAction = false;
 		else	
 			return;
@@ -1626,7 +1625,7 @@ public class MiningWindow extends JFrame
 			default :
 			{
 				Log.logCommandLine("Unable to compute random qualities for " +
-							itsTargetConcept.getTargetType().TEXT);
+							itsTargetConcept.getTargetType().GUI_TEXT);
 				return; // TODO also throw JDialog?
 			}
 		}
@@ -1731,7 +1730,7 @@ public class MiningWindow extends JFrame
 		itsSearchParameters.setNrBins(getSearchStrategyNrBins());
 
 		itsSearchParameters.setPostProcessingCount(20);
-		itsSearchParameters.setMaximumPostProcessingSubgroups(100);
+//		itsSearchParameters.setMaximumPostProcessingSubgroups(100); // TODO not used
 
 		// Bayesian stuff
 		 // TODO This will overwrite values set in RandomQualitiesWindow

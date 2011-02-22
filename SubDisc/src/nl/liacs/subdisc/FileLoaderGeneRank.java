@@ -9,7 +9,6 @@ package nl.liacs.subdisc;
 import java.io.*;
 import java.util.*;
 
-import nl.liacs.subdisc.Attribute.*;
 import nl.liacs.subdisc.cui.*;
 import nl.liacs.subdisc.gui.*;
 
