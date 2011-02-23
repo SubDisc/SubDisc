@@ -1135,11 +1135,36 @@ public class MiningWindow extends JFrame
 		jComboBoxMiscField.setVisible(hasMiscField);
 		jLabelMiscField.setVisible(hasMiscField);
 
-		if (aTargetType == TargetType.SINGLE_NOMINAL ||
-			aTargetType == TargetType.MULTI_BINARY_CLASSIFICATION)
-			jLabelMiscField.setText(" target value");
-		else
-			jLabelTargetInfo.setText(" # binary targets");
+		switch (aTargetType)
+		{
+			case SINGLE_NOMINAL :
+			{
+				jLabelTargetInfo.setText(" # positive");
+				break;
+			}
+			case SINGLE_ORDINAL :
+			case SINGLE_NUMERIC :
+			{
+				jLabelTargetInfo.setText(" average");
+				break;
+			}
+			case DOUBLE_REGRESSION :
+			case DOUBLE_CORRELATION :
+			{
+				jLabelTargetInfo.setText(" correlation");
+				break;
+			}
+			case MULTI_LABEL :
+			{
+				jLabelTargetInfo.setText(" # binary targets");
+				break;
+			}
+			case MULTI_BINARY_CLASSIFICATION :
+			{
+				jLabelTargetInfo.setText(" target info");
+				break;
+			}
+		}
 
 		// has secondary targets (JList)?
 		boolean hasMultiTargets = TargetType.hasMultiTargets(aTargetType);
@@ -1584,7 +1609,7 @@ public class MiningWindow extends JFrame
 			aSubgroupAction = true;
 		else if (RandomQualitiesWindow.RANDOM_DESCRIPTIONS.equals(theMethod))
 			aSubgroupAction = false;
-		else	
+		else
 			return;
 
 		String aNrRepetitionsString = new RandomQualitiesWindow(theMethod).getSettings()[1];
@@ -1939,9 +1964,11 @@ public class MiningWindow extends JFrame
 
 	private void enableBaseModelButtonCheck()
 	{
-		jButtonBaseModel.setEnabled(
-			(TargetType.hasBaseModel(itsTargetConcept.getTargetType()) &&
-				(jListMultiTargets.getSelectedIndices().length != 0)));
+		TargetType aType = itsTargetConcept.getTargetType();
+		boolean isEnabled = TargetType.hasBaseModel(aType);
+		if (aType == TargetType.MULTI_LABEL && jListMultiTargets.getSelectedIndices().length != 0)
+			isEnabled = false;
+		jButtonBaseModel.setEnabled(isEnabled);
 	}
 
 	/* FIELD METHODS OF CORTANA COMPONENTS */
