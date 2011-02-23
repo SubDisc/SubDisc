@@ -11,7 +11,6 @@ import javax.swing.border.*;
 
 import nl.liacs.subdisc.*;
 import nl.liacs.subdisc.FileHandler.Action;
-import nl.liacs.subdisc.SearchParameters.*;
 import nl.liacs.subdisc.XMLAutoRun.*;
 import nl.liacs.subdisc.cui.*;
 
@@ -1114,8 +1113,14 @@ public class MiningWindow extends JFrame
 
 	private void jComboBoxQualityMeasureActionPerformed()
 	{
+		// TODO should this not be the other way around?
 		itsSearchParameters.setQualityMeasureMinimum(getQualityMeasureMinimum());
 		initEvaluationMinimum();
+
+		// this ALWAYS resets alpha if switching TO EDIT_DISTANCE
+		// remove upon discretion
+		if (QualityMeasure.getMeasureString(QualityMeasure.EDIT_DISTANCE).equals(getQualityMeasureName()))
+			itsSearchParameters.setAlpha(SearchParameters.ALPHA_EDIT_DISTANCE);
 	}
 
 	private void jComboBoxTargetTypeActionPerformed()
@@ -1299,14 +1304,19 @@ public class MiningWindow extends JFrame
 			case MULTI_LABEL :
 			{
 				ArrayList<Attribute> aList = itsTargetConcept.getMultiTargets();
-				String[] aNames = new String[aList.size()];
+				int aNrMultiTargets = aList.size();
+				String[] aNames = new String[aNrMultiTargets];
+
+				for (int i = 0; i < aNrMultiTargets; ++i)
+					aNames[i] = aList.get(i).getName();
+/*
 				int aCount = 0;
 				for (Attribute anAttribute : aList)
 				{
 					aNames[aCount] = anAttribute.getName();
 					aCount++;
 				}
-
+*/
 				// compute base model
 				Bayesian aBayesian =
 					new Bayesian(new BinaryTable(itsTable, aList), aNames);
@@ -1753,17 +1763,19 @@ public class MiningWindow extends JFrame
 		itsSearchParameters.setSearchStrategyWidth(getSearchStrategyWidth());
 		itsSearchParameters.setNumericStrategy(getNumericStrategy());
 		itsSearchParameters.setNrBins(getSearchStrategyNrBins());
-
-		itsSearchParameters.setPostProcessingCount(20);
+/*
+ * These values are no longer 'static', but can be changed in MultiTargetsWindow
+		itsSearchParameters.setPostProcessingCount(SearchParameters.POST_PROCESSING_COUNT_DEFAULT);
 //		itsSearchParameters.setMaximumPostProcessingSubgroups(100); // TODO not used
 
 		// Bayesian stuff
 		 // TODO This will overwrite values set in RandomQualitiesWindow
 		if (QualityMeasure.getMeasureString(QualityMeasure.EDIT_DISTANCE).equals(getQualityMeasureName()))
-			itsSearchParameters.setAlpha(0.0f);
+			itsSearchParameters.setAlpha(SearchParameters.ALPHA_EDIT_DISTANCE);
 		else
-			itsSearchParameters.setAlpha(0.5f);
-		itsSearchParameters.setBeta(1.0f);
+			itsSearchParameters.setAlpha(SearchParameters.ALPHA_DEFAULT);
+		itsSearchParameters.setBeta(SearchParameters.BETA_DEFAULT);
+*/
 	}
 
 	// Obsolete, this info is already up to date through *ActionPerformed methods
@@ -1903,8 +1915,8 @@ public class MiningWindow extends JFrame
 				float aPercentage = ((float) itsPositiveCount * 100.0f) / (float) itsTotalCount;
 				NumberFormat aFormatter = NumberFormat.getNumberInstance();
 				aFormatter.setMaximumFractionDigits(1);
-				jLFieldTargetInfo.setText(itsPositiveCount + " (" + aFormatter.format(aPercentage) + " %)");
 				jLabelTargetInfo.setText(" # positive");
+				jLFieldTargetInfo.setText(itsPositiveCount + " (" + aFormatter.format(aPercentage) + " %)");
 				break;
 			}
 			case SINGLE_NUMERIC :
@@ -1933,8 +1945,8 @@ public class MiningWindow extends JFrame
 			}
 			case MULTI_LABEL :
 			{
-				jLFieldTargetInfo.setText(String.valueOf(itsTargetConcept.getMultiTargets().size()));
 				jLabelTargetInfo.setText(" # binary targets");
+				jLFieldTargetInfo.setText(String.valueOf(itsTargetConcept.getMultiTargets().size()));
 				break;
 			}
 			case MULTI_BINARY_CLASSIFICATION :

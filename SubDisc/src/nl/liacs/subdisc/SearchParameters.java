@@ -7,6 +7,11 @@ import org.w3c.dom.*;
  */
 public class SearchParameters implements XMLNodeInterface
 {
+	public static final float ALPHA_EDIT_DISTANCE = 0.0f;
+	public static final float ALPHA_DEFAULT = 0.5f;
+	public static final float BETA_DEFAULT = 1.0f;
+	public static final int POST_PROCESSING_COUNT_DEFAULT = 20;
+
 	// when adding/removing members be sure to update addNodeTo() and loadNode()
 	private TargetConcept	itsTargetConcept;
 	private int				itsQualityMeasure;
@@ -21,8 +26,8 @@ public class SearchParameters implements XMLNodeInterface
 	private SearchStrategy	itsSearchStrategy;
 	private int				itsSearchStrategyWidth;
 	private NumericStrategy	itsNumericStrategy;
-
 	private int				itsNrBins;
+
 	private float			itsAlpha;
 	private float			itsBeta;
 	private int				itsPostProcessingCount;
@@ -35,7 +40,18 @@ public class SearchParameters implements XMLNodeInterface
 		loadData(theSearchParametersNode);
 	}
 
-	public SearchParameters() {}	// TODO for now
+	public SearchParameters()
+	{
+		/*
+		 * There are no MiningWindow text fields for the following. But they
+		 * need to be available for MULTI_LABELs 'Targets and Settings'. They
+		 * are no longer 'static', but can be changed upon users discretion,
+		 * therefore they can not be set in initSearchParameters.
+		 */
+		itsAlpha = ALPHA_DEFAULT;
+		itsBeta = BETA_DEFAULT;
+		itsPostProcessingCount = POST_PROCESSING_COUNT_DEFAULT;
+	}
 
 	/* QUALITY MEASURE */
 	public TargetConcept getTargetConcept() { return itsTargetConcept; }
@@ -103,7 +119,8 @@ public class SearchParameters implements XMLNodeInterface
 		for(NumericStrategy n : NumericStrategy.values())
 			if(n.text.equalsIgnoreCase(theNumericStrategy))
 				itsNumericStrategy = n;
-*/		if (theNumericStrategy.equalsIgnoreCase("all"))
+*/
+		if (theNumericStrategy.equalsIgnoreCase("all"))
 			itsNumericStrategy = NumericStrategy.NUMERIC_ALL;
 		else if (theNumericStrategy.equalsIgnoreCase("bins"))
 			itsNumericStrategy = NumericStrategy.NUMERIC_BINS;

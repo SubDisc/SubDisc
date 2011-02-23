@@ -11,7 +11,6 @@ import nl.liacs.subdisc.*;
 public class MultiTargetsWindow extends BasicJListWindow// implements ActionListener//, ListSelectionListener
 {
 	private static final long serialVersionUID = 1L;
-	private static final String DEFAULT_NR_REPETITIONS = "20";
 	//alpha = '\u03B1' '&#x3b1' beta =  '\u03B2' '&#x3b2' 
 	private static final String ERROR =
 		"Fields with invalid input: %d.\nAlpha and Beta must be >= 0.\nNumber of repetitions must be > 1.";
@@ -22,8 +21,7 @@ public class MultiTargetsWindow extends BasicJListWindow// implements ActionList
 	private JTextField itsBetaField;
 	private JComboBox itsRepeatedModelingBox =
 		GUI.buildComboBox(new Object[] { "No","Yes" });
-	private JTextField itsNrRepetitionsField =
-		GUI.buildTextField(DEFAULT_NR_REPETITIONS);
+	private JTextField itsNrRepetitionsField;
 
 	public MultiTargetsWindow(JList theJList, SearchParameters theSearchParameters)
 	{
@@ -55,7 +53,7 @@ public class MultiTargetsWindow extends BasicJListWindow// implements ActionList
 		aPanel.add(GUI.buildLabel("Repeated modeling", itsRepeatedModelingBox));
 		aPanel.add(itsRepeatedModelingBox);
 		aPanel.add(GUI.buildLabel("Number of repetitions", itsNrRepetitionsField));
-		aPanel.add(itsNrRepetitionsField);
+		aPanel.add(itsNrRepetitionsField = GUI.buildTextField(String.valueOf(itsSearchParameters.getPostProcessingCount())));
 
 		getContentPane().add(aPanel, BorderLayout.NORTH);
 	}
@@ -77,7 +75,7 @@ public class MultiTargetsWindow extends BasicJListWindow// implements ActionList
 			byte aNrInvalid = 0;
 
 			float anAlpha = aFormat.parse(itsAlphaField.getText()).floatValue();
-			if (anAlpha < 0.0f || anAlpha > 1.0f)
+			if (anAlpha < 0.0f)
 			{
 				itsAlphaField.selectAll();
 				++aNrInvalid;
@@ -86,7 +84,7 @@ public class MultiTargetsWindow extends BasicJListWindow// implements ActionList
 				itsSearchParameters.setAlpha(anAlpha);
 
 			float aBeta = aFormat.parse(itsBetaField.getText()).floatValue();
-			if (aBeta < 0.0f || aBeta > 1.0f)
+			if (aBeta < 0.0f)
 			{
 				itsBetaField.selectAll();
 				++aNrInvalid;
@@ -101,9 +99,7 @@ public class MultiTargetsWindow extends BasicJListWindow// implements ActionList
 				++aNrInvalid;
 			}
 			else
-			{
-//				itsSearchParameters.setPostProcessing(anAmount);
-			}
+				itsSearchParameters.setPostProcessingCount(aNrRepetitions);
 
 			if (aNrInvalid == 0)
 				dispose();
