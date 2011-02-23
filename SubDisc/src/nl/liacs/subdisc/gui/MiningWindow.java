@@ -4,6 +4,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.text.*;
 import java.util.*;
+import java.util.List;
 
 import javax.swing.*;
 import javax.swing.UIManager.*;
@@ -166,7 +167,8 @@ public class MiningWindow extends JFrame
 		// reset original value
 		itsSearchParameters.setQualityMeasureMinimum(originalMinimum);
 		setQualityMeasureMinimum(String.valueOf(itsSearchParameters.getQualityMeasureMinimum()));
-		setTargetAttribute(itsTargetConcept.getPrimaryTarget().getName());
+		if (TargetType.hasTargetValue(itsTargetConcept.getTargetType()))
+			setTargetAttribute(itsTargetConcept.getPrimaryTarget().getName());
 
 		/*
 		 * Text in jTextFieldSearchCoverageMinimum is overwritten by
@@ -1128,7 +1130,7 @@ public class MiningWindow extends JFrame
 		if (itsTable == null)
 			return;
 
-		itsTargetConcept.setTargetType(TargetType.getTargetType(getTargetTypeName()));
+		itsTargetConcept.setTargetType(getTargetTypeName());
 		itsSearchParameters.setTargetConcept(itsTargetConcept);
 
 		initQualityMeasure();
@@ -1303,7 +1305,7 @@ public class MiningWindow extends JFrame
 			}
 			case MULTI_LABEL :
 			{
-				ArrayList<Attribute> aList = itsTargetConcept.getMultiTargets();
+				List<Attribute> aList = itsTargetConcept.getMultiTargets();
 				int aNrMultiTargets = aList.size();
 				String[] aNames = new String[aNrMultiTargets];
 

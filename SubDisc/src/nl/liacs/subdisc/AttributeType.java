@@ -114,6 +114,6 @@ public enum AttributeType implements EnumInterface
 	@Override
 	public String toString()
 	{
-		return this.toString().toLowerCase();
+		return name().toLowerCase();
 	}
 }

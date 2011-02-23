@@ -5,8 +5,6 @@ import java.util.*;
 
 import javax.swing.*;
 
-import nl.liacs.subdisc.Attribute.*;
-
 import org.w3c.dom.*;
 
 public class Table
@@ -599,7 +597,7 @@ public class Table
 
 	public void swapRandomizeTarget(TargetConcept theTC)
 	{
-		ArrayList<Attribute> aTargets = new ArrayList<Attribute>(2);
+		List<Attribute> aTargets = new ArrayList<Attribute>(2);
 
 		//find all targets
 		switch (theTC.getTargetType())

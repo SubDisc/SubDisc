@@ -107,25 +107,14 @@ public class SearchParameters implements XMLNodeInterface
  */
 	public void setSearchStrategy(String theSearchStrategyName)
 	{
-		itsSearchStrategy = SearchStrategy.get(theSearchStrategyName);
+		itsSearchStrategy = SearchStrategy.getSearchStrategy(theSearchStrategyName);
 	}
 
 	public NumericStrategy getNumericStrategy() { return itsNumericStrategy; }
 
-	public void setNumericStrategy(String theNumericStrategy)
+	public void setNumericStrategy(String theNumericStrategyName)
 	{
-/*
-		// TODO not safe if theNumericStrategy is 'illegal'
-		for(NumericStrategy n : NumericStrategy.values())
-			if(n.text.equalsIgnoreCase(theNumericStrategy))
-				itsNumericStrategy = n;
-*/
-		if (theNumericStrategy.equalsIgnoreCase("all"))
-			itsNumericStrategy = NumericStrategy.NUMERIC_ALL;
-		else if (theNumericStrategy.equalsIgnoreCase("bins"))
-			itsNumericStrategy = NumericStrategy.NUMERIC_BINS;
-		else
-			itsNumericStrategy = NumericStrategy.NUMERIC_BEST;
+		itsNumericStrategy = NumericStrategy.getNumericStrategy(theNumericStrategyName);
 	}
 
 	public void setSearchStrategyWidth(int theWidth)	{ itsSearchStrategyWidth = theWidth; }
@@ -151,6 +140,7 @@ public class SearchParameters implements XMLNodeInterface
 	public void addNodeTo(Node theParentNode)
 	{
 		Node aNode = XMLNode.addNodeTo(theParentNode, "search_parameters");
+		// itsTargetConcept is added through its own Node
 		XMLNode.addNodeTo(aNode, "quality_measure", getQualityMeasureString());
 		XMLNode.addNodeTo(aNode, "quality_measure_minimum", getQualityMeasureMinimum());
 		XMLNode.addNodeTo(aNode, "search_depth", getSearchDepth());
@@ -158,7 +148,7 @@ public class SearchParameters implements XMLNodeInterface
 		XMLNode.addNodeTo(aNode, "maximum_coverage", getMaximumCoverage());
 		XMLNode.addNodeTo(aNode, "maximum_subgroups", getMaximumSubgroups());
 		XMLNode.addNodeTo(aNode, "maximum_time", getMaximumTime());
-		XMLNode.addNodeTo(aNode, "search_strategy", getSearchStrategy());
+		XMLNode.addNodeTo(aNode, "search_strategy", getSearchStrategy().GUI_TEXT);
 		XMLNode.addNodeTo(aNode, "search_strategy_width", getSearchStrategyWidth());
 		XMLNode.addNodeTo(aNode, "numeric_strategy", getNumericStrategy().GUI_TEXT);
 		XMLNode.addNodeTo(aNode, "nr_bins", getNrBins());
@@ -166,7 +156,6 @@ public class SearchParameters implements XMLNodeInterface
 		XMLNode.addNodeTo(aNode, "beta", getBeta());
 		XMLNode.addNodeTo(aNode, "post_processing_count", getPostProcessingCount());
 //		XMLNode.addNodeTo(aNode, "maximum_post_processing_subgroups", getMaximumPostProcessingSubgroups()); // TODO not used
-		XMLNode.addNodeTo(aNode, "maximum_post_processing_subgroups", "");
 	}
 
 	private void loadData(Node theSearchParametersNode)
@@ -191,7 +180,7 @@ public class SearchParameters implements XMLNodeInterface
 			else if("maximum_time".equalsIgnoreCase(aNodeName))
 				itsMaximumTime = Float.parseFloat(aSetting.getTextContent());
 			else if("search_strategy".equalsIgnoreCase(aNodeName))
-				setSearchStrategy(aSetting.getTextContent());
+				itsSearchStrategy = (SearchStrategy.getSearchStrategy(aSetting.getTextContent()));
 			else if("search_strategy_width".equalsIgnoreCase(aNodeName))
 				itsSearchStrategyWidth = Integer.parseInt(aSetting.getTextContent());
 			else if("numeric_strategy".equalsIgnoreCase(aNodeName))
@@ -204,9 +193,8 @@ public class SearchParameters implements XMLNodeInterface
 				itsBeta = Float.parseFloat(aSetting.getTextContent());
 			else if("post_processing_count".equalsIgnoreCase(aNodeName))
 				itsPostProcessingCount = Integer.parseInt(aSetting.getTextContent());
-			else if("maximum_post_processing_subgroups".equalsIgnoreCase(aNodeName))
+//			else if("maximum_post_processing_subgroups".equalsIgnoreCase(aNodeName))
 //				itsMaximumPostProcessingSubgroups = Integer.parseInt(aSetting.getTextContent());
-				;
 			else
 				;	// TODO throw warning dialog
 		}

@@ -84,7 +84,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		itsMaximumCoverage = itsTable.getNrRows();
 
 		//compute base model
-		ArrayList<Attribute> anAttributes = itsSearchParameters.getTargetConcept().getMultiTargets();
+		List<Attribute> anAttributes = itsSearchParameters.getTargetConcept().getMultiTargets();
 		itsBinaryTable = new BinaryTable(itsTable, anAttributes);
 		itsTargets = new String[anAttributes.size()];
 		for (int i = 0, j = anAttributes.size(); i < j; ++i)

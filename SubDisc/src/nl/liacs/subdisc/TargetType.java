@@ -33,7 +33,7 @@ public enum TargetType implements EnumInterface
 	 * Returns the TargetType corresponding to the <code>String</code>
 	 * parameter. This method is case insensitive.
 	 * 
-	 * @param theType the <code>String</code> corresponding to a SearchStrategy.
+	 * @param theType the <code>String</code> corresponding to a TargetType.
 	 * 
 	 * @return the TargetType corresponding to the <code>String</code>
 	 * parameter, or the default TargetType <code>SINGLE_NOMINAL</code> if no

@@ -12,6 +12,6 @@ public interface EnumInterface
 	 * 
 	 * @return the text <code>String</code> presented to the end user.
 	 */
-//	@Override
+	@Override
 	public String toString();
 }

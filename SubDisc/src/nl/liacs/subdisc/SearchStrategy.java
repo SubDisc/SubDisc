@@ -32,7 +32,7 @@ public enum SearchStrategy implements EnumInterface
 	 * parameter, or the default SearchStrategy <code>BEAM</code> if no
 	 * corresponding SearchStrategy can not be found.
 	 */
-	public static SearchStrategy get(String theType)
+	public static SearchStrategy getSearchStrategy(String theType)
 	{
 		for (SearchStrategy s : SearchStrategy.values())
 			if (s.GUI_TEXT.equalsIgnoreCase(theType))

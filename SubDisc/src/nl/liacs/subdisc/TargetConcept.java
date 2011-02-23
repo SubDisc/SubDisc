@@ -22,7 +22,7 @@ public class TargetConcept implements XMLNodeInterface
 	private Attribute	itsPrimaryTarget;
 	private String		itsTargetValue;
 	private Attribute	itsSecondaryTarget;
-	private ArrayList<Attribute> itsMultiTargets;
+	private List<Attribute> itsMultiTargets;
 
 	public TargetConcept()
 	{
@@ -43,7 +43,7 @@ public class TargetConcept implements XMLNodeInterface
 			if ("nr_target_attributes".equalsIgnoreCase(aNodeName))
 				itsNrTargetAttributes = Integer.parseInt(aSetting.getTextContent());
 			if ("target_type".equalsIgnoreCase(aNodeName))
-				setTargetType(TargetType.getTargetType(aSetting.getTextContent()));
+				itsTargetType = (TargetType.getTargetType(aSetting.getTextContent()));
 			else if ("primary_target".equalsIgnoreCase(aNodeName))
 				itsPrimaryTarget = theTable.getAttribute(aSetting.getTextContent());
 			else if ("target_value".equalsIgnoreCase(aNodeName))
@@ -52,9 +52,12 @@ public class TargetConcept implements XMLNodeInterface
 				itsSecondaryTarget = theTable.getAttribute(aSetting.getTextContent());
 			else if ("multi_targets".equalsIgnoreCase(aNodeName))
 			{
-				itsMultiTargets = new ArrayList<Attribute>();
-				for (String s : aSetting.getTextContent().split(",", -1))
-					itsMultiTargets.add(new Attribute(s, null, null));	// TODO
+				if (!aSetting.getTextContent().isEmpty())
+				{
+					itsMultiTargets = new ArrayList<Attribute>();
+					for (String s : aSetting.getTextContent().split(",", -1))
+						itsMultiTargets.add(theTable.getAttribute(s));
+				}
 			}
 			else
 				;	// TODO throw warning dialog
@@ -65,12 +68,9 @@ public class TargetConcept implements XMLNodeInterface
 	public int getNrTargetAttributes() { return itsNrTargetAttributes; }
 	public void setNrTargetAttributes(int theNr) { itsNrTargetAttributes = theNr; }
 	public TargetType getTargetType() { return itsTargetType; }
-	public void setTargetType(TargetType theTargetType)
+	public void setTargetType(String theTargetTypeName)
 	{
-		if (theTargetType != null)
-			itsTargetType = theTargetType;
-		else
-			Log.logCommandLine("Setting a TargetType to 'null' is not allowed.");
+			itsTargetType = TargetType.getTargetType(theTargetTypeName);
 	}
 
 	public Attribute getPrimaryTarget() { return itsPrimaryTarget; }
@@ -81,7 +81,7 @@ public class TargetConcept implements XMLNodeInterface
 	public Attribute getSecondaryTarget() { return itsSecondaryTarget; }
 	public void setSecondaryTarget(Attribute theSecondaryTarget) { itsSecondaryTarget = theSecondaryTarget; }
 
-	public ArrayList<Attribute> getMultiTargets() { return itsMultiTargets; }
+	public List<Attribute> getMultiTargets() { return itsMultiTargets; }
 	public void setMultiTargets(ArrayList<Attribute> theMultiTargets)
 	{
 		itsMultiTargets = theMultiTargets;
@@ -117,12 +117,19 @@ public class TargetConcept implements XMLNodeInterface
 		Node aNode = XMLNode.addNodeTo(theParentNode, "target_concept");
 		XMLNode.addNodeTo(aNode, "nr_target_attributes", itsNrTargetAttributes);
 		XMLNode.addNodeTo(aNode, "target_type", itsTargetType.GUI_TEXT);
-		XMLNode.addNodeTo(aNode, "primary_target", itsPrimaryTarget.getName());
+
+		if (itsPrimaryTarget == null)
+			XMLNode.addNodeTo(aNode, "primary_target");
+		else
+			XMLNode.addNodeTo(aNode, "primary_target", itsPrimaryTarget.getName());
+
 		XMLNode.addNodeTo(aNode, "target_value", itsTargetValue);
+
 		if (itsSecondaryTarget == null)
 			XMLNode.addNodeTo(aNode, "secondary_target");
 		else
 			XMLNode.addNodeTo(aNode, "secondary_target", itsSecondaryTarget.getName());
+
 		if (itsMultiTargets == null || itsMultiTargets.size() == 0)
 			XMLNode.addNodeTo(aNode, "multi_targets");
 		else
@@ -130,8 +137,8 @@ public class TargetConcept implements XMLNodeInterface
 			StringBuilder sb = new StringBuilder(itsMultiTargets.size() * 10);
 			for (Attribute a : itsMultiTargets)
 				sb.append(a.getName() + ",");
-			sb.deleteCharAt(sb.length() - 1);	// removes last comma
-			XMLNode.addNodeTo(aNode, "secondary_targets", sb);
+//			sb.deleteCharAt(sb.length() - 1);	// removes last comma
+			XMLNode.addNodeTo(aNode, "multi_targets", sb.substring(0, sb.length() - 1));
 		}
 	}
 }

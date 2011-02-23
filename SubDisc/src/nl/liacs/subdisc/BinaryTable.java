@@ -1,8 +1,6 @@
 package nl.liacs.subdisc;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.BitSet;
+import java.util.*;
 
 public class BinaryTable
 {
@@ -10,7 +8,7 @@ public class BinaryTable
 	private int itsNrRecords; //Nr. of examples
 
 	//From Table
-	public BinaryTable(Table theTable, ArrayList<Attribute> theAttributes)
+	public BinaryTable(Table theTable, List<Attribute> theAttributes)
 	{
 		itsColumns = new ArrayList<BitSet>(theAttributes.size());
 		for (Attribute anAttribute : theAttributes)
