@@ -1980,7 +1980,7 @@ public class MiningWindow extends JFrame
 	{
 		TargetType aType = itsTargetConcept.getTargetType();
 		boolean isEnabled = TargetType.hasBaseModel(aType);
-		if (aType == TargetType.MULTI_LABEL && jListMultiTargets.getSelectedIndices().length != 0)
+		if (aType == TargetType.MULTI_LABEL && jListMultiTargets.getSelectedIndices().length == 0)
 			isEnabled = false;
 		jButtonBaseModel.setEnabled(isEnabled);
 	}
