@@ -88,12 +88,12 @@ public class Subgroup implements Comparable<Object>
 	}
 
 	//TODO: check correctheid van diepe copy
-	public Object copy()
+	public Subgroup copy()
 	{
 		Subgroup aReturn = new Subgroup(itsMeasureValue, itsCoverage, itsDepth, itsParentSet);
 		aReturn.itsConditions = itsConditions.copy();
 		aReturn.itsMembers = (BitSet) itsMembers.clone();
-		return (Object)aReturn;
+		return aReturn;
 	}
 
 	public void print()
@@ -147,15 +147,15 @@ public class Subgroup implements Comparable<Object>
 			return -1;
 		else if(getCoverage() < s.getCoverage())
 			return 1;
-		else if(itsConditions.itsConditions.size() > s.itsConditions.itsConditions.size())
+		else if(itsConditions.size() > s.itsConditions.size())
 			return -1;
-		else if(itsConditions.itsConditions.size() < s.itsConditions.itsConditions.size())
+		else if(itsConditions.size() < s.itsConditions.size())
 			return 1;
 
-		for(Condition c : itsConditions.itsConditions)
+		for(Condition c : itsConditions)
 		{
 			boolean hasSameAttributeAndOperator = false;
-			for(Condition sc : s.itsConditions.itsConditions)
+			for(Condition sc : s.itsConditions)
 			{
 				if(c.getAttribute().getName().equals(sc.getAttribute().getName()) &&
 						c.getOperatorString().equals(sc.getOperatorString()))

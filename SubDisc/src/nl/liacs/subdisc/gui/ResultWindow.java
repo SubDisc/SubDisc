@@ -7,6 +7,7 @@ import java.util.*;
 import javax.swing.*;
 
 import nl.liacs.subdisc.*;
+import nl.liacs.subdisc.FileHandler.Action;
 
 public class ResultWindow extends JFrame implements ActionListener
 {
@@ -392,21 +393,8 @@ public class ResultWindow extends JFrame implements ActionListener
 
 	private void jButtonDumpPatternsActionPerformed()
 	{
-		StringBuffer aStringBuffer = new StringBuffer();
-		aStringBuffer.append("\n\nnr,coverage,measure,conditionlist\n");
-		Iterator<Subgroup> anIterator = itsSubgroupSet.iterator();
-		while (anIterator.hasNext())
-		{
-			Subgroup aSubgroup = anIterator.next();
-
-			aStringBuffer.append(aSubgroup.getID() + ","
-									+ aSubgroup.getCoverage() + ","
-									+ aSubgroup.getMeasureValue() + ","
-									+ aSubgroup.getConditions().toString()
-									+ "\n");
-		}
-
-		Log.toUniqueFile("patterns", aStringBuffer.toString());
+		XMLAutoRun.save(itsSubgroupSet,
+					new FileHandler(Action.SAVE).getFile().getAbsolutePath());
 	}
 
 	private void jButtonPostprocessActionPerformed()

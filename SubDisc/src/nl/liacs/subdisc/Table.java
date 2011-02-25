@@ -5,6 +5,8 @@ import java.util.*;
 
 import javax.swing.*;
 
+import nl.liacs.subdisc.FileHandler.Action;
+
 import org.w3c.dom.*;
 
 public class Table
@@ -312,7 +314,7 @@ public class Table
 
 		for (int i=0; i<theList.size(); i++) //loop over conditions
 		{
-			Condition aCondition = theList.getCondition(i);
+			Condition aCondition = theList.get(i);
 			Attribute anAttribute = aCondition.getAttribute();
 			int anIndex = anAttribute.getIndex();
 			Column aColumn = itsColumns.get(anIndex);
@@ -545,42 +547,6 @@ public class Table
 		return aSubgroup;
 	}
 
-	public void print()
-	{
-		Log.logCommandLine("Types ===========================================");
-		for (Column c : itsColumns)
-			c.getAttribute().print();
-		Log.logCommandLine("Table ===========================================");
-		for (int i = 0, j = itsColumns.get(0).size(); i < j; i++)
-		{
-			StringBuilder aRows = new StringBuilder("Row ");
-			aRows.append(i + 1);
-			aRows.append(": ");
-			for (Column aColumn : itsColumns)
-			{
-				aRows.append(aColumn.getString(i));
-				aRows.append(", ");
-			}
-			Log.logCommandLine(aRows
-								.substring(0, aRows.length() - 2)
-								.toString());
-		}
-		Log.logCommandLine("=================================================");
-	}
-
-	public void addNodeTo(Node theParentNode)
-	{
-		Node aNode = XMLNode.addNodeTo(theParentNode, "table");
-		XMLNode.addNodeTo(aNode, "table_name", itsName);
-		XMLNode.addNodeTo(aNode, "source", itsSource);
-
-		for (int i = 0, j = itsColumns.size(); i < j; ++i)
-		{
-			itsColumns.get(i).addNodeTo(aNode);
-			((Element)aNode.getLastChild()).setAttribute("nr", String.valueOf(i));
-		}
-	}
-
 	public Table select(BitSet theSet)
 	{
 		Table aResult = new Table(itsName);
@@ -637,6 +603,121 @@ public class Table
 		{
 			Log.logCommandLine("permuting " + anAttribute.getName());
 			getColumn(anAttribute).permute(aPermutation);
+		}
+	}
+
+	public void print()
+	{
+		Log.logCommandLine("Types ===========================================");
+		for (Column c : itsColumns)
+			c.getAttribute().print();
+		Log.logCommandLine("Table ===========================================");
+		for (int i = 0, j = itsColumns.get(0).size(); i < j; i++)
+		{
+			StringBuilder aRows = new StringBuilder("Row ");
+			aRows.append(i + 1);
+			aRows.append(": ");
+			for (Column aColumn : itsColumns)
+			{
+				aRows.append(aColumn.getString(i));
+				aRows.append(", ");
+			}
+			Log.logCommandLine(aRows
+								.substring(0, aRows.length() - 2)
+								.toString());
+		}
+		Log.logCommandLine("=================================================");
+	}
+
+	public void toFile()
+	{
+		BufferedWriter aWriter = null;
+
+		File aFile = new FileHandler(Action.SAVE).getFile();
+
+		if (aFile == null)
+			return;
+		else
+		{
+			try
+			{
+				aWriter = new BufferedWriter(new FileWriter(aFile));
+				int aNrColumnsMinusOne = itsNrColumns - 1;
+
+				for (int h = 0; h < aNrColumnsMinusOne; ++h)
+				{
+					aWriter.write(itsColumns.get(h).getName());
+					aWriter.write(",");
+				}
+				aWriter.write(itsColumns.get(aNrColumnsMinusOne).getName());
+				aWriter.write("\n");
+
+				for (int i = 0, j = itsNrRows; i < j; ++i)
+				{
+					for (int k = 0; k < aNrColumnsMinusOne; ++k)
+					{
+						Column c = itsColumns.get(k);
+						switch(c.getType())
+						{
+							case NOMINAL : aWriter.write(c.getNominal(i)); break;
+							case NUMERIC : aWriter.write(String.valueOf(c.getFloat(i))); break;
+							case ORDINAL : aWriter.write(String.valueOf(c.getFloat(i))); break;
+							case BINARY : aWriter.write(c.getBinary(i) ? "1" : "0"); break;
+							default :
+							{
+								Log.logCommandLine("Unknown AttributeType: "
+													+ c.getType());
+								break;
+							}
+						}
+						aWriter.write(",");
+					}
+					Column c = itsColumns.get(aNrColumnsMinusOne);
+					switch(c.getType())
+					{
+						case NOMINAL : aWriter.write(c.getNominal(i)); break;
+						case NUMERIC : aWriter.write(String.valueOf(c.getFloat(i))); break;
+						case ORDINAL : aWriter.write(String.valueOf(c.getFloat(i))); break;
+						case BINARY : aWriter.write(c.getBinary(i) ? "1" : "0"); break;
+						default :
+						{
+							Log.logCommandLine("Unknown AttributeType: "
+												+ c.getType());
+							break;
+						}
+					}
+					aWriter.write("\n");
+				}
+			}
+			catch (IOException e)
+			{
+				Log.logCommandLine("Error while writing: " + aFile);
+			}
+			finally
+			{
+				try
+				{
+					if (aWriter != null)
+						aWriter.close();
+				}
+				catch (IOException e)
+				{
+					Log.logCommandLine("Error while writing: " + aFile);
+				}
+			}
+		}
+	}
+
+	public void addNodeTo(Node theParentNode)
+	{
+		Node aNode = XMLNode.addNodeTo(theParentNode, "table");
+		XMLNode.addNodeTo(aNode, "table_name", itsName);
+		XMLNode.addNodeTo(aNode, "source", itsSource);
+
+		for (int i = 0, j = itsColumns.size(); i < j; ++i)
+		{
+			itsColumns.get(i).addNodeTo(aNode);
+			((Element)aNode.getLastChild()).setAttribute("nr", String.valueOf(i));
 		}
 	}
 }

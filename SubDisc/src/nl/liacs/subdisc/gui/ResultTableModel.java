@@ -1,6 +1,5 @@
 package nl.liacs.subdisc.gui;
 
-import java.io.*;
 import java.text.*;
 import java.util.*;
 
@@ -70,84 +69,5 @@ public class ResultTableModel extends AbstractTableModel
 			case 5: return aSubgroup.getConditions().toString();
 			default : return "---";
 		}
-	}
-
-	// TODO unused
-	public void toUniqueFile(String theFileName)
-	{
-			boolean errorMade = false;
-			java.io.OutputStream aFileStream = System.out;
-			FileOutputStream aFile = null;
-			String LOGPATH = new String("../log/");
-
-			try
-			{
-				File alogPath = new File(LOGPATH);
-				alogPath.mkdirs(); // create directories if not already there
-
-				String aUniqueID = "" + System.currentTimeMillis();
-				aFile = new java.io.FileOutputStream(LOGPATH + theFileName + aUniqueID + ".wri");
-			} catch (Exception ex)
-			{
-				errorMade = true;
-			}
-
-			if (!errorMade)
-			{
-				aFileStream = aFile;
-				try { // SubgroupSet ColumnHeader
-					aFileStream.write(charsToBytes(getHeaderString().toCharArray()));
-					aFileStream.write('\n');
-				} catch (Exception ex) { }
-
-				for (int row = 0; row < getRowCount(); row++)
-				try {
-					aFileStream.write(charsToBytes(getSubgroupString(row).toCharArray()));
-					aFileStream.write('\n');
-				} catch (Exception ex) { }
-			}
-
-			try {
-				aFileStream.flush(); aFileStream.close();
-			} catch (Exception ex) { }
-	}
-
-	public String getHeaderString()
-	{
-		String theString = "";
-
-		// add column names
-		for (int column = 0; column < getColumnCount(); column ++)
-		{
-			theString += getColumnName(column);
-			if ( column < getColumnCount() - 1)
-				theString += '\t';
-			else
-				theString += '\n';
-		}
-
-		return theString;
-	}
-
-	public String getSubgroupString(int row)
-	{
-		String theString = "";
-		for (int column = 0; column < getColumnCount(); column ++)
-		{
-			theString += (String)getValueAt(row, column);
-				if ( column < getColumnCount() - 1)
-					theString += '\t';
-				//else
-					//theString += '\n';
-		}
-		return theString;
-	}
-
-	private static byte[] charsToBytes(char[] ca)
-	{
-		byte[] ba = new byte[ca.length];
-		for (int i = 0; i < ca.length; i++)
-			ba[i] = (byte)ca[i];
-		return ba;
 	}
 }

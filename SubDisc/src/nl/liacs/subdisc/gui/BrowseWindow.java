@@ -18,10 +18,12 @@ import nl.liacs.subdisc.*;
 public class BrowseWindow extends JFrame implements ActionListener
 {
 	private static final long serialVersionUID = 1L;
+	private final Table itsTable;
 
 	public BrowseWindow(Table theTable)
 	{
-		if (theTable == null)
+		itsTable = theTable;
+		if (itsTable == null)
 		{
 			Log.logCommandLine(
 				"BrowseWindow Constructor: parameter can not be 'null'.");
@@ -29,7 +31,7 @@ public class BrowseWindow extends JFrame implements ActionListener
 		}
 		else
 		{
-			initComponents(theTable);
+			initComponents(itsTable);
 			setTitle("Data for: " + theTable.getName());
 			setIconImage(MiningWindow.ICON);
 			setLocation(100, 100);
@@ -98,9 +100,8 @@ public class BrowseWindow extends JFrame implements ActionListener
 	public void actionPerformed(ActionEvent theEvent)
 	{
 		if ("save".equals(theEvent.getActionCommand()))
-			; // TODO save aggregated table to file 
+			itsTable.toFile();
 		else if ("close".equals(theEvent.getActionCommand()))
 			dispose();
 	}
-
 }

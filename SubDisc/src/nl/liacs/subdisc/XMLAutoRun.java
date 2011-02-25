@@ -244,7 +244,7 @@ public class XMLAutoRun
 
 		MiningWindow.echoMiningEnd(anEnd - aBegin, aSubgroupDiscovery.getNumberOfSubgroups());
 		// always save result TODO search parameters based filename
-		save(aSubgroupDiscovery, (theFile.getAbsolutePath().replace(".xml", ("_"+ aBegin + ".txt"))));
+		save(aSubgroupDiscovery.getResult(), (theFile.getAbsolutePath().replace(".xml", ("_"+ aBegin + ".txt"))));
 
 		// ignore cross-validate
 		BitSet aBitSet = new BitSet(aTable.getNrRows());
@@ -267,8 +267,11 @@ public class XMLAutoRun
 		}
 	}
 
-	private static void save(SubgroupDiscovery theSubgroupDiscovery, String theFileName)
+	public static void save(SubgroupSet theSubgroupSet, String theFileName)
 	{
+		if (theSubgroupSet == null || theFileName == null)
+			return;
+
 		BufferedWriter aWriter = null;
 
 		try
@@ -279,7 +282,7 @@ public class XMLAutoRun
 			// hardcoded
 			aWriter.write("nr\tdepth\tcoverage\tmeasure\tp-value\tconditionlist\n");
 
-			Iterator<Subgroup> anIterator = theSubgroupDiscovery.getResult().iterator();
+			Iterator<Subgroup> anIterator = theSubgroupSet.iterator();
 			Subgroup aSubgroup;
 			while (anIterator.hasNext())
 			{
