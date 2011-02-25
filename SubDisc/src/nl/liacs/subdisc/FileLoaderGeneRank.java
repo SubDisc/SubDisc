@@ -9,6 +9,8 @@ package nl.liacs.subdisc;
 import java.io.*;
 import java.util.*;
 
+import javax.swing.*;
+
 import nl.liacs.subdisc.cui.*;
 import nl.liacs.subdisc.gui.*;
 
@@ -129,10 +131,6 @@ public class FileLoaderGeneRank implements FileLoaderInterface
 
 		try
 		{
-			String aDomainName = FileType.removeExtension(itsEnrichmentSource);
-			if (!itsTable.addDomain(aDomainName))
-				return;
-
 			aReader = new BufferedReader(new FileReader(itsEnrichmentSource));
 
 			ArrayList<Column> aColumns = itsTable.getColumns();
@@ -171,6 +169,10 @@ public class FileLoaderGeneRank implements FileLoaderInterface
 				else
 					createGene2CuiMap(aChooser.getIdentifierType());
 			}
+
+			String aDomainName = FileType.removeExtension(itsEnrichmentSource);
+			if (!itsTable.addDomain(aDomainName))
+				return;
 
 			// disable by default
 			aColumns.get(identifierColumn).setIsEnabled(false);

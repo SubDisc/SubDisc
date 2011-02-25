@@ -487,6 +487,7 @@ public class MiningWindow extends JFrame
 				jMenuItemRemoveEnrichmentSourceActionPerformed();
 			}
 		});
+		jMenuItemRemoveEnrichmentSource.setEnabled(false);
 		jMenuEnrichment.add(jMenuItemRemoveEnrichmentSource);
 
 		jMiningWindowMenuBar.add(jMenuEnrichment);
@@ -929,7 +930,7 @@ public class MiningWindow extends JFrame
 									jMenuItemAddCuiEnrichmentSource,
 									jMenuItemAddGoEnrichmentSource,
 									jMenuItemAddCustomEnrichmentSource,
-									jMenuItemRemoveEnrichmentSource,
+//									jMenuItemRemoveEnrichmentSource,
 									jButtonBrowse,
 									jButtonMetaData,
 									jButtonSwapRandomize,
@@ -989,6 +990,7 @@ public class MiningWindow extends JFrame
 				initGuiComponentsFromFile();
 			}
 
+			jMenuItemRemoveEnrichmentSource.setEnabled(false);
 			jComboBoxTargetTypeActionPerformed();	// update hack
 		}
 	}
@@ -1021,6 +1023,7 @@ public class MiningWindow extends JFrame
 			{
 				new FileHandler(itsTable, theType);
 				update();
+				jMenuItemRemoveEnrichmentSource.setEnabled(itsTable.getDomainList() != null && itsTable.getDomainList().getComponentCount() > 0);
 			}
 		});
 	}
@@ -1033,15 +1036,18 @@ public class MiningWindow extends JFrame
 			{
 				JList aDomainList = itsTable.getDomainList();
 				new RemoveDomainWindow(aDomainList);
+//				int aComponentCount = aDomainList.getModel().getSize();
+				int aComponentCount = aDomainList.getComponentCount();
 
-				if ((aDomainList == null) || (aDomainList.getModel().getSize() == 0))
-					return;
-				else
-					for (int i = 0, j = aDomainList.getModel().getSize(); i < j; ++i)
+				if ((aDomainList != null) && (aComponentCount > 0))
+				{
+					for (int i = 0, j = aComponentCount; i < j; ++i)
 						if (aDomainList.isSelectedIndex(i))
 							itsTable.removeDomain(i);
 
-				update();
+					update();
+					jMenuItemRemoveEnrichmentSource.setEnabled(aDomainList == null || aComponentCount == 0);
+				}
 			}
 		});
 	}

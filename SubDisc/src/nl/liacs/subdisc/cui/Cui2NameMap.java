@@ -35,7 +35,7 @@ public class Cui2NameMap implements CuiMapInterface
 			String aLine;
 			String[] aLineArray;
 
-			aReader.readLine();	// skip headerLine
+//			aReader.readLine();	// there is no headerLine
 			while ((aLine = aReader.readLine()) != null)
 			{
 				aLineArray = aLine.split("\t");
