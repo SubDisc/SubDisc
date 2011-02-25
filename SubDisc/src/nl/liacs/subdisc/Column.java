@@ -31,7 +31,7 @@ public class Column implements XMLNodeInterface
 	private float itsMax = Float.NEGATIVE_INFINITY;
 	private boolean isEnabled = true;
 
-	private static final String falseFloat = "[-+]?0*(\\.0+)?";
+//	private static final String falseFloat = "[-+]?0*(\\.0+)?";
 	private static final String trueFloat = "\\+?0*1(\\.0+)?";
 	private static final String trueInteger = "[-+]?\\d+(\\.0+)?";
 

@@ -7,6 +7,9 @@ public class SubDisc
 {
 	public static void main(String[] args)
 	{
+		if (XMLAutoRun.autoRunSetting(args))
+			return;
+
 		//FREEZE
 		try
 		{

@@ -6,8 +6,6 @@ import org.w3c.dom.*;
 
 public class FileLoaderXML implements FileLoaderInterface
 {
-	private boolean itsRunAutomatic = true;
-	private boolean itsRunAll = true;
 	private Table itsTable;
 	private SearchParameters itsSearchParameters;
 
@@ -16,8 +14,9 @@ public class FileLoaderXML implements FileLoaderInterface
 		if (theFile == null || !theFile.exists())
 		{
 			Log.logCommandLine(
-					String.format("FileLoaderXML: can not open File '%s'",
-							theFile.getAbsolutePath()));
+				String.format(
+					"FileLoaderXML: can not open File '%s'",
+					theFile.getAbsolutePath()));
 			return;
 		}
 		else
@@ -27,9 +26,9 @@ public class FileLoaderXML implements FileLoaderInterface
 	private void loadFile(File theFile)
 	{
 		NodeList aSettings = XMLDocument.parseXMLFile(theFile)
-										.getLastChild()
-										.getFirstChild()
-										.getChildNodes();
+						.getLastChild()
+						.getFirstChild()
+						.getChildNodes();
 
 		// order of nodes is known but use fail-safe checking for now
 		// also order is important (Table, SearchParameters, TargetConcept)
@@ -42,18 +41,10 @@ public class FileLoaderXML implements FileLoaderInterface
 				itsSearchParameters = new SearchParameters(aSettings.item(i));
 			// NOTE order sensitive, SearchParameters must be set first
 			else if ("target_concept".equalsIgnoreCase(aNodeName))
-				itsSearchParameters
-					.setTargetConcept(new TargetConcept(aSettings.item(i),
-														itsTable));
+				itsSearchParameters.setTargetConcept(new TargetConcept(aSettings.item(i),
+											itsTable));
 		}
 	}
-
-	public void setRunAutomatic(boolean theSetting)
-	{
-		itsRunAutomatic = theSetting;
-	}
-
-	public void SetRunAll(boolean theSetting){ itsRunAll = theSetting; }
 
 	@Override
 	public Table getTable() { return itsTable; }
@@ -63,3 +54,4 @@ public class FileLoaderXML implements FileLoaderInterface
 		return itsSearchParameters;
 	}
 }
+

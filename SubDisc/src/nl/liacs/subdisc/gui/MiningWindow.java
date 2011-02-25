@@ -1802,12 +1802,12 @@ public class MiningWindow extends JFrame
 		// TODO add more details of target concept from GUI
 	}
 
-	public void echoMiningStart()
+	public static void echoMiningStart()
 	{
 		Log.logCommandLine("Mining process started");
 	}
 
-	public void echoMiningEnd(long theMilliSeconds, int theNumberOfSubgroups)
+	public static void echoMiningEnd(long theMilliSeconds, int theNumberOfSubgroups)
 	{
 		int seconds = Math.round(theMilliSeconds / 1000);
 		int minutes = Math.round(theMilliSeconds / 60000);

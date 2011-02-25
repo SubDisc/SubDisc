@@ -174,8 +174,8 @@ public class ResultWindow extends JFrame implements ActionListener
 		itsSubgroupTable.getColumnModel().getColumn(1).setPreferredWidth(aUnitWidth);
 		itsSubgroupTable.getColumnModel().getColumn(2).setPreferredWidth((int)(1.5f * aUnitWidth));
 		itsSubgroupTable.getColumnModel().getColumn(3).setPreferredWidth((int)(1.5f * aUnitWidth));
-		itsSubgroupTable.getColumnModel().getColumn(4).setPreferredWidth(3 * aUnitWidth);
-		itsSubgroupTable.getColumnModel().getColumn(5).setPreferredWidth(12 * aUnitWidth);
+		itsSubgroupTable.getColumnModel().getColumn(4).setPreferredWidth(2 * aUnitWidth);
+		itsSubgroupTable.getColumnModel().getColumn(5).setPreferredWidth(13 * aUnitWidth);
 
 		itsScrollPane.add(itsSubgroupTable);
 		itsScrollPane.setViewportView(itsSubgroupTable);
