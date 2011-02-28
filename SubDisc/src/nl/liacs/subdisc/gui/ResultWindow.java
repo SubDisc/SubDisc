@@ -2,6 +2,7 @@ package nl.liacs.subdisc.gui;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.io.*;
 import java.util.*;
 
 import javax.swing.*;
@@ -393,8 +394,11 @@ public class ResultWindow extends JFrame implements ActionListener
 
 	private void jButtonDumpPatternsActionPerformed()
 	{
-		XMLAutoRun.save(itsSubgroupSet,
-					new FileHandler(Action.SAVE).getFile().getAbsolutePath());
+		File aFile = new FileHandler(Action.SAVE).getFile();
+		if (aFile == null)
+			return; // cancelled
+
+		XMLAutoRun.save(itsSubgroupSet, aFile.getAbsolutePath());
 	}
 
 	private void jButtonPostprocessActionPerformed()
