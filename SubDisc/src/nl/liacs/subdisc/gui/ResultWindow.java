@@ -2,6 +2,7 @@ package nl.liacs.subdisc.gui;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.print.*;
 import java.io.*;
 import java.util.*;
 
@@ -212,7 +213,7 @@ public class ResultWindow extends JFrame implements ActionListener
 
 		itsScrollPane = new JScrollPane();
 
-		jButtonShowModel = GUI.buildButton("Show Model", 'S', "model", this);
+		jButtonShowModel = GUI.buildButton("Show Model", 'M', "model", this);
 		aSubgroupPanel.add(jButtonShowModel);
 		jButtonShowModel.setVisible(itsSearchParameters.getTargetType() != TargetType.SINGLE_NOMINAL);
 
@@ -220,17 +221,14 @@ public class ResultWindow extends JFrame implements ActionListener
 		aSubgroupPanel.add(jButtonROC);
 		jButtonROC.setVisible(itsSearchParameters.getTargetType() == TargetType.SINGLE_NOMINAL);
 
-		jButtonDeleteSubgroups = GUI.buildButton("Delete Pattern", 'D', "delete", this);
+		jButtonDeleteSubgroups = GUI.buildButton("Delete Selected", 'D', "delete", this);
 		aSubgroupPanel.add(jButtonDeleteSubgroups);
-
-		jButtonDumpPatterns = GUI.buildButton("Dump Patterns", 'U', "dump", this);
-		aSubgroupPanel.add(jButtonDumpPatterns);
 
 		jButtonPostprocess = GUI.buildButton("Post-process", 'O', "post_process", this);
 		aSubgroupPanel.add(jButtonPostprocess);
 		jButtonPostprocess.setVisible(itsSearchParameters.getTargetType() == TargetType.MULTI_LABEL);
 
-		jButtonPValues = GUI.buildButton("Compute p-Values", 'P', "compute_p", this);
+		jButtonPValues = GUI.buildButton("Compute p-Values", 'V', "compute_p", this);
 		aSubgroupPanel.add(jButtonPValues);
 
 		jButtonRegressionTest = GUI.buildButton("Regression Test", 'T', "regression", this);
@@ -243,6 +241,12 @@ public class ResultWindow extends JFrame implements ActionListener
 		aSubgroupPanel.add(jButtonFold);
 		jButtonFold.setVisible(itsFold != 0);
 
+		jButtonSaveResult = GUI.buildButton("Save Result", 'S', "save", this);
+		aSubgroupPanel.add(jButtonSaveResult);
+
+		jButtonPrintResult = GUI.buildButton("Print Result", 'P', "print", this);
+		aSubgroupPanel.add(jButtonPrintResult);
+
 		jButtonCloseWindow = GUI.buildButton("Close", 'C', "close", this);
 		aSubgroupSetPanel.add(jButtonCloseWindow);
 
@@ -252,12 +256,13 @@ public class ResultWindow extends JFrame implements ActionListener
 			jButtonShowModel.setEnabled(false);
 			jButtonROC.setEnabled(false);
 			jButtonDeleteSubgroups.setEnabled(false);
-			jButtonDumpPatterns.setEnabled(false);
 			jButtonPostprocess.setEnabled(false);
 			jButtonPValues.setEnabled(false);
 			jButtonRegressionTest.setEnabled(false);
 			jButtonEmpirical.setEnabled(false);
 			jButtonFold.setEnabled(false);
+			jButtonSaveResult.setEnabled(false);
+			jButtonPrintResult.setEnabled(false);
 		}
 
 		jPanelSouth.add(aSubgroupPanel);
@@ -276,18 +281,20 @@ public class ResultWindow extends JFrame implements ActionListener
 			jButtonROCActionPerformed();
 		else if ("delete".equals(aCommand))
 			jButtonDeleteSubgroupsActionPerformed();
-		else if ("dump".equals(aCommand))
-			jButtonDumpPatternsActionPerformed();
 		else if ("post_process".equals(aCommand))
 			jButtonPostprocessActionPerformed();
 		else if ("compute_p".equals(aCommand))
 			jButtonPValuesActionPerformed();
 		else if ("regression".equals(aCommand))
 			jButtonRegressionTestActionPerformed();
-		else if ("emperical_p".equals(aCommand))
+		else if ("empirical_p".equals(aCommand))
 			jButtonEmpiricalActionPerformed();
 		else if ("fold".equals(aCommand))
 			jButtonFoldActionPerformed();
+		else if ("save".equals(aCommand))
+			jButtonSaveResultActionPerformed();
+		else if ("print".equals(aCommand))
+			jButtonPrintResultActionPerformed();
 		else if ("close".equals(aCommand))
 			dispose();
 	}
@@ -390,15 +397,6 @@ public class ResultWindow extends JFrame implements ActionListener
 			itsSubgroupTable.addRowSelectionInterval(0, 0);
 		else
 			jButtonDeleteSubgroups.setEnabled(false);
-	}
-
-	private void jButtonDumpPatternsActionPerformed()
-	{
-		File aFile = new FileHandler(Action.SAVE).getFile();
-		if (aFile == null)
-			return; // cancelled
-
-		XMLAutoRun.save(itsSubgroupSet, aFile.getAbsolutePath());
 	}
 
 	private void jButtonPostprocessActionPerformed()
@@ -535,6 +533,32 @@ public class ResultWindow extends JFrame implements ActionListener
 		}
 	}
 
+	private void jButtonSaveResultActionPerformed()
+	{
+		File aFile = new FileHandler(Action.SAVE).getFile();
+		if (aFile == null)
+			return; // cancelled
+
+		XMLAutoRun.save(itsSubgroupSet, aFile.getAbsolutePath());
+	}
+
+	private void jButtonPrintResultActionPerformed()
+	{
+		try
+		{
+			itsSubgroupTable.print();
+		}
+		catch (PrinterException e)
+		{
+			JOptionPane.showMessageDialog(this,
+											"Print error!",
+											"Warning",
+											JOptionPane.WARNING_MESSAGE);
+			e.printStackTrace();
+		}
+	}
+
+
 /*
 	private double[] obtainRandomQualities()
 	{
@@ -595,13 +619,14 @@ public class ResultWindow extends JFrame implements ActionListener
 	private JPanel jPanelSouth;
 	private JButton jButtonShowModel;
 	private JButton jButtonDeleteSubgroups;
-	private JButton jButtonDumpPatterns;
 	private JButton jButtonFold;
 	private JButton jButtonPostprocess;
 	private JButton jButtonPValues;
 	private JButton jButtonRegressionTest;
 	private JButton jButtonEmpirical;
 	private JButton jButtonROC;
+	private JButton jButtonSaveResult;
+	private JButton jButtonPrintResult;
 	private JButton jButtonCloseWindow;
 	private JScrollPane itsScrollPane;
 }

@@ -13,7 +13,8 @@ public class MultiTargetsWindow extends BasicJListWindow// implements ActionList
 	private static final long serialVersionUID = 1L;
 	//alpha = '\u03B1' '&#x3b1' beta =  '\u03B2' '&#x3b2' 
 	private static final String ERROR =
-		"Fields with invalid input: %d.\nAlpha and Beta must be >= 0.\nNumber of repetitions must be > 1.";
+			"Fields with invalid input: %d.\n" +
+			"Alpha and Beta must be >= 0.\nNumber of repetitions must be > 1.";
 
 	private int[] itsOriginalSelection;
 	private SearchParameters itsSearchParameters;
@@ -46,14 +47,22 @@ public class MultiTargetsWindow extends BasicJListWindow// implements ActionList
 		aPanel.setBorder(GUI.buildBorder("Settings"));
 
 		aPanel.setLayout(new GridLayout(4, 2));
+
 		aPanel.add(GUI.buildLabel("Alpha", itsAlphaField));
-		aPanel.add(itsAlphaField = GUI.buildTextField(String.valueOf(itsSearchParameters.getAlpha())));
+		aPanel.add(itsAlphaField =
+			GUI.buildTextField(String.valueOf(itsSearchParameters.getAlpha())));
+
 		aPanel.add(GUI.buildLabel("Beta", itsBetaField));
-		aPanel.add(itsBetaField = GUI.buildTextField(String.valueOf(itsSearchParameters.getBeta())));
+		aPanel.add(itsBetaField =
+			GUI.buildTextField(String.valueOf(itsSearchParameters.getBeta())));
+		
 		aPanel.add(GUI.buildLabel("Repeated modeling", itsRepeatedModelingBox));
+		itsRepeatedModelingBox.setSelectedIndex(1);
 		aPanel.add(itsRepeatedModelingBox);
+
 		aPanel.add(GUI.buildLabel("Number of repetitions", itsNrRepetitionsField));
-		aPanel.add(itsNrRepetitionsField = GUI.buildTextField(String.valueOf(itsSearchParameters.getPostProcessingCount())));
+		aPanel.add(itsNrRepetitionsField = GUI.buildTextField(
+				String.valueOf(itsSearchParameters.getPostProcessingCount())));
 
 		getContentPane().add(aPanel, BorderLayout.NORTH);
 	}
@@ -92,8 +101,13 @@ public class MultiTargetsWindow extends BasicJListWindow// implements ActionList
 			else
 				itsSearchParameters.setBeta(aBeta);
 
-			int aNrRepetitions = aFormat.parse(itsNrRepetitionsField.getText()).intValue();
-			if (aNrRepetitions <= 1) // (itsNrRepetitions > itsSearchParameters.getMaximumSubgroups())
+			itsSearchParameters.setPostProcessingDoAutoRun(
+								itsRepeatedModelingBox.getSelectedIndex() == 1);
+
+			int aNrRepetitions =
+					aFormat.parse(itsNrRepetitionsField.getText()).intValue();
+			// (itsNrRepetitions > itsSearchParameters.getMaximumSubgroups())
+			if (aNrRepetitions <= 1)
 			{
 				itsNrRepetitionsField.selectAll();
 				++aNrInvalid;

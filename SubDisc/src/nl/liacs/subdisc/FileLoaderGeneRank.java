@@ -9,8 +9,6 @@ package nl.liacs.subdisc;
 import java.io.*;
 import java.util.*;
 
-import javax.swing.*;
-
 import nl.liacs.subdisc.cui.*;
 import nl.liacs.subdisc.gui.*;
 
@@ -23,10 +21,8 @@ public class FileLoaderGeneRank implements FileLoaderInterface
 	// TODO make static
 	private Map<String, String> itsGene2CuiMap;
 
-	private File itsEnrichmentSource = null;
 	private Table itsTable;
-	private int identifierColumn = -1;
-	private boolean hasRankColumn = false;
+	private File itsEnrichmentSource = null;
 
 	public FileLoaderGeneRank(Table theTable, EnrichmentType theType)
 	{
@@ -49,6 +45,11 @@ public class FileLoaderGeneRank implements FileLoaderInterface
 			else if (!itsEnrichmentSource.exists())
 			{
 				ErrorLog.log(itsEnrichmentSource, new FileNotFoundException());
+				return;
+			}
+			else if (itsEnrichmentSource.length() == 0)
+			{
+				Log.logCommandLine("Empty file: " + itsEnrichmentSource);
 				return;
 			}
 			else
@@ -132,12 +133,16 @@ public class FileLoaderGeneRank implements FileLoaderInterface
 		try
 		{
 			aReader = new BufferedReader(new FileReader(itsEnrichmentSource));
+			boolean hasCuiColumn = false;
+			boolean hasRankColumn = false;
+			int identifierColumn = -1;
 
 			ArrayList<Column> aColumns = itsTable.getColumns();
 			int aNrDataColumns = aColumns.size();	// safer than itsTable.getNrColumns()
 			//int aNrDataColumns = itsTable.getNrColumns(); // relies on correct itsNrColumn/update
 			int aNrRows = itsTable.getNrRows();
-			String[] aCUIHeaderArray = aReader.readLine().split("\t", -1);	// TODO fails if file is empty
+			// file non-empty checked by constructor
+			String[] aCUIHeaderArray = aReader.readLine().split("\t", -1);
 			int aNrCUIColumns = aCUIHeaderArray.length;
 			String aString = null;
 
@@ -153,6 +158,12 @@ public class FileLoaderGeneRank implements FileLoaderInterface
 				else if ("entrez".equals(aString) || "go".equals(aString))
 				{
 					createGene2CuiMap(aString);
+					identifierColumn = i;
+				}
+				// no mapping needed
+				else if ("cui".equals(aString))
+				{
+					hasCuiColumn = true;
 					identifierColumn = i;
 				}
 
@@ -177,7 +188,7 @@ public class FileLoaderGeneRank implements FileLoaderInterface
 			// disable by default
 			aColumns.get(identifierColumn).setIsEnabled(false);
 
-			aColumns.ensureCapacity(aNrDataColumns + aNrCUIColumns+ (hasRankColumn ? 0 : 1));
+			aColumns.ensureCapacity(aNrDataColumns + aNrCUIColumns + (hasRankColumn ? 0 : 1));
 
 			if (!hasRankColumn)
 			{
@@ -188,9 +199,9 @@ public class FileLoaderGeneRank implements FileLoaderInterface
 								aNrRows);
 
 				for (float f = 1.0f, nrRows = (float)aNrRows; f <= nrRows; ++f)
-					aRankColumn.add(f);	// relatively expensive, see comment XXX
+					aRankColumn.add(f);	// relatively expensive, see TODO XXX
 
-				aRankColumn.setIsEnabled(false);	// TODO for now disable by default
+				aRankColumn.setIsEnabled(false);	// XXX for now disable by default
 				aColumns.add(aRankColumn);
 			}
 
@@ -237,13 +248,18 @@ public class FileLoaderGeneRank implements FileLoaderInterface
 					itsTable.getColumn(--k).add(0.0f);
 
 				// if CUI exists, put it in Map<cuiLineNr, identifierRowNr>
-				String anIdentifier = String.valueOf(Float.valueOf(idColumn.getString(i)).intValue()); // TODO removes '.0' :)
-				Integer aLineNr = itsCui2LineNrMap.get(itsGene2CuiMap.get(anIdentifier));
+				String aCui;
+				if (hasCuiColumn)
+					aCui = String.valueOf(Float.valueOf(idColumn.getString(i)).intValue()); // XXX removes '.0' :)
+				else
+					aCui = itsGene2CuiMap.get(String.valueOf(Float.valueOf(idColumn.getString(i)).intValue())); // XXX removes '.0' :)
+
+				Integer aLineNr = itsCui2LineNrMap.get(aCui);
+				aDomainColumn.add(itsCui2NameMap.get(aCui));
+
+				// no mapping may exist in some ENTREZ/GO case
 				if (aLineNr != null)
 					aLineNrMap.put(aLineNr, i);
-
-				// map cui2name
-				aDomainColumn.add(itsCui2NameMap.get(itsGene2CuiMap.get(anIdentifier)));
 			}
 
 			// populate the new CUI columns for identifiers mapped to CUIs

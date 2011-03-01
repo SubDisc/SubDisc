@@ -455,7 +455,8 @@ public class MiningWindow extends JFrame
 			}
 		});
 		jMenuEnrichment.add(jMenuItemAddCuiEnrichmentSource);
-
+/*
+		// TODO add when implemented
 		jMenuItemAddGoEnrichmentSource.setFont(GUI.DEFAULT_TEXT_FONT);
 		jMenuItemAddGoEnrichmentSource.setText("Add GO Domain");
 		jMenuItemAddGoEnrichmentSource.setMnemonic('G');
@@ -467,6 +468,7 @@ public class MiningWindow extends JFrame
 		});
 		jMenuEnrichment.add(jMenuItemAddGoEnrichmentSource);
 
+		// TODO add when implemented
 		jMenuItemAddCustomEnrichmentSource.setFont(GUI.DEFAULT_TEXT_FONT);
 		jMenuItemAddCustomEnrichmentSource.setText("Add Custom Source");
 		jMenuItemAddCustomEnrichmentSource.setMnemonic('U');
@@ -477,7 +479,7 @@ public class MiningWindow extends JFrame
 			}
 		});
 		jMenuEnrichment.add(jMenuItemAddCustomEnrichmentSource);
-
+*/
 		jMenuItemRemoveEnrichmentSource.setFont(GUI.DEFAULT_TEXT_FONT);
 		jMenuItemRemoveEnrichmentSource.setText("Remove Enrichment Source");
 		jMenuItemRemoveEnrichmentSource.setMnemonic('R');
@@ -702,6 +704,9 @@ public class MiningWindow extends JFrame
 		});
 		jPanelEvaluationFields.add(jComboBoxTargetAttribute);
 
+		// note in cui setting this is often to small
+		jComboBoxMiscField.setPreferredSize(new Dimension(86, 22));
+		jComboBoxMiscField.setMinimumSize(new Dimension(86, 22));
 		jComboBoxMiscField.setFont(GUI.DEFAULT_TEXT_FONT);
 		jComboBoxMiscField.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
@@ -930,7 +935,6 @@ public class MiningWindow extends JFrame
 									jMenuItemAddCuiEnrichmentSource,
 									jMenuItemAddGoEnrichmentSource,
 									jMenuItemAddCustomEnrichmentSource,
-//									jMenuItemRemoveEnrichmentSource,
 									jButtonBrowse,
 									jButtonMetaData,
 									jButtonSwapRandomize,
@@ -1023,7 +1027,9 @@ public class MiningWindow extends JFrame
 			{
 				new FileHandler(itsTable, theType);
 				update();
-				jMenuItemRemoveEnrichmentSource.setEnabled(itsTable.getDomainList() != null && itsTable.getDomainList().getComponentCount() > 0);
+				jMenuItemRemoveEnrichmentSource
+					.setEnabled(itsTable.getDomainList() != null &&
+								itsTable.getDomainList().getComponentCount() > 0);
 			}
 		});
 	}
@@ -1046,7 +1052,8 @@ public class MiningWindow extends JFrame
 							itsTable.removeDomain(i);
 
 					update();
-					jMenuItemRemoveEnrichmentSource.setEnabled(aDomainList == null || aComponentCount == 0);
+					jMenuItemRemoveEnrichmentSource
+						.setEnabled(aDomainList == null || aComponentCount == 0);
 				}
 			}
 		});
@@ -1121,9 +1128,8 @@ public class MiningWindow extends JFrame
 
 	private void jComboBoxQualityMeasureActionPerformed()
 	{
-		// TODO should this not be the other way around?
-		itsSearchParameters.setQualityMeasureMinimum(getQualityMeasureMinimum());
 		initEvaluationMinimum();
+		itsSearchParameters.setQualityMeasureMinimum(getQualityMeasureMinimum());
 
 		// this ALWAYS resets alpha if switching TO EDIT_DISTANCE
 		// remove upon discretion

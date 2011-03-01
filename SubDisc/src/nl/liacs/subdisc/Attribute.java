@@ -58,22 +58,22 @@ public class Attribute implements XMLNodeInterface
 		for (int i = 0, j = aChildren.getLength(); i < j; ++i)
 		{
 			Node aSetting = aChildren.item(i);
-			String aNodeName = aSetting.getNodeName();
-			if ("name".equalsIgnoreCase(aNodeName))
+			String aNodeName = aSetting.getNodeName().toLowerCase();
+			if ("name".equals(aNodeName))
 			{
 				checkAndSetName(aSetting.getTextContent());
 			}
-			else if ("short".equalsIgnoreCase(aNodeName))
+			else if ("short".equals(aNodeName))
 			{
 				itsShort = aSetting.getTextContent().isEmpty() ?
 											null : aSetting.getTextContent();
 			}
-			else if ("type".equalsIgnoreCase(aNodeName))
+			else if ("type".equals(aNodeName))
 			{
 				itsType =
 					AttributeType.getAttributeType(aSetting.getTextContent());
 			}
-			else if ("index".equalsIgnoreCase(aNodeName))
+			else if ("index".equals(aNodeName))
 			{
 				int tempInt = -1;
 				try

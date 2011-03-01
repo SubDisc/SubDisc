@@ -30,6 +30,7 @@ public class SearchParameters implements XMLNodeInterface
 
 	private float			itsAlpha;
 	private float			itsBeta;
+	private boolean			itsPostProcessingDoAutoRun;
 	private int				itsPostProcessingCount;
 //	private int				itsMaximumPostProcessingSubgroups; // TODO not used
 
@@ -117,15 +118,17 @@ public class SearchParameters implements XMLNodeInterface
 		itsNumericStrategy = NumericStrategy.getNumericStrategy(theNumericStrategyName);
 	}
 
+	public int getSearchStrategyWidth()					{ return itsSearchStrategyWidth; }
 	public void setSearchStrategyWidth(int theWidth)	{ itsSearchStrategyWidth = theWidth; }
-	public int getSearchStrategyWidth()		{ return itsSearchStrategyWidth; }
-	public int getNrBins()			{ return itsNrBins; }
-	public void setNrBins(int theNr)	{ itsNrBins = theNr; }
+	public int getNrBins()					{ return itsNrBins; }
+	public void setNrBins(int theNr)		{ itsNrBins = theNr; }
 	public float getAlpha()					{ return itsAlpha; }
 	public void setAlpha(float theAlpha)	{ itsAlpha = theAlpha; }
 	public float getBeta()					{ return itsBeta; }
 	public void setBeta(float theBeta)		{ itsBeta = theBeta; }
-	public int getPostProcessingCount()		{ return itsPostProcessingCount; }
+	public boolean getPostProcessingDoAutoRun()							{ return itsPostProcessingDoAutoRun; }
+	public void setPostProcessingDoAutoRun(boolean theAutoRunSetting)	{ itsPostProcessingDoAutoRun = theAutoRunSetting; }
+	public int getPostProcessingCount()				{ return itsPostProcessingCount; }
 	public void setPostProcessingCount(int theNr)	{ itsPostProcessingCount = theNr; }
 //	public int getMaximumPostProcessingSubgroups()	{ return itsMaximumPostProcessingSubgroups; } // TODO not used
 //	public void setMaximumPostProcessingSubgroups(int theNr)	{ itsMaximumPostProcessingSubgroups = theNr; } // TODO not used
@@ -154,6 +157,7 @@ public class SearchParameters implements XMLNodeInterface
 		XMLNode.addNodeTo(aNode, "nr_bins", getNrBins());
 		XMLNode.addNodeTo(aNode, "alpha", getAlpha());
 		XMLNode.addNodeTo(aNode, "beta", getBeta());
+		XMLNode.addNodeTo(aNode, "post_processing_do_autorun", getPostProcessingDoAutoRun());
 		XMLNode.addNodeTo(aNode, "post_processing_count", getPostProcessingCount());
 //		XMLNode.addNodeTo(aNode, "maximum_post_processing_subgroups", getMaximumPostProcessingSubgroups()); // TODO not used
 	}
@@ -191,6 +195,8 @@ public class SearchParameters implements XMLNodeInterface
 				itsAlpha = Float.parseFloat(aSetting.getTextContent());
 			else if("beta".equalsIgnoreCase(aNodeName))
 				itsBeta = Float.parseFloat(aSetting.getTextContent());
+			else if("post_processing_do_autorun".equalsIgnoreCase(aNodeName))
+				itsPostProcessingDoAutoRun = Boolean.parseBoolean(aSetting.getTextContent());
 			else if("post_processing_count".equalsIgnoreCase(aNodeName))
 				itsPostProcessingCount = Integer.parseInt(aSetting.getTextContent());
 //			else if("maximum_post_processing_subgroups".equalsIgnoreCase(aNodeName))
@@ -199,5 +205,4 @@ public class SearchParameters implements XMLNodeInterface
 				;	// TODO throw warning dialog
 		}
 	}
-
 }

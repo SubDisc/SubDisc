@@ -364,6 +364,9 @@ public class FileLoaderARFF implements FileLoaderInterface
 			case BINARY :
 			{
 				// TODO any other value is accepted as 'false'
+				// TODO this will fail on AutoRun loading files where
+				// isValidBinaryTrueValue(theCell) does not hold
+				// ie. data with 2 values, set to BINARY by user
 				theColumn.add(AttributeType.isValidBinaryTrueValue(theCell));
 				break;
 			}
