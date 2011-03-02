@@ -215,18 +215,18 @@ public class ResultWindow extends JFrame implements ActionListener
 
 		jButtonShowModel = GUI.buildButton("Show Model", 'M', "model", this);
 		aSubgroupPanel.add(jButtonShowModel);
-		jButtonShowModel.setVisible(itsSearchParameters.getTargetType() != TargetType.SINGLE_NOMINAL);
+//		jButtonShowModel.setVisible(itsSearchParameters.getTargetType() != TargetType.SINGLE_NOMINAL);
 
 		jButtonROC = GUI.buildButton("ROC", 'R', "roc", this);
 		aSubgroupPanel.add(jButtonROC);
-		jButtonROC.setVisible(itsSearchParameters.getTargetType() == TargetType.SINGLE_NOMINAL);
+//		jButtonROC.setVisible(aTargetType == TargetType.SINGLE_NOMINAL);
 
 		jButtonDeleteSubgroups = GUI.buildButton("Delete Selected", 'D', "delete", this);
 		aSubgroupPanel.add(jButtonDeleteSubgroups);
 
 		jButtonPostprocess = GUI.buildButton("Post-process", 'O', "post_process", this);
 		aSubgroupPanel.add(jButtonPostprocess);
-		jButtonPostprocess.setVisible(itsSearchParameters.getTargetType() == TargetType.MULTI_LABEL);
+//		jButtonPostprocess.setVisible(aTargetType == TargetType.MULTI_LABEL);
 
 		jButtonPValues = GUI.buildButton("Compute p-Values", 'V', "compute_p", this);
 		aSubgroupPanel.add(jButtonPValues);
@@ -239,7 +239,7 @@ public class ResultWindow extends JFrame implements ActionListener
 
 		jButtonFold = GUI.buildButton("Fold members", 'F', "fold", this);
 		aSubgroupPanel.add(jButtonFold);
-		jButtonFold.setVisible(itsFold != 0);
+//		jButtonFold.setVisible(itsFold != 0);
 
 		jButtonSaveResult = GUI.buildButton("Save Result", 'S', "save", this);
 		aSubgroupPanel.add(jButtonSaveResult);
@@ -249,7 +249,7 @@ public class ResultWindow extends JFrame implements ActionListener
 
 		jButtonCloseWindow = GUI.buildButton("Close", 'C', "close", this);
 		aSubgroupSetPanel.add(jButtonCloseWindow);
-
+/*
 		//disable result dependent buttons
 		if (itsSubgroupSet.isEmpty())
 		{
@@ -264,7 +264,8 @@ public class ResultWindow extends JFrame implements ActionListener
 			jButtonSaveResult.setEnabled(false);
 			jButtonPrintResult.setEnabled(false);
 		}
-
+*/
+		enableButtonsCheck();
 		jPanelSouth.add(aSubgroupPanel);
 		jPanelSouth.add(aSubgroupSetPanel);
 		getContentPane().add(jPanelSouth, BorderLayout.SOUTH);
@@ -297,6 +298,38 @@ public class ResultWindow extends JFrame implements ActionListener
 			jButtonPrintResultActionPerformed();
 		else if ("close".equals(aCommand))
 			dispose();
+	}
+
+	private void enableButtonsCheck()
+	{
+		if (itsSubgroupSet.isEmpty())
+		{
+			jButtonShowModel.setEnabled(false);
+			jButtonROC.setEnabled(false);
+			jButtonDeleteSubgroups.setEnabled(false);
+			jButtonPostprocess.setEnabled(false);
+			jButtonPValues.setEnabled(false);
+			jButtonRegressionTest.setEnabled(false);
+			jButtonEmpirical.setEnabled(false);
+			jButtonFold.setEnabled(false);
+			jButtonSaveResult.setEnabled(false);
+			jButtonPrintResult.setEnabled(false);
+			return;
+		}
+		else
+		{
+			TargetType aTargetType = itsSearchParameters.getTargetType();
+
+			jButtonShowModel.setVisible(TargetType.hasBaseModel(aTargetType));
+			jButtonROC.setVisible(aTargetType == TargetType.SINGLE_NOMINAL);
+			jButtonPostprocess.setVisible(aTargetType == TargetType.MULTI_LABEL);
+			// TargetType.SINGLE_NUMERIC shortcut for cmsb versions
+			jButtonPValues.setVisible(aTargetType != TargetType.SINGLE_NUMERIC);
+			jButtonRegressionTest.setVisible(aTargetType != TargetType.SINGLE_NUMERIC);
+			jButtonEmpirical.setVisible(aTargetType != TargetType.SINGLE_NUMERIC);
+
+			jButtonFold.setVisible(itsFold != 0);
+		}
 	}
 
 	private void jButtonShowModelActionPerformed()

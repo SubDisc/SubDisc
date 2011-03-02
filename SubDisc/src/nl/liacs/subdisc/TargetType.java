@@ -193,6 +193,7 @@ public enum TargetType implements EnumInterface
 	}
 
 	// used by MiningWindow.jComboBoxTargetAttributeActionPerformed()
+	// used by ResultWindow.initComponents()
 	public static boolean hasBaseModel(TargetType theType)
 	{
 		switch (theType)
