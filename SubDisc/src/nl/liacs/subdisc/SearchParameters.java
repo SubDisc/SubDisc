@@ -52,6 +52,7 @@ public class SearchParameters implements XMLNodeInterface
 		itsAlpha = ALPHA_DEFAULT;
 		itsBeta = BETA_DEFAULT;
 		itsPostProcessingCount = POST_PROCESSING_COUNT_DEFAULT;
+		itsPostProcessingDoAutoRun = true;
 	}
 
 	/* QUALITY MEASURE */

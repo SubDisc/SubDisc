@@ -2,6 +2,7 @@ package nl.liacs.subdisc.gui;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.io.*;
 import java.text.*;
 import java.util.*;
 import java.util.List;
@@ -32,6 +33,9 @@ public class MiningWindow extends JFrame
 	private final MiningWindow masterWindow = this;
 	private SearchParameters itsSearchParameters = new SearchParameters();
 	private TargetConcept itsTargetConcept = new TargetConcept();
+	
+	// for uniform file names when crossvalidating;
+	private long itsTimeStamp;
 
 	public MiningWindow()
 	{
@@ -1428,8 +1432,11 @@ public class MiningWindow extends JFrame
 			{
 //					aResultWindow = new ResultWindow(aPreliminaryResults, itsSearchParameters, null, aTable, aSubgroupDiscovery.getQualityMeasure(), itsTotalCount, theFold, theBitSet);
 				new ResultWindow(aTable, aSubgroupDiscovery, null, theFold, theBitSet);
-			}
+			} 
 		}
+		
+		String aFileName = itsTable.getName() + "_fold_" + (theFold) + "_" + itsTimeStamp +".txt";
+		XMLAutoRun.save(aSubgroupDiscovery.getResult(), aFileName);
 	}
 /*
 	// TODO update using new RandomQualityWindow(RANDOM_SUBGROUPS).getSettings()
@@ -1738,11 +1745,40 @@ public class MiningWindow extends JFrame
 
 	private void jButtonCrossValidateActionPerformed()
 	{
+		itsTimeStamp = System.currentTimeMillis();
+
 		int aK = 10; //TODO set k from GUI
 		CrossValidation aCV = new CrossValidation(itsTable.getNrRows(), aK);
+		
+		BufferedWriter aWriter = null;
+		String aFileName = itsTable.getName() + "_fold_members_" + itsTimeStamp +".txt";
+
+		try
+		{	
+			aWriter = new BufferedWriter(new FileWriter(aFileName));
+		}
+		catch (IOException e)
+		{
+			Log.logCommandLine("Error on file: " + aFileName);
+		}
+		
 		for (int i=0; i<aK; i++)
 		{
 			BitSet aSet = aCV.getSet(i, true);
+			
+			try
+			{
+				aWriter.write("Fold " + (i+1) + ":\n" + aSet.toString());
+				if (i!=aK-1)
+					aWriter.write("\n\n");
+				else if (aWriter != null)
+						aWriter.close();
+			}
+			catch (IOException e)
+			{
+				Log.logCommandLine("Error on file: " + aFileName);
+			}
+
 			Log.logCommandLine("size: " + aSet.cardinality());
 			Table aTable = itsTable.select(aSet);
 

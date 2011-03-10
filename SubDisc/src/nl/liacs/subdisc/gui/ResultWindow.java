@@ -149,6 +149,9 @@ public class ResultWindow extends JFrame implements ActionListener
 			s.append("No subgroups found that match the set criterion");
 		else
 			s.append(itsSubgroupSet.size() + " subgroups found");
+		
+		s.append(";  target table = ");
+		s.append(itsTable.getName());
 
 		s.append(";  quality measure = ");
 		s.append(QualityMeasure.getMeasureString(itsSearchParameters.getQualityMeasure()));
