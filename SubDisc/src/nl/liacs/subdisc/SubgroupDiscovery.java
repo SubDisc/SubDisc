@@ -139,6 +139,9 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		Log.logCommandLine("number of subgroups: " + getNumberOfSubgroups());
 
 		itsResult.setIDs(); //assign 1 to n to subgroups, for future reference in subsets
+		
+		if ((itsSearchParameters.getTargetType() == TargetType.MULTI_LABEL) && itsSearchParameters.getPostProcessingDoAutoRun())
+			postprocess();
 	}
 /*
 	// Obsolete
@@ -398,6 +401,49 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		return itsQualityMeasure.calculate(theSubgroup);
 	}
 
+	private void postprocess()
+	{
+		if (itsResult.isEmpty())
+			return;
+
+		// Create quality measures on whole dataset
+		Log.logCommandLine("Creating quality measures.");
+		int aPostProcessingCount = itsSearchParameters.getPostProcessingCount();
+		double aPostProcessingCountSquare = Math.pow(aPostProcessingCount, 2);
+		int itsNrRecords = itsTable.getNrRows();
+
+		QualityMeasure[] aQMs = new QualityMeasure[aPostProcessingCount];
+		for (int i = 0; i < aPostProcessingCount; i++)
+		{
+			Bayesian aGlobalBayesian = new Bayesian(itsBinaryTable);
+			aGlobalBayesian.climb();
+			aQMs[i] = new QualityMeasure(itsSearchParameters, aGlobalBayesian.getDAG(), itsNrRecords);
+		}
+
+		// Iterate over subgroups
+		SubgroupSet aNewSubgroupSet = new SubgroupSet(itsSearchParameters.getMaximumSubgroups());
+		int aCount = 0;
+		for (Subgroup s : itsResult)
+		{
+			Log.logCommandLine("Postprocessing subgroup " + ++aCount);
+			double aTotalQuality = 0.0;
+			BinaryTable aSubgroupTable = itsBinaryTable.selectRows(s.getMembers());
+			for (int i = 0; i < aPostProcessingCount; i++)
+			{
+				Bayesian aLocalBayesian = new Bayesian(aSubgroupTable);
+				aLocalBayesian.climb();
+				s.setDAG(aLocalBayesian.getDAG());
+				for (int j = 0; j < aPostProcessingCount; j++)
+					aTotalQuality += aQMs[j].calculate(s);
+			}
+			s.setMeasureValue(aTotalQuality / aPostProcessingCountSquare);
+			s.renouncePValue();
+			aNewSubgroupSet.add(s);
+		}
+		aNewSubgroupSet.setIDs();
+		itsResult = aNewSubgroupSet;
+	}
+	
 	public int getNumberOfSubgroups() { return itsResult.size(); }
 	public SubgroupSet getResult() { return itsResult; }
 	public BitSet getBinaryTarget() { return (BitSet)itsBinaryTarget.clone(); }

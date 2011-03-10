@@ -224,10 +224,6 @@ public class ResultWindow extends JFrame implements ActionListener
 		jButtonDeleteSubgroups = GUI.buildButton("Delete Selected", 'D', "delete", this);
 		aSubgroupPanel.add(jButtonDeleteSubgroups);
 
-		jButtonPostprocess = GUI.buildButton("Post-process", 'O', "post_process", this);
-		aSubgroupPanel.add(jButtonPostprocess);
-//		jButtonPostprocess.setVisible(aTargetType == TargetType.MULTI_LABEL);
-
 		jButtonPValues = GUI.buildButton("Compute p-Values", 'V', "compute_p", this);
 		aSubgroupPanel.add(jButtonPValues);
 
@@ -256,7 +252,6 @@ public class ResultWindow extends JFrame implements ActionListener
 			jButtonShowModel.setEnabled(false);
 			jButtonROC.setEnabled(false);
 			jButtonDeleteSubgroups.setEnabled(false);
-			jButtonPostprocess.setEnabled(false);
 			jButtonPValues.setEnabled(false);
 			jButtonRegressionTest.setEnabled(false);
 			jButtonEmpirical.setEnabled(false);
@@ -282,8 +277,6 @@ public class ResultWindow extends JFrame implements ActionListener
 			jButtonROCActionPerformed();
 		else if ("delete".equals(aCommand))
 			jButtonDeleteSubgroupsActionPerformed();
-		else if ("post_process".equals(aCommand))
-			jButtonPostprocessActionPerformed();
 		else if ("compute_p".equals(aCommand))
 			jButtonPValuesActionPerformed();
 		else if ("regression".equals(aCommand))
@@ -307,7 +300,6 @@ public class ResultWindow extends JFrame implements ActionListener
 			jButtonShowModel.setEnabled(false);
 			jButtonROC.setEnabled(false);
 			jButtonDeleteSubgroups.setEnabled(false);
-			jButtonPostprocess.setEnabled(false);
 			jButtonPValues.setEnabled(false);
 			jButtonRegressionTest.setEnabled(false);
 			jButtonEmpirical.setEnabled(false);
@@ -322,7 +314,6 @@ public class ResultWindow extends JFrame implements ActionListener
 
 			jButtonShowModel.setVisible(TargetType.hasBaseModel(aTargetType));
 			jButtonROC.setVisible(aTargetType == TargetType.SINGLE_NOMINAL);
-			jButtonPostprocess.setVisible(aTargetType == TargetType.MULTI_LABEL);
 			// TargetType.SINGLE_NUMERIC shortcut for cmsb versions
 			jButtonPValues.setVisible(aTargetType != TargetType.SINGLE_NUMERIC);
 			jButtonRegressionTest.setVisible(aTargetType != TargetType.SINGLE_NUMERIC);
@@ -430,67 +421,6 @@ public class ResultWindow extends JFrame implements ActionListener
 			itsSubgroupTable.addRowSelectionInterval(0, 0);
 		else
 			jButtonDeleteSubgroups.setEnabled(false);
-	}
-
-	private void jButtonPostprocessActionPerformed()
-	{
-		if (itsSubgroupSet.isEmpty())
-			return;
-
-		String inputValue = JOptionPane.showInputDialog("# DAGs fitted to each subgroup.");
-		try
-		{
-			itsSearchParameters.setPostProcessingCount(Integer.parseInt(inputValue));
-		}
-		catch (Exception e)
-		{
-			JOptionPane.showMessageDialog(null, "Your input is unsound.");
-			return;
-		}
-
-		// Create quality measures on whole dataset
-		Log.logCommandLine("Creating quality measures.");
-		int aPostProcessingCount = itsSearchParameters.getPostProcessingCount();
-		double aPostProcessingCountSquare = Math.pow(aPostProcessingCount, 2);
-
-		QualityMeasure[] aQMs = new QualityMeasure[aPostProcessingCount];
-		for (int i = 0; i < aPostProcessingCount; i++)
-		{
-			Bayesian aGlobalBayesian = new Bayesian(itsBinaryTable);
-			aGlobalBayesian.climb();
-			aQMs[i] = new QualityMeasure(itsSearchParameters, aGlobalBayesian.getDAG(), itsNrRecords);
-		}
-
-		// Iterate over subgroups
-		SubgroupSet aNewSubgroupSet = new SubgroupSet(itsSearchParameters.getMaximumSubgroups());
-		int aCount = 0;
-		for (Subgroup s : itsSubgroupSet)
-		{
-			Log.logCommandLine("Postprocessing subgroup " + ++aCount);
-			double aTotalQuality = 0.0;
-			BinaryTable aSubgroupTable = itsBinaryTable.selectRows(s.getMembers());
-			for (int i = 0; i < aPostProcessingCount; i++)
-			{
-				Bayesian aLocalBayesian = new Bayesian(aSubgroupTable);
-				aLocalBayesian.climb();
-				s.setDAG(aLocalBayesian.getDAG());
-				for (int j = 0; j < aPostProcessingCount; j++)
-					aTotalQuality += aQMs[j].calculate(s);
-			}
-			s.setMeasureValue(aTotalQuality / aPostProcessingCountSquare);
-			s.renouncePValue();
-			aNewSubgroupSet.add(s);
-		}
-		aNewSubgroupSet.setIDs();
-
-		//why is it bigger and re-located?
-		// Display postprocessed results
-//		ResultWindow aResultWindow = new ResultWindow(itsTable, aNewSubgroupSet, itsSearchParameters, itsQualityMeasure, itsBinaryTable, itsFold, itsBitSet);
-//		aResultWindow.setLocation(0, 0);
-//		aResultWindow.setSize(1200, 900);
-//		aResultWindow.setVisible(true);
-		new ResultWindow(itsTable, aNewSubgroupSet, itsSearchParameters, itsQualityMeasure, itsBinaryTable, itsFold, itsBitSet);
-		dispose();
 	}
 
 	private void jButtonPValuesActionPerformed()
@@ -653,7 +583,6 @@ public class ResultWindow extends JFrame implements ActionListener
 	private JButton jButtonShowModel;
 	private JButton jButtonDeleteSubgroups;
 	private JButton jButtonFold;
-	private JButton jButtonPostprocess;
 	private JButton jButtonPValues;
 	private JButton jButtonRegressionTest;
 	private JButton jButtonEmpirical;
