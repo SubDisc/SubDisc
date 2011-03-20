@@ -1426,6 +1426,8 @@ public class MiningWindow extends JFrame
 				BinaryTable aBinaryTable = new BinaryTable(aTable, itsTargetConcept.getMultiTargets());
 //					aResultWindow = new ResultWindow(aPreliminaryResults, itsSearchParameters, null, itsTable, aBinaryTable, aSubgroupDiscovery.getQualityMeasure(), itsTotalCount, theFold, theBitSet);
 				new ResultWindow(itsTable, aSubgroupDiscovery, aBinaryTable, theFold, theBitSet);
+				String aFileName = itsTable.getName() + "_fold_" + (theFold) + "_" + itsTimeStamp +".txt";
+				XMLAutoRun.save(aSubgroupDiscovery.getResult(), aFileName);
 				break;
 			}
 			default :
@@ -1434,9 +1436,6 @@ public class MiningWindow extends JFrame
 				new ResultWindow(aTable, aSubgroupDiscovery, null, theFold, theBitSet);
 			} 
 		}
-		
-		String aFileName = itsTable.getName() + "_fold_" + (theFold) + "_" + itsTimeStamp +".txt";
-		XMLAutoRun.save(aSubgroupDiscovery.getResult(), aFileName);
 	}
 /*
 	// TODO update using new RandomQualityWindow(RANDOM_SUBGROUPS).getSettings()
