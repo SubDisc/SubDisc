@@ -1,6 +1,7 @@
 package nl.liacs.subdisc;
 
 import java.util.*;
+import java.io.*;
 
 /**
  * A SubgroupSet is a <code>TreeSet</code> of {@link Subgroup Subgroup}s. If its
@@ -114,6 +115,73 @@ public class SubgroupSet extends TreeSet<Subgroup>
 												s.getID(),
 												s.getCoverage(),
 												s.getMeasureValue()));
+	}
+
+	public void saveExtent(BufferedWriter theWriter, Table theTable, BitSet theSubset, TargetConcept theTargetConcept)
+	{
+		Log.logCommandLine("saving extent...");
+		try
+		{
+			for (int i=0; i<theTable.getNrRows(); i++)
+			{
+				String aRow = (theSubset.get(i))?"train,":"test ,";
+				//aRow += "" + i + ",";
+
+				//add subgroup extents to current row
+				boolean aStart = true;
+				for (Subgroup aSubgroup: this)
+				{
+					boolean aCovers = aSubgroup.getMembers().get(i);
+					int aValue = aCovers?1:0;
+					if (!aStart)
+						aRow += ",";
+					aRow += "" + aValue;
+					aStart = false;
+				}
+
+				//add targets
+
+				Attribute aPrimaryAttribute = theTargetConcept.getPrimaryTarget(); //almost always there is a primary target
+				switch (theTargetConcept.getTargetType())
+				{
+					case SINGLE_NOMINAL :
+					{
+						aRow += "," + theTable.getColumn(aPrimaryAttribute).getNominal(i);
+						break;
+					}
+					case SINGLE_NUMERIC :
+					{
+						aRow += "," + theTable.getColumn(aPrimaryAttribute).getFloat(i);
+						break;
+					}
+					case DOUBLE_REGRESSION :
+					case DOUBLE_CORRELATION :
+					{
+						Attribute aSecondaryAttribute = theTargetConcept.getSecondaryTarget();
+						aRow += "," + theTable.getColumn(aPrimaryAttribute).getFloat(i) + "," + theTable.getColumn(aSecondaryAttribute).getFloat(i);
+						break;
+					}
+					case MULTI_LABEL :
+					{
+						List<Attribute> aTargets = theTargetConcept.getMultiTargets();
+						for (Attribute aTarget: aTargets)
+						{
+							boolean aTargetValue = theTable.getColumn(aTarget).getBinary(i);
+							int aValue = aTargetValue?1:0;
+							aRow += "," + aValue;
+						}
+						break;
+					}
+				}
+
+				//Log.logCommandLine(aRow);
+				theWriter.write(aRow + "\n");
+			}
+		}
+		catch (IOException e)
+		{
+			Log.logCommandLine("Error on file: " + e.getMessage());
+		}
 	}
 
 	/*

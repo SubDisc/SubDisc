@@ -33,7 +33,7 @@ public class ResultWindow extends JFrame implements ActionListener
 		if (theTable == null ||theSubgroupDiscovery == null)
 		{
 			Log.logCommandLine("ResultWindow Constructor: parameter(s) can not be 'null'.");
-			
+
 			return;
 		}
 		else
@@ -149,7 +149,7 @@ public class ResultWindow extends JFrame implements ActionListener
 			s.append("No subgroups found that match the set criterion");
 		else
 			s.append(itsSubgroupSet.size() + " subgroups found");
-		
+
 		s.append(";  target table = ");
 		s.append(itsTable.getName());
 
@@ -240,11 +240,11 @@ public class ResultWindow extends JFrame implements ActionListener
 		aSubgroupPanel.add(jButtonFold);
 //		jButtonFold.setVisible(itsFold != 0);
 
-		jButtonSaveResult = GUI.buildButton("Save Result", 'S', "save", this);
-		aSubgroupPanel.add(jButtonSaveResult);
+		jButtonSave = GUI.buildButton("Save", 'S', "save", this);
+		aSubgroupPanel.add(jButtonSave);
 
-		jButtonPrintResult = GUI.buildButton("Print Result", 'P', "print", this);
-		aSubgroupPanel.add(jButtonPrintResult);
+		jButtonPrint = GUI.buildButton("Print", 'P', "print", this);
+		aSubgroupPanel.add(jButtonPrint);
 
 		jButtonCloseWindow = GUI.buildButton("Close", 'C', "close", this);
 		aSubgroupSetPanel.add(jButtonCloseWindow);
@@ -259,8 +259,8 @@ public class ResultWindow extends JFrame implements ActionListener
 			jButtonRegressionTest.setEnabled(false);
 			jButtonEmpirical.setEnabled(false);
 			jButtonFold.setEnabled(false);
-			jButtonSaveResult.setEnabled(false);
-			jButtonPrintResult.setEnabled(false);
+			jButtonSave.setEnabled(false);
+			jButtonPrint.setEnabled(false);
 		}
 */
 		enableButtonsCheck();
@@ -289,9 +289,9 @@ public class ResultWindow extends JFrame implements ActionListener
 		else if ("fold".equals(aCommand))
 			jButtonFoldActionPerformed();
 		else if ("save".equals(aCommand))
-			jButtonSaveResultActionPerformed();
+			jButtonSaveActionPerformed();
 		else if ("print".equals(aCommand))
-			jButtonPrintResultActionPerformed();
+			jButtonPrintActionPerformed();
 		else if ("close".equals(aCommand))
 			dispose();
 	}
@@ -307,8 +307,8 @@ public class ResultWindow extends JFrame implements ActionListener
 			jButtonRegressionTest.setEnabled(false);
 			jButtonEmpirical.setEnabled(false);
 			jButtonFold.setEnabled(false);
-			jButtonSaveResult.setEnabled(false);
-			jButtonPrintResult.setEnabled(false);
+			jButtonSave.setEnabled(false);
+			jButtonPrint.setEnabled(false);
 			return;
 		}
 		else
@@ -499,7 +499,7 @@ public class ResultWindow extends JFrame implements ActionListener
 		}
 	}
 
-	private void jButtonSaveResultActionPerformed()
+	private void jButtonSaveActionPerformed()
 	{
 		File aFile = new FileHandler(Action.SAVE).getFile();
 		if (aFile == null)
@@ -508,7 +508,7 @@ public class ResultWindow extends JFrame implements ActionListener
 		XMLAutoRun.save(itsSubgroupSet, aFile.getAbsolutePath());
 	}
 
-	private void jButtonPrintResultActionPerformed()
+	private void jButtonPrintActionPerformed()
 	{
 		try
 		{
@@ -590,8 +590,8 @@ public class ResultWindow extends JFrame implements ActionListener
 	private JButton jButtonRegressionTest;
 	private JButton jButtonEmpirical;
 	private JButton jButtonROC;
-	private JButton jButtonSaveResult;
-	private JButton jButtonPrintResult;
+	private JButton jButtonSave;
+	private JButton jButtonPrint;
 	private JButton jButtonCloseWindow;
 	private JScrollPane itsScrollPane;
 }

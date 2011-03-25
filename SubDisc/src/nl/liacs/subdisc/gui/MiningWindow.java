@@ -33,7 +33,7 @@ public class MiningWindow extends JFrame
 	private final MiningWindow masterWindow = this;
 	private SearchParameters itsSearchParameters = new SearchParameters();
 	private TargetConcept itsTargetConcept = new TargetConcept();
-	
+
 	// for uniform file names when crossvalidating;
 	private long itsTimeStamp;
 
@@ -1327,14 +1327,6 @@ public class MiningWindow extends JFrame
 
 				for (int i = 0; i < aNrMultiTargets; ++i)
 					aNames[i] = aList.get(i).getName();
-/*
-				int aCount = 0;
-				for (Attribute anAttribute : aList)
-				{
-					aNames[aCount] = anAttribute.getName();
-					aCount++;
-				}
-*/
 				// compute base model
 				Bayesian aBayesian =
 					new Bayesian(new BinaryTable(itsTable, aList), aNames);
@@ -1357,14 +1349,14 @@ public class MiningWindow extends JFrame
 		runSubgroupDiscovery(itsTable, 0, aBitSet);
 	}
 
-	private void runSubgroupDiscovery(Table aTable, int theFold, BitSet theBitSet)
+	private SubgroupSet runSubgroupDiscovery(Table aTable, int theFold, BitSet theBitSet)
 	{
 		setupSearchParameters();
 		TargetType aTargetType = itsTargetConcept.getTargetType();
 
 		//TODO other types not implemented yet
 		if (!TargetType.isImplemented(aTargetType))
-			return;
+			return null;
 
 		echoMiningStart();
 		long aBegin = System.currentTimeMillis();
@@ -1406,7 +1398,7 @@ public class MiningWindow extends JFrame
 				aSubgroupDiscovery = new SubgroupDiscovery(itsSearchParameters, aTable, false);
 				break;
 			}
-			default : return; // TODO should never get here, throw warning
+			default : return null; // TODO should never get here, throw warning
 		}
 		aSubgroupDiscovery.Mine(System.currentTimeMillis());
 
@@ -1418,220 +1410,27 @@ public class MiningWindow extends JFrame
 		echoMiningEnd(anEnd - aBegin, aSubgroupDiscovery.getNumberOfSubgroups());
 
 		//ResultWindow
-//			SubgroupSet aPreliminaryResults = aSubgroupDiscovery.getResult();
 		switch (aTargetType)
 		{
 			case MULTI_LABEL :
 			{
 				BinaryTable aBinaryTable = new BinaryTable(aTable, itsTargetConcept.getMultiTargets());
-//					aResultWindow = new ResultWindow(aPreliminaryResults, itsSearchParameters, null, itsTable, aBinaryTable, aSubgroupDiscovery.getQualityMeasure(), itsTotalCount, theFold, theBitSet);
 				new ResultWindow(itsTable, aSubgroupDiscovery, aBinaryTable, theFold, theBitSet);
-				String aFileName = itsTable.getName() + "_fold_" + (theFold) + "_" + itsTimeStamp +".txt";
-				XMLAutoRun.save(aSubgroupDiscovery.getResult(), aFileName);
 				break;
 			}
 			default :
 			{
-//					aResultWindow = new ResultWindow(aPreliminaryResults, itsSearchParameters, null, aTable, aSubgroupDiscovery.getQualityMeasure(), itsTotalCount, theFold, theBitSet);
 				new ResultWindow(aTable, aSubgroupDiscovery, null, theFold, theBitSet);
-			} 
-		}
-	}
-/*
-	// TODO update using new RandomQualityWindow(RANDOM_SUBGROUPS).getSettings()
-	// TODO what could throw exception, probably nothing
-	private void jButtonRandomSubgroupsActionPerformed()
-	{
-		try
-		{
-			setupSearchParameters();
-
-			String inputValue = JOptionPane.showInputDialog("Number of random subgroups to be used\nfor distribution estimation:", 1000);
-			int aNrRepetitions;
-			try
-			{
-				aNrRepetitions = Integer.parseInt(inputValue);
-			}
-			catch (Exception e)
-			{
-				JOptionPane.showMessageDialog(null, "Not a valid number.");
-				return;
-			}
-
-			QualityMeasure aQualityMeasure;
-			switch(itsTargetConcept.getTargetType())
-			{
-				case SINGLE_NOMINAL :
-				{
-					aQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), itsTable.getNrRows(), itsPositiveCount);
-					break;
-				}
-				case MULTI_LABEL :
-				{
-					// base model
-					BinaryTable aBaseTable = new BinaryTable(itsTable, itsTargetConcept.getMultiTargets());
-					Bayesian aBayesian = new Bayesian(aBaseTable);
-					aBayesian.climb();
-					aQualityMeasure = new QualityMeasure(itsSearchParameters, aBayesian.getDAG(), itsTotalCount);
-					break;
-				}
-				case DOUBLE_REGRESSION :
-				case DOUBLE_CORRELATION :
-				{
-					//base model
-					aQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), itsTable.getNrRows(), 100); //TODO fix 100, is useless?
-					break;
-				}
-				default : return; // TODO should never get here
-			}
-
-			Validation aValidation = new Validation(itsSearchParameters, itsTable, aQualityMeasure);
-			double[] aQualities = aValidation.randomSubgroups(aNrRepetitions);
-			NormalDistribution aDistro = new NormalDistribution(aQualities);
-			Arrays.sort(aQualities);
-			for (double aQuality : aQualities)
-			{
-				Log.logCommandLine("" + aDistro.zTransform(aQuality));
-			}
-			Log.logCommandLine("mu: " + aDistro.getMu());
-			Log.logCommandLine("sigma: " + aDistro.getSigma());
-
-			// TODO remove duplicate code
-			int aMethod = JOptionPane.showOptionDialog(null,
-				"The following quality measure thresholds were computed:\n" +
-				"1% significance level: " + aDistro.getOnePercentSignificance() + "\n" +
-				"5% significance level: " + aDistro.getFivePercentSignificance() + "\n" +
-				"10% significance level: " + aDistro.getTenPercentSignificance() + "\n" +
-				"Would you like to keep one of these thresholds as search constraint?",
-				"Keep quality measure threshold?",
-				JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null,
-				new String[] {"1% significance", "5% significance", "10% significance", "Ignore statistics"},
-				"1% significance");
-			switch (aMethod)
-			{
-				case 0:
-				{
-					setQualityMeasureMinimum(Float.toString(aDistro.getOnePercentSignificance()));
-					break;
-				}
-				case 1:
-				{
-					setQualityMeasureMinimum(Float.toString(aDistro.getFivePercentSignificance()));
-					break;
-				}
-				case 2:
-				{
-					setQualityMeasureMinimum(Float.toString(aDistro.getTenPercentSignificance()));
-					break;
-				}
-				case 3:
-				{
-					break; //discard statistics
-				}
 			}
 		}
-		catch (Exception e)
-		{
-			e.printStackTrace();
-			ErrorWindow aWindow = new ErrorWindow(e);
-			aWindow.setLocation(200, 200);
-			aWindow.setVisible(true);
-		}
+
+		//experimental code to always save results to file when running SD.
+		//String aFileName = itsTable.getName() + "_fold_" + (theFold) + "_" + itsTimeStamp +".txt";
+		//XMLAutoRun.save(aSubgroupDiscovery.getResult(), aFileName);
+
+		return aSubgroupDiscovery.getResult();
 	}
 
-	// TODO update using new RandomQualityWindow(RANDOM_SUBGROUPS).getSettings()
-	// TODO what could throw exception, probably nothing
-	private void jButtonRandomConditionsActionPerformed()
-	{
-		try
-		{
-			setupSearchParameters();
-
-			String inputValue = JOptionPane.showInputDialog("Number of random conditions to be used\nfor distribution estimation:", 1000);
-			int aNrRepetitions;
-			try
-			{
-				aNrRepetitions = Integer.parseInt(inputValue);
-			}
-			catch (Exception e)
-			{
-				JOptionPane.showMessageDialog(null, "Not a valid number.");
-				return;
-			}
-
-			QualityMeasure aQualityMeasure;
-			switch(itsTargetConcept.getTargetType())
-			{
-				case SINGLE_NOMINAL :
-				{
-					aQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), itsTable.getNrRows(), itsPositiveCount);
-					break;
-				}
-				case MULTI_LABEL :
-				{
-					// base model
-					BinaryTable aBaseTable = new BinaryTable(itsTable, itsTargetConcept.getMultiTargets());
-					Bayesian aBayesian = new Bayesian(aBaseTable);
-					aBayesian.climb();
-					aQualityMeasure = new QualityMeasure(itsSearchParameters, aBayesian.getDAG(), itsTotalCount);
-					break;
-				}
-				case DOUBLE_REGRESSION :
-				case DOUBLE_CORRELATION :
-				{
-					//base model
-					aQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), itsTable.getNrRows(), 100); //TODO fix 100, is useless?
-					break;
-				}
-				default : return; // TODO should never get here
-			}
-
-			Validation aValidation = new Validation(itsSearchParameters, itsTable, aQualityMeasure);
-			NormalDistribution aDistro = new NormalDistribution(aValidation.randomConditions(aNrRepetitions));
-
-			// TODO remove duplicate code
-			int aMethod = JOptionPane.showOptionDialog(null,
-				"The following quality measure thresholds were computed:\n" +
-				"1% significance level: " + aDistro.getOnePercentSignificance() + "\n" +
-				"5% significance level: " + aDistro.getFivePercentSignificance() + "\n" +
-				"10% significance level: " + aDistro.getTenPercentSignificance() + "\n" +
-				"Would you like to keep one of these thresholds as search constraint?",
-				"Keep quality measure threshold?",
-				JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null,
-				new String[] {"1% significance", "5% significance", "10% significance", "Ignore statistics"},
-				"1% significance");
-			switch (aMethod)
-			{
-				case 0:
-				{
-					setQualityMeasureMinimum(Float.toString(aDistro.getOnePercentSignificance()));
-					break;
-				}
-				case 1:
-				{
-					setQualityMeasureMinimum(Float.toString(aDistro.getFivePercentSignificance()));
-					break;
-				}
-				case 2:
-				{
-					setQualityMeasureMinimum(Float.toString(aDistro.getTenPercentSignificance()));
-					break;
-				}
-				case 3:
-				{
-					break; //discard statistics
-				}
-			}
-		}
-		catch (Exception e)
-		{
-			e.printStackTrace();
-			ErrorWindow aWindow = new ErrorWindow(e);
-			aWindow.setLocation(200, 200);
-			aWindow.setVisible(true);
-		}
-	}
-*/
 	private void jButtonRandomQualitiesActionPerformed(String theMethod)
 	{
 		boolean aSubgroupAction;
@@ -1744,45 +1543,54 @@ public class MiningWindow extends JFrame
 
 	private void jButtonCrossValidateActionPerformed()
 	{
+		int aStore = JOptionPane.showConfirmDialog(null, "Would you like to store binary tables for each fold in a file?",
+			"Store results", JOptionPane.YES_NO_OPTION);
 		itsTimeStamp = System.currentTimeMillis();
 
 		int aK = 10; //TODO set k from GUI
 		CrossValidation aCV = new CrossValidation(itsTable.getNrRows(), aK);
-		
-		BufferedWriter aWriter = null;
-		String aFileName = itsTable.getName() + "_fold_members_" + itsTimeStamp +".txt";
 
-		try
-		{	
-			aWriter = new BufferedWriter(new FileWriter(aFileName));
-		}
-		catch (IOException e)
-		{
-			Log.logCommandLine("Error on file: " + aFileName);
-		}
-		
-		for (int i=0; i<aK; i++)
-		{
-			BitSet aSet = aCV.getSet(i, true);
-			
+		BufferedWriter aWriter = null;
+		String aFileName = itsTable.getName() + "_folds_" + itsTimeStamp +".txt";
+
+		if (aStore == 0)
 			try
 			{
-				aWriter.write("Fold " + (i+1) + ":\n" + aSet.toString());
-				if (i!=aK-1)
-					aWriter.write("\n\n");
-				else if (aWriter != null)
-						aWriter.close();
+				aWriter = new BufferedWriter(new FileWriter(aFileName));
 			}
 			catch (IOException e)
 			{
 				Log.logCommandLine("Error on file: " + aFileName);
 			}
 
-			Log.logCommandLine("size: " + aSet.cardinality());
+		for (int i=0; i<aK; i++)
+		{
+			BitSet aSet = aCV.getSet(i, true);
 			Table aTable = itsTable.select(aSet);
+			SubgroupSet aResult = runSubgroupDiscovery(aTable, (i+1), aSet);
 
-			runSubgroupDiscovery(aTable, (i+1), aSet);
+			if (aStore == 0)
+			{
+				try
+				{
+					aWriter.write("Fold " + (i+1) + ":\n" + aSet.toString() + "\n");
+				}
+				catch (IOException e)
+				{
+					Log.logCommandLine("File writer error: " + e.getMessage());
+				}
+				aResult.saveExtent(aWriter, itsTable, aSet, itsTargetConcept);
+			}
 		}
+		if (aStore == 0)
+			try
+			{
+				aWriter.close();
+			}
+			catch (IOException e)
+			{
+				Log.logCommandLine("File writer error: " + e.getMessage());
+			}
 	}
 
 	/* Setups */
