@@ -11,7 +11,7 @@ import nl.liacs.subdisc.*;
 public class MultiTargetsWindow extends BasicJListWindow// implements ActionListener//, ListSelectionListener
 {
 	private static final long serialVersionUID = 1L;
-	//alpha = '\u03B1' '&#x3b1' beta =  '\u03B2' '&#x3b2' 
+	//alpha = '\u03B1' '&#x3b1' beta =  '\u03B2' '&#x3b2'
 	private static final String ERROR =
 			"Fields with invalid input: %d.\n" +
 			"Alpha and Beta must be >= 0.\nNumber of repetitions must be > 1.";
@@ -37,7 +37,7 @@ public class MultiTargetsWindow extends BasicJListWindow// implements ActionList
 			itsOriginalSelection = itsJList.getSelectedIndices();
 			itsSearchParameters = theSearchParameters;
 			addAdditionalComponents();
-			display("Secondary Targets");
+			display("Multi-label details");
 		}
 	}
 
@@ -55,7 +55,7 @@ public class MultiTargetsWindow extends BasicJListWindow// implements ActionList
 		aPanel.add(GUI.buildLabel("Beta", itsBetaField));
 		aPanel.add(itsBetaField =
 			GUI.buildTextField(String.valueOf(itsSearchParameters.getBeta())));
-		
+
 		aPanel.add(GUI.buildLabel("Repeated modeling", itsRepeatedModelingBox));
 		itsRepeatedModelingBox.setSelectedIndex(1);
 		aPanel.add(itsRepeatedModelingBox);
