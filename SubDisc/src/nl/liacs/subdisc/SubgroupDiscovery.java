@@ -137,7 +137,10 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		itsCandidateCount = 0;
 
 		int aSearchDepth = itsSearchParameters.getSearchDepth();
-		long theEndTime = theBeginTime + (long)(itsSearchParameters.getMaximumTime()*60*1000);
+
+		long theEndTime = theBeginTime + (((long) itsSearchParameters.getMaximumTime()) * 60 * 1000);
+		if (theEndTime <= theBeginTime)
+			theEndTime = Long.MAX_VALUE;
 
 		while ((itsCandidateQueue.size() > 0 ) && (System.currentTimeMillis() <= theEndTime))
 		{
@@ -165,7 +168,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		Log.logCommandLine("number of subgroups: " + getNumberOfSubgroups());
 
 		itsResult.setIDs(); //assign 1 to n to subgroups, for future reference in subsets
-		
+
 		if ((itsSearchParameters.getTargetType() == TargetType.MULTI_LABEL) && itsSearchParameters.getPostProcessingDoAutoRun())
 			postprocess();
 	}
