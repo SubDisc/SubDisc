@@ -141,32 +141,31 @@ public class SubgroupSet extends TreeSet<Subgroup>
 
 				//add targets
 
-				Attribute aPrimaryAttribute = theTargetConcept.getPrimaryTarget(); //almost always there is a primary target
+				Column aPrimaryAttribute = theTargetConcept.getPrimaryTarget(); //almost always there is a primary target
 				switch (theTargetConcept.getTargetType())
 				{
 					case SINGLE_NOMINAL :
 					{
-						aRow += "," + theTable.getColumn(aPrimaryAttribute).getNominal(i);
+						aRow += "," + aPrimaryAttribute.getNominal(i);
 						break;
 					}
 					case SINGLE_NUMERIC :
 					{
-						aRow += "," + theTable.getColumn(aPrimaryAttribute).getFloat(i);
+						aRow += "," + aPrimaryAttribute.getFloat(i);
 						break;
 					}
 					case DOUBLE_REGRESSION :
 					case DOUBLE_CORRELATION :
 					{
-						Attribute aSecondaryAttribute = theTargetConcept.getSecondaryTarget();
-						aRow += "," + theTable.getColumn(aPrimaryAttribute).getFloat(i) + "," + theTable.getColumn(aSecondaryAttribute).getFloat(i);
+						aRow += "," + aPrimaryAttribute.getFloat(i) + "," + theTargetConcept.getSecondaryTarget().getFloat(i);
 						break;
 					}
 					case MULTI_LABEL :
 					{
-						List<Attribute> aTargets = theTargetConcept.getMultiTargets();
-						for (Attribute aTarget: aTargets)
+						List<Column> aTargets = theTargetConcept.getMultiTargets();
+						for (Column aTarget: aTargets)
 						{
-							boolean aTargetValue = theTable.getColumn(aTarget).getBinary(i);
+							boolean aTargetValue = aTarget.getBinary(i);
 							int aValue = aTargetValue?1:0;
 							aRow += "," + aValue;
 						}
