@@ -4,14 +4,14 @@ import java.util.*;
 
 public class BinaryTable
 {
-	private ArrayList<BitSet> itsColumns;
+	private List<BitSet> itsColumns;
 	private int itsNrRecords; //Nr. of examples
 
 	//From Table
-	public BinaryTable(Table theTable, List<Attribute> theAttributes)
+	public BinaryTable(Table theTable, List<Column> theAttributes)
 	{
 		itsColumns = new ArrayList<BitSet>(theAttributes.size());
-		for (Attribute anAttribute : theAttributes)
+		for (Column anAttribute : theAttributes)
 			itsColumns.add(theTable.getBinaryColumn(anAttribute.getIndex()));
 		itsNrRecords = theTable.getNrRows();
 	}

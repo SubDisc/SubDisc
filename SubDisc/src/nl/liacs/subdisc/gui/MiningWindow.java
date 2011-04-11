@@ -2,7 +2,6 @@ package nl.liacs.subdisc.gui;
 
 import java.awt.*;
 import java.awt.event.*;
-import java.io.*;
 import java.text.*;
 import java.util.*;
 import java.util.List;
@@ -33,9 +32,6 @@ public class MiningWindow extends JFrame
 	private final MiningWindow masterWindow = this;
 	private SearchParameters itsSearchParameters = new SearchParameters();
 	private TargetConcept itsTargetConcept = new TargetConcept();
-
-	// for uniform file names when crossvalidating;
-	private long itsTimeStamp;
 
 	public MiningWindow()
 	{
@@ -1256,14 +1252,14 @@ public class MiningWindow extends JFrame
 
 		Object[] aSelection = jListMultiTargets.getSelectedValues();
 		int aNrBinary = aSelection.length;
-		ArrayList<Attribute> aList = new ArrayList<Attribute>(aNrBinary);
+		List<Column> aList = new ArrayList<Column>(aNrBinary);
 
 		// aSelection is in order and names are always present in itsColumns
 		for (int i = 0, j = 0; i < aNrBinary; ++j)
 		{
 			if (aSelection[i].equals(itsTable.getColumn(j).getName()))
 			{
-				aList.add(itsTable.getColumn(j).getAttribute());
+				aList.add(itsTable.getColumn(j));
 				++i;
 			}
 		}
@@ -1321,12 +1317,32 @@ public class MiningWindow extends JFrame
 			}
 			case MULTI_LABEL :
 			{
+				List<Column> aList = itsTargetConcept.getMultiTargets();
+
+				// compute base model
+				Bayesian aBayesian =
+					new Bayesian(new BinaryTable(itsTable, aList), aList);
+				aBayesian.climb();
+				DAG aBaseDAG = aBayesian.getDAG();
+				aBaseDAG.print();
+
+				new ModelWindow(aBaseDAG, 1200, 900);
+				break;
+/*
 				List<Attribute> aList = itsTargetConcept.getMultiTargets();
 				int aNrMultiTargets = aList.size();
 				String[] aNames = new String[aNrMultiTargets];
 
 				for (int i = 0; i < aNrMultiTargets; ++i)
 					aNames[i] = aList.get(i).getName();
+
+//				int aCount = 0;
+//				for (Attribute anAttribute : aList)
+//				{
+//					aNames[aCount] = anAttribute.getName();
+//					aCount++;
+//				}
+
 				// compute base model
 				Bayesian aBayesian =
 					new Bayesian(new BinaryTable(itsTable, aList), aNames);
@@ -1336,6 +1352,7 @@ public class MiningWindow extends JFrame
 
 				new ModelWindow(aBaseDAG, 1200, 900);
 				break;
+*/
 			}
 			default: return; // TODO other types not implemented yet
 		}
@@ -1349,14 +1366,14 @@ public class MiningWindow extends JFrame
 		runSubgroupDiscovery(itsTable, 0, aBitSet);
 	}
 
-	private SubgroupSet runSubgroupDiscovery(Table aTable, int theFold, BitSet theBitSet)
+	private void runSubgroupDiscovery(Table aTable, int theFold, BitSet theBitSet)
 	{
 		setupSearchParameters();
 		TargetType aTargetType = itsTargetConcept.getTargetType();
 
 		//TODO other types not implemented yet
 		if (!TargetType.isImplemented(aTargetType))
-			return null;
+			return;
 
 		echoMiningStart();
 		long aBegin = System.currentTimeMillis();
@@ -1398,7 +1415,7 @@ public class MiningWindow extends JFrame
 				aSubgroupDiscovery = new SubgroupDiscovery(itsSearchParameters, aTable, false);
 				break;
 			}
-			default : return null; // TODO should never get here, throw warning
+			default : return; // TODO should never get here, throw warning
 		}
 		aSubgroupDiscovery.Mine(System.currentTimeMillis());
 
@@ -1410,27 +1427,218 @@ public class MiningWindow extends JFrame
 		echoMiningEnd(anEnd - aBegin, aSubgroupDiscovery.getNumberOfSubgroups());
 
 		//ResultWindow
+//			SubgroupSet aPreliminaryResults = aSubgroupDiscovery.getResult();
 		switch (aTargetType)
 		{
 			case MULTI_LABEL :
 			{
 				BinaryTable aBinaryTable = new BinaryTable(aTable, itsTargetConcept.getMultiTargets());
+//					aResultWindow = new ResultWindow(aPreliminaryResults, itsSearchParameters, null, itsTable, aBinaryTable, aSubgroupDiscovery.getQualityMeasure(), itsTotalCount, theFold, theBitSet);
 				new ResultWindow(itsTable, aSubgroupDiscovery, aBinaryTable, theFold, theBitSet);
 				break;
 			}
 			default :
 			{
+//					aResultWindow = new ResultWindow(aPreliminaryResults, itsSearchParameters, null, aTable, aSubgroupDiscovery.getQualityMeasure(), itsTotalCount, theFold, theBitSet);
 				new ResultWindow(aTable, aSubgroupDiscovery, null, theFold, theBitSet);
 			}
 		}
+	}
+/*
+	// TODO update using new RandomQualityWindow(RANDOM_SUBGROUPS).getSettings()
+	// TODO what could throw exception, probably nothing
+	private void jButtonRandomSubgroupsActionPerformed()
+	{
+		try
+		{
+			setupSearchParameters();
 
-		//experimental code to always save results to file when running SD.
-		//String aFileName = itsTable.getName() + "_fold_" + (theFold) + "_" + itsTimeStamp +".txt";
-		//XMLAutoRun.save(aSubgroupDiscovery.getResult(), aFileName);
+			String inputValue = JOptionPane.showInputDialog("Number of random subgroups to be used\nfor distribution estimation:", 1000);
+			int aNrRepetitions;
+			try
+			{
+				aNrRepetitions = Integer.parseInt(inputValue);
+			}
+			catch (Exception e)
+			{
+				JOptionPane.showMessageDialog(null, "Not a valid number.");
+				return;
+			}
 
-		return aSubgroupDiscovery.getResult();
+			QualityMeasure aQualityMeasure;
+			switch(itsTargetConcept.getTargetType())
+			{
+				case SINGLE_NOMINAL :
+				{
+					aQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), itsTable.getNrRows(), itsPositiveCount);
+					break;
+				}
+				case MULTI_LABEL :
+				{
+					// base model
+					BinaryTable aBaseTable = new BinaryTable(itsTable, itsTargetConcept.getMultiTargets());
+					Bayesian aBayesian = new Bayesian(aBaseTable);
+					aBayesian.climb();
+					aQualityMeasure = new QualityMeasure(itsSearchParameters, aBayesian.getDAG(), itsTotalCount);
+					break;
+				}
+				case DOUBLE_REGRESSION :
+				case DOUBLE_CORRELATION :
+				{
+					//base model
+					aQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), itsTable.getNrRows(), 100); //TODO fix 100, is useless?
+					break;
+				}
+				default : return; // TODO should never get here
+			}
+
+			Validation aValidation = new Validation(itsSearchParameters, itsTable, aQualityMeasure);
+			double[] aQualities = aValidation.randomSubgroups(aNrRepetitions);
+			NormalDistribution aDistro = new NormalDistribution(aQualities);
+			Arrays.sort(aQualities);
+			for (double aQuality : aQualities)
+			{
+				Log.logCommandLine("" + aDistro.zTransform(aQuality));
+			}
+			Log.logCommandLine("mu: " + aDistro.getMu());
+			Log.logCommandLine("sigma: " + aDistro.getSigma());
+
+			// TODO remove duplicate code
+			int aMethod = JOptionPane.showOptionDialog(null,
+				"The following quality measure thresholds were computed:\n" +
+				"1% significance level: " + aDistro.getOnePercentSignificance() + "\n" +
+				"5% significance level: " + aDistro.getFivePercentSignificance() + "\n" +
+				"10% significance level: " + aDistro.getTenPercentSignificance() + "\n" +
+				"Would you like to keep one of these thresholds as search constraint?",
+				"Keep quality measure threshold?",
+				JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null,
+				new String[] {"1% significance", "5% significance", "10% significance", "Ignore statistics"},
+				"1% significance");
+			switch (aMethod)
+			{
+				case 0:
+				{
+					setQualityMeasureMinimum(Float.toString(aDistro.getOnePercentSignificance()));
+					break;
+				}
+				case 1:
+				{
+					setQualityMeasureMinimum(Float.toString(aDistro.getFivePercentSignificance()));
+					break;
+				}
+				case 2:
+				{
+					setQualityMeasureMinimum(Float.toString(aDistro.getTenPercentSignificance()));
+					break;
+				}
+				case 3:
+				{
+					break; //discard statistics
+				}
+			}
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+			ErrorWindow aWindow = new ErrorWindow(e);
+			aWindow.setLocation(200, 200);
+			aWindow.setVisible(true);
+		}
 	}
 
+	// TODO update using new RandomQualityWindow(RANDOM_SUBGROUPS).getSettings()
+	// TODO what could throw exception, probably nothing
+	private void jButtonRandomConditionsActionPerformed()
+	{
+		try
+		{
+			setupSearchParameters();
+
+			String inputValue = JOptionPane.showInputDialog("Number of random conditions to be used\nfor distribution estimation:", 1000);
+			int aNrRepetitions;
+			try
+			{
+				aNrRepetitions = Integer.parseInt(inputValue);
+			}
+			catch (Exception e)
+			{
+				JOptionPane.showMessageDialog(null, "Not a valid number.");
+				return;
+			}
+
+			QualityMeasure aQualityMeasure;
+			switch(itsTargetConcept.getTargetType())
+			{
+				case SINGLE_NOMINAL :
+				{
+					aQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), itsTable.getNrRows(), itsPositiveCount);
+					break;
+				}
+				case MULTI_LABEL :
+				{
+					// base model
+					BinaryTable aBaseTable = new BinaryTable(itsTable, itsTargetConcept.getMultiTargets());
+					Bayesian aBayesian = new Bayesian(aBaseTable);
+					aBayesian.climb();
+					aQualityMeasure = new QualityMeasure(itsSearchParameters, aBayesian.getDAG(), itsTotalCount);
+					break;
+				}
+				case DOUBLE_REGRESSION :
+				case DOUBLE_CORRELATION :
+				{
+					//base model
+					aQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), itsTable.getNrRows(), 100); //TODO fix 100, is useless?
+					break;
+				}
+				default : return; // TODO should never get here
+			}
+
+			Validation aValidation = new Validation(itsSearchParameters, itsTable, aQualityMeasure);
+			NormalDistribution aDistro = new NormalDistribution(aValidation.randomConditions(aNrRepetitions));
+
+			// TODO remove duplicate code
+			int aMethod = JOptionPane.showOptionDialog(null,
+				"The following quality measure thresholds were computed:\n" +
+				"1% significance level: " + aDistro.getOnePercentSignificance() + "\n" +
+				"5% significance level: " + aDistro.getFivePercentSignificance() + "\n" +
+				"10% significance level: " + aDistro.getTenPercentSignificance() + "\n" +
+				"Would you like to keep one of these thresholds as search constraint?",
+				"Keep quality measure threshold?",
+				JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null,
+				new String[] {"1% significance", "5% significance", "10% significance", "Ignore statistics"},
+				"1% significance");
+			switch (aMethod)
+			{
+				case 0:
+				{
+					setQualityMeasureMinimum(Float.toString(aDistro.getOnePercentSignificance()));
+					break;
+				}
+				case 1:
+				{
+					setQualityMeasureMinimum(Float.toString(aDistro.getFivePercentSignificance()));
+					break;
+				}
+				case 2:
+				{
+					setQualityMeasureMinimum(Float.toString(aDistro.getTenPercentSignificance()));
+					break;
+				}
+				case 3:
+				{
+					break; //discard statistics
+				}
+			}
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+			ErrorWindow aWindow = new ErrorWindow(e);
+			aWindow.setLocation(200, 200);
+			aWindow.setVisible(true);
+		}
+	}
+*/
 	private void jButtonRandomQualitiesActionPerformed(String theMethod)
 	{
 		boolean aSubgroupAction;
@@ -1543,54 +1751,16 @@ public class MiningWindow extends JFrame
 
 	private void jButtonCrossValidateActionPerformed()
 	{
-		int aStore = JOptionPane.showConfirmDialog(null, "Would you like to store binary tables for each fold in a file?",
-			"Store results", JOptionPane.YES_NO_OPTION);
-		itsTimeStamp = System.currentTimeMillis();
-
 		int aK = 10; //TODO set k from GUI
 		CrossValidation aCV = new CrossValidation(itsTable.getNrRows(), aK);
-
-		BufferedWriter aWriter = null;
-		String aFileName = itsTable.getName() + "_folds_" + itsTimeStamp +".txt";
-
-		if (aStore == 0)
-			try
-			{
-				aWriter = new BufferedWriter(new FileWriter(aFileName));
-			}
-			catch (IOException e)
-			{
-				Log.logCommandLine("Error on file: " + aFileName);
-			}
-
 		for (int i=0; i<aK; i++)
 		{
 			BitSet aSet = aCV.getSet(i, true);
+			Log.logCommandLine("size: " + aSet.cardinality());
 			Table aTable = itsTable.select(aSet);
-			SubgroupSet aResult = runSubgroupDiscovery(aTable, (i+1), aSet);
 
-			if (aStore == 0)
-			{
-				try
-				{
-					aWriter.write("Fold " + (i+1) + ":\n" + aSet.toString() + "\n");
-				}
-				catch (IOException e)
-				{
-					Log.logCommandLine("File writer error: " + e.getMessage());
-				}
-				aResult.saveExtent(aWriter, itsTable, aSet, itsTargetConcept);
-			}
+			runSubgroupDiscovery(aTable, (i+1), aSet);
 		}
-		if (aStore == 0)
-			try
-			{
-				aWriter.close();
-			}
-			catch (IOException e)
-			{
-				Log.logCommandLine("File writer error: " + e.getMessage());
-			}
 	}
 
 	/* Setups */
@@ -1638,8 +1808,9 @@ public class MiningWindow extends JFrame
 	// Obsolete, this info is already up to date through *ActionPerformed methods
 	private void initTargetConcept()
 	{
-		Attribute aTarget = itsTable.getAttribute(getTargetAttributeName());
-		itsTargetConcept.setPrimaryTarget(aTarget);
+//		Attribute aTarget = itsTable.getAttribute(getTargetAttributeName());
+//		itsTargetConcept.setPrimaryTarget(aTarget);
+		itsTargetConcept.setPrimaryTarget(itsTable.getAttribute(getTargetAttributeName()));
 
 		// target value
 		switch (itsTargetConcept.getTargetType())
@@ -1694,7 +1865,7 @@ public class MiningWindow extends JFrame
 		// primary target and MiscField
 		boolean isEmpty = true;
 		for (int i = 0; i < itsTable.getNrColumns(); i++) {
-			Attribute anAttribute = itsTable.getAttribute(i);
+			Column anAttribute = itsTable.getColumn(i);
 			if ((aTargetType == TargetType.SINGLE_NOMINAL && anAttribute.isNominalType()) ||
 					(aTargetType == TargetType.SINGLE_NOMINAL && anAttribute.isBinaryType()) ||
 					(aTargetType == TargetType.SINGLE_NUMERIC && anAttribute.isNumericType()) ||
@@ -1705,10 +1876,10 @@ public class MiningWindow extends JFrame
 					(aTargetType == TargetType.MULTI_BINARY_CLASSIFICATION && anAttribute.isBinaryType()) ||
 					(aTargetType == TargetType.MULTI_BINARY_CLASSIFICATION && anAttribute.isNominalType()))
 			{
-				addTargetAttributeItem(itsTable.getAttribute(i).getName());
+				addTargetAttributeItem(itsTable.getColumn(i).getName());
 				if ((aTargetType == TargetType.DOUBLE_REGRESSION) ||
 						(aTargetType == TargetType.DOUBLE_CORRELATION))
-					addMiscFieldItem(itsTable.getAttribute(i).getName());
+					addMiscFieldItem(itsTable.getColumn(i).getName());
 
 				isEmpty = false;
 			}
@@ -1729,12 +1900,12 @@ public class MiningWindow extends JFrame
 			((DefaultListModel) jListMultiTargets.getModel()).clear();
 
 			int aCount = 0;
-			ArrayList<Attribute> aList = new ArrayList<Attribute>();
+			List<Column> aList = new ArrayList<Column>();
 			for (Column c: itsTable.getColumns())
-				if (c.getAttribute().isBinaryType() && c.getIsEnabled())
+				if (c.isBinaryType() && c.getIsEnabled())
 				{
 					addMultiTargetsItem(c.getName());
-					aList.add(c.getAttribute());
+					aList.add(c);
 					aCount++;
 				}
 			itsTargetConcept.setMultiTargets(aList);
@@ -1792,8 +1963,8 @@ public class MiningWindow extends JFrame
 			case DOUBLE_CORRELATION :
 			{
 				initTargetConcept();
-				Column aPrimaryColumn = itsTable.getColumn(itsTargetConcept.getPrimaryTarget());
-				Column aSecondaryColumn = itsTable.getColumn(itsTargetConcept.getSecondaryTarget());
+				Column aPrimaryColumn = itsTargetConcept.getPrimaryTarget();
+				Column aSecondaryColumn = itsTargetConcept.getSecondaryTarget();
 				CorrelationMeasure aCM =
 					new CorrelationMeasure(QualityMeasure.CORRELATION_R, aPrimaryColumn, aSecondaryColumn);
 				jLabelTargetInfo.setText(" correlation");

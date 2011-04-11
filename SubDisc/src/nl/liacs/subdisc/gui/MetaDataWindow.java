@@ -190,7 +190,7 @@ public class MetaDataWindow extends JFrame implements ActionListener
 		{
 			if (at.toString().equals(aCommand))
 			{
-				for (int i = 0, j = itsTable.getColumns().size(); i < j; i++)
+				for (int i = 0, j = itsTable.getNrColumns(); i < j; i++)
 					if (itsTable.getColumn(i).getType() == at)
 						itsJTable.addRowSelectionInterval(i, i);
 				return;
@@ -264,7 +264,7 @@ public class MetaDataWindow extends JFrame implements ActionListener
 						Column aColumn = itsTable.getColumn(aWrongType.get(0));
 						anIndicator = String.format("attribute '%s', which is of type '%s'.%n",
 										aColumn.getName(),
-										aColumn.getAttribute().getTypeName());
+										aColumn.getType());
 					}
 					else
 						anIndicator = "some attributes. \nThey are of an incompatible type. See selection.";

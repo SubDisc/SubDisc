@@ -32,7 +32,7 @@ public class Validation
 		{
 			case SINGLE_NOMINAL :
 			{
-				Attribute aTarget = itsTargetConcept.getPrimaryTarget();
+				Column aTarget = itsTargetConcept.getPrimaryTarget();
 				Condition aCondition = new Condition(aTarget, Condition.EQUALS);
 				aCondition.setValue(itsTargetConcept.getTargetValue());
 				BitSet aBinaryTarget = itsTable.evaluate(aCondition);
@@ -79,8 +79,10 @@ public class Validation
 				//TODO implement
 			case DOUBLE_CORRELATION :
 			{
-				Column aPrimaryColumn = itsTable.getColumn(itsTargetConcept.getPrimaryTarget());
-				Column aSecondaryColumn = itsTable.getColumn(itsTargetConcept.getSecondaryTarget());
+//				Column aPrimaryColumn = itsTable.getColumn(itsTargetConcept.getPrimaryTarget());
+//				Column aSecondaryColumn = itsTable.getColumn(itsTargetConcept.getSecondaryTarget());
+				Column aPrimaryColumn = itsTargetConcept.getPrimaryTarget();
+				Column aSecondaryColumn = itsTargetConcept.getSecondaryTarget();
 				CorrelationMeasure itsBaseCM =
 					new CorrelationMeasure(itsSearchParameters.getQualityMeasure(), aPrimaryColumn, aSecondaryColumn);
 
@@ -124,7 +126,7 @@ public class Validation
 		{
 			case SINGLE_NOMINAL :
 			{
-				Attribute aTarget = itsTargetConcept.getPrimaryTarget();
+				Column aTarget = itsTargetConcept.getPrimaryTarget();
 				Condition aCondition = new Condition(aTarget, Condition.EQUALS);
 				aCondition.setValue(itsTargetConcept.getTargetValue());
 				BitSet aBinaryTarget = itsTable.evaluate(aCondition);
@@ -185,8 +187,10 @@ public class Validation
 				//TODO implement
 			case DOUBLE_CORRELATION :
 			{
-				Column aPrimaryColumn = itsTable.getColumn(itsTargetConcept.getPrimaryTarget());
-				Column aSecondaryColumn = itsTable.getColumn(itsTargetConcept.getSecondaryTarget());
+//				Column aPrimaryColumn = itsTable.getColumn(itsTargetConcept.getPrimaryTarget());
+//				Column aSecondaryColumn = itsTable.getColumn(itsTargetConcept.getSecondaryTarget());
+				Column aPrimaryColumn = itsTargetConcept.getPrimaryTarget();
+				Column aSecondaryColumn = itsTargetConcept.getSecondaryTarget();
 				CorrelationMeasure itsBaseCM =
 					new CorrelationMeasure(itsSearchParameters.getQualityMeasure(), aPrimaryColumn, aSecondaryColumn);
 
@@ -328,28 +332,32 @@ public class Validation
 			{
 				anAttribute = itsTable.getAttribute(theRandom.nextInt(aNrColumns));
 			}
-*/
 			Attribute anAttribute;
 			do
 				anAttribute = itsTable.getAttribute(theRandom.nextInt(aNrColumns));
 			while (itsTargetConcept.isTargetAttribute(anAttribute));
+ */
+			Column aColumn;
+			do
+				aColumn = itsTable.getColumn(theRandom.nextInt(aNrColumns));
+			while (itsTargetConcept.isTargetAttribute(aColumn));
 
 			int anOperator;
 			Condition aCondition;
-			switch(anAttribute.getType())
+			switch(aColumn.getType())
 			{
 				case BINARY :
 				{
 					anOperator = Condition.EQUALS;
-					aCondition = new Condition(anAttribute, anOperator);
+					aCondition = new Condition(aColumn, anOperator);
 					aCondition.setValue(theRandom.nextBoolean() ? "1" : "0");
 					break;
 				}
 				case NOMINAL :
 				{
 					anOperator = Condition.EQUALS;
-					aCondition = new Condition(anAttribute, anOperator);
-					TreeSet<String> aDomain = itsTable.getColumn(anAttribute).getDomain();
+					aCondition = new Condition(aColumn, anOperator);
+					TreeSet<String> aDomain = aColumn.getDomain();
 					int aNrDistinct = aDomain.size();
 					int aRandomIndex = (int) (theRandom.nextDouble()* (double) aNrDistinct);
 					Iterator<String> anIterator = aDomain.iterator();
@@ -364,9 +372,9 @@ public class Validation
 				{
 					anOperator = theRandom.nextBoolean() ?
 						Condition.LESS_THAN_OR_EQUAL : Condition.GREATER_THAN_OR_EQUAL;
-					aCondition = new Condition(anAttribute, anOperator);
-					float aMin = itsTable.getColumn(anAttribute).getMin();
-					float aMax = itsTable.getColumn(anAttribute).getMax();
+					aCondition = new Condition(aColumn, anOperator);
+					float aMin = aColumn.getMin();
+					float aMax = aColumn.getMax();
 					aCondition.setValue(
 						Float.toString(aMin + (aMax - aMin) / 4 + (aMax - aMin) * theRandom.nextFloat() / 2));
 					break;

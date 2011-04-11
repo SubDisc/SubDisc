@@ -17,28 +17,31 @@ public class Condition
 	public static final int SECOND_NUMERIC_OPERATOR = GREATER_THAN_OR_EQUAL;
 	public static final int LAST_NUMERIC_OPERATOR   = SECOND_NUMERIC_OPERATOR;
 
-	private Attribute itsAttribute;
+//	private Attribute itsAttribute;
+	private Column itsColumn;
 	private int itsOperator;
 	private String itsValue = null;
 
-	public Condition(Attribute theAttribute)
+	public Condition(Column theColumn)
 	{
-		itsAttribute = theAttribute;
-		if (itsAttribute.isNumericType())
+		// TODO null check
+		itsColumn = theColumn;
+		if (itsColumn.isNumericType())
 			itsOperator = FIRST_NUMERIC_OPERATOR;
 		else // if (itsAttribute.isNominalType())
 			itsOperator = FIRST_NOMINAL_OPERATOR;
 	}
 
-	public Condition(Attribute theAttribute, int theOperator)
+	// TODO null check
+	public Condition(Column theColumn, int theOperator)
 	{
-		itsAttribute = theAttribute;
+		itsColumn = theColumn;
 		itsOperator = theOperator;
 	}
 
 	public Condition copy()
 	{
-		Condition aNewCondition = new Condition(itsAttribute, itsOperator);
+		Condition aNewCondition = new Condition(itsColumn, itsOperator);
 		aNewCondition.setValue(new String(getValue()));
 		return aNewCondition;
 	}
@@ -48,7 +51,7 @@ public class Condition
 		if (theObject.getClass() != this.getClass())
 			return false;
 		Condition aCondition = (Condition) theObject;
-		if (itsAttribute == aCondition.getAttribute() && itsOperator == aCondition.getOperator() &&
+		if (itsColumn == aCondition.getAttribute() && itsOperator == aCondition.getOperator() &&
 			itsValue.equals(aCondition.getValue()))
 			return true;
 		return false;
@@ -74,7 +77,7 @@ public class Condition
 		itsValue = theValue;
 	}
 
-	public Attribute getAttribute() { return itsAttribute; }
+	public Column getAttribute() { return itsColumn; }
 
 	public String getAggregateString()
 	{
@@ -90,14 +93,15 @@ public class Condition
 	// this is used by ConditionList.toString()
 	public String toString()
 	{
-		return itsAttribute.getName() + " " + getOperatorString() + " '" + itsValue + "'";
+		return itsColumn.getName() + " " + getOperatorString() + " '" + itsValue + "'";
 	}
 
+	// this is never used atm
 	public String toCleanString()
 	{
-		String aName = itsAttribute.hasShort() ? itsAttribute.getShort() : itsAttribute.getName();
+		String aName = itsColumn.hasShort() ? itsColumn.getShort() : itsColumn.getName();
 
-		if (itsAttribute.isNumericType())
+		if (itsColumn.isNumericType())
 			return aName  + " " + getOperatorString() + " " + itsValue;
 		else
 			return aName + " " + getOperatorString() + " '" + itsValue + "'";
@@ -117,6 +121,8 @@ public class Condition
 
 	public int getOperator() { return itsOperator; }
 
+	// TODO theValue for <= and >= is converted from Float to String in Table
+	// and converted from String to Float here
 	public boolean evaluate(String theValue)
 	{
 		switch(itsOperator)

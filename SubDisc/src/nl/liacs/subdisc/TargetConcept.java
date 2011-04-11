@@ -19,10 +19,12 @@ public class TargetConcept implements XMLNodeInterface
 	// itsMembers
 	private int			itsNrTargetAttributes = 1;	// always 1 in current code
 	private TargetType	itsTargetType;
-	private Attribute	itsPrimaryTarget;
+//	private Attribute	itsPrimaryTarget;
+	private Column		itsPrimaryTarget;
 	private String		itsTargetValue;
-	private Attribute	itsSecondaryTarget;
-	private List<Attribute> itsMultiTargets;
+//	private Attribute	itsSecondaryTarget;
+	private Column		itsSecondaryTarget;
+	private List<Column> itsMultiTargets;
 
 	public TargetConcept()
 	{
@@ -54,7 +56,7 @@ public class TargetConcept implements XMLNodeInterface
 			{
 				if (!aSetting.getTextContent().isEmpty())
 				{
-					itsMultiTargets = new ArrayList<Attribute>();
+					itsMultiTargets = new ArrayList<Column>();
 					for (String s : aSetting.getTextContent().split(",", -1))
 						itsMultiTargets.add(theTable.getAttribute(s));
 				}
@@ -73,34 +75,38 @@ public class TargetConcept implements XMLNodeInterface
 			itsTargetType = TargetType.getTargetType(theTargetTypeName);
 	}
 
-	public Attribute getPrimaryTarget() { return itsPrimaryTarget; }
-	public void setPrimaryTarget(Attribute thePrimaryTarget) { itsPrimaryTarget = thePrimaryTarget; }
+//	public Attribute getPrimaryTarget() { return itsPrimaryTarget; }
+	public Column getPrimaryTarget() { return itsPrimaryTarget; }
+//	public void setPrimaryTarget(Attribute thePrimaryTarget) { itsPrimaryTarget = thePrimaryTarget; }
+	public void setPrimaryTarget(Column thePrimaryTarget) { itsPrimaryTarget = thePrimaryTarget; }
 	public String getTargetValue() { return itsTargetValue; }
 	public void setTargetValue(String theTargetValue) { itsTargetValue = theTargetValue; }
 
-	public Attribute getSecondaryTarget() { return itsSecondaryTarget; }
-	public void setSecondaryTarget(Attribute theSecondaryTarget) { itsSecondaryTarget = theSecondaryTarget; }
+//	public Attribute getSecondaryTarget() { return itsSecondaryTarget; }
+	public Column getSecondaryTarget() { return itsSecondaryTarget; }
+//	public void setSecondaryTarget(Attribute theSecondaryTarget) { itsSecondaryTarget = theSecondaryTarget; }
+	public void setSecondaryTarget(Column theSecondaryTarget) { itsSecondaryTarget = theSecondaryTarget; }
 
-	public List<Attribute> getMultiTargets() { return itsMultiTargets; }
-	public void setMultiTargets(ArrayList<Attribute> theMultiTargets)
+	public List<Column> getMultiTargets() { return itsMultiTargets; }
+	public void setMultiTargets(List<Column> theMultiTargets)
 	{
 		itsMultiTargets = theMultiTargets;
 	}
 
 	public boolean isSingleNominal() { return (itsTargetType == TargetType.SINGLE_NOMINAL); }
 
-	public boolean isTargetAttribute(Attribute theAttribute)
+	public boolean isTargetAttribute(Column theColumn)
 	{
 		switch (itsTargetType)
 		{
 			case SINGLE_NOMINAL :
 			case SINGLE_NUMERIC :
-				return (theAttribute == itsPrimaryTarget);
+				return (theColumn == itsPrimaryTarget);
 			case DOUBLE_REGRESSION :
 			case DOUBLE_CORRELATION :
-				return (theAttribute == itsPrimaryTarget || theAttribute == itsSecondaryTarget);
+				return (theColumn == itsPrimaryTarget || theColumn == itsSecondaryTarget);
 			case MULTI_LABEL :
-				return (itsMultiTargets.contains(theAttribute));
+				return (itsMultiTargets.contains(theColumn));
 			default :
 				return false;
 		}
@@ -135,9 +141,8 @@ public class TargetConcept implements XMLNodeInterface
 		else
 		{
 			StringBuilder sb = new StringBuilder(itsMultiTargets.size() * 10);
-			for (Attribute a : itsMultiTargets)
-				sb.append(a.getName() + ",");
-//			sb.deleteCharAt(sb.length() - 1);	// removes last comma
+			for (Column c : itsMultiTargets)
+				sb.append(c.getName() + ",");
 			XMLNode.addNodeTo(aNode, "multi_targets", sb.substring(0, sb.length() - 1));
 		}
 	}

@@ -88,7 +88,7 @@ public class BrowseWindow extends JFrame implements ActionListener
 		{
 			// 91 is width of "(999 distinct)"
 			aHeaderWidth = Math.max(aRenderer.getTableCellRendererComponent(
-									null, theDataTable.getAttribute(i).getName(),
+									null, theDataTable.getColumn(i).getName(),
 									false, false, 0, 0).getPreferredSize().width,
 									91);
 

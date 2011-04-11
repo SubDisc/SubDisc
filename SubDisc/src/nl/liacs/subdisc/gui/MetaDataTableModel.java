@@ -83,17 +83,17 @@ public class MetaDataTableModel extends AbstractTableModel
 		else
 		{
 			if (col == MetaDataTableHeader.ATTRIBUTE.columnNr)
-				return itsTable.getColumns().get(row).getAttribute().getName();
+				return itsTable.getColumn(row).getName();
 			else if (col == MetaDataTableHeader.CARDINALITY.columnNr)
-				return itsTable.getColumns().get(row).getCardinality();
+				return itsTable.getColumn(row).getCardinality();
 			else if (col == MetaDataTableHeader.TYPE.columnNr)
-				return itsTable.getColumns().get(row).getAttribute().getTypeName();
+				return itsTable.getColumn(row).getType();
 			else if (col == MetaDataTableHeader.ENABLED.columnNr)
-				return itsTable.getColumns().get(row).getIsEnabled() ? "yes" : "no";
+				return itsTable.getColumn(row).getIsEnabled() ? "yes" : "no";
 			else if (col == MetaDataTableHeader.HAS_MISSING.columnNr)
-				return itsTable.getColumns().get(row).getHasMissingValues() ? "yes" : "no";
+				return itsTable.getColumn(row).getHasMissingValues() ? "yes" : "no";
 			else if (col == MetaDataTableHeader.MISSING_VALUE.columnNr)
-				return itsTable.getColumns().get(row).getMissingValue();
+				return itsTable.getColumn(row).getMissingValue();
 			else
 			{
 				Log.logCommandLine(

@@ -14,10 +14,17 @@ import org.w3c.dom.*;
  */
 public class Column implements XMLNodeInterface
 {
-	private static final int DEFAULT_INIT_SIZE = 1000;
+	public static final int DEFAULT_INIT_SIZE = 1000;
+
+	// itsAttribute replacements
+	private AttributeType itsType;
+	private String itsName;
+	private String itsShort;
+	private int itsIndex;
+
 
 	// when adding/removing members be sure to update addNodeTo() and loadNode()
-	private Attribute itsAttribute;
+//	private Attribute itsAttribute;
 	private ArrayList<Float> itsFloats;
 	private ArrayList<String> itsNominals;
 	private BitSet itsBinaries;
@@ -35,26 +42,88 @@ public class Column implements XMLNodeInterface
 	private static final String trueFloat = "\\+?0*1(\\.0+)?";
 	private static final String trueInteger = "[-+]?\\d+(\\.0+)?";
 
-	/**
-	 *
-	 * @param theAttribute
-	 */
+/*
+ * NEW itsAttribute REPLACEMENTS
+ */
+	public Column(String theName, String theShort, AttributeType theType, int theIndex, int theNrRows)
+	{
+		if (!isValidIndex(theIndex))
+			return;
+		else
+			itsIndex = theIndex;
+
+		checkAndSetName(theName);
+		itsShort = theShort;
+		checkAndSetType(theType);
+
+		setupColumn(theNrRows <= 0 ? DEFAULT_INIT_SIZE : theNrRows);
+	}
+
+	private boolean isValidIndex(int theIndex)
+	{
+		boolean isValid = (theIndex >= 0);
+
+		if (!isValid)
+			Log.logCommandLine(
+				"Column Constructor: index can not be < 0. No index set.");
+
+		return isValid;
+	}
+
+	private void checkAndSetName(String theName)
+	{
+		if (theName == null || theName.isEmpty())
+		{
+			itsName = String.valueOf(System.nanoTime());
+			constructorErrorLog("name can not be 'null' or empty. Using: ",
+								itsName);
+		}
+		else
+			itsName = theName;
+	}
+
+	private void checkAndSetType(AttributeType theType)
+	{
+		if (theType == null)
+		{
+			itsType = AttributeType.getDefault();
+			constructorErrorLog("type can not be 'null'. Using: ",
+								itsType.name());
+		}
+		else
+			itsType = theType;
+	}
+
+	private void constructorErrorLog(String theMessage, String theAlternative)
+	{
+		Log.logCommandLine("Column Constructor: " +
+							theMessage +
+							theAlternative);
+	}
+
+	//called after removing (domain) columns from Table
+	void setIndex(int theIndex)
+	{
+		if (isValidIndex(theIndex))
+			itsIndex = theIndex;
+	}
+/*
+ * END OF itsAttribute REPLACEMENTS
+ */
+
+/*
 	public Column(Attribute theAttribute)
 	{
 		itsAttribute = theAttribute;
 		setupColumn(DEFAULT_INIT_SIZE);
 	}
 
-	/**
-	 *
-	 * @param theAttribute
-	 */
 	public Column(Attribute theAttribute, int theNrRows)
 	{
 		itsAttribute = theAttribute;
 		setupColumn(theNrRows);
 	}
-
+*/
 	/**
 	 *
 	 * @param theColumnNode
@@ -67,7 +136,8 @@ public class Column implements XMLNodeInterface
 			Node aSetting = aChildren.item(i);
 			String aNodeName = aSetting.getNodeName();
 			if ("attribute".equalsIgnoreCase(aNodeName))
-				itsAttribute = new Attribute(aSetting);
+			;
+//				itsAttribute = new Attribute(aSetting);
 			else if ("missing_value".equalsIgnoreCase(aNodeName))
 				itsMissingValue = aSetting.getTextContent();
 			else if ("enabled".equalsIgnoreCase(aNodeName))
@@ -78,7 +148,7 @@ public class Column implements XMLNodeInterface
 
 	private void setupColumn(int theNrRows)
 	{
-		switch(itsAttribute.getType())
+		switch(itsType)
 		{
 			case NOMINAL :
 			{
@@ -115,9 +185,9 @@ public class Column implements XMLNodeInterface
 	public Column select(BitSet theSet)
 	{
 		int aColumnsSize = theSet.cardinality();
-		Column aColumn = new Column(itsAttribute, aColumnsSize);
+		Column aColumn = new Column(itsName, itsShort, itsType, itsIndex, aColumnsSize);
 
-		switch(itsAttribute.getType())
+		switch(itsType)
 		{
 			case NOMINAL :
 			{
@@ -169,31 +239,38 @@ public class Column implements XMLNodeInterface
 		itsNominals.set(theIndex, theValue);
 	}
 	public int size() { return itsSize; }
-	public Attribute getAttribute() { return itsAttribute; }	// TODO return copy of mutable type
-	public AttributeType getType() { return itsAttribute.getType(); }
-	public String getName() {return itsAttribute.getName(); }
+//	public Attribute getAttribute() { return itsAttribute; }	// TODO return copy of mutable type
+	public String getName() { return itsName; }
+	public String getShort() { return hasShort() ? itsShort : ""; }
+	public boolean hasShort() { return (itsShort != null) ; }
+	public String getNameAndShort()
+	{
+		return itsName + (hasShort() ? " (" + getShort() + ")" : "");
+	}
+	public AttributeType getType() { return itsType; }
+	public int getIndex() { return itsIndex; }	// is never set for MRML
 	// TODO these methods should all check for ArrayIndexOutOfBounds Exceptions
 	public float getFloat(int theIndex) { return itsFloats.get(theIndex).floatValue(); }
 	public String getNominal(int theIndex) { return itsNominals.get(theIndex); }
 	public boolean getBinary(int theIndex) { return itsBinaries.get(theIndex); }
 	public String getString(int theIndex)
 	{
-		switch (itsAttribute.getType())
+		switch (itsType)
 		{
 			case NOMINAL : return getNominal(theIndex);
 			case NUMERIC :
 			case ORDINAL : return itsFloats.get(theIndex).toString();
 			case BINARY : return getBinary(theIndex)?"1":"0";
 			default : logTypeError("Column.getString()");
-						return ("Unknown type: " + itsAttribute.getTypeName());
+						return ("Unknown type: " + itsType.toString().toLowerCase());
 		}
 	}
 	public BitSet getBinaries() { return (BitSet) itsBinaries.clone(); }
 
-	public boolean isNominalType() { return itsAttribute.isNominalType(); }
-	public boolean isNumericType() { return itsAttribute.isNumericType(); }
-	public boolean isOrdinalType() { return itsAttribute.isOrdinalType(); }
-	public boolean isBinaryType() { return itsAttribute.isBinaryType(); }
+	public boolean isNominalType() { return itsType == AttributeType.NOMINAL; }
+	public boolean isNumericType() { return itsType == AttributeType.NUMERIC; }
+	public boolean isOrdinalType() { return itsType == AttributeType.ORDINAL; }
+	public boolean isBinaryType() { return itsType == AttributeType.BINARY; }
 
 	public float getMin()
 	{
@@ -222,7 +299,7 @@ public class Column implements XMLNodeInterface
 
 	public void permute(int[] thePermutation)
 	{
-		switch (itsAttribute.getType())
+		switch (itsType)
 		{
 			case NOMINAL :
 				ArrayList<String> aNominals = new ArrayList<String>(thePermutation.length);
@@ -250,7 +327,9 @@ public class Column implements XMLNodeInterface
 
 	public void print()
 	{
-		switch(itsAttribute.getType())
+		Log.logCommandLine(itsIndex + ":" + getNameAndShort() + " " + itsType);
+
+		switch(itsType)
 		{
 			case NOMINAL : Log.logCommandLine(itsNominals.toString()); break;
 			case NUMERIC :
@@ -292,7 +371,8 @@ public class Column implements XMLNodeInterface
 	{
 		if (theAttributeType == null)
 			return false;
-		else if (itsAttribute.getType().equals(theAttributeType))
+		// TODO above check no longer needed == is preferred on Enums and is null safe
+		else if (itsType == theAttributeType)
 			return true;
 		else
 		{
@@ -319,7 +399,7 @@ public class Column implements XMLNodeInterface
 	 */
 	private boolean toNominalType()
 	{
-		switch (itsAttribute.getType())
+		switch (itsType)
 		{
 			case NOMINAL : break;	// should not happen
 			case NUMERIC :
@@ -363,7 +443,8 @@ public class Column implements XMLNodeInterface
 			default : logTypeError("Column.toNominalType()"); return false;
 		}
 
-		return itsAttribute.setType(AttributeType.NOMINAL);
+		itsType = AttributeType.NOMINAL;
+		return true;
 	}
 
 	/*
@@ -377,7 +458,7 @@ public class Column implements XMLNodeInterface
 	 */
 	private boolean toNumericType(AttributeType theNewType)
 	{
-		switch (itsAttribute.getType())
+		switch (itsType)
 		{
 			case NOMINAL :
 			{
@@ -437,7 +518,8 @@ public class Column implements XMLNodeInterface
 			default : logTypeError("Column.toNumericType()"); return false;
 		}
 
-		return itsAttribute.setType(theNewType);
+		itsType = theNewType;
+		return true;
 	}
 
 	/*
@@ -467,7 +549,7 @@ public class Column implements XMLNodeInterface
 			return false;
 		else
 		{
-			switch (itsAttribute.getType())
+			switch (itsType)
 			{
 				case NOMINAL :
 				{
@@ -586,7 +668,7 @@ public class Column implements XMLNodeInterface
 					itsMissingValue = "0";
 				else if (Float.parseFloat(itsMissingValue) == 1f)
 					itsMissingValue = "1";
-				else if (itsAttribute.getType().DEFAULT_MISSING_VALUE.equals(itsMissingValue))
+				else if (itsType.DEFAULT_MISSING_VALUE.equals(itsMissingValue))
 					itsMissingValue = AttributeType.BINARY.DEFAULT_MISSING_VALUE;
 			}
 			catch (NumberFormatException anException) {}
@@ -630,7 +712,8 @@ public class Column implements XMLNodeInterface
 				for (int i = itsMissing.nextSetBit(0); i >= 0; i = itsMissing.nextSetBit(i + 1))
 					itsBinaries.set(i);
 
-			return itsAttribute.setType(AttributeType.BINARY);
+			itsType = AttributeType.BINARY;
+			return true;
 		}
 	}
 
@@ -640,7 +723,7 @@ public class Column implements XMLNodeInterface
 			String.format("Error in %s: Column '%s' has AttributeType '%s'.",
 							theMethodName,
 							getName(),
-							itsAttribute.getType()));
+							itsType));
 	}
 
 	/**
@@ -705,9 +788,9 @@ public class Column implements XMLNodeInterface
 	{
 		if (itsMissingValue.equals(theNewValue))
 			return true;
-		else if (isValidValue(itsAttribute.getType(), theNewValue))
+		else if (isValidValue(itsType, theNewValue))
 		{
-			switch (itsAttribute.getType())
+			switch (itsType)
 			{
 				case NOMINAL :
 				{
@@ -793,7 +876,7 @@ public class Column implements XMLNodeInterface
 			// not set yet
 			if (itsCardinality == 0)
 			{
-				switch (itsAttribute.getType())
+				switch (itsType)
 				{
 					// expect low itsCardinality/itsSize ratio
 					// TODO check JLS, how are TreeSets created from ArrayLists?
@@ -824,7 +907,7 @@ public class Column implements XMLNodeInterface
 					case NUMERIC:
 					case ORDINAL :
 					{
-						float aMissingValue = Float.valueOf(itsAttribute.getType().DEFAULT_MISSING_VALUE).floatValue();
+						float aMissingValue = Float.valueOf(itsType.DEFAULT_MISSING_VALUE).floatValue();
 						for (int i = 0; i < itsSize; i++)
 						{
 							if (itsFloats.get(i).floatValue() == aMissingValue && !itsMissing.get(i))
@@ -839,7 +922,7 @@ public class Column implements XMLNodeInterface
 					case BINARY :
 					{
 						// BINARY.DEFAULT_MISSING_VALUE is "0", but could be "1"
-						if ("0".equals(itsAttribute.getType().DEFAULT_MISSING_VALUE))
+						if ("0".equals(itsType.DEFAULT_MISSING_VALUE))
 						{
 							for (int i = itsBinaries.nextClearBit(0); i >= 0 && i < itsSize; i = itsBinaries.nextClearBit(i + 1))
 							{
@@ -882,7 +965,7 @@ public class Column implements XMLNodeInterface
 		else
 		{
 			Object aValue;
-			if (itsAttribute.getType().equals(AttributeType.NOMINAL))
+			if (itsType.equals(AttributeType.NOMINAL))
 				aValue = itsMissingValue;
 			else
 				aValue = Float.parseFloat(itsMissingValue);
@@ -951,7 +1034,7 @@ public class Column implements XMLNodeInterface
 	{
 		Node aNode = XMLNode.addNodeTo(theParentNode, "column");
 		((Element)aNode).setAttribute("nr", "0");
-		itsAttribute.addNodeTo(aNode);
+//		itsAttribute.addNodeTo(aNode);
 		XMLNode.addNodeTo(aNode, "missing_value", itsMissingValue);
 		XMLNode.addNodeTo(aNode, "enabled", isEnabled);
 	}

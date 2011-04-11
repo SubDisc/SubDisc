@@ -7,7 +7,7 @@ public class DAG
 	private double itsQuality;
 	private int noArcs;
 	private int itsSize;
-	private ArrayList<NetworkNode> dagNode; //index is nodeId, value is Node
+	private List<NetworkNode> dagNode; //index is nodeId, value is Node
 
 	private int[] visitation; //cyclic/order check stuff
 
@@ -26,6 +26,23 @@ public class DAG
 		visitation = new int[theSize];
 	}
 
+	public DAG(List<Column> theTargets)
+	{
+		itsQuality = 0;
+		itsSize = theTargets.size();
+		dagNode = new ArrayList<NetworkNode>(itsSize);
+		for(Column c : theTargets)
+		{
+			NetworkNode aNetworkNode = new NetworkNode(null, itsSize, c.getName());
+			dagNode.add(aNetworkNode);
+			itsQuality += aNetworkNode.getQuality();
+		}
+
+		noArcs = 0;
+		visitation = new int[itsSize];
+	}
+
+/*
 	public DAG(int theSize, String[] theNames)
 	{
 		itsQuality = 0;
@@ -40,6 +57,7 @@ public class DAG
 		noArcs=0;
 		visitation = new int[theSize];
 	}
+ */
 
 	//nodes are printed from 1 to n instead of the regular 0 to n-1
 	public void print()
@@ -68,8 +86,8 @@ public class DAG
 	}
 
 	public int getSize() {return itsSize;}
-	public NetworkNode getNode(int nd) {return (NetworkNode) dagNode.get(nd);}
-	public String getName(int aNode) {return ((NetworkNode) dagNode.get(aNode)).getName();}
+	public NetworkNode getNode(int nd) {return dagNode.get(nd);}
+	public String getName(int aNode) {return dagNode.get(aNode).getName();}
 
 	public void addArc(int fromNode, int toNode, boolean onlyAdd)
 	{

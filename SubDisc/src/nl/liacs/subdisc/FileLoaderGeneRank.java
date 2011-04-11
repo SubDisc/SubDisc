@@ -192,10 +192,10 @@ public class FileLoaderGeneRank implements FileLoaderInterface
 
 			if (!hasRankColumn)
 			{
-				Column aRankColumn = new Column(new Attribute("RANK",
+				Column aRankColumn = new Column("RANK",
 										null,
 										AttributeType.NUMERIC,
-										aNrDataColumns++),
+										aNrDataColumns++,
 								aNrRows);
 
 				for (float f = 1.0f, nrRows = (float)aNrRows; f <= nrRows; ++f)
@@ -205,11 +205,11 @@ public class FileLoaderGeneRank implements FileLoaderInterface
 				aColumns.add(aRankColumn);
 			}
 
-			aColumns.add(new Column(new Attribute(("Domain: " + aDomainName),
-								null,
-								AttributeType.NOMINAL,
-								aNrDataColumns++),
-						aNrRows));
+			aColumns.add(new Column(("Domain: " + aDomainName),
+									null,
+									AttributeType.NOMINAL,
+									aNrDataColumns++,
+									aNrRows));
 
 			// disable CUI column
 			aColumns.get(aNrDataColumns - 1).setIsEnabled(false);
@@ -217,11 +217,11 @@ public class FileLoaderGeneRank implements FileLoaderInterface
 			for (int i = 1; i < aNrCUIColumns; i++)
 			{
 				// Note: Browse~/ReasultWindow use normal name, not short name
-				aColumns.add(new Column(new Attribute(itsCui2NameMap.get(aCUIHeaderArray[i]),
-									aCUIHeaderArray[i],
-									AttributeType.NUMERIC,
-									aNrDataColumns++),
-							aNrRows));
+				aColumns.add(new Column(itsCui2NameMap.get(aCUIHeaderArray[i]),
+										aCUIHeaderArray[i],
+										AttributeType.NUMERIC,
+										aNrDataColumns++,
+										aNrRows));
 			}
 
 			// for each identifier in itsTable determine Domain file lineNr

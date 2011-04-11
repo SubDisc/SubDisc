@@ -8,14 +8,12 @@ import java.io.*;
 import java.util.*;
 import java.util.regex.*;
 
-import nl.liacs.subdisc.Attribute.*;
-
 public class FileLoaderARFF implements FileLoaderInterface
 {
 	private Table itsTable = null;
 	private boolean checkDataWithXMLTable = false; // if loaded from XML
 	private int itsNrDataRows = 0;
-	private ArrayList<NominalAttribute> itsNominalAttributes =
+	private List<NominalAttribute> itsNominalAttributes =
 		new ArrayList<NominalAttribute>();	// used to check data declarations
 
 	private static enum Keyword
@@ -40,8 +38,10 @@ public class FileLoaderARFF implements FileLoaderInterface
 		}
 	}
 
+	// This is not used atm., it will be in the future
 	private class NominalAttribute
 	{
+/*
 		final Attribute itsAttribute;
 		final List<String> itsNominalClasses;
 
@@ -50,6 +50,7 @@ public class FileLoaderARFF implements FileLoaderInterface
 			itsAttribute = theAttribute;
 			itsNominalClasses = theNominalClasses;
 		}
+*/
 	}
 
 	public FileLoaderARFF(File theFile)
@@ -196,9 +197,8 @@ public class FileLoaderARFF implements FileLoaderInterface
 						else
 							itsTable
 							.getColumns()
-							.add(new Column(
-								parseAttribute(aLine.substring(aMatcher.end()),
-												anAttributeIndex++)));
+							.add(parseAttribute(aLine.substring(aMatcher.end()),
+												anAttributeIndex++));
 					}
 				}
 				else if (Keyword.DATA.atStartOfLine(aLine))
@@ -278,7 +278,7 @@ public class FileLoaderARFF implements FileLoaderInterface
 	 */
 	// TODO we can not handle STRING/DATE appropriately
 	// attribute type(s), only NUMERIC/NOMINAL/BINARY for now, not ORDINAL
-	private Attribute parseAttribute(String theLine, int theIndex)
+	private Column parseAttribute(String theLine, int theIndex)
 	{
 		String aName;
 
@@ -291,7 +291,7 @@ public class FileLoaderARFF implements FileLoaderInterface
 		theLine = theLine.replaceFirst("\\'?" + aName + "\\'?", "").trim();
 
 		// (aName, theLine) HACK for NominalAttribute
-		return new Attribute(aName, null, declaredType(aName, theLine), theIndex);
+		return new Column(aName, null, declaredType(aName, theLine), theIndex, Column.DEFAULT_INIT_SIZE);
 	}
 
 	// TODO do this only once for the whole line

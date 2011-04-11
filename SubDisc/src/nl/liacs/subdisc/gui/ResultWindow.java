@@ -355,8 +355,8 @@ public class ResultWindow extends JFrame implements ActionListener
 						TargetConcept aTargetConcept = itsSearchParameters.getTargetConcept();
 
 						//no trendline
-						new ModelWindow(itsTable.getColumn(aTargetConcept.getPrimaryTarget()),
-										itsTable.getColumn(aTargetConcept.getSecondaryTarget()),
+						new ModelWindow(aTargetConcept.getPrimaryTarget(),
+										aTargetConcept.getSecondaryTarget(),
 										null,
 										aSubgroup).setTitle("Subgroup " + (aCount + 1));
 						break;

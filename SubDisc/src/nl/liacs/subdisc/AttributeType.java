@@ -116,4 +116,13 @@ public enum AttributeType implements EnumInterface
 	{
 		return name().toLowerCase();
 	}
+/*
+	private static void unknownType(String theSource, String theType)
+	{
+		Log.logCommandLine(
+					String.format("AttributeType.%s(): unknown AttributeType '%s'",
+									theSource,
+									theType));
+	}
+*/
 }

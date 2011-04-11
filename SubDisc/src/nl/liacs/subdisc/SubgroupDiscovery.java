@@ -19,7 +19,8 @@ public class SubgroupDiscovery extends MiningAlgorithm
 	private CorrelationMeasure itsBaseCM;	//DOUBLE_CORRELATION
 	private RegressionMeasure itsBaseRM;	//DOUBLE_REGRESSION
 	private BinaryTable itsBinaryTable;	//MULTI_LABEL
-	private String[] itsTargets;	//MULTI_LABEL
+//	private String[] itsTargets;	//MULTI_LABEL
+	private List<Column> itsTargets;	//MULTI_LABEL
 //	private DAG itsBaseDAG;				//MULTI_LABEL
 
 	//SINGLE_NOMINAL
@@ -45,7 +46,8 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		itsTable = theTable;
 		itsMaximumCoverage = itsTable.getNrRows();
 		TargetConcept aTC = itsSearchParameters.getTargetConcept();
-		itsNumericTarget = itsTable.getColumn(aTC.getPrimaryTarget());
+//		itsNumericTarget = itsTable.getColumn(aTC.getPrimaryTarget());
+		itsNumericTarget = aTC.getPrimaryTarget();
 		NumericDomain aDomain = new NumericDomain(itsNumericTarget);
 
 		itsQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), itsMaximumCoverage,
@@ -66,8 +68,10 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		itsQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), itsMaximumCoverage, 100); //TODO
 
 		TargetConcept aTC = itsSearchParameters.getTargetConcept();
-		itsPrimaryColumn = itsTable.getColumn(aTC.getPrimaryTarget());
-		itsSecondaryColumn = itsTable.getColumn(aTC.getSecondaryTarget());
+//		itsPrimaryColumn = itsTable.getColumn(aTC.getPrimaryTarget());
+//		itsSecondaryColumn = itsTable.getColumn(aTC.getSecondaryTarget());
+		itsPrimaryColumn = aTC.getPrimaryTarget();
+		itsSecondaryColumn = aTC.getSecondaryTarget();
 		if (isRegression)
 			itsBaseRM = new RegressionMeasure(itsSearchParameters.getQualityMeasure(), itsPrimaryColumn, itsSecondaryColumn, null);
 		else
@@ -75,7 +79,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 
 		itsResult = new SubgroupSet(itsSearchParameters.getMaximumSubgroups());
 	}
-
+/*
 	//MULTI_LABEL
 	public SubgroupDiscovery(SearchParameters theSearchParameters, Table theTable)
 	{
@@ -89,6 +93,28 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		itsTargets = new String[anAttributes.size()];
 		for (int i = 0, j = anAttributes.size(); i < j; ++i)
 			itsTargets[i] = anAttributes.get(i).getName();
+		Bayesian aBayesian = new Bayesian(itsBinaryTable, itsTargets);
+		aBayesian.climb();
+
+		itsQualityMeasure = new QualityMeasure(itsSearchParameters,
+												aBayesian.getDAG(),
+												itsMaximumCoverage);
+
+		itsResult = new SubgroupSet(itsSearchParameters.getMaximumSubgroups());
+	}
+*/
+
+	//MULTI_LABEL
+	public SubgroupDiscovery(SearchParameters theSearchParameters, Table theTable)
+	{
+		super(theSearchParameters);
+		itsTable = theTable;
+		itsMaximumCoverage = itsTable.getNrRows();
+
+		//compute base model
+		itsTargets = itsSearchParameters.getTargetConcept().getMultiTargets();
+		itsBinaryTable = new BinaryTable(itsTable, itsTargets);
+
 		Bayesian aBayesian = new Bayesian(itsBinaryTable, itsTargets);
 		aBayesian.climb();
 
@@ -310,9 +336,10 @@ public class SubgroupDiscovery extends MiningAlgorithm
 
 	private void evaluateNominalBinaryRefinements(long theBeginTime, Subgroup theSubgroup, Refinement theRefinement)
 	{
-		Attribute anAttribute = theRefinement.getCondition().getAttribute();
-		int anAttributeIndex = anAttribute.getIndex();
-		TreeSet<String> aDomain = itsTable.getDomain(anAttributeIndex);
+//		Attribute anAttribute = theRefinement.getCondition().getAttribute();
+//		int anAttributeIndex = anAttribute.getIndex();
+//		TreeSet<String> aDomain = itsTable.getDomain(anAttributeIndex);
+		TreeSet<String> aDomain = itsTable.getDomain(theRefinement.getCondition().getAttribute().getIndex());
 		int aMinimumCoverage = itsSearchParameters.getMinimumCoverage();
 		float aQualityMeasureMinimum = itsSearchParameters.getQualityMeasureMinimum();
 

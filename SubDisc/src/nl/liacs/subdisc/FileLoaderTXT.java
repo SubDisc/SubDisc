@@ -257,24 +257,24 @@ public class FileLoaderTXT implements FileLoaderInterface
 				{
 					if (aNominals.get(i))
 						itsTable.getColumns()
-						.add(new Column(new Attribute(aHeaders[i].trim(),
-														null,
-														AttributeType.NOMINAL,
-														i),
+						.add(new Column(aHeaders[i].trim(),
+										null,
+										AttributeType.NOMINAL,
+										i,
 										aNrRows));
 					else if (aNotZeroOne.get(i))
 						itsTable.getColumns()
-						.add(new Column(new Attribute(aHeaders[i].trim(),
-														null,
-														AttributeType.NUMERIC,
-														i),
+						.add(new Column(aHeaders[i].trim(),
+										null,
+										AttributeType.NUMERIC,
+										i,
 										aNrRows));
 					else
 						itsTable.getColumns()
-						.add(new Column(new Attribute(aHeaders[i].trim(),
-														null,
-														AttributeType.BINARY,
-														i),
+						.add(new Column(aHeaders[i].trim(),
+										null,
+										AttributeType.BINARY,
+										i,
 										aNrRows));
 				}
 			}

@@ -32,8 +32,8 @@ public class Table
 	public int getNrRows() { return itsNrRows; }
 	public int getNrColumns() { return itsNrColumns; } //just the descriptors
 
-	public Attribute getAttribute(int i) { return itsColumns.get(i).getAttribute(); }
-	public Column getColumn(Attribute theAttribute) { return itsColumns.get(theAttribute.getIndex()); }
+//	public Attribute getAttribute(int i) { return itsColumns.get(i).getAttribute(); }
+//	public Column getColumn(Attribute theAttribute) { return itsColumns.get(theAttribute.getIndex()); }
 	public Column getColumn(int theIndex) { return itsColumns.get(theIndex); }
 
 	public ArrayList<Column> getColumns() { return itsColumns; };
@@ -177,7 +177,7 @@ public class Table
 		//inefficient if multiple domains are removed at once
 		if (aStartIndex < itsNrColumns)
 			for (int i = aStartIndex; i < itsNrColumns; ++i)
-				itsColumns.get(i).getAttribute().setIndex(i);
+				itsColumns.get(i).setIndex(i);
 
 		if (itsDomains.isEmpty())
 		{
@@ -277,7 +277,7 @@ public class Table
 //	public int getNrNumerics() {};
 //	public int getNrOrdinals() {};
 //	public int getNrBinaries() {};
-
+/*
 	public BitSet evaluate(Condition theCondition)
 	{
 		BitSet aSet = new BitSet(itsNrRows);
@@ -306,7 +306,52 @@ public class Table
 
 		return aSet;
 	}
+*/
 
+	// as above, but only checks type once
+	public BitSet evaluate(Condition theCondition)
+	{
+		BitSet aSet = new BitSet(itsNrRows);
+		Column aColumn = theCondition.getAttribute();
+
+		switch (aColumn.getType())
+		{
+			case NOMINAL :;
+			{
+				for (int j = 0; j < itsNrRows; ++j)
+					if (theCondition.evaluate(aColumn.getNominal(j)))
+						aSet.set(j);
+				break;
+			}
+			case NUMERIC :
+			case ORDINAL :
+			{
+				for (int j = 0; j < itsNrRows; ++j)
+					if (theCondition.evaluate(Float.toString(aColumn.getFloat(j))))
+						aSet.set(j);
+				break;
+			}
+			case BINARY :
+			{
+				for (int j = 0; j < itsNrRows; ++j)
+						if (theCondition.evaluate(aColumn.getBinary(j)))
+							aSet.set(j);
+				break;
+			}
+			default :
+			{
+				Log.logCommandLine(
+					String.format(
+						"Table.evaluate(): unknown AttributeType '%s'",
+									aColumn.getType()));
+					break;
+			}
+		}
+
+		return aSet;
+	}
+
+/*
 	public BitSet evaluate(ConditionList theList)
 	{
 		BitSet aSet = new BitSet(itsNrRows);
@@ -330,6 +375,55 @@ public class Table
 		}
 		return aSet;
 	}
+*/
+
+	// as above but only checks type once
+	public BitSet evaluate(ConditionList theList)
+	{
+		BitSet aSet = new BitSet(itsNrRows);
+		aSet.set(0, itsNrRows); //set all to true first, because of conjunction
+
+		for (Condition aCondition : theList) //loop over conditions
+		{
+			Column aColumn = aCondition.getAttribute();
+
+			switch (aColumn.getType())
+			{
+				case NOMINAL:
+				{
+					for (int j = 0; j < itsNrRows; ++j)
+						if (!aCondition.evaluate(aColumn.getNominal(j)))
+							aSet.set(j, false);
+					break;
+				}
+				case NUMERIC:
+				case ORDINAL:
+				{
+					for (int j = 0; j < itsNrRows; ++j)
+						if (!aCondition.evaluate(Float.toString(aColumn.getFloat(j))))
+							aSet.set(j, false);
+					break;
+				}
+				case BINARY:
+				{
+					for (int j = 0; j < itsNrRows; ++j)
+						if (!aCondition.evaluate(aColumn.getBinary(j)))
+							aSet.set(j, false);
+					break;
+				}
+				default :
+				{
+					Log.logCommandLine(
+						String.format(
+								"Table.evaluate(): unknown AttributeType '%s'",
+											aColumn.getType()));
+					break;
+				}
+			}
+		}
+
+		return aSet;
+	}
 
 	//returns a complete column (as long as it is binary)
 	public BitSet getBinaryColumn(int i)
@@ -339,12 +433,12 @@ public class Table
 
 	//Data Model ===========================================================================
 
-	public Attribute getAttribute(String theName)
+	public Column getAttribute(String theName)
 	{
 		for (Column c : itsColumns)
 		{
 			if (c.getName().equals(theName))
-				return c.getAttribute();
+				return c;
 		}
 		return null; //not found
 	}
@@ -353,13 +447,13 @@ public class Table
 	{
 		for (Column c : itsColumns)
 			if (c.getName().equals(theName))
-				return c.getAttribute().getIndex();
+				return c.getIndex();
 		return -1; // not found (causes ArrayIndexOutOfBounds)
 	}
 
 	public Condition getFirstCondition()
 	{
-		return new Condition(itsColumns.get(0).getAttribute());
+		return new Condition(itsColumns.get(0));
 	}
 
 	public Condition getNextCondition(Condition theCurrentCondition)
@@ -374,7 +468,7 @@ public class Table
 			if (anIndex == itsNrColumns-1) // No more attributes
 				aCondition = null;
 			else
-				aCondition = new Condition(itsColumns.get(anIndex + 1).getAttribute());
+				aCondition = new Condition(itsColumns.get(anIndex + 1));
 		}
 
 		return aCondition;
@@ -563,7 +657,7 @@ public class Table
 
 	public void swapRandomizeTarget(TargetConcept theTC)
 	{
-		List<Attribute> aTargets = new ArrayList<Attribute>(2);
+		List<Column> aTargets = new ArrayList<Column>(2);
 
 		//find all targets
 		switch (theTC.getTargetType())
@@ -599,10 +693,10 @@ public class Table
 		}
 
 		//execute permutation on all targets
-		for (Attribute anAttribute : aTargets)
+		for (Column anAttribute : aTargets)
 		{
 			Log.logCommandLine("permuting " + anAttribute.getName());
-			getColumn(anAttribute).permute(aPermutation);
+			anAttribute.permute(aPermutation);
 		}
 	}
 
@@ -610,7 +704,7 @@ public class Table
 	{
 		Log.logCommandLine("Types ===========================================");
 		for (Column c : itsColumns)
-			c.getAttribute().print();
+			c.print();
 		Log.logCommandLine("Table ===========================================");
 		for (int i = 0, j = itsColumns.get(0).size(); i < j; i++)
 		{

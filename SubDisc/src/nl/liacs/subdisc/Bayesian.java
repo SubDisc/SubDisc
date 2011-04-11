@@ -1,8 +1,6 @@
 package nl.liacs.subdisc;
 
-import java.util.ArrayList;
-import java.util.BitSet;
-import java.util.Random;
+import java.util.*;
 
 public class Bayesian
 {
@@ -10,9 +8,20 @@ public class Bayesian
 	private BinaryTable itsTable;
 	private static Random itsRandom;
 
+/*
 	public Bayesian(BinaryTable theTable, String[] theNames)
 	{
 		itsDAG = new DAG(theTable.getNrColumns(), theNames);
+		itsTable = theTable;
+		itsRandom = new Random(System.currentTimeMillis()); // truly random
+//		itsRandom = new Random(12345); // random, but always the same
+	}
+*/
+
+	// XXX BinaryTable could include ColumnName/Indices, only 1 constructor needed
+	public Bayesian(BinaryTable theTable, List<Column> theTargets)
+	{
+		itsDAG = new DAG(theTargets);
 		itsTable = theTable;
 		itsRandom = new Random(System.currentTimeMillis()); // truly random
 //		itsRandom = new Random(12345); // random, but always the same
