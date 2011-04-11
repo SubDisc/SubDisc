@@ -1420,7 +1420,8 @@ public class MiningWindow extends JFrame
 		aSubgroupDiscovery.Mine(System.currentTimeMillis());
 
 		long anEnd = System.currentTimeMillis();
-		if (anEnd > aBegin + (long)(itsSearchParameters.getMaximumTime()*60*1000))
+		if (itsSearchParameters.getMaximumTime() > 0.0f)
+			if (anEnd > aBegin + (((long) itsSearchParameters.getMaximumTime()) * 60 * 1000))
 			JOptionPane.showMessageDialog(null, "Mining process ended prematurely due to time limit.",
 											"Time Limit", JOptionPane.INFORMATION_MESSAGE);
 
