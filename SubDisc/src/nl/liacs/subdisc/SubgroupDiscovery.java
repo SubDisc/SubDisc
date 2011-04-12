@@ -149,7 +149,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 
 			if (aSubgroup.getDepth() < aSearchDepth)
 			{
-				RefinementList aRefinementList = new RefinementList(aSubgroup, itsTable, itsSearchParameters.getTargetConcept());
+				RefinementList aRefinementList = new RefinementList(aSubgroup, itsTable, itsSearchParameters);
 
 				for (int i = 0, j = aRefinementList.size(); i < j; i++)
 				{
@@ -473,7 +473,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		aNewSubgroupSet.setIDs();
 		itsResult = aNewSubgroupSet;
 	}
-	
+
 	public int getNumberOfSubgroups() { return itsResult.size(); }
 	public SubgroupSet getResult() { return itsResult; }
 	public BitSet getBinaryTarget() { return (BitSet)itsBinaryTarget.clone(); }

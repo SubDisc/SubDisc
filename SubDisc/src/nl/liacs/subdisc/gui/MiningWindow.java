@@ -103,6 +103,10 @@ public class MiningWindow extends JFrame
 			jComboBoxSearchStrategyType.addItem(s.GUI_TEXT);
 //		jComboBoxSearchStrategyType.setEnabled(hasTable);
 
+		// Add all Numeric Operators choices
+		for (NumericOperators n : NumericOperators.values())
+			jComboBoxNumericOperators.addItem(n.GUI_TEXT);
+
 		// Add all Numeric Strategies
 		for (NumericStrategy n : NumericStrategy.values())
 			jComboBoxSearchStrategyNumeric.addItem(n.GUI_TEXT);
@@ -321,12 +325,14 @@ public class MiningWindow extends JFrame
 		jPanelSearchStrategyLabels = new JPanel();
 		jLabelStrategyType = new JLabel();
 		jLabelStrategyWidth = new JLabel();
+		jLabelNumericOperators = new JLabel();
 		jLabelSearchStrategyNumericFrr = new JLabel();
 		jLabelSearchStrategyNrBins = new JLabel();
 		// search strategy - fields
 		jPanelSearchStrategyFields = new JPanel();
 		jComboBoxSearchStrategyType = new JComboBox();
 		jTextFieldSearchStrategyWidth = new JTextField();
+		jComboBoxNumericOperators = new JComboBox();
 		jComboBoxSearchStrategyNumeric = new JComboBox();
 		jTextFieldSearchStrategyNrBins = new JTextField();
 
@@ -820,7 +826,10 @@ public class MiningWindow extends JFrame
 		jLabelStrategyWidth = initJLabel(" search width");
 		jPanelSearchStrategyLabels.add(jLabelStrategyWidth);
 
-		jLabelSearchStrategyNumericFrr = initJLabel(" best numeric");
+		jLabelNumericOperators = initJLabel(" numeric operators");
+		jPanelSearchStrategyLabels.add(jLabelNumericOperators);
+
+		jLabelSearchStrategyNumericFrr = initJLabel(" numeric strategy");
 		jPanelSearchStrategyLabels.add(jLabelSearchStrategyNumericFrr);
 
 		jLabelSearchStrategyNrBins = initJLabel(" number of bins");
@@ -846,6 +855,16 @@ public class MiningWindow extends JFrame
 		jTextFieldSearchStrategyWidth.setHorizontalAlignment(SwingConstants.RIGHT);
 		jTextFieldSearchStrategyWidth.setMinimumSize(new Dimension(86, 22));
 		jPanelSearchStrategyFields.add(jTextFieldSearchStrategyWidth);
+
+		jComboBoxNumericOperators.setPreferredSize(new Dimension(86, 22));
+		jComboBoxNumericOperators.setMinimumSize(new Dimension(86, 22));
+		jComboBoxNumericOperators.setFont(GUI.DEFAULT_TEXT_FONT);
+		jComboBoxNumericOperators.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				jComboBoxNumericOperatorsActionPerformed();
+			}
+		});
+		jPanelSearchStrategyFields.add(jComboBoxNumericOperators);
 
 		jComboBoxSearchStrategyNumeric.setPreferredSize(new Dimension(86, 22));
 		jComboBoxSearchStrategyNumeric.setMinimumSize(new Dimension(86, 22));
@@ -1113,6 +1132,13 @@ public class MiningWindow extends JFrame
 			itsSearchParameters.setSearchStrategy(aName);
 			jTextFieldSearchStrategyWidth.setEnabled(!SearchStrategy.BEST_FIRST.GUI_TEXT.equalsIgnoreCase(aName));
 		}
+	}
+
+	private void jComboBoxNumericOperatorsActionPerformed()
+	{
+		String aName = getNumericOperators();
+		if (aName != null)
+			itsSearchParameters.setNumericOperators(aName);
 	}
 
 	private void jComboBoxSearchStrategyNumericActionPerformed()
@@ -2064,6 +2090,10 @@ public class MiningWindow extends JFrame
 	private int getSearchStrategyWidth() { return getValue(100, jTextFieldSearchStrategyWidth.getText()); }
 	private void setSearchStrategyWidth(String aValue) { jTextFieldSearchStrategyWidth.setText(aValue); }
 
+	// search strategy - numeric operators
+	private String getNumericOperators() { return (String) jComboBoxNumericOperators.getSelectedItem(); }
+	private void setNumericOperators(String theOperators) { jComboBoxNumericOperators.setSelectedItem(theOperators); }
+
 	// search strategy - numeric strategy
 	private String getNumericStrategy() { return (String) jComboBoxSearchStrategyNumeric.getSelectedItem(); }
 	private void setNumericStrategy(String aStrategy) { jComboBoxSearchStrategyNumeric.setSelectedItem(aStrategy); }
@@ -2174,11 +2204,13 @@ public class MiningWindow extends JFrame
 	private JPanel jPanelSearchStrategyLabels;
 	private JLabel jLabelStrategyType;
 	private JLabel jLabelStrategyWidth;
+	private JLabel jLabelNumericOperators;
 	private JLabel jLabelSearchStrategyNumericFrr;
 	private JLabel jLabelSearchStrategyNrBins;
 	private JPanel jPanelSearchStrategyFields;
 	private JComboBox jComboBoxSearchStrategyType;
 	private JTextField jTextFieldSearchStrategyWidth;
+	private JComboBox jComboBoxNumericOperators;
 	private JComboBox jComboBoxSearchStrategyNumeric;
 	private JTextField jTextFieldSearchStrategyNrBins;
 

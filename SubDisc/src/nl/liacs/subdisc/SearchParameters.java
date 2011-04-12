@@ -25,6 +25,7 @@ public class SearchParameters implements XMLNodeInterface
 
 	private SearchStrategy	itsSearchStrategy;
 	private int				itsSearchStrategyWidth;
+	private NumericOperators itsNumericOperators;
 	private NumericStrategy	itsNumericStrategy;
 	private int				itsNrBins;
 
@@ -112,8 +113,13 @@ public class SearchParameters implements XMLNodeInterface
 		itsSearchStrategy = SearchStrategy.getSearchStrategy(theSearchStrategyName);
 	}
 
-	public NumericStrategy getNumericStrategy() { return itsNumericStrategy; }
+	public NumericOperators getNumericOperators() { return itsNumericOperators; }
+	public void setNumericOperators(String theNumericOperatorsName)
+	{
+		itsNumericOperators = NumericOperators.getNumericOperators(theNumericOperatorsName);
+	}
 
+	public NumericStrategy getNumericStrategy() { return itsNumericStrategy; }
 	public void setNumericStrategy(String theNumericStrategyName)
 	{
 		itsNumericStrategy = NumericStrategy.getNumericStrategy(theNumericStrategyName);
@@ -188,6 +194,8 @@ public class SearchParameters implements XMLNodeInterface
 				itsSearchStrategy = (SearchStrategy.getSearchStrategy(aSetting.getTextContent()));
 			else if("search_strategy_width".equalsIgnoreCase(aNodeName))
 				itsSearchStrategyWidth = Integer.parseInt(aSetting.getTextContent());
+			else if("numeric_operators".equalsIgnoreCase(aNodeName))
+				itsNumericOperators = (NumericOperators.getNumericOperators(aSetting.getTextContent()));
 			else if("numeric_strategy".equalsIgnoreCase(aNodeName))
 				itsNumericStrategy = (NumericStrategy.getNumericStrategy(aSetting.getTextContent()));
 			else if("nr_bins".equalsIgnoreCase(aNodeName))

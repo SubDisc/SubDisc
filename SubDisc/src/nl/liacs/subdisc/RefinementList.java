@@ -8,36 +8,27 @@ public class RefinementList extends ArrayList<Refinement>
 	private Table itsTable;
 	private Subgroup itsSubgroup;
 
-	public RefinementList(Subgroup theSubgroup, Table theTable, TargetConcept theTC)
+	public RefinementList(Subgroup theSubgroup, Table theTable, SearchParameters theSearchParameters)
 	{
 		itsSubgroup = theSubgroup;
 		itsTable = theTable;
 		Log.logCommandLine("refinementlist");
 
 		Condition aCondition = itsTable.getFirstCondition();
-
-/*
-		do
-		{
-			Attribute anAttribute = aCondition.getAttribute();
-			Column aColumn = itsTable.getColumn(anAttribute);
-			if (aColumn.getIsEnabled() && !theTC.isTargetAttribute(anAttribute))
-			{
-				Refinement aRefinement = new Refinement(aCondition, itsSubgroup);
-				add(aRefinement);
-				Log.logCommandLine("   condition: " + aCondition.toString());
-			}
-		}
-		while ((aCondition = itsTable.getNextCondition(aCondition)) != null);
-*/
 		do
 		{
 			Column aColumn = aCondition.getAttribute();
-			if (aColumn.getIsEnabled() && !theTC.isTargetAttribute(aColumn))
+			if (aColumn.getIsEnabled() && !theSearchParameters.getTargetConcept().isTargetAttribute(aColumn))
 			{
 				Refinement aRefinement = new Refinement(aCondition, itsSubgroup);
-				add(aRefinement);
-				Log.logCommandLine("   condition: " + aCondition.toString());
+
+				//check validity of operator
+				if (!aColumn.isNumericType() ||
+					NumericOperators.check(theSearchParameters.getNumericOperators(), aCondition.getOperator()))
+				{
+					add(aRefinement);
+					Log.logCommandLine("   condition: " + aCondition.toString());
+				}
 			}
 		}
 		while ((aCondition = itsTable.getNextCondition(aCondition)) != null);

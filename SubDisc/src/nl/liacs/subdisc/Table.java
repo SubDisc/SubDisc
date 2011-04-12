@@ -456,6 +456,9 @@ public class Table
 		return new Condition(itsColumns.get(0));
 	}
 
+	//TODO this code is overly complex, due to its Safarii-background
+	//Arno needs to fix this, at some point.
+
 	public Condition getNextCondition(Condition theCurrentCondition)
 	{
 		Condition aCondition;
