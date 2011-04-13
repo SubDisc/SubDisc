@@ -13,14 +13,17 @@ public class ROCCurveWindow extends JFrame implements ActionListener
 
 	public ROCCurveWindow(SubgroupSet theSubgroupSet, SearchParameters theSearchParameters)
 	{
-		JScrollPane aROCScrollPane = new JScrollPane();
 		ROCCurve aROCCurve = new ROCCurve(theSubgroupSet, theSearchParameters);
-		aROCScrollPane.setViewportView(aROCCurve);
 
 		JPanel aClosePanel = new JPanel();
 		aClosePanel.add(GUI.buildButton("Close", 'C', "close", this));
 
-		getContentPane().add(aROCScrollPane, BorderLayout.CENTER);
+		// needs to be run after after new ROCCurve
+		JTable aJTable = new JTable(theSubgroupSet.getROCListSubgroups(), SubgroupSet.ROC_HEADER);
+		aJTable.setPreferredScrollableViewportSize(new Dimension(100, 80));
+
+		getContentPane().add(new JScrollPane(aJTable), BorderLayout.NORTH);
+		getContentPane().add(new JScrollPane(aROCCurve), BorderLayout.CENTER);
 		getContentPane().add(aClosePanel, BorderLayout.SOUTH);
 
 		setTitle("ROC Curve (area under curve: " + aROCCurve.getAreaUnderCurve() + ")");

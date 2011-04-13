@@ -26,6 +26,7 @@ public class SubgroupSet extends TreeSet<Subgroup>
 	private final int itsTotalCoverage;
 	private final float itsTotalTargetCoverage;
 	private final BitSet itsBinaryTarget;
+	private ROCList itsROCList;
 
 	/*
 	 * SubgroupSets' other members are only used in a nominal target setting,
@@ -225,6 +226,39 @@ public class SubgroupSet extends TreeSet<Subgroup>
 		if (!nominalTargetSetting || itsBinaryTarget == null)
 			return null;
 		else
-			return new ROCList(new ArrayList<Subgroup>(this));
+		{
+			itsROCList = new ROCList(this);
+			return itsROCList;
+		}
+	}
+
+	/*
+	 * solely for ROCCurveWindow
+	 * extremely inefficient, should be member of ROCList
+	 * could be more efficient when first ordering ROCList
+	 * but most ROC code should change as it is overly complex
+	 */
+	public static final Object[] ROC_HEADER = { "ID", "FPR", "TPR", "Conditions" };
+	public Object[][] getROCListSubgroups()
+	{
+		int aSize = itsROCList.size();
+		Object[][] aSubgroupList = new Object[aSize][ROC_HEADER.length];
+
+		for (int i = 0, j = aSize; i < j; ++i)
+		{
+			SubgroupROCPoint p = itsROCList.get(i);
+			Subgroup s;
+			Iterator<Subgroup> it = iterator();
+
+			while ((s = it.next()).getID() < p.ID);
+
+			aSubgroupList[i] =
+				new Object[] { s.getID(),
+						p.getFPR(),
+						p.getTPR(),
+						s.getConditions().toString() };
+		}
+
+		return aSubgroupList;
 	}
 }

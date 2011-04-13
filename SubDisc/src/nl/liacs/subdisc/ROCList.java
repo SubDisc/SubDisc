@@ -6,9 +6,9 @@ public class ROCList extends ArrayList<SubgroupROCPoint>
 {
 	private static final long serialVersionUID = 1L;
 
-	public ROCList(ArrayList<Subgroup> theSubgroupList)
+	public ROCList(SubgroupSet theSubgroupSet)
 	{
-		for(Subgroup s : theSubgroupList)
+		for(Subgroup s : theSubgroupSet)
 			add(new SubgroupROCPoint(s));
 	}
 
