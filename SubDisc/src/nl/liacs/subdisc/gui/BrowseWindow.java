@@ -2,6 +2,7 @@ package nl.liacs.subdisc.gui;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.util.*;
 
 import javax.swing.*;
 import javax.swing.table.*;
@@ -19,6 +20,9 @@ public class BrowseWindow extends JFrame implements ActionListener
 {
 	private static final long serialVersionUID = 1L;
 	private final Table itsTable;
+	private Subgroup itsSubgroup;
+	private JTable itsJTable;
+	private boolean itsTPOnly = false;
 
 	public BrowseWindow(Table theTable)
 	{
@@ -41,22 +45,56 @@ public class BrowseWindow extends JFrame implements ActionListener
 		}
 	}
 
+	public BrowseWindow(Table theTable, Subgroup theSubgroup)
+	{
+		itsTable = theTable;
+		if (itsTable == null || theSubgroup == null)
+		{
+			Log.logCommandLine(
+			"BrowseWindow Constructor: parameter(s) must be non-null.");
+			return;
+		}
+		else
+		{
+			itsSubgroup = theSubgroup;
+			initComponents(itsTable);
+			setTitle(theSubgroup.getCoverage() + " members in subgroup: " + theSubgroup.getConditions());
+			setIconImage(MiningWindow.ICON);
+			setLocation(100, 100);
+			setSize(GUI.WINDOW_DEFAULT_SIZE);
+			setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+			setVisible(true);
+		}
+	}
+
 	private void initComponents(Table theTable)
 	{
 		// JTable viewport for theTable
-		JTable aJTable = new JTable(new BrowseTableModel(theTable));
-		aJTable.setPreferredScrollableViewportSize(GUI.WINDOW_DEFAULT_SIZE);
-		initColumnSizes(theTable, aJTable);
-		aJTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-		aJTable.setFillsViewportHeight(true);
-		getContentPane().add(new JScrollPane(aJTable), BorderLayout.CENTER);
+		// TODO use/ allow only one BrowseTableModel per Table
+		itsJTable = new JTable(new BrowseTableModel(theTable));
+
+		itsJTable.setPreferredScrollableViewportSize(GUI.WINDOW_DEFAULT_SIZE);
+		initColumnSizes();
+		itsJTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+		itsJTable.setFillsViewportHeight(true);
+		getContentPane().add(new JScrollPane(itsJTable), BorderLayout.CENTER);
 
 		// close button
 		final JPanel aButtonPanel = new JPanel();
+		JButton aSaveButton = GUI.buildButton("Save Table", 'S', "save", this);
 
 		// bioinformatics setting
 		if (theTable.getDomainList() != null)
-			aButtonPanel.add(GUI.buildButton("Save Table", 'S', "save", this));
+			aButtonPanel.add(aSaveButton);
+
+		// Browse Subgroup
+		if (itsSubgroup != null)
+		{
+			aButtonPanel.add(GUI.buildButton("True Positives", 'P', "positives", this));
+			filter();
+			// disable save button as it saves whole Table
+			aSaveButton.setVisible(false);
+		}
 
 		final JButton aCloseButton = GUI.buildButton("Close", 'C', "close", this);
 		aButtonPanel.add(aCloseButton);
@@ -78,21 +116,21 @@ public class BrowseWindow extends JFrame implements ActionListener
 	 * Could use JTable tables' itsTable for sizes instead (1 less parameter).
 	 * TODO Put in SwingWorker background thread.
 	 */
-	private void initColumnSizes(Table theDataTable, JTable theJTable)
+	private void initColumnSizes()
 	{
 		int aHeaderWidth = 0;
 
-		TableCellRenderer aRenderer = theJTable.getTableHeader().getDefaultRenderer();
+		TableCellRenderer aRenderer = itsJTable.getTableHeader().getDefaultRenderer();
 
-		for (int i = 0, j = theJTable.getColumnModel().getColumnCount(); i < j; i++)
+		for (int i = 0, j = itsJTable.getColumnModel().getColumnCount(); i < j; i++)
 		{
 			// 91 is width of "(999 distinct)"
 			aHeaderWidth = Math.max(aRenderer.getTableCellRendererComponent(
-									null, theDataTable.getColumn(i).getName(),
+									null, itsTable.getColumn(i).getName(),
 									false, false, 0, 0).getPreferredSize().width,
 									91);
 
-			theJTable.getColumnModel().getColumn(i).setPreferredWidth(aHeaderWidth);
+			itsJTable.getColumnModel().getColumn(i).setPreferredWidth(aHeaderWidth);
 		}
 	}
 
@@ -101,7 +139,43 @@ public class BrowseWindow extends JFrame implements ActionListener
 	{
 		if ("save".equals(theEvent.getActionCommand()))
 			itsTable.toFile();
+		else if ("positives".equals(theEvent.getActionCommand()))
+		{
+			itsTPOnly = !itsTPOnly;
+			if (itsTPOnly)
+			{
+				BitSet aTP = itsSubgroup.getParentSet().getBinaryTargetClone();
+				System.out.println(aTP);
+				System.out.println(itsSubgroup.getMembers());
+				aTP.and(itsSubgroup.getMembers());
+				System.out.println(aTP);
+				for (int i = aTP.nextSetBit(0); i >= 0; i = aTP.nextSetBit(i + 1))
+				{
+					int k = itsJTable.convertRowIndexToView(i);
+					itsJTable.addRowSelectionInterval(k, k);
+				}
+			}
+			else
+				itsJTable.clearSelection();
+		}
 		else if ("close".equals(theEvent.getActionCommand()))
 			dispose();
+	}
+
+	// TODO memory hog, cleaner would be to allow only one TableModel per Table
+	// and filter on per-view basis
+	private void filter()
+	{
+		final BitSet aMembers = itsSubgroup.getMembers();
+
+		RowFilter<? super AbstractTableModel, ? super Integer> subgroupFilter = new RowFilter<AbstractTableModel, Integer>() {
+			public boolean include(Entry<? extends AbstractTableModel, ? extends Integer> entry) {
+				return aMembers.get(entry.getIdentifier());
+			}
+		};
+
+		TableRowSorter<AbstractTableModel> sorter = new TableRowSorter<AbstractTableModel>((AbstractTableModel) itsJTable.getModel());
+		sorter.setRowFilter(subgroupFilter);
+		itsJTable.setRowSorter(sorter);
 	}
 }

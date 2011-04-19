@@ -253,6 +253,12 @@ public class Subgroup implements Comparable<Object>
 		return 31*itsMembers.hashCode() + hashCode;
 	}
 */
+	// used to determine TP/FP
+	public SubgroupSet getParentSet()
+	{
+		return itsParentSet;
+	}
+
 	// TODO not safe for divide by ZERO
 	/**
 	 * Returns the TruePositiveRate for this Subgroup.

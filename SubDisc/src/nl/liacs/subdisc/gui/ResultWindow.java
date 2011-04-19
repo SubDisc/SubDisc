@@ -224,6 +224,9 @@ public class ResultWindow extends JFrame implements ActionListener
 		aSubgroupPanel.add(jButtonROC);
 //		jButtonROC.setVisible(aTargetType == TargetType.SINGLE_NOMINAL);
 
+		jButtonBrowseSubgroups = GUI.buildButton("Browse Selected", 'B', "browse", this);
+		aSubgroupSetPanel.add(jButtonBrowseSubgroups);
+
 		jButtonDeleteSubgroups = GUI.buildButton("Delete Selected", 'D', "delete", this);
 		aSubgroupPanel.add(jButtonDeleteSubgroups);
 
@@ -278,6 +281,8 @@ public class ResultWindow extends JFrame implements ActionListener
 			jButtonShowModelActionPerformed();
 		else if ("roc".equals(aCommand))
 			jButtonROCActionPerformed();
+		else if ("browse".equals(aCommand))
+			jButtonBrowseSubgroupsActionPerformed();
 		else if ("delete".equals(aCommand))
 			jButtonDeleteSubgroupsActionPerformed();
 		else if ("compute_p".equals(aCommand))
@@ -302,6 +307,7 @@ public class ResultWindow extends JFrame implements ActionListener
 		{
 			jButtonShowModel.setEnabled(false);
 			jButtonROC.setEnabled(false);
+			jButtonBrowseSubgroups.setEnabled(false);
 			jButtonDeleteSubgroups.setEnabled(false);
 			jButtonPValues.setEnabled(false);
 			jButtonRegressionTest.setEnabled(false);
@@ -397,6 +403,22 @@ public class ResultWindow extends JFrame implements ActionListener
 	private void jButtonROCActionPerformed()
 	{
 		new ROCCurveWindow(itsSubgroupSet, itsSearchParameters);
+	}
+
+	private void jButtonBrowseSubgroupsActionPerformed() {
+		if (itsSubgroupSet.isEmpty())
+			return;
+
+		int[] aSelection = itsSubgroupTable.getSelectedRows();
+		Iterator<Subgroup> anIterator = itsSubgroupSet.iterator();
+
+		for (int i = 0, j = aSelection.length, k = 0; i < j; ++k)
+		{
+			int aNext = aSelection[k];
+			while (i++ < aNext)
+				anIterator.next();
+			new BrowseWindow(itsTable, anIterator.next());
+		}
 	}
 
 	private void jButtonDeleteSubgroupsActionPerformed()
@@ -524,7 +546,6 @@ public class ResultWindow extends JFrame implements ActionListener
 		}
 	}
 
-
 /*
 	private double[] obtainRandomQualities()
 	{
@@ -584,6 +605,7 @@ public class ResultWindow extends JFrame implements ActionListener
 */
 	private JPanel jPanelSouth;
 	private JButton jButtonShowModel;
+	private JButton jButtonBrowseSubgroups;
 	private JButton jButtonDeleteSubgroups;
 	private JButton jButtonFold;
 	private JButton jButtonPValues;
