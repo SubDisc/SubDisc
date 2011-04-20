@@ -64,84 +64,6 @@ public class ResultWindow extends JFrame implements ActionListener
 		}
 	}
 
-	//only used for post-processing
-	private ResultWindow(Table theTable, SubgroupSet theSubgroupSet, SearchParameters theSearchParameters, QualityMeasure theQualityMeasure, BinaryTable theBinaryTable, int theFold, BitSet theBitSet)
-	{
-		itsTable = theTable;
-		itsNrRecords = itsTable.getNrRows();
-		itsSubgroupSet = theSubgroupSet;
-		itsSearchParameters = theSearchParameters;
-		itsQualityMeasure = theQualityMeasure;
-//		itsDAGView = theDAGView;
-		itsBinaryTable = theBinaryTable;
-		itsFold = theFold;
-		itsBitSet = theBitSet;
-
-		itsResultTableModel = new ResultTableModel(itsSubgroupSet);
-		itsSubgroupTable = new JTable(itsResultTableModel);
-		if (!itsSubgroupSet.isEmpty())
-			itsSubgroupTable.addRowSelectionInterval(0, 0);
-
-		initComponents ();
-		initialise();
-		setTitle();
-		setIconImage(MiningWindow.ICON);
-		setLocation(100, 100);
-		setSize(GUI.WINDOW_DEFAULT_SIZE);
-		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-		setVisible(true);
-	}
-
-/*
-	public ResultWindow(SubgroupSet theSubgroupSet, SearchParameters theSearchParameters, DAGView theDAGView, Table theTable, QualityMeasure theQualityMeasure, int theNrRecords, int theFold, BitSet theBitSet)
-	{
-		itsSubgroupSet = theSubgroupSet;
-		itsSearchParameters = theSearchParameters;
-		itsDAGView = theDAGView;
-		itsResultTableModel = new ResultTableModel(itsSubgroupSet);
-		itsSubgroupTable = new JTable(itsResultTableModel);
-		if (!itsSubgroupSet.isEmpty())
-			itsSubgroupTable.addRowSelectionInterval(0, 0);
-
-		itsTable = theTable;
-		itsBinaryTable = null;
-		itsQualityMeasure = theQualityMeasure;
-		itsNrRecords = theNrRecords;
-		itsFold = theFold;
-		itsBitSet = theBitSet;
-
-		initComponents ();
-//		setIconImage(ICON);
-		initialise();
-
-		setTitle();
-	}
-
-	public ResultWindow(SubgroupSet theSubgroupSet, SearchParameters theSearchParameters, DAGView theDAGView, Table theTable, BinaryTable theBinaryTable, QualityMeasure theQualityMeasure, int theNrRecords, int theFold, BitSet theBitSet)
-	{
-		itsSubgroupSet = theSubgroupSet;
-		itsSearchParameters = theSearchParameters;
-		itsDAGView = theDAGView;
-		itsResultTableModel = new ResultTableModel(itsSubgroupSet);
-		itsSubgroupTable = new JTable(itsResultTableModel);
-		if (!itsSubgroupSet.isEmpty())
-			itsSubgroupTable.addRowSelectionInterval(0, 0);
-
-		initComponents ();
-//		setIconImage(ICON);
-		initialise();
-
-		itsTable = theTable;
-		itsBinaryTable = theBinaryTable;
-		itsQualityMeasure = theQualityMeasure;
-		itsNrRecords = theNrRecords;
-		itsFold = theFold;
-		itsBitSet = theBitSet;
-
-		setTitle();
-	}
-*/
-
 	public void setTitle()
 	{
 		StringBuilder s = new StringBuilder(150);
@@ -218,14 +140,12 @@ public class ResultWindow extends JFrame implements ActionListener
 
 		jButtonShowModel = GUI.buildButton("Show Model", 'M', "model", this);
 		aSubgroupPanel.add(jButtonShowModel);
-//		jButtonShowModel.setVisible(itsSearchParameters.getTargetType() != TargetType.SINGLE_NOMINAL);
 
 		jButtonROC = GUI.buildButton("ROC", 'R', "roc", this);
 		aSubgroupPanel.add(jButtonROC);
-//		jButtonROC.setVisible(aTargetType == TargetType.SINGLE_NOMINAL);
 
 		jButtonBrowseSubgroups = GUI.buildButton("Browse Selected", 'B', "browse", this);
-		aSubgroupSetPanel.add(jButtonBrowseSubgroups);
+		aSubgroupPanel.add(jButtonBrowseSubgroups);
 
 		jButtonDeleteSubgroups = GUI.buildButton("Delete Selected", 'D', "delete", this);
 		aSubgroupPanel.add(jButtonDeleteSubgroups);
@@ -251,21 +171,7 @@ public class ResultWindow extends JFrame implements ActionListener
 
 		jButtonCloseWindow = GUI.buildButton("Close", 'C', "close", this);
 		aSubgroupSetPanel.add(jButtonCloseWindow);
-/*
-		//disable result dependent buttons
-		if (itsSubgroupSet.isEmpty())
-		{
-			jButtonShowModel.setEnabled(false);
-			jButtonROC.setEnabled(false);
-			jButtonDeleteSubgroups.setEnabled(false);
-			jButtonPValues.setEnabled(false);
-			jButtonRegressionTest.setEnabled(false);
-			jButtonEmpirical.setEnabled(false);
-			jButtonFold.setEnabled(false);
-			jButtonSave.setEnabled(false);
-			jButtonPrint.setEnabled(false);
-		}
-*/
+
 		enableButtonsCheck();
 		jPanelSouth.add(aSubgroupPanel);
 		jPanelSouth.add(aSubgroupSetPanel);
@@ -332,6 +238,10 @@ public class ResultWindow extends JFrame implements ActionListener
 		}
 	}
 
+	/*
+	 * TODO use Subgroup.getID/getConditions() for title
+	 * Current naming relies on non-sortable columns
+	 */
 	private void jButtonShowModelActionPerformed()
 	{
 		int[] aSelectionIndex = itsSubgroupTable.getSelectedRows();
@@ -347,17 +257,6 @@ public class ResultWindow extends JFrame implements ActionListener
 				{
 					if (aCount == aSelectionIndex[0]) //just the first selection gets a window
 					{
-						/*
-						TargetConcept aTargetConcept = itsSearchParameters.getTargetConcept();
-						Attribute aPrimaryTarget = aTargetConcept.getPrimaryTarget();
-						Column aPrimaryColumn = itsTable.getColumn(aPrimaryTarget);
-						Attribute aSecondaryTarget = aTargetConcept.getSecondaryTarget();
-						Column aSecondaryColumn = itsTable.getColumn(aSecondaryTarget);
-
-						//no trendline
-						new ModelWindow(aPrimaryColumn, aSecondaryColumn, aPrimaryTarget.getName(), aSecondaryTarget.getName(), null, aSubgroup).setTitle("Subgroup " + (aCount+1));
-						break;
-						*/
 						TargetConcept aTargetConcept = itsSearchParameters.getTargetConcept();
 
 						//no trendline
@@ -373,6 +272,10 @@ public class ResultWindow extends JFrame implements ActionListener
 			}
 			case MULTI_LABEL :
 			{
+				/*
+				 * TODO inefficient loop
+				 * use convertViewToModel(i) to select correct s, then use s.ID
+				 */
 				int i = 0;
 				while (i < aSelectionIndex.length)
 				{
@@ -469,10 +372,8 @@ public class ResultWindow extends JFrame implements ActionListener
 		if (aQualities == null)
 			return;
 		Validation aValidation = new Validation(itsSearchParameters, itsTable, itsQualityMeasure);
-//		double aRegressionTestScore = aValidation.performRegressionTest(aQualities, aNrSubgroups, itsSubgroupSet);
-//		JOptionPane.showMessageDialog(null, "The regression test score equals\n" + aRegressionTestScore);
 		double[] aRegressionTestScore = aValidation.performRegressionTest(aQualities, itsSubgroupSet);
-		JOptionPane.showMessageDialog(this, "The regression test score equals\nfor k =  1 : "+aRegressionTestScore[0]+"\nfor k = 10 : "+aRegressionTestScore[1]);
+		JOptionPane.showMessageDialog(null, "The regression test score equals\nfor k =  1 : "+aRegressionTestScore[0]+"\nfor k = 10 : "+aRegressionTestScore[1]);
 	}
 
 	private void jButtonEmpiricalActionPerformed()
@@ -546,63 +447,6 @@ public class ResultWindow extends JFrame implements ActionListener
 		}
 	}
 
-/*
-	private double[] obtainRandomQualities()
-	{
-		double[] aPi = {Math.PI};
-		int aMethod = JOptionPane.showOptionDialog(this,
-				"By which method should the random qualities be computed?",
-				"Which method?",
-				JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE,
-				null,
-				new String[] {"Random subgroups", "Random conditions"},
-				"Random subgroups");
-		if (!(aMethod == 0 || aMethod == 1))
-		{
-			JOptionPane.showMessageDialog(this, "No method selected;\nrandom qualities cannot be computed.");
-			return aPi;
-		}
-
-		String inputValue = JOptionPane.showInputDialog("Number of random subgroups to be used\nfor random quality estimation:", 1000);
-		int aNrRepetitions;
-		try
-		{
-			aNrRepetitions = Integer.parseInt(inputValue);
-			if (aNrRepetitions <= 1)
-			{
-				JOptionPane.showMessageDialog(this, "Number should be > 1;\nrandom qualities cannot be computed.");
-				return aPi;
-			}
-		}
-		catch (Exception e)
-		{
-			JOptionPane.showMessageDialog(this, "Not a valid number;\nrandom qualities cannot be computed.");
-			return aPi;
-		}
-
-		// Compute qualities
-		Validation aValidation = new Validation(itsSearchParameters, itsTable, itsQualityMeasure);
-		double[] aQualities;
-		switch (aMethod)
-		{
-			case 0:
-			{
-				aQualities = aValidation.randomSubgroups(aNrRepetitions);
-				break;
-			}
-			case 1:
-			{
-				aQualities = aValidation.randomConditions(aNrRepetitions);
-				break;
-			}
-			default:
-			{	// Should never reach this code
-				aQualities = null;
-			}
-		}
-		return aQualities;
-	}
-*/
 	private JPanel jPanelSouth;
 	private JButton jButtonShowModel;
 	private JButton jButtonBrowseSubgroups;

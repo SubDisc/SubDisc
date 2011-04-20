@@ -50,7 +50,7 @@ public class Subgroup implements Comparable<Object>
 		itsConditions = new ConditionList();
 		itsMeasureValue = theMeasureValue;
 		itsCoverage = theCoverage;
-		itsMembers = new BitSet(1000);
+		itsMembers = new BitSet(1000); // TODO > theCoverage && theSubgroupSet.binaryTarget
 		itsDepth = theDepth;
 		itsDAG = null;	//not set yet
 		itsParentSet = (theSubgroupSet == null ? new SubgroupSet(0) : theSubgroupSet);

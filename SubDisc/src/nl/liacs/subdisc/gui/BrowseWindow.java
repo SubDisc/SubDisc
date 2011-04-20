@@ -90,7 +90,10 @@ public class BrowseWindow extends JFrame implements ActionListener
 		// Browse Subgroup
 		if (itsSubgroup != null)
 		{
-			aButtonPanel.add(GUI.buildButton("True Positives", 'P', "positives", this));
+			// enable only for NOMINAL setting
+			if (itsSubgroup.getParentSet().getBinaryTargetClone() != null)
+				aButtonPanel.add(GUI.buildButton("True Positives", 'P', "positives", this));
+
 			filter();
 			// disable save button as it saves whole Table
 			aSaveButton.setVisible(false);
@@ -113,7 +116,6 @@ public class BrowseWindow extends JFrame implements ActionListener
 	/*
 	 * Based on Swing tutorial TableRenderDemo.java.
 	 * This method picks column sizes, based on column heads only.
-	 * Could use JTable tables' itsTable for sizes instead (1 less parameter).
 	 * TODO Put in SwingWorker background thread.
 	 */
 	private void initColumnSizes()
@@ -137,18 +139,20 @@ public class BrowseWindow extends JFrame implements ActionListener
 	@Override
 	public void actionPerformed(ActionEvent theEvent)
 	{
-		if ("save".equals(theEvent.getActionCommand()))
+		String anEvent = theEvent.getActionCommand();
+
+		if ("save".equals(anEvent))
 			itsTable.toFile();
-		else if ("positives".equals(theEvent.getActionCommand()))
+		else if ("positives".equals(anEvent))
 		{
+			// TODO clicks on JTable interfere with this ActionEvent/itsTPOnly
+			// NOTE button should only be enabled in NOMINAL setting
 			itsTPOnly = !itsTPOnly;
 			if (itsTPOnly)
 			{
 				BitSet aTP = itsSubgroup.getParentSet().getBinaryTargetClone();
-				System.out.println(aTP);
-				System.out.println(itsSubgroup.getMembers());
 				aTP.and(itsSubgroup.getMembers());
-				System.out.println(aTP);
+
 				for (int i = aTP.nextSetBit(0); i >= 0; i = aTP.nextSetBit(i + 1))
 				{
 					int k = itsJTable.convertRowIndexToView(i);
@@ -158,7 +162,7 @@ public class BrowseWindow extends JFrame implements ActionListener
 			else
 				itsJTable.clearSelection();
 		}
-		else if ("close".equals(theEvent.getActionCommand()))
+		else if ("close".equals(anEvent))
 			dispose();
 	}
 
