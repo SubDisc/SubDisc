@@ -87,6 +87,6 @@ public class BrowseTableModel extends AbstractTableModel
 	private void LogError(String theMethod)
 	{
 		Log.logCommandLine(
-			"Error in TableTableWindow" + theMethod + ": Table is 'null'.");
+			"Error in BrowseTableWindow" + theMethod + ": Table is 'null'.");
 	}
 }
