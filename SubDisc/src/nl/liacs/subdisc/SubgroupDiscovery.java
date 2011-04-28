@@ -157,7 +157,8 @@ public class SubgroupDiscovery extends MiningAlgorithm
 						break;
 
 					Refinement aRefinement = aRefinementList.get(i);
-					if (aRefinement.getCondition().getAttribute().isNumericType())
+					// if refinement is (num_attr = value) then treat it as nominal
+					if (aRefinement.getCondition().getAttribute().isNumericType() && aRefinement.getCondition().getOperator() != Condition.EQUALS)
 						evaluateNumericRefinements(theBeginTime, aSubgroup, aRefinement);
 					else
 						evaluateNominalBinaryRefinements(theBeginTime, aSubgroup, aRefinement);
@@ -172,68 +173,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		if ((itsSearchParameters.getTargetType() == TargetType.MULTI_LABEL) && itsSearchParameters.getPostProcessingDoAutoRun())
 			postprocess();
 	}
-/*
-	// Obsolete
-	public void Mine(long theBeginTime)
-	{
-		//make subgroup to start with, containing all elements
-		Subgroup aStart = new Subgroup(0.0, itsMaximumCoverage, 0, itsResult);
-		BitSet aBitSet = new BitSet(itsMaximumCoverage);
-		aBitSet.set(0,itsMaximumCoverage);
-		aStart.setMembers(aBitSet);
 
-		Mine(theBeginTime, aStart);
-		itsResult.setIDs(); //assign 1 to n to subgroups, for future reference in subsets
-	}
-
-	// Obsolete
-	//what Exception can be thrown, requiring this to be in a try block?
-	public void Mine(long theBeginTime, Subgroup theStart)
-	{
-		try
-		{
-			Candidate aRootCandidate = new Candidate(theStart, 0.0f);
-			itsCandidateQueue = new CandidateQueue(itsSearchParameters.getSearchStrategy(),
-													itsSearchParameters.getSearchStrategyWidth(),
-													aRootCandidate);
-			itsCandidateCount = 0;
-
-			int aSearchDepth = itsSearchParameters.getSearchDepth();
-			long theEndTime = theBeginTime + (long)(itsSearchParameters.getMaximumTime()*60*1000);
-			while ((itsCandidateQueue != null && itsCandidateQueue.size() > 0 ) && (System.currentTimeMillis() <= theEndTime))
-			{
-				Candidate aCandidate = itsCandidateQueue.removeFirst(); // take off first Candidate from Queue
-				Subgroup aSubgroup = aCandidate.getSubgroup();
-
-				if (aSubgroup.getDepth() < aSearchDepth)
-				{
-					RefinementList aRefinementList = new RefinementList(aSubgroup, itsTable, itsSearchParameters.getTargetConcept());
-
-					for (int i = 0, j = aRefinementList.size(); i < j; i++)
-					{
-						if (System.currentTimeMillis() > theEndTime)
-							break;
-
-						Refinement aRefinement = aRefinementList.get(i);
-						if (aRefinement.getCondition().getAttribute().isNumericType())
-							evaluateNumericRefinements(theBeginTime, aSubgroup, aRefinement);
-						else
-							evaluateNominalBinaryRefinements(theBeginTime, aSubgroup, aRefinement);
-					}
-				}
-			}
-			Log.logCommandLine("number of candidates: " + itsCandidateCount);
-			Log.logCommandLine("number of subgroups: " + getNumberOfSubgroups());
-		}
-		catch (Exception e)
-		{
-			ErrorWindow aWindow = new ErrorWindow(e);
-			aWindow.setLocation(200, 200);
-			aWindow.setVisible(true);
-			e.printStackTrace();
-		}
-	}
-*/
 	private void evaluateNumericRefinements(long theBeginTime, Subgroup theSubgroup, Refinement theRefinement)
 	{
 		int anAttributeIndex = theRefinement.getCondition().getAttribute().getIndex();
@@ -339,9 +279,6 @@ public class SubgroupDiscovery extends MiningAlgorithm
 
 	private void evaluateNominalBinaryRefinements(long theBeginTime, Subgroup theSubgroup, Refinement theRefinement)
 	{
-//		Attribute anAttribute = theRefinement.getCondition().getAttribute();
-//		int anAttributeIndex = anAttribute.getIndex();
-//		TreeSet<String> aDomain = itsTable.getDomain(anAttributeIndex);
 		TreeSet<String> aDomain = itsTable.getDomain(theRefinement.getCondition().getAttribute().getIndex());
 		int aMinimumCoverage = itsSearchParameters.getMinimumCoverage();
 		float aQualityMeasureMinimum = itsSearchParameters.getQualityMeasureMinimum();

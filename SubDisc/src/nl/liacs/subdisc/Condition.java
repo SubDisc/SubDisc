@@ -13,9 +13,9 @@ public class Condition
 	public static final int LAST_NOMINAL_OPERATOR   = FIRST_NOMINAL_OPERATOR;
 
 	// Numeric Operator  Constants
-	public static final int FIRST_NUMERIC_OPERATOR  = LESS_THAN_OR_EQUAL;
-	public static final int SECOND_NUMERIC_OPERATOR = GREATER_THAN_OR_EQUAL;
-	public static final int LAST_NUMERIC_OPERATOR   = SECOND_NUMERIC_OPERATOR;
+	//this allows =, <= and >=
+	public static final int FIRST_NUMERIC_OPERATOR  = EQUALS;
+	public static final int LAST_NUMERIC_OPERATOR   = GREATER_THAN_OR_EQUAL;
 
 //	private Attribute itsAttribute;
 	private Column itsColumn;
@@ -59,12 +59,17 @@ public class Condition
 
 	public boolean hasNextOperator()
 	{
-		return ((this.itsOperator != LAST_NOMINAL_OPERATOR)&&(this.itsOperator != LAST_NUMERIC_OPERATOR));
+		if (itsOperator == LAST_NOMINAL_OPERATOR && !itsColumn.isNumericType())
+			return false;
+		if (itsOperator == LAST_NUMERIC_OPERATOR && itsColumn.isNumericType())
+			return false;
+
+		return true;
 	}
 
 	public int getNextOperator()
 	{
-		if ( this.hasNextOperator() )
+		if (hasNextOperator())
 			return itsOperator+1;
 		else	// No Next Operators
 			return NOT_AN_OPERATOR;
