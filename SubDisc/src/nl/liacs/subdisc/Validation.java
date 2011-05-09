@@ -220,6 +220,37 @@ public class Validation
 		}
 		return aQualities; //return the qualities belonging to this random sample
 	}
+	
+	/* DISCLAIMER:
+	 * Only implemented for SINGLE_NOMINAL setting so far
+	 * 
+	 * KNOWN BUG:
+	 * Swap randomizes the original Table, so all further operations done in this ResultWindow are meaningless. Should we make a deep copy of the entire dataset to prevent this?
+	 */
+	public double[] swapRandomization(int theNrRepetitions)
+	{
+		double[] aQualities = new double[theNrRepetitions];
+		SubgroupDiscovery aSubgroupDiscovery;
+
+		Log.COMMANDLINELOG = false;
+		for (int i=0; i<theNrRepetitions; i++)
+		{
+			itsTable.swapRandomizeTarget(itsTargetConcept);
+			int itsPositiveCount = itsTable.countValues(itsTargetConcept.getPrimaryTarget().getIndex(), itsTargetConcept.getTargetValue());
+			aSubgroupDiscovery = new SubgroupDiscovery(itsSearchParameters, itsTable, itsPositiveCount);
+			aSubgroupDiscovery.Mine(System.currentTimeMillis());
+			SubgroupSet aSubgroupSet = aSubgroupDiscovery.getResult();
+			if (aSubgroupSet.size()==0)
+				i--; // if no subgroups are found, try again.
+			else
+				aQualities[i] = aSubgroupSet.getBestSubgroup().getMeasureValue();
+		}
+		Log.COMMANDLINELOG = true;
+
+		for (int j=0; j<theNrRepetitions; j++)
+			Log.logCommandLine((j + 1) + "," + aQualities[j]);
+		return aQualities;
+	}
 
 	public double performRegressionTest(double[] theQualities, int theK, SubgroupSet theSubgroupSet)
 	{

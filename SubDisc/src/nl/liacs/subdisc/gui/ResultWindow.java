@@ -417,6 +417,10 @@ public class ResultWindow extends JFrame implements ActionListener
 				return aValidation.randomSubgroups(aNrRepetitions);
 			else if (RandomQualitiesWindow.RANDOM_DESCRIPTIONS.equals(aMethod))
 				return aValidation.randomConditions(aNrRepetitions);
+			else if (RandomQualitiesWindow.SWAP_RANDOMIZATION.equals(aMethod))
+			{
+				return aValidation.swapRandomization(aNrRepetitions);
+			}
 			else
 				return null;
 		}

@@ -11,6 +11,7 @@ public class RandomQualitiesWindow extends JDialog implements ActionListener
 
 	public static final String RANDOM_SUBSETS = "Random subsets";
 	public static final String RANDOM_DESCRIPTIONS = "Random descriptions";
+	public static final String SWAP_RANDOMIZATION = "Swap-randomization";
 	public static final String DEFAULT_AMOUNT = "1000";
 
 	private ButtonGroup itsMethods;
@@ -50,6 +51,12 @@ public class RandomQualitiesWindow extends JDialog implements ActionListener
 
 		aRadioButton = new JRadioButton(RANDOM_DESCRIPTIONS);
 		aRadioButton.setActionCommand(RANDOM_DESCRIPTIONS);
+		aRadioButtonPanel.add(aRadioButton);
+		itsMethods.add(aRadioButton);
+		aMasterPanel.add(aRadioButtonPanel);
+
+		aRadioButton = new JRadioButton(SWAP_RANDOMIZATION);
+		aRadioButton.setActionCommand(SWAP_RANDOMIZATION);
 		aRadioButtonPanel.add(aRadioButton);
 		itsMethods.add(aRadioButton);
 		aMasterPanel.add(aRadioButtonPanel);
