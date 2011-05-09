@@ -221,34 +221,82 @@ public class Validation
 		return aQualities; //return the qualities belonging to this random sample
 	}
 	
-	/* DISCLAIMER:
-	 * Only implemented for SINGLE_NOMINAL setting so far
-	 * 
+	/* 
 	 * KNOWN BUG:
 	 * Swap randomizes the original Table, so all further operations done in this ResultWindow are meaningless. Should we make a deep copy of the entire dataset to prevent this?
 	 */
 	public double[] swapRandomization(int theNrRepetitions)
 	{
+		boolean aCOMMANDLINELOGmem = Log.COMMANDLINELOG;
 		double[] aQualities = new double[theNrRepetitions];
-		SubgroupDiscovery aSubgroupDiscovery;
+		
+		SubgroupDiscovery aSubgroupDiscovery = null;
+		int itsPositiveCount = 0;
+		float itsTargetAverage = 0;
+		
+		switch(itsTargetConcept.getTargetType())
+		{
+			case SINGLE_NOMINAL :
+			{
+				itsPositiveCount = itsTable.countValues(itsTargetConcept.getPrimaryTarget().getIndex(), itsTargetConcept.getTargetValue());
+				break;
+			}
+			case SINGLE_NUMERIC :
+			{
+				itsTargetAverage = itsTable.getAverage(itsTargetConcept.getPrimaryTarget().getIndex());
+				break;
+			}
+			default : ;
+		}
 
 		Log.COMMANDLINELOG = false;
 		for (int i=0; i<theNrRepetitions; i++)
 		{
 			itsTable.swapRandomizeTarget(itsTargetConcept);
-			int itsPositiveCount = itsTable.countValues(itsTargetConcept.getPrimaryTarget().getIndex(), itsTargetConcept.getTargetValue());
-			aSubgroupDiscovery = new SubgroupDiscovery(itsSearchParameters, itsTable, itsPositiveCount);
+			
+			switch(itsTargetConcept.getTargetType())
+			{
+				case SINGLE_NOMINAL :
+				{
+					aSubgroupDiscovery = new SubgroupDiscovery(itsSearchParameters, itsTable, itsPositiveCount);
+					break;
+				}
+				case SINGLE_NUMERIC:
+				{
+					aSubgroupDiscovery = new SubgroupDiscovery(itsSearchParameters, itsTable, itsTargetAverage);
+					break;
+				}
+				case MULTI_LABEL :
+				{
+					aSubgroupDiscovery = new SubgroupDiscovery(itsSearchParameters, itsTable);
+					break;
+				}
+				case DOUBLE_REGRESSION :
+				{
+					aSubgroupDiscovery = new SubgroupDiscovery(itsSearchParameters, itsTable, true);
+					break;
+				}
+				case DOUBLE_CORRELATION :
+				{
+					aSubgroupDiscovery = new SubgroupDiscovery(itsSearchParameters, itsTable, false);
+					break;
+				}
+				default : ; // TODO should never get here, throw warning
+			}
+			
 			aSubgroupDiscovery.Mine(System.currentTimeMillis());
 			SubgroupSet aSubgroupSet = aSubgroupDiscovery.getResult();
 			if (aSubgroupSet.size()==0)
 				i--; // if no subgroups are found, try again.
 			else
+			{
+				Log.COMMANDLINELOG = true;
 				aQualities[i] = aSubgroupSet.getBestSubgroup().getMeasureValue();
+				Log.logCommandLine((i + 1) + "," + aQualities[i]);
+				Log.COMMANDLINELOG = false;
+			}
 		}
-		Log.COMMANDLINELOG = true;
-
-		for (int j=0; j<theNrRepetitions; j++)
-			Log.logCommandLine((j + 1) + "," + aQualities[j]);
+		Log.COMMANDLINELOG = aCOMMANDLINELOGmem;
 		return aQualities;
 	}
 
