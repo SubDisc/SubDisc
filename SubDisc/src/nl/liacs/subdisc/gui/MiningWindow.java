@@ -39,7 +39,7 @@ public class MiningWindow extends JFrame
 	}
 
 	public MiningWindow(Table theTable)
-	{
+	{	
 		if (theTable != null)
 		{
 			itsTable = theTable;
@@ -285,7 +285,7 @@ public class MiningWindow extends JFrame
 		jPanelEvaluationLabels = new JPanel();
 		jLabelTargetType = new JLabel();
 		jLabelQualityMeasure = new JLabel();
-		jLabelEvaluationTreshold = new JLabel();
+		jLabelEvaluationThreshold = new JLabel();
 		jLabelTargetAttribute = new JLabel();
 		jLabelMiscField = new JLabel(); // used for target value or secondary target
 		jLabelMultiTargets = new JLabel();
@@ -339,8 +339,7 @@ public class MiningWindow extends JFrame
 		// mining buttons
 		jPanelMineButtons = new JPanel();
 		jButtonSubgroupDiscovery = new JButton();
-		jButtonRandomSubgroups = new JButton();
-		jButtonRandomConditions = new JButton();
+		jButtonThreshold = new JButton();
 
 		// setting up - menu items
 		jMiningWindowMenuBar.setFont(GUI.DEFAULT_TEXT_FONT);
@@ -664,8 +663,8 @@ public class MiningWindow extends JFrame
 		jLabelQualityMeasure = initJLabel(" quality measure");
 		jPanelEvaluationLabels.add(jLabelQualityMeasure);
 
-		jLabelEvaluationTreshold = initJLabel(" measure minimum");
-		jPanelEvaluationLabels.add(jLabelEvaluationTreshold);
+		jLabelEvaluationThreshold = initJLabel(" measure minimum");
+		jPanelEvaluationLabels.add(jLabelEvaluationThreshold);
 
 		jLabelTargetAttribute = initJLabel(" primary target");
 		jPanelEvaluationLabels.add(jLabelTargetAttribute);
@@ -915,23 +914,14 @@ public class MiningWindow extends JFrame
 		});
 		jPanelMineButtons.add(jButtonCrossValidate);
 
-		jButtonRandomSubgroups = initButton("Random Subgroups", 'R');
-		jButtonRandomSubgroups.addActionListener(new ActionListener() {
+		jButtonThreshold = initButton("Compute Threshold", 'R');
+		jButtonThreshold.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
 //				jButtonRandomSubgroupsActionPerformed();
 				jButtonRandomQualitiesActionPerformed(RandomQualitiesWindow.RANDOM_SUBSETS);
 			}
 		});
-		jPanelMineButtons.add(jButtonRandomSubgroups);
-
-		jButtonRandomConditions = initButton("Random Conditions", 'C');
-		jButtonRandomConditions.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent evt) {
-//				jButtonRandomConditionsActionPerformed();
-				jButtonRandomQualitiesActionPerformed(RandomQualitiesWindow.RANDOM_DESCRIPTIONS);
-			}
-		});
-		jPanelMineButtons.add(jButtonRandomConditions);
+		jPanelMineButtons.add(jButtonThreshold);
 
 		jPanelSouth.add(jPanelMineButtons);
 
@@ -960,8 +950,7 @@ public class MiningWindow extends JFrame
 									jButtonCrossValidate,
 									//jButtonDataExplorer,	//TODO add when implemented
 									jButtonSubgroupDiscovery,
-									jButtonRandomSubgroups,
-									jButtonRandomConditions,
+									jButtonThreshold,
 									jButtonMultiTargets};
 		enableBaseModelButtonCheck();
 
@@ -1471,201 +1460,7 @@ public class MiningWindow extends JFrame
 			}
 		}
 	}
-/*
-	// TODO update using new RandomQualityWindow(RANDOM_SUBGROUPS).getSettings()
-	// TODO what could throw exception, probably nothing
-	private void jButtonRandomSubgroupsActionPerformed()
-	{
-		try
-		{
-			setupSearchParameters();
 
-			String inputValue = JOptionPane.showInputDialog("Number of random subgroups to be used\nfor distribution estimation:", 1000);
-			int aNrRepetitions;
-			try
-			{
-				aNrRepetitions = Integer.parseInt(inputValue);
-			}
-			catch (Exception e)
-			{
-				JOptionPane.showMessageDialog(null, "Not a valid number.");
-				return;
-			}
-
-			QualityMeasure aQualityMeasure;
-			switch(itsTargetConcept.getTargetType())
-			{
-				case SINGLE_NOMINAL :
-				{
-					aQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), itsTable.getNrRows(), itsPositiveCount);
-					break;
-				}
-				case MULTI_LABEL :
-				{
-					// base model
-					BinaryTable aBaseTable = new BinaryTable(itsTable, itsTargetConcept.getMultiTargets());
-					Bayesian aBayesian = new Bayesian(aBaseTable);
-					aBayesian.climb();
-					aQualityMeasure = new QualityMeasure(itsSearchParameters, aBayesian.getDAG(), itsTotalCount);
-					break;
-				}
-				case DOUBLE_REGRESSION :
-				case DOUBLE_CORRELATION :
-				{
-					//base model
-					aQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), itsTable.getNrRows(), 100); //TODO fix 100, is useless?
-					break;
-				}
-				default : return; // TODO should never get here
-			}
-
-			Validation aValidation = new Validation(itsSearchParameters, itsTable, aQualityMeasure);
-			double[] aQualities = aValidation.randomSubgroups(aNrRepetitions);
-			NormalDistribution aDistro = new NormalDistribution(aQualities);
-			Arrays.sort(aQualities);
-			for (double aQuality : aQualities)
-			{
-				Log.logCommandLine("" + aDistro.zTransform(aQuality));
-			}
-			Log.logCommandLine("mu: " + aDistro.getMu());
-			Log.logCommandLine("sigma: " + aDistro.getSigma());
-
-			// TODO remove duplicate code
-			int aMethod = JOptionPane.showOptionDialog(null,
-				"The following quality measure thresholds were computed:\n" +
-				"1% significance level: " + aDistro.getOnePercentSignificance() + "\n" +
-				"5% significance level: " + aDistro.getFivePercentSignificance() + "\n" +
-				"10% significance level: " + aDistro.getTenPercentSignificance() + "\n" +
-				"Would you like to keep one of these thresholds as search constraint?",
-				"Keep quality measure threshold?",
-				JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null,
-				new String[] {"1% significance", "5% significance", "10% significance", "Ignore statistics"},
-				"1% significance");
-			switch (aMethod)
-			{
-				case 0:
-				{
-					setQualityMeasureMinimum(Float.toString(aDistro.getOnePercentSignificance()));
-					break;
-				}
-				case 1:
-				{
-					setQualityMeasureMinimum(Float.toString(aDistro.getFivePercentSignificance()));
-					break;
-				}
-				case 2:
-				{
-					setQualityMeasureMinimum(Float.toString(aDistro.getTenPercentSignificance()));
-					break;
-				}
-				case 3:
-				{
-					break; //discard statistics
-				}
-			}
-		}
-		catch (Exception e)
-		{
-			e.printStackTrace();
-			ErrorWindow aWindow = new ErrorWindow(e);
-			aWindow.setLocation(200, 200);
-			aWindow.setVisible(true);
-		}
-	}
-
-	// TODO update using new RandomQualityWindow(RANDOM_SUBGROUPS).getSettings()
-	// TODO what could throw exception, probably nothing
-	private void jButtonRandomConditionsActionPerformed()
-	{
-		try
-		{
-			setupSearchParameters();
-
-			String inputValue = JOptionPane.showInputDialog("Number of random conditions to be used\nfor distribution estimation:", 1000);
-			int aNrRepetitions;
-			try
-			{
-				aNrRepetitions = Integer.parseInt(inputValue);
-			}
-			catch (Exception e)
-			{
-				JOptionPane.showMessageDialog(null, "Not a valid number.");
-				return;
-			}
-
-			QualityMeasure aQualityMeasure;
-			switch(itsTargetConcept.getTargetType())
-			{
-				case SINGLE_NOMINAL :
-				{
-					aQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), itsTable.getNrRows(), itsPositiveCount);
-					break;
-				}
-				case MULTI_LABEL :
-				{
-					// base model
-					BinaryTable aBaseTable = new BinaryTable(itsTable, itsTargetConcept.getMultiTargets());
-					Bayesian aBayesian = new Bayesian(aBaseTable);
-					aBayesian.climb();
-					aQualityMeasure = new QualityMeasure(itsSearchParameters, aBayesian.getDAG(), itsTotalCount);
-					break;
-				}
-				case DOUBLE_REGRESSION :
-				case DOUBLE_CORRELATION :
-				{
-					//base model
-					aQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), itsTable.getNrRows(), 100); //TODO fix 100, is useless?
-					break;
-				}
-				default : return; // TODO should never get here
-			}
-
-			Validation aValidation = new Validation(itsSearchParameters, itsTable, aQualityMeasure);
-			NormalDistribution aDistro = new NormalDistribution(aValidation.randomConditions(aNrRepetitions));
-
-			// TODO remove duplicate code
-			int aMethod = JOptionPane.showOptionDialog(null,
-				"The following quality measure thresholds were computed:\n" +
-				"1% significance level: " + aDistro.getOnePercentSignificance() + "\n" +
-				"5% significance level: " + aDistro.getFivePercentSignificance() + "\n" +
-				"10% significance level: " + aDistro.getTenPercentSignificance() + "\n" +
-				"Would you like to keep one of these thresholds as search constraint?",
-				"Keep quality measure threshold?",
-				JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null,
-				new String[] {"1% significance", "5% significance", "10% significance", "Ignore statistics"},
-				"1% significance");
-			switch (aMethod)
-			{
-				case 0:
-				{
-					setQualityMeasureMinimum(Float.toString(aDistro.getOnePercentSignificance()));
-					break;
-				}
-				case 1:
-				{
-					setQualityMeasureMinimum(Float.toString(aDistro.getFivePercentSignificance()));
-					break;
-				}
-				case 2:
-				{
-					setQualityMeasureMinimum(Float.toString(aDistro.getTenPercentSignificance()));
-					break;
-				}
-				case 3:
-				{
-					break; //discard statistics
-				}
-			}
-		}
-		catch (Exception e)
-		{
-			e.printStackTrace();
-			ErrorWindow aWindow = new ErrorWindow(e);
-			aWindow.setLocation(200, 200);
-			aWindow.setVisible(true);
-		}
-	}
-*/
 	private void jButtonRandomQualitiesActionPerformed(String theMethod)
 	{
 		boolean aSubgroupAction;
@@ -2144,8 +1939,7 @@ public class MiningWindow extends JFrame
 	private JButton jButtonCrossValidate;
 //	private JButton jButtonDataExplorer;
 	private JButton jButtonSubgroupDiscovery;
-	private JButton jButtonRandomSubgroups;
-	private JButton jButtonRandomConditions;
+	private JButton jButtonThreshold;
 	private JPanel jPanelCenter;
 	private JPanel jPanelRuleTarget;
 	private JPanel jPanelRuleTargetLabels;
@@ -2182,7 +1976,7 @@ public class MiningWindow extends JFrame
 	private JPanel jPanelEvaluationLabels;
 	private JLabel jLabelTargetType;
 	private JLabel jLabelQualityMeasure;
-	private JLabel jLabelEvaluationTreshold;
+	private JLabel jLabelEvaluationThreshold;
 	private JPanel jPanelEvaluationFields;
 	private JComboBox jComboBoxQualityMeasure;
 	private JComboBox jComboBoxTargetType;

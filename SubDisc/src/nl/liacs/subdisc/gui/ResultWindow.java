@@ -150,7 +150,7 @@ public class ResultWindow extends JFrame implements ActionListener
 		jButtonDeleteSubgroups = GUI.buildButton("Delete Selected", 'D', "delete", this);
 		aSubgroupPanel.add(jButtonDeleteSubgroups);
 
-		jButtonPValues = GUI.buildButton("Compute p-Values", 'V', "compute_p", this);
+		jButtonPValues = GUI.buildButton("Gaussian p-Values", 'V', "compute_p", this);
 		aSubgroupPanel.add(jButtonPValues);
 
 		jButtonRegressionTest = GUI.buildButton("Regression Test", 'T', "regression", this);
