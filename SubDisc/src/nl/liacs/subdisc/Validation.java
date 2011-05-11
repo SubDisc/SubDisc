@@ -223,32 +223,57 @@ public class Validation
 	
 	/* 
 	 * KNOWN BUG:
-	 * Swap randomizes the original Table, so all further operations done in this ResultWindow are meaningless. Should we make a deep copy of the entire dataset to prevent this?
+	 * 
+	 * Swap randomizes the original Table. When this method is called from the MiningWindow, the swap randomized Columns are restored, 
+	 * but when the method is called from the ResultWindow they are not. 
+	 * 
+	 * "I can't understand what the problem is, I find it hard enough dealing with my own biz."
+	 *                                                -- De La Soul, Ring Ring Ring (Ha Ha Hey) 
 	 */
 	public double[] swapRandomization(int theNrRepetitions)
 	{
+		// Memorizing the COMMANDLINELOG setting, creating a place for the to be generated qualities
 		boolean aCOMMANDLINELOGmem = Log.COMMANDLINELOG;
 		double[] aQualities = new double[theNrRepetitions];
 		
+		// Initializing variables		
 		SubgroupDiscovery aSubgroupDiscovery = null;
 		int itsPositiveCount = 0;
 		float itsTargetAverage = 0;
+		Column aPrimaryCopy = null;
+		Column aSecondaryCopy = null;
+		List<Column> aMultiCopy = new ArrayList<Column>();
 		
+		// Do some administration to enable running SD, store columns that will soon be swap randomized
 		switch(itsTargetConcept.getTargetType())
 		{
 			case SINGLE_NOMINAL :
 			{
 				itsPositiveCount = itsTable.countValues(itsTargetConcept.getPrimaryTarget().getIndex(), itsTargetConcept.getTargetValue());
+				aPrimaryCopy = itsTargetConcept.getPrimaryTarget().copy();
 				break;
 			}
 			case SINGLE_NUMERIC :
 			{
 				itsTargetAverage = itsTable.getAverage(itsTargetConcept.getPrimaryTarget().getIndex());
+				aPrimaryCopy = itsTargetConcept.getPrimaryTarget().copy();
 				break;
+			}
+			case DOUBLE_CORRELATION :
+			{
+				aPrimaryCopy = itsTargetConcept.getPrimaryTarget().copy();
+				aSecondaryCopy = itsTargetConcept.getSecondaryTarget().copy();
+			}
+			case MULTI_LABEL :
+			{
+				List<Column> aTemp = itsTargetConcept.getMultiTargets();
+				for (Column c : aTemp)
+					aMultiCopy.add(c.copy());
 			}
 			default : ;
 		}
-
+		
+		// Generate swap randomized random results
 		Log.COMMANDLINELOG = false;
 		for (int i=0; i<theNrRepetitions; i++)
 		{
@@ -296,6 +321,29 @@ public class Validation
 				Log.COMMANDLINELOG = false;
 			}
 		}
+		
+		// Restore swap randomized target columns to obtain the original dataset again
+		switch(itsTargetConcept.getTargetType())
+		{
+			case DOUBLE_CORRELATION :
+			{
+				itsTargetConcept.setSecondaryTarget(aSecondaryCopy); // do NOT break; primary target needs restoration too
+			}
+			case SINGLE_NOMINAL :
+			case SINGLE_NUMERIC :
+			{
+				itsTargetConcept.setPrimaryTarget(aPrimaryCopy);
+				break;
+			}
+			case MULTI_LABEL :
+			{
+				itsTargetConcept.setMultiTargets(aMultiCopy);
+				break;
+			}
+			default : ;
+		}
+		
+		// Reset COMMANDLINELOG, return result
 		Log.COMMANDLINELOG = aCOMMANDLINELOGmem;
 		return aQualities;
 	}

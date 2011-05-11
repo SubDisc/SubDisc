@@ -1038,5 +1038,23 @@ public class Column implements XMLNodeInterface
 		XMLNode.addNodeTo(aNode, "missing_value", itsMissingValue);
 		XMLNode.addNodeTo(aNode, "enabled", isEnabled);
 	}
+	
+	public Column copy()
+	{
+		Column aCopy = 	new Column(itsName, itsShort, itsType, itsIndex, itsSize);
+		
+		aCopy.itsFloats = this.itsFloats;
+		aCopy.itsNominals = this.itsNominals;
+		aCopy.itsBinaries = this.itsBinaries;
+		aCopy.itsMissingValue = this.itsMissingValue;
+		aCopy.itsMissing = this.itsMissing;
+		aCopy.itsMissingValueIsUnique = this.itsMissingValueIsUnique;
+		aCopy.itsCardinality = this.itsCardinality;
+		aCopy.itsMin = this.itsMin;
+		aCopy.itsMax = this.itsMax;
+		aCopy.isEnabled = this.isEnabled;
+		
+		return aCopy;
+	}
 }
 
