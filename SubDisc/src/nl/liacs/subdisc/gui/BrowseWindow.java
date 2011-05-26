@@ -23,6 +23,11 @@ public class BrowseWindow extends JFrame implements ActionListener
 	private Subgroup itsSubgroup;
 	private JTable itsJTable;
 	private boolean itsTPOnly = false;
+	/*
+	 * TODO Hacked in for now. Used to bring column into focus in
+	 * findColumn(). Will be replaced with clean code.
+	 */
+	private int[] itsOffsets;
 
 	public BrowseWindow(Table theTable)
 	{
@@ -58,6 +63,13 @@ public class BrowseWindow extends JFrame implements ActionListener
 		{
 			itsSubgroup = theSubgroup;
 			initComponents(itsTable);
+
+			int i = itsJTable.convertColumnIndexToModel(itsSubgroup.getConditions().get(0).getAttribute().getIndex());
+			itsJTable.setCellSelectionEnabled(true);
+			itsJTable.setColumnSelectionInterval(i, i);
+			itsJTable.setRowSelectionInterval(0, itsSubgroup.getCoverage() - 1);
+			itsJTable.scrollRectToVisible(new Rectangle(itsOffsets[i], 0, 0, 0));
+
 			setTitle(theSubgroup.getCoverage() + " members in subgroup: " + theSubgroup.getConditions());
 			setIconImage(MiningWindow.ICON);
 			setLocation(100, 100);
@@ -121,7 +133,8 @@ public class BrowseWindow extends JFrame implements ActionListener
 	private void initColumnSizes()
 	{
 		int aHeaderWidth = 0;
-
+		int aTotalWidth = 0;
+		itsOffsets = new int[itsJTable.getColumnModel().getColumnCount() + 1]; // ;)
 		TableCellRenderer aRenderer = itsJTable.getTableHeader().getDefaultRenderer();
 
 		for (int i = 0, j = itsJTable.getColumnModel().getColumnCount(); i < j; i++)
@@ -133,6 +146,7 @@ public class BrowseWindow extends JFrame implements ActionListener
 									91);
 
 			itsJTable.getColumnModel().getColumn(i).setPreferredWidth(aHeaderWidth);
+			itsOffsets[i + 1] = aTotalWidth += aHeaderWidth;
 		}
 	}
 
