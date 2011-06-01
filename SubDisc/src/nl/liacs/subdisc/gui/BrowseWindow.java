@@ -219,18 +219,14 @@ public class BrowseWindow extends JFrame implements ActionListener
 
 		@Override
 		public void setValue(Object aValue) {
-			if (aValue == null) {
+			if (aValue == null)
 				super.setValue(aValue);
-				return;
-			} else if (aValue instanceof Boolean) {
+			else if (aValue instanceof Boolean)
 				setText(((Boolean)aValue) ? "1" : "0");
-				return;
-			} else if (aValue instanceof Number) {
+			else if (aValue instanceof Number)
 				setText(FORMATTER.format((Number)aValue));
-				return;
-			} else {
+			else
 				super.setValue(aValue);
-			}
 		}
 	}
 }
