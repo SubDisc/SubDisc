@@ -226,7 +226,7 @@ public class BrowseWindow extends JFrame implements ActionListener
 				setText(((Boolean)aValue) ? "1" : "0");
 				return;
 			} else if (aValue instanceof Number) {
-				super.setValue(FORMATTER.format((Number)aValue));
+				setText(FORMATTER.format((Number)aValue));
 				return;
 			} else {
 				super.setValue(aValue);
