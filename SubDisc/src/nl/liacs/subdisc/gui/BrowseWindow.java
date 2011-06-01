@@ -2,6 +2,7 @@ package nl.liacs.subdisc.gui;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.text.*;
 import java.util.*;
 
 import javax.swing.*;
@@ -84,7 +85,9 @@ public class BrowseWindow extends JFrame implements ActionListener
 		// JTable viewport for theTable
 		// TODO use/ allow only one BrowseTableModel per Table
 		itsJTable = new JTable(new BrowseTableModel(theTable));
-
+		itsJTable.setRowSorter(((BrowseTableModel)itsJTable.getModel()).getRowSorter());
+		itsJTable.setDefaultRenderer(Float.class, CustomRenderer.RENDERER);
+		itsJTable.setDefaultRenderer(Boolean.class, CustomRenderer.RENDERER);
 		itsJTable.setPreferredScrollableViewportSize(GUI.WINDOW_DEFAULT_SIZE);
 		initColumnSizes();
 		itsJTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
@@ -182,18 +185,52 @@ public class BrowseWindow extends JFrame implements ActionListener
 
 	// TODO memory hog, cleaner would be to allow only one TableModel per Table
 	// and filter on per-view basis
+	@SuppressWarnings("unchecked")
+	// RowSorter
 	private void filter()
 	{
 		final BitSet aMembers = itsSubgroup.getMembers();
 
 		RowFilter<? super AbstractTableModel, ? super Integer> subgroupFilter = new RowFilter<AbstractTableModel, Integer>() {
+			@Override
 			public boolean include(Entry<? extends AbstractTableModel, ? extends Integer> entry) {
 				return aMembers.get(entry.getIdentifier());
 			}
 		};
 
-		TableRowSorter<AbstractTableModel> sorter = new TableRowSorter<AbstractTableModel>((AbstractTableModel) itsJTable.getModel());
-		sorter.setRowFilter(subgroupFilter);
-		itsJTable.setRowSorter(sorter);
+		((DefaultRowSorter<BrowseTableModel, Integer>) itsJTable.getRowSorter()).setRowFilter(subgroupFilter);
+	}
+
+	// renders Number using 6 decimals, Boolean as 0/1
+	// may be split into separate Boolean and Number renderers
+	// may be used for other JTables later
+	private static final class CustomRenderer extends DefaultTableCellRenderer {
+		public static final CustomRenderer RENDERER;
+		public static final NumberFormat FORMATTER;
+
+		static
+		{
+			RENDERER = new CustomRenderer();
+			FORMATTER  = NumberFormat.getNumberInstance();
+			FORMATTER.setMaximumFractionDigits(6);
+		}
+		// only one/uninstantiable
+		private CustomRenderer() {}
+
+		@Override
+		public void setValue(Object aValue) {
+			if (aValue == null) {
+				super.setValue(aValue);
+				return;
+			} else if (aValue instanceof Boolean) {
+				setText(((Boolean)aValue) ? "1" : "0");
+				return;
+			} else if (aValue instanceof Number) {
+				super.setValue(FORMATTER.format((Number)aValue));
+				return;
+			} else {
+				super.setValue(aValue);
+			}
+		}
 	}
 }

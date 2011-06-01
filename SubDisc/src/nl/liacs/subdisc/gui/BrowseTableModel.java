@@ -17,7 +17,9 @@ import nl.liacs.subdisc.*;
 public class BrowseTableModel extends AbstractTableModel
 {
 	private static final long serialVersionUID = 1L;
+
 	private Table itsTable;
+	private TableRowSorter<BrowseTableModel> itsRowSorter;
 
 	public BrowseTableModel(Table theTable)
 	{
@@ -26,8 +28,10 @@ public class BrowseTableModel extends AbstractTableModel
 			Log.logCommandLine("BrowseTableModel Constructor()");
 			return;
 		}
-		else
+		else {
 			itsTable = theTable;
+			itsRowSorter = new TableRowSorter<BrowseTableModel>(this);
+		}
 	}
 
 	@Override
@@ -75,13 +79,47 @@ public class BrowseTableModel extends AbstractTableModel
 	@Override
 	public Object getValueAt(int theRow, int theColumn)
 	{
-		if (itsTable == null)
+		if (itsTable == null || itsTable.getNrRows() == 0)
 		{
 			LogError(".getValueAt()");
 			return null;
 		}
 		else
-			return itsTable.getColumn(theColumn).getString(theRow);
+		{
+			Column aColumn = itsTable.getColumn(theColumn);
+			switch (aColumn.getType())
+			{
+				case NOMINAL : return aColumn.getNominal(theRow);
+				case NUMERIC :
+				case ORDINAL : return aColumn.getFloat(theRow);
+				/*
+				 * NOTE DefaultCellRenderer draws check boxes
+				 * in JTable for Boolean return type.
+				 */
+				case BINARY : 
+					return aColumn.getBinary(theRow);
+				default : {
+					Log.logCommandLine(
+						String.format(
+							"%s.getValueAt(%d, %d), Unknown AttributeType: %s",
+							getClass().getSimpleName(),
+							theRow,
+							theColumn,
+							aColumn.getType()));
+					return null;
+				}
+			}
+		}
+	}
+
+	// for sorting
+	@Override
+	public Class<?> getColumnClass(int theColumn) {
+		return getValueAt(0, theColumn).getClass();
+	}
+
+	public TableRowSorter<BrowseTableModel> getRowSorter() {
+		return itsRowSorter;
 	}
 
 	private void LogError(String theMethod)
