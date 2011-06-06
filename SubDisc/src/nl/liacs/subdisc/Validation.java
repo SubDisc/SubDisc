@@ -220,30 +220,30 @@ public class Validation
 		}
 		return aQualities; //return the qualities belonging to this random sample
 	}
-	
-	/* 
+
+	/*
 	 * KNOWN BUG:
-	 * 
-	 * Swap randomizes the original Table. When this method is called from the MiningWindow, the swap randomized Columns are restored, 
-	 * but when the method is called from the ResultWindow they are not. 
-	 * 
+	 *
+	 * Swap randomizes the original Table. When this method is called from the MiningWindow, the swap randomized Columns are restored,
+	 * but when the method is called from the ResultWindow they are not.
+	 *
 	 * "I can't understand what the problem is, I find it hard enough dealing with my own biz."
-	 *                                                -- De La Soul, Ring Ring Ring (Ha Ha Hey) 
+	 *                                                -- De La Soul, Ring Ring Ring (Ha Ha Hey)
 	 */
 	public double[] swapRandomization(int theNrRepetitions)
 	{
 		// Memorizing the COMMANDLINELOG setting, creating a place for the to be generated qualities
 		boolean aCOMMANDLINELOGmem = Log.COMMANDLINELOG;
 		double[] aQualities = new double[theNrRepetitions];
-		
-		// Initializing variables		
+
+		// Initializing variables
 		SubgroupDiscovery aSubgroupDiscovery = null;
 		int itsPositiveCount = 0;
 		float itsTargetAverage = 0;
 		Column aPrimaryCopy = null;
 		Column aSecondaryCopy = null;
 		List<Column> aMultiCopy = new ArrayList<Column>();
-		
+
 		// Do some administration to enable running SD, store columns that will soon be swap randomized
 		switch(itsTargetConcept.getTargetType())
 		{
@@ -263,22 +263,24 @@ public class Validation
 			{
 				aPrimaryCopy = itsTargetConcept.getPrimaryTarget().copy();
 				aSecondaryCopy = itsTargetConcept.getSecondaryTarget().copy();
+				break;
 			}
 			case MULTI_LABEL :
 			{
 				List<Column> aTemp = itsTargetConcept.getMultiTargets();
+
 				for (Column c : aTemp)
 					aMultiCopy.add(c.copy());
 			}
 			default : ;
 		}
-		
+
 		// Generate swap randomized random results
 		Log.COMMANDLINELOG = false;
 		for (int i=0; i<theNrRepetitions; i++)
 		{
 			itsTable.swapRandomizeTarget(itsTargetConcept);
-			
+
 			switch(itsTargetConcept.getTargetType())
 			{
 				case SINGLE_NOMINAL :
@@ -308,7 +310,7 @@ public class Validation
 				}
 				default : ; // TODO should never get here, throw warning
 			}
-			
+
 			aSubgroupDiscovery.Mine(System.currentTimeMillis());
 			SubgroupSet aSubgroupSet = aSubgroupDiscovery.getResult();
 			if (aSubgroupSet.size()==0)
@@ -321,7 +323,7 @@ public class Validation
 				Log.COMMANDLINELOG = false;
 			}
 		}
-		
+
 		// Restore swap randomized target columns to obtain the original dataset again
 		switch(itsTargetConcept.getTargetType())
 		{
@@ -342,7 +344,7 @@ public class Validation
 			}
 			default : ;
 		}
-		
+
 		// Reset COMMANDLINELOG, return result
 		Log.COMMANDLINELOG = aCOMMANDLINELOGmem;
 		return aQualities;
