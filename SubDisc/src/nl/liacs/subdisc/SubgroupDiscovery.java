@@ -79,30 +79,6 @@ public class SubgroupDiscovery extends MiningAlgorithm
 
 		itsResult = new SubgroupSet(itsSearchParameters.getMaximumSubgroups());
 	}
-/*
-	//MULTI_LABEL
-	public SubgroupDiscovery(SearchParameters theSearchParameters, Table theTable)
-	{
-		super(theSearchParameters);
-		itsTable = theTable;
-		itsMaximumCoverage = itsTable.getNrRows();
-
-		//compute base model
-		List<Attribute> anAttributes = itsSearchParameters.getTargetConcept().getMultiTargets();
-		itsBinaryTable = new BinaryTable(itsTable, anAttributes);
-		itsTargets = new String[anAttributes.size()];
-		for (int i = 0, j = anAttributes.size(); i < j; ++i)
-			itsTargets[i] = anAttributes.get(i).getName();
-		Bayesian aBayesian = new Bayesian(itsBinaryTable, itsTargets);
-		aBayesian.climb();
-
-		itsQualityMeasure = new QualityMeasure(itsSearchParameters,
-												aBayesian.getDAG(),
-												itsMaximumCoverage);
-
-		itsResult = new SubgroupSet(itsSearchParameters.getMaximumSubgroups());
-	}
-*/
 
 	//MULTI_LABEL
 	public SubgroupDiscovery(SearchParameters theSearchParameters, Table theTable)
@@ -389,10 +365,9 @@ public class SubgroupDiscovery extends MiningAlgorithm
 
 		// Iterate over subgroups
 		SubgroupSet aNewSubgroupSet = new SubgroupSet(itsSearchParameters.getMaximumSubgroups());
-		int aCount = 0;
 		for (Subgroup s : itsResult)
 		{
-			Log.logCommandLine("Postprocessing subgroup " + ++aCount);
+			Log.logCommandLine("Postprocessing subgroup " + s.getID());
 			double aTotalQuality = 0.0;
 			BinaryTable aSubgroupTable = itsBinaryTable.selectRows(s.getMembers());
 			for (int i = 0; i < aPostProcessingCount; i++)

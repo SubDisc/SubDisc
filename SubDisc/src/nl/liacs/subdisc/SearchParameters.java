@@ -39,6 +39,7 @@ public class SearchParameters implements XMLNodeInterface
 	{
 		if(theSearchParametersNode == null)
 			return;	// TODO throw warning dialog
+
 		loadData(theSearchParametersNode);
 	}
 
@@ -81,33 +82,7 @@ public class SearchParameters implements XMLNodeInterface
 
 	/* SEARCH STRATEGY */
 	public SearchStrategy getSearchStrategy() { return itsSearchStrategy; }
-/*
-	public static String getSearchStrategyName(int theSearchStrategy)
-	{
-		switch(theSearchStrategy)
-		{
-			case CandidateQueue.BFS		: return "breadth first";
-			case CandidateQueue.DFS		: return "depth first";
-			case CandidateQueue.BESTFIRST	: return "best first";
-			case CandidateQueue.BEAM	: return "beam";
-			default						: return "";	// TODO warning dialog
-		}
-	}
 
-	public void setSearchStrategy(String theSearchStrategyName)
-	{
-		if (theSearchStrategyName.equals("breadth first"))
-			itsSearchStrategy = CandidateQueue.BFS;
-		else if (theSearchStrategyName.equals("depth first"))
-			itsSearchStrategy = CandidateQueue.DFS;
-		else if (theSearchStrategyName.equals("best first"))
-			itsSearchStrategy = CandidateQueue.BESTFIRST;
-		else if (theSearchStrategyName.equals("beam"))
-			itsSearchStrategy = CandidateQueue.BEAM;
-		else
-			itsSearchStrategy = CandidateQueue.BESTFIRST; // default TODO warning dialog
-	}
- */
 	public void setSearchStrategy(String theSearchStrategyName)
 	{
 		itsSearchStrategy = SearchStrategy.getSearchStrategy(theSearchStrategyName);

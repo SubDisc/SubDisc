@@ -1291,18 +1291,6 @@ public class MiningWindow extends JFrame
 		{
 			case DOUBLE_REGRESSION :
 			{
-				/*
-				Attribute aPrimaryTarget = itsTargetConcept.getPrimaryTarget();
-				Column aPrimaryColumn = itsTable.getColumn(aPrimaryTarget);
-				Attribute aSecondaryTarget = itsTargetConcept.getSecondaryTarget();
-				Column aSecondaryColumn = itsTable.getColumn(aSecondaryTarget);
-				RegressionMeasure anRM = new RegressionMeasure(itsSearchParameters.getQualityMeasure(),
-					aPrimaryColumn, aSecondaryColumn, null);
-
-				new ModelWindow(aPrimaryColumn, aSecondaryColumn,
-					aPrimaryTarget.getName(), aSecondaryTarget.getName(), anRM, null); //trendline, no subset
-				break;
-				*/
 				Column aPrimaryColumn = itsTable.getColumn(itsTargetConcept.getPrimaryTarget().getIndex());
 				Column aSecondaryColumn = itsTable.getColumn(itsTargetConcept.getSecondaryTarget().getIndex());
 
@@ -1314,16 +1302,6 @@ public class MiningWindow extends JFrame
 			}
 			case DOUBLE_CORRELATION :
 			{
-				/*
-				Attribute aPrimaryTarget = itsTargetConcept.getPrimaryTarget();
-				Column aPrimaryColumn = itsTable.getColumn(aPrimaryTarget);
-				Attribute aSecondaryTarget = itsTargetConcept.getSecondaryTarget();
-				Column aSecondaryColumn = itsTable.getColumn(aSecondaryTarget);
-
-				new ModelWindow(aPrimaryColumn, aSecondaryColumn,
-					aPrimaryTarget.getName(), aSecondaryTarget.getName(), null, null); //no trendline, no subset
-				break;
-				*/
 				new ModelWindow(itsTable.getColumn(itsTargetConcept.getPrimaryTarget().getIndex()),
 								itsTable.getColumn(itsTargetConcept.getSecondaryTarget().getIndex()),
 								null,
@@ -1343,31 +1321,6 @@ public class MiningWindow extends JFrame
 
 				new ModelWindow(aBaseDAG, 1200, 900);
 				break;
-/*
-				List<Attribute> aList = itsTargetConcept.getMultiTargets();
-				int aNrMultiTargets = aList.size();
-				String[] aNames = new String[aNrMultiTargets];
-
-				for (int i = 0; i < aNrMultiTargets; ++i)
-					aNames[i] = aList.get(i).getName();
-
-//				int aCount = 0;
-//				for (Attribute anAttribute : aList)
-//				{
-//					aNames[aCount] = anAttribute.getName();
-//					aCount++;
-//				}
-
-				// compute base model
-				Bayesian aBayesian =
-					new Bayesian(new BinaryTable(itsTable, aList), aNames);
-				aBayesian.climb();
-				DAG aBaseDAG = aBayesian.getDAG();
-				aBaseDAG.print();
-
-				new ModelWindow(aBaseDAG, 1200, 900);
-				break;
-*/
 			}
 			default: return; // TODO other types not implemented yet
 		}
@@ -1442,20 +1395,16 @@ public class MiningWindow extends JFrame
 
 		echoMiningEnd(anEnd - aBegin, aSubgroupDiscovery.getNumberOfSubgroups());
 
-		//ResultWindow
-//			SubgroupSet aPreliminaryResults = aSubgroupDiscovery.getResult();
 		switch (aTargetType)
 		{
 			case MULTI_LABEL :
 			{
 				BinaryTable aBinaryTable = new BinaryTable(aTable, itsTargetConcept.getMultiTargets());
-//					aResultWindow = new ResultWindow(aPreliminaryResults, itsSearchParameters, null, itsTable, aBinaryTable, aSubgroupDiscovery.getQualityMeasure(), itsTotalCount, theFold, theBitSet);
 				new ResultWindow(itsTable, aSubgroupDiscovery, aBinaryTable, theFold, theBitSet);
 				break;
 			}
 			default :
 			{
-//					aResultWindow = new ResultWindow(aPreliminaryResults, itsSearchParameters, null, aTable, aSubgroupDiscovery.getQualityMeasure(), itsTotalCount, theFold, theBitSet);
 				new ResultWindow(aTable, aSubgroupDiscovery, null, theFold, theBitSet);
 			}
 		}
@@ -1630,8 +1579,6 @@ public class MiningWindow extends JFrame
 	// Obsolete, this info is already up to date through *ActionPerformed methods
 	private void initTargetConcept()
 	{
-//		Attribute aTarget = itsTable.getAttribute(getTargetAttributeName());
-//		itsTargetConcept.setPrimaryTarget(aTarget);
 		itsTargetConcept.setPrimaryTarget(itsTable.getAttribute(getTargetAttributeName()));
 
 		// target value

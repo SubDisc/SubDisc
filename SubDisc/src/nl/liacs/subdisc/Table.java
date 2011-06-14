@@ -675,6 +675,8 @@ public class Table
 				break;
 			case MULTI_LABEL:
 				aTargets = theTC.getMultiTargets();
+				break;
+			default : ; // TODO should never get here, throw warning
 		}
 
 		int n = getNrRows();

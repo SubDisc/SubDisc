@@ -16,7 +16,6 @@ public class Column implements XMLNodeInterface
 {
 	public static final int DEFAULT_INIT_SIZE = 1000;
 
-	// itsAttribute replacements
 	private AttributeType itsType;
 	private String itsName;
 	private String itsShort;
@@ -24,7 +23,7 @@ public class Column implements XMLNodeInterface
 
 
 	// when adding/removing members be sure to update addNodeTo() and loadNode()
-//	private Attribute itsAttribute;
+	// TODO base type should be interface type List, not an implementation type
 	private ArrayList<Float> itsFloats;
 	private ArrayList<String> itsNominals;
 	private BitSet itsBinaries;
@@ -38,13 +37,10 @@ public class Column implements XMLNodeInterface
 	private float itsMax = Float.NEGATIVE_INFINITY;
 	private boolean isEnabled = true;
 
-//	private static final String falseFloat = "[-+]?0*(\\.0+)?";
+//	private static final String falseFloat = "[-+]?0*(\\.0+)?"; // DO NOT REMOVE
 	private static final String trueFloat = "\\+?0*1(\\.0+)?";
 	private static final String trueInteger = "[-+]?\\d+(\\.0+)?";
 
-/*
- * NEW itsAttribute REPLACEMENTS
- */
 	public Column(String theName, String theShort, AttributeType theType, int theIndex, int theNrRows)
 	{
 		if (!isValidIndex(theIndex))
@@ -107,23 +103,7 @@ public class Column implements XMLNodeInterface
 		if (isValidIndex(theIndex))
 			itsIndex = theIndex;
 	}
-/*
- * END OF itsAttribute REPLACEMENTS
- */
 
-/*
-	public Column(Attribute theAttribute)
-	{
-		itsAttribute = theAttribute;
-		setupColumn(DEFAULT_INIT_SIZE);
-	}
-
-	public Column(Attribute theAttribute, int theNrRows)
-	{
-		itsAttribute = theAttribute;
-		setupColumn(theNrRows);
-	}
-*/
 	/**
 	 *
 	 * @param theColumnNode
@@ -136,8 +116,7 @@ public class Column implements XMLNodeInterface
 			Node aSetting = aChildren.item(i);
 			String aNodeName = aSetting.getNodeName();
 			if ("attribute".equalsIgnoreCase(aNodeName))
-			;
-//				itsAttribute = new Attribute(aSetting);
+			;	// TODO REMOVE
 			else if ("missing_value".equalsIgnoreCase(aNodeName))
 				itsMissingValue = aSetting.getTextContent();
 			else if ("enabled".equalsIgnoreCase(aNodeName))
@@ -239,7 +218,6 @@ public class Column implements XMLNodeInterface
 		itsNominals.set(theIndex, theValue);
 	}
 	public int size() { return itsSize; }
-//	public Attribute getAttribute() { return itsAttribute; }	// TODO return copy of mutable type
 	public String getName() { return itsName; }
 	public String getShort() { return hasShort() ? itsShort : ""; }
 	public boolean hasShort() { return (itsShort != null) ; }
@@ -1034,18 +1012,21 @@ public class Column implements XMLNodeInterface
 	{
 		Node aNode = XMLNode.addNodeTo(theParentNode, "column");
 		((Element)aNode).setAttribute("nr", "0");
-//		itsAttribute.addNodeTo(aNode);
 		XMLNode.addNodeTo(aNode, "missing_value", itsMissingValue);
 		XMLNode.addNodeTo(aNode, "enabled", isEnabled);
 	}
-	
+
 	public Column copy()
 	{
-		Column aCopy = 	new Column(itsName, itsShort, itsType, itsIndex, itsSize);
-		
+		Column aCopy = new Column(itsName, itsShort, itsType, itsIndex, itsSize);
+
+		// TODO deep copy
 		aCopy.itsFloats = this.itsFloats;
 		aCopy.itsNominals = this.itsNominals;
 		aCopy.itsBinaries = this.itsBinaries;
+		// TODO change itsNominals base type to List
+		// Collections.copy(aDest, itsNominals);
+
 		aCopy.itsMissingValue = this.itsMissingValue;
 		aCopy.itsMissing = this.itsMissing;
 		aCopy.itsMissingValueIsUnique = this.itsMissingValueIsUnique;
@@ -1053,7 +1034,7 @@ public class Column implements XMLNodeInterface
 		aCopy.itsMin = this.itsMin;
 		aCopy.itsMax = this.itsMax;
 		aCopy.isEnabled = this.isEnabled;
-		
+
 		return aCopy;
 	}
 }

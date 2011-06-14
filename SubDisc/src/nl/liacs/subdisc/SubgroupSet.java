@@ -123,22 +123,17 @@ public class SubgroupSet extends TreeSet<Subgroup>
 		Log.logCommandLine("saving extent...");
 		try
 		{
-			for (int i=0; i<theTable.getNrRows(); i++)
+			for (int i = 0, j = theTable.getNrRows(); i < j; ++i)
 			{
-				String aRow = (theSubset.get(i))?"train,":"test ,";
-				//aRow += "" + i + ",";
+				// 5 + aNrRows*(,1) + 2*float
+				StringBuilder aRow = new StringBuilder(j*2 + 100);
+				aRow.append(theSubset.get(i) ? "train":"test ");
+				//aRow.append(",");
+				//aRow.append(i);
 
 				//add subgroup extents to current row
-				boolean aStart = true;
 				for (Subgroup aSubgroup: this)
-				{
-					boolean aCovers = aSubgroup.getMembers().get(i);
-					int aValue = aCovers?1:0;
-					if (!aStart)
-						aRow += ",";
-					aRow += "" + aValue;
-					aStart = false;
-				}
+					aRow.append(aSubgroup.getMembers().get(i) ? ",1" : ",0");
 
 				//add targets
 
@@ -147,35 +142,35 @@ public class SubgroupSet extends TreeSet<Subgroup>
 				{
 					case SINGLE_NOMINAL :
 					{
-						aRow += "," + aPrimaryAttribute.getNominal(i);
+						aRow.append(",");
+						aRow.append(aPrimaryAttribute.getNominal(i));
 						break;
 					}
 					case SINGLE_NUMERIC :
 					{
-						aRow += "," + aPrimaryAttribute.getFloat(i);
+						aRow.append(",");
+						aRow.append(aPrimaryAttribute.getFloat(i));
 						break;
 					}
 					case DOUBLE_REGRESSION :
 					case DOUBLE_CORRELATION :
 					{
-						aRow += "," + aPrimaryAttribute.getFloat(i) + "," + theTargetConcept.getSecondaryTarget().getFloat(i);
+						aRow.append(",");
+						aRow.append(aPrimaryAttribute.getFloat(i));
+						aRow.append(",");
+						aRow.append(theTargetConcept.getSecondaryTarget().getFloat(i));
 						break;
 					}
 					case MULTI_LABEL :
 					{
-						List<Column> aTargets = theTargetConcept.getMultiTargets();
-						for (Column aTarget: aTargets)
-						{
-							boolean aTargetValue = aTarget.getBinary(i);
-							int aValue = aTargetValue?1:0;
-							aRow += "," + aValue;
-						}
+						for (Column aTarget: theTargetConcept.getMultiTargets())
+							aRow.append(aTarget.getBinary(i) ? ",1" : ",0");
 						break;
 					}
 				}
 
-				//Log.logCommandLine(aRow);
-				theWriter.write(aRow + "\n");
+				//Log.logCommandLine(aRow.toString());
+				theWriter.write(aRow.append("\n").toString());
 			}
 		}
 		catch (IOException e)

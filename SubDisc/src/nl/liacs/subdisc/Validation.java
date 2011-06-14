@@ -267,12 +267,12 @@ public class Validation
 			}
 			case MULTI_LABEL :
 			{
-				List<Column> aTemp = itsTargetConcept.getMultiTargets();
-
-				for (Column c : aTemp)
+				//Collections.copy(newList, oldList);
+				for (Column c : itsTargetConcept.getMultiTargets())
 					aMultiCopy.add(c.copy());
+				break;
 			}
-			default : ;
+			default : ; // TODO should never get here, throw warning
 		}
 
 		// Generate swap randomized random results
