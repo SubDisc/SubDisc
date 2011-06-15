@@ -79,8 +79,6 @@ public class Validation
 				//TODO implement
 			case DOUBLE_CORRELATION :
 			{
-//				Column aPrimaryColumn = itsTable.getColumn(itsTargetConcept.getPrimaryTarget());
-//				Column aSecondaryColumn = itsTable.getColumn(itsTargetConcept.getSecondaryTarget());
 				Column aPrimaryColumn = itsTargetConcept.getPrimaryTarget();
 				Column aSecondaryColumn = itsTargetConcept.getSecondaryTarget();
 				CorrelationMeasure itsBaseCM =
@@ -187,8 +185,6 @@ public class Validation
 				//TODO implement
 			case DOUBLE_CORRELATION :
 			{
-//				Column aPrimaryColumn = itsTable.getColumn(itsTargetConcept.getPrimaryTarget());
-//				Column aSecondaryColumn = itsTable.getColumn(itsTargetConcept.getSecondaryTarget());
 				Column aPrimaryColumn = itsTargetConcept.getPrimaryTarget();
 				Column aSecondaryColumn = itsTargetConcept.getSecondaryTarget();
 				CorrelationMeasure itsBaseCM =
@@ -221,100 +217,146 @@ public class Validation
 		return aQualities; //return the qualities belonging to this random sample
 	}
 
-	/*
-	 * KNOWN BUG:
-	 *
-	 * Swap randomizes the original Table. When this method is called from the MiningWindow, the swap randomized Columns are restored,
-	 * but when the method is called from the ResultWindow they are not.
-	 *
-	 * "I can't understand what the problem is, I find it hard enough dealing with my own biz."
-	 *                                                -- De La Soul, Ring Ring Ring (Ha Ha Hey)
+	/**
+	 * Swap randomizes the original {@link Table Table} for cross validation,
+	 * and restores it to the original state afterwards.
+	 * 
+	 * @param theNrRepetitions the number of folds to use for cross validation.
+	 * 
+	 * @return an array holding the qualities of the best scoring
+	 * {@link Subgroup Subgroup} of each fold.
 	 */
 	public double[] swapRandomization(int theNrRepetitions)
 	{
-		// Memorizing the COMMANDLINELOG setting, creating a place for the to be generated qualities
-		boolean aCOMMANDLINELOGmem = Log.COMMANDLINELOG;
-		double[] aQualities = new double[theNrRepetitions];
-
-		// Initializing variables
-		SubgroupDiscovery aSubgroupDiscovery = null;
-		int itsPositiveCount = 0;
-		float itsTargetAverage = 0;
-		Column aPrimaryCopy = null;
-		Column aSecondaryCopy = null;
-		List<Column> aMultiCopy = new ArrayList<Column>();
-
-		// Do some administration to enable running SD, store columns that will soon be swap randomized
+		// Always back up and restore columns that will be swap randomized.
 		switch(itsTargetConcept.getTargetType())
 		{
 			case SINGLE_NOMINAL :
 			{
-				itsPositiveCount = itsTable.countValues(itsTargetConcept.getPrimaryTarget().getIndex(), itsTargetConcept.getTargetValue());
-				aPrimaryCopy = itsTargetConcept.getPrimaryTarget().copy();
-				break;
+				// back up column that will be swap randomized.
+				Column aPrimaryCopy = itsTargetConcept.getPrimaryTarget().copy();
+				int aPositiveCount =
+					itsTable.countValues(itsTargetConcept.getPrimaryTarget().getIndex(),
+											itsTargetConcept.getTargetValue());
+				// run
+				double[] aQualities =
+					runCVSD(new SubgroupDiscovery(itsSearchParameters, itsTable, aPositiveCount),
+							theNrRepetitions);
+				// restore column that was swap randomized.
+				itsTargetConcept.setPrimaryTarget(aPrimaryCopy);
+				itsTable.getColumns().set(aPrimaryCopy.getIndex(), aPrimaryCopy);
+				// return result
+				return aQualities;
 			}
 			case SINGLE_NUMERIC :
 			{
-				itsTargetAverage = itsTable.getAverage(itsTargetConcept.getPrimaryTarget().getIndex());
-				aPrimaryCopy = itsTargetConcept.getPrimaryTarget().copy();
-				break;
+				Column aPrimaryCopy = itsTargetConcept.getPrimaryTarget().copy();
+				float aTargetAverage =
+					itsTable.getAverage(itsTargetConcept.getPrimaryTarget().getIndex());
+
+				double[] aQualities =
+					runCVSD(new SubgroupDiscovery(itsSearchParameters, itsTable, aTargetAverage),
+							theNrRepetitions);
+
+				itsTargetConcept.setPrimaryTarget(aPrimaryCopy);
+				itsTable.getColumns().set(aPrimaryCopy.getIndex(), aPrimaryCopy);
+
+				return aQualities;
 			}
 			case DOUBLE_CORRELATION :
 			{
-				aPrimaryCopy = itsTargetConcept.getPrimaryTarget().copy();
-				aSecondaryCopy = itsTargetConcept.getSecondaryTarget().copy();
-				break;
+				Column aPrimaryCopy = itsTargetConcept.getPrimaryTarget().copy();
+				Column aSecondaryCopy = itsTargetConcept.getSecondaryTarget().copy();
+
+				double[] aQualities =
+					runCVSD(new SubgroupDiscovery(itsSearchParameters, itsTable, false),
+							theNrRepetitions);
+
+				itsTargetConcept.setPrimaryTarget(aPrimaryCopy);
+				itsTable.getColumns().set(aPrimaryCopy.getIndex(), aPrimaryCopy);
+				itsTargetConcept.setSecondaryTarget(aSecondaryCopy);
+				itsTable.getColumns().set(aSecondaryCopy.getIndex(), aSecondaryCopy);
+
+				return aQualities;
+			}
+			case DOUBLE_REGRESSION :
+			{
+				Column aPrimaryCopy = itsTargetConcept.getPrimaryTarget().copy();
+				Column aSecondaryCopy = itsTargetConcept.getSecondaryTarget().copy();
+
+				double[] aQualities =
+					runCVSD(new SubgroupDiscovery(itsSearchParameters, itsTable, true),
+					theNrRepetitions);
+
+				itsTargetConcept.setPrimaryTarget(aPrimaryCopy);
+				itsTable.getColumns().set(aPrimaryCopy.getIndex(), aPrimaryCopy);
+				itsTargetConcept.setSecondaryTarget(aSecondaryCopy);
+				itsTable.getColumns().set(aSecondaryCopy.getIndex(), aSecondaryCopy);
+
+				return aQualities;
 			}
 			case MULTI_LABEL :
 			{
 				//Collections.copy(newList, oldList);
+				List<Column> aMultiCopy =
+					new ArrayList<Column>(itsTargetConcept.getMultiTargets().size());
 				for (Column c : itsTargetConcept.getMultiTargets())
 					aMultiCopy.add(c.copy());
-				break;
-			}
-			default : ; // TODO should never get here, throw warning
-		}
 
-		// Generate swap randomized random results
+				double[] aQualities =
+					runCVSD(new SubgroupDiscovery(itsSearchParameters, itsTable),
+							theNrRepetitions);
+
+				itsTargetConcept.setMultiTargets(aMultiCopy);
+				for (Column c : aMultiCopy)
+					itsTable.getColumns().set(c.getIndex(), c);
+
+				return aQualities;
+			}
+			default : return null; // TODO should never get here, throw warning
+		}
+/*
+		double[] aQualities = runCVSD(aSubgroupDiscovery, theNrRepetitions);
+
+		// Restore swap randomized target columns to obtain the original dataset again
+		if (aPrimaryCopy != null)
+		{
+			itsTargetConcept.setPrimaryTarget(aPrimaryCopy);
+			itsTable.getColumns().set(aPrimaryCopy.getIndex(), aPrimaryCopy);
+
+			if (aSecondaryCopy != null)
+			{
+				itsTargetConcept.setSecondaryTarget(aSecondaryCopy);
+				itsTable.getColumns().set(aSecondaryCopy.getIndex(), aSecondaryCopy);
+			}
+		}
+		else // multilabel
+		{
+			itsTargetConcept.setMultiTargets(aMultiCopy);
+		}
+		// Reset COMMANDLINELOG, return result
+		return aQualities;
+ */
+	}
+
+	// TODO null / < 0 check
+	private double[] runCVSD(SubgroupDiscovery theSubgroupDiscovery, int theNrRepetitions)
+	{
+		// Memorize COMMANDLINELOG setting
+		boolean aCOMMANDLINELOGmem = Log.COMMANDLINELOG;
+		double[] aQualities = new double[theNrRepetitions];
+
+		// suppress printing of all intermediate mining steps
 		Log.COMMANDLINELOG = false;
-		for (int i=0; i<theNrRepetitions; i++)
+		// Generate swap randomized random results
+		for (int i = 0, j = theNrRepetitions; i < j; ++i)
 		{
 			itsTable.swapRandomizeTarget(itsTargetConcept);
 
-			switch(itsTargetConcept.getTargetType())
-			{
-				case SINGLE_NOMINAL :
-				{
-					aSubgroupDiscovery = new SubgroupDiscovery(itsSearchParameters, itsTable, itsPositiveCount);
-					break;
-				}
-				case SINGLE_NUMERIC:
-				{
-					aSubgroupDiscovery = new SubgroupDiscovery(itsSearchParameters, itsTable, itsTargetAverage);
-					break;
-				}
-				case MULTI_LABEL :
-				{
-					aSubgroupDiscovery = new SubgroupDiscovery(itsSearchParameters, itsTable);
-					break;
-				}
-				case DOUBLE_REGRESSION :
-				{
-					aSubgroupDiscovery = new SubgroupDiscovery(itsSearchParameters, itsTable, true);
-					break;
-				}
-				case DOUBLE_CORRELATION :
-				{
-					aSubgroupDiscovery = new SubgroupDiscovery(itsSearchParameters, itsTable, false);
-					break;
-				}
-				default : ; // TODO should never get here, throw warning
-			}
-
-			aSubgroupDiscovery.Mine(System.currentTimeMillis());
-			SubgroupSet aSubgroupSet = aSubgroupDiscovery.getResult();
-			if (aSubgroupSet.size()==0)
-				i--; // if no subgroups are found, try again.
+			theSubgroupDiscovery.Mine(System.currentTimeMillis());
+			SubgroupSet aSubgroupSet = theSubgroupDiscovery.getResult();
+			if (aSubgroupSet.size() == 0)
+				--i; // if no subgroups are found, try again.
 			else
 			{
 				Log.COMMANDLINELOG = true;
@@ -324,28 +366,7 @@ public class Validation
 			}
 		}
 
-		// Restore swap randomized target columns to obtain the original dataset again
-		switch(itsTargetConcept.getTargetType())
-		{
-			case DOUBLE_CORRELATION :
-			{
-				itsTargetConcept.setSecondaryTarget(aSecondaryCopy); // do NOT break; primary target needs restoration too
-			}
-			case SINGLE_NOMINAL :
-			case SINGLE_NUMERIC :
-			{
-				itsTargetConcept.setPrimaryTarget(aPrimaryCopy);
-				break;
-			}
-			case MULTI_LABEL :
-			{
-				itsTargetConcept.setMultiTargets(aMultiCopy);
-				break;
-			}
-			default : ;
-		}
-
-		// Reset COMMANDLINELOG, return result
+		// Reset COMMANDLINELOG setting, return result
 		Log.COMMANDLINELOG = aCOMMANDLINELOGmem;
 		return aQualities;
 	}
