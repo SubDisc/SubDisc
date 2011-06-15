@@ -86,8 +86,8 @@ public class BrowseWindow extends JFrame implements ActionListener
 		// TODO use/ allow only one BrowseTableModel per Table
 		itsJTable = new JTable(new BrowseTableModel(theTable));
 		itsJTable.setRowSorter(((BrowseTableModel)itsJTable.getModel()).getRowSorter());
-		itsJTable.setDefaultRenderer(Float.class, CustomRenderer.RENDERER);
-		itsJTable.setDefaultRenderer(Boolean.class, CustomRenderer.RENDERER);
+		itsJTable.setDefaultRenderer(Float.class, NumberRenderer.RENDERER);
+		itsJTable.setDefaultRenderer(Boolean.class, BoolRenderer.RENDERER);
 		itsJTable.setPreferredScrollableViewportSize(GUI.WINDOW_DEFAULT_SIZE);
 		initColumnSizes();
 		itsJTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
@@ -167,6 +167,7 @@ public class BrowseWindow extends JFrame implements ActionListener
 			itsTPOnly = !itsTPOnly;
 			if (itsTPOnly)
 			{
+				itsJTable.setColumnSelectionAllowed(false);
 				BitSet aTP = itsSubgroup.getParentSet().getBinaryTargetClone();
 				aTP.and(itsSubgroup.getMembers());
 
@@ -191,42 +192,66 @@ public class BrowseWindow extends JFrame implements ActionListener
 	{
 		final BitSet aMembers = itsSubgroup.getMembers();
 
-		RowFilter<? super AbstractTableModel, ? super Integer> subgroupFilter = new RowFilter<AbstractTableModel, Integer>() {
-			@Override
-			public boolean include(Entry<? extends AbstractTableModel, ? extends Integer> entry) {
-				return aMembers.get(entry.getIdentifier());
+		RowFilter<? super AbstractTableModel, ? super Integer> subgroupFilter =
+			new RowFilter<AbstractTableModel, Integer>() {
+				@Override
+				public boolean include(Entry<? extends AbstractTableModel, ? extends Integer> entry) {
+					return aMembers.get(entry.getIdentifier());
 			}
 		};
 
 		((DefaultRowSorter<BrowseTableModel, Integer>) itsJTable.getRowSorter()).setRowFilter(subgroupFilter);
 	}
 
+	// both may be used for other JTables later
 	// renders Number using 6 decimals, Boolean as 0/1
-	// may be split into separate Boolean and Number renderers
-	// may be used for other JTables later
-	private static final class CustomRenderer extends DefaultTableCellRenderer {
-		public static final CustomRenderer RENDERER;
+	private static final class NumberRenderer extends DefaultTableCellRenderer {
+		private static final long serialVersionUID = 1L;
+
+		public static final NumberRenderer RENDERER = new NumberRenderer();
 		public static final NumberFormat FORMATTER;
 
 		static
 		{
-			RENDERER = new CustomRenderer();
 			FORMATTER  = NumberFormat.getNumberInstance();
 			FORMATTER.setMaximumFractionDigits(6);
 		}
 		// only one/uninstantiable
-		private CustomRenderer() {}
+		private NumberRenderer() {}
 
 		@Override
 		public void setValue(Object aValue) {
-			if (aValue == null)
-				super.setValue(aValue);
-			else if (aValue instanceof Boolean)
-				setText(((Boolean)aValue) ? "1" : "0");
-			else if (aValue instanceof Number)
+			if (aValue instanceof Number)
 				setText(FORMATTER.format((Number)aValue));
-			else
+			else	// not a Number, or null
 				super.setValue(aValue);
 		}
 	}
+
+	// renders Boolean as 0/1
+	private static final class BoolRenderer extends DefaultTableCellRenderer {
+		private static final long serialVersionUID = 1L;
+
+		public static final BoolRenderer RENDERER = new BoolRenderer();
+		private BoolRenderer() {} // only one/uninstantiable
+
+		@Override
+		public void setValue(Object aValue) {
+			if (aValue instanceof Boolean)
+				setText(((Boolean)aValue) ? "1" : "0");
+			else	// not a Boolean, or null
+				super.setValue(aValue);
+		}
+	}
+/*
+	private static final class TPRenderer extends DefaultTableCellRenderer {
+		public Component prepareRenderer(TableCellRenderer renderer, int row, int column) {
+			Component c = prepareRenderer(renderer, row, column);
+
+			c.setBackground(UIManager.getColor("Table.selectionBackground"));
+			c.setForeground(UIManager.getColor("Table.selectionForeground"));
+			return c;
+		}
+	}
+*/
 }
