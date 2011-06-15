@@ -218,13 +218,14 @@ public class Validation
 	}
 
 	/**
-	 * Swap randomizes the original {@link Table Table} for cross validation,
-	 * and restores it to the original state afterwards.
+	 * Swap randomizes the original {@link Table Table} and restores it to the
+	 * original state afterwards.
 	 * 
-	 * @param theNrRepetitions the number of folds to use for cross validation.
+	 * @param theNrRepetitions the number of times to perform a permutation of
+	 * the {@link TargetConcept TargetConcept}.
 	 * 
 	 * @return an array holding the qualities of the best scoring
-	 * {@link Subgroup Subgroup} of each fold.
+	 * {@link Subgroup Subgroup} of each permutation.
 	 */
 	public double[] swapRandomization(int theNrRepetitions)
 	{
@@ -240,7 +241,7 @@ public class Validation
 											itsTargetConcept.getTargetValue());
 				// run
 				double[] aQualities =
-					runCVSD(new SubgroupDiscovery(itsSearchParameters, itsTable, aPositiveCount),
+					runSRSD(new SubgroupDiscovery(itsSearchParameters, itsTable, aPositiveCount),
 							theNrRepetitions);
 				// restore column that was swap randomized.
 				itsTargetConcept.setPrimaryTarget(aPrimaryCopy);
@@ -255,7 +256,7 @@ public class Validation
 					itsTable.getAverage(itsTargetConcept.getPrimaryTarget().getIndex());
 
 				double[] aQualities =
-					runCVSD(new SubgroupDiscovery(itsSearchParameters, itsTable, aTargetAverage),
+					runSRSD(new SubgroupDiscovery(itsSearchParameters, itsTable, aTargetAverage),
 							theNrRepetitions);
 
 				itsTargetConcept.setPrimaryTarget(aPrimaryCopy);
@@ -269,7 +270,7 @@ public class Validation
 				Column aSecondaryCopy = itsTargetConcept.getSecondaryTarget().copy();
 
 				double[] aQualities =
-					runCVSD(new SubgroupDiscovery(itsSearchParameters, itsTable, false),
+					runSRSD(new SubgroupDiscovery(itsSearchParameters, itsTable, false),
 							theNrRepetitions);
 
 				itsTargetConcept.setPrimaryTarget(aPrimaryCopy);
@@ -285,7 +286,7 @@ public class Validation
 				Column aSecondaryCopy = itsTargetConcept.getSecondaryTarget().copy();
 
 				double[] aQualities =
-					runCVSD(new SubgroupDiscovery(itsSearchParameters, itsTable, true),
+					runSRSD(new SubgroupDiscovery(itsSearchParameters, itsTable, true),
 					theNrRepetitions);
 
 				itsTargetConcept.setPrimaryTarget(aPrimaryCopy);
@@ -297,14 +298,13 @@ public class Validation
 			}
 			case MULTI_LABEL :
 			{
-				//Collections.copy(newList, oldList);
 				List<Column> aMultiCopy =
 					new ArrayList<Column>(itsTargetConcept.getMultiTargets().size());
 				for (Column c : itsTargetConcept.getMultiTargets())
 					aMultiCopy.add(c.copy());
 
 				double[] aQualities =
-					runCVSD(new SubgroupDiscovery(itsSearchParameters, itsTable),
+					runSRSD(new SubgroupDiscovery(itsSearchParameters, itsTable),
 							theNrRepetitions);
 
 				itsTargetConcept.setMultiTargets(aMultiCopy);
@@ -315,32 +315,10 @@ public class Validation
 			}
 			default : return null; // TODO should never get here, throw warning
 		}
-/*
-		double[] aQualities = runCVSD(aSubgroupDiscovery, theNrRepetitions);
-
-		// Restore swap randomized target columns to obtain the original dataset again
-		if (aPrimaryCopy != null)
-		{
-			itsTargetConcept.setPrimaryTarget(aPrimaryCopy);
-			itsTable.getColumns().set(aPrimaryCopy.getIndex(), aPrimaryCopy);
-
-			if (aSecondaryCopy != null)
-			{
-				itsTargetConcept.setSecondaryTarget(aSecondaryCopy);
-				itsTable.getColumns().set(aSecondaryCopy.getIndex(), aSecondaryCopy);
-			}
-		}
-		else // multilabel
-		{
-			itsTargetConcept.setMultiTargets(aMultiCopy);
-		}
-		// Reset COMMANDLINELOG, return result
-		return aQualities;
- */
 	}
 
 	// TODO null / < 0 check
-	private double[] runCVSD(SubgroupDiscovery theSubgroupDiscovery, int theNrRepetitions)
+	private double[] runSRSD(SubgroupDiscovery theSubgroupDiscovery, int theNrRepetitions)
 	{
 		// Memorize COMMANDLINELOG setting
 		boolean aCOMMANDLINELOGmem = Log.COMMANDLINELOG;
