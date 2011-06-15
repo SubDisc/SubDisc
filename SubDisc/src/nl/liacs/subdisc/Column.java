@@ -23,9 +23,8 @@ public class Column implements XMLNodeInterface
 
 
 	// when adding/removing members be sure to update addNodeTo() and loadNode()
-	// TODO base type should be interface type List, not an implementation type
-	private ArrayList<Float> itsFloats;
-	private ArrayList<String> itsNominals;
+	private List<Float> itsFloats;
+	private List<String> itsNominals;
 	private BitSet itsBinaries;
 
 	private String itsMissingValue;
@@ -264,7 +263,7 @@ public class Column implements XMLNodeInterface
 
 	private void updateMinMax()
 	{
-		if (itsMax == Float.NEGATIVE_INFINITY) //never computed yet?
+		if (itsMax == Float.NEGATIVE_INFINITY) //not computed yet?
 			for (int i=0; i<itsSize; i++)
 			{
 				float aValue = getFloat(i);
@@ -347,10 +346,8 @@ public class Column implements XMLNodeInterface
 	 */
 	public boolean setType(AttributeType theAttributeType)
 	{
-		if (theAttributeType == null)
-			return false;
-		// TODO above check no longer needed == is preferred on Enums and is null safe
-		else if (itsType == theAttributeType)
+		// == is preferred on Enums and is null safe
+		if (itsType == theAttributeType)
 			return true;
 		else
 		{
@@ -935,7 +932,7 @@ public class Column implements XMLNodeInterface
 	}
 
 	// parse(itsMissingValue) for itsFloats
-	private void updateCardinality(ArrayList<?> theColumnData)
+	private void updateCardinality(List<?> theColumnData)
 	{
 		// not set yet, or no data
 		if (itsCardinality == 0)
@@ -1019,21 +1016,17 @@ public class Column implements XMLNodeInterface
 	public Column copy()
 	{
 		Column aCopy = new Column(itsName, itsShort, itsType, itsIndex, itsSize);
-
-		// TODO deep copy
-		aCopy.itsFloats = this.itsFloats;
-		aCopy.itsNominals = this.itsNominals;
-		aCopy.itsBinaries = this.itsBinaries;
-		// TODO change itsNominals base type to List
-		// Collections.copy(aDest, itsNominals);
-
-		aCopy.itsMissingValue = this.itsMissingValue;
-		aCopy.itsMissing = this.itsMissing;
-		aCopy.itsMissingValueIsUnique = this.itsMissingValueIsUnique;
-		aCopy.itsCardinality = this.itsCardinality;
-		aCopy.itsMin = this.itsMin;
-		aCopy.itsMax = this.itsMax;
-		aCopy.isEnabled = this.isEnabled;
+		aCopy.itsFloats = itsFloats;
+		aCopy.itsNominals = itsNominals;
+		aCopy.itsBinaries = itsBinaries;
+		aCopy.itsMissingValue = itsMissingValue;
+		aCopy.itsMissing = itsMissing;
+		aCopy.itsMissingValueIsUnique = itsMissingValueIsUnique;
+		aCopy.itsSize = itsSize;	// NOTE not set through constructor
+		aCopy.itsCardinality = itsCardinality;
+		aCopy.itsMin = itsMin;
+		aCopy.itsMax = itsMax;
+		aCopy.isEnabled = isEnabled;
 
 		return aCopy;
 	}
