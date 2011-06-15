@@ -439,9 +439,9 @@ public class Validation
 
 		Arrays.sort(theQualities);
 		Log.logCommandLine("Empirical p-value: " + aCount/(double)theQualities.length);
-		Log.logCommandLine("score at alpha = 1%: " + theQualities[theQualities.length-theQualities.length/100]);
-		Log.logCommandLine("score at alpha = 5%: " + theQualities[theQualities.length-theQualities.length/20]);
-		Log.logCommandLine("score at alpha = 10%: " + theQualities[theQualities.length-theQualities.length/10]);
+//		Log.logCommandLine("score at alpha = 1%: " + theQualities[theQualities.length-theQualities.length/100]);
+//		Log.logCommandLine("score at alpha = 5%: " + theQualities[theQualities.length-theQualities.length/20]);
+//		Log.logCommandLine("score at alpha = 10%: " + theQualities[theQualities.length-theQualities.length/10]);
 		return aCount/(double)theQualities.length;
 	}
 
@@ -454,17 +454,6 @@ public class Validation
 
 		for (int j = 0; j < aDepth; j++) // j conditions
 		{
-/*
-			Attribute anAttribute = itsTable.getAttribute(theRandom.nextInt(aNrColumns));
-			while (itsTargetConcept.isTargetAttribute(anAttribute))
-			{
-				anAttribute = itsTable.getAttribute(theRandom.nextInt(aNrColumns));
-			}
-			Attribute anAttribute;
-			do
-				anAttribute = itsTable.getAttribute(theRandom.nextInt(aNrColumns));
-			while (itsTargetConcept.isTargetAttribute(anAttribute));
- */
 			Column aColumn;
 			do
 				aColumn = itsTable.getColumn(theRandom.nextInt(aNrColumns));
