@@ -21,9 +21,9 @@ public class BrowseWindow extends JFrame implements ActionListener
 {
 	private static final long serialVersionUID = 1L;
 	private final Table itsTable;
-	private Subgroup itsSubgroup;
+	private BitSet itsSubgroupMembers;
+	private BitSet itsTP;	// NOMINAL only
 	private JTable itsJTable;
-	private boolean itsTPOnly = false;
 	/*
 	 * TODO Hacked in for now. Used to bring column into focus in
 	 * findColumn(). Will be replaced with clean code.
@@ -62,13 +62,20 @@ public class BrowseWindow extends JFrame implements ActionListener
 		}
 		else
 		{
-			itsSubgroup = theSubgroup;
+			itsSubgroupMembers = theSubgroup.getMembers();
+			if (theSubgroup.getParentSet().getBinaryTargetClone() != null)
+			{
+				itsTP = theSubgroup.getParentSet().getBinaryTargetClone();
+				itsTP.and(itsSubgroupMembers);
+			}
 			initComponents(itsTable);
 
-			int i = itsJTable.convertColumnIndexToModel(itsSubgroup.getConditions().get(0).getAttribute().getIndex());
-			itsJTable.setCellSelectionEnabled(true);
+			// for now always focus only on first attribute, need findColumn()
+			int i = itsJTable.convertColumnIndexToModel(theSubgroup.getConditions().get(0).getAttribute().getIndex());
+			itsJTable.setRowSelectionAllowed(false);
+			itsJTable.setColumnSelectionAllowed(true);
 			itsJTable.setColumnSelectionInterval(i, i);
-			itsJTable.setRowSelectionInterval(0, itsSubgroup.getCoverage() - 1);
+			//itsJTable.setRowSelectionInterval(0, itsSubgroup.getCoverage() - 1);
 			itsJTable.scrollRectToVisible(new Rectangle(itsOffsets[i], 0, 0, 0));
 
 			setTitle(theSubgroup.getCoverage() + " members in subgroup: " + theSubgroup.getConditions());
@@ -84,7 +91,26 @@ public class BrowseWindow extends JFrame implements ActionListener
 	{
 		// JTable viewport for theTable
 		// TODO use/ allow only one BrowseTableModel per Table
-		itsJTable = new JTable(new BrowseTableModel(theTable));
+		itsJTable = new JTable(new BrowseTableModel(theTable))
+		{
+			private static final long serialVersionUID = 1L;
+			private final boolean NOMINAL = (itsTP != null); // fast
+
+			public Component prepareRenderer(TableCellRenderer renderer, int row, int column)
+			{
+				Component c = super.prepareRenderer(renderer, row, column);
+				// Row color based on TruePositive/FalsePositive (NOMINAL only)
+				if (!isColumnSelected(column))
+				{
+					if (NOMINAL)
+						c.setBackground(itsTP.get(convertRowIndexToModel(row)) ?
+													Color.GREEN : Color.RED);
+					else
+						c.setBackground(getBackground());
+				}
+				return c;
+			}
+		};
 		itsJTable.setRowSorter(((BrowseTableModel)itsJTable.getModel()).getRowSorter());
 		itsJTable.setDefaultRenderer(Float.class, NumberRenderer.RENDERER);
 		itsJTable.setDefaultRenderer(Boolean.class, BoolRenderer.RENDERER);
@@ -103,12 +129,8 @@ public class BrowseWindow extends JFrame implements ActionListener
 			aButtonPanel.add(aSaveButton);
 
 		// Browse Subgroup
-		if (itsSubgroup != null)
+		if (itsSubgroupMembers != null)
 		{
-			// enable only for NOMINAL setting
-			if (itsSubgroup.getParentSet().getBinaryTargetClone() != null)
-				aButtonPanel.add(GUI.buildButton("True Positives", 'P', "positives", this));
-
 			filter();
 			// disable save button as it saves whole Table
 			aSaveButton.setVisible(false);
@@ -160,26 +182,6 @@ public class BrowseWindow extends JFrame implements ActionListener
 
 		if ("save".equals(anEvent))
 			itsTable.toFile();
-		else if ("positives".equals(anEvent))
-		{
-			// TODO clicks on JTable interfere with this ActionEvent/itsTPOnly
-			// NOTE button should only be enabled in NOMINAL setting
-			itsTPOnly = !itsTPOnly;
-			if (itsTPOnly)
-			{
-				itsJTable.setColumnSelectionAllowed(false);
-				BitSet aTP = itsSubgroup.getParentSet().getBinaryTargetClone();
-				aTP.and(itsSubgroup.getMembers());
-
-				for (int i = aTP.nextSetBit(0); i >= 0; i = aTP.nextSetBit(i + 1))
-				{
-					int k = itsJTable.convertRowIndexToView(i);
-					itsJTable.addRowSelectionInterval(k, k);
-				}
-			}
-			else
-				itsJTable.clearSelection();
-		}
 		else if ("close".equals(anEvent))
 			dispose();
 	}
@@ -190,20 +192,18 @@ public class BrowseWindow extends JFrame implements ActionListener
 	// RowSorter
 	private void filter()
 	{
-		final BitSet aMembers = itsSubgroup.getMembers();
-
 		RowFilter<? super AbstractTableModel, ? super Integer> subgroupFilter =
 			new RowFilter<AbstractTableModel, Integer>() {
 				@Override
 				public boolean include(Entry<? extends AbstractTableModel, ? extends Integer> entry) {
-					return aMembers.get(entry.getIdentifier());
+					return itsSubgroupMembers.get(entry.getIdentifier());
 			}
 		};
 
 		((DefaultRowSorter<BrowseTableModel, Integer>) itsJTable.getRowSorter()).setRowFilter(subgroupFilter);
 	}
 
-	// both may be used for other JTables later
+	// both *Renderer may be used for other JTables later
 	// renders Number using 6 decimals, Boolean as 0/1
 	private static final class NumberRenderer extends DefaultTableCellRenderer {
 		private static final long serialVersionUID = 1L;
@@ -243,15 +243,4 @@ public class BrowseWindow extends JFrame implements ActionListener
 				super.setValue(aValue);
 		}
 	}
-/*
-	private static final class TPRenderer extends DefaultTableCellRenderer {
-		public Component prepareRenderer(TableCellRenderer renderer, int row, int column) {
-			Component c = prepareRenderer(renderer, row, column);
-
-			c.setBackground(UIManager.getColor("Table.selectionBackground"));
-			c.setForeground(UIManager.getColor("Table.selectionForeground"));
-			return c;
-		}
-	}
-*/
 }
