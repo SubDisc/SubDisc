@@ -21,7 +21,7 @@ public class MultiTargetsWindow extends BasicJListWindow// implements ActionList
 	private JTextField itsAlphaField;
 	private JTextField itsBetaField;
 	private JComboBox itsRepeatedModelingBox =
-		GUI.buildComboBox(new Object[] { "No","Yes" });
+		GUI.buildComboBox(new Object[] { "No","Yes" }, null);	// TODO checkBox
 	private JTextField itsNrRepetitionsField;
 
 	public MultiTargetsWindow(JList theJList, SearchParameters theSearchParameters)

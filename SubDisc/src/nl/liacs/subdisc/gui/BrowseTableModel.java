@@ -115,8 +115,10 @@ public class BrowseTableModel extends AbstractTableModel
 	// for sorting
 	@Override
 	public Class<?> getColumnClass(int theColumn) {
-		// fails on empty Table
-		return getValueAt(0, theColumn).getClass();
+		if (itsTable == null || itsTable.getNrRows() == 0)
+			return null;
+		else
+			return getValueAt(0, theColumn).getClass();
 	}
 
 	public TableRowSorter<BrowseTableModel> getRowSorter() {

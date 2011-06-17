@@ -74,7 +74,7 @@ public class GUI
 		return aCheckBox;
 	}
 
-	public static JComboBox buildComboBox(Object[] theItems)
+	public static JComboBox buildComboBox(Object[] theItems, ActionListener theClass)
 	{
 		JComboBox aComboBox = new JComboBox();
 		aComboBox.setPreferredSize(TEXT_FIELD_DEFAULT_SIZE);
@@ -83,6 +83,8 @@ public class GUI
 
 		for (Object o : theItems)
 			aComboBox.addItem(o);
+
+		aComboBox.addActionListener(theClass);
 		return aComboBox;
 	}
 

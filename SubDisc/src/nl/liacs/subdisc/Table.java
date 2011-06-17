@@ -728,6 +728,7 @@ public class Table
 		Log.logCommandLine("=================================================");
 	}
 
+	// TODO add second parameter BitSet(subgroupMembers) to save only subgroup
 	public void toFile()
 	{
 		BufferedWriter aWriter = null;
