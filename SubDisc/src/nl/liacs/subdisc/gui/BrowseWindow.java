@@ -207,6 +207,7 @@ public class BrowseWindow extends JFrame implements ActionListener
 	{
 		int i = itsJTable.convertColumnIndexToView(theModelIndex);
 		itsJTable.setColumnSelectionInterval(i, i);
+		itsJTable.scrollRectToVisible(new Rectangle(0, 0, 0, 0)); // HACK
 		itsJTable.scrollRectToVisible(new Rectangle(itsOffsets[theModelIndex],
 													0,
 													itsOffsets[theModelIndex + 1],
