@@ -103,9 +103,8 @@ public class BrowseWindow extends JFrame implements ActionListener
 				// Row color based on TruePositive/FalsePositive (NOMINAL only)
 				if (!isColumnSelected(column))
 				{
-					if (NOMINAL)
-						c.setBackground(itsTP.get(convertRowIndexToModel(row)) ?
-													Color.GREEN : Color.RED);
+					if ((NOMINAL) && !itsTP.get(convertRowIndexToModel(row)))
+						c.setBackground(new Color(255, 150, 166));
 					else
 						c.setBackground(getBackground());
 				}
