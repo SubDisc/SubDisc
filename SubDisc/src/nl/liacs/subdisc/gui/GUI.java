@@ -16,6 +16,7 @@ import javax.swing.border.*;
 
 public class GUI
 {
+	public static final Color RED = new Color(255, 150, 166);
 	// TODO remove DEFAULT_
 	public static final Font DEFAULT_TEXT_FONT = new Font ("Dialog", 0, 10);
 	public static final Font DEFAULT_BUTTON_FONT = new Font ("Dialog", 1, 11);

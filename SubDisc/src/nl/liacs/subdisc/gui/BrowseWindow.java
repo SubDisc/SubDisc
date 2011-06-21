@@ -2,11 +2,11 @@ package nl.liacs.subdisc.gui;
 
 import java.awt.*;
 import java.awt.event.*;
-import java.text.*;
 import java.util.*;
+import java.util.Map.*;
 
 import javax.swing.*;
-import javax.swing.table.*;
+import javax.swing.text.*;
 
 import nl.liacs.subdisc.*;
 
@@ -17,67 +17,36 @@ import nl.liacs.subdisc.*;
  * {@link Attribute Attribute} and the number of distinct values for that
  * Attribute.
  */
-public class BrowseWindow extends JFrame implements ActionListener
+public class BrowseWindow extends JFrame implements ActionListener//, MouseListener
 {
 	private static final long serialVersionUID = 1L;
-	private final Table itsTable;
-	private BitSet itsSubgroupMembers;
-	private BitSet itsTP;	// NOMINAL only
-	private JTable itsJTable;
+	private Table itsTable;
+	private BrowseJTable itsBrowseJTable;
+	private BitSet itsSubgroupMembers;	// for Table.save()
 	private JComboBox itsColumnsBox;
-
-	/*
-	 * TODO Hacked in for now. Used to bring column into focus in
-	 * findColumn(). Will be replaced with clean code.
-	 * Problems occur when resizing columns. (Quick-fix: disable resizing.)
-	 */
-	private int[] itsOffsets;
-
-	public BrowseWindow(Table theTable)
-	{
-		itsTable = theTable;
-		if (itsTable == null)
-		{
-			Log.logCommandLine(
-				"BrowseWindow Constructor: parameter can not be 'null'.");
-			return;
-		}
-		else
-		{
-			initComponents(itsTable);
-			setTitle("Data for: " + theTable.getName());
-			setIconImage(MiningWindow.ICON);
-			setLocation(100, 100);
-			setSize(GUI.WINDOW_DEFAULT_SIZE);
-			setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-			setVisible(true);
-		}
-	}
+	// problematic in case of double columnNames
+	private Map<String, Integer> itsMap;
 
 	public BrowseWindow(Table theTable, Subgroup theSubgroup)
 	{
-		itsTable = theTable;
-		if (itsTable == null || theSubgroup == null)
+		if (theTable == null)
 		{
 			Log.logCommandLine(
-			"BrowseWindow Constructor: parameter(s) must be non-null.");
+				"BrowseWindow Constructor: theTable can not be 'null'.");
 			return;
 		}
 		else
 		{
-			itsSubgroupMembers = theSubgroup.getMembers();
-			if (theSubgroup.getParentSet().getBinaryTargetClone() != null)
-			{
-				itsTP = theSubgroup.getParentSet().getBinaryTargetClone();
-				itsTP.and(itsSubgroupMembers);
-			}
-			initComponents(itsTable);
-			// by default always focus is on first attribute
-			itsColumnsBox.setSelectedIndex(theSubgroup.getConditions().get(0)
-													.getAttribute().getIndex());
+			itsTable = theTable;
+			initComponents(theSubgroup);
 
-			setTitle(theSubgroup.getCoverage() +
-						" members in subgroup: " + theSubgroup.getConditions());
+			if (theSubgroup == null)
+				setTitle("Data for: " + itsTable.getName());
+			else
+				setTitle(theSubgroup.getCoverage() +
+						" members in subgroup: " +
+						theSubgroup.getConditions());
+
 			setIconImage(MiningWindow.ICON);
 			setLocation(100, 100);
 			setSize(GUI.WINDOW_DEFAULT_SIZE);
@@ -86,63 +55,44 @@ public class BrowseWindow extends JFrame implements ActionListener
 		}
 	}
 
-	private void initComponents(Table theTable)
+	private void initComponents(Subgroup theSubgroup)
 	{
-		// JTable viewport for theTable
-		// TODO use/ allow only one BrowseTableModel per Table
-		// TODO create BrowseTable extends JTable class, greatly simplifies code
-		itsJTable = new JTable(new BrowseTableModel(theTable))
-		{
-			private static final long serialVersionUID = 1L;
-			private final boolean NOMINAL = (itsTP != null); // fast
-
-			@Override
-			public Component prepareRenderer(TableCellRenderer renderer, int row, int column)
-			{
-				final Component c = super.prepareRenderer(renderer, row, column);
-				// Row color based on TruePositive/FalsePositive (NOMINAL only)
-				if (!isColumnSelected(column))
-				{
-					if ((NOMINAL) && !itsTP.get(convertRowIndexToModel(row)))
-						c.setBackground(new Color(255, 150, 166));
-					else
-						c.setBackground(getBackground());
-				}
-				return c;
-			}
-		};
-		itsJTable.setRowSelectionAllowed(false);
-		itsJTable.setColumnSelectionAllowed(true);
-		itsJTable.setRowSorter(((BrowseTableModel)itsJTable.getModel()).getRowSorter());
-		itsJTable.setDefaultRenderer(Float.class, NumberRenderer.RENDERER);
-		itsJTable.setDefaultRenderer(Boolean.class, BoolRenderer.RENDERER);
-		itsJTable.setPreferredScrollableViewportSize(GUI.WINDOW_DEFAULT_SIZE);
-		initColumnSizes();
-		itsJTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-		itsJTable.setFillsViewportHeight(true);
-		getContentPane().add(new JScrollPane(itsJTable), BorderLayout.CENTER);
+		itsBrowseJTable = new BrowseJTable(itsTable, theSubgroup);
+		//itsBrowseJTable.addMouseListener(this);
+		getContentPane().add(new JScrollPane(itsBrowseJTable), BorderLayout.CENTER);
 
 		final JPanel aButtonPanel = new JPanel();
 
 		int aNrColumns = itsTable.getNrColumns();
-		String[] aColumnNames = new String[aNrColumns];
+		itsMap = new LinkedHashMap<String, Integer>(aNrColumns);
 		for (int i = 0, j = aNrColumns; i < j; ++i)
-			aColumnNames[i] = itsTable.getColumn(i).getName();
-		itsColumnsBox = GUI.buildComboBox(aColumnNames, this);
+		{
+			Column aColumn = itsTable.getColumn(i);
+			itsMap.put(aColumn.getName(), aColumn.getIndex());
+		}
+		itsColumnsBox = GUI.buildComboBox(itsMap.keySet().toArray(), this);
+		itsColumnsBox.setEditable(true);
 		itsColumnsBox.setPreferredSize(GUI.BUTTON_DEFAULT_SIZE);
 		aButtonPanel.add(itsColumnsBox);
 
 		JButton aSaveButton = GUI.buildButton("Save Table", 'S', "save", this);
 
 		// bioinformatics setting
-		if (theTable.getDomainList() != null)
+		if (itsTable.getDomainList() != null)
 			aButtonPanel.add(aSaveButton);
 
 		// Browse Subgroup
-		if (itsSubgroupMembers != null)
+		// by default focus is on first (condition-)attribute
+		if (theSubgroup == null)
+			itsColumnsBox.setSelectedIndex(0);
+		else
 		{
-			filter();
-			// disable save button as it saves whole Table
+			itsSubgroupMembers = theSubgroup.getMembers();
+			String aName = theSubgroup.getConditions().get(0).getAttribute().getName();
+			((JTextComponent)itsColumnsBox.getEditor().getEditorComponent()).setText(aName);
+			itsColumnsBox.setSelectedItem(aName);
+
+			// TODO for now, disable save button as it saves whole Table
 			aSaveButton.setVisible(false);
 		}
 
@@ -160,42 +110,17 @@ public class BrowseWindow extends JFrame implements ActionListener
 		});
 	}
 
-	/*
-	 * Based on Swing tutorial TableRenderDemo.java.
-	 * This method picks column sizes, based on column heads only.
-	 * TODO Put in SwingWorker background thread.
-	 */
-	private void initColumnSizes()
-	{
-		int aHeaderWidth = 0;
-		int aTotalWidth = 0;
-		TableColumnModel aColumnModel = itsJTable.getColumnModel();
-		itsOffsets = new int[aColumnModel.getColumnCount() + 1]; // ;)
-		TableCellRenderer aRenderer = itsJTable.getTableHeader().getDefaultRenderer();
-
-		for (int i = 0, j = aColumnModel.getColumnCount(); i < j; ++i)
-		{
-			// 91 is width of "(999 distinct)"
-			aHeaderWidth = Math.max(aRenderer.getTableCellRendererComponent(
-									null, itsTable.getColumn(i).getName(),
-									false, false, 0, 0).getPreferredSize().width,
-									91);
-
-			aColumnModel.getColumn(i).setPreferredWidth(aHeaderWidth);
-			itsOffsets[i + 1] = aTotalWidth += aHeaderWidth;
-		}
-	}
-
 	@Override
 	public void actionPerformed(ActionEvent theEvent)
 	{
 		String anEvent = theEvent.getActionCommand();
+//		System.out.println(anEvent);
 
 		// relies on only one comboBox being present
 		if("comboBoxEdited".equals(anEvent))
-			;
+			;//comboBoxCheck();
 		else if("comboBoxChanged".equals(anEvent))
-			focusColumn(itsColumnsBox.getSelectedIndex());
+			updateItsColumnsBox();
 		else if ("save".equals(anEvent))
 			// TODO allow subgroup to be saved, pass BitSet itsSubgroupMembers
 			itsTable.toFile();
@@ -203,79 +128,38 @@ public class BrowseWindow extends JFrame implements ActionListener
 			dispose();
 	}
 
-	private void focusColumn(int theModelIndex)
+	private void updateItsColumnsBox()
 	{
-		int i = itsJTable.convertColumnIndexToView(theModelIndex);
-		itsJTable.setColumnSelectionInterval(i, i);
-		itsJTable.scrollRectToVisible(new Rectangle(0, 0, 0, 0)); // HACK
-		itsJTable.scrollRectToVisible(new Rectangle(itsOffsets[theModelIndex],
-													0,
-													itsOffsets[theModelIndex + 1],
-													0));
-	}
+		String aText = ((JTextComponent)itsColumnsBox.getEditor().getEditorComponent()).getText();
 
-	// TODO memory hog, cleaner would be to allow only one TableModel per Table
-	// and filter on per-view basis
-	@SuppressWarnings("unchecked")
-	// RowSorter
-	private void filter()
-	{
-		RowFilter<? super AbstractTableModel, ? super Integer> subgroupFilter =
-			new RowFilter<AbstractTableModel, Integer>() {
-				final BitSet aMembers = itsSubgroupMembers;
-
-				@Override
-				public boolean include(Entry<? extends AbstractTableModel, ? extends Integer> entry)
-				{
-					return aMembers.get(entry.getIdentifier());
-				}
-			};
-
-		((DefaultRowSorter<BrowseTableModel, Integer>) itsJTable.getRowSorter()).setRowFilter(subgroupFilter);
-	}
-
-	// both *Renderer may be used for other JTables later
-	// renders Number using 6 decimals, Boolean as 0/1
-	private static final class NumberRenderer extends DefaultTableCellRenderer
-	{
-		private static final long serialVersionUID = 1L;
-
-		public static final NumberRenderer RENDERER = new NumberRenderer();
-		public static final NumberFormat FORMATTER;
-
-		static
+		if (itsMap.containsKey(aText))
+			itsBrowseJTable.focusColumn(itsMap.get(aText));
+		else
 		{
-			FORMATTER  = NumberFormat.getNumberInstance();
-			FORMATTER.setMaximumFractionDigits(6);
-		}
-		// only one/uninstantiable
-		private NumberRenderer() {}
+			String aNewText = aText.toLowerCase();
+			itsColumnsBox.removeActionListener(this);
+			itsColumnsBox.setSelectedIndex(-1);
+			itsBrowseJTable.clearSelection();
+			itsColumnsBox.removeAllItems();
 
-		@Override
-		public void setValue(Object aValue)
-		{
-			if (aValue instanceof Number)
-				setText(FORMATTER.format((Number)aValue));
-			else	// not a Number, or null
-				super.setValue(aValue);
-		}
-	}
+			// special case (aText == ""), true for all items, resets full list
+			for (Entry<String, Integer> e : itsMap.entrySet())
+				if (e.getKey().toLowerCase().startsWith(aNewText))
+					itsColumnsBox.addItem(e.getKey());
 
-	// renders Boolean as 0/1
-	private static final class BoolRenderer extends DefaultTableCellRenderer
-	{
-		private static final long serialVersionUID = 1L;
-
-		public static final BoolRenderer RENDERER = new BoolRenderer();
-		private BoolRenderer() {} // only one/uninstantiable
-
-		@Override
-		public void setValue(Object aValue)
-		{
-			if (aValue instanceof Boolean)
-				setText(((Boolean)aValue) ? "1" : "0");
-			else	// not a Boolean, or null
-				super.setValue(aValue);
+			if (itsColumnsBox.getItemCount() > 0)
+			{
+				itsColumnsBox.setSelectedIndex(0);
+				itsBrowseJTable.focusColumn(itsMap.get(itsColumnsBox.getItemAt(0)));
+				//((JComponent)itsColumnsBox.getEditor().getEditorComponent()).setForeground(getForeground());
+			}
+			else
+			{
+				((JTextComponent)itsColumnsBox.getEditor().getEditorComponent()).setText(aText);
+				// if no column startsWith aText, colour aText
+				//((JTextField)itsColumnsBox.getEditor().getEditorComponent()).setForeground(GUI.RED);
+			}
+			itsColumnsBox.addActionListener(this);
 		}
 	}
 }

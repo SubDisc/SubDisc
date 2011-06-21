@@ -1084,7 +1084,7 @@ public class MiningWindow extends JFrame
 		{
 			public void run()
 			{
-				new BrowseWindow(itsTable);
+				new BrowseWindow(itsTable, null);
 			}
 		});
 	}

@@ -19,8 +19,6 @@ public class BrowseTableModel extends AbstractTableModel
 	private static final long serialVersionUID = 1L;
 
 	private Table itsTable;
-	private TableRowSorter<BrowseTableModel> itsRowSorter;
-
 	public BrowseTableModel(Table theTable)
 	{
 		if (theTable == null)
@@ -28,10 +26,8 @@ public class BrowseTableModel extends AbstractTableModel
 			Log.logCommandLine("BrowseTableModel Constructor()");
 			return;
 		}
-		else {
+		else
 			itsTable = theTable;
-			itsRowSorter = new TableRowSorter<BrowseTableModel>(this);
-		}
 	}
 
 	@Override
@@ -119,10 +115,6 @@ public class BrowseTableModel extends AbstractTableModel
 			return null;
 		else
 			return getValueAt(0, theColumn).getClass();
-	}
-
-	public TableRowSorter<BrowseTableModel> getRowSorter() {
-		return itsRowSorter;
 	}
 
 	private void LogError(String theMethod)
