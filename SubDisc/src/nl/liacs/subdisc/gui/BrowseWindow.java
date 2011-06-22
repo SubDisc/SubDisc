@@ -11,11 +11,10 @@ import javax.swing.text.*;
 import nl.liacs.subdisc.*;
 
 /**
- * A BrowseWindow contains a JTable that shows all data in a {@link Table Table}
- * , which in turn is read from a <code>File</code> or database. For each
- * {@link Column Column}, the header displays both the name of its
- * {@link Attribute Attribute} and the number of distinct values for that
- * Attribute.
+ * A BrowseWindow contains a {@link BrowseJTable BrowseJTable} that shows all
+ * data in a {@link Table Table}, which in turn is read from a <code>File</code>
+ * or database. For each {@link Column Column}, the header displays both the
+ * name and the number of distinct values.
  */
 public class BrowseWindow extends JFrame implements ActionListener//, MouseListener
 {

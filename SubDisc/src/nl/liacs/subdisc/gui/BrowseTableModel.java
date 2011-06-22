@@ -19,6 +19,7 @@ public class BrowseTableModel extends AbstractTableModel
 	private static final long serialVersionUID = 1L;
 
 	private Table itsTable;
+
 	public BrowseTableModel(Table theTable)
 	{
 		if (theTable == null)

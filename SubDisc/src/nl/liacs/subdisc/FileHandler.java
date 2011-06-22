@@ -8,6 +8,7 @@ import java.io.*;
 import javax.swing.*;
 
 import nl.liacs.subdisc.cui.*;
+import nl.liacs.subdisc.gui.*;
 
 public class FileHandler extends JFrame
 {
@@ -146,7 +147,7 @@ public class FileHandler extends JFrame
 
 	private void showFileChooser(Action theAction)
 	{
-		//setIconImage(MiningWindow.ICON)
+		setIconImage(MiningWindow.ICON);
 		JFileChooser aChooser = new JFileChooser(new File(itsLastFileLocation));
 		aChooser.addChoosableFileFilter(new FileTypeFilter(FileType.TXT));
 		aChooser.addChoosableFileFilter(new FileTypeFilter(FileType.ARFF));

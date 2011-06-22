@@ -21,9 +21,17 @@ public class BrowseJTable extends JTable
 	 */
 	private int[] itsOffsets;
 
+	@SuppressWarnings("unchecked")
 	public BrowseJTable(Table theTable, Subgroup theSubgroup)
 	{
-		if (theSubgroup == null)
+		if (theTable == null)
+		{
+			MEMBERS = null;
+			TRUE_POSITIVES = null;
+			NOMINAL = false;
+			return;	// warning
+		}
+		else if (theSubgroup == null)
 		{
 			MEMBERS = null;
 			TRUE_POSITIVES = null;
@@ -38,7 +46,7 @@ public class BrowseJTable extends JTable
 		NOMINAL = (TRUE_POSITIVES != null);
 
 		super.setModel(new BrowseTableModel(theTable));
-		super.setRowSorter(new TableRowSorter<TableModel>(getModel()));
+		super.setRowSorter(new TableRowSorter<TableModel>(super.getModel()));
 		((DefaultRowSorter<BrowseTableModel, Integer>) getRowSorter()).setRowFilter(new RowFilterBitSet(MEMBERS));
 
 		super.setRowSelectionAllowed(false);
@@ -95,12 +103,17 @@ public class BrowseJTable extends JTable
 	public void focusColumn(int theModelIndex)
 	{
 		super.scrollRectToVisible(new Rectangle(0, 0, 0, 0)); // HACK
-
-		int i = super.convertColumnIndexToView(theModelIndex);
-		super.setColumnSelectionInterval(i, i);
-		super.scrollRectToVisible(new Rectangle(itsOffsets[theModelIndex],
+		if (theModelIndex < 0 ||
+				theModelIndex >= super.getColumnModel().getColumnCount())
+			super.clearSelection();
+		else
+		{
+			int i = super.convertColumnIndexToView(theModelIndex);
+			super.setColumnSelectionInterval(i, i);
+			super.scrollRectToVisible(new Rectangle(itsOffsets[theModelIndex],
 													0,
 													itsOffsets[theModelIndex + 1],
 													0));
+		}
 	}
 }
