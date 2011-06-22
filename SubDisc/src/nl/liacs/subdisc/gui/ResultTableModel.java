@@ -1,6 +1,5 @@
 package nl.liacs.subdisc.gui;
 
-import java.text.*;
 import java.util.*;
 
 import javax.swing.table.*;
@@ -18,13 +17,16 @@ public class ResultTableModel extends AbstractTableModel
 		itsSubgroupSet = theSubgroupSet;
 	}
 
+	@Override
 	public int getRowCount()
 	{
 		return itsSubgroupSet.size();
 	}
 
+	@Override
 	public int getColumnCount() { return 6; }
 
+	@Override
 	public String getColumnName(int theColumnIndex)
 	{
 		switch(theColumnIndex)
@@ -39,15 +41,34 @@ public class ResultTableModel extends AbstractTableModel
 		}
 	}
 
+	@Override
 	public Object getValueAt(int theRowIndex, int theColumnIndex)
 	{
+/*
 		Iterator<Subgroup> anIterator = itsSubgroupSet.iterator();
-
-		// Good way to walk trough sorted list?
+		// Good way to walk through sorted list?
+		// will crash if (!anIterator.hasNext())
 		for (int i = 0 ; i < theRowIndex; i++)
 			anIterator.next();
 
 		// Next Subgroup is the one
+		Subgroup aSubgroup = anIterator.next();
+*/
+		// will crash if (!anIterator.hasNext())
+		// !(0 <= theRowIndex < itsSubgroupSet.size())
+		Iterator<Subgroup> anIterator;
+		if (theRowIndex <= (itsSubgroupSet.size() / 2))
+		{
+			anIterator = itsSubgroupSet.iterator();
+			for (int i = 0 ; i < theRowIndex; ++i)
+				anIterator.next();
+		}
+		else 
+		{
+			anIterator = itsSubgroupSet.descendingIterator();
+			for (int i = itsSubgroupSet.size()-1; i > theRowIndex; --i)
+				anIterator.next();
+		}
 		Subgroup aSubgroup = anIterator.next();
 
 		switch(theColumnIndex)
@@ -55,17 +76,12 @@ public class ResultTableModel extends AbstractTableModel
 			case 0: return aSubgroup.getID();
 			case 1: return aSubgroup.getNrConditions();
 			case 2: return aSubgroup.getCoverage();
-			case 3: {
-						NumberFormat aFormatter = NumberFormat.getNumberInstance();
-						aFormatter.setMaximumFractionDigits(6);
-						return aFormatter.format(aSubgroup.getMeasureValue());
-					}
-			case 4: {
-//						NumberFormat aFormatter = NumberFormat.getNumberInstance();
-//						aFormatter.setMaximumFractionDigits(6);
-						double aPValue = aSubgroup.getPValue();
-						return ((Double.isNaN(aPValue)) ? "  -" : (float)aPValue);
-					}
+			case 3: return RendererNumber.FORMATTER.format(aSubgroup.getMeasureValue());
+			case 4:
+			{
+				double aPValue = aSubgroup.getPValue();
+				return ((Double.isNaN(aPValue)) ? "  -" : (float)aPValue);
+			}
 			case 5: return aSubgroup.getConditions().toString();
 			default : return "---";
 		}

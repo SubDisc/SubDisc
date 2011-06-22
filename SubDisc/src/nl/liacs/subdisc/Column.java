@@ -195,26 +195,31 @@ public class Column implements XMLNodeInterface
 		return aColumn;
 	}
 
-	public void add(float theFloat) { itsFloats.add(new Float(theFloat)); itsSize++; }
+	public void add(String theNominal)
+	{
+		itsNominals.add(theNominal == null ? "" : theNominal);
+		++itsSize;
+	}
+	public void add(float theFloat)
+	{
+		itsFloats.add(new Float(theFloat));
+		++itsSize;
+	}
 	public void add(boolean theBinary)
 	{
 		if (theBinary)
 			itsBinaries.set(itsSize);
-		itsSize++;
+		++itsSize;
 	}
-	public void add(String theNominal)
-	{
-		itsNominals.add(theNominal == null ? "" : theNominal);
-		itsSize++;
-	}
-	// TODO throws IndexOutOfBoundsException
+//	public void set(int theIndex, String theValue)
+//	{
+//		if (!isOutOfBounds(theIndex))
+//			itsNominals.set(theIndex, theValue);
+//	}
 	public void set(int theIndex, float theValue)
 	{
-		itsFloats.set(theIndex, theValue);
-	}
-	public void set(int theIndex, String theValue)
-	{
-		itsNominals.set(theIndex, theValue);
+		if (!isOutOfBounds(theIndex))
+			itsFloats.set(theIndex, theValue);
 	}
 	public int size() { return itsSize; }
 	public String getName() { return itsName; }
@@ -226,18 +231,29 @@ public class Column implements XMLNodeInterface
 	}
 	public AttributeType getType() { return itsType; }
 	public int getIndex() { return itsIndex; }	// is never set for MRML
-	// TODO these methods should all check for ArrayIndexOutOfBounds Exceptions
-	public float getFloat(int theIndex) { return itsFloats.get(theIndex).floatValue(); }
-	public String getNominal(int theIndex) { return itsNominals.get(theIndex); }
-	public boolean getBinary(int theIndex) { return itsBinaries.get(theIndex); }
+	public String getNominal(int theIndex)
+	{
+		return isOutOfBounds(theIndex) ? "" : itsNominals.get(theIndex);
+	}
+	public float getFloat(int theIndex)
+	{
+		return isOutOfBounds(theIndex) ?
+					Float.NaN :
+					itsFloats.get(theIndex).floatValue();
+	}
+	public boolean getBinary(int theIndex)
+	{
+		return isOutOfBounds(theIndex) ? false :
+						itsBinaries.get(theIndex);
+	}
 	public String getString(int theIndex)
 	{
 		switch (itsType)
 		{
 			case NOMINAL : return getNominal(theIndex);
 			case NUMERIC :
-			case ORDINAL : return itsFloats.get(theIndex).toString();
-			case BINARY : return getBinary(theIndex)?"1":"0";
+			case ORDINAL : return Float.toString(getFloat(theIndex));
+			case BINARY : return getBinary(theIndex) ? "1" : "0";
 			default : logTypeError("Column.getString()");
 						return ("Unknown type: " + itsType.toString().toLowerCase());
 		}
@@ -248,6 +264,16 @@ public class Column implements XMLNodeInterface
 	public boolean isNumericType() { return itsType == AttributeType.NUMERIC; }
 	public boolean isOrdinalType() { return itsType == AttributeType.ORDINAL; }
 	public boolean isBinaryType() { return itsType == AttributeType.BINARY; }
+
+	private boolean isOutOfBounds(int theIndex)
+	{
+		boolean isOutOfBounds = (theIndex < 0 || theIndex >= itsSize);
+
+		if (isOutOfBounds)
+			Log.logCommandLine("indexOutOfBounds:" + theIndex);
+
+		return isOutOfBounds;
+	}
 
 	public float getMin()
 	{
