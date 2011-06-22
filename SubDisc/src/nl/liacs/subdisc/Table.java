@@ -728,8 +728,16 @@ public class Table
 		Log.logCommandLine("=================================================");
 	}
 
-	// TODO add second parameter BitSet(subgroupMembers) to save only subgroup
-	public void toFile()
+	// TODO arff-writer, AttributeType inclusion makes is load faster/safer
+	/**
+	 * Write this Table to <code>File</code>.
+	 * 
+	 * @param theMembers the indices of the set bits in this <BitSet>
+	 * correspond to the row numbers of this Table that should be written to
+	 * the output <code>File</code>. If the parameter is <code>null</code>,
+	 * the whole Table will be written.
+	 */
+	public void toFile(BitSet theMembers)
 	{
 		BufferedWriter aWriter = null;
 
@@ -737,6 +745,8 @@ public class Table
 
 		if (aFile == null)
 			return;
+		else if (theMembers == null)
+			toFile(aFile);
 		else
 		{
 			try
@@ -744,50 +754,46 @@ public class Table
 				aWriter = new BufferedWriter(new FileWriter(aFile));
 				int aNrColumnsMinusOne = itsNrColumns - 1;
 
-				for (int h = 0; h < aNrColumnsMinusOne; ++h)
+				for (int i = 0; i < aNrColumnsMinusOne; ++i)
 				{
-					aWriter.write(itsColumns.get(h).getName());
+					aWriter.write(itsColumns.get(i).getName());
 					aWriter.write(",");
 				}
 				aWriter.write(itsColumns.get(aNrColumnsMinusOne).getName());
 				aWriter.write("\n");
 
-				for (int i = 0, j = itsNrRows; i < j; ++i)
+				// could return if (theMembers.cardinality == 0)
+				// lookup columnTypes only once
+				AttributeType[] aTypes = new AttributeType[itsNrColumns];
+				for (int i = 0, j = itsNrColumns; i < j; ++i)
+					aTypes[i] = itsColumns.get(i).getType();
+
+				// itsNrRows for safety
+				for (int i = theMembers.nextSetBit(0); i >= 0 && i < itsNrRows; i = theMembers.nextSetBit(i + 1))
 				{
 					for (int k = 0; k < aNrColumnsMinusOne; ++k)
 					{
-						Column c = itsColumns.get(k);
-						switch(c.getType())
+						switch(aTypes[k])
 						{
-							case NOMINAL : aWriter.write(c.getNominal(i)); break;
-							case NUMERIC : aWriter.write(String.valueOf(c.getFloat(i))); break;
-							case ORDINAL : aWriter.write(String.valueOf(c.getFloat(i))); break;
-							case BINARY : aWriter.write(c.getBinary(i) ? "1" : "0"); break;
-							default :
-							{
-								Log.logCommandLine("Unknown AttributeType: "
-													+ c.getType());
-								break;
-							}
+							case NOMINAL : aWriter.write(itsColumns.get(k).getNominal(i)); break;
+							case NUMERIC : aWriter.write(String.valueOf(itsColumns.get(k).getFloat(i))); break;
+							case ORDINAL : aWriter.write(String.valueOf(itsColumns.get(k).getFloat(i))); break;
+							case BINARY : aWriter.write(itsColumns.get(k).getBinary(i) ? "1" : "0"); break;
+							default : Log.logCommandLine("Unknown AttributeType: " + aTypes[k]); break;
 						}
 						aWriter.write(",");
 					}
-					Column c = itsColumns.get(aNrColumnsMinusOne);
-					switch(c.getType())
+					switch(aTypes[aNrColumnsMinusOne])
 					{
-						case NOMINAL : aWriter.write(c.getNominal(i)); break;
-						case NUMERIC : aWriter.write(String.valueOf(c.getFloat(i))); break;
-						case ORDINAL : aWriter.write(String.valueOf(c.getFloat(i))); break;
-						case BINARY : aWriter.write(c.getBinary(i) ? "1" : "0"); break;
-						default :
-						{
-							Log.logCommandLine("Unknown AttributeType: "
-												+ c.getType());
-							break;
-						}
+						case NOMINAL : aWriter.write(itsColumns.get(aNrColumnsMinusOne).getNominal(i)); break;
+						case NUMERIC : aWriter.write(String.valueOf(itsColumns.get(aNrColumnsMinusOne).getFloat(i))); break;
+						case ORDINAL : aWriter.write(String.valueOf(itsColumns.get(aNrColumnsMinusOne).getFloat(i))); break;
+						case BINARY : aWriter.write(itsColumns.get(aNrColumnsMinusOne).getBinary(i) ? "1" : "0"); break;
+						default : Log.logCommandLine("Unknown AttributeType: " + aTypes[aNrColumnsMinusOne]); break;
 					}
 					aWriter.write("\n");
 				}
+				aWriter.write("\n");
 			}
 			catch (IOException e)
 			{
@@ -804,6 +810,73 @@ public class Table
 				{
 					Log.logCommandLine("Error while writing: " + aFile);
 				}
+			}
+		}
+	}
+
+	// as above, but writes whole Table (no row inclusion test)
+	private void toFile(File theFile)
+	{
+		BufferedWriter aWriter = null;
+
+		try
+		{
+			aWriter = new BufferedWriter(new FileWriter(theFile));
+			int aNrColumnsMinusOne = itsNrColumns - 1;
+
+			for (int i = 0; i < aNrColumnsMinusOne; ++i)
+			{
+				aWriter.write(itsColumns.get(i).getName());
+				aWriter.write(",");
+			}
+			aWriter.write(itsColumns.get(aNrColumnsMinusOne).getName());
+			aWriter.write("\n");
+
+			// lookup columnTypes only once
+			AttributeType[] aTypes = new AttributeType[itsNrColumns];
+			for (int i = 0, j = itsNrColumns; i < j; ++i)
+				aTypes[i] = itsColumns.get(i).getType();
+
+			for (int i = 0, j = itsNrRows; i < j; ++i)
+			{
+				for (int k = 0; k < aNrColumnsMinusOne; ++k)
+				{
+					switch(aTypes[k])
+					{
+						case NOMINAL : aWriter.write(itsColumns.get(k).getNominal(i)); break;
+						case NUMERIC : aWriter.write(String.valueOf(itsColumns.get(k).getFloat(i))); break;
+						case ORDINAL : aWriter.write(String.valueOf(itsColumns.get(k).getFloat(i))); break;
+						case BINARY : aWriter.write(itsColumns.get(k).getBinary(i) ? "1" : "0"); break;
+						default : Log.logCommandLine("Unknown AttributeType: " + aTypes[k]); break;
+					}
+					aWriter.write(",");
+				}
+				switch(aTypes[aNrColumnsMinusOne])
+				{
+					case NOMINAL : aWriter.write(itsColumns.get(aNrColumnsMinusOne).getNominal(i)); break;
+					case NUMERIC : aWriter.write(String.valueOf(itsColumns.get(aNrColumnsMinusOne).getFloat(i))); break;
+					case ORDINAL : aWriter.write(String.valueOf(itsColumns.get(aNrColumnsMinusOne).getFloat(i))); break;
+					case BINARY : aWriter.write(itsColumns.get(aNrColumnsMinusOne).getBinary(i) ? "1" : "0"); break;
+					default : Log.logCommandLine("Unknown AttributeType: " + aTypes[aNrColumnsMinusOne]); break;
+				}
+				aWriter.write("\n");
+			}
+			aWriter.write("\n");
+		}
+		catch (IOException e)
+		{
+			Log.logCommandLine("Error while writing: " + theFile);
+		}
+		finally
+		{
+			try
+			{
+				if (aWriter != null)
+					aWriter.close();
+			}
+			catch (IOException e)
+			{
+				Log.logCommandLine("Error while writing: " + theFile);
 			}
 		}
 	}

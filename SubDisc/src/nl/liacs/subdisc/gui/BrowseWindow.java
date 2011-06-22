@@ -75,13 +75,9 @@ public class BrowseWindow extends JFrame implements ActionListener//, MouseListe
 		itsColumnsBox.setPreferredSize(GUI.BUTTON_DEFAULT_SIZE);
 		aButtonPanel.add(itsColumnsBox);
 
-		JButton aSaveButton = GUI.buildButton("Save Table", 'S', "save", this);
+		// always allow saving, useful if data is modified
+		aButtonPanel.add(GUI.buildButton("Save", 'S', "save", this));
 
-		// bioinformatics setting
-		if (itsTable.getDomainList() != null)
-			aButtonPanel.add(aSaveButton);
-
-		// Browse Subgroup
 		// by default focus is on first (condition-)attribute
 		if (theSubgroup == null)
 			itsColumnsBox.setSelectedIndex(0);
@@ -91,9 +87,6 @@ public class BrowseWindow extends JFrame implements ActionListener//, MouseListe
 			String aName = theSubgroup.getConditions().get(0).getAttribute().getName();
 			((JTextComponent)itsColumnsBox.getEditor().getEditorComponent()).setText(aName);
 			itsColumnsBox.setSelectedItem(aName);
-
-			// TODO for now, disable save button as it saves whole Table
-			aSaveButton.setVisible(false);
 		}
 
 		final JButton aCloseButton = GUI.buildButton("Close", 'C', "close", this);
@@ -122,8 +115,7 @@ public class BrowseWindow extends JFrame implements ActionListener//, MouseListe
 		else if("comboBoxChanged".equals(anEvent))
 			updateItsColumnsBox();
 		else if ("save".equals(anEvent))
-			// TODO allow subgroup to be saved, pass BitSet itsSubgroupMembers
-			itsTable.toFile();
+			itsTable.toFile(itsSubgroupMembers);
 		else if ("close".equals(anEvent))
 			dispose();
 	}

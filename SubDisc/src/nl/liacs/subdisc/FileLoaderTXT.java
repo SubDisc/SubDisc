@@ -184,6 +184,9 @@ public class FileLoaderTXT implements FileLoaderInterface
 				// check number of columns for each line in the File
 				while ((aLine = aReader.readLine()) != null)
 				{
+					if (aLine.isEmpty())
+						continue;
+
 					++aNrRows;
 
 					String[] aRow = aLine.split(itsSeparator, -1);
@@ -210,6 +213,9 @@ public class FileLoaderTXT implements FileLoaderInterface
 			{
 				while ((aLine = aReader.readLine()) != null)
 				{
+					if (aLine.isEmpty())
+						continue;
+
 					++aNrRows;
 
 					String[] aRow = aLine.split(itsSeparator, -1);
