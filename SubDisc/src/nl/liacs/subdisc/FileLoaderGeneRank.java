@@ -56,6 +56,7 @@ public class FileLoaderGeneRank implements FileLoaderInterface
 			{
 				// TODO remove debug only
 				System.gc();
+				// TODO wrong calculation if more memory is clamained @runtime
 				long freePre = Runtime.getRuntime().freeMemory();
 				long start = System.currentTimeMillis();
 				foo();
