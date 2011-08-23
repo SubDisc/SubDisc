@@ -19,31 +19,35 @@ public class ModelWindow extends JFrame implements ActionListener
 	private static final long serialVersionUID = 1L;
 
 	private JScrollPane itsJScrollPaneCenter = new JScrollPane();
-	private DAGView itsDAGView;
 
 	//correlation and regression ===============================
 
 	//TODO There should never be this much code in a constructor
-//	public ModelWindow(Column theXColumn, Column theYColumn, String theX, String theY, RegressionMeasure theRM, Subgroup theSubgroup)
 	public ModelWindow(Column theXColumn, Column theYColumn, RegressionMeasure theRM, Subgroup theSubgroup)
 	{
 		initComponents();
-		String aName = "2D distribution";
-		if (theRM != null)
-			aName = "y = " + (float)theRM.getIntercept() + " + " + (float)theRM.getSlope() + " * x";
+		String aName = (theRM == null ? "2D distribution" :
+										String.format("y = %f + %f * x",
+													(float)theRM.getIntercept(),
+													(float)theRM.getSlope()));
 
 		//data
 		BitSet aMembers = (theSubgroup == null) ? null : theSubgroup.getMembers();
 		XYSeries aSeries = new XYSeries("data");
-		for (int i = 0; i < theXColumn.size(); i++)
-			if (theSubgroup ==null || aMembers.get(i)) //if complete database, or i is a member of the specified subgroup
+
+		//if complete database
+		if (aMembers == null)
+			for (int i = 0, j = theXColumn.size(); i < j; ++i)
 				aSeries.add(theXColumn.getFloat(i), theYColumn.getFloat(i));
-		XYSeriesCollection aDataSet = new XYSeriesCollection();
-		aDataSet.addSeries(aSeries);
+		//if i is a member of the specified subgroup
+		else
+			for (int i = 0, j = theXColumn.size(); i < j; ++i)
+				if (aMembers.get(i))
+					aSeries.add(theXColumn.getFloat(i), theYColumn.getFloat(i));
+		XYSeriesCollection aDataSet = new XYSeriesCollection(aSeries);
 
 		// create the chart
 		JFreeChart aChart =
-//			ChartFactory.createScatterPlot(aName, theX, theY,	aDataSet, PlotOrientation.VERTICAL, false, true, false);
 			ChartFactory.createScatterPlot(aName, theXColumn.getName(), theYColumn.getName(), aDataSet, PlotOrientation.VERTICAL, false, true, false);
 		aChart.setAntiAlias(true);
 		XYPlot plot = aChart.getXYPlot();
@@ -67,8 +71,7 @@ public class ModelWindow extends JFrame implements ActionListener
 			aLineRenderer.setSeriesStroke(0, new BasicStroke(2.0f));
 		}
 
-		ChartPanel aChartPanel = new ChartPanel(aChart);
-		itsJScrollPaneCenter.setViewportView(aChartPanel);
+		itsJScrollPaneCenter.setViewportView(new ChartPanel(aChart));
 
 		setTitle("Base Model");
 		setIconImage(MiningWindow.ICON);
@@ -83,10 +86,10 @@ public class ModelWindow extends JFrame implements ActionListener
 	public ModelWindow(DAG theDAG, int theDAGWidth, int theDAGHeight)
 	{
 		initComponents();
-		itsDAGView = new DAGView(theDAG);
-		itsDAGView.setDAGArea(theDAGWidth, theDAGHeight);
-		itsDAGView.drawDAG();
-		itsJScrollPaneCenter.setViewportView(itsDAGView);
+		DAGView aDAGView = new DAGView(theDAG);
+		aDAGView.setDAGArea(theDAGWidth, theDAGHeight);
+		aDAGView.drawDAG();
+		itsJScrollPaneCenter.setViewportView(aDAGView);
 
 		setTitle("Base Model: Bayesian Network");
 		setIconImage(MiningWindow.ICON);

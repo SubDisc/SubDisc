@@ -45,6 +45,8 @@ public class CorrelationMeasure
 		itsType = theBase.itsType;
 	}
 
+	// XXX never used
+/*
 	public CorrelationMeasure(double[] theXValues, double[] theYValues, int theType, CorrelationMeasure theBase)
 	{
 		itsBase = theBase;
@@ -72,7 +74,7 @@ public class CorrelationMeasure
 			itsYSquaredSum = 0;
 		}
 	}
-
+*/
 	/**
 	 * Adds a new observation after which the current correlation will be outdated. getCorrelation automatically takes
 	 * care that the current correlation is returned by checking whether CorrelationMeasure is outdated.

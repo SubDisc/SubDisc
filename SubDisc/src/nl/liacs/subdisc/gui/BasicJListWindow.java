@@ -25,7 +25,7 @@ public class BasicJListWindow extends JDialog implements ActionListener {
 		else if ((itsJListSize = itsJList.getModel().getSize()) == 0)
 			;
 		else
-			initComponents(itsJList);
+			initComponents();
 	}
 
 	protected void constructorWarning(String theClass, boolean isNullWarning)
@@ -47,13 +47,13 @@ public class BasicJListWindow extends JDialog implements ActionListener {
 		setVisible(true);
 	}
 
-	private void initComponents(JList theJList)
+	private void initComponents()
 	{
 		JPanel aMasterPanel = new JPanel();
 		aMasterPanel.setLayout(new BoxLayout(aMasterPanel, BoxLayout.Y_AXIS));
 		aMasterPanel.setBorder(GUI.buildBorder("Select"));
 
-		aMasterPanel.add(new JScrollPane(theJList), BorderLayout.CENTER);
+		aMasterPanel.add(new JScrollPane(itsJList), BorderLayout.CENTER);
 
 		JPanel aButtonPanel = new JPanel();
 		aButtonPanel.setLayout(new BoxLayout(aButtonPanel, BoxLayout.Y_AXIS));
