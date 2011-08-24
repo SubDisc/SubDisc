@@ -116,6 +116,8 @@ public class Subgroup implements Comparable<Object>
 		}
 	}
 
+	public boolean covers(int theRow) { return itsMembers.get(theRow); }
+
 	public int getID() { return itsID; }
 	public void setID(int theID) { itsID = theID; }
 
@@ -322,13 +324,13 @@ public class Subgroup implements Comparable<Object>
 	{
 		return (isPValueComputed ? itsPValue : Double.NaN);
 	}
-	
+
 	public void setPValue(NormalDistribution theDistro)
 	{
 		isPValueComputed = true;
 		itsPValue = 1 - theDistro.calcCDF(itsMeasureValue);
 	}
-	
+
 	public void setEmpiricalPValue(double[] theQualities)
 	{
 		isPValueComputed = true;
@@ -341,7 +343,7 @@ public class Subgroup implements Comparable<Object>
 		}
 		itsPValue = aP/aLength;
 	}
-	
+
 	public void renouncePValue()
 	{
 		isPValueComputed = false;

@@ -206,6 +206,21 @@ public class SubgroupSet extends TreeSet<Subgroup>
 	public float getTotalTargetCoverage() { return itsTotalTargetCoverage; }
 
 	/**
+	* Computes the cover count of a particular example: the number of times this example is a member of a subgroup
+	* See van Leeuwen & Knobbe, ECML PKDD 2011
+	*/
+	public int computeCoverCount(int theRow)
+	{
+		int aResult = 0;
+		for (Subgroup aSubgroup : this)
+		{
+			if (aSubgroup.covers (theRow))
+				aResult++;
+		}
+		return aResult;
+	}
+
+	/**
 	 * Returns a new {@link ROCList ROCList}. If {@link Subgroup Subgroup}s are
 	 * removed from this SubgroupSet, this new ROCList reflects these changes.
 	 * This method only returns a ROCList in a nominal target setting, meaning

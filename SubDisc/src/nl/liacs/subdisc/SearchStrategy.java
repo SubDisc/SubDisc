@@ -6,8 +6,9 @@ package nl.liacs.subdisc;
 public enum SearchStrategy implements EnumInterface
 {
 	BEAM("beam"),
+	COVER_BASED_BEAM_SELECTION("cover-based beam selection"),
 	BEST_FIRST("best first"),
-	DEPTH_FIRST("depth_first"),
+	DEPTH_FIRST("depth first"),
 	BREADTH_FIRST("breadth first");
 
 	/**
@@ -19,15 +20,15 @@ public enum SearchStrategy implements EnumInterface
 
 	private SearchStrategy(String theGuiText)
 	{
-		GUI_TEXT = theGuiText; 
+		GUI_TEXT = theGuiText;
 	}
 
 	/**
 	 * Returns the SearchStartegy corresponding to the <code>String</code>
 	 * parameter. This method is case insensitive.
-	 * 
+	 *
 	 * @param theType the <code>String</code> corresponding to a SearchStrategy.
-	 * 
+	 *
 	 * @return the SearchStrategy corresponding to the <code>String</code>
 	 * parameter, or the default SearchStrategy <code>BEAM</code> if no
 	 * corresponding SearchStrategy can not be found.
@@ -52,7 +53,7 @@ public enum SearchStrategy implements EnumInterface
 
 	/**
 	 * Returns the default SearchStrategy.
-	 * 
+	 *
 	 * @return the default SearchStrategy.
 	 */
 	public static SearchStrategy getDefault()
@@ -65,5 +66,10 @@ public enum SearchStrategy implements EnumInterface
 	public String toString()
 	{
 		return GUI_TEXT;
+	}
+
+	public boolean isBeam()
+	{
+		return ((this == SearchStrategy.BEAM) || (this == SearchStrategy.COVER_BASED_BEAM_SELECTION));
 	}
 }

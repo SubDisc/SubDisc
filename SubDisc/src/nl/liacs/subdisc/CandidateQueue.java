@@ -4,15 +4,10 @@ import java.util.*;
 
 public class CandidateQueue
 {
-//	public static final int BEAM	= 0;
-//	public static final int BESTFIRST 		= 1;
-//	public static final int DFS 		= 2;
-//	public static final int BFS		= 3;
-//	public static final int LAST_SEARCH_STRATEGY = BFS;
-
 	private SearchStrategy itsSearchStrategy;
 	private TreeSet<Candidate> itsQueue;
 	private TreeSet<Candidate> itsNextQueue;
+	private TreeSet<Candidate> itsTempQueue;
 	private int itsMaximumQueueSize = 1000;
 
 	public CandidateQueue(SearchParameters theSearchParameters, Candidate theRootCandidate)
@@ -20,41 +15,31 @@ public class CandidateQueue
 		itsSearchStrategy = theSearchParameters.getSearchStrategy();
 		if (itsSearchStrategy == SearchStrategy.BEAM)
 			itsNextQueue = new TreeSet<Candidate>();
+		if (itsSearchStrategy == SearchStrategy.COVER_BASED_BEAM_SELECTION)
+			itsTempQueue = new TreeSet<Candidate>();
 		itsQueue = new TreeSet<Candidate>();
 		itsQueue.add(theRootCandidate);
 
 		itsMaximumQueueSize = theSearchParameters.getSearchStrategyWidth();
 	}
-/*
-	public boolean add(Candidate theCandidate)
-	{
-		boolean aResult;
 
-		if (itsSearchStrategy == BEAM)
-			aResult = itsNextQueue.add(theCandidate);
-		else
-			aResult = itsQueue.add(theCandidate);
-		if (aResult)
-			trimQueue();
-
-		return aResult;
-	}
-*/
 	public boolean add(Candidate theCandidate)
 	{
 		if (itsSearchStrategy == SearchStrategy.BEAM)
 			return addToQueue(itsNextQueue, theCandidate);
+		else if (itsSearchStrategy == SearchStrategy.COVER_BASED_BEAM_SELECTION)
+			return itsTempQueue.add(theCandidate); //simply add candidate, regardless of the current size of itsTempQueue
 		else
 			return addToQueue(itsQueue, theCandidate);
 	}
 
+	//add candidate and trim queue to specified size itsMaximumQueueSize
 	private boolean addToQueue(TreeSet<Candidate> theQueue, Candidate theCandidate)
 	{
 		boolean isAdded = theQueue.add(theCandidate);
 
 		if (isAdded && (theQueue.size() > itsMaximumQueueSize))
 		{
-//			itsQueue.remove(itsQueue.last());	// see comment removeFirst below
 			Iterator<Candidate> anIterator = theQueue.descendingIterator();
 			anIterator.next();
 			anIterator.remove();
@@ -67,86 +52,98 @@ public class CandidateQueue
 	 * TODO itsQueue.remove(aFirstCandidate) does not work properly because of
 	 * the incomplete Candicate.compareTo() method.
 	 */
+	 /**
+	 * Retrieves first candidate from Queue, and moves to next level if required.
+	 */
 	public Candidate removeFirst()
 	{
-		if ((itsSearchStrategy == SearchStrategy.BEAM) && (itsQueue.size() == 0))
-		{
-			itsQueue = itsNextQueue;
-			itsNextQueue = new TreeSet<Candidate>();
-		}
+		if (itsSearchStrategy.isBeam() && itsQueue.size() == 0)
+			moveToNextLevel();
+
 		Candidate aFirstCandidate = itsQueue.first();
-//		itsQueue.remove(aFirstCandidate);
 		Iterator<Candidate> anIterator = itsQueue.iterator();
 		anIterator.next();
 		anIterator.remove();
 		return aFirstCandidate;
 	}
 
-	public double getMinimumPriority()
+	public void moveToNextLevel()
 	{
-		if (size() > 0)
+		Log.logCommandLine("\nLevel finished --------------------------------------------\n");
+		if (itsSearchStrategy == SearchStrategy.BEAM) //make next level current
 		{
-			if (itsSearchStrategy == SearchStrategy.BEAM)
-			{
-				if (itsQueue.last().getPriorityLevel() > itsNextQueue.last().getPriorityLevel())
-					return itsNextQueue.last().getPriorityLevel();
-				else
-					return itsQueue.last().getPriorityLevel();
-			}
-			else
-				return itsQueue.last().getPriorityLevel();
+			itsQueue = itsNextQueue;
+			itsNextQueue = new TreeSet<Candidate>();
 		}
-		else
-			return 0;
+		else // COVER_BASED_BEAM_SELECTION
+		{
+			Log.logCommandLine("candidates: " + itsTempQueue.size());
+			itsNextQueue = new TreeSet<Candidate>();
+			for (Candidate aCandidate : itsTempQueue) //copy canidates into itsNextQueue
+			{
+				double aQuality = computeMultiplicativeWeight(aCandidate) * aCandidate.getPriority();
+				Log.logCommandLine("itsTempQueue: " + aCandidate.getPriority() + ", " + computeMultiplicativeWeight(aCandidate) + ", " + aQuality);
+				aCandidate.setPriority(aQuality);
+				addToQueue(itsNextQueue, aCandidate);
+			}
+			itsQueue = itsNextQueue;
+
+			Log.logCommandLine("========================================================");
+			for (Candidate aCandidate : itsQueue)
+				Log.logCommandLine("itsQueue: " + aCandidate.getPriority());
+
+			itsNextQueue = new TreeSet<Candidate>();
+			itsTempQueue = new TreeSet<Candidate>();
+		}
 	}
 
-	public double getMaximumPriority()
-	{
-		if (size() > 0)
-		{
-			if (itsSearchStrategy == SearchStrategy.BEAM)
-			{
-				if (itsQueue.first().getPriorityLevel() < itsNextQueue.first().getPriorityLevel())
-					return itsNextQueue.first().getPriorityLevel();
-				else
-					return itsQueue.first().getPriorityLevel();
-			}
-			else
-				return itsQueue.first().getPriorityLevel();
-		}
-		else
-			return 0;
-	}
-/*
-	// TODO just remove (itsQueue.size() - itsMaximumQueueSize) elements using
-	// Iterator<Candidate> anIterator = itsNextQueue.descendingIterator();
-	public void trimQueue()
-	{
-		if (itsSearchStrategy == BEAM)
-			while (itsNextQueue.size() > itsMaximumQueueSize)
-			{
-				Iterator<Candidate> anIterator = itsNextQueue.iterator();
-				while (anIterator.hasNext())
-					anIterator.next();
-				anIterator.remove();
-			}
-		else
-			while (itsQueue.size() > itsMaximumQueueSize)
-			{
-				Iterator<Candidate> anIterator = itsQueue.iterator();
-				while (anIterator.hasNext())
-					anIterator.next();
-				anIterator.remove();
-			}
-	}
-*/
 	public int size()
 	{
 		if (itsSearchStrategy == SearchStrategy.BEAM)
 			return itsQueue.size() + itsNextQueue.size();
+		else if (itsSearchStrategy == SearchStrategy.COVER_BASED_BEAM_SELECTION)
+			return itsQueue.size() + itsTempQueue.size();
 		else
 			return itsQueue.size();
 	}
 
 	public void setMaximumQueueSize(int theMax) { itsMaximumQueueSize = theMax; }
+
+	/**
+	* Computes the cover count of a particular example: the number of times this example is a member of a subgroup. \n
+	* See van Leeuwen & Knobbe, ECML PKDD 2011. \n
+	* Only applies to beam search
+	*/
+	public int computeCoverCount(int theRow)
+	{
+		int aResult = 0;
+
+		for (Candidate aCandidate: itsNextQueue)
+		{
+			Subgroup aSubgroup = aCandidate.getSubgroup();
+			if (aSubgroup.covers (theRow))
+				aResult++;
+		}
+		return aResult;
+	}
+
+	/**
+	* Computes the multiplicative weight of a subgroup \n
+	* See van Leeuwen & Knobbe, ECML PKDD 2011. \n
+	* Only applies to beam search
+	*/
+	public double computeMultiplicativeWeight(Candidate theCandidate)
+	{
+		double aResult = 0;
+		double anAlpha = 0.5;
+		Subgroup aSubgroup = theCandidate.getSubgroup();
+		BitSet aMember = aSubgroup.getMembers();
+
+		for(int i=aMember.nextSetBit(0); i>=0; i=aMember.nextSetBit(i+1))
+		{
+			int aCoverCount = computeCoverCount(i);
+			aResult += Math.pow(anAlpha, aCoverCount);
+		}
+		return aResult/aSubgroup.getCoverage();
+	}
 }

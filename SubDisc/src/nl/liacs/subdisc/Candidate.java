@@ -31,6 +31,7 @@ public class Candidate implements Comparable<Object>
 		return 1;
 	}
 
-	public double getPriorityLevel() { return itsPriority; }
+	public double getPriority() { return itsPriority; }
+	public void setPriority(double thePriority) { itsPriority = thePriority; }
 	public Subgroup getSubgroup() { return itsSubgroup; }
 }
