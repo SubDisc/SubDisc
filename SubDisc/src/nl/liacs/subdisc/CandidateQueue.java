@@ -79,12 +79,34 @@ public class CandidateQueue
 		{
 			Log.logCommandLine("candidates: " + itsTempQueue.size());
 			itsNextQueue = new TreeSet<Candidate>();
-			for (Candidate aCandidate : itsTempQueue) //copy canidates into itsNextQueue
+			int aLoopSize = Math.min(itsMaximumQueueSize, itsTempQueue.size());
+			BitSet aUsed = new BitSet(itsTempQueue.size());
+			for (int i=0; i<aLoopSize; i++) //copy canidates into itsNextQueue
 			{
-				double aQuality = computeMultiplicativeWeight(aCandidate) * aCandidate.getPriority();
-				Log.logCommandLine("itsTempQueue: " + aCandidate.getPriority() + ", " + computeMultiplicativeWeight(aCandidate) + ", " + aQuality);
-				aCandidate.setPriority(aQuality);
-				addToQueue(itsNextQueue, aCandidate);
+				Log.logCommandLine("loop " + i);
+				Candidate aBestCandidate = null;
+				double aMaxQuality = Float.MIN_VALUE;
+				int aCount = 0;
+				int aChosen = 0;
+				for (Candidate aCandidate : itsTempQueue)
+				{
+					if (!aUsed.get(aCount)) //is this one still available
+					{
+						double aQuality = computeMultiplicativeWeight(aCandidate) * aCandidate.getPriority();
+						if (aQuality > aMaxQuality)
+						{
+							aMaxQuality = aQuality;
+							aBestCandidate = aCandidate;
+							aChosen = aCount;
+							Log.logCommandLine("    ---" + aMaxQuality);
+						}
+					}
+					aCount++;
+				}
+				Log.logCommandLine("best (" + aChosen + "): " + aBestCandidate.getPriority() + ", " + computeMultiplicativeWeight(aBestCandidate) + ", " + aMaxQuality);
+				aUsed.set(aChosen, true);
+				aBestCandidate.setPriority(aMaxQuality);
+				addToQueue(itsNextQueue, aBestCandidate);
 			}
 			itsQueue = itsNextQueue;
 
@@ -135,7 +157,7 @@ public class CandidateQueue
 	public double computeMultiplicativeWeight(Candidate theCandidate)
 	{
 		double aResult = 0;
-		double anAlpha = 0.5;
+		double anAlpha = 0.7;
 		Subgroup aSubgroup = theCandidate.getSubgroup();
 		BitSet aMember = aSubgroup.getMembers();
 
