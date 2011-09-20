@@ -81,11 +81,11 @@ public class CandidateQueue
 			itsNextQueue = new TreeSet<Candidate>();
 			int aLoopSize = Math.min(itsMaximumQueueSize, itsTempQueue.size());
 			BitSet aUsed = new BitSet(itsTempQueue.size());
-			for (int i=0; i<aLoopSize; i++) //copy canidates into itsNextQueue
+			for (int i=0; i<aLoopSize; i++) //copy candidates into itsNextQueue
 			{
 				Log.logCommandLine("loop " + i);
 				Candidate aBestCandidate = null;
-				double aMaxQuality = Float.MIN_VALUE;
+				double aMaxQuality = Float.NEGATIVE_INFINITY;
 				int aCount = 0;
 				int aChosen = 0;
 				for (Candidate aCandidate : itsTempQueue)
@@ -98,7 +98,6 @@ public class CandidateQueue
 							aMaxQuality = aQuality;
 							aBestCandidate = aCandidate;
 							aChosen = aCount;
-							Log.logCommandLine("    ---" + aMaxQuality);
 						}
 					}
 					aCount++;
@@ -111,8 +110,9 @@ public class CandidateQueue
 			itsQueue = itsNextQueue;
 
 			Log.logCommandLine("========================================================");
+			Log.logCommandLine("used: " + aUsed.toString());
 			for (Candidate aCandidate : itsQueue)
-				Log.logCommandLine("itsQueue: " + aCandidate.getPriority());
+				Log.logCommandLine("priority: " + aCandidate.getPriority());
 
 			itsNextQueue = new TreeSet<Candidate>();
 			itsTempQueue = new TreeSet<Candidate>();
@@ -134,7 +134,6 @@ public class CandidateQueue
 	/**
 	* Computes the cover count of a particular example: the number of times this example is a member of a subgroup. \n
 	* See van Leeuwen & Knobbe, ECML PKDD 2011. \n
-	* Only applies to beam search
 	*/
 	public int computeCoverCount(int theRow)
 	{
@@ -152,12 +151,11 @@ public class CandidateQueue
 	/**
 	* Computes the multiplicative weight of a subgroup \n
 	* See van Leeuwen & Knobbe, ECML PKDD 2011. \n
-	* Only applies to beam search
 	*/
 	public double computeMultiplicativeWeight(Candidate theCandidate)
 	{
 		double aResult = 0;
-		double anAlpha = 0.7;
+		double anAlpha = 0.9;
 		Subgroup aSubgroup = theCandidate.getSubgroup();
 		BitSet aMember = aSubgroup.getMembers();
 

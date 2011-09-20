@@ -77,6 +77,19 @@ public class SubgroupSet extends TreeSet<Subgroup>
 	}
 
 	/**
+	 * Creates a SubgroupSet just like the argument, except empty.
+	 */
+	public SubgroupSet(SubgroupSet theOriginal)
+	{
+		nominalTargetSetting = theOriginal.nominalTargetSetting;
+		itsMaximumSize = theOriginal.itsMaximumSize;
+		itsTotalCoverage = theOriginal.itsTotalCoverage;
+		itsBinaryTarget = theOriginal.itsBinaryTarget;
+		itsTotalTargetCoverage = theOriginal.itsTotalTargetCoverage;
+		itsROCList = theOriginal.itsROCList;
+	}
+
+	/**
 	 * Tries to add the {@link Subgroup Subgroup} passed in as parameter to this
 	 * SubgroupSet. Also ensures this SubgroupSet never exceeds its maximum size
 	 * (if one is set).
@@ -205,20 +218,87 @@ public class SubgroupSet extends TreeSet<Subgroup>
 	public int getTotalCoverage() { return itsTotalCoverage; }
 	public float getTotalTargetCoverage() { return itsTotalTargetCoverage; }
 
+
+
+
+	public SubgroupSet postProcess(SearchStrategy theSearchStrategy)
+	{
+		if (theSearchStrategy != SearchStrategy.COVER_BASED_BEAM_SELECTION) //only valid for COVER_BASED_BEAM_SELECTION
+			return this;
+
+		int aSize = 10; //TODO
+		Log.logCommandLine("subgroups found: " + size());
+		SubgroupSet aResult = new SubgroupSet(this); //make empty copy
+		int aLoopSize = Math.min(aSize, size());
+		BitSet aUsed = new BitSet(size());
+		for (int i=0; i<aLoopSize; i++)
+		{
+			Log.logCommandLine("loop " + i);
+			Subgroup aBest = null;
+			double aMaxQuality = Float.NEGATIVE_INFINITY;
+			int aCount = 0;
+			int aChosen = 0;
+			for (Subgroup aSubgroup : this)
+			{
+				if (!aUsed.get(aCount)) //is this one still available
+				{
+					double aQuality = computeMultiplicativeWeight(aResult, aSubgroup) * aSubgroup.getMeasureValue();
+					if (aQuality > aMaxQuality)
+					{
+						aMaxQuality = aQuality;
+						aBest = aSubgroup;
+						aChosen = aCount;
+					}
+				}
+				aCount++;
+			}
+			Log.logCommandLine("best (" + aChosen + "): " + aBest.getMeasureValue() + ", " + computeMultiplicativeWeight(aResult, aBest) + ", " + aMaxQuality + "\n");
+			aUsed.set(aChosen, true);
+			aResult.add(aBest);
+		}
+
+		Log.logCommandLine("========================================================");
+		Log.logCommandLine("used: " + aUsed.toString());
+		for (Subgroup aSubgroup : aResult)
+			Log.logCommandLine("result: " + aSubgroup.getMeasureValue());
+		return aResult;
+	}
+
 	/**
 	* Computes the cover count of a particular example: the number of times this example is a member of a subgroup
 	* See van Leeuwen & Knobbe, ECML PKDD 2011
 	*/
-	public int computeCoverCount(int theRow)
+	public int computeCoverCount(SubgroupSet theSet, int theRow)
 	{
 		int aResult = 0;
-		for (Subgroup aSubgroup : this)
+		for (Subgroup aSubgroup : theSet)
 		{
-			if (aSubgroup.covers (theRow))
+			if (aSubgroup.covers(theRow))
 				aResult++;
 		}
 		return aResult;
 	}
+
+	/**
+	* Computes the multiplicative weight of a subgroup \n
+	* See van Leeuwen & Knobbe, ECML PKDD 2011.
+	*/
+	public double computeMultiplicativeWeight(SubgroupSet theSet, Subgroup theSubgroup)
+	{
+		double aResult = 0;
+		double anAlpha = 0.9;
+		BitSet aMember = theSubgroup.getMembers();
+
+		for(int i=aMember.nextSetBit(0); i>=0; i=aMember.nextSetBit(i+1))
+		{
+			int aCoverCount = computeCoverCount(theSet, i);
+			aResult += Math.pow(anAlpha, aCoverCount);
+		}
+		return aResult/theSubgroup.getCoverage();
+	}
+
+
+
 
 	/**
 	 * Returns a new {@link ROCList ROCList}. If {@link Subgroup Subgroup}s are

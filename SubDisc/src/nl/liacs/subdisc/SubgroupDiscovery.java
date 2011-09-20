@@ -144,10 +144,14 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		Log.logCommandLine("number of candidates: " + itsCandidateCount);
 		Log.logCommandLine("number of subgroups: " + getNumberOfSubgroups());
 
-		itsResult.setIDs(); //assign 1 to n to subgroups, for future reference in subsets
 
 		if ((itsSearchParameters.getTargetType() == TargetType.MULTI_LABEL) && itsSearchParameters.getPostProcessingDoAutoRun())
 			postprocess();
+
+		//now just for cover-based beam search post selection
+		itsResult = itsResult.postProcess(itsSearchParameters.getSearchStrategy());
+
+		itsResult.setIDs(); //assign 1 to n to subgroups, for future reference in subsets
 	}
 
 	private void evaluateNumericRefinements(long theBeginTime, Subgroup theSubgroup, Refinement theRefinement)
