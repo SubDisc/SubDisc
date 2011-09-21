@@ -226,7 +226,7 @@ public class SubgroupSet extends TreeSet<Subgroup>
 		if (theSearchStrategy != SearchStrategy.COVER_BASED_BEAM_SELECTION) //only valid for COVER_BASED_BEAM_SELECTION
 			return this;
 
-		int aSize = 10; //TODO
+		int aSize = 100; //TODO
 		Log.logCommandLine("subgroups found: " + size());
 		SubgroupSet aResult = new SubgroupSet(this); //make empty copy
 		int aLoopSize = Math.min(aSize, size());
