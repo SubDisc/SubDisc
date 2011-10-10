@@ -81,7 +81,7 @@ public class Table
 		 * now all columns are know, check if data (Attributes) is valid by
 		 * loading actual data from itsSource
 		 */
-		new FileHandler(new File(theXMLFileDirectory + "/"+ itsSource), this);
+		new FileHandler(new File(theXMLFileDirectory + "/" + itsSource), this);
 	}
 
 	/*

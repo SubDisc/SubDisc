@@ -171,7 +171,7 @@ public class XMLAutoRun
 	private static void runSubgroupDiscovery(Node theExperimentNode, File theFile, boolean showWindows)
 	{
 		NodeList aSettings = theExperimentNode.getChildNodes();
-		Table aTable = new Table(aSettings.item(2), theFile.getParent());
+		Table aTable = new Table(aSettings.item(2), theFile.getParent() == null ? "." : theFile.getParent());
 		aTable.update();
 		SearchParameters aSearchParameters = new SearchParameters(aSettings.item(1));
 		aSearchParameters.setTargetConcept(new TargetConcept(aSettings.item(0), aTable));
