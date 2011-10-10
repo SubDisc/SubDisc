@@ -246,23 +246,25 @@ public class XMLAutoRun
 		// always save result TODO search parameters based filename
 		save(aSubgroupDiscovery.getResult(), (theFile.getAbsolutePath().replace(".xml", ("_"+ aBegin + ".txt"))));
 
-		// ignore cross-validate
-		BitSet aBitSet = new BitSet(aTable.getNrRows());
-		aBitSet.set(0,aTable.getNrRows());
-		switch (aTargetType)
+		// following is only needed if windows will be shown
+		if (showWindows)
 		{
-			case MULTI_LABEL :
+			// ignore cross-validate
+			BitSet aBitSet = new BitSet(aTable.getNrRows());
+			aBitSet.set(0, aTable.getNrRows());
+			switch (aTargetType)
 			{
-				BinaryTable aBinaryTable = new BinaryTable(aTable, aSearchParameters.getTargetConcept().getMultiTargets());
-				if (showWindows)
+				case MULTI_LABEL :
+				{
+					BinaryTable aBinaryTable = new BinaryTable(aTable, aSearchParameters.getTargetConcept().getMultiTargets());
 					new ResultWindow(aTable, aSubgroupDiscovery, aBinaryTable, 0, aBitSet);
-				break;
-			}
-			default :
-			{
-				if (showWindows)
+					break;
+				}
+				default :
+				{
 					new ResultWindow(aTable, aSubgroupDiscovery, null, 0, aBitSet);
-				break;
+					break;
+				}
 			}
 		}
 	}

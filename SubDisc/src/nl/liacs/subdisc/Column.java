@@ -114,8 +114,16 @@ public class Column implements XMLNodeInterface
 		{
 			Node aSetting = aChildren.item(i);
 			String aNodeName = aSetting.getNodeName();
-			if ("attribute".equalsIgnoreCase(aNodeName))
-			;	// TODO REMOVE
+			if ("type".equalsIgnoreCase(aNodeName))
+				itsType = AttributeType.getAttributeType(aSetting.getTextContent());
+			else if ("name".equalsIgnoreCase(aNodeName))
+				itsName = aSetting.getTextContent();
+			else if ("short".equalsIgnoreCase(aNodeName))
+				itsShort = aSetting.getTextContent();
+			// FIXME index not always set for Column
+			else if ("index".equalsIgnoreCase(aNodeName))
+				//itsIndex = Integer.parseInt(aSetting.getTextContent());
+				itsIndex = Integer.parseInt(((Element)theColumnNode).getAttribute("nr"));
 			else if ("missing_value".equalsIgnoreCase(aNodeName))
 				itsMissingValue = aSetting.getTextContent();
 			else if ("enabled".equalsIgnoreCase(aNodeName))
@@ -1035,6 +1043,11 @@ public class Column implements XMLNodeInterface
 	{
 		Node aNode = XMLNode.addNodeTo(theParentNode, "column");
 		((Element)aNode).setAttribute("nr", "0");
+		XMLNode.addNodeTo(aNode, "type", itsType);
+		XMLNode.addNodeTo(aNode, "name", itsName);
+		XMLNode.addNodeTo(aNode, "short", itsShort == null ? "" : itsShort);
+		//XMLNode.addNodeTo(aNode, "index", itsIndex);
+		XMLNode.addNodeTo(aNode, "index", itsIndex);
 		XMLNode.addNodeTo(aNode, "missing_value", itsMissingValue);
 		XMLNode.addNodeTo(aNode, "enabled", isEnabled);
 	}

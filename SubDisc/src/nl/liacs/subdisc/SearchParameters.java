@@ -135,6 +135,7 @@ public class SearchParameters implements XMLNodeInterface
 		XMLNode.addNodeTo(aNode, "maximum_time", getMaximumTime());
 		XMLNode.addNodeTo(aNode, "search_strategy", getSearchStrategy().GUI_TEXT);
 		XMLNode.addNodeTo(aNode, "search_strategy_width", getSearchStrategyWidth());
+		XMLNode.addNodeTo(aNode, "numeric_operators", getNumericOperators().GUI_TEXT);
 		XMLNode.addNodeTo(aNode, "numeric_strategy", getNumericStrategy().GUI_TEXT);
 		XMLNode.addNodeTo(aNode, "nr_bins", getNrBins());
 		XMLNode.addNodeTo(aNode, "alpha", getAlpha());
