@@ -888,10 +888,6 @@ public class Table
 		XMLNode.addNodeTo(aNode, "source", itsSource);
 
 		for (int i = 0, j = itsColumns.size(); i < j; ++i)
-		{
 			itsColumns.get(i).addNodeTo(aNode);
-			// FIXME index is not always set in Column
-			((Element)aNode.getLastChild()).setAttribute("nr", String.valueOf(i));
-		}
 	}
 }

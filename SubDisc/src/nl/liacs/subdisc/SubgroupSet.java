@@ -19,13 +19,13 @@ import java.io.*;
 public class SubgroupSet extends TreeSet<Subgroup>
 {
 	private static final long serialVersionUID = 1L;
-	private final int itsMaximumSize;
 
 	// For SubgroupSet in nominal target setting (used for TPR/FPR in ROCList)
 	private final boolean nominalTargetSetting;
 	private final int itsTotalCoverage;
 	private final float itsTotalTargetCoverage;
 	private final BitSet itsBinaryTarget;
+	private int itsMaximumSize;
 	private ROCList itsROCList;
 
 	/*
@@ -90,6 +90,15 @@ public class SubgroupSet extends TreeSet<Subgroup>
 	}
 
 	/**
+	 * Only the top result is needed in this setting. Setting maximum size
+	 * to 1 saves memory and insertion lookup time (Olog(n) for Java's 
+	 * red-black tree implementation of TreeSet).
+	 */
+	protected void useSwapRandomisationSetting() {
+		itsMaximumSize = 1;
+	}
+
+	/**
 	 * Tries to add the {@link Subgroup Subgroup} passed in as parameter to this
 	 * SubgroupSet. Also ensures this SubgroupSet never exceeds its maximum size
 	 * (if one is set).
@@ -108,7 +117,7 @@ public class SubgroupSet extends TreeSet<Subgroup>
 			boolean aResult = super.add(theSubgroup);
 			if ((itsMaximumSize > 0) && (size() > itsMaximumSize))
 				remove(last());
-
+			
 			return aResult;
 		}
 	}

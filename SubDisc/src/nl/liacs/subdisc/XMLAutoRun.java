@@ -228,7 +228,7 @@ public class XMLAutoRun
 				return;
 			}
 		}
-		aSubgroupDiscovery.Mine(System.currentTimeMillis());
+		aSubgroupDiscovery.mine(System.currentTimeMillis());
 		long anEnd = System.currentTimeMillis();
 		if (anEnd > aBegin + (long)(aSearchParameters.getMaximumTime()*60*1000))
 		{

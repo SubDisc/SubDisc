@@ -331,7 +331,10 @@ public class Validation
 		{
 			itsTable.swapRandomizeTarget(itsTargetConcept);
 
-			theSubgroupDiscovery.Mine(System.currentTimeMillis());
+			// functionally equivalent
+			//theSubgroupDiscovery.useSwapRandomisationSetting();
+			//itsSearchParameters.setMaximumSubgroups(1);
+			theSubgroupDiscovery.mine(System.currentTimeMillis());
 			SubgroupSet aSubgroupSet = theSubgroupDiscovery.getResult();
 			if (aSubgroupSet.size() == 0)
 				--i; // if no subgroups are found, try again.

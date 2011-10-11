@@ -101,7 +101,15 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		itsResult = new SubgroupSet(itsSearchParameters.getMaximumSubgroups());
 	}
 
-	public void Mine(long theBeginTime)
+	/**
+	 * Only the top result is used in this setting. Maximum coverage and
+	 * binary target constructor parameters are not needed.
+	 */
+	protected void useSwapRandomisationSetting() {
+		itsResult.useSwapRandomisationSetting();
+	}
+
+	public void mine(long theBeginTime)
 	{
 		//make subgroup to start with, containing all elements
 		Subgroup aStart = new Subgroup(0.0, itsMaximumCoverage, 0, itsResult);
