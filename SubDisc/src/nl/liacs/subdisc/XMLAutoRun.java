@@ -1,5 +1,6 @@
 package nl.liacs.subdisc;
 
+import java.awt.*;
 import java.io.*;
 import java.util.*;
 
@@ -140,6 +141,10 @@ public class XMLAutoRun
 	 */
 	public static boolean autoRunSetting(String[] args)
 	{
+		// remove it as fast as possible, gives a short blink
+		if (!GraphicsEnvironment.isHeadless())
+			SplashScreen.getSplashScreen().close();
+
 		File aFile = null;
 		boolean showWindows = false;
 
