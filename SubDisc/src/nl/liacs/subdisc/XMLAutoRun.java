@@ -168,6 +168,8 @@ public class XMLAutoRun
 			runSubgroupDiscovery(allExperiments.item(i), theFile, showWindows);
 	}
 
+	// TODO for safety/ consistency runSubgroupDiscovery() should be merged
+	// with Miningwindow.runSubgroupDiscovery()
 	private static void runSubgroupDiscovery(Node theExperimentNode, File theFile, boolean showWindows)
 	{
 		NodeList aSettings = theExperimentNode.getChildNodes();

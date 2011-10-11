@@ -10,7 +10,7 @@ import javax.swing.*;
 import nl.liacs.subdisc.cui.*;
 import nl.liacs.subdisc.gui.*;
 
-public class FileHandler extends JFrame
+public class FileHandler
 {
 	private static final long serialVersionUID = 1L;
 
@@ -147,7 +147,10 @@ public class FileHandler extends JFrame
 
 	private void showFileChooser(Action theAction)
 	{
-		setIconImage(MiningWindow.ICON);
+		// dummy frame to pass ICON to showXXXXDialog
+		// this class is no longer a JFrame (avoids HeadlessExceptions)
+		JFrame aFrame = new JFrame();
+		aFrame.setIconImage(MiningWindow.ICON);
 		JFileChooser aChooser = new JFileChooser(new File(itsLastFileLocation));
 		aChooser.addChoosableFileFilter(new FileTypeFilter(FileType.TXT));
 		aChooser.addChoosableFileFilter(new FileTypeFilter(FileType.ARFF));
@@ -157,9 +160,9 @@ public class FileHandler extends JFrame
 		int theOption = -1;
 
 		if (theAction == Action.OPEN_FILE)
-			theOption = aChooser.showOpenDialog(this);
+			theOption = aChooser.showOpenDialog(aFrame);
 		else if (theAction == Action.SAVE)
-			theOption = aChooser.showSaveDialog(this);
+			theOption = aChooser.showSaveDialog(aFrame);
 
 		if (theOption == JFileChooser.APPROVE_OPTION)
 		{
