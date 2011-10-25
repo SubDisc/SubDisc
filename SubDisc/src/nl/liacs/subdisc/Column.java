@@ -905,6 +905,7 @@ public class Column implements XMLNodeInterface
 					// TODO check JLS, how are TreeSets created from ArrayLists?
 					case NOMINAL :
 					{
+						/*
 						String[] anArray =
 									itsNominals.toArray(new String[itsSize]);
 						Arrays.sort(anArray);
@@ -924,6 +925,9 @@ public class Column implements XMLNodeInterface
 
 						itsMissingValueIsUnique = true;
 						return itsCardinality;
+						*/
+						itsMissingValueIsUnique = true;
+						return itsDistinctValues.size();
 					}
 					// expect high itsCardinality/itsSize ratio
 					// Arrays.sort = O(n*log(n))
