@@ -698,10 +698,10 @@ public class Table
 		}
 
 		//execute permutation on all targets
-		for (Column anAttribute : aTargets)
+		for (Column aColumn : aTargets)
 		{
-			Log.logCommandLine("permuting " + anAttribute.getName());
-			anAttribute.permute(aPermutation);
+			Log.logCommandLine("permuting \"" + aColumn.getName() + "\"");
+			aColumn.permute(aPermutation);
 		}
 	}
 
@@ -731,7 +731,7 @@ public class Table
 	// TODO arff-writer, AttributeType inclusion makes is load faster/safer
 	/**
 	 * Write this Table to <code>File</code>.
-	 * 
+	 *
 	 * @param theMembers the indices of the set bits in this <BitSet>
 	 * correspond to the row numbers of this Table that should be written to
 	 * the output <code>File</code>. If the parameter is <code>null</code>,

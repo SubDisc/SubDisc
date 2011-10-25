@@ -326,7 +326,7 @@ public class Column implements XMLNodeInterface
 			case BINARY :
 				int n = thePermutation.length;
 				BitSet aBinaries = new BitSet(n);
-				for (int i=0; i<n; i++)
+				for (int i : thePermutation)
 					aBinaries.set(i, itsBinaries.get(thePermutation[i]));
 				itsBinaries = aBinaries;
 				break;

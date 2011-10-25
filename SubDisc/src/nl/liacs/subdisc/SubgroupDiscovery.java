@@ -401,6 +401,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 
 	public int getNumberOfSubgroups() { return itsResult.size(); }
 	public SubgroupSet getResult() { return itsResult; }
+	public void clearResult() { itsResult.clear(); }
 	public BitSet getBinaryTarget() { return (BitSet)itsBinaryTarget.clone(); }
 	public QualityMeasure getQualityMeasure() { return itsQualityMeasure; }
 	public SearchParameters getSearchParameters() { return itsSearchParameters; }

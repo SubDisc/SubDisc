@@ -220,10 +220,10 @@ public class Validation
 	/**
 	 * Swap randomizes the original {@link Table Table} and restores it to the
 	 * original state afterwards.
-	 * 
+	 *
 	 * @param theNrRepetitions the number of times to perform a permutation of
 	 * the {@link TargetConcept TargetConcept}.
-	 * 
+	 *
 	 * @return an array holding the qualities of the best scoring
 	 * {@link Subgroup Subgroup} of each permutation.
 	 */
@@ -237,12 +237,10 @@ public class Validation
 				// back up column that will be swap randomized.
 				Column aPrimaryCopy = itsTargetConcept.getPrimaryTarget().copy();
 				int aPositiveCount =
-					itsTable.countValues(itsTargetConcept.getPrimaryTarget().getIndex(),
-											itsTargetConcept.getTargetValue());
+					itsTable.countValues(itsTargetConcept.getPrimaryTarget().getIndex(), itsTargetConcept.getTargetValue());
 				// run
 				double[] aQualities =
-					runSRSD(new SubgroupDiscovery(itsSearchParameters, itsTable, aPositiveCount),
-							theNrRepetitions);
+					runSRSD(new SubgroupDiscovery(itsSearchParameters, itsTable, aPositiveCount), theNrRepetitions);
 				// restore column that was swap randomized.
 				itsTargetConcept.setPrimaryTarget(aPrimaryCopy);
 				itsTable.getColumns().set(aPrimaryCopy.getIndex(), aPrimaryCopy);
@@ -324,8 +322,6 @@ public class Validation
 		boolean aCOMMANDLINELOGmem = Log.COMMANDLINELOG;
 		double[] aQualities = new double[theNrRepetitions];
 
-		// suppress printing of all intermediate mining steps
-		Log.COMMANDLINELOG = false;
 		// Generate swap randomized random results
 		for (int i = 0, j = theNrRepetitions; i < j; ++i)
 		{
@@ -334,16 +330,18 @@ public class Validation
 			// functionally equivalent
 			//theSubgroupDiscovery.useSwapRandomisationSetting();
 			//itsSearchParameters.setMaximumSubgroups(1);
+
+			theSubgroupDiscovery.clearResult(); //throw away any results from a previous run
+			Log.COMMANDLINELOG = false;
 			theSubgroupDiscovery.mine(System.currentTimeMillis());
+			Log.COMMANDLINELOG = true;
 			SubgroupSet aSubgroupSet = theSubgroupDiscovery.getResult();
 			if (aSubgroupSet.size() == 0)
 				--i; // if no subgroups are found, try again.
 			else
 			{
-				Log.COMMANDLINELOG = true;
 				aQualities[i] = aSubgroupSet.getBestSubgroup().getMeasureValue();
 				Log.logCommandLine((i + 1) + "," + aQualities[i]);
-				Log.COMMANDLINELOG = false;
 			}
 		}
 
