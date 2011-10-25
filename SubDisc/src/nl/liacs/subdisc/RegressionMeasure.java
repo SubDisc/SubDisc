@@ -2,8 +2,6 @@ package nl.liacs.subdisc;
 
 import java.util.ArrayList;
 
-
-//TODO: Make more efficient by not updating the regression function after every addObservation. only when necessary
 public class RegressionMeasure
 {
 	private double itsSampleSize;
@@ -103,11 +101,15 @@ public class RegressionMeasure
 		double aComplementSlope = getSlope(aComplementXSum, aComplementYSum, aComplementXSquaredSum, aComplementXYSum, aComplementSampleSize);
 		double aSlopeDifference = Math.abs(aComplementSlope - aSlope);
 
+		double result= Math.PI; // throw PI; if this number is not overridden in one of the following cases, something went horribly wrong.
+		switch(itsType)
+		{
+			case QualityMeasure.LINEAR_REGRESSION:	{ result = aSlopeDifference / (aVariance+aComplementVariance); }
+				//		System.err.println("Z: "+aZValue+ " Slope1: "+aSlope + " Slope2: "+aComplementSlope);
+			case QualityMeasure.COOKS_DISTANCE:		{ result = Math.random(); }	
+		}
 
-		double aZValue = aSlopeDifference / (aVariance+aComplementVariance);
-//		System.err.println("Z: "+aZValue+ " Slope1: "+aSlope + " Slope2: "+aComplementSlope);
-
-		return aZValue;
+		return result;
 	}
 
 	/**
@@ -160,10 +162,19 @@ public class RegressionMeasure
 
 		//update the new regression function
 		updateRegressionFunction();
-
+		
 		//update the error terms of this measure
 		updateErrorTerms();
 
+	}
+	
+	public void update()
+	{
+		//update the new regression function
+		updateRegressionFunction();
+		
+		//update the error terms of this measure
+		updateErrorTerms();
 	}
 
 	/**
@@ -186,9 +197,10 @@ public class RegressionMeasure
 			itsComplementErrorTermSquaredSum=0;
 			for(int n=0; n < (itsBase.getSampleSize()-itsSampleSize); n++)	// TODO
 			{
-				if(itsComplementData.size()!=itsBase.getSampleSize()-itsSampleSize)	// TODO
-					System.err.println("dD");
-
+//				if(itsComplementData.size()!=itsBase.getSampleSize()-itsSampleSize)	// TODO
+//					System.err.println("dD");
+// WHITE FLAG!!! This was simply commented out to make some qualities come out; does not necessarily make sense since these lines probably were here for a reason.
+//				 If you know this reason, please let me know. Thanks, Wouter.				
 				double anErrorTerm = getErrorTerm(itsComplementData.get(n));
 				itsComplementErrorTermSquaredSum += anErrorTerm*anErrorTerm;
 			}

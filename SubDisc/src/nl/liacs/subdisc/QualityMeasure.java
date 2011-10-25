@@ -74,6 +74,7 @@ public class QualityMeasure
 	public static final int CORRELATION_ENTROPY = 39;
 	//DOUBLE_REGRESSION
 	public static final int LINEAR_REGRESSION = 40;
+	public static final int COOKS_DISTANCE = 41;
 
 	//SINGLE =========================================================================================
 
@@ -127,7 +128,7 @@ public class QualityMeasure
 			case SINGLE_ORDINAL		: return MMAD;
 			case MULTI_LABEL		: return EDIT_DISTANCE;
 			case DOUBLE_CORRELATION	: return CORRELATION_ENTROPY;
-			case DOUBLE_REGRESSION	: return LINEAR_REGRESSION;
+			case DOUBLE_REGRESSION	: return COOKS_DISTANCE;
 			default					: return NOVELTY;
 		}
 	}
@@ -491,6 +492,7 @@ public class QualityMeasure
 			case CORRELATION_P : 	{ anEvaluationMinimum = "0.0"; break; }
 			case CORRELATION_ENTROPY : 	{ anEvaluationMinimum = "0.0"; break; }
 			case LINEAR_REGRESSION :{ anEvaluationMinimum = "0.0"; break; }
+			case COOKS_DISTANCE	:	{ anEvaluationMinimum = "0.0"; break; }
 		}
 		return anEvaluationMinimum;
 	}
@@ -546,6 +548,7 @@ public class QualityMeasure
 			case CORRELATION_P		: { anEvaluationMeasure = "p-Value Distance"; break; }
 			case CORRELATION_ENTROPY		: { anEvaluationMeasure = "Wtd Ent Distance"; break; }
 			case LINEAR_REGRESSION		: { anEvaluationMeasure = "Linear Regression"; break; }
+			case COOKS_DISTANCE			: { anEvaluationMeasure = "Cook's Distance"; break; }
 		}
 		return anEvaluationMeasure;
 	}
@@ -600,6 +603,7 @@ public class QualityMeasure
 		else if ("wtd ent distance".equals(anEvaluationMeasure)) return CORRELATION_ENTROPY;
 		//DOUBLE_REGRESSION
 		else if ("linear regression".equals(anEvaluationMeasure)) return LINEAR_REGRESSION;
+		else if ("cook's distance".equals(anEvaluationMeasure)) return COOKS_DISTANCE;
 
 		return NOVELTY;
 	}

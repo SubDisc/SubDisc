@@ -322,7 +322,8 @@ public class SubgroupDiscovery extends MiningAlgorithm
 				for (int i = 0; i < itsMaximumCoverage; i++)
 					if (theSubgroup.getMembers().get(i))
 						aRM.addObservation(itsPrimaryColumn.getFloat(i), itsSecondaryColumn.getFloat(i));
-
+				aRM.update();
+				
 				aQuality = (float) aRM.getEvaluationMeasureValue();
 				break;
 			}
