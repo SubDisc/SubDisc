@@ -4,6 +4,7 @@ import java.util.*;
 
 import org.w3c.dom.*;
 
+// TODO Attributes do not exist anymore.
 /**
  * A Column contains all data from a column read from a <code>File</code> or
  * database. Its members store some of the important characteristics of the
@@ -26,6 +27,11 @@ public class Column implements XMLNodeInterface
 	private List<Float> itsFloats;
 	private List<String> itsNominals;
 	private BitSet itsBinaries;
+	// TODO new needs field tests (eg. when switching AttributeTypes)
+	// store only references to unique Strings, not individual Strings
+	// List is not the most ideal interface, bi-directional map or
+	// itsNominals storing Integer indices would be better/ faster/ leaner
+	private List<String> itsDistinctValues;
 
 	private String itsMissingValue;
 	private BitSet itsMissing = new BitSet();
@@ -137,6 +143,7 @@ public class Column implements XMLNodeInterface
 			case NOMINAL :
 			{
 				itsNominals = new ArrayList<String>(theNrRows);
+				itsDistinctValues = new ArrayList<String>();
 				itsMissingValue = AttributeType.NOMINAL.DEFAULT_MISSING_VALUE;
 				break;
 			}
@@ -203,7 +210,16 @@ public class Column implements XMLNodeInterface
 
 	public void add(String theNominal)
 	{
-		itsNominals.add(theNominal == null ? "" : theNominal);
+		if (theNominal == null)
+			theNominal = "";
+		if (!itsDistinctValues.contains(theNominal)) {
+			itsDistinctValues.add(theNominal);
+			// !contains so inserted at end of list
+			itsNominals.add(itsDistinctValues.get(itsDistinctValues.size()-1));
+		}
+		else
+			itsNominals.add(itsDistinctValues.get(itsDistinctValues.indexOf(theNominal)));
+		//itsNominals.add(theNominal);
 		++itsSize;
 	}
 	public void add(float theFloat)
