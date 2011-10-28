@@ -292,7 +292,7 @@ public class Column implements XMLNodeInterface
 		boolean isOutOfBounds = (theIndex < 0 || theIndex >= itsSize);
 
 		if (isOutOfBounds)
-			Log.logCommandLine("indexOutOfBounds:" + theIndex);
+			Log.logCommandLine("indexOutOfBounds: " + theIndex);
 
 		return isOutOfBounds;
 	}
@@ -367,6 +367,34 @@ public class Column implements XMLNodeInterface
 	public TreeSet<String> getDomain()
 	{
 		TreeSet<String> aResult = new TreeSet<String>();
+
+		switch (itsType)
+		{
+			case NOMINAL :
+			{
+				aResult.addAll(itsDistinctValues);
+				break;
+			}
+			case NUMERIC :
+			{
+				for (Float f : itsFloats)
+					aResult.add(Float.toString(f));
+				break;
+			}
+			case ORDINAL :
+			{
+				// XXX no use case yet
+				break;
+			}
+			case BINARY :
+			{
+				aResult.add("0");
+				aResult.add("1");
+				break;
+			}
+			default: break;
+		}
+/*
 		if (isBinaryType())
 		{
 			aResult.add("0");
@@ -380,7 +408,7 @@ public class Column implements XMLNodeInterface
 			else if (isNumericType())
 				aResult.add(Float.toString(itsFloats.get(i)));
 			//TODO ordinal?
-
+*/
 		return aResult;
 	}
 
@@ -422,6 +450,13 @@ public class Column implements XMLNodeInterface
 	 */
 	private boolean toNominalType()
 	{
+		if (itsType == AttributeType.NOMINAL)
+			return true;
+
+		// relies on itsCardinality to be set at this time
+		itsDistinctValues = new ArrayList<String>(itsCardinality);
+		itsNominals = new ArrayList<String>(itsSize);
+
 		switch (itsType)
 		{
 			case NOMINAL : break;	// should not happen
@@ -436,30 +471,41 @@ public class Column implements XMLNodeInterface
 					if (Float.toString(f).matches(trueInteger))
 						++aNrTrueIntegers ;
 
+				// NOTE uses add(String) to populate itsDistinctValues
 				if (aNrTrueIntegers == itsSize)
 				{
 					for (Float f : itsFloats)
-						itsNominals.add(String.valueOf(f.intValue()));
+						add(String.valueOf(f.intValue()));
 
 					// no missing values or itsMissingValue is a true Integer
 					itsMissingValue = String.valueOf(Float.valueOf(itsMissingValue).intValue());
 				}
 				else
 					for (Float f : itsFloats)
-						itsNominals.add(Float.toString(f));
+						add(Float.toString(f));
 
+				// Cleanup (for GarbageCollector).
 				itsFloats = null;
 				break;
 			}
 			case BINARY :
 			{
-				/*
-				 * Initialise to "0", then update only set bits in itsBitSet.
-				 * Cleanup (for GarbageCollector).
-				 */
-				itsNominals= new ArrayList<String>(Collections.nCopies(itsSize, "0"));
-				for (int i = itsBinaries.nextSetBit(0); i >= 0; i = itsBinaries.nextSetBit(i + 1))
-					itsNominals.set(i, "1");
+				if (itsCardinality == 2)
+				{
+					itsDistinctValues.add("0");
+					itsDistinctValues.add("1");
+				}
+				else if (itsBinaries.cardinality() == 0 && itsSize > 0)
+					itsDistinctValues.add("0");
+				else if (itsSize > 0)
+					itsDistinctValues.add("1");
+
+				// TODO non-reference based UTF-16 Strings, may change
+				for (int i = 0, j = itsSize; i < j; ++i)
+					itsNominals.add(itsBinaries.get(i) ? "1" : "0");
+					//add(itsBinaries.get(i) ? "1" : "0");
+
+				// Cleanup (for GarbageCollector).
 				itsBinaries = null;
 				break;
 			}
@@ -505,6 +551,7 @@ public class Column implements XMLNodeInterface
 				 * Only gets here if all values are parsed successfully, (or
 				 * itsSize == 0). Cleanup (for GarbageCollector).
 				 */
+				itsDistinctValues = null;
 				itsNominals = null;
 
 				if (itsMissing.cardinality() == 0 && !isValidValue(theNewType, itsMissingValue))
@@ -615,6 +662,7 @@ public class Column implements XMLNodeInterface
 									itsBinaries.set(i);
 						}
 					}
+					itsDistinctValues = null;
 					itsNominals = null;
 					break;
 				}
@@ -794,10 +842,7 @@ public class Column implements XMLNodeInterface
 	 */
 	public String getMissingValue()
 	{
-		if (itsMissing.cardinality() == 0)
-			return "";
-		else
-			return itsMissingValue;
+		return itsMissing.cardinality() == 0 ? "" : itsMissingValue;
 	}
 
 	/**
@@ -818,7 +863,7 @@ public class Column implements XMLNodeInterface
 				case NOMINAL :
 				{
 					itsMissingValue = theNewValue;
-					updateCardinality(itsNominals);
+					updateCardinality(itsDistinctValues);
 					for (int i = itsMissing.nextSetBit(0); i >= 0; i = itsMissing.nextSetBit(i + 1))
 						itsNominals.set(i, itsMissingValue);
 					return true;
@@ -927,7 +972,8 @@ public class Column implements XMLNodeInterface
 						return itsCardinality;
 						*/
 						itsMissingValueIsUnique = true;
-						return itsDistinctValues.size();
+						itsCardinality = itsDistinctValues.size();
+						return itsCardinality;
 					}
 					// expect high itsCardinality/itsSize ratio
 					// Arrays.sort = O(n*log(n))
@@ -983,7 +1029,6 @@ public class Column implements XMLNodeInterface
 		}
 	}
 
-	// parse(itsMissingValue) for itsFloats
 	private void updateCardinality(List<?> theColumnData)
 	{
 		// not set yet, or no data
@@ -995,7 +1040,7 @@ public class Column implements XMLNodeInterface
 			if (itsType.equals(AttributeType.NOMINAL))
 				aValue = itsMissingValue;
 			else
-				aValue = Float.parseFloat(itsMissingValue);
+				aValue = Float.valueOf(itsMissingValue);
 
 			if (itsMissingValueIsUnique)
 			{

@@ -231,7 +231,6 @@ public class Validation
 	{
 		// Memorize COMMANDLINELOG setting
 		boolean aCOMMANDLINELOGmem = Log.COMMANDLINELOG;
-		SubgroupDiscovery aSubgroupDiscovery;
 		double[] aQualities = new double[theNrRepetitions];
 
 		// Always back up and restore columns that will be swap randomized.
@@ -375,16 +374,14 @@ public class Validation
 	{
 		Log.COMMANDLINELOG = false;
 		theSubgroupDiscovery.mine(System.currentTimeMillis());
-//		Log.COMMANDLINELOG = true;
+		Log.COMMANDLINELOG = true;
 		SubgroupSet aSubgroupSet = theSubgroupDiscovery.getResult();
 		if (aSubgroupSet.size() == 0)
 			--theRepetition; // if no subgroups are found, try again.
 		else
 		{
 			theQualities[theRepetition] = aSubgroupSet.getBestSubgroup().getMeasureValue();
-			Log.COMMANDLINELOG = true;
 			Log.logCommandLine((theRepetition + 1) + "," + theQualities[theRepetition]);
-			Log.COMMANDLINELOG = false;
 		}
 
 		return theRepetition;
