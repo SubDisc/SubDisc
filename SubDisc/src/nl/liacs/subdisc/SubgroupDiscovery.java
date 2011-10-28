@@ -208,7 +208,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 						BitSet aMembers = itsTable.evaluate(aNewSubgroup.getConditions());
 						aNewSubgroup.setMembers(aMembers);
 
-						if (aNewSubgroup.getCoverage() >= aMinimumCoverage)
+						if (aNewSubgroup.getCoverage() >= aMinimumCoverage && aNewSubgroup.getCoverage()< itsMaximumCoverage)
 						{
 							Log.logCommandLine("candidate " + aNewSubgroup.getConditions() + " size: " + aNewSubgroup.getCoverage());
 							float aQuality = evaluateCandidate(aNewSubgroup);

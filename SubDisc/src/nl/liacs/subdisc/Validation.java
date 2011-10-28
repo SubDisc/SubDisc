@@ -373,16 +373,18 @@ public class Validation
 	 */
 	private int runSRSD(SubgroupDiscovery theSubgroupDiscovery, double[] theQualities, int theRepetition)
 	{
-//		Log.COMMANDLINELOG = false;
+		Log.COMMANDLINELOG = false;
 		theSubgroupDiscovery.mine(System.currentTimeMillis());
-		Log.COMMANDLINELOG = true;
+//		Log.COMMANDLINELOG = true;
 		SubgroupSet aSubgroupSet = theSubgroupDiscovery.getResult();
 		if (aSubgroupSet.size() == 0)
 			--theRepetition; // if no subgroups are found, try again.
 		else
 		{
 			theQualities[theRepetition] = aSubgroupSet.getBestSubgroup().getMeasureValue();
+			Log.COMMANDLINELOG = true;
 			Log.logCommandLine((theRepetition + 1) + "," + theQualities[theRepetition]);
+			Log.COMMANDLINELOG = false;
 		}
 
 		return theRepetition;

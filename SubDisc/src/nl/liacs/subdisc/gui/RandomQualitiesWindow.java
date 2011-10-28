@@ -12,7 +12,7 @@ public class RandomQualitiesWindow extends JDialog implements ActionListener
 	public static final String RANDOM_SUBSETS = "Random subsets";
 	public static final String RANDOM_DESCRIPTIONS = "Random descriptions";
 	public static final String SWAP_RANDOMIZATION = "Swap-randomization";
-	public static final String DEFAULT_AMOUNT = "1000";
+	public static final String DEFAULT_AMOUNT = "100";
 
 	private ButtonGroup itsMethods;
 	private JTextField itsAmountField;
@@ -78,11 +78,12 @@ public class RandomQualitiesWindow extends JDialog implements ActionListener
 		getContentPane().add(aButtonPanel);
 
 		// select appropriate radio button, focus itsAmountField
-		if (RANDOM_DESCRIPTIONS.equals(itsSettings[0]))
+/*		if (RANDOM_DESCRIPTIONS.equals(itsSettings[0]))
 			((JRadioButton) aRadioButtonPanel.getComponent(1)).setSelected(true);
 		else
 			((JRadioButton) aRadioButtonPanel.getComponent(0)).setSelected(true);
-
+*/		((JRadioButton) aRadioButtonPanel.getComponent(2)).setSelected(true);
+		
 		addWindowListener(new WindowAdapter()
 		{
 			@Override
