@@ -7,21 +7,21 @@ package nl.liacs.subdisc;
 
 public class DataPoint
 {
-	private final double itsX;
-	private final double itsY;
-	
-	public DataPoint(double theX, double theY)
+	private final float itsX;
+	private final float itsY;
+
+	public DataPoint(float theX, float theY)
 	{
 		itsX = theX;
 		itsY = theY;
 	}
 
-	public double getX()
+	public float getX()
 	{
-		return itsX;		
+		return itsX;
 	}
 
-	public double getY()
+	public float getY()
 	{
 		return itsY;
 	}

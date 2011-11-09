@@ -39,7 +39,7 @@ public class MiningWindow extends JFrame
 	}
 
 	public MiningWindow(Table theTable)
-	{	
+	{
 		if (theTable != null)
 		{
 			itsTable = theTable;
@@ -1294,8 +1294,8 @@ public class MiningWindow extends JFrame
 				Column aPrimaryColumn = itsTable.getColumn(itsTargetConcept.getPrimaryTarget().getIndex());
 				Column aSecondaryColumn = itsTable.getColumn(itsTargetConcept.getSecondaryTarget().getIndex());
 
-				RegressionMeasure anRM = new RegressionMeasure(itsSearchParameters.getQualityMeasure(),
-																aPrimaryColumn, aSecondaryColumn, null);
+				RegressionMeasure anRM =
+					new RegressionMeasure(itsSearchParameters.getQualityMeasure(), aPrimaryColumn, aSecondaryColumn);
 
 				new ModelWindow(aPrimaryColumn, aSecondaryColumn, anRM, null); //trendline, no subset
 				break;

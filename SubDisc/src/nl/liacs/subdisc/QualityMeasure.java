@@ -547,7 +547,7 @@ public class QualityMeasure
 			case CORRELATION_DISTANCE		: { anEvaluationMeasure = "Distance"; break; }
 			case CORRELATION_P		: { anEvaluationMeasure = "p-Value Distance"; break; }
 			case CORRELATION_ENTROPY		: { anEvaluationMeasure = "Wtd Ent Distance"; break; }
-			case LINEAR_REGRESSION		: { anEvaluationMeasure = "Linear Regression"; break; }
+			case LINEAR_REGRESSION		: { anEvaluationMeasure = "Significance of Slope Difference"; break; }
 			case COOKS_DISTANCE			: { anEvaluationMeasure = "Cook's Distance"; break; }
 		}
 		return anEvaluationMeasure;
@@ -602,7 +602,7 @@ public class QualityMeasure
 		else if ("p-value distance".equals(anEvaluationMeasure)) return CORRELATION_P;
 		else if ("wtd ent distance".equals(anEvaluationMeasure)) return CORRELATION_ENTROPY;
 		//DOUBLE_REGRESSION
-		else if ("linear regression".equals(anEvaluationMeasure)) return LINEAR_REGRESSION;
+		else if ("significance of slope difference".equals(anEvaluationMeasure)) return LINEAR_REGRESSION;
 		else if ("cook's distance".equals(anEvaluationMeasure)) return COOKS_DISTANCE;
 
 		return NOVELTY;

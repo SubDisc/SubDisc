@@ -1,10 +1,10 @@
 package nl.liacs.subdisc;
 
-import java.util.ArrayList;
+import java.util.*;
 
 public class RegressionMeasure
 {
-	private double itsSampleSize;
+	private int itsSampleSize;
 	private double itsXSum; //The sum of all X-values
 	private double itsYSum; // The sum of all Y-values
 	private double itsXYSum;// SUM(x*y)
@@ -19,22 +19,21 @@ public class RegressionMeasure
 
 	private double itsCorrelation;
 
-	private ArrayList<DataPoint> itsData = new ArrayList<DataPoint>();//Stores all the datapoints for this measure
+	private ArrayList<DataPoint> itsData;//Stores all the datapoints for this measure
 	private ArrayList<DataPoint> itsComplementData = new ArrayList<DataPoint>();//Stores all the datapoints for the complement
 
 	public static int itsType;
 	private RegressionMeasure itsBase = null;
 
 	//make a base model from two columns
-	public RegressionMeasure(int theType, Column thePrimaryColumn, Column theSecondaryColumn, RegressionMeasure theBase)
+	public RegressionMeasure(int theType, Column thePrimaryColumn, Column theSecondaryColumn)
 	{
-		itsBase = theBase;
-		if(itsBase!=null)
-			itsComplementData = new ArrayList<DataPoint>(theBase.getData());
-//			itsComplementData = (ArrayList<DataPoint>) theBase.getData().clone();
-
+		itsBase = null; //this *is* the base
 		itsType = theType;
 		itsSampleSize = thePrimaryColumn.size();
+		itsData = new ArrayList<DataPoint>(itsSampleSize);
+		itsComplementData = null; //will remain empty for the base RM
+
 		for(int i=0; i<itsSampleSize; i++)
 		{
 			itsXSum += thePrimaryColumn.getFloat(i);
@@ -43,19 +42,17 @@ public class RegressionMeasure
 			itsXSquaredSum += thePrimaryColumn.getFloat(i)*thePrimaryColumn.getFloat(i);
 			itsYSquaredSum += theSecondaryColumn.getFloat(i)*theSecondaryColumn.getFloat(i);
 
-			//for each entry added to this measure, remove it from its complement
+			//for each entry added to this measure
 			itsData.add(new DataPoint(thePrimaryColumn.getFloat(i), theSecondaryColumn.getFloat(i)) );
-			itsComplementData.remove(new DataPoint(thePrimaryColumn.getFloat(i), theSecondaryColumn.getFloat(i)));
 		}
 
 		//After all data is included, update the regression function and its error terms
-		updateRegressionFunction();
-		updateErrorTerms();
+		update();
 	}
 
-	public RegressionMeasure(RegressionMeasure theBase)
+	//constructor for non-base RM. It derives from a base-RM
+	public RegressionMeasure(RegressionMeasure theBase, BitSet theMembers)
 	{
-		// TODO this has no effect, assigns class variable to instance variable?
 		itsType = theBase.itsType;
 		itsBase = theBase;
 
@@ -67,12 +64,21 @@ public class RegressionMeasure
 		itsXSquaredSum = 0;
 		itsYSquaredSum = 0;
 
-		//Init the complement measure. For an empty measure the complement is equal to the root
-		if(theBase!=null)
-			itsComplementData = new ArrayList<DataPoint>(theBase.getData());
-//			itsComplementData = (ArrayList<DataPoint>) theBase.getData().clone();
-		//else
-		//	If theBase==null it means this measure itself is the root and thus the complement is empty
+		itsData = new ArrayList<DataPoint>(theMembers.cardinality());
+		itsComplementData =
+			new ArrayList<DataPoint>(itsBase.getSampleSize() - theMembers.cardinality()); //create empty one. will be filled after update()
+
+		for (int i=0; i<itsBase.getSampleSize(); i++)
+		{
+			DataPoint anObservation = itsBase.getObservation(i);
+			if (theMembers.get(i))
+				addObservation(anObservation);
+			else //complement
+				itsComplementData.add(anObservation);
+		}
+
+		//After all data is included, update the regression function and its error terms
+		update();
 	}
 
 
@@ -104,9 +110,10 @@ public class RegressionMeasure
 		double result= Math.PI; // throw PI; if this number is not overridden in one of the following cases, something went horribly wrong.
 		switch(itsType)
 		{
-			case QualityMeasure.LINEAR_REGRESSION:	{ result = aSlopeDifference / (aVariance+aComplementVariance); }
+			//TODO turn this t-value into a p-value.
+			case QualityMeasure.LINEAR_REGRESSION:	{ result = -aSlopeDifference / Math.sqrt(aVariance+aComplementVariance); }
 				//		System.err.println("Z: "+aZValue+ " Slope1: "+aSlope + " Slope2: "+aComplementSlope);
-			case QualityMeasure.COOKS_DISTANCE:		{ result = Math.random(); }	
+			case QualityMeasure.COOKS_DISTANCE:		{ result = Math.random(); }
 		}
 
 		return result;
@@ -126,7 +133,6 @@ public class RegressionMeasure
 		double aYMean = itsYSum / itsSampleSize;
 		itsSlope = getSlope(itsXSum, itsYSum, itsXSquaredSum, itsXYSum, itsSampleSize);
 		itsIntercept = aYMean - itsSlope*aXMean;
-
 	}
 
 	private double getSlope(double theXSum, double theYSum, double theXSquaredSum, double theXYSum, double theSampleSize)
@@ -140,10 +146,11 @@ public class RegressionMeasure
 
 	/**
 	 * Add a new datapoint to this measure, where the Y-value is the target variable.
+	 * Always call update() after all datapoints have been added.
 	 * @param theY the Y-value, the target
 	 * @param theX the X-value
 	 */
-	public void addObservation(double theY, double theX)
+	public void addObservation(float theY, float theX)
 	{
 		//adjust the sums
 		itsSampleSize++;
@@ -156,24 +163,33 @@ public class RegressionMeasure
 		//Add to its own lists
 		DataPoint aDataPoint = new DataPoint(theX,theY);
 		itsData.add(aDataPoint);
-
-		//Remove from the complement
-		itsComplementData.remove(aDataPoint);
-
-		//update the new regression function
-		updateRegressionFunction();
-		
-		//update the error terms of this measure
-		updateErrorTerms();
-
 	}
-	
+
+	public void addObservation(DataPoint theObservation)
+	{
+		float anX = theObservation.getX();
+		float aY = theObservation.getY();
+
+		//adjust the sums
+		itsSampleSize++;
+		itsXSum += anX;
+		itsYSum += aY;
+		itsXYSum += anX*aY;
+		itsXSquaredSum += anX*anX;
+		itsYSquaredSum += aY*aY;
+
+		//Add to its own lists
+		itsData.add(theObservation);
+	}
+
+	public DataPoint getObservation(int theIndex)
+	{
+		return itsData.get(theIndex);
+	}
+
 	public void update()
 	{
-		//update the new regression function
 		updateRegressionFunction();
-		
-		//update the error terms of this measure
 		updateErrorTerms();
 	}
 
@@ -185,9 +201,9 @@ public class RegressionMeasure
 	private void updateErrorTerms()
 	{
 		itsErrorTermSquaredSum = 0;
-		for(int n=0; n<itsSampleSize; n++)
+		for(int i=0; i<itsSampleSize; i++)
 		{
-			double anErrorTerm = getErrorTerm(itsData.get(n));
+			double anErrorTerm = getErrorTerm(itsData.get(i));
 			itsErrorTermSquaredSum += anErrorTerm*anErrorTerm;
 		}
 
@@ -195,13 +211,11 @@ public class RegressionMeasure
 		if(itsBase!=null)
 		{
 			itsComplementErrorTermSquaredSum=0;
-			for(int n=0; n < (itsBase.getSampleSize()-itsSampleSize); n++)	// TODO
+			for(int i=0; i<(itsBase.getSampleSize()-itsSampleSize); i++)
 			{
-//				if(itsComplementData.size()!=itsBase.getSampleSize()-itsSampleSize)	// TODO
-//					System.err.println("dD");
-// WHITE FLAG!!! This was simply commented out to make some qualities come out; does not necessarily make sense since these lines probably were here for a reason.
-//				 If you know this reason, please let me know. Thanks, Wouter.				
-				double anErrorTerm = getErrorTerm(itsComplementData.get(n));
+				if(itsComplementData.size()!=itsBase.getSampleSize()-itsSampleSize)
+					System.err.println("incorrect computation of complement!");
+				double anErrorTerm = getErrorTerm(itsComplementData.get(i));
 				itsComplementErrorTermSquaredSum += anErrorTerm*anErrorTerm;
 			}
 		}
@@ -225,18 +239,12 @@ public class RegressionMeasure
 		return getErrorTerm(theDataPoint.getX(), theDataPoint.getY());
 	}
 
-	// Exposes the private itsData list, better return new ArrayList<>(itsData)?
-	public ArrayList<DataPoint> getData()
-	{
-		return itsData; 
-	}
-
 	private double getErrorTermVariance(double theErrorTermSquaredSum, double theSampleSize)
 	{
 		return theErrorTermSquaredSum / (theSampleSize - 2 );
 	}
 
-	public double getSampleSize()
+	public int getSampleSize()
 	{
 		return itsSampleSize;
 	}

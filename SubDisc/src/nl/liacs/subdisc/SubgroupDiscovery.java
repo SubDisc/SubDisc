@@ -73,7 +73,10 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		itsPrimaryColumn = aTC.getPrimaryTarget();
 		itsSecondaryColumn = aTC.getSecondaryTarget();
 		if (isRegression)
-			itsBaseRM = new RegressionMeasure(itsSearchParameters.getQualityMeasure(), itsPrimaryColumn, itsSecondaryColumn, null);
+		{
+			itsBaseRM = new RegressionMeasure(itsSearchParameters.getQualityMeasure(), itsPrimaryColumn, itsSecondaryColumn);
+			Log.logCommandLine("base model: y = " + (float) itsBaseRM.getIntercept() + " + " + (float) itsBaseRM.getSlope()+ " * x");
+		}
 		else
 			itsBaseCM = new CorrelationMeasure(itsSearchParameters.getQualityMeasure(), itsPrimaryColumn, itsSecondaryColumn);
 
@@ -318,12 +321,10 @@ public class SubgroupDiscovery extends MiningAlgorithm
 			}
 			case DOUBLE_REGRESSION :
 			{
-				RegressionMeasure aRM = new RegressionMeasure(itsBaseRM);
-				for (int i = 0; i < itsMaximumCoverage; i++)
-					if (theSubgroup.getMembers().get(i))
-						aRM.addObservation(itsPrimaryColumn.getFloat(i), itsSecondaryColumn.getFloat(i));
-				aRM.update();
-				
+				RegressionMeasure aRM = new RegressionMeasure(itsBaseRM, theSubgroup.getMembers());
+				aRM.update(); //update after all points have been added
+				Log.logCommandLine("base model: y = " + (float) aRM.getIntercept() + " + " + (float) aRM.getSlope()+ " * x");
+
 				aQuality = (float) aRM.getEvaluationMeasureValue();
 				break;
 			}
