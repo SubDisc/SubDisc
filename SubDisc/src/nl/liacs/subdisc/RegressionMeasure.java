@@ -96,12 +96,20 @@ public class RegressionMeasure
 		double aNumerator = getErrorTermVariance(itsErrorTermSquaredSum, itsSampleSize);
 		double aDenominator = itsXSquaredSum - 2*itsXSum*itsXSum/itsSampleSize + itsXSum*itsXSum/itsSampleSize;
 		double aVariance = aNumerator / aDenominator;
-
+		
+		//if we divided by zero along the way, we are considering a degenerate candidate subgroup, hence quality=0 
+		if (itsSampleSize==0 || itsSampleSize==2 || aDenominator==0)
+			return 0;
+		
 		//determine variance for the complement distribution
 		aNumerator = getErrorTermVariance(itsComplementErrorTermSquaredSum, aComplementSampleSize);
 		aDenominator = aComplementXSquaredSum - 2*aComplementXSum*aComplementXSum/aComplementSampleSize + aComplementXSum*aComplementXSum/aComplementSampleSize;
 		double aComplementVariance = aNumerator/aDenominator;
 
+		//if we divided by zero along the way, we are considering a degenerate candidate subgroup complement, hence quality=0 
+		if (aComplementSampleSize==0 || aComplementSampleSize==2 || aDenominator==0)
+			return 0;
+		
 		//calculate the difference between slopes of this measure and its complement
 		double aSlope = getSlope(itsXSum, itsYSum, itsXSquaredSum, itsXYSum, itsSampleSize);
 		double aComplementSlope = getSlope(aComplementXSum, aComplementYSum, aComplementXSquaredSum, aComplementXYSum, aComplementSampleSize);
@@ -109,7 +117,7 @@ public class RegressionMeasure
 
 		Log.logCommandLine("\n           slope: " + aSlope);
 		Log.logCommandLine("complement slope: " + aComplementSlope);
-		Log.logCommandLine("           variance : " + aVariance);
+		Log.logCommandLine("           variance: " + aVariance);
 		Log.logCommandLine("complement variance: " + aComplementVariance);
 
 		double result = Math.PI; // throw PI; if this number is not overridden in one of the following cases, something went horribly wrong.
@@ -118,7 +126,9 @@ public class RegressionMeasure
 			//TODO turn this t-value into a p-value.
 			case QualityMeasure.LINEAR_REGRESSION:
 			{
-				result = -aSlopeDifference / Math.sqrt(aVariance+aComplementVariance);
+				if (aVariance+aComplementVariance==0)
+					result=0;
+				else {result = aSlopeDifference / Math.sqrt(aVariance+aComplementVariance);}
 				break;
 			}
 			case QualityMeasure.COOKS_DISTANCE:
