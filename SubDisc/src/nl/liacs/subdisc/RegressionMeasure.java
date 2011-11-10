@@ -1,6 +1,7 @@
 package nl.liacs.subdisc;
 
 import java.util.*;
+import nl.liacs.subdisc.Jama.*;
 
 public class RegressionMeasure
 {
@@ -24,6 +25,7 @@ public class RegressionMeasure
 
 	public static int itsType;
 	private RegressionMeasure itsBase = null;
+	private Subgroup itsParent; //Might be superfluous since we also have a base RegressionMeasure, but we'll look at efficiency later
 
 	//make a base model from two columns
 	public RegressionMeasure(int theType, Column thePrimaryColumn, Column theSecondaryColumn)
@@ -51,10 +53,11 @@ public class RegressionMeasure
 	}
 
 	//constructor for non-base RM. It derives from a base-RM
-	public RegressionMeasure(RegressionMeasure theBase, BitSet theMembers)
+	public RegressionMeasure(RegressionMeasure theBase, BitSet theMembers, Subgroup theParent)
 	{
 		itsType = theBase.itsType;
 		itsBase = theBase;
+		itsParent = theParent;
 
 		//Create an empty measure
 		itsSampleSize = 0;
@@ -76,14 +79,29 @@ public class RegressionMeasure
 			else //complement
 				itsComplementData.add(anObservation);
 		}
-
-		//After all data is included, update the regression function and its error terms
-		update();
 	}
-
 
 	//TODO test and verify method
 	public double getEvaluationMeasureValue()
+	{
+		switch(itsType)
+		{
+			case QualityMeasure.LINEAR_REGRESSION:
+			{
+				update();
+				return getSSD();
+			}
+			case QualityMeasure.COOKS_DISTANCE:
+			{
+				return getCook();
+			}
+		}
+
+		return Math.PI; //If this code is reached, something is wrong in one of the above cases. Throw pi.
+	}
+	
+	//TODO turn this t-value into a p-value.
+	public double getSSD()
 	{
 		//determine the sums for the complement
 		double aComplementXSum = itsBase.getXSum()-itsXSum;
@@ -120,25 +138,36 @@ public class RegressionMeasure
 		Log.logCommandLine("           variance: " + aVariance);
 		Log.logCommandLine("complement variance: " + aComplementVariance);
 
-		double result = Math.PI; // throw PI; if this number is not overridden in one of the following cases, something went horribly wrong.
-		switch(itsType)
-		{
-			//TODO turn this t-value into a p-value.
-			case QualityMeasure.LINEAR_REGRESSION:
-			{
-				if (aVariance+aComplementVariance==0)
-					result=0;
-				else {result = aSlopeDifference / Math.sqrt(aVariance+aComplementVariance);}
-				break;
-			}
-			case QualityMeasure.COOKS_DISTANCE:
-			{
-				result = Math.random();
-				break;
-			}
+		if (aVariance+aComplementVariance==0)
+			return 0;
+		else {return aSlopeDifference / Math.sqrt(aVariance+aComplementVariance);}
+	}
+	
+	public double getCook(){
+		double[][] anXValues = new double[itsSampleSize][2];
+		for (int i=0; i<itsSampleSize; i++){
+			anXValues[i][0]=1;
+			anXValues[i][1]=itsData.get(i).getX();
 		}
-
-		return result;
+		double[][] aYValues = new double[itsSampleSize][1];
+		for (int i=0; i<itsSampleSize; i++)
+			aYValues[i][0]=itsData.get(i).getY();
+		Matrix anXMatrix = new Matrix(anXValues);
+		Matrix aYMatrix = new Matrix(aYValues);
+		
+		Matrix aBetaHat = (anXMatrix.transpose().times(anXMatrix)).inverse().times(anXMatrix.transpose()).times(aYMatrix);
+		Matrix aHatMatrix = anXMatrix.times((anXMatrix.transpose().times(anXMatrix)).inverse()).times(anXMatrix.transpose());
+		Matrix aResidualMatrix = (Matrix.identity(itsSampleSize,itsSampleSize).minus(aHatMatrix)).times(aYMatrix);
+		
+		aBetaHat.print(15,15);
+		/*For comparing the new method with the old one, uncomment the next three lines 
+		  update();
+		  Log.logCommandLine("Intercept: " + itsIntercept);
+		  Log.logCommandLine("Slope    : " + itsSlope);*/
+		double aTotalResidual = 0;
+		for (int i=0; i<itsSampleSize; i++)
+			aTotalResidual -= aResidualMatrix.get(i,0);
+		return aTotalResidual;
 	}
 
 	/**

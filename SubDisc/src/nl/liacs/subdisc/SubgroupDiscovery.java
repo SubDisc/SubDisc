@@ -186,7 +186,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 					if (aNewSubgroup.getCoverage() >= aMinimumCoverage)
 					{
 						Log.logCommandLine("candidate " + aNewSubgroup.getConditions() + " size: " + aNewSubgroup.getCoverage());
-						float aQuality = evaluateCandidate(aNewSubgroup);
+						float aQuality = evaluateCandidate(aNewSubgroup, theSubgroup);
 						aNewSubgroup.setMeasureValue(aQuality);
 						if (aQuality > aQualityMeasureMinimum)
 							itsResult.add(aNewSubgroup);
@@ -214,7 +214,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 						if (aNewSubgroup.getCoverage() >= aMinimumCoverage && aNewSubgroup.getCoverage()< itsMaximumCoverage)
 						{
 							Log.logCommandLine("candidate " + aNewSubgroup.getConditions() + " size: " + aNewSubgroup.getCoverage());
-							float aQuality = evaluateCandidate(aNewSubgroup);
+							float aQuality = evaluateCandidate(aNewSubgroup, theSubgroup);
 							aNewSubgroup.setMeasureValue(aQuality);
 							if (aQuality > aQualityMeasureMinimum)
 								itsResult.add(aNewSubgroup);
@@ -242,7 +242,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 
 					if (aNewSubgroup.getCoverage() >= aMinimumCoverage)
 					{
-						float aQuality = evaluateCandidate(aNewSubgroup);
+						float aQuality = evaluateCandidate(aNewSubgroup, theSubgroup);
 						aNewSubgroup.setMeasureValue(aQuality);
 						if (aQuality > aMax)
 						{
@@ -283,7 +283,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 			if (aNewSubgroup.getCoverage() >= aMinimumCoverage)
 			{
 				Log.logCommandLine("candidate " + aNewSubgroup.getConditions() + " size: " + aNewSubgroup.getCoverage());
-				float aQuality = evaluateCandidate(aNewSubgroup);
+				float aQuality = evaluateCandidate(aNewSubgroup, theSubgroup);
 				aNewSubgroup.setMeasureValue(aQuality);
 				if (aQuality > aQualityMeasureMinimum)
 					itsResult.add(aNewSubgroup);
@@ -294,7 +294,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		}
 	}
 
-	private float evaluateCandidate(Subgroup theSubgroup)
+	private float evaluateCandidate(Subgroup theNewSubgroup, Subgroup theOldSubgroup)
 	{
 		float aQuality = 0.0f;
 
@@ -303,26 +303,25 @@ public class SubgroupDiscovery extends MiningAlgorithm
 			case SINGLE_NOMINAL :
 			{
 				BitSet aTarget = (BitSet)itsBinaryTarget.clone();
-				aTarget.and(theSubgroup.getMembers());
+				aTarget.and(theNewSubgroup.getMembers());
 				int aCountHeadBody = aTarget.cardinality();
-				aQuality = itsQualityMeasure.calculate(aCountHeadBody, theSubgroup.getCoverage());
+				aQuality = itsQualityMeasure.calculate(aCountHeadBody, theNewSubgroup.getCoverage());
 				break;
 			}
 			case SINGLE_NUMERIC :
 			{
-				NumericDomain aDomain = new NumericDomain(itsNumericTarget, theSubgroup.getMembers());
-				aQuality = itsQualityMeasure.calculate(theSubgroup.getCoverage(),
-					aDomain.computeSum(0, theSubgroup.getCoverage()),
-					aDomain.computeSumSquaredDeviations(0, theSubgroup.getCoverage()),
-					aDomain.computeMedian(0, theSubgroup.getCoverage()),
-					aDomain.computeMedianAD(0, theSubgroup.getCoverage()),
+				NumericDomain aDomain = new NumericDomain(itsNumericTarget, theNewSubgroup.getMembers());
+				aQuality = itsQualityMeasure.calculate(theNewSubgroup.getCoverage(),
+					aDomain.computeSum(0, theNewSubgroup.getCoverage()),
+					aDomain.computeSumSquaredDeviations(0, theNewSubgroup.getCoverage()),
+					aDomain.computeMedian(0, theNewSubgroup.getCoverage()),
+					aDomain.computeMedianAD(0, theNewSubgroup.getCoverage()),
 					null); //TODO fix this parameter. only used by X2
 				break;
 			}
 			case DOUBLE_REGRESSION :
 			{
-				RegressionMeasure aRM = new RegressionMeasure(itsBaseRM, theSubgroup.getMembers());
-				aRM.update(); //update after all points have been added
+				RegressionMeasure aRM = new RegressionMeasure(itsBaseRM, theNewSubgroup.getMembers(), theOldSubgroup);
 				aQuality = (float) aRM.getEvaluationMeasureValue();
 				break;
 			}
@@ -330,7 +329,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 			{
 				CorrelationMeasure aCM = new CorrelationMeasure(itsBaseCM);
 				for (int i = 0; i < itsMaximumCoverage; i++)
-					if (theSubgroup.getMembers().get(i))
+					if (theNewSubgroup.getMembers().get(i))
 						aCM.addObservation(itsPrimaryColumn.getFloat(i), itsSecondaryColumn.getFloat(i));
 
 				aQuality = (float) aCM.getEvaluationMeasureValue();
@@ -338,7 +337,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 			}
 			case MULTI_LABEL :
 			{
-				aQuality = weightedEntropyEditDistance(theSubgroup); //also stores DAG in Subgroup
+				aQuality = weightedEntropyEditDistance(theNewSubgroup); //also stores DAG in Subgroup
 				break;
 			}
 			default : break;
