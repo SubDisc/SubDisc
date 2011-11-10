@@ -111,13 +111,21 @@ public class RegressionMeasure
 		Log.logCommandLine("complement slope: " + aComplementSlope);
 		Log.logCommandLine("           variance : " + aVariance);
 		Log.logCommandLine("complement variance: " + aComplementVariance);
-		double result= Math.PI; // throw PI; if this number is not overridden in one of the following cases, something went horribly wrong.
+
+		double result = Math.PI; // throw PI; if this number is not overridden in one of the following cases, something went horribly wrong.
 		switch(itsType)
 		{
 			//TODO turn this t-value into a p-value.
-			case QualityMeasure.LINEAR_REGRESSION:	{ result = -aSlopeDifference / Math.sqrt(aVariance+aComplementVariance); }
-				//		System.err.println("Z: "+aZValue+ " Slope1: "+aSlope + " Slope2: "+aComplementSlope);
-			case QualityMeasure.COOKS_DISTANCE:		{ result = Math.random(); }
+			case QualityMeasure.LINEAR_REGRESSION:
+			{
+				result = -aSlopeDifference / Math.sqrt(aVariance+aComplementVariance);
+				break;
+			}
+			case QualityMeasure.COOKS_DISTANCE:
+			{
+				result = Math.random();
+				break;
+			}
 		}
 
 		return result;
