@@ -389,21 +389,16 @@ public class Validation
 
 	public double performRegressionTest(double[] theQualities, int theK, SubgroupSet theSubgroupSet)
 	{
-		// extract average quality of top-k subgroups
-		Iterator<Subgroup> anIterator = theSubgroupSet.iterator();
+		//extract average quality
 		double aTopKQuality = 0.0;
-		for (int i=0; i<theK; i++)
-		{
-			Subgroup aSubgroup = anIterator.next();
+		for (Subgroup aSubgroup : theSubgroupSet)
 			aTopKQuality += aSubgroup.getMeasureValue();
-		}
-		aTopKQuality /= ((double) theK);
+		aTopKQuality /= theK;
 
 		// make deep copy of double array
+		//public static double[] copyOf(double[] original, int newLength)
 		int theNrRandomSubgroups = theQualities.length;
-		double[] aCopy = new double[theNrRandomSubgroups];
-		for (int i=0; i<theNrRandomSubgroups; i++)
-			aCopy[i] = theQualities[i];
+		double[] aCopy = Arrays.copyOf(theQualities, theQualities.length);
 
 		// rescale all qualities between 0 and 1
 		// also compute some necessary statistics
