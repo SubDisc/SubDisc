@@ -107,6 +107,10 @@ public class RegressionMeasure
 		double aComplementSlope = getSlope(aComplementXSum, aComplementYSum, aComplementXSquaredSum, aComplementXYSum, aComplementSampleSize);
 		double aSlopeDifference = Math.abs(aComplementSlope - aSlope);
 
+		Log.logCommandLine("\n           slope: " + aSlope);
+		Log.logCommandLine("complement slope: " + aComplementSlope);
+		Log.logCommandLine("           variance : " + aVariance);
+		Log.logCommandLine("complement variance: " + aComplementVariance);
 		double result= Math.PI; // throw PI; if this number is not overridden in one of the following cases, something went horribly wrong.
 		switch(itsType)
 		{

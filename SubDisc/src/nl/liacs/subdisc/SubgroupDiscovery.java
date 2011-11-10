@@ -323,8 +323,6 @@ public class SubgroupDiscovery extends MiningAlgorithm
 			{
 				RegressionMeasure aRM = new RegressionMeasure(itsBaseRM, theSubgroup.getMembers());
 				aRM.update(); //update after all points have been added
-				Log.logCommandLine("base model: y = " + (float) aRM.getIntercept() + " + " + (float) aRM.getSlope()+ " * x");
-
 				aQuality = (float) aRM.getEvaluationMeasureValue();
 				break;
 			}
