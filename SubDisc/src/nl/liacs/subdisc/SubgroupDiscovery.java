@@ -186,7 +186,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 					if (aNewSubgroup.getCoverage() >= aMinimumCoverage)
 					{
 						Log.logCommandLine("candidate " + aNewSubgroup.getConditions() + " size: " + aNewSubgroup.getCoverage());
-						float aQuality = evaluateCandidate(aNewSubgroup, theSubgroup);
+						float aQuality = evaluateCandidate(aNewSubgroup);
 						aNewSubgroup.setMeasureValue(aQuality);
 						if (aQuality > aQualityMeasureMinimum)
 							itsResult.add(aNewSubgroup);
@@ -214,7 +214,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 						if (aNewSubgroup.getCoverage() >= aMinimumCoverage && aNewSubgroup.getCoverage()< itsMaximumCoverage)
 						{
 							Log.logCommandLine("candidate " + aNewSubgroup.getConditions() + " size: " + aNewSubgroup.getCoverage());
-							float aQuality = evaluateCandidate(aNewSubgroup, theSubgroup);
+							float aQuality = evaluateCandidate(aNewSubgroup);
 							aNewSubgroup.setMeasureValue(aQuality);
 							if (aQuality > aQualityMeasureMinimum)
 								itsResult.add(aNewSubgroup);
@@ -242,7 +242,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 
 					if (aNewSubgroup.getCoverage() >= aMinimumCoverage)
 					{
-						float aQuality = evaluateCandidate(aNewSubgroup, theSubgroup);
+						float aQuality = evaluateCandidate(aNewSubgroup);
 						aNewSubgroup.setMeasureValue(aQuality);
 						if (aQuality > aMax)
 						{
@@ -283,7 +283,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 			if (aNewSubgroup.getCoverage() >= aMinimumCoverage)
 			{
 				Log.logCommandLine("candidate " + aNewSubgroup.getConditions() + " size: " + aNewSubgroup.getCoverage());
-				float aQuality = evaluateCandidate(aNewSubgroup, theSubgroup);
+				float aQuality = evaluateCandidate(aNewSubgroup);
 				aNewSubgroup.setMeasureValue(aQuality);
 				if (aQuality > aQualityMeasureMinimum)
 					itsResult.add(aNewSubgroup);
@@ -294,7 +294,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		}
 	}
 
-	private float evaluateCandidate(Subgroup theNewSubgroup, Subgroup theOldSubgroup)
+	private float evaluateCandidate(Subgroup theNewSubgroup)
 	{
 		float aQuality = 0.0f;
 
@@ -321,7 +321,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 			}
 			case DOUBLE_REGRESSION :
 			{
-				RegressionMeasure aRM = new RegressionMeasure(itsBaseRM, theNewSubgroup.getMembers(), theOldSubgroup);
+				RegressionMeasure aRM = new RegressionMeasure(itsBaseRM, theNewSubgroup.getMembers());
 				aQuality = (float) aRM.getEvaluationMeasureValue();
 				break;
 			}

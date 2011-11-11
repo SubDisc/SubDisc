@@ -25,7 +25,6 @@ public class RegressionMeasure
 
 	public static int itsType;
 	private RegressionMeasure itsBase = null;
-	private Subgroup itsParent; //Might be superfluous since we also have a base RegressionMeasure, but we'll look at efficiency later
 
 	//make a base model from two columns
 	public RegressionMeasure(int theType, Column thePrimaryColumn, Column theSecondaryColumn)
@@ -53,11 +52,10 @@ public class RegressionMeasure
 	}
 
 	//constructor for non-base RM. It derives from a base-RM
-	public RegressionMeasure(RegressionMeasure theBase, BitSet theMembers, Subgroup theParent)
+	public RegressionMeasure(RegressionMeasure theBase, BitSet theMembers)
 	{
 		itsType = theBase.itsType;
 		itsBase = theBase;
-		itsParent = theParent;
 
 		//Create an empty measure
 		itsSampleSize = 0;
@@ -159,15 +157,12 @@ public class RegressionMeasure
 		Matrix aHatMatrix = anXMatrix.times((anXMatrix.transpose().times(anXMatrix)).inverse()).times(anXMatrix.transpose());
 		Matrix aResidualMatrix = (Matrix.identity(itsSampleSize,itsSampleSize).minus(aHatMatrix)).times(aYMatrix);
 		
-		aBetaHat.print(15,15);
-		/*For comparing the new method with the old one, uncomment the next three lines 
-		  update();
-		  Log.logCommandLine("Intercept: " + itsIntercept);
-		  Log.logCommandLine("Slope    : " + itsSlope);*/
-		double aTotalResidual = 0;
-		for (int i=0; i<itsSampleSize; i++)
-			aTotalResidual -= aResidualMatrix.get(i,0);
-		return aTotalResidual;
+		double aP = aBetaHat.getRowDimension();
+		double anSSquared = (aResidualMatrix.transpose().times(aResidualMatrix)).get(0,0)/((double) itsBase.getSampleSize()-aP);
+		double[][] aParentValues = {{itsBase.getIntercept()},{itsBase.getSlope()}};
+		Matrix aParentBetaHat = new Matrix(aParentValues);
+		
+		return aBetaHat.minus(aParentBetaHat).transpose().times(anXMatrix.transpose()).times(anXMatrix).times(aBetaHat.minus(aParentBetaHat)).get(0,0)/(aP*anSSquared);
 	}
 
 	/**
