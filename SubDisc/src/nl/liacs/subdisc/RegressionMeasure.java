@@ -25,16 +25,23 @@ public class RegressionMeasure
 
 	public static int itsType;
 	private RegressionMeasure itsBase = null;
+	
+	private Matrix itsDataMatrix;
+	private Matrix itsBetaHat;
+	private Matrix itsHatMatrix;
+	private Matrix itsResidualMatrix;
+	
+	private double itsP;
+	private double itsSSquared;
+	private double[] itsRSquared;
+	private double[] itsT;
 
 	//make a base model from two columns
 	public RegressionMeasure(int theType, Column thePrimaryColumn, Column theSecondaryColumn)
 	{
-		itsBase = null; //this *is* the base
 		itsType = theType;
 		itsSampleSize = thePrimaryColumn.size();
 		itsData = new ArrayList<DataPoint>(itsSampleSize);
-		itsComplementData = null; //will remain empty for the base RM
-
 		for(int i=0; i<itsSampleSize; i++)
 		{
 			itsXSum += thePrimaryColumn.getFloat(i);
@@ -43,12 +50,66 @@ public class RegressionMeasure
 			itsXSquaredSum += thePrimaryColumn.getFloat(i)*thePrimaryColumn.getFloat(i);
 			itsYSquaredSum += theSecondaryColumn.getFloat(i)*theSecondaryColumn.getFloat(i);
 
-			//for each entry added to this measure
 			itsData.add(new DataPoint(thePrimaryColumn.getFloat(i), theSecondaryColumn.getFloat(i)) );
 		}
-
-		//After all data is included, update the regression function and its error terms
-		update();
+			
+		switch(itsType)
+		{
+			case QualityMeasure.LINEAR_REGRESSION:
+			{
+				itsBase = null; //this *is* the base
+				itsComplementData = null; //will remain empty for the base RM
+				updateRegressionFunction();
+				updateErrorTerms();
+			}
+			case QualityMeasure.COOKS_DISTANCE:
+			{
+				updateRegressionFunction(); //updating error terms unnecessary since Cook's distance does not care
+				
+				double[][] aData = new double[itsSampleSize][2];
+				double[][] anXValues = new double[itsSampleSize][2];
+				for (int i=0; i<itsSampleSize; i++){
+					anXValues[i][0]=1;
+					anXValues[i][1]=itsData.get(i).getX();
+					aData[i][0] = anXValues[i][1];
+				}
+				double[][] aYValues = new double[itsSampleSize][1];
+				for (int i=0; i<itsSampleSize; i++)
+				{
+					aYValues[i][0]=itsData.get(i).getY();
+					aData[i][1] = aYValues[i][0];
+				}
+				Matrix anXMatrix = new Matrix(anXValues);
+				Matrix aYMatrix = new Matrix(aYValues);
+				
+				itsDataMatrix = new Matrix(aData);
+				itsBetaHat = (anXMatrix.transpose().times(anXMatrix)).inverse().times(anXMatrix.transpose()).times(aYMatrix);
+				itsHatMatrix = anXMatrix.times((anXMatrix.transpose().times(anXMatrix)).inverse()).times(anXMatrix.transpose());
+				itsResidualMatrix = (Matrix.identity(itsSampleSize,itsSampleSize).minus(itsHatMatrix)).times(aYMatrix);
+				
+				itsP = itsBetaHat.getRowDimension();
+				itsSSquared = (itsResidualMatrix.transpose().times(itsResidualMatrix)).get(0,0)/((double) itsSampleSize-itsP);
+				
+				//fill R^2 array
+				double[] aResiduals = new double[itsSampleSize];
+				for (int i=0; i<itsSampleSize; i++)
+					aResiduals[i] = itsResidualMatrix.get(i,0)*itsResidualMatrix.get(i,0);
+				Arrays.sort(aResiduals);
+				//now we have squared residuals in ascending order, but we want array[i] = sum(array[i]...array[n])
+				for (int i=itsSampleSize-2; i>=0; i--)
+					aResiduals[i] += aResiduals[i+1];
+				itsRSquared = aResiduals;
+				
+				//fill T array
+				double[] aT = new double[itsSampleSize];
+				for (int i=0; i<itsSampleSize; i++)
+					aT[i] = itsHatMatrix.get(i,i);
+				Arrays.sort(aT);
+				for (int i=itsSampleSize-2; i>=0; i--)
+					aT[i] += aT[i+1];
+				itsT = aT;
+			}
+		}
 	}
 
 	//constructor for non-base RM. It derives from a base-RM
@@ -82,20 +143,9 @@ public class RegressionMeasure
 	//TODO test and verify method
 	public double getEvaluationMeasureValue()
 	{
-		switch(itsType)
-		{
-			case QualityMeasure.LINEAR_REGRESSION:
-			{
-				update();
-				return getSSD();
-			}
-			case QualityMeasure.COOKS_DISTANCE:
-			{
-				return getCook();
-			}
-		}
-
-		return Math.PI; //If this code is reached, something is wrong in one of the above cases. Throw pi.
+		updateRegressionFunction();
+		updateErrorTerms();
+		return getSSD();
 	}
 	
 	//TODO turn this t-value into a p-value.
@@ -141,28 +191,110 @@ public class RegressionMeasure
 		else {return aSlopeDifference / Math.sqrt(aVariance+aComplementVariance);}
 	}
 	
-	public double getCook(){
-		double[][] anXValues = new double[itsSampleSize][2];
-		for (int i=0; i<itsSampleSize; i++){
-			anXValues[i][0]=1;
-			anXValues[i][1]=itsData.get(i).getX();
-		}
-		double[][] aYValues = new double[itsSampleSize][1];
+	public double calculate(Subgroup theNewSubgroup)
+	{
+		BitSet aMembers = theNewSubgroup.getMembers();
+		int aSampleSize = aMembers.cardinality();
+		
+		double aT = itsT[aSampleSize];
+		double aRSquared = itsRSquared[aSampleSize];
+		
+		double aBoundSeven = computeBoundSeven(aSampleSize, aT, aRSquared);
+		Log.logCommandLine("Bound 7: " + aBoundSeven);
+		
+		int[] anIndices = new int[aSampleSize];
+		int[] aRemovedIndices = new int[itsSampleSize-aSampleSize];
+		int anIndex=0;
+		int aRemovedIndex=0;
 		for (int i=0; i<itsSampleSize; i++)
-			aYValues[i][0]=itsData.get(i).getY();
+		{
+			if (aMembers.get(i))
+			{
+				anIndices[anIndex] = i;
+				anIndex++;
+			}
+			else
+			{
+				aRemovedIndices[aRemovedIndex] = i;
+				aRemovedIndex++;
+			}
+		}
+
+		Matrix aRemovedResiduals = itsResidualMatrix.getMatrix(aRemovedIndices,0,0);
+		double aSquaredResidualSum = squareSum(aRemovedResiduals);
+		double aBoundSix = computeBoundSix(aSampleSize, aT, aSquaredResidualSum);		
+		Log.logCommandLine("Bound 6: " + aBoundSix);
+		
+		Matrix aRemovedHatMatrix = itsHatMatrix.getMatrix(aRemovedIndices,aRemovedIndices);
+		double aRemovedTrace = aRemovedHatMatrix.trace();
+		double aBoundFive = computeBoundFive(aSampleSize, aRemovedTrace, aRSquared);
+		Log.logCommandLine("Bound 5: " + aBoundFive);
+		
+		double aBoundFour = computeBoundFour(aSampleSize, aRemovedTrace, aSquaredResidualSum);
+		Log.logCommandLine("Bound 4: " + aBoundFour);
+
+		//compute Cook's Distance
+		Matrix aNewDataMatrix = itsDataMatrix.getMatrix(anIndices,0,1);
+		double[][] anXValues = new double[aSampleSize][2];
+		for (int i=0; i<aSampleSize; i++)
+		{
+			anXValues[i][0]=1;
+			anXValues[i][1]=aNewDataMatrix.get(i,0);
+		}
+		double[][] aYValues = new double[aSampleSize][1];
+		for (int i=0; i<aSampleSize; i++)
+			aYValues[i][0]=aNewDataMatrix.get(i,1);
 		Matrix anXMatrix = new Matrix(anXValues);
 		Matrix aYMatrix = new Matrix(aYValues);
 		
 		Matrix aBetaHat = (anXMatrix.transpose().times(anXMatrix)).inverse().times(anXMatrix.transpose()).times(aYMatrix);
 		Matrix aHatMatrix = anXMatrix.times((anXMatrix.transpose().times(anXMatrix)).inverse()).times(anXMatrix.transpose());
-		Matrix aResidualMatrix = (Matrix.identity(itsSampleSize,itsSampleSize).minus(aHatMatrix)).times(aYMatrix);
+		Matrix aResidualMatrix = (Matrix.identity(aSampleSize,aSampleSize).minus(aHatMatrix)).times(aYMatrix);
 		
 		double aP = aBetaHat.getRowDimension();
-		double anSSquared = (aResidualMatrix.transpose().times(aResidualMatrix)).get(0,0)/((double) itsBase.getSampleSize()-aP);
-		double[][] aParentValues = {{itsBase.getIntercept()},{itsBase.getSlope()}};
+		double anSSquared = (aResidualMatrix.transpose().times(aResidualMatrix)).get(0,0)/((double) itsSampleSize-aP);
+		double[][] aParentValues = {{itsIntercept},{itsSlope}};
 		Matrix aParentBetaHat = new Matrix(aParentValues);
 		
 		return aBetaHat.minus(aParentBetaHat).transpose().times(anXMatrix.transpose()).times(anXMatrix).times(aBetaHat.minus(aParentBetaHat)).get(0,0)/(aP*anSSquared);
+	}
+	
+	private double computeBoundSeven(int theSampleSize, double theT, double theRSquared)
+	{
+		if (theT>=1)
+			return -1;
+		return theT/((1-theT)*(1-theT))*theRSquared/(itsP*itsSSquared);
+	}
+
+	private double computeBoundSix(int theSampleSize, double theT, double theSquaredResidualSum)
+	{
+		if (theT>=1)
+			return -1;
+		return theT/((1-theT)*(1-theT))*theSquaredResidualSum/(itsP*itsSSquared);
+	}
+
+	private double computeBoundFive(int theSampleSize, double theRemovedTrace, double theRSquared)
+	{
+		if (theRemovedTrace>=1)
+			return -1;
+		return theRemovedTrace/((1-theRemovedTrace)*(1-theRemovedTrace))*theRSquared/(itsP*itsSSquared);
+	}
+	
+	private double computeBoundFour(int theSampleSize, double theRemovedTrace, double theSquaredResidualSum)
+	{
+		if (theRemovedTrace>=1)
+			return -1;
+		return theRemovedTrace/((1-theRemovedTrace)*(1-theRemovedTrace))*theSquaredResidualSum/(itsP*itsSSquared);
+	}
+	
+	private double squareSum(Matrix itsMatrix)
+	{
+		int aSampleSize = itsMatrix.getRowDimension();
+		double[] itsValues = itsMatrix.getRowPackedCopy();
+		double aSum = 0.0;
+		for (int i=0; i<aSampleSize; i++)
+			aSum += itsValues[i]*itsValues[i];
+		return aSum;
 	}
 
 	/**
@@ -233,13 +365,7 @@ public class RegressionMeasure
 		return itsData.get(theIndex);
 	}
 
-	public void update()
-	{
-		updateRegressionFunction();
-		updateErrorTerms();
-	}
-
-	/**
+ 	/**
 	 * calculates the error terms for the distribution and recomputes the
 	 * sum of the squared error term
 	 *

@@ -321,8 +321,20 @@ public class SubgroupDiscovery extends MiningAlgorithm
 			}
 			case DOUBLE_REGRESSION :
 			{
-				RegressionMeasure aRM = new RegressionMeasure(itsBaseRM, theNewSubgroup.getMembers());
-				aQuality = (float) aRM.getEvaluationMeasureValue();
+				switch (itsBaseRM.itsType)
+				{
+					case QualityMeasure.LINEAR_REGRESSION:
+					{
+						RegressionMeasure aRM = new RegressionMeasure(itsBaseRM, theNewSubgroup.getMembers());
+						aQuality = (float) aRM.getEvaluationMeasureValue();
+						break;
+					}
+					case QualityMeasure.COOKS_DISTANCE:
+					{
+						aQuality = (float) itsBaseRM.calculate(theNewSubgroup);
+					}
+				}
+
 				break;
 			}
 			case DOUBLE_CORRELATION :
