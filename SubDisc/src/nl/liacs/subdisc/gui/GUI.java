@@ -114,4 +114,23 @@ public class GUI
 		return new TitledBorder(
 				new EtchedBorder(), theTitle, 4, 2, DEFAULT_BUTTON_FONT);
 	}
+
+	// on window opening focus on the specified JComponent
+	// TODO to be used by all window classes
+	public static void focusComponent(final JComponent theComponentToFocus, JFrame theFrame)
+	{
+		if (theComponentToFocus == null || theFrame == null)
+			return;
+		else
+		{
+			theFrame.addWindowListener(new WindowAdapter()
+							{
+								@Override
+								public void windowOpened(WindowEvent e)
+								{
+									theComponentToFocus.requestFocusInWindow();
+								}
+							});
+		}
+	}
 }

@@ -63,6 +63,7 @@ public class BrowseWindow extends JFrame implements ActionListener//, MouseListe
 		final JPanel aButtonPanel = new JPanel();
 
 		int aNrColumns = itsTable.getNrColumns();
+		// TODO HistogramWindow uses a similar list, sync?
 		itsMap = new LinkedHashMap<String, Integer>(aNrColumns);
 		for (int i = 0, j = aNrColumns; i < j; ++i)
 		{
@@ -92,14 +93,7 @@ public class BrowseWindow extends JFrame implements ActionListener//, MouseListe
 		aButtonPanel.add(aCloseButton);
 		getContentPane().add(aButtonPanel, BorderLayout.SOUTH);
 
-		addWindowListener(new WindowAdapter()
-		{
-			@Override
-			public void windowOpened(WindowEvent e)
-			{
-				aCloseButton.requestFocusInWindow();
-			}
-		});
+		GUI.focusComponent(aCloseButton, this);
 	}
 
 	@Override
