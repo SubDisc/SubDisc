@@ -243,6 +243,7 @@ public class MiningWindow extends JFrame
 
 		jMenuAbout = new JMenu();
 		jMenuItemAboutCortana = new JMenuItem();
+		jMenuItemHistoTest = new JMenuItem();
 		jMenuGui = new JMenu();
 
 		jPanelCenter = new JPanel();	// 4 panels
@@ -515,6 +516,18 @@ public class MiningWindow extends JFrame
 		jMenuAbout.add(jMenuItemAboutCortana);
 
 		jMiningWindowMenuBar.add(jMenuAbout);
+
+		jMenuItemHistoTest.setFont(GUI.DEFAULT_TEXT_FONT);
+		jMenuItemHistoTest.setText("HistoTest");
+		jMenuItemHistoTest.setMnemonic('H');
+		jMenuItemHistoTest.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_H, InputEvent.CTRL_MASK));
+		jMenuItemHistoTest.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				jMenuItemHistoTestActionPerformed();
+			}
+		});
+		jMenuAbout.add(jMenuItemHistoTest);
+
 /*
 		// TODO for testing only
 		jMenuGui.setFont(GUI.DEFAULT_TEXT_FONT);
@@ -1877,6 +1890,7 @@ public class MiningWindow extends JFrame
 	private JMenuItem jMenuItemRemoveEnrichmentSource;
 	private JMenu jMenuAbout;
 	private JMenuItem jMenuItemAboutCortana;
+	private JMenuItem jMenuItemHistoTest;	// XXX for testing only
 	private JMenu jMenuGui;	// XXX for testing only
 	private JPanel jPanelSouth;
 	private JPanel jPanelMineButtons;
@@ -2037,4 +2051,10 @@ public class MiningWindow extends JFrame
 	}
 	// TODO end test
 
+	// TODO will be moved when finished
+	private void jMenuItemHistoTestActionPerformed()
+	{
+		// disabled when itsTable == null
+		new HistogramWindow(itsTable);
+	}
 }
