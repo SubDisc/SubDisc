@@ -16,8 +16,12 @@ import org.jfree.data.category.*;
 public class HistogramWindow extends JFrame implements ActionListener
 {
 	private static final long serialVersionUID = 1L;
+
 	private Table itsTable;
-	private JFreeChart itsChart;
+	private ChartPanel itsChartPanel;
+	private JButton itsButton;
+	private JComboBox itsAttributeColumnsBox;
+	private JComboBox itsTargetColumnsBox;
 
 	// TODO should be tied to parent window
 	public HistogramWindow(Table theTable)
@@ -26,39 +30,49 @@ public class HistogramWindow extends JFrame implements ActionListener
 			return;
 
 		itsTable = theTable;
-		JPanel mainPanel = new JPanel();
-		mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
-		mainPanel.add(createHistogram(), BorderLayout.CENTER);
-		mainPanel.add(createSouthPanel());
-		add(mainPanel);
 
-		GUI.focusComponent(itsButton, this);
+		initComponents();
+
 		setTitle("Histogram");
 		setIconImage(MiningWindow.ICON);
 		setLocation(50, 50);
-		setSize(GUI.WINDOW_DEFAULT_SIZE);
+		//setSize(GUI.WINDOW_DEFAULT_SIZE);
 		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		pack();
 		setVisible(true);
 	}
 
-	private ChartPanel createHistogram()
+	private void initComponents()
 	{
-		itsChart =
+		JPanel mainPanel = new JPanel();
+		mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
+		itsChartPanel = new ChartPanel(null);
+		createHistogram(null);
+		mainPanel.add(itsChartPanel, BorderLayout.CENTER);
+		mainPanel.add(createSouthPanel(), BorderLayout.SOUTH);
+		add(mainPanel);
+
+		GUI.focusComponent(itsButton, this);
+	}
+
+	private void createHistogram(Column theColumn)
+	{
+		JFreeChart aChart =
 			ChartFactory.createStackedBarChart(
 				null, // no title
 				null, // no x-axis label
 				"Count", // remove?
-				createDataset(null),
+				createDataset(theColumn, null),
 				PlotOrientation.VERTICAL,
 				true,
 				true,
 				false);
 
 		// TODO getPlotAxis: use integer, not floating point, for y-axis
-		return new ChartPanel(itsChart);
+		itsChartPanel.setChart(aChart);
 	}
 
-	private CategoryDataset createDataset(Column theColumn)
+	private CategoryDataset createDataset(Column theColumn, Column theTargetColumn)
 	{
 		if (theColumn == null)
 		{
@@ -79,7 +93,7 @@ public class HistogramWindow extends JFrame implements ActionListener
 		// works for Nominal/Binary
 		// Numeric is more complicated (could use nr_bins)
 		Map<String, Integer> aMap =
-			new HashMap<String, Integer>(theColumn.getCardinality());
+			new LinkedHashMap<String, Integer>(theColumn.getCardinality());
 		// Column.itsDistinctValues TreeSet is alphabetically ordered
 		for (String s : theColumn.getDomain())
 			aMap.put(s, 0);
@@ -95,16 +109,13 @@ public class HistogramWindow extends JFrame implements ActionListener
 
 		for (Entry<String, Integer> e : aMap.entrySet())
 		{
-			dataset.addValue(e.getValue()/10, "true", e.getKey());
+			//dataset.addValue(e.getValue()/10, "true", e.getKey());
 			dataset.addValue(e.getValue(), "false", e.getKey());
 		}
 
 		return dataset;
 	}
 
-	JButton itsButton;
-	JComboBox itsAttributeColumnsBox;
-	JComboBox itsTargetColumnsBox;
 	private JPanel createSouthPanel()
 	{
 		JPanel aPanel = new JPanel();
@@ -138,19 +149,59 @@ public class HistogramWindow extends JFrame implements ActionListener
 
 		if("button".equals(anEvent))
 			;
-		else if("attribute".equals(anEvent))
-			updateDataset();
+		else if("attribute".equals(anEvent)) {
+			createHistogram(itsTable.getColumn(itsAttributeColumnsBox.getSelectedIndex()));
+			count();
+		}
 		else if("target".equals(anEvent))
 			// if attribute==target do nothing
-			;
+			count();
 		else if ("close".equals(anEvent))
 			dispose();
 	}
 
-	private void updateDataset()
+	// alternative could be a targetValues Map for each attributeValue
+	// Map<AttributeValues, Map<TargetValues, index>> but it would be bigger
+	//
+	// TODO for numeric attributes all values are now used as separate value
+	// should use bins
+	private void count()
 	{
-		createDataset(itsTable.getColumn(itsAttributeColumnsBox.getSelectedIndex()));
-		itsChart.fireChartChanged();
-		//getPlot(). = createDataset(itsTable.getColumn(itsAttributeColumnsBox.getSelectedIndex()));
+		Column a = itsTable.getColumn(itsAttributeColumnsBox.getSelectedIndex());
+		Column t = itsTable.getColumn(itsTargetColumnsBox.getSelectedIndex());
+
+		//if (a == t)
+		//	return;
+
+		// although only one map needs to be updated at selection change
+		// it would requires permanent storage of both aMap and tMap
+
+		// all possible attribute values are stored in an (ordered) Map
+		Map<String, Integer> aMap = new LinkedHashMap<String, Integer>();
+		Iterator<String> anIterator = a.getDomain().iterator();
+		int idx = -1;
+		while (anIterator.hasNext())
+			aMap.put(anIterator.next(), ++idx);
+
+		// all possible target values are stored in an (ordered) Map
+		Map<String, Integer> tMap = new LinkedHashMap<String, Integer>();
+		anIterator = t.getDomain().iterator();
+		idx = -1;
+		while (anIterator.hasNext())
+			tMap.put(anIterator.next(), ++idx);
+
+		int[][] counts = new int[aMap.size()][tMap.size()];
+
+		// loops over all values in Attribute Column
+		// for each possible Attribute value the corresponding Target value
+		// count is incremented
+		// uses aMap and tMap for fast indexing (O(1))
+		// (compared to linear array/ TreeSet lookups (O(l)))
+		for (int i = 0, j = a.size(); i < j; ++i)
+			++counts[aMap.get(a.getString(i))][tMap.get(t.getString(i))];
+
+		// TODO for testing only
+		for (int[] ia : counts)
+			System.out.println(Arrays.toString(ia));
 	}
 }
