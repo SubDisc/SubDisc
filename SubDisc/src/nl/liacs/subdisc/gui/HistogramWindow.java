@@ -19,14 +19,14 @@ public class HistogramWindow extends JFrame implements ActionListener
 
 	private Table itsTable;
 	private ChartPanel itsChartPanel;
-	private JButton itsButton;
 	private JComboBox itsAttributeColumnsBox;
 	private JComboBox itsTargetColumnsBox;
 
 	// TODO should be tied to parent window
+	// TODO supply TargetColumn if set in MainWindow
 	public HistogramWindow(Table theTable)
 	{
-		if (theTable == null)
+		if (theTable == null || theTable.getNrColumns() == 0)
 			return;
 
 		itsTable = theTable;
@@ -44,82 +44,10 @@ public class HistogramWindow extends JFrame implements ActionListener
 
 	private void initComponents()
 	{
-		JPanel mainPanel = new JPanel();
-		mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
-		itsChartPanel = new ChartPanel(null);
-		createHistogram(null);
-		mainPanel.add(itsChartPanel, BorderLayout.CENTER);
-		mainPanel.add(createSouthPanel(), BorderLayout.SOUTH);
-		add(mainPanel);
+		setLayout(new BorderLayout());
 
-		GUI.focusComponent(itsButton, this);
-	}
-
-	private void createHistogram(Column theColumn)
-	{
-		JFreeChart aChart =
-			ChartFactory.createStackedBarChart(
-				null, // no title
-				null, // no x-axis label
-				"Count", // remove?
-				createDataset(theColumn, null),
-				PlotOrientation.VERTICAL,
-				true,
-				true,
-				false);
-
-		// TODO getPlotAxis: use integer, not floating point, for y-axis
-		itsChartPanel.setChart(aChart);
-	}
-
-	private CategoryDataset createDataset(Column theColumn, Column theTargetColumn)
-	{
-		if (theColumn == null)
-		{
-			for (Column c : itsTable.getColumns())
-			{
-				if (c.getType() == AttributeType.NOMINAL ||
-						c.getType() == AttributeType.BINARY)
-				{
-					theColumn = c;
-					break;
-				}
-			}
-			if (theColumn == null)
-				return null;
-		}
-
-		// permanent counts-Map in Column may be to memory demanding
-		// works for Nominal/Binary
-		// Numeric is more complicated (could use nr_bins)
-		Map<String, Integer> aMap =
-			new LinkedHashMap<String, Integer>(theColumn.getCardinality());
-		// Column.itsDistinctValues TreeSet is alphabetically ordered
-		for (String s : theColumn.getDomain())
-			aMap.put(s, 0);
-		for (int i = 0, j = theColumn.size(); i < j; ++i)
-		{
-			String s = theColumn.getString(i);
-			aMap.put(s, 1+aMap.get(s).intValue());
-		}
-
-		DefaultCategoryDataset dataset = new DefaultCategoryDataset();
-		//for (Entry<String, Integer> e : aMap.entrySet())
-		//	dataset.addValue(e.getValue(), e.getKey(), aColumn.getName());
-
-		for (Entry<String, Integer> e : aMap.entrySet())
-		{
-			//dataset.addValue(e.getValue()/10, "true", e.getKey());
-			dataset.addValue(e.getValue(), "false", e.getKey());
-		}
-
-		return dataset;
-	}
-
-	private JPanel createSouthPanel()
-	{
-		JPanel aPanel = new JPanel();
-
+		// SOUTH PANEL, initialises comboBoxes used by createHistogram
+		JPanel aSouthPanel = new JPanel();
 		// TODO create permanent 'columnName-columnIndex map' in Table?
 		// map can also be used directly by MiningWindow/ BrowseWindow
 		String[] sa = new String[itsTable.getNrColumns()];
@@ -128,36 +56,33 @@ public class HistogramWindow extends JFrame implements ActionListener
 
 		itsAttributeColumnsBox = GUI.buildComboBox(sa, this);
 		itsAttributeColumnsBox.setPreferredSize(GUI.BUTTON_DEFAULT_SIZE);
-		itsAttributeColumnsBox.setActionCommand("attribute");
-		aPanel.add(itsAttributeColumnsBox);
-
 		itsTargetColumnsBox = GUI.buildComboBox(sa, this);
 		itsTargetColumnsBox.setPreferredSize(GUI.BUTTON_DEFAULT_SIZE);
-		itsTargetColumnsBox.setActionCommand("target");
-		aPanel.add(itsTargetColumnsBox);
 
-		aPanel.add(itsButton = GUI.buildButton("Button", "button", this));
+		aSouthPanel.add(itsAttributeColumnsBox);
+		aSouthPanel.add(itsTargetColumnsBox);
 
-		return aPanel;
+		JButton aButton = GUI.buildButton("Close", "close", this);
+		aSouthPanel.add(aButton);
+		GUI.focusComponent(aButton, this);
+		add(aSouthPanel, BorderLayout.SOUTH);
+
+		// CHART PANEL
+		itsChartPanel = new ChartPanel(createHistogram());
+		add(itsChartPanel, BorderLayout.CENTER);
 	}
 
-	@Override
-	public void actionPerformed(ActionEvent theEvent)
+	// TODO getPlotAxis: use integer, not floating point, for y-axis
+	private JFreeChart createHistogram()
 	{
-		String anEvent = theEvent.getActionCommand();
-		System.out.println(anEvent);
-
-		if("button".equals(anEvent))
-			;
-		else if("attribute".equals(anEvent)) {
-			createHistogram(itsTable.getColumn(itsAttributeColumnsBox.getSelectedIndex()));
-			count();
-		}
-		else if("target".equals(anEvent))
-			// if attribute==target do nothing
-			count();
-		else if ("close".equals(anEvent))
-			dispose();
+		return ChartFactory.createStackedBarChart(null, // no title
+													null, // no x-axis label
+													null, // no y-axis label
+													createDataset(),
+													PlotOrientation.VERTICAL,
+													true,
+													true,
+													false);
 	}
 
 	// alternative could be a targetValues Map for each attributeValue
@@ -165,16 +90,13 @@ public class HistogramWindow extends JFrame implements ActionListener
 	//
 	// TODO for numeric attributes all values are now used as separate value
 	// should use bins
-	private void count()
+	private CategoryDataset createDataset()
 	{
 		Column a = itsTable.getColumn(itsAttributeColumnsBox.getSelectedIndex());
 		Column t = itsTable.getColumn(itsTargetColumnsBox.getSelectedIndex());
 
-		//if (a == t)
-		//	return;
-
 		// although only one map needs to be updated at selection change
-		// it would requires permanent storage of both aMap and tMap
+		// it would require permanent storage of both aMap and tMap
 
 		// all possible attribute values are stored in an (ordered) Map
 		Map<String, Integer> aMap = new LinkedHashMap<String, Integer>();
@@ -191,17 +113,34 @@ public class HistogramWindow extends JFrame implements ActionListener
 			tMap.put(anIterator.next(), ++idx);
 
 		int[][] counts = new int[aMap.size()][tMap.size()];
-
 		// loops over all values in Attribute Column
 		// for each possible Attribute value the corresponding Target value
 		// count is incremented
 		// uses aMap and tMap for fast indexing (O(1))
-		// (compared to linear array/ TreeSet lookups (O(l)))
+		// (compared to linear array/ TreeSet lookups (O(n)))
 		for (int i = 0, j = a.size(); i < j; ++i)
 			++counts[aMap.get(a.getString(i))][tMap.get(t.getString(i))];
 
 		// TODO for testing only
 		for (int[] ia : counts)
 			System.out.println(Arrays.toString(ia));
+
+		DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+		for (Entry<String, Integer> ae : aMap.entrySet())
+			for (Entry<String, Integer> te : tMap.entrySet())
+				dataset.addValue(counts[ae.getValue()][te.getValue()], te.getKey(), ae.getKey());
+
+		return dataset;
+	}
+
+	@Override
+	public void actionPerformed(ActionEvent theEvent)
+	{
+		String anEvent = theEvent.getActionCommand();
+
+		if ("comboBoxChanged".equals(anEvent))
+			itsChartPanel.setChart(createHistogram());
+		else if ("close".equals(anEvent))
+			dispose();
 	}
 }
