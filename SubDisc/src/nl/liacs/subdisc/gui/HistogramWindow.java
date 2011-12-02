@@ -10,12 +10,22 @@ import javax.swing.*;
 import nl.liacs.subdisc.*;
 
 import org.jfree.chart.*;
+import org.jfree.chart.axis.*;
+import org.jfree.chart.block.*;
 import org.jfree.chart.plot.*;
+import org.jfree.chart.renderer.category.*;
+import org.jfree.chart.title.*;
 import org.jfree.data.category.*;
+import org.jfree.ui.*;
 
 public class HistogramWindow extends JFrame implements ActionListener
 {
 	private static final long serialVersionUID = 1L;
+	// do not show legend when target has many values
+	private static final int TARGET_VALUES_MAX = 30;
+	private static final int ATTRIBUTE_VALUES_MAX = 100;
+	// use smaller font if nr columns > ATTRIBUTE_VALUES_MAX
+	private static final Font SMALL_FONT = new Font("Dialog", 0, 8);
 
 	private Table itsTable;
 	private ChartPanel itsChartPanel;
@@ -36,9 +46,9 @@ public class HistogramWindow extends JFrame implements ActionListener
 		setTitle("Histogram");
 		setIconImage(MiningWindow.ICON);
 		setLocation(50, 50);
-		//setSize(GUI.WINDOW_DEFAULT_SIZE);
+		setSize(GUI.WINDOW_DEFAULT_SIZE);
 		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-		pack();
+		//pack();
 		setVisible(true);
 	}
 
@@ -68,21 +78,59 @@ public class HistogramWindow extends JFrame implements ActionListener
 		add(aSouthPanel, BorderLayout.SOUTH);
 
 		// CHART PANEL
-		itsChartPanel = new ChartPanel(createHistogram());
-		add(itsChartPanel, BorderLayout.CENTER);
+		itsChartPanel = new ChartPanel(null);
+		updateChartPanel();
+		add(new JScrollPane(itsChartPanel), BorderLayout.CENTER);
 	}
 
 	// TODO getPlotAxis: use integer, not floating point, for y-axis
-	private JFreeChart createHistogram()
+	private void updateChartPanel()
 	{
-		return ChartFactory.createStackedBarChart(null, // no title
-													null, // no x-axis label
-													null, // no y-axis label
-													createDataset(),
-													PlotOrientation.VERTICAL,
-													true,
-													true,
-													false);
+		final CategoryDataset aDataset = createDataset();
+
+		// TODO create GUI toggle
+		boolean showLegend = aDataset.getRowCount() < TARGET_VALUES_MAX;
+
+		final JFreeChart aChart =
+			ChartFactory.createStackedBarChart(null, // no title
+												null, // no x-axis label
+												"", // no y-axis label
+												aDataset,
+												PlotOrientation.VERTICAL,
+												showLegend,
+												true,
+												false);
+
+		final CategoryPlot aPlot = aChart.getCategoryPlot();
+		aPlot.setBackgroundPaint(Color.WHITE);
+		aPlot.setRangeGridlinePaint(Color.BLACK);
+		aPlot.getDomainAxis().setTickMarkStroke(new BasicStroke(0.1f));
+		aPlot.getRangeAxis().setStandardTickUnits(NumberAxis.createIntegerTickUnits());
+
+		final BarRenderer aRenderer = (BarRenderer)aPlot.getRenderer();
+		aRenderer.setBarPainter(new StandardBarPainter());
+		aRenderer.setShadowVisible(false);
+
+
+		int aNrColumns = aDataset.getColumnCount();
+		if (aNrColumns > ATTRIBUTE_VALUES_MAX)
+		{
+			if (showLegend)
+			{
+				final LegendTitle aLegend = aChart.getLegend();
+				aLegend.setFrame(new LineBorder(Color.BLACK, new BasicStroke(0), new RectangleInsets()));
+				aLegend.setItemFont(SMALL_FONT);
+			}
+
+			aPlot.setRangeGridlinesVisible(false);
+			aPlot.getDomainAxis().setTickLabelsVisible(false);
+			//aDomainAxis.setCategoryLabelPositions(CategoryLabelPositions.UP_90);
+			aPlot.getRangeAxis().setTickLabelFont(SMALL_FONT);
+	}
+
+		itsChartPanel.setPreferredSize(new Dimension(aNrColumns*20, 500));
+		itsChartPanel.setChart(aChart);
+		itsChartPanel.revalidate();
 	}
 
 	// alternative could be a targetValues Map for each attributeValue
@@ -122,8 +170,12 @@ public class HistogramWindow extends JFrame implements ActionListener
 			++counts[aMap.get(a.getString(i))][tMap.get(t.getString(i))];
 
 		// TODO for testing only
+		System.out.print(tMap.keySet().toString());
+		System.out.println("\t< target values/ attribute values v");
+		String[] sa = aMap.keySet().toArray(new String[0]);
+		int i = -1;
 		for (int[] ia : counts)
-			System.out.println(Arrays.toString(ia));
+			System.out.println(Arrays.toString(ia) + "\t" + sa[++i]);
 
 		DefaultCategoryDataset dataset = new DefaultCategoryDataset();
 		for (Entry<String, Integer> ae : aMap.entrySet())
@@ -139,7 +191,7 @@ public class HistogramWindow extends JFrame implements ActionListener
 		String anEvent = theEvent.getActionCommand();
 
 		if ("comboBoxChanged".equals(anEvent))
-			itsChartPanel.setChart(createHistogram());
+			updateChartPanel();
 		else if ("close".equals(anEvent))
 			dispose();
 	}
