@@ -3,14 +3,19 @@ package nl.liacs.subdisc;
 public class Condition
 {
 	// Operator Constants
+	public static final int DOES_NOT_EQUAL			= -1;
 	public static final int EQUALS                  = 0;
 	public static final int LESS_THAN_OR_EQUAL      = 1;
 	public static final int GREATER_THAN_OR_EQUAL   = 2;
 	public static final int NOT_AN_OPERATOR			= 99;
 
+	// Binary Operator Constants
+	public static final int FIRST_BINARY_OPERATOR	= EQUALS;
+	public static final int LAST_BINARY_OPERATOR	= EQUALS;
+	
 	// Nominal Operator  Constants
-	public static final int FIRST_NOMINAL_OPERATOR  = EQUALS;
-	public static final int LAST_NOMINAL_OPERATOR   = FIRST_NOMINAL_OPERATOR;
+	public static final int FIRST_NOMINAL_OPERATOR  = DOES_NOT_EQUAL;
+	public static final int LAST_NOMINAL_OPERATOR  	= EQUALS;
 
 	// Numeric Operator  Constants
 	//this allows =, <= and >=
@@ -28,8 +33,13 @@ public class Condition
 		itsColumn = theColumn;
 		if (itsColumn.isNumericType())
 			itsOperator = FIRST_NUMERIC_OPERATOR;
-		else // if (itsAttribute.isNominalType())
-			itsOperator = FIRST_NOMINAL_OPERATOR;
+		else 
+		{
+			if (itsColumn.isNominalType())
+				itsOperator = FIRST_NOMINAL_OPERATOR;
+			else
+				itsOperator = FIRST_BINARY_OPERATOR;
+		}
 	}
 
 	// TODO null check
@@ -59,7 +69,9 @@ public class Condition
 
 	public boolean hasNextOperator()
 	{
-		if (itsOperator == LAST_NOMINAL_OPERATOR && !itsColumn.isNumericType())
+		if (itsOperator == LAST_BINARY_OPERATOR && itsColumn.isBinaryType())
+			return false;
+		if (itsOperator == LAST_NOMINAL_OPERATOR && itsColumn.isNominalType())
 			return false;
 		if (itsOperator == LAST_NUMERIC_OPERATOR && itsColumn.isNumericType())
 			return false;
@@ -117,6 +129,7 @@ public class Condition
 		String anOperatorString = "";
 		switch(itsOperator)
 		{
+			case DOES_NOT_EQUAL			: { anOperatorString = "!="; break; } 
 			case EQUALS					: { anOperatorString = "="; break; }
 			case LESS_THAN_OR_EQUAL		: { anOperatorString = "<="; break; }
 			case GREATER_THAN_OR_EQUAL	: { anOperatorString = ">="; break; }
@@ -132,6 +145,10 @@ public class Condition
 	{
 		switch(itsOperator)
 		{
+			case DOES_NOT_EQUAL			:
+			{
+				return (!theValue.equals(itsValue));
+			}
 			case EQUALS					:
 			{
 				return (theValue.equals(itsValue));
