@@ -169,6 +169,8 @@ public class HistogramWindow extends JFrame implements ActionListener
 			++counts[aMap.get(a.getString(i))][tMap.get(t.getString(i))];
 
 		// TODO for testing only
+		if (a.getType() == AttributeType.NUMERIC && t.getType() == AttributeType.NUMERIC)
+			createDatasetForNumeric();
 		System.out.print(tMap.keySet().toString());
 		System.out.println("\t< target values/ attribute values v");
 		String[] sa = aMap.keySet().toArray(new String[0]);
@@ -182,6 +184,41 @@ public class HistogramWindow extends JFrame implements ActionListener
 				dataset.addValue(counts[ae.getValue()][te.getValue()], te.getKey(), ae.getKey());
 
 		return dataset;
+	}
+
+	private void createDatasetForNumeric() {
+		Column a = itsTable.getColumn(itsAttributeColumnsBox.getSelectedIndex());
+		Column t = itsTable.getColumn(itsTargetColumnsBox.getSelectedIndex());
+
+		int DEFAULT_NR_BINS = 8;
+		double min = a.getMin();
+		double range = (a.getMax()-min) / (DEFAULT_NR_BINS-1);
+
+		double[] aBins = new double[DEFAULT_NR_BINS];
+		for (int i = 0, j = DEFAULT_NR_BINS; i < j; ++i)
+			aBins[i] = min + (range*i);
+
+		min = t.getMin();
+		range = (t.getMax()-min) / (DEFAULT_NR_BINS-1);
+		double[] tBins = new double[DEFAULT_NR_BINS];
+		for (int i = 0, j = DEFAULT_NR_BINS; i < j; ++i)
+			tBins[i] = min + (range*i);
+
+		int[][] counts = new int[DEFAULT_NR_BINS][DEFAULT_NR_BINS];
+		for (int i = 0, j = a.size(); i < j; ++i) {
+			int ai = Arrays.binarySearch(aBins, a.getFloat(i));
+			int ti = Arrays.binarySearch(tBins, t.getFloat(i));
+			++counts[ai < 0 ? -ai-1: ai][ti < 0 ? -ti-1: ti];
+		}
+
+		// TODO for testing only
+		System.out.println("***** BOTH NUMERIC *****");
+		System.out.print(Arrays.toString(tBins));
+		System.out.println("\t< target values/ attribute values v");
+		int i = -1;
+		for (int[] ia : counts)
+			System.out.println(Arrays.toString(ia) + "\t" + aBins[++i]);
+		System.out.println("***** END BOTH NUMERIC *****");
 	}
 
 	@Override
