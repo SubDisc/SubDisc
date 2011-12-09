@@ -243,12 +243,12 @@ public class SubgroupDiscovery extends MiningAlgorithm
 					if (aNewSubgroup.getCoverage() >= aMinimumCoverage)
 					{
 						float aQuality = evaluateCandidate(aNewSubgroup);
-						aNewSubgroup.setMeasureValue(aQuality);
 						if (aQuality > aMax)
 						{
 							aMax = aQuality;
-							aBest = aSplit;
+							aNewSubgroup.setMeasureValue(aQuality);
 							aBestSubgroup = aNewSubgroup;
+							aBest = aSplit;
 						}
 					}
 				}

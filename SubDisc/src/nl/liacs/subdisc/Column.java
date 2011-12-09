@@ -394,21 +394,7 @@ public class Column implements XMLNodeInterface
 			}
 			default: break;
 		}
-/*
-		if (isBinaryType())
-		{
-			aResult.add("0");
-			aResult.add("1");
-			return aResult;
-		}
 
-		for (int i=0; i<itsSize; i++)
-			if (isNominalType())
-				aResult.add(itsNominals.get(i));
-			else if (isNumericType())
-				aResult.add(Float.toString(itsFloats.get(i)));
-			//TODO ordinal?
-*/
 		return aResult;
 	}
 
@@ -990,7 +976,7 @@ public class Column implements XMLNodeInterface
 							}
 						}
 
-						return new TreeSet<Float>(itsFloats).size();
+						return new HashSet<Float>(itsFloats).size();
 					}
 					case BINARY :
 					{

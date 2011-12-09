@@ -83,7 +83,6 @@ public class HistogramWindow extends JFrame implements ActionListener
 		add(new JScrollPane(itsChartPanel), BorderLayout.CENTER);
 	}
 
-	// TODO getPlotAxis: use integer, not floating point, for y-axis
 	private void updateChartPanel()
 	{
 		final CategoryDataset aDataset = createDataset();

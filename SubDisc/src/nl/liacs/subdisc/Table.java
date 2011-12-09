@@ -544,8 +544,7 @@ public class Table
 	// TODO check for out of range
 	public TreeSet<String> getDomain(int theColumn)
 	{
-		Column aColumn = itsColumns.get(theColumn);
-		return aColumn.getDomain();
+		return itsColumns.get(theColumn).getDomain();
 	}
 
 	public float[] getSplitPoints(int theColumn, BitSet theSubset, int theNrSplits)
