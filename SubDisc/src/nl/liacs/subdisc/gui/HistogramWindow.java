@@ -6,6 +6,7 @@ import java.util.*;
 import java.util.Map.*;
 
 import javax.swing.*;
+import javax.swing.event.*;
 
 import nl.liacs.subdisc.*;
 
@@ -18,7 +19,7 @@ import org.jfree.chart.title.*;
 import org.jfree.data.category.*;
 import org.jfree.ui.*;
 
-public class HistogramWindow extends JFrame implements ActionListener
+public class HistogramWindow extends JFrame implements ActionListener, ChangeListener
 {
 	private static final long serialVersionUID = 1L;
 	// do not show legend when target has many values
@@ -38,8 +39,8 @@ public class HistogramWindow extends JFrame implements ActionListener
 	private Map<?, Integer> itsTMap;
 
 	// TODO use configurable sliders for Numeric Attribute/Target
-	private JSlider itsABins = new JSlider(JSlider.HORIZONTAL, MIN_NR_BINS, MAX_NR_BINS, DEFAULT_NR_BINS);
-	private JSlider itsTBins = new JSlider(JSlider.HORIZONTAL, MIN_NR_BINS, MAX_NR_BINS, DEFAULT_NR_BINS);
+	private JSlider itsAttributeBinsSlider;
+	private JSlider itsTargetBinsSlider;
 
 	// TODO should be tied to parent window
 	// TODO supply TargetColumn if set in MainWindow
@@ -81,7 +82,8 @@ public class HistogramWindow extends JFrame implements ActionListener
 		itsAttributeColumnsBox = GUI.buildComboBox(sa, this);
 		itsAttributeColumnsBox.setPreferredSize(GUI.BUTTON_DEFAULT_SIZE);
 		anAttributePanel.add(itsAttributeColumnsBox);
-		anAttributePanel.add(itsABins);
+		setupSlider(itsAttributeBinsSlider = new JSlider());
+		anAttributePanel.add(itsAttributeBinsSlider);
 		aSouthPanel.add(anAttributePanel);
 
 		// TARGET PANEL (duplicate code)
@@ -91,10 +93,11 @@ public class HistogramWindow extends JFrame implements ActionListener
 		itsTargetColumnsBox = GUI.buildComboBox(sa, this);
 		itsTargetColumnsBox.setPreferredSize(GUI.BUTTON_DEFAULT_SIZE);
 		aTargetPanel.add(itsTargetColumnsBox);
-		aTargetPanel.add(itsTBins);
+		setupSlider(itsTargetBinsSlider = new JSlider());
+		aTargetPanel.add(itsTargetBinsSlider);
 		aSouthPanel.add(aTargetPanel);
 
-		// MISC PANEL (duplicate code)
+		// MISC PANEL
 		JPanel aMiscPanel = new JPanel();
 		aMiscPanel.setLayout(new BoxLayout(aMiscPanel, BoxLayout.Y_AXIS));
 		aMiscPanel.setBorder(GUI.buildBorder("Other"));
@@ -116,6 +119,26 @@ public class HistogramWindow extends JFrame implements ActionListener
 		add(new JScrollPane(itsChartPanel), BorderLayout.CENTER);
 	}
 
+	private void setupSlider(JSlider theSlider) {
+		theSlider.setMinimum(MIN_NR_BINS);
+		theSlider.setMaximum(MAX_NR_BINS);
+		theSlider.setValue(DEFAULT_NR_BINS);
+		//theSlider.setMajorTickSpacing(8);
+		theSlider.setMinorTickSpacing(1);
+		theSlider.setPaintTicks(true);
+		theSlider.setPaintLabels(true);
+		// labels (within range of MIN-MAX)
+		Hashtable<Integer, JLabel> aTable = new Hashtable<Integer, JLabel>();
+		aTable.put(new Integer(1), new JLabel(String.valueOf(1)));
+		aTable.put(new Integer(8), new JLabel(String.valueOf(8)));
+		aTable.put(new Integer(16), new JLabel(String.valueOf(16)));
+		aTable.put(new Integer(24), new JLabel(String.valueOf(24)));
+		aTable.put(new Integer(32), new JLabel(String.valueOf(32)));
+		theSlider.setLabelTable(aTable);
+		theSlider.setFont(GUI.DEFAULT_BUTTON_FONT);
+		theSlider.addChangeListener(this);
+	}
+
 	@Override
 	public void actionPerformed(ActionEvent theEvent)
 	{
@@ -125,6 +148,14 @@ public class HistogramWindow extends JFrame implements ActionListener
 			update(itsAttributeColumnsBox.equals(theEvent.getSource()));
 		else if ("close".equals(anEvent))
 			dispose();
+	}
+
+	@Override
+	public void stateChanged(ChangeEvent theEvent)
+	{
+		if (!((JSlider)theEvent.getSource()).getValueIsAdjusting())
+			// assumes only 2 sources exist (Attribute and Target slider)
+			update(theEvent.getSource() == itsAttributeBinsSlider);
 	}
 
 	// start point for updating
@@ -143,20 +174,31 @@ public class HistogramWindow extends JFrame implements ActionListener
 		AttributeType aType = aColumn.getType();
 
 		if (isAttributeChanged) {
+			itsAttributeBinsSlider.setEnabled(aType == AttributeType.NUMERIC);
+
 			switch (aType) {
 				case NOMINAL : itsAMap = new LinkedHashMap<String, Integer>(); break;
 				case ORDINAL : break;	// no use case yet
 				case NUMERIC : itsAMap = new LinkedHashMap<Float, Integer>(); break;
-				case BINARY : itsAMap = new LinkedHashMap<String, Integer>(); break;
-				default : System.out.println("--- ERROR --- HistogramWindow.updateMap()"); return;
+				case BINARY : itsAMap = new LinkedHashMap<Boolean, Integer>(); break;
+				default : {
+					unknownAttributeType("updateMap", aType);
+					return;
+				}
 			}
 		}
 		else {
+			itsTargetBinsSlider.setEnabled(aType == AttributeType.NUMERIC);
+
 			switch (aType) {
 				case NOMINAL : itsTMap = new LinkedHashMap<String, Integer>(); break;
 				case ORDINAL : break;	// no use case yet
 				case NUMERIC : itsTMap = new LinkedHashMap<Float, Integer>(); break;
-				case BINARY : itsTMap = new LinkedHashMap<String, Integer>(); break;
+				case BINARY : itsTMap = new LinkedHashMap<Boolean, Integer>(); break;
+				default : {
+					unknownAttributeType("updateMap", aType);
+					return;
+				}
 			}
 		}
 
@@ -178,13 +220,19 @@ public class HistogramWindow extends JFrame implements ActionListener
 				break;
 			}
 			case NUMERIC : {
-				safariiHisto(aColumn, aMap, DEFAULT_NR_BINS);
+				safariiHisto(aColumn, aMap);
 				break;
 			}
 			case BINARY : {
-				aMap.put("0", 0);
-				aMap.put("1", 1);
+				// NOTE map is not used for count-mapping in createDataset
+				// but order [0, 1] is still essential
+				aMap.put(Boolean.FALSE, 0);
+				aMap.put(Boolean.TRUE, 1);
 				break;
+			}
+			default : {
+				unknownAttributeType("updateMap", aType);
+				return;
 			}
 		}
 	}
@@ -244,57 +292,135 @@ public class HistogramWindow extends JFrame implements ActionListener
 		DefaultCategoryDataset dataset = new DefaultCategoryDataset();
 		Column a = itsTable.getColumn(itsAttributeColumnsBox.getSelectedIndex());
 		Column t = itsTable.getColumn(itsTargetColumnsBox.getSelectedIndex());
-		boolean aNumeric = a.isNumericType(); // || a.isOrdinalType();
-		boolean tNumeric = t.isNumericType(); // || t.isOrdinalType();
 		int[][] counts = new int[itsAMap.size()][itsTMap.size()];
 
-		// 4 use cases
-		// XXX NOTE !NUMERIC may mean NOMINAL, ORDINAL or BINARY for now
-		// uses getString() instead of getNominal() (which crashes on BINARY)
-		// even though that continuously, uselessly, switches on AttributeType
-		if (!aNumeric && !tNumeric)
-		{
-			// loops over all values in Attribute Column
-			// for each possible Attribute value the corresponding Target value
-			// count is incremented
-			// uses aMap and tMap for fast indexing (O(1))
-			// (compared to linear array/ TreeSet lookups (O(n)))
-			for (int i = 0, j = a.size(); i < j; ++i)
-				++counts[itsAMap.get(a.getString(i))][itsTMap.get(t.getString(i))];
-		}
-		else if (!aNumeric && tNumeric)
-		{
-			Float[] tBins = itsTMap.keySet().toArray(new Float[0]);
+		// 16 possibilities (NOMINAL, ORDINAL, NUMERIC, BINARY)^2
+		switch (a.getType()) {
+			// Attribute NOMINAL
+			case NOMINAL : {
+				switch (t.getType()) {
+					case NOMINAL : {
+						// loops over all values in Attribute Column
+						// for each possible Attribute value the corresponding Target value
+						// count is incremented
+						// uses aMap and tMap for fast indexing (O(1))
+						// (compared to linear array/ TreeSet lookups (O(n)))
+						for (int i = 0, j = a.size(); i < j; ++i)
+							++counts[itsAMap.get(a.getNominal(i))][itsTMap.get(t.getNominal(i))];
+						break;
+					}
+					case ORDINAL : {
+						unknownAttributeType("createDataset", t.getType());
+						break;
+					}
+					case NUMERIC : {
+						Float[] tBins = itsTMap.keySet().toArray(new Float[0]);
 
-			for (int i = 0, j = a.size(); i < j; ++i) {
-				// binarySearch could be more efficient
-				int ti = Arrays.binarySearch(tBins, t.getFloat(i));
-				++counts[itsAMap.get(a.getString(i))][ti < 0 ? -ti-1: ti];
+						for (int i = 0, j = a.size(); i < j; ++i) {
+							// binarySearch could be more efficient
+							int ti = Arrays.binarySearch(tBins, t.getFloat(i));
+							++counts[itsAMap.get(a.getNominal(i))][ti < 0 ? -ti-1: ti];
+						}
+						break;
+					}
+					case BINARY : {
+						for (int i = 0, j = a.size(); i < j; ++i)
+							// NOTE order of Boolean map should be [0, 1]
+							++counts[itsAMap.get(a.getNominal(i))][t.getBinary(i) ? 1 : 0];
+						break;
+					}
+					default : {
+						unknownAttributeType("createDataset", t.getType());
+						break;
+					}
+				}
+				break;
+			}
+			// Attribute ORDINAL
+			case ORDINAL : {
+				unknownAttributeType("createDataset", a.getType());
+				break;
+			}
+			// Attribute NUMERIC
+			case NUMERIC : {
+				Float[] aBins = itsAMap.keySet().toArray(new Float[0]);
+
+				switch (t.getType()) {
+					case NOMINAL : {
+						for (int i = 0, j = a.size(); i < j; ++i) {
+							int ai = Arrays.binarySearch(aBins, a.getFloat(i));
+							++counts[ai < 0 ? -ai-1: ai][itsTMap.get(t.getNominal(i))];
+						}
+						break;
+					}
+					case ORDINAL : {
+						unknownAttributeType("createDataset", t.getType());
+						break;
+					}
+					case NUMERIC : {
+						Float[] tBins = itsTMap.keySet().toArray(new Float[0]);
+
+						for (int i = 0, j = a.size(); i < j; ++i) {
+							int ai = Arrays.binarySearch(aBins, a.getFloat(i));
+							int ti = Arrays.binarySearch(tBins, t.getFloat(i));
+							++counts[ai < 0 ? -ai-1: ai][ti < 0 ? -ti-1: ti];
+						}
+						break;
+					}
+					case BINARY : {
+						for (int i = 0, j = a.size(); i < j; ++i) {
+							int ai = Arrays.binarySearch(aBins, a.getFloat(i));
+							++counts[ai < 0 ? -ai-1: ai][t.getBinary(i) ? 1 : 0];
+						}
+						break;
+					}
+					default : {
+						unknownAttributeType("createDataset", t.getType());
+						break;
+					}
+				}
+				break;
+			}
+			// Attribute BINARY
+			case BINARY : {
+				switch (t.getType()) {
+					case NOMINAL : {
+						for (int i = 0, j = a.size(); i < j; ++i)
+							++counts[a.getBinary(i) ? 1 : 0][itsTMap.get(t.getNominal(i))];
+						break;
+					}
+					case ORDINAL : {
+						unknownAttributeType("createDataset", t.getType());
+						break;
+					}
+					case NUMERIC : {
+						Float[] tBins = itsTMap.keySet().toArray(new Float[0]);
+
+						for (int i = 0, j = a.size(); i < j; ++i) {
+							// binarySearch could be more efficient
+							int ti = Arrays.binarySearch(tBins, t.getFloat(i));
+							++counts[a.getBinary(i) ? 1 : 0][ti < 0 ? -ti-1: ti];
+						}
+						break;
+					}
+					case BINARY : {
+						for (int i = 0, j = a.size(); i < j; ++i)
+							++counts[a.getBinary(i) ? 1 : 0][t.getBinary(i) ? 1 : 0];
+						break;
+					}
+					default : {
+						unknownAttributeType("createDataset", t.getType());
+						break;
+					}
+				}
+				break;
+			}
+			// Attribute unknown
+			default : {
+				unknownAttributeType("createDataset", a.getType());
+				break;
 			}
 		}
-		else if (aNumeric && !tNumeric)
-		{
-			Float[] aBins = itsAMap.keySet().toArray(new Float[0]);
-
-			for (int i = 0, j = a.size(); i < j; ++i) {
-				int ai = Arrays.binarySearch(aBins, a.getFloat(i));
-				++counts[ai < 0 ? -ai-1: ai][itsTMap.get(t.getString(i))];
-			}
-		}
-		else if (aNumeric && tNumeric)
-		{
-			Float[] aBins = itsAMap.keySet().toArray(new Float[0]);
-			Float[] tBins = itsTMap.keySet().toArray(new Float[0]);
-
-			for (int i = 0, j = a.size(); i < j; ++i) {
-				int ai = Arrays.binarySearch(aBins, a.getFloat(i));
-				int ti = Arrays.binarySearch(tBins, t.getFloat(i));
-				++counts[ai < 0 ? -ai-1: ai][ti < 0 ? -ti-1: ti];
-			}
-		}
-		else
-			// used ORDINAL?
-			System.out.println("--- ERROR --- HistogramWindow.createDataset()");
 
 		for (Entry<?, Integer> ae : itsAMap.entrySet())
 			for (Entry<?, Integer> te : itsTMap.entrySet())
@@ -303,9 +429,20 @@ public class HistogramWindow extends JFrame implements ActionListener
 		return dataset;
 	}
 
+	private void unknownAttributeType(String theSource, AttributeType theType) {
+		Log.logCommandLine(String.format("%s.%s(), unknown AttributeType: '%s'",
+											getClass().getSimpleName(),
+											theSource,
+											theType));
+	}
+
 	// NOTE not save for overflow/ NaN
-	private void safariiHisto(Column theColumn, Map<? super Object, Integer> theMap, int theNrBins)
+	private void safariiHisto(Column theColumn, Map<? super Object, Integer> theMap)
 	{
+		// assumes only 2 maps exist (Attribute and Target map)
+		int aNrBins = (theMap == itsAMap ? itsAttributeBinsSlider.getValue() :
+											itsTargetBinsSlider.getValue());
+
 		float aSum = 0.0f;
 		for (int i = 0, j = theColumn.size(); i < j; ++i)
 			aSum += theColumn.getFloat(i);
@@ -324,11 +461,11 @@ public class HistogramWindow extends JFrame implements ActionListener
 			aStop++;
 		}
 		float aValue = aStart;
-		float aStep = theNrBins > 2 ? (aStop - aStart)/(theNrBins-2) : 0.0f;
+		float aStep = aNrBins > 2 ? (aStop - aStart)/(aNrBins-2) : 0.0f;
 
-		for(int i = 0; i < theNrBins-1; ++i)
+		for(int i = 0; i < aNrBins-1; ++i)
 			theMap.put(aValue + i*aStep, i);
-		theMap.put(Float.POSITIVE_INFINITY, theNrBins-1);
+		theMap.put(Float.POSITIVE_INFINITY, aNrBins-1);
 	}
 
 	/*
