@@ -103,6 +103,7 @@ public class HistogramWindow extends JFrame implements ActionListener, ChangeLis
 		aMiscPanel.setBorder(GUI.buildBorder("Other"));
 		//aMiscPanel.add(GUI.buildButton("Save", "save", this));
 		//aMiscPanel.add(GUI.buildButton("Print", "print", this));
+		aMiscPanel.add(GUI.buildButton("CrossTable", "crosstable", this));
 		JButton aButton = GUI.buildButton("Close", "close", this);
 		GUI.focusComponent(aButton, this);
 		aMiscPanel.add(aButton);
@@ -146,6 +147,8 @@ public class HistogramWindow extends JFrame implements ActionListener, ChangeLis
 
 		if ("comboBoxChanged".equals(anEvent))
 			update(itsAttributeColumnsBox.equals(theEvent.getSource()));
+		if ("crosstable".equals(anEvent))
+			new CrossTableWindow(((CategoryPlot)itsChartPanel.getChart().getPlot()).getDataset());
 		else if ("close".equals(anEvent))
 			dispose();
 	}
