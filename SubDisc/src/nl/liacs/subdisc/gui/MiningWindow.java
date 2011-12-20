@@ -1847,7 +1847,7 @@ public class MiningWindow extends JFrame
 
 	// search strategy - numeric operators
 	private String getNumericOperators() { return (String) jComboBoxNumericOperators.getSelectedItem(); }
-	private void setNumericOperators(String theOperators) { jComboBoxNumericOperators.setSelectedItem(theOperators); }
+	//private void setNumericOperators(String theOperators) { jComboBoxNumericOperators.setSelectedItem(theOperators); }
 
 	// search strategy - numeric strategy
 	private String getNumericStrategy() { return (String) jComboBoxSearchStrategyNumeric.getSelectedItem(); }

@@ -67,6 +67,15 @@ public class GUI
 		return aButton;
 	}
 
+	public static JRadioButton buildRadioButton(String theName, String theActionCommand, ActionListener theClass)
+	{
+		JRadioButton aRadioButton = new JRadioButton();
+		aRadioButton.setText(theName);
+		aRadioButton.setActionCommand(theActionCommand);
+		aRadioButton.addActionListener(theClass);
+		return aRadioButton;
+	}
+	
 	public static JCheckBox buildCheckBox(String theName, ItemListener theClass)
 	{
 		JCheckBox aCheckBox = new JCheckBox(theName);

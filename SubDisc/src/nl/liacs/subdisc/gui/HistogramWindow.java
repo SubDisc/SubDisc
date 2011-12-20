@@ -37,6 +37,8 @@ public class HistogramWindow extends JFrame implements ActionListener, ChangeLis
 	private JComboBox itsTargetColumnsBox;
 	private Map<?, Integer> itsAMap;
 	private Map<?, Integer> itsTMap;
+	private JButton itsAttributePlotButton;
+	private JButton itsTargetPlotButton;
 
 	// TODO use configurable sliders for Numeric Attribute/Target
 	private JSlider itsAttributeBinsSlider;
@@ -84,6 +86,8 @@ public class HistogramWindow extends JFrame implements ActionListener, ChangeLis
 		anAttributePanel.add(itsAttributeColumnsBox);
 		setupSlider(itsAttributeBinsSlider = new JSlider());
 		anAttributePanel.add(itsAttributeBinsSlider);
+		itsAttributePlotButton = GUI.buildButton("Plot Attribute", 'A', "attributeplot", this);
+		anAttributePanel.add(itsAttributePlotButton);
 		aSouthPanel.add(anAttributePanel);
 
 		// TARGET PANEL (duplicate code)
@@ -95,6 +99,8 @@ public class HistogramWindow extends JFrame implements ActionListener, ChangeLis
 		aTargetPanel.add(itsTargetColumnsBox);
 		setupSlider(itsTargetBinsSlider = new JSlider());
 		aTargetPanel.add(itsTargetBinsSlider);
+		itsTargetPlotButton = GUI.buildButton("Plot Target", 'T', "targetplot", this);
+		aTargetPanel.add(itsTargetPlotButton);
 		aSouthPanel.add(aTargetPanel);
 
 		// MISC PANEL
@@ -103,8 +109,9 @@ public class HistogramWindow extends JFrame implements ActionListener, ChangeLis
 		aMiscPanel.setBorder(GUI.buildBorder("Other"));
 		//aMiscPanel.add(GUI.buildButton("Save", "save", this));
 		//aMiscPanel.add(GUI.buildButton("Print", "print", this));
-		aMiscPanel.add(GUI.buildButton("CrossTable", "crosstable", this));
-		JButton aButton = GUI.buildButton("Close", "close", this);
+		aMiscPanel.add(GUI.buildButton("CrossTable", 'R', "crosstable", this));
+
+		JButton aButton = GUI.buildButton("Close", 'C', "close", this);
 		GUI.focusComponent(aButton, this);
 		aMiscPanel.add(aButton);
 		aSouthPanel.add(aMiscPanel);
@@ -147,8 +154,12 @@ public class HistogramWindow extends JFrame implements ActionListener, ChangeLis
 
 		if ("comboBoxChanged".equals(anEvent))
 			update(itsAttributeColumnsBox.equals(theEvent.getSource()));
-		if ("crosstable".equals(anEvent))
+		else if ("crosstable".equals(anEvent))
 			new CrossTableWindow(((CategoryPlot)itsChartPanel.getChart().getPlot()).getDataset());
+		else if ("attributeplot".equals(anEvent))
+			new PlotWindow(itsTable.getColumn(itsAttributeColumnsBox.getSelectedIndex()));
+		else if ("targetplot".equals(anEvent))
+			new PlotWindow(itsTable.getColumn(itsTargetColumnsBox.getSelectedIndex()));
 		else if ("close".equals(anEvent))
 			dispose();
 	}
@@ -178,6 +189,7 @@ public class HistogramWindow extends JFrame implements ActionListener, ChangeLis
 
 		if (isAttributeChanged) {
 			itsAttributeBinsSlider.setEnabled(aType == AttributeType.NUMERIC);
+			itsAttributePlotButton.setEnabled(aType == AttributeType.NUMERIC);
 
 			switch (aType) {
 				case NOMINAL : itsAMap = new LinkedHashMap<String, Integer>(); break;
@@ -192,6 +204,7 @@ public class HistogramWindow extends JFrame implements ActionListener, ChangeLis
 		}
 		else {
 			itsTargetBinsSlider.setEnabled(aType == AttributeType.NUMERIC);
+			itsTargetPlotButton.setEnabled(aType == AttributeType.NUMERIC);
 
 			switch (aType) {
 				case NOMINAL : itsTMap = new LinkedHashMap<String, Integer>(); break;

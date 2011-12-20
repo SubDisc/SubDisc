@@ -61,7 +61,7 @@ public class ModelWindow extends JFrame implements ActionListener
 		if (theRM != null)
 		{
 			StandardXYItemRenderer aLineRenderer = new StandardXYItemRenderer(StandardXYItemRenderer.LINES);
-			aDataSet = new XYSeriesCollection();
+			aDataSet = new XYSeriesCollection(); // ?
 			aSeries = new XYSeries("line");
 			aSeries.add(theXColumn.getMin(), theRM.getBaseFunctionValue(theXColumn.getMin()));
 			aSeries.add(theXColumn.getMax(), theRM.getBaseFunctionValue(theXColumn.getMax()));
