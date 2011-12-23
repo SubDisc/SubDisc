@@ -228,8 +228,8 @@ public class MiningWindow extends JFrame
 		jMenuFile = new JMenu();
 		jMenuItemOpenFile = new JMenuItem();
 		jMenuItemBrowse = new JMenuItem();
+		jMenuItemExplore = new JMenuItem();
 		jMenuItemMetaData = new JMenuItem();
-//		jMenuItemDataExplorer = new JMenuItem();	// TODO add when implemented
 		jMenuItemSubgroupDiscovery = new JMenuItem();
 		jMenuItemCreateAutoRunFile = new JMenuItem();
 		jMenuItemAddToAutoRunFile = new JMenuItem();
@@ -243,7 +243,6 @@ public class MiningWindow extends JFrame
 
 		jMenuAbout = new JMenu();
 		jMenuItemAboutCortana = new JMenuItem();
-		jMenuItemHistoTest = new JMenuItem();
 		jMenuGui = new JMenu();
 
 		jPanelCenter = new JPanel();	// 4 panels
@@ -276,6 +275,7 @@ public class MiningWindow extends JFrame
 		// dataset - buttons
 		jPanelRuleTargetButtons = new JPanel();
 		jButtonBrowse = new JButton();
+		jButtonExplore = new JButton();
 		jButtonMetaData = new JButton();
 		jButtonSwapRandomize = new JButton();
 		jButtonCrossValidate = new JButton();
@@ -361,7 +361,7 @@ public class MiningWindow extends JFrame
 		jMenuFile.add(jMenuItemOpenFile);
 
 		jMenuItemBrowse.setFont(GUI.DEFAULT_TEXT_FONT);
-		jMenuItemBrowse.setText("Browse");
+		jMenuItemBrowse.setText("Browse...");
 		jMenuItemBrowse.setMnemonic('B');
 		jMenuItemBrowse.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_B, InputEvent.CTRL_MASK));
 		jMenuItemBrowse.addActionListener(new ActionListener() {
@@ -370,6 +370,17 @@ public class MiningWindow extends JFrame
 			}
 		});
 		jMenuFile.add(jMenuItemBrowse);
+
+		jMenuItemExplore.setFont(GUI.DEFAULT_TEXT_FONT);
+		jMenuItemExplore.setText("Explore...");
+		jMenuItemExplore.setMnemonic('E');
+		jMenuItemExplore.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_E, InputEvent.CTRL_MASK));
+		jMenuItemExplore.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				exploreActionPerformed();
+			}
+		});
+		jMenuFile.add(jMenuItemExplore);
 
 		jMenuItemMetaData.setFont(GUI.DEFAULT_TEXT_FONT);
 		jMenuItemMetaData.setText("Meta Data...");
@@ -381,20 +392,6 @@ public class MiningWindow extends JFrame
 			}
 		});
 		jMenuFile.add(jMenuItemMetaData);
-
-/*
-		// TODO add when implemented
-		jMenuItemDataExplorer.setFont(GUI.DEFAULT_TEXT_FONT);
-		jMenuItemDataExplorer.setText("Data Explorer");
-		jMenuItemDataExplorer.setMnemonic('E');
-		jMenuItemDataExplorer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_E, InputEvent.CTRL_MASK));
-		jMenuItemDataExplorer.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent evt) {
-				dataExplorerActionPerformed();
-			}
-		});
-		jMenuFile.add(jMenuItemDataExplorer);
-*/
 
 		jMenuFile.addSeparator();
 
@@ -516,20 +513,8 @@ public class MiningWindow extends JFrame
 		jMenuAbout.add(jMenuItemAboutCortana);
 
 		jMiningWindowMenuBar.add(jMenuAbout);
-
-		jMenuItemHistoTest.setFont(GUI.DEFAULT_TEXT_FONT);
-		jMenuItemHistoTest.setText("HistoTest");
-		jMenuItemHistoTest.setMnemonic('H');
-		jMenuItemHistoTest.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_H, InputEvent.CTRL_MASK));
-		jMenuItemHistoTest.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent evt) {
-				jMenuItemHistoTestActionPerformed();
-			}
-		});
-		jMenuAbout.add(jMenuItemHistoTest);
-
 /*
-		// TODO for testing only
+		// XXX uncomment for GUI testing only
 		jMenuGui.setFont(GUI.DEFAULT_TEXT_FONT);
 		jMenuGui.setText("Gui");
 		jMenuGui.setMnemonic('G');
@@ -622,24 +607,27 @@ public class MiningWindow extends JFrame
 
 		jPanelRuleTarget.add(jPanelRuleTargetFieldsEnabled, BorderLayout.EAST);
 
-//		jPanelRuleTargetButtons.setLayout(new BoxLayout(jPanelRuleTargetButtons , BoxLayout.X_AXIS));
-/*
-		// TODO add when implemented
-		jButtonDataExplorer = initButton("Data Explorer", 'D');
-		jButtonDataExplorer.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent evt) {
-				dataExplorerActionPerformed();
-			}
-		});
-		jPanelRuleTargetButtons.add(jButtonDataExplorer);
-*/
-		jButtonBrowse = initButton("Browse", 'B');
+		//jPanelRuleTargetButtons.setLayout(new BoxLayout(jPanelRuleTargetButtons , BoxLayout.X_AXIS));
+		final JPanel aButtonPanel = new JPanel();
+		aButtonPanel.setLayout(new GridLayout(2, 2));
+
+		jButtonBrowse = initButton("Browse...", 'B');
 		jButtonBrowse.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
 				browseActionPerformed();
 			}
 		});
-		jPanelRuleTargetButtons.add(jButtonBrowse);
+		//jPanelRuleTargetButtons.add(jButtonBrowse);
+		aButtonPanel.add(jButtonBrowse);
+
+		jButtonExplore = initButton("Explore...", 'E');
+		jButtonExplore.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				exploreActionPerformed();
+			}
+		});
+		//jPanelRuleTargetButtons.add(jButtonExplore);
+		aButtonPanel.add(jButtonExplore);
 
 		jButtonMetaData = initButton("Meta Data...", 'M');
 		jButtonMetaData.addActionListener(new ActionListener() {
@@ -647,7 +635,10 @@ public class MiningWindow extends JFrame
 				metaDataActionPerformed();
 			}
 		});
-		jPanelRuleTargetButtons.add(jButtonMetaData);
+		//jPanelRuleTargetButtons.add(jButtonMetaData);
+		aButtonPanel.add(jButtonMetaData);
+
+		jPanelRuleTargetButtons.add(aButtonPanel);
 
 		jPanelRuleTarget.add(jPanelRuleTargetButtons, BorderLayout.SOUTH);
 		jPanelCenter.add(jPanelRuleTarget);	// MM
@@ -949,8 +940,8 @@ public class MiningWindow extends JFrame
 	{
 		AbstractButton[] anAbstractButtonArray =
 			new AbstractButton[] {	jMenuItemBrowse,
+									jMenuItemExplore,
 									jMenuItemMetaData,
-									//jMenuItemDataExplorer,	//TODO add when implemented
 									jMenuItemSubgroupDiscovery,
 									jMenuItemCreateAutoRunFile,
 									jMenuItemAddToAutoRunFile,
@@ -958,10 +949,10 @@ public class MiningWindow extends JFrame
 									jMenuItemAddGoEnrichmentSource,
 									jMenuItemAddCustomEnrichmentSource,
 									jButtonBrowse,
+									jButtonExplore,
 									jButtonMetaData,
 									jButtonSwapRandomize,
 									jButtonCrossValidate,
-									//jButtonDataExplorer,	//TODO add when implemented
 									jButtonSubgroupDiscovery,
 									jButtonThreshold,
 									jButtonMultiTargets};
@@ -1102,16 +1093,16 @@ public class MiningWindow extends JFrame
 		});
 	}
 
-	// TODO not on EDT
-	private void dataExplorerActionPerformed()
+	//not on Event Dispatching Thread, may take a long time to load
+	private void exploreActionPerformed()
 	{
-		// TODO
-		// DataExplorerWindow aDataExplorerWindow = new
-		// DataExplorerWindow(itsDataModel);
-		// aDataExplorerWindow.setLocation(30, 150);
-		// aDataExplorerWindow.setTitle("Explore data model: " +
-		// itsDataModel.getName());
-		// aDataExplorerWindow.setVisible(true);
+		SwingUtilities.invokeLater(new Runnable()
+		{
+			public void run()
+			{
+				new HistogramWindow(itsTable);
+			}
+		});
 	}
 
 	//not on Event Dispatching Thread, may take a long time to load
@@ -1877,8 +1868,8 @@ public class MiningWindow extends JFrame
 	private JMenu jMenuFile;
 	private JMenuItem jMenuItemOpenFile;
 	private JMenuItem jMenuItemBrowse;
+	private JMenuItem jMenuItemExplore;
 	private JMenuItem jMenuItemMetaData;
-//	private JMenuItem jMenuItemDataExplorer;
 	private JMenuItem jMenuItemSubgroupDiscovery;
 	private JMenuItem jMenuItemCreateAutoRunFile;
 	private JMenuItem jMenuItemAddToAutoRunFile;
@@ -1890,15 +1881,14 @@ public class MiningWindow extends JFrame
 	private JMenuItem jMenuItemRemoveEnrichmentSource;
 	private JMenu jMenuAbout;
 	private JMenuItem jMenuItemAboutCortana;
-	private JMenuItem jMenuItemHistoTest;	// XXX for testing only
 	private JMenu jMenuGui;	// XXX for testing only
 	private JPanel jPanelSouth;
 	private JPanel jPanelMineButtons;
 	private JButton jButtonBrowse;
+	private JButton jButtonExplore;
 	private JButton jButtonMetaData;
 	private JButton jButtonSwapRandomize;
 	private JButton jButtonCrossValidate;
-//	private JButton jButtonDataExplorer;
 	private JButton jButtonSubgroupDiscovery;
 	private JButton jButtonThreshold;
 	private JPanel jPanelCenter;
@@ -1990,6 +1980,7 @@ public class MiningWindow extends JFrame
 		OPEN_FILE('O'),
 		OPEN_GENE_RANK('G'),
 		BROWSE('B'),
+		EXPLORE('E'),
 		META_DATA('M'),
 		DATA_EXPLORER('D'),
 		SUBGROUP_DISCOVERY('S'),
@@ -2014,7 +2005,7 @@ public class MiningWindow extends JFrame
 		return aJLable;
 	}
 
-	// TODO for testing only
+	// XXX for GUI testing only
 	private void initJMenuGui()
 	{
 		JRadioButtonMenuItem aLookAndFeel;
@@ -2049,12 +2040,5 @@ public class MiningWindow extends JFrame
 		catch (IllegalAccessException e) { e.printStackTrace(); }
 		catch (UnsupportedLookAndFeelException e) { e.printStackTrace(); }
 	}
-	// TODO end test
-
-	// TODO will be moved when finished
-	private void jMenuItemHistoTestActionPerformed()
-	{
-		// disabled when itsTable == null
-		new HistogramWindow(itsTable);
-	}
+	// XXX end GUI test
 }
