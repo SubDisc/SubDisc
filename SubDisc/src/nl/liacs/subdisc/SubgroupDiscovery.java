@@ -153,6 +153,14 @@ public class SubgroupDiscovery extends MiningAlgorithm
 			}
 		}
 		Log.logCommandLine("number of candidates: " + itsCandidateCount);
+		if (itsSearchParameters.getQualityMeasure() == QualityMeasure.COOKS_DISTANCE)
+		{
+			Log.logCommandLine("Bound seven fired " + itsBaseRM.getNrBoundSeven() + " times");
+			Log.logCommandLine("Bound six   fired " + itsBaseRM.getNrBoundSix() + " times");
+			Log.logCommandLine("Bound five  fired " + itsBaseRM.getNrBoundFive() + " times");
+			Log.logCommandLine("Bound four  fired " + itsBaseRM.getNrBoundFour() + " times");
+			Log.logCommandLine("Rank deficient models: " + itsBaseRM.getNrRankDef());
+		}
 		Log.logCommandLine("number of subgroups: " + getNumberOfSubgroups());
 
 

@@ -35,6 +35,13 @@ public class RegressionMeasure
 	private double itsSSquared;
 	private double[] itsRSquared;
 	private double[] itsT;
+	private double[] itsSVP;
+	
+	private int itsBoundSevenCount;
+	private int itsBoundSixCount;
+	private int itsBoundFiveCount;
+	private int itsBoundFourCount;
+	private int itsRankDefCount;
 
 	//make a base model from two columns
 	public RegressionMeasure(int theType, Column thePrimaryColumn, Column theSecondaryColumn)
@@ -108,6 +115,19 @@ public class RegressionMeasure
 				for (int i=itsSampleSize-2; i>=0; i--)
 					aT[i] += aT[i+1];
 				itsT = aT;
+				
+				//fill SVP array; this would be Cook's distance when removing only single points. Cf. Cook&Weisberg p.117, Cook1977a
+				double[] aSVP = new double[itsSampleSize];
+				for (int i=0; i<itsSampleSize; i++)
+					aSVP[i] = itsResidualMatrix.get(i,0)*itsResidualMatrix.get(i,0)/itsP * itsHatMatrix.get(i,i)/(1-itsHatMatrix.get(i,i));
+				itsSVP = aSVP;
+				
+				//initialize bounds
+				itsBoundSevenCount=0;
+				itsBoundSixCount=0;
+				itsBoundFiveCount=0;
+				itsBoundFourCount=0;
+				itsRankDefCount=0;
 			}
 		}
 	}
@@ -196,11 +216,23 @@ public class RegressionMeasure
 		BitSet aMembers = theNewSubgroup.getMembers();
 		int aSampleSize = aMembers.cardinality();
 		
+		//filter out rank deficient model that crash matrix multiplication library
+		if (aSampleSize<2)
+		{
+			itsRankDefCount++;
+			return Double.MIN_VALUE;
+		}
+		
+		//calculate the upper bound values. Before each bound, only the necessary computations are done.
 		double aT = itsT[aSampleSize];
 		double aRSquared = itsRSquared[aSampleSize];
 		
 		double aBoundSeven = computeBoundSeven(aSampleSize, aT, aRSquared);
-		Log.logCommandLine("Bound 7: " + aBoundSeven);
+		if (aBoundSeven>Double.MIN_VALUE)
+		{
+			Log.logCommandLine("                   Bound 7: " + aBoundSeven);
+			itsBoundSevenCount++;
+		}
 		
 		int[] anIndices = new int[aSampleSize];
 		int[] aRemovedIndices = new int[itsSampleSize-aSampleSize];
@@ -223,18 +255,44 @@ public class RegressionMeasure
 		Matrix aRemovedResiduals = itsResidualMatrix.getMatrix(aRemovedIndices,0,0);
 		double aSquaredResidualSum = squareSum(aRemovedResiduals);
 		double aBoundSix = computeBoundSix(aSampleSize, aT, aSquaredResidualSum);		
-		Log.logCommandLine("Bound 6: " + aBoundSix);
+		if (aBoundSix>Double.MIN_VALUE)
+		{
+			Log.logCommandLine("                   Bound 6: " + aBoundSix);
+			itsBoundSixCount++;
+		}
 		
 		Matrix aRemovedHatMatrix = itsHatMatrix.getMatrix(aRemovedIndices,aRemovedIndices);
 		double aRemovedTrace = aRemovedHatMatrix.trace();
 		double aBoundFive = computeBoundFive(aSampleSize, aRemovedTrace, aRSquared);
-		Log.logCommandLine("Bound 5: " + aBoundFive);
+		if (aBoundFive>Double.MIN_VALUE)
+		{
+			Log.logCommandLine("                   Bound 5: " + aBoundFive);
+			itsBoundFiveCount++;
+		}
 		
 		double aBoundFour = computeBoundFour(aSampleSize, aRemovedTrace, aSquaredResidualSum);
-		Log.logCommandLine("Bound 4: " + aBoundFour);
+		if (aBoundFour>Double.MIN_VALUE)
+		{
+			Log.logCommandLine("                   Bound 4: " + aBoundFour);
+			itsBoundFourCount++;
+		}
+		
+		//compute estimate based on projection of single influence values 
+		double anSVPDistance = computeSVPDistance(itsSampleSize-aSampleSize, aRemovedIndices);
+		Log.logCommandLine("                   SVP est: " + anSVPDistance);
 
-		//compute Cook's Distance
+		//start computing Cook's Distance
 		Matrix aNewDataMatrix = itsDataMatrix.getMatrix(anIndices,0,1);
+		
+		//filter out rank-deficient cases; these regressions cannot be computed, hence low quality
+		LUDecomposition itsDecomp = new LUDecomposition(aNewDataMatrix);
+		if (!itsDecomp.isNonsingular())
+		{
+			itsRankDefCount++;
+			return Double.MIN_VALUE;
+		}
+		
+		//make submatrices
 		double[][] anXValues = new double[aSampleSize][2];
 		for (int i=0; i<aSampleSize; i++)
 		{
@@ -247,10 +305,12 @@ public class RegressionMeasure
 		Matrix anXMatrix = new Matrix(anXValues);
 		Matrix aYMatrix = new Matrix(aYValues);
 		
+		//compute regression
 		Matrix aBetaHat = (anXMatrix.transpose().times(anXMatrix)).inverse().times(anXMatrix.transpose()).times(aYMatrix);
 		Matrix aHatMatrix = anXMatrix.times((anXMatrix.transpose().times(anXMatrix)).inverse()).times(anXMatrix.transpose());
 		Matrix aResidualMatrix = (Matrix.identity(aSampleSize,aSampleSize).minus(aHatMatrix)).times(aYMatrix);
 		
+		//compute Cook's distance
 		double aP = aBetaHat.getRowDimension();
 		double anSSquared = (aResidualMatrix.transpose().times(aResidualMatrix)).get(0,0)/((double) itsSampleSize-aP);
 		double[][] aParentValues = {{itsIntercept},{itsSlope}};
@@ -262,29 +322,37 @@ public class RegressionMeasure
 	private double computeBoundSeven(int theSampleSize, double theT, double theRSquared)
 	{
 		if (theT>=1)
-			return -1;
+			return Double.MIN_VALUE;
 		return theT/((1-theT)*(1-theT))*theRSquared/(itsP*itsSSquared);
 	}
 
 	private double computeBoundSix(int theSampleSize, double theT, double theSquaredResidualSum)
 	{
 		if (theT>=1)
-			return -1;
+			return Double.MIN_VALUE;
 		return theT/((1-theT)*(1-theT))*theSquaredResidualSum/(itsP*itsSSquared);
 	}
 
 	private double computeBoundFive(int theSampleSize, double theRemovedTrace, double theRSquared)
 	{
 		if (theRemovedTrace>=1)
-			return -1;
+			return Double.MIN_VALUE;
 		return theRemovedTrace/((1-theRemovedTrace)*(1-theRemovedTrace))*theRSquared/(itsP*itsSSquared);
 	}
 	
 	private double computeBoundFour(int theSampleSize, double theRemovedTrace, double theSquaredResidualSum)
 	{
 		if (theRemovedTrace>=1)
-			return -1;
+			return Double.MIN_VALUE;
 		return theRemovedTrace/((1-theRemovedTrace)*(1-theRemovedTrace))*theSquaredResidualSum/(itsP*itsSSquared);
+	}
+	
+	private double computeSVPDistance(int theNrRemoved, int[] theIndices)
+	{
+		double result = 0.0;
+		for (int i=0; i<theNrRemoved; i++)
+			result += itsSVP[theIndices[i]];
+		return result;
 	}
 	
 	private double squareSum(Matrix itsMatrix)
@@ -471,4 +539,10 @@ public class RegressionMeasure
 	{
 		return theX*itsSlope + itsIntercept;
 	}
+	
+	public int getNrBoundSeven() { return itsBoundSevenCount; }
+	public int getNrBoundSix() { return itsBoundSixCount; }
+	public int getNrBoundFive() { return itsBoundFiveCount; }
+	public int getNrBoundFour() { return itsBoundFourCount; }
+	public int getNrRankDef() { return itsRankDefCount; }
 }
