@@ -189,6 +189,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 	{
 		int anAttributeIndex = theRefinement.getCondition().getAttribute().getIndex();
 		int aMinimumCoverage = itsSearchParameters.getMinimumCoverage();
+		int anOldCoverage = theSubgroup.getCoverage();
 		float aQualityMeasureMinimum = itsSearchParameters.getQualityMeasureMinimum();
 
 		switch (itsSearchParameters.getNumericStrategy())
@@ -198,23 +199,8 @@ public class SubgroupDiscovery extends MiningAlgorithm
 				float[] aSplitPoints = itsTable.getUniqueNumericDomain(anAttributeIndex, theSubgroup.getMembers());
 				for (float aSplit : aSplitPoints)
 				{
-					String aConditionValue = Float.toString(aSplit);
-					Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(aConditionValue);
-					BitSet aMembers = itsTable.evaluate(aNewSubgroup.getConditions());
-					aNewSubgroup.setMembers(aMembers);
-					
-					int aNewCoverage = aNewSubgroup.getCoverage();
-					if (aNewCoverage >= aMinimumCoverage && aNewCoverage < theSubgroup.getCoverage())
-					{
-						Log.logCommandLine("candidate " + aNewSubgroup.getConditions() + " size: " + aNewSubgroup.getCoverage());
-						float aQuality = evaluateCandidate(aNewSubgroup);
-						aNewSubgroup.setMeasureValue(aQuality);
-						if (aQuality > aQualityMeasureMinimum)
-							itsResult.add(aNewSubgroup);
-						itsCandidateQueue.add(new Candidate(aNewSubgroup, aQuality));
-						Log.logCommandLine("  subgroup nr. " + itsCandidateCount + "; quality " + aNewSubgroup.getMeasureValue());
-					}
-					itsCandidateCount++;
+					Subgroup aNewSubgroup = makeNewSubgroup(Float.toString(aSplit), theRefinement);
+					checkAndLog(aNewSubgroup, aMinimumCoverage, anOldCoverage, aQualityMeasureMinimum);
 				}
 				break;
 			}
@@ -227,23 +213,8 @@ public class SubgroupDiscovery extends MiningAlgorithm
 				{
 					if (first || aSplitPoints[j] != aSplitPoints[j-1])
 					{
-						String aConditionValue = Float.toString(aSplitPoints[j]);
-						Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(aConditionValue);
-						BitSet aMembers = itsTable.evaluate(aNewSubgroup.getConditions());
-						aNewSubgroup.setMembers(aMembers);
-
-						int aNewCoverage = aNewSubgroup.getCoverage();
-						if (aNewCoverage >= aMinimumCoverage && aNewCoverage < itsMaximumCoverage  && aNewCoverage < theSubgroup.getCoverage())
-						{
-							Log.logCommandLine("candidate " + aNewSubgroup.getConditions() + " size: " + aNewSubgroup.getCoverage());
-							float aQuality = evaluateCandidate(aNewSubgroup);
-							aNewSubgroup.setMeasureValue(aQuality);
-							if (aQuality > aQualityMeasureMinimum)
-								itsResult.add(aNewSubgroup);
-							itsCandidateQueue.add(new Candidate(aNewSubgroup, aQuality));
-							Log.logCommandLine("  subgroup nr. " + itsCandidateCount + "; quality " + aNewSubgroup.getMeasureValue());
-						}
-						itsCandidateCount++;
+						Subgroup aNewSubgroup = makeNewSubgroup(Float.toString(aSplitPoints[j]), theRefinement);
+						checkAndLog(aNewSubgroup, aMinimumCoverage, anOldCoverage, aQualityMeasureMinimum);
 					}
 					first = false;
 				}
@@ -257,13 +228,10 @@ public class SubgroupDiscovery extends MiningAlgorithm
 				Subgroup aBestSubgroup = null;
 				for (float aSplit : aSplitPoints)
 				{
-					String aConditionValue = Float.toString(aSplit);
-					Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(aConditionValue);
-					BitSet aMembers = itsTable.evaluate(aNewSubgroup.getConditions());
-					aNewSubgroup.setMembers(aMembers);
+					Subgroup aNewSubgroup = makeNewSubgroup(Float.toString(aSplit), theRefinement);
 
 					int aNewCoverage = aNewSubgroup.getCoverage();
-					if (aNewCoverage >= aMinimumCoverage && aNewCoverage < theSubgroup.getCoverage())
+					if (aNewCoverage >= aMinimumCoverage && aNewCoverage < anOldCoverage)
 					{
 						float aQuality = evaluateCandidate(aNewSubgroup);
 						if (aQuality > aMax)
@@ -278,14 +246,9 @@ public class SubgroupDiscovery extends MiningAlgorithm
 
 				//add best
 				if (aBestSubgroup!=null) //at least one threshold found that has enough quality and coverage
-				{
-					Log.logCommandLine("candidate " + aBestSubgroup.getConditions() + " size: " + aBestSubgroup.getCoverage());
-					if (aMax > aQualityMeasureMinimum)
-						itsResult.add(aBestSubgroup);
-					itsCandidateQueue.add(new Candidate(aBestSubgroup, aMax));
-					Log.logCommandLine("  subgroup nr. " + itsCandidateCount + "; quality " + aMax);
-					itsCandidateCount++;
-				}
+					// unnecessarily re-evaluates result
+					checkAndLog(aBestSubgroup, aMinimumCoverage, anOldCoverage, aQualityMeasureMinimum);
+
 				break;
 			}
 		}
@@ -295,27 +258,53 @@ public class SubgroupDiscovery extends MiningAlgorithm
 	{
 		TreeSet<String> aDomain = itsTable.getDomain(theRefinement.getCondition().getAttribute().getIndex());
 		int aMinimumCoverage = itsSearchParameters.getMinimumCoverage();
+		int anOldCoverage = theSubgroup.getCoverage();
 		float aQualityMeasureMinimum = itsSearchParameters.getQualityMeasureMinimum();
 
 		for (String aConditionValue : aDomain)
 		{
-			Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(aConditionValue);
-			BitSet aMembers = itsTable.evaluate(aNewSubgroup.getConditions());
-			aNewSubgroup.setMembers(aMembers);
-
-			int aNewCoverage = aNewSubgroup.getCoverage();
-			if (aNewCoverage >= aMinimumCoverage && aNewCoverage < theSubgroup.getCoverage())
-			{
-				Log.logCommandLine("candidate " + aNewSubgroup.getConditions() + " size: " + aNewCoverage);
-				float aQuality = evaluateCandidate(aNewSubgroup);
-				aNewSubgroup.setMeasureValue(aQuality);
-				if (aQuality > aQualityMeasureMinimum)
-					itsResult.add(aNewSubgroup);
-				itsCandidateQueue.add(new Candidate(aNewSubgroup, aQuality));
-				Log.logCommandLine("  subgroup nr. " + itsCandidateCount + "; quality " + aNewSubgroup.getMeasureValue());
-			}
-			itsCandidateCount++;
+			Subgroup aNewSubgroup = makeNewSubgroup(aConditionValue, theRefinement);
+			checkAndLog(aNewSubgroup, aMinimumCoverage, anOldCoverage, aQualityMeasureMinimum);
 		}
+	}
+
+	private Subgroup makeNewSubgroup(String theConditionValue, Refinement theRefinement)
+	{
+		Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(theConditionValue);
+		BitSet aMembers = itsTable.evaluate(aNewSubgroup.getConditions());
+		aNewSubgroup.setMembers(aMembers);
+		return aNewSubgroup;
+	}
+
+	private void checkAndLog(Subgroup theSubgroup, int aMinimumCoverage, int theOldCoverage, float aQualityMeasureMinimum)
+	{
+		int aNewCoverage = theSubgroup.getCoverage();
+		if (aNewCoverage >= aMinimumCoverage && aNewCoverage < theOldCoverage)
+		{
+			float aQuality = evaluateCandidate(theSubgroup);
+			theSubgroup.setMeasureValue(aQuality);
+
+			if (aQuality > aQualityMeasureMinimum)
+				itsResult.add(theSubgroup);
+			itsCandidateQueue.add(new Candidate(theSubgroup, aQuality));
+			itsCandidateCount++;
+
+			logCandidateAddition(theSubgroup);
+		}
+	}
+
+	private void logCandidateAddition(Subgroup theSubgroup)
+	{
+		StringBuffer sb = new StringBuffer(200);
+		sb.append("candidate ");
+		sb.append(theSubgroup.getConditions());
+		sb.append(" size: ");
+		sb.append(theSubgroup.getCoverage());
+		Log.logCommandLine(sb.toString());
+
+		Log.logCommandLine(String.format("  subgroup nr. %d; quality %f",
+											itsCandidateCount,
+											theSubgroup.getMeasureValue()));
 	}
 
 	private float evaluateCandidate(Subgroup theNewSubgroup)
