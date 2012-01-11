@@ -316,7 +316,10 @@ public class RegressionMeasure
 		double[][] aParentValues = {{itsIntercept},{itsSlope}};
 		Matrix aParentBetaHat = new Matrix(aParentValues);
 		
-		return aBetaHat.minus(aParentBetaHat).transpose().times(anXMatrix.transpose()).times(anXMatrix).times(aBetaHat.minus(aParentBetaHat)).get(0,0)/(aP*anSSquared);
+		double aQuality = aBetaHat.minus(aParentBetaHat).transpose().times(anXMatrix.transpose()).times(anXMatrix).times(aBetaHat.minus(aParentBetaHat)).get(0,0)/(aP*anSSquared);
+		//N.B.: Temporary line for fetching Cook's experimental statistics
+		Log.logRefinement(""+aQuality+","+anSVPDistance+","+aSampleSize);
+		return aQuality;
 	}
 	
 	private double computeBoundSeven(int theSampleSize, double theT, double theRSquared)

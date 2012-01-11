@@ -67,6 +67,14 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		itsMaximumCoverage = itsTable.getNrRows();
 		itsQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), itsMaximumCoverage, 100); //TODO
 
+		//N.B.: Temporary lines for fetching Cook's experimental statistics
+		if (theSearchParameters.getQualityMeasure() == QualityMeasure.COOKS_DISTANCE)
+		{
+			Log.REFINEMENTLOG = true;
+			Log.openFileOutputStreams();
+			Log.logRefinement("Cook,SVP,SubgroupSize");
+		}
+		
 		TargetConcept aTC = itsSearchParameters.getTargetConcept();
 //		itsPrimaryColumn = itsTable.getColumn(aTC.getPrimaryTarget());
 //		itsSecondaryColumn = itsTable.getColumn(aTC.getSecondaryTarget());
@@ -171,6 +179,10 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		itsResult = itsResult.postProcess(itsSearchParameters.getSearchStrategy());
 
 		itsResult.setIDs(); //assign 1 to n to subgroups, for future reference in subsets
+		
+		//N.B.: Temporary lines for fetching Cook's experimental statistics		
+		if (itsSearchParameters.getQualityMeasure() == QualityMeasure.COOKS_DISTANCE)
+			Log.closeFileOutputStreams();
 	}
 
 	private void evaluateNumericRefinements(long theBeginTime, Subgroup theSubgroup, Refinement theRefinement)
