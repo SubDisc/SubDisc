@@ -190,8 +190,9 @@ public class SubgroupDiscovery extends MiningAlgorithm
 					Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(aConditionValue);
 					BitSet aMembers = itsTable.evaluate(aNewSubgroup.getConditions());
 					aNewSubgroup.setMembers(aMembers);
-
-					if (aNewSubgroup.getCoverage() >= aMinimumCoverage)
+					
+					int aNewCoverage = aNewSubgroup.getCoverage();
+					if (aNewCoverage >= aMinimumCoverage && aNewCoverage < theSubgroup.getCoverage())
 					{
 						Log.logCommandLine("candidate " + aNewSubgroup.getConditions() + " size: " + aNewSubgroup.getCoverage());
 						float aQuality = evaluateCandidate(aNewSubgroup);
@@ -219,7 +220,8 @@ public class SubgroupDiscovery extends MiningAlgorithm
 						BitSet aMembers = itsTable.evaluate(aNewSubgroup.getConditions());
 						aNewSubgroup.setMembers(aMembers);
 
-						if (aNewSubgroup.getCoverage() >= aMinimumCoverage && aNewSubgroup.getCoverage()< itsMaximumCoverage)
+						int aNewCoverage = aNewSubgroup.getCoverage();
+						if (aNewCoverage >= aMinimumCoverage && aNewCoverage < itsMaximumCoverage  && aNewCoverage < theSubgroup.getCoverage())
 						{
 							Log.logCommandLine("candidate " + aNewSubgroup.getConditions() + " size: " + aNewSubgroup.getCoverage());
 							float aQuality = evaluateCandidate(aNewSubgroup);
@@ -248,7 +250,8 @@ public class SubgroupDiscovery extends MiningAlgorithm
 					BitSet aMembers = itsTable.evaluate(aNewSubgroup.getConditions());
 					aNewSubgroup.setMembers(aMembers);
 
-					if (aNewSubgroup.getCoverage() >= aMinimumCoverage)
+					int aNewCoverage = aNewSubgroup.getCoverage();
+					if (aNewCoverage >= aMinimumCoverage && aNewCoverage < theSubgroup.getCoverage())
 					{
 						float aQuality = evaluateCandidate(aNewSubgroup);
 						if (aQuality > aMax)
@@ -288,9 +291,10 @@ public class SubgroupDiscovery extends MiningAlgorithm
 			BitSet aMembers = itsTable.evaluate(aNewSubgroup.getConditions());
 			aNewSubgroup.setMembers(aMembers);
 
-			if (aNewSubgroup.getCoverage() >= aMinimumCoverage)
+			int aNewCoverage = aNewSubgroup.getCoverage();
+			if (aNewCoverage >= aMinimumCoverage && aNewCoverage < theSubgroup.getCoverage())
 			{
-				Log.logCommandLine("candidate " + aNewSubgroup.getConditions() + " size: " + aNewSubgroup.getCoverage());
+				Log.logCommandLine("candidate " + aNewSubgroup.getConditions() + " size: " + aNewCoverage);
 				float aQuality = evaluateCandidate(aNewSubgroup);
 				aNewSubgroup.setMeasureValue(aQuality);
 				if (aQuality > aQualityMeasureMinimum)
