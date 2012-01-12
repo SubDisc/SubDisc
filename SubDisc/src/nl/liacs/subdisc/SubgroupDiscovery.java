@@ -287,10 +287,10 @@ public class SubgroupDiscovery extends MiningAlgorithm
 			if (aQuality > aQualityMeasureMinimum)
 				itsResult.add(theSubgroup);
 			itsCandidateQueue.add(new Candidate(theSubgroup, aQuality));
-			itsCandidateCount++;
 
 			logCandidateAddition(theSubgroup);
 		}
+		++itsCandidateCount;
 	}
 
 	private void logCandidateAddition(Subgroup theSubgroup)
@@ -302,9 +302,9 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		sb.append(theSubgroup.getCoverage());
 		Log.logCommandLine(sb.toString());
 
-		Log.logCommandLine(String.format("  subgroup nr. %d; quality %f",
+		Log.logCommandLine(String.format("  subgroup nr. %d; quality %s",
 											itsCandidateCount,
-											theSubgroup.getMeasureValue()));
+											Double.toString(theSubgroup.getMeasureValue())));
 	}
 
 	private float evaluateCandidate(Subgroup theNewSubgroup)
