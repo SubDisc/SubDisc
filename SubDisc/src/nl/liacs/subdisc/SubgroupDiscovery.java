@@ -1,6 +1,8 @@
 package nl.liacs.subdisc;
 
 import java.util.*;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.*;
 
 public class SubgroupDiscovery extends MiningAlgorithm
 {
@@ -9,7 +11,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 	private final QualityMeasure itsQualityMeasure;
 	private SubgroupSet itsResult;
 	private CandidateQueue itsCandidateQueue;
-	private int itsCandidateCount;
+	private AtomicInteger itsCandidateCount;
 
 	//target concept type-specific information, including base models
 	private BitSet itsBinaryTarget;		//SINGLE_NOMINAL
@@ -46,7 +48,6 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		itsTable = theTable;
 		itsMaximumCoverage = itsTable.getNrRows();
 		TargetConcept aTC = itsSearchParameters.getTargetConcept();
-//		itsNumericTarget = itsTable.getColumn(aTC.getPrimaryTarget());
 		itsNumericTarget = aTC.getPrimaryTarget();
 		NumericDomain aDomain = new NumericDomain(itsNumericTarget);
 
@@ -76,8 +77,6 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		}
 		
 		TargetConcept aTC = itsSearchParameters.getTargetConcept();
-//		itsPrimaryColumn = itsTable.getColumn(aTC.getPrimaryTarget());
-//		itsSecondaryColumn = itsTable.getColumn(aTC.getSecondaryTarget());
 		itsPrimaryColumn = aTC.getPrimaryTarget();
 		itsSecondaryColumn = aTC.getSecondaryTarget();
 		if (isRegression)
@@ -129,7 +128,6 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		aStart.setMembers(aBitSet);
 
 		itsCandidateQueue = new CandidateQueue(itsSearchParameters, new Candidate(aStart, 0.0f));
-		itsCandidateCount = 0;
 
 		int aSearchDepth = itsSearchParameters.getSearchDepth();
 
@@ -154,13 +152,13 @@ public class SubgroupDiscovery extends MiningAlgorithm
 					Refinement aRefinement = aRefinementList.get(i);
 					// if refinement is (num_attr = value) then treat it as nominal
 					if (aRefinement.getCondition().getAttribute().isNumericType() && aRefinement.getCondition().getOperator() != Condition.EQUALS)
-						evaluateNumericRefinements(theBeginTime, aSubgroup, aRefinement);
+						evaluateNumericRefinements(aSubgroup, aRefinement);
 					else
-						evaluateNominalBinaryRefinements(theBeginTime, aSubgroup, aRefinement);
+						evaluateNominalBinaryRefinements(aSubgroup, aRefinement);
 				}
 			}
 		}
-		Log.logCommandLine("number of candidates: " + itsCandidateCount);
+		Log.logCommandLine("number of candidates: " + itsCandidateCount.get());
 		if (itsSearchParameters.getQualityMeasure() == QualityMeasure.COOKS_DISTANCE)
 		{
 			Log.logCommandLine("Bound seven fired " + itsBaseRM.getNrBoundSeven() + " times");
@@ -185,7 +183,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 			Log.closeFileOutputStreams();
 	}
 
-	private void evaluateNumericRefinements(long theBeginTime, Subgroup theSubgroup, Refinement theRefinement)
+	private void evaluateNumericRefinements(Subgroup theSubgroup, Refinement theRefinement)
 	{
 		int anAttributeIndex = theRefinement.getCondition().getAttribute().getIndex();
 		int aMinimumCoverage = itsSearchParameters.getMinimumCoverage();
@@ -254,7 +252,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		}
 	}
 
-	private void evaluateNominalBinaryRefinements(long theBeginTime, Subgroup theSubgroup, Refinement theRefinement)
+	private void evaluateNominalBinaryRefinements(Subgroup theSubgroup, Refinement theRefinement)
 	{
 		TreeSet<String> aDomain = itsTable.getDomain(theRefinement.getCondition().getAttribute().getIndex());
 		int aMinimumCoverage = itsSearchParameters.getMinimumCoverage();
@@ -276,6 +274,15 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		return aNewSubgroup;
 	}
 
+	/*
+	 * Access to itsResult is synchronized, as many threads may try to add
+	 * results concurrently.
+	 * 
+	 * Access to itsCandidateQueue is synchronized, as many threads may try
+	 * to add candidates concurrently.
+	 * 
+	 * itsCandidateCount is Atomic (synchronized by nature).
+	 */
 	private void checkAndLog(Subgroup theSubgroup, int aMinimumCoverage, int theOldCoverage, float aQualityMeasureMinimum)
 	{
 		int aNewCoverage = theSubgroup.getCoverage();
@@ -285,12 +292,14 @@ public class SubgroupDiscovery extends MiningAlgorithm
 			theSubgroup.setMeasureValue(aQuality);
 
 			if (aQuality > aQualityMeasureMinimum)
-				itsResult.add(theSubgroup);
-			itsCandidateQueue.add(new Candidate(theSubgroup, aQuality));
+			{
+				synchronized (itsResult) { itsResult.add(theSubgroup); }
+			}
+			synchronized (itsCandidateQueue) { itsCandidateQueue.add(new Candidate(theSubgroup, aQuality)); };
 
 			logCandidateAddition(theSubgroup);
 		}
-		++itsCandidateCount;
+		itsCandidateCount.getAndIncrement();
 	}
 
 	private void logCandidateAddition(Subgroup theSubgroup)
@@ -303,7 +312,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		Log.logCommandLine(sb.toString());
 
 		Log.logCommandLine(String.format("  subgroup nr. %d; quality %s",
-											itsCandidateCount,
+											itsCandidateCount.get(),
 											Double.toString(theSubgroup.getMeasureValue())));
 	}
 
@@ -428,4 +437,153 @@ public class SubgroupDiscovery extends MiningAlgorithm
 	public BitSet getBinaryTarget() { return (BitSet)itsBinaryTarget.clone(); }
 	public QualityMeasure getQualityMeasure() { return itsQualityMeasure; }
 	public SearchParameters getSearchParameters() { return itsSearchParameters; }
+
+
+	/*
+	 * TEST TEST TEST TEST TEST TEST TEST TEST TEST TEST TEST TEST TEST
+	 * 
+	 * same as public void mine(long theBeginTime)
+	 * but allows nrThreads to be set
+	 * use theNrThreads = 0 to run old mine(theBeginTime)
+	 */
+	public void mine(long theBeginTime, int theNrThreads)
+	{
+		if (theNrThreads == 0)
+		{
+			mine(theBeginTime);
+			return;
+		}
+
+		//make subgroup to start with, containing all elements
+		Subgroup aStart = new Subgroup(0.0, itsMaximumCoverage, 0, itsResult);
+		BitSet aBitSet = new BitSet(itsMaximumCoverage);
+		aBitSet.set(0,itsMaximumCoverage);
+		aStart.setMembers(aBitSet);
+
+		itsCandidateQueue = new CandidateQueue(itsSearchParameters, new Candidate(aStart, 0.0f));
+
+		int aSearchDepth = itsSearchParameters.getSearchDepth();
+
+		long theEndTime = theBeginTime + (((long) itsSearchParameters.getMaximumTime()) * 60 * 1000);
+		if (theEndTime <= theBeginTime)
+			theEndTime = Long.MAX_VALUE;
+
+		/*
+		 * essential multi-thread setup
+		 * uses semaphores so only nrThreads can run at the same time
+		 * AND ExecutorService can only start new Test after old one
+		 * completes, resulting in a more stable itsCandidateQueue
+		 */
+		ExecutorService es = Executors.newFixedThreadPool(theNrThreads);
+		Semaphore s = new Semaphore(theNrThreads);
+		// hack to populate Queue for the first time
+		// however if after populating (theNrCandidates < theNrThreads)
+		// while loop below will still/ might? break prematurely
+		// TODO
+		try { s.acquire(); }
+		catch (InterruptedException e) { e.printStackTrace(); }
+		es.execute(new Test(itsCandidateQueue.removeFirst(), aSearchDepth, theEndTime, s));
+		// wait for this Thread to fully populate itsCandidateQueue
+		while (s.availablePermits() != theNrThreads) {};
+
+		while (System.currentTimeMillis() <= theEndTime)
+		{
+			// wait until a Thread becomes available
+			try { s.acquire(); }
+			catch (InterruptedException e) { e.printStackTrace(); }
+
+			Candidate aCandidate;
+			synchronized (itsCandidateQueue) {
+				// abort if
+				//   1 this is the only Thread still running AND
+				//   2 itsCandidateQueue.size() == 0
+				// else others may be populating it
+				if (!(itsCandidateQueue.size() > 0))
+				{
+					if (s.availablePermits() == theNrThreads-1)
+						break;
+					else
+					{
+						s.release();
+						continue;
+					}
+				}
+				aCandidate = itsCandidateQueue.removeFirst(); // take off first Candidate from Queue
+			}
+			es.execute(new Test(aCandidate, aSearchDepth, theEndTime, s));
+		}
+		es.shutdown();
+		// wait for last active threads to complete
+		while(!es.isTerminated()) {};
+
+		Log.logCommandLine("number of candidates: " + itsCandidateCount.get());
+		if (itsSearchParameters.getQualityMeasure() == QualityMeasure.COOKS_DISTANCE)
+		{
+			Log.logCommandLine("Bound seven fired " + itsBaseRM.getNrBoundSeven() + " times");
+			Log.logCommandLine("Bound six   fired " + itsBaseRM.getNrBoundSix() + " times");
+			Log.logCommandLine("Bound five  fired " + itsBaseRM.getNrBoundFive() + " times");
+			Log.logCommandLine("Bound four  fired " + itsBaseRM.getNrBoundFour() + " times");
+			Log.logCommandLine("Rank deficient models: " + itsBaseRM.getNrRankDef());
+		}
+		Log.logCommandLine("number of subgroups: " + getNumberOfSubgroups());
+
+
+		if ((itsSearchParameters.getTargetType() == TargetType.MULTI_LABEL) && itsSearchParameters.getPostProcessingDoAutoRun())
+			postprocess();
+
+		//now just for cover-based beam search post selection
+		itsResult = itsResult.postProcess(itsSearchParameters.getSearchStrategy());
+
+		itsResult.setIDs(); //assign 1 to n to subgroups, for future reference in subsets
+		
+		//N.B.: Temporary lines for fetching Cook's experimental statistics		
+		if (itsSearchParameters.getQualityMeasure() == QualityMeasure.COOKS_DISTANCE)
+			Log.closeFileOutputStreams();
+	}
+
+	/*
+	 * Essential Runnable, code copied from old mine().
+	 * After Test is done, semaphore is release, so ExecutorService can
+	 * start a new Test.
+	 */
+	private class Test implements Runnable
+	{
+		private final Candidate itsCandidate;
+		private final int itsSearchDepth;
+		private final long itsEndTime;
+		private final Semaphore itsSemaphore;
+
+		public Test(Candidate theCandidate, int theSearchDepth, long theEndTime, Semaphore theSemaphore)
+		{
+			itsCandidate = theCandidate;
+			itsSearchDepth= theSearchDepth;
+			itsEndTime = theEndTime;
+			itsSemaphore = theSemaphore;
+		}
+
+		@Override
+		public void run()
+		{
+			Subgroup aSubgroup = itsCandidate.getSubgroup();
+
+			if (aSubgroup.getDepth() < itsSearchDepth)
+			{
+				RefinementList aRefinementList = new RefinementList(aSubgroup, itsTable, itsSearchParameters);
+
+				for (int i = 0, j = aRefinementList.size(); i < j; i++)
+				{
+					if (System.currentTimeMillis() > itsEndTime)
+						break;
+
+					Refinement aRefinement = aRefinementList.get(i);
+					// if refinement is (num_attr = value) then treat it as nominal
+					if (aRefinement.getCondition().getAttribute().isNumericType() && aRefinement.getCondition().getOperator() != Condition.EQUALS)
+						evaluateNumericRefinements(aSubgroup, aRefinement);
+					else
+						evaluateNominalBinaryRefinements(aSubgroup, aRefinement);
+				}
+			}
+			itsSemaphore.release();
+		}
+	}
 }

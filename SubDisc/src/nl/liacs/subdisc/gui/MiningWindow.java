@@ -1389,7 +1389,9 @@ public class MiningWindow extends JFrame
 			}
 			default : return; // TODO should never get here, throw warning
 		}
-		aSubgroupDiscovery.mine(System.currentTimeMillis());
+		aSubgroupDiscovery.mine(System.currentTimeMillis(), 0);
+		// if 2nd argument to above mine() is 0, you effectively run:
+		//aSubgroupDiscovery.mine(System.currentTimeMillis());
 
 		long anEnd = System.currentTimeMillis();
 		if (itsSearchParameters.getMaximumTime() > 0.0f)
