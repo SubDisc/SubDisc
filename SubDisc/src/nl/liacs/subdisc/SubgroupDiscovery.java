@@ -11,7 +11,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 	private final QualityMeasure itsQualityMeasure;
 	private SubgroupSet itsResult;
 	private CandidateQueue itsCandidateQueue;
-	private AtomicInteger itsCandidateCount;
+	private AtomicInteger itsCandidateCount= new AtomicInteger(0);
 
 	//target concept type-specific information, including base models
 	private BitSet itsBinaryTarget;		//SINGLE_NOMINAL
