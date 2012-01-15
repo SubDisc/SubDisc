@@ -448,7 +448,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 	 */
 	public void mine(long theBeginTime, int theNrThreads)
 	{
-		if (theNrThreads == 0)
+		if (theNrThreads <= 0)
 		{
 			mine(theBeginTime);
 			return;

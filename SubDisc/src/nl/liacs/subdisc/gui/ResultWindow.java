@@ -45,8 +45,11 @@ public class ResultWindow extends JFrame implements ActionListener
 			itsQualityMeasure = theSubgroupDiscovery.getQualityMeasure();
 //			itsDAGView = theDAGView;
 			itsBinaryTable = theBinaryTable;
-			itsFold = theFold; // only used in MULTI_LABEL setting for now
-			itsBitSet = theBitSet; // only used in MULTI_LABEL setting for now
+
+			// only used in MULTI_LABEL setting for now
+			// if theFold == 0, itsBitSet is never used
+			itsFold = theFold;
+			itsBitSet = theBitSet;
 
 			itsResultTableModel = new ResultTableModel(itsSubgroupSet);
 			itsSubgroupTable = new JTable(itsResultTableModel);
@@ -161,7 +164,6 @@ public class ResultWindow extends JFrame implements ActionListener
 
 		jButtonFold = GUI.buildButton("Fold members", 'F', "fold", this);
 		aSubgroupPanel.add(jButtonFold);
-//		jButtonFold.setVisible(itsFold != 0);
 
 		jButtonSave = GUI.buildButton("Save", 'S', "save", this);
 		aSubgroupPanel.add(jButtonSave);

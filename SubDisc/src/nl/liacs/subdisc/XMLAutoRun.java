@@ -149,8 +149,9 @@ public class XMLAutoRun
 
 		File aFile = null;
 		boolean showWindows = false;
+		int aNrThreads = 0;
 
-		if (args.length == 1 || args.length == 2)
+		if (args.length == 1 || args.length == 2 || args.length == 3)
 		{
 			if (!args[0].endsWith(".xml"))
 				showHelp();
@@ -159,25 +160,27 @@ public class XMLAutoRun
 
 			if (args.length == 2)
 				showWindows = AttributeType.isValidBinaryTrueValue(args[1]);
-	
-			runAllFromFile(aFile, showWindows);
+
+			if (args.length == 3)
+				try { aNrThreads = Integer.parseInt(args[2]); }
+				catch (NumberFormatException e) { showHelp(); }
+
+			runAllFromFile(aFile, showWindows, aNrThreads);
 			return true;
 		}
 		else
 			return false;
 	}
 
-	private static void runAllFromFile(File theFile, boolean showWindows)
+	private static void runAllFromFile(File theFile, boolean showWindows, int theNrThreads)
 	{
 		NodeList allExperiments = XMLDocument.parseXMLFile(theFile).getLastChild().getChildNodes();
 
 		for (int i = 0, j = allExperiments.getLength(); i < j; ++i)
-			runSubgroupDiscovery(allExperiments.item(i), theFile, showWindows);
+			runSubgroupDiscovery(allExperiments.item(i), theFile, showWindows, theNrThreads);
 	}
 
-	// TODO for safety/ consistency runSubgroupDiscovery() should be merged
-	// with Miningwindow.runSubgroupDiscovery()
-	private static void runSubgroupDiscovery(Node theExperimentNode, File theFile, boolean showWindows)
+	private static void runSubgroupDiscovery(Node theExperimentNode, File theFile, boolean showWindows, int theNrThreads)
 	{
 		NodeList aSettings = theExperimentNode.getChildNodes();
 		Table aTable = new Table(aSettings.item(2), theFile.getParent() == null ? "." : theFile.getParent());
@@ -185,97 +188,11 @@ public class XMLAutoRun
 		SearchParameters aSearchParameters = new SearchParameters(aSettings.item(1));
 		aSearchParameters.setTargetConcept(new TargetConcept(aSettings.item(0), aTable));
 
-		TargetType aTargetType = aSearchParameters.getTargetType();
-		SubgroupDiscovery aSubgroupDiscovery;
-
-		//TODO other types not implemented yet
-		if (!TargetType.isImplemented(aTargetType))
-			return;
-
-		MiningWindow.echoMiningStart();
 		long aBegin = System.currentTimeMillis();
-
-		switch(aTargetType)
-		{
-			case SINGLE_NOMINAL :
-			{
-				TargetConcept aTargetConcept = aSearchParameters.getTargetConcept();
-				//recompute this number, as we may be dealing with cross-validation here, and hence a smaller number
-				int itsPositiveCount = aTable.countValues(aTable.getIndex(aTargetConcept.getPrimaryTarget().getName()), aTargetConcept.getTargetValue());
-				Log.logCommandLine("positive count: " + itsPositiveCount);
-				aSubgroupDiscovery = new SubgroupDiscovery(aSearchParameters, aTable, itsPositiveCount);
-				break;
-			}
-
-			case SINGLE_NUMERIC:
-			{
-				TargetConcept aTargetConcept = aSearchParameters.getTargetConcept();
-				//recompute this number, as we may be dealing with cross-validation here, and hence a different value
-				float itsTargetAverage = aTable.getAverage(aTable.getIndex(aTargetConcept.getPrimaryTarget().getName()));
-				Log.logCommandLine("average: " + itsTargetAverage);
-				aSubgroupDiscovery = new SubgroupDiscovery(aSearchParameters, aTable, itsTargetAverage);
-				break;
-			}
-			case MULTI_LABEL :
-			{
-				aSubgroupDiscovery = new SubgroupDiscovery(aSearchParameters, aTable);
-				break;
-			}
-			case DOUBLE_REGRESSION :
-			{
-				aSubgroupDiscovery = new SubgroupDiscovery(aSearchParameters, aTable, true);
-				break;
-			}
-			case DOUBLE_CORRELATION :
-			{
-				aSubgroupDiscovery = new SubgroupDiscovery(aSearchParameters, aTable, false);
-				break;
-			}
-			default :
-			{
-				Log.logCommandLine("XMLAutoRun Unknown TargetType: "+ aTargetType);
-				return;
-			}
-		}
-		aSubgroupDiscovery.mine(System.currentTimeMillis());
-		long anEnd = System.currentTimeMillis();
-		if (anEnd > aBegin + (long)(aSearchParameters.getMaximumTime()*60*1000))
-		{
-			String aMessage = "Mining process ended prematurely due to time limit.";
-			if (showWindows)
-				JOptionPane.showMessageDialog(null,
-								aMessage,
-								"Time Limit",
-								JOptionPane.INFORMATION_MESSAGE);
-			else
-				Log.logCommandLine(aMessage);
-		}
-
-		MiningWindow.echoMiningEnd(anEnd - aBegin, aSubgroupDiscovery.getNumberOfSubgroups());
+		SubgroupDiscovery aSubgroupDiscovery =
+			MiningWindow.runSubgroupDiscovery(aTable, 0, null, aSearchParameters, showWindows, theNrThreads);
 		// always save result TODO search parameters based filename
 		save(aSubgroupDiscovery.getResult(), (theFile.getAbsolutePath().replace(".xml", ("_"+ aBegin + ".txt"))));
-
-		// following is only needed if windows will be shown
-		if (showWindows)
-		{
-			// ignore cross-validate
-			BitSet aBitSet = new BitSet(aTable.getNrRows());
-			aBitSet.set(0, aTable.getNrRows());
-			switch (aTargetType)
-			{
-				case MULTI_LABEL :
-				{
-					BinaryTable aBinaryTable = new BinaryTable(aTable, aSearchParameters.getTargetConcept().getMultiTargets());
-					new ResultWindow(aTable, aSubgroupDiscovery, aBinaryTable, 0, aBitSet);
-					break;
-				}
-				default :
-				{
-					new ResultWindow(aTable, aSubgroupDiscovery, null, 0, aBitSet);
-					break;
-				}
-			}
-		}
 	}
 
 	public static void save(SubgroupSet theSubgroupSet, String theFileName)
@@ -334,13 +251,16 @@ public class XMLAutoRun
 	private static void showHelp()
 	{
 		Log.logCommandLine("");
-		Log.logCommandLine("Usage: SubDisc /path/to/file.xml [showWindows]");
+		Log.logCommandLine("Usage: java -jar cortana.jar /path/to/file.xml [showWindows] [nrThreads]");
 		Log.logCommandLine("");
 		Log.logCommandLine("filepath can be relative");
 		Log.logCommandLine("filename must end with '.xml'");
 		Log.logCommandLine("optional showWindows:");
 		Log.logCommandLine("'true' to show result window");
 		Log.logCommandLine("'false' to suppress all GUI elements (default)");
+		Log.logCommandLine("optional nrThreads:");
+		Log.logCommandLine("positive integer indicating the number of threads to use");
+		Log.logCommandLine("default is 1");
 		System.exit(0);
 	}
 }

@@ -1333,11 +1333,101 @@ public class MiningWindow extends JFrame
 	/* MINING BUTTONS */
 	private void jButtonSubgroupDiscoveryActionPerformed()
 	{
-		BitSet aBitSet = new BitSet(itsTable.getNrRows());
-		aBitSet.set(0,itsTable.getNrRows());
-		runSubgroupDiscovery(itsTable, 0, aBitSet);
+		// takes care of setupSearchParameters();
+		runSubgroupDiscovery(itsTable, 0, null);
 	}
 
+	private void runSubgroupDiscovery(Table theTable, int theFold, BitSet theBitSet)
+	{
+		setupSearchParameters();
+		runSubgroupDiscovery(theTable, theFold, theBitSet, itsSearchParameters, true, 0);
+	}
+
+	// public, but does not perform ANY sanity checks
+	public static SubgroupDiscovery runSubgroupDiscovery(Table theTable, int theFold, BitSet theBitSet, SearchParameters theSearchParameters, boolean showWindows, int theNrThreads)
+	{
+		TargetType aTargetType = theSearchParameters.getTargetConcept().getTargetType();
+		//TODO other types not implemented yet
+		if (!TargetType.isImplemented(aTargetType))
+			return null;
+
+		SubgroupDiscovery aSubgroupDiscovery = null;
+		echoMiningStart();
+		long aBegin = System.currentTimeMillis();
+
+		switch(aTargetType)
+		{
+			case SINGLE_NOMINAL :
+			{
+				TargetConcept aTargetConcept = theSearchParameters.getTargetConcept();
+				//recompute this number, as we may be dealing with cross-validation here, and hence a smaller number
+				int itsPositiveCount = theTable.countValues(theTable.getIndex(aTargetConcept.getPrimaryTarget().getName()), aTargetConcept.getTargetValue());
+				Log.logCommandLine("positive count: " + itsPositiveCount);
+				aSubgroupDiscovery = new SubgroupDiscovery(theSearchParameters, theTable, itsPositiveCount);
+				break;
+			}
+
+			case SINGLE_NUMERIC:
+			{
+				TargetConcept aTargetConcept = theSearchParameters.getTargetConcept();
+				//recompute this number, as we may be dealing with cross-validation here, and hence a different value
+				float itsTargetAverage = theTable.getAverage(theTable.getIndex(aTargetConcept.getPrimaryTarget().getName()));
+				Log.logCommandLine("average: " + itsTargetAverage);
+				aSubgroupDiscovery = new SubgroupDiscovery(theSearchParameters, theTable, itsTargetAverage);
+				break;
+			}
+			case MULTI_LABEL :
+			{
+				aSubgroupDiscovery = new SubgroupDiscovery(theSearchParameters, theTable);
+				break;
+			}
+			case DOUBLE_REGRESSION :
+			{
+				aSubgroupDiscovery = new SubgroupDiscovery(theSearchParameters, theTable, true);
+				break;
+			}
+			case DOUBLE_CORRELATION :
+			{
+				aSubgroupDiscovery = new SubgroupDiscovery(theSearchParameters, theTable, false);
+				break;
+			}
+			default : return null; // TODO should never get here, throw warning
+		}
+		aSubgroupDiscovery.mine(System.currentTimeMillis(), theNrThreads);
+		// if 2nd argument to above mine() is 0, you effectively run:
+		//aSubgroupDiscovery.mine(System.currentTimeMillis());
+
+		long anEnd = System.currentTimeMillis();
+		float aMaxTime = theSearchParameters.getMaximumTime();
+
+		if (aMaxTime > 0.0f && (anEnd > (aBegin + aMaxTime*60*1000)))
+		{
+			String aMessage = "Mining process ended prematurely due to time limit.";
+			if (showWindows)
+				JOptionPane.showMessageDialog(null,
+								aMessage,
+								"Time Limit",
+								JOptionPane.INFORMATION_MESSAGE);
+			else
+				Log.logCommandLine(aMessage);
+		}
+
+		echoMiningEnd(anEnd - aBegin, aSubgroupDiscovery.getNumberOfSubgroups());
+
+		// following is only needed if windows will be shown
+		if (showWindows)
+		{
+			BinaryTable aBinaryTable = null;
+
+			if (aTargetType == TargetType.MULTI_LABEL)
+				aBinaryTable = new BinaryTable(theTable, theSearchParameters.getTargetConcept().getMultiTargets());
+
+			new ResultWindow(theTable, aSubgroupDiscovery, aBinaryTable, theFold, theBitSet);
+		}
+
+		return aSubgroupDiscovery;
+	}
+/*
 	private void runSubgroupDiscovery(Table aTable, int theFold, BitSet theBitSet)
 	{
 		setupSearchParameters();
@@ -1415,7 +1505,7 @@ public class MiningWindow extends JFrame
 			}
 		}
 	}
-
+*/
 	private void jButtonRandomQualitiesActionPerformed(String theMethod)
 	{
 		boolean aSubgroupAction;
