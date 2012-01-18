@@ -289,6 +289,7 @@ public class MiningWindow extends JFrame
 		jLabelEvaluationThreshold = new JLabel();
 		jLabelTargetAttribute = new JLabel();
 		jLabelMiscField = new JLabel(); // used for target value or secondary target
+		jLabelMultiRegressionTargets = new JLabel();
 		jLabelMultiTargets = new JLabel();
 		jLabelTargetInfo = new JLabel();
 		// target concept - fields
@@ -298,7 +299,9 @@ public class MiningWindow extends JFrame
 		jTextFieldQualityMeasureMinimum = new JTextField();
 		jComboBoxTargetAttribute = new JComboBox();
 		jComboBoxMiscField = new JComboBox(); // used for target value or secondary target
+		jButtonMultiRegressionTargets = new JButton();
 		jButtonMultiTargets = new JButton();	// shows jListMultiTargets
+		jListMultiRegressionTargets = new JList(new DefaultListModel());
 		jListMultiTargets = new JList(new DefaultListModel());	// permanently maintained
 		jLFieldTargetInfo = new JLabel();
 		jButtonBaseModel = new JButton();
@@ -649,7 +652,7 @@ public class MiningWindow extends JFrame
 				"Target Concept", 4, 2, new Font("Dialog", 1, 11)));
 		jPanelRuleEvaluation.setFont(new Font("Dialog", 1, 12));
 
-		jPanelEvaluationLabels.setLayout(new GridLayout(8, 1));
+		jPanelEvaluationLabels.setLayout(new GridLayout(9, 1));
 
 		jComboBoxTargetType.setPreferredSize(new Dimension(86, 22));
 		jComboBoxTargetType.setMinimumSize(new Dimension(86, 22));
@@ -676,6 +679,9 @@ public class MiningWindow extends JFrame
 		jLabelMiscField = initJLabel("");
 		jPanelEvaluationLabels.add(jLabelMiscField);
 
+		jLabelMultiRegressionTargets = initJLabel(" secondary/tertiary targets");
+		jPanelEvaluationLabels.add(jLabelMultiRegressionTargets);
+
 		jLabelMultiTargets = initJLabel(" targets and settings");
 		jPanelEvaluationLabels.add(jLabelMultiTargets);
 
@@ -684,7 +690,7 @@ public class MiningWindow extends JFrame
 		jPanelRuleEvaluation.add(jPanelEvaluationLabels);
 
 		// setting up - target concept - fields ================================
-		jPanelEvaluationFields.setLayout(new GridLayout(8, 1));
+		jPanelEvaluationFields.setLayout(new GridLayout(9, 1));
 
 		jComboBoxQualityMeasure.setPreferredSize(new Dimension(86, 22));
 		jComboBoxQualityMeasure.setMinimumSize(new Dimension(86, 22));
@@ -723,6 +729,14 @@ public class MiningWindow extends JFrame
 			}
 		});
 		jPanelEvaluationFields.add(jComboBoxMiscField);
+
+		jButtonMultiRegressionTargets = initButton("Secondary/Tertiary Targets", 'S');
+		jButtonMultiRegressionTargets.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				jButtonMultiRegressionTargetsActionPerformed();
+			}
+		});
+		jPanelEvaluationFields.add(jButtonMultiRegressionTargets);
 
 		jButtonMultiTargets = initButton("Targets and Settings", 'T');
 		jButtonMultiTargets.addActionListener(new ActionListener() {
@@ -955,7 +969,8 @@ public class MiningWindow extends JFrame
 									jButtonCrossValidate,
 									jButtonSubgroupDiscovery,
 									jButtonThreshold,
-									jButtonMultiTargets};
+									jButtonMultiTargets,
+									jButtonMultiRegressionTargets};
 		enableBaseModelButtonCheck();
 
 		for (AbstractButton a : anAbstractButtonArray)
@@ -1204,6 +1219,13 @@ public class MiningWindow extends JFrame
 			}
 		}
 
+		boolean hasMultiRegressionTargets = TargetType.hasMultiRegressionTargets(aTargetType);
+		jLabelMultiRegressionTargets.setVisible(hasMultiRegressionTargets);
+		jButtonMultiRegressionTargets.setVisible(hasMultiRegressionTargets);
+		// disable if not enough numeric attributes TODO should be itsTable.field
+		// jListMultiRegressionTargets is populated through initTargetAttributeItems above
+		jButtonMultiRegressionTargets.setEnabled(jListMultiRegressionTargets.getSelectedIndices().length > 1);
+		
 		// has secondary targets (JList)?
 		boolean hasMultiTargets = TargetType.hasMultiTargets(aTargetType);
 		jLabelMultiTargets.setVisible(hasMultiTargets);
@@ -1234,7 +1256,7 @@ public class MiningWindow extends JFrame
 		{
 			initTargetValueItems();
 		}
-
+		
 		//update misc field? Other types are updated through action listeners
 		if (aTargetType == TargetType.SINGLE_NUMERIC)
 			initTargetInfo();
@@ -1264,6 +1286,11 @@ public class MiningWindow extends JFrame
 			initTargetInfo();
 	}
 
+	private void jButtonMultiRegressionTargetsActionPerformed()
+	{
+		new MultiRegressionTargetsWindow(jListMultiRegressionTargets, itsSearchParameters, itsTable, this);
+	}
+	
 	private void jButtonMultiTargetsActionPerformed()
 	{
 		// is modal, blocks all input to other windows until closed
@@ -1752,6 +1779,25 @@ public class MiningWindow extends JFrame
 		if (aTargetType == TargetType.SINGLE_NOMINAL && isEmpty) // no target attribute selected
 			removeAllMiscFieldItems();
 
+		if (aTargetType == TargetType.DOUBLE_REGRESSION)
+		{
+			((DefaultListModel) jListMultiRegressionTargets.getModel()).clear();
+
+			int aCount = 0;
+			List<Column> aList = new ArrayList<Column>();
+			for (Column c: itsTable.getColumns())
+				if (c.isNumericType() && c.getIsEnabled())
+				{
+					addMultiRegressionTargetsItem(c.getName());
+					aList.add(c);
+					aCount++;
+				}
+			itsTargetConcept.setMultiRegressionTargets(aList);
+			jListMultiRegressionTargets.setSelectionInterval(0, jListMultiRegressionTargets.getModel().getSize() - 1);
+			jLFieldTargetInfo.setText(String.valueOf(aCount));
+			
+		}
+		
 		// multi targets =======================================
 		if (aTargetType == TargetType.MULTI_LABEL)
 		{
@@ -1907,6 +1953,9 @@ public class MiningWindow extends JFrame
 	private void addMultiTargetsItem(String theItem) { ((DefaultListModel) jListMultiTargets.getModel()).addElement(theItem); }
 	private void removeAllMultiTargetsItems() { ((DefaultListModel) jListMultiTargets.getModel()).clear(); }
 
+	// target type - jList secondary targets
+	private void addMultiRegressionTargetsItem(String theItem) { ((DefaultListModel) jListMultiRegressionTargets.getModel()).addElement(theItem); }
+	private void removeAllMultiRegressionTargetsItems() { ((DefaultListModel) jListMultiRegressionTargets.getModel()).clear(); }
 
 
 	private void setSearchDepthMaximum(String aValue) { jTextFieldSearchDepth.setText(aValue); }
@@ -1990,6 +2039,7 @@ public class MiningWindow extends JFrame
 	private JLabel jLabelTargetTable;
 	private JLabel jLabelTargetAttribute;
 	private JLabel jLabelMiscField;
+	private JLabel jLabelMultiRegressionTargets;
 	private JLabel jLabelMultiTargets;
 	private JLabel jLabelNrExamples;
 	private JLabel jLabelNrColumns;
@@ -2002,7 +2052,9 @@ public class MiningWindow extends JFrame
 	private JLabel jLFieldTargetTable;
 	private JComboBox jComboBoxTargetAttribute;
 	private JComboBox jComboBoxMiscField;
+	private JButton jButtonMultiRegressionTargets;
 	private JButton jButtonMultiTargets;
+	private JList jListMultiRegressionTargets;
 	private JList jListMultiTargets;
 	private JLabel jLFieldNrExamples;
 	private JLabel jLFieldNrColumns;

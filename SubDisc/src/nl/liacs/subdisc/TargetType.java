@@ -133,6 +133,26 @@ public enum TargetType implements EnumInterface
 	}
 
 	// used by MiningWindow.jComboBoxTargetAttributeActionPerformed()
+	public static boolean hasMultiRegressionTargets(TargetType theType)
+	{
+		switch (theType)
+		{
+			case SINGLE_NOMINAL					: return false;
+			case SINGLE_NUMERIC					: return false;
+			case SINGLE_ORDINAL					: return false;
+			case DOUBLE_REGRESSION				: return true;
+			case DOUBLE_CORRELATION				: return false;
+			case MULTI_LABEL					: return false;
+			case MULTI_BINARY_CLASSIFICATION	: return false;
+			default :
+			{
+				unknownTargetType("hasMultiTargets", theType.GUI_TEXT);
+				return false;
+			}
+		}
+	}
+
+	// used by MiningWindow.jComboBoxTargetAttributeActionPerformed()
 	public static boolean hasMiscField(TargetType theType)
 	{
 		switch (theType)

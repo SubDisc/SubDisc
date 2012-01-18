@@ -24,7 +24,11 @@ public class TargetConcept implements XMLNodeInterface
 	private String		itsTargetValue;
 //	private Attribute	itsSecondaryTarget;
 	private Column		itsSecondaryTarget;
+	private List<Column> itsMultiRegressionTargets;
 	private List<Column> itsMultiTargets;
+	// for double regression code:
+	private List<Column> itsSecondaryTargets;
+	private List<Column> itsTertiaryTargets;
 
 	public TargetConcept()
 	{
@@ -61,6 +65,16 @@ public class TargetConcept implements XMLNodeInterface
 						itsMultiTargets.add(theTable.getAttribute(s));
 				}
 			}
+			else if ("multi_regression_targets".equalsIgnoreCase(aNodeName))
+			{
+				if (!aSetting.getTextContent().isEmpty())
+				{
+					itsSecondaryTargets = new ArrayList<Column>();
+					itsTertiaryTargets = new ArrayList<Column>();
+					for (String s : aSetting.getTextContent().split(",", -1))
+						itsSecondaryTargets.add(theTable.getAttribute(s));
+				}
+			}
 			else
 				;	// TODO throw warning dialog
 		}
@@ -93,6 +107,24 @@ public class TargetConcept implements XMLNodeInterface
 		itsMultiTargets = theMultiTargets;
 	}
 
+	public List<Column> getMultiRegressionTargets() { return itsMultiRegressionTargets; }
+	public void setMultiRegressionTargets(List<Column> theMultiRegressionTargets)
+	{
+		itsMultiRegressionTargets = theMultiRegressionTargets;
+	}
+
+	public List<Column> getSecondaryTargets() { return itsSecondaryTargets; }
+	public void setSecondaryTargets(List<Column> theSecondaryTargets)
+	{
+		itsSecondaryTargets = theSecondaryTargets;
+	}
+
+	public List<Column> getTertiaryTargets() { return itsTertiaryTargets; }
+	public void setTertiaryTargets(List<Column> theTertiaryTargets)
+	{
+		itsTertiaryTargets = theTertiaryTargets;
+	}
+
 	public boolean isSingleNominal() { return (itsTargetType == TargetType.SINGLE_NOMINAL); }
 
 	public boolean isTargetAttribute(Column theColumn)
@@ -103,6 +135,7 @@ public class TargetConcept implements XMLNodeInterface
 			case SINGLE_NUMERIC :
 				return (theColumn == itsPrimaryTarget);
 			case DOUBLE_REGRESSION :
+				return (theColumn == itsPrimaryTarget || itsSecondaryTargets.contains(theColumn) || itsTertiaryTargets.contains(theColumn) );
 			case DOUBLE_CORRELATION :
 				return (theColumn == itsPrimaryTarget || theColumn == itsSecondaryTarget);
 			case MULTI_LABEL :
@@ -144,6 +177,36 @@ public class TargetConcept implements XMLNodeInterface
 			for (Column c : itsMultiTargets)
 				sb.append(c.getName() + ",");
 			XMLNode.addNodeTo(aNode, "multi_targets", sb.substring(0, sb.length() - 1));
+		}
+
+		if (itsMultiRegressionTargets == null || itsMultiRegressionTargets.size() == 0)
+			XMLNode.addNodeTo(aNode, "multi_regression_targets");
+		else
+		{
+			StringBuilder sb = new StringBuilder(itsMultiRegressionTargets.size() * 10);
+			for (Column c : itsMultiRegressionTargets)
+				sb.append(c.getName() + ",");
+			XMLNode.addNodeTo(aNode, "multi_regression_targets", sb.substring(0, sb.length() - 1));
+		}
+
+		if (itsSecondaryTargets == null || itsSecondaryTargets.size() == 0)
+			XMLNode.addNodeTo(aNode, "secondary_targets");
+		else
+		{
+			StringBuilder sb = new StringBuilder(itsSecondaryTargets.size() * 10);
+			for (Column c : itsSecondaryTargets)
+				sb.append(c.getName() + ",");
+			XMLNode.addNodeTo(aNode, "secondary_targets", sb.substring(0, sb.length() - 1));
+		}
+
+		if (itsTertiaryTargets == null || itsTertiaryTargets.size() == 0)
+			XMLNode.addNodeTo(aNode, "tertiary_targets");
+		else
+		{
+			StringBuilder sb = new StringBuilder(itsTertiaryTargets.size() * 10);
+			for (Column c : itsTertiaryTargets)
+				sb.append(c.getName() + ",");
+			XMLNode.addNodeTo(aNode, "tertiary_targets", sb.substring(0, sb.length() - 1));
 		}
 	}
 }
