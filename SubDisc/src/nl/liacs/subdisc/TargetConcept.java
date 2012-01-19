@@ -29,6 +29,7 @@ public class TargetConcept implements XMLNodeInterface
 	// for double regression code:
 	private List<Column> itsSecondaryTargets;
 	private List<Column> itsTertiaryTargets;
+	private boolean		 itsInterceptRelevance;
 
 	public TargetConcept()
 	{
@@ -123,6 +124,20 @@ public class TargetConcept implements XMLNodeInterface
 	public void setTertiaryTargets(List<Column> theTertiaryTargets)
 	{
 		itsTertiaryTargets = theTertiaryTargets;
+	}
+	
+	public int getNrTargets()
+	{
+		return 1+itsSecondaryTargets.size()+itsTertiaryTargets.size();
+	}
+	
+	public boolean getInterceptRelevance() { return itsInterceptRelevance; }
+	public void setInterceptRelevance(boolean theInterceptRelevance)
+	{
+		itsInterceptRelevance = theInterceptRelevance;
+		if (theInterceptRelevance)
+			Log.logCommandLine("check");
+		else Log.logCommandLine("uncheck");
 	}
 
 	public boolean isSingleNominal() { return (itsTargetType == TargetType.SINGLE_NOMINAL); }

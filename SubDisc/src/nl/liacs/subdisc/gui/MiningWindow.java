@@ -1252,10 +1252,15 @@ public class MiningWindow extends JFrame
 
 		if (getTargetAttributeName() != null &&
 			(aTargetType == TargetType.SINGLE_NOMINAL ||
-				aTargetType == TargetType.MULTI_BINARY_CLASSIFICATION))
+				aTargetType == TargetType.MULTI_BINARY_CLASSIFICATION) )
 		{
 			initTargetValueItems();
 		}
+		
+		//itsTable.getAttribute(getTargetAttributeName()).makePrimaryTarget();
+		
+		if (getTargetAttributeName() != null && aTargetType == TargetType.DOUBLE_REGRESSION)
+			computeMultiRegressionTargets();
 		
 		//update misc field? Other types are updated through action listeners
 		if (aTargetType == TargetType.SINGLE_NUMERIC)
@@ -1288,6 +1293,7 @@ public class MiningWindow extends JFrame
 
 	private void jButtonMultiRegressionTargetsActionPerformed()
 	{
+		itsTable.getAttribute(getTargetAttributeName()).makePrimaryTarget();
 		new MultiRegressionTargetsWindow(jListMultiRegressionTargets, itsSearchParameters, itsTable, this);
 	}
 	
@@ -1781,21 +1787,7 @@ public class MiningWindow extends JFrame
 
 		if (aTargetType == TargetType.DOUBLE_REGRESSION)
 		{
-			((DefaultListModel) jListMultiRegressionTargets.getModel()).clear();
-
-			int aCount = 0;
-			List<Column> aList = new ArrayList<Column>();
-			for (Column c: itsTable.getColumns())
-				if (c.isNumericType() && c.getIsEnabled())
-				{
-					addMultiRegressionTargetsItem(c.getName());
-					aList.add(c);
-					aCount++;
-				}
-			itsTargetConcept.setMultiRegressionTargets(aList);
-			jListMultiRegressionTargets.setSelectionInterval(0, jListMultiRegressionTargets.getModel().getSize() - 1);
-			jLFieldTargetInfo.setText(String.valueOf(aCount));
-			
+			computeMultiRegressionTargets();
 		}
 		
 		// multi targets =======================================
@@ -1823,6 +1815,24 @@ public class MiningWindow extends JFrame
 			jListMultiTargets.setSelectionInterval(0, jListMultiTargets.getModel().getSize() - 1);
 			jLFieldTargetInfo.setText(String.valueOf(aCount));
 		}
+	}
+	
+	private void computeMultiRegressionTargets()
+	{
+		((DefaultListModel) jListMultiRegressionTargets.getModel()).clear();
+
+		int aCount = 0;
+		List<Column> aList = new ArrayList<Column>();
+		for (Column c: itsTable.getColumns())
+			if (c.isNumericType() && c.getIsEnabled() && !itsTargetConcept.getPrimaryTarget().equals(c))
+			{
+				addMultiRegressionTargetsItem(c.getName());
+				aList.add(c);
+				aCount++;
+			}
+		itsTargetConcept.setMultiRegressionTargets(aList);
+		jListMultiRegressionTargets.setSelectionInterval(0, jListMultiRegressionTargets.getModel().getSize() - 1);
+		jLFieldTargetInfo.setText(String.valueOf(aCount));
 	}
 
 	private void initTargetValueItems()

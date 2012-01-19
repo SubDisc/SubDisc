@@ -22,7 +22,6 @@ public class Column implements XMLNodeInterface
 	private String itsShort;
 	private int itsIndex;
 
-
 	// when adding/removing members be sure to update addNodeTo() and loadNode()
 	private List<Float> itsFloats;
 	private List<String> itsNominals;
@@ -46,6 +45,15 @@ public class Column implements XMLNodeInterface
 	private static final String trueFloat = "\\+?0*1(\\.0+)?";
 	private static final String trueInteger = "[-+]?\\d+(\\.0+)?";
 
+	private int itsTargetStatus;
+	public static final int NONE      = 0;
+	public static final int PRIMARY   = 1;
+	public static final int SECONDARY = 2;
+	public static final int TERTIARY  = 3;
+
+	public static final int FIRST_TARGET_STATUS = NONE;
+	public static final int LAST_TARGET_STATUS = TERTIARY;
+
 	public Column(String theName, String theShort, AttributeType theType, int theIndex, int theNrRows)
 	{
 		if (!isValidIndex(theIndex))
@@ -58,6 +66,10 @@ public class Column implements XMLNodeInterface
 		checkAndSetType(theType);
 
 		setupColumn(theNrRows <= 0 ? DEFAULT_INIT_SIZE : theNrRows);
+		
+		if (itsType == AttributeType.NUMERIC)
+			itsTargetStatus = SECONDARY;
+		else itsTargetStatus = NONE;
 	}
 
 	private boolean isValidIndex(int theIndex)
@@ -1115,6 +1127,52 @@ public class Column implements XMLNodeInterface
 		aCopy.isEnabled = isEnabled;
 
 		return aCopy;
+	}
+	
+	public void makeNoTarget() { if (itsType == AttributeType.NUMERIC) itsTargetStatus = NONE; }
+	public void makePrimaryTarget() { if (itsType == AttributeType.NUMERIC) itsTargetStatus = PRIMARY; }
+	public void makeSecondaryTarget() { if (itsType == AttributeType.NUMERIC) itsTargetStatus = SECONDARY; }
+	public void makeTertiaryTarget() { if (itsType == AttributeType.NUMERIC) itsTargetStatus = TERTIARY; }
+	public int getTargetStatus() { return itsTargetStatus; }
+	public String displayTargetStatus()
+	{
+		return getTargetText(itsTargetStatus);
+	}
+	
+	public static String getTargetText(int theTargetStatus)
+	{
+		String aResult;
+		switch (theTargetStatus)
+		{
+			case NONE	   : { aResult = " none"; break; } 	
+			case PRIMARY   : { aResult = " primary"; break; } 
+			case SECONDARY : { aResult = " secondary"; break; } 
+			case TERTIARY  : { aResult = " tertiary"; break; }
+			default        : { aResult = " undefined"; } // should be impossible
+		}
+		return aResult;
+	}
+	
+	public void setTargetStatus(String theTargetStatus)
+	{
+		if (itsType == AttributeType.NUMERIC)
+		{
+			if (theTargetStatus.equals(" none"))
+				makeNoTarget();
+			else if (theTargetStatus.equals(" primary"))
+				makePrimaryTarget();
+			else if (theTargetStatus.equals(" secondary"))
+				makeSecondaryTarget();
+			else if (theTargetStatus.equals(" tertiary"))
+				makeTertiaryTarget();
+			else itsTargetStatus = Integer.MAX_VALUE; // should be impossible
+		}
+	}
+	
+	public void setTargetStatus(int theTargetStatus)
+	{
+		if (itsType == AttributeType.NUMERIC)
+			itsTargetStatus = theTargetStatus;
 	}
 }
 

@@ -1,5 +1,6 @@
 package nl.liacs.subdisc.gui;
 
+//import javax.swing.*;
 import javax.swing.table.*;
 
 import nl.liacs.subdisc.*;
@@ -11,19 +12,16 @@ public class MultiRegressionTargetsTableModel extends AbstractTableModel
 
 	private Table itsTable;
 
-	public enum MetaDataTableHeader
+	public enum MultiRegressionTargetsTableHeader
 	{
 		ATTRIBUTE(0, "Attribute"),
-		CARDINALITY(1, "Cardinality"),
-		TYPE(2, "Type"),
-		ENABLED(3, "Enabled"),
-		HAS_MISSING(4, "Values Missing"),
-		MISSING_VALUE(5, "Value for Missing");
+		TARGET_STATUS(1, "Target status"),
+		TYPE(2, "Type");
 
 		public final int columnNr;
 		public final String guiText;
 
-		private MetaDataTableHeader(int theColumnNr, String theGuiText)
+		private MultiRegressionTargetsTableHeader(int theColumnNr, String theGuiText)
 		{
 			columnNr = theColumnNr;
 			guiText = theGuiText;
@@ -31,7 +29,7 @@ public class MultiRegressionTargetsTableModel extends AbstractTableModel
 
 		public static String getColumnName(int theColumnIndex)
 		{
-			for (MetaDataTableHeader h : MetaDataTableHeader.values())
+			for (MultiRegressionTargetsTableHeader h : MultiRegressionTargetsTableHeader.values())
 				if (h.columnNr == theColumnIndex)
 						return h.guiText;
 			Log.logCommandLine(
@@ -53,12 +51,12 @@ public class MultiRegressionTargetsTableModel extends AbstractTableModel
 	}
 
 	@Override
-	public int getColumnCount() { return MetaDataTableHeader.values().length; }
+	public int getColumnCount() { return MultiRegressionTargetsTableHeader.values().length; }
 
 	@Override
 	public String getColumnName(int theColumnIndex)
 	{
-		return MetaDataTableHeader.getColumnName(theColumnIndex);
+		return MultiRegressionTargetsTableHeader.getColumnName(theColumnIndex);
 	}
 
 	@Override
@@ -83,23 +81,17 @@ public class MultiRegressionTargetsTableModel extends AbstractTableModel
 		}
 		else
 		{
-			if (col == MetaDataTableHeader.ATTRIBUTE.columnNr)
+			if (col == MultiRegressionTargetsTableHeader.ATTRIBUTE.columnNr)
 				return itsTable.getColumn(row).getName();
-			else if (col == MetaDataTableHeader.CARDINALITY.columnNr)
-				return itsTable.getColumn(row).getCardinality();
+			else if (col == MultiRegressionTargetsTableHeader.TARGET_STATUS.columnNr)
+				return itsTable.getColumn(row).displayTargetStatus();
 			else if (col == MetaDataTableHeader.TYPE.columnNr)
 				return itsTable.getColumn(row).getType();
-			else if (col == MetaDataTableHeader.ENABLED.columnNr)
-				return itsTable.getColumn(row).getIsEnabled() ? "yes" : "no";
-			else if (col == MetaDataTableHeader.HAS_MISSING.columnNr)
-				return itsTable.getColumn(row).getHasMissingValues() ? "yes" : "no";
-			else if (col == MetaDataTableHeader.MISSING_VALUE.columnNr)
-				return itsTable.getColumn(row).getMissingValue();
 			else
 			{
 				Log.logCommandLine(
-					"Error in MetaDataTableModel.getValueAt(): " +
-					"invalid index: '" + col + "' for MetaDataTableHeader.");
+					"Error in MultiRegressionTargetsTableModel.getValueAt(): " +
+					"invalid index: '" + col + "' for MultiRegressionTargetsTableHeader.");
 				return null;
 			}
 		}

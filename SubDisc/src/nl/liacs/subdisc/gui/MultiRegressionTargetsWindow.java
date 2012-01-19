@@ -7,6 +7,8 @@ package nl.liacs.subdisc.gui;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
+import org.w3c.dom.*;
+
 
 import javax.swing.*;
 
@@ -23,15 +25,18 @@ public class MultiRegressionTargetsWindow extends JFrame implements ActionListen
 	private JTextField aNewMissingValue =
 		new JTextField(AttributeType.getDefault().DEFAULT_MISSING_VALUE);
 	private JLabel itsFeedBackLabel;
+	private SearchParameters itsSearchParameters;
+	private boolean itsInterceptRelevance;
 
 	public MultiRegressionTargetsWindow(JList theMultiRegressionTargets, SearchParameters theSearchParameters, Table theTable, MiningWindow theMiningWindow)
 	{
 		itsTable = theTable;
 		itsMiningWindow = theMiningWindow;
+		itsSearchParameters = theSearchParameters;
 
 		if (theTable == null || theMiningWindow == null)
 		{
-			Log.logCommandLine("MetaDataWindow Constructor: parameters can not be 'null'.");
+			Log.logCommandLine("MultiRegressionTargetsWindow Constructor: parameters can not be 'null'.");
 			return;
 		}
 		else
@@ -49,58 +54,38 @@ public class MultiRegressionTargetsWindow extends JFrame implements ActionListen
 
 	private void initJTable(Table theTable)
 	{
-		itsJTable = new JTable(new MetaDataTableModel(theTable));
+		itsJTable = new JTable(new MultiRegressionTargetsTableModel(theTable));
 		itsJTable.setPreferredScrollableViewportSize(GUI.WINDOW_DEFAULT_SIZE);
 		itsJTable.setFillsViewportHeight(true);
 
 		float aScalar = 0.3f;
 		int anAttributeWidth = (int)(aScalar * GUI.WINDOW_DEFAULT_SIZE.width);
-		int anOtherWidth = (int)((1.0f - aScalar / MetaDataTableHeader.values().length -1) * GUI.WINDOW_DEFAULT_SIZE.width);
+		int anOtherWidth = (int)((1.0f - aScalar / MultiRegressionTargetsTableHeader.values().length -1) * GUI.WINDOW_DEFAULT_SIZE.width);
 
-		itsJTable.getColumnModel().getColumn(MetaDataTableHeader.ATTRIBUTE.columnNr).setPreferredWidth(anAttributeWidth);
-		itsJTable.getColumnModel().getColumn(MetaDataTableHeader.CARDINALITY.columnNr).setPreferredWidth(anOtherWidth);
-		itsJTable.getColumnModel().getColumn(MetaDataTableHeader.TYPE.columnNr).setPreferredWidth(anOtherWidth);
-		itsJTable.getColumnModel().getColumn(MetaDataTableHeader.ENABLED.columnNr).setPreferredWidth(anOtherWidth);
-		itsJTable.getColumnModel().getColumn(MetaDataTableHeader.HAS_MISSING.columnNr).setPreferredWidth(anOtherWidth);
-		itsJTable.getColumnModel().getColumn(MetaDataTableHeader.MISSING_VALUE.columnNr).setPreferredWidth(anOtherWidth);
+		itsJTable.getColumnModel().getColumn(MultiRegressionTargetsTableHeader.ATTRIBUTE.columnNr).setPreferredWidth(anAttributeWidth);
+		itsJTable.getColumnModel().getColumn(MultiRegressionTargetsTableHeader.TARGET_STATUS.columnNr).setPreferredWidth(anOtherWidth);
 	}
 
 	private void initComponents()
 	{
 		final JPanel aSouthPanel = new JPanel();
-		JPanel anActionPanel = new JPanel(new GridLayout(1, 4));
-		JPanel aSelectionPanel = new JPanel();
-		JPanel aDisablePanel = new JPanel();
+		JPanel anActionPanel = new JPanel(new GridLayout(1, 2));
 		JPanel aRadioButtonPanel = new JPanel();
 		JPanel aChangeTypePanel = new JPanel();
-		JPanel aSetMissingPanel = new JPanel();
+		JPanel anInterceptPanel = new JPanel();
 
 		JScrollPane jScrollPane = new JScrollPane(itsJTable);
 
-		// selection buttons
-		aSelectionPanel.setBorder(GUI.buildBorder("Select"));
-		aSelectionPanel.setLayout(new BoxLayout(aSelectionPanel, BoxLayout.PAGE_AXIS));
-
-		addCentered(aSelectionPanel, GUI.buildButton("All", 'A', "all", this));
-		// TODO could use generic loop over all AttributeTypes
-		addCentered(aSelectionPanel, GUI.buildButton("All Nominal", 'N', AttributeType.NOMINAL.toString(), this));
-		addCentered(aSelectionPanel, GUI.buildButton("All Numeric", 'U', AttributeType.NUMERIC.toString(), this));
-//		addCentered(aSelectionPanel, GUI.buildButton("All Ordinal", 'O', AttributeType.ORDINAL.toString(), this));
-		addCentered(aSelectionPanel, GUI.buildButton("All Binary", 'B', AttributeType.BINARY.toString(), this));
-//		addCentered(aSelectionPanel, GUI.buildButton("Invert Selection", 'I', "invert", this));
-		addCentered(aSelectionPanel, GUI.buildButton("Clear Selection", 'X', "clear", this));
-		anActionPanel.add(aSelectionPanel);
-
 		// change type
-		aChangeTypePanel.setBorder(GUI.buildBorder("Set Type"));
+		aChangeTypePanel.setBorder(GUI.buildBorder("Set Target Status"));
 		aChangeTypePanel.setLayout(new BoxLayout(aChangeTypePanel, BoxLayout.PAGE_AXIS));
 		aChangeTypePanel.add(Box.createVerticalGlue());
 
 		aRadioButtonPanel.setLayout(new BoxLayout(aRadioButtonPanel, BoxLayout.PAGE_AXIS));
 
-		for (AttributeType at : AttributeType.values())
+		for (int i=Column.FIRST_TARGET_STATUS; i<=Column.LAST_TARGET_STATUS; i++)
 		{
-			String aType = at.toString();
+			String aType = Column.getTargetText(i);
 			JRadioButton aRadioButton = new JRadioButton(aType.toLowerCase());
 			aRadioButton.setActionCommand(aType);	// UPPERCASE
 			aRadioButtonPanel.add(aRadioButton);
@@ -112,38 +97,27 @@ public class MultiRegressionTargetsWindow extends JFrame implements ActionListen
 		if (aRadioButtonPanel.getComponents().length > 0)
 			((JRadioButton) aRadioButtonPanel.getComponent(0)).setSelected(true);
 
-		// TODO for now, disable ORDINAL, will change when implemented
-		aNewType.remove((AbstractButton) aRadioButtonPanel.getComponent(2));
-		aRadioButtonPanel.remove(2);
-
 		addCentered(aChangeTypePanel, aRadioButtonPanel);
 		aChangeTypePanel.add(Box.createVerticalGlue());
-		addCentered(aChangeTypePanel, GUI.buildButton("Change Type", 'C', "type", this));
+		addCentered(aChangeTypePanel, GUI.buildButton("Change Target Status", 'C', "target status", this));
 		anActionPanel.add(aChangeTypePanel);
+		
+		// intercept panel
+		anInterceptPanel.setBorder(GUI.buildBorder("Include intercept in validation"));
+		anInterceptPanel.setLayout(new BoxLayout(anInterceptPanel, BoxLayout.PAGE_AXIS));
+		anInterceptPanel.add(Box.createVerticalGlue());
 
-		// disable / enable
-		aDisablePanel.setBorder(GUI.buildBorder("Set Disabled/Enabled"));
-		aDisablePanel.setLayout(new BoxLayout(aDisablePanel, BoxLayout.PAGE_AXIS));
-		aDisablePanel.add(Box.createVerticalGlue());
-		addCentered(aDisablePanel, GUI.buildButton("Disable Selected", 'D', "disable", this));
-		aDisablePanel.add(Box.createVerticalGlue());
-		addCentered(aDisablePanel, GUI.buildButton("Enable Selected", 'E', "enable", this));
-		aDisablePanel.add(Box.createVerticalGlue());
-		addCentered(aDisablePanel, GUI.buildButton("Toggle Selected", 'T', "toggle", this));
-//		aDisablePanel.add(Box.createVerticalGlue());
-		anActionPanel.add(aDisablePanel);
-
-		// set missing
-		aSetMissingPanel.setBorder(GUI.buildBorder("Set Value for Missing"));
-		aSetMissingPanel.setLayout(new BoxLayout(aSetMissingPanel, BoxLayout.PAGE_AXIS));
-
-		aSetMissingPanel.add(Box.createVerticalGlue());
-		aNewMissingValue.setMaximumSize(GUI.BUTTON_MAXIMUM_SIZE);
-		addCentered(aSetMissingPanel, aNewMissingValue);
-		aSetMissingPanel.add(Box.createVerticalGlue());
-		addCentered(aSetMissingPanel, GUI.buildButton("Change Value", 'M', "missing", this));
-//		aSetMissingPanel.add(Box.createVerticalGlue());
-		anActionPanel.add(aSetMissingPanel);
+		JCheckBox aCheckBox = new JCheckBox("Include intercept");
+		aCheckBox.setActionCommand("intercept check");
+		anInterceptPanel.add(aCheckBox);
+		aNewType.add(aCheckBox);
+		JCheckBox anotherCheckBox = new JCheckBox("Exclude intercept");
+		anotherCheckBox.setActionCommand("intercept uncheck");
+		anInterceptPanel.add(anotherCheckBox);
+		aNewType.add(anotherCheckBox);
+		
+		anInterceptPanel.add(Box.createVerticalGlue());
+		anActionPanel.add(anInterceptPanel);
 
 		anActionPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
 
@@ -186,100 +160,72 @@ public class MultiRegressionTargetsWindow extends JFrame implements ActionListen
 	{
 		String aCommand = theEvent.getActionCommand();
 		// generic loop prevents hard coding all AttributeTypes
-		for (AttributeType at : AttributeType.values())
-		{
-			if (at.toString().equals(aCommand))
-			{
-				for (int i = 0, j = itsTable.getNrColumns(); i < j; i++)
-					if (itsTable.getColumn(i).getType() == at)
-						itsJTable.addRowSelectionInterval(i, i);
-				return;
-			}
-		}
+//		for (AttributeType at : AttributeType.values())
+//		{
+//			if (at.toString().equals(aCommand))
+//			{
+//				for (int i = 0, j = itsTable.getNrColumns(); i < j; i++)
+//					if (itsTable.getColumn(i).getType() == at)
+//						itsJTable.addRowSelectionInterval(i, i);
+//				return;
+//			}
+//		}
 
-		if ("all".equals(aCommand))
-			itsJTable.selectAll();
-/*
-		else if ("invert".equals(aCommand))
+		if ("close".equals(aCommand))
+			closingHook();
+		else if ("target status".equals(aCommand))
 		{
-			for (int i = 0, j = itsTable.getColumns().size(); i < j; ++i)
-			{
-				if (jTable.isRowSelected(i))
-					jTable.removeRowSelectionInterval(i, i);
-				else
-					jTable.addRowSelectionInterval(i, i);
-			}
-		}
-*/
-		else if ("clear".equals(aCommand))
-			itsJTable.clearSelection();
-		else if ("close".equals(aCommand))
-			dispose();
-		else
-		{
-			if ("disable".equals(aCommand) || "enable".equals(aCommand))
-			{
-				boolean enable = "enable".equals(aCommand);
-				for (int i : itsJTable.getSelectedRows())
-					itsTable.getColumn(i).setIsEnabled(enable);
-			}
-			else if ("toggle".equals(aCommand))
-			{
-				Column aColumn = null;
-				for (int i : itsJTable.getSelectedRows())
-				{
-					aColumn = itsTable.getColumn(i);
-					aColumn.setIsEnabled(!aColumn.getIsEnabled());
-				}
-			}
-			else if ("type".equals(aCommand))
-			{
-				for (int i : itsJTable.getSelectedRows())
-					itsTable.getColumn(i).setType(AttributeType.getAttributeType(aNewType.getSelection().getActionCommand()));
-					// TODO show messageDialog asking to treat first value as
-					// 'true' or 'false' (see Column.toBinary())
-					// TODO failed to change type warning
-			}
-			else if ("missing".equals(aCommand))
-			{
-				String aNewValue = aNewMissingValue.getText().trim();
-				aNewMissingValue.setText(aNewValue);
-				ArrayList<Integer> aWrongType = new ArrayList<Integer>(itsJTable.getSelectedRows().length);
-				for (int i : itsJTable.getSelectedRows())
-				{
-					if (itsTable.getColumn(i).getHasMissingValues() &&
-						!itsTable.getColumn(i).setNewMissingValue(aNewValue))
-						aWrongType.add(i);
-				}
-
-				if (aWrongType.size() > 0)
-				{
-					itsJTable.getSelectionModel().clearSelection();
-					for (int i : aWrongType)
-						itsJTable.addRowSelectionInterval(i, i);
-
-					String anIndicator;
-					if (aWrongType.size() == 1)
-					{
-						Column aColumn = itsTable.getColumn(aWrongType.get(0));
-						anIndicator = String.format("attribute '%s', which is of type '%s'.%n",
-										aColumn.getName(),
-										aColumn.getType());
-					}
-					else
-						anIndicator = "some attributes. \nThey are of an incompatible type. See selection.";
-					JOptionPane.showMessageDialog(null,
-										String.format(
-											"'%s' is not a valid value for %s",
-											aNewValue,
-											anIndicator),
-										"alert",
-										JOptionPane.ERROR_MESSAGE);
-				}
-			}
+			for (int i : itsJTable.getSelectedRows())
+				itsTable.getColumn(i).setTargetStatus(aNewType.getSelection().getActionCommand());
+				// TODO show messageDialog asking to treat first value as
+				// 'true' or 'false' (see Column.toBinary())
+				// TODO failed to change type warning
 			itsJTable.repaint();
 			itsMiningWindow.update();
 		}
+		else if ("intercept check".equals(aCommand))
+			itsInterceptRelevance = true;
+		else if ("intercept uncheck".equals(aCommand))
+			itsInterceptRelevance = false;
 	}
-
+	
+	public void closingHook()
+	{
+		ArrayList<Column> aSecondaryTargets = new ArrayList<Column>();
+		ArrayList<Column> aTertiaryTargets = new ArrayList<Column>();
+		TargetConcept aTargetConcept = itsSearchParameters.getTargetConcept();
+		int aPrimaryTargetCount = 0;
+		int aSecondaryTargetCount = 0;
+		for ( Column aColumn : itsTable.getColumns() )
+		{
+			if (aColumn.isNumericType())
+			{
+				switch (aColumn.getTargetStatus())
+				{
+					case Column.PRIMARY :
+					{
+						aPrimaryTargetCount++;
+						aTargetConcept.setPrimaryTarget(aColumn);
+						break;
+					}
+					case Column.SECONDARY :
+					{
+						aSecondaryTargetCount++;
+						aSecondaryTargets.add(aColumn);
+						break;
+					}
+					case Column.TERTIARY :
+					{
+						aTertiaryTargets.add(aColumn);
+						break;
+					}
+				}
+			}
+		}
+		aTargetConcept.setSecondaryTargets(aSecondaryTargets);
+		aTargetConcept.setTertiaryTargets(aTertiaryTargets);
+		aTargetConcept.setInterceptRelevance(itsInterceptRelevance);
+		if (aPrimaryTargetCount==1 && aSecondaryTargetCount>0)
+			dispose();
+	}
 }
