@@ -135,9 +135,6 @@ public class TargetConcept implements XMLNodeInterface
 	public void setInterceptRelevance(boolean theInterceptRelevance)
 	{
 		itsInterceptRelevance = theInterceptRelevance;
-		if (theInterceptRelevance)
-			Log.logCommandLine("check");
-		else Log.logCommandLine("uncheck");
 	}
 
 	public boolean isSingleNominal() { return (itsTargetType == TargetType.SINGLE_NOMINAL); }

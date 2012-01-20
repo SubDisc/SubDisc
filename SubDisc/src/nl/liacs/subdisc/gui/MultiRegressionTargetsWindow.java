@@ -24,9 +24,10 @@ public class MultiRegressionTargetsWindow extends JFrame implements ActionListen
 	private ButtonGroup aNewType = new ButtonGroup();
 	private JTextField aNewMissingValue =
 		new JTextField(AttributeType.getDefault().DEFAULT_MISSING_VALUE);
+	private JComboBox itsInterceptRelevanceBox =
+		GUI.buildComboBox(new Object[] { "No","Yes" }, null);
 	private JLabel itsFeedBackLabel;
 	private SearchParameters itsSearchParameters;
-	private boolean itsInterceptRelevance;
 
 	public MultiRegressionTargetsWindow(JList theMultiRegressionTargets, SearchParameters theSearchParameters, Table theTable, MiningWindow theMiningWindow)
 	{
@@ -107,15 +108,14 @@ public class MultiRegressionTargetsWindow extends JFrame implements ActionListen
 		anInterceptPanel.setLayout(new BoxLayout(anInterceptPanel, BoxLayout.PAGE_AXIS));
 		anInterceptPanel.add(Box.createVerticalGlue());
 
-		JCheckBox aCheckBox = new JCheckBox("Include intercept");
-		aCheckBox.setActionCommand("intercept check");
-		anInterceptPanel.add(aCheckBox);
-		aNewType.add(aCheckBox);
-		JCheckBox anotherCheckBox = new JCheckBox("Exclude intercept");
-		anotherCheckBox.setActionCommand("intercept uncheck");
-		anInterceptPanel.add(anotherCheckBox);
-		aNewType.add(anotherCheckBox);
+//		JCheckBox aCheckBox = new JCheckBox("Include intercept");
+//		aCheckBox.setActionCommand("intercept check");
+//		anInterceptPanel.add(aCheckBox);
 		
+		anInterceptPanel.add(GUI.buildLabel("Include intercept", itsInterceptRelevanceBox));
+		itsInterceptRelevanceBox.setSelectedIndex(1);
+		anInterceptPanel.add(itsInterceptRelevanceBox);
+
 		anInterceptPanel.add(Box.createVerticalGlue());
 		anActionPanel.add(anInterceptPanel);
 
@@ -183,10 +183,6 @@ public class MultiRegressionTargetsWindow extends JFrame implements ActionListen
 			itsJTable.repaint();
 			itsMiningWindow.update();
 		}
-		else if ("intercept check".equals(aCommand))
-			itsInterceptRelevance = true;
-		else if ("intercept uncheck".equals(aCommand))
-			itsInterceptRelevance = false;
 	}
 	
 	public void closingHook()
@@ -224,7 +220,7 @@ public class MultiRegressionTargetsWindow extends JFrame implements ActionListen
 		}
 		aTargetConcept.setSecondaryTargets(aSecondaryTargets);
 		aTargetConcept.setTertiaryTargets(aTertiaryTargets);
-		aTargetConcept.setInterceptRelevance(itsInterceptRelevance);
+		aTargetConcept.setInterceptRelevance(itsInterceptRelevanceBox.getSelectedIndex() == 1);
 		if (aPrimaryTargetCount==1 && aSecondaryTargetCount>0)
 			dispose();
 	}
