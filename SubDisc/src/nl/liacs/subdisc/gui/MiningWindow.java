@@ -1327,14 +1327,14 @@ public class MiningWindow extends JFrame
 		switch (itsTargetConcept.getTargetType())
 		{
 			case DOUBLE_REGRESSION :
-			{
-				Column aPrimaryColumn = itsTable.getColumn(itsTargetConcept.getPrimaryTarget().getIndex());
+			{//TODO: Fix
+			/*	Column aPrimaryColumn = itsTable.getColumn(itsTargetConcept.getPrimaryTarget().getIndex());
 				Column aSecondaryColumn = itsTable.getColumn(itsTargetConcept.getSecondaryTarget().getIndex());
 
 				RegressionMeasure anRM =
 					new RegressionMeasure(itsSearchParameters.getQualityMeasure(), aPrimaryColumn, aSecondaryColumn);
 
-				new ModelWindow(aPrimaryColumn, aSecondaryColumn, anRM, null); //trendline, no subset
+				new ModelWindow(aPrimaryColumn, aSecondaryColumn, anRM, null); //trendline, no subset*/
 				break;
 			}
 			case DOUBLE_CORRELATION :

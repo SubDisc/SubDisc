@@ -81,8 +81,8 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		itsSecondaryColumn = aTC.getSecondaryTarget();
 		if (isRegression)
 		{
-			itsBaseRM = new RegressionMeasure(itsSearchParameters.getQualityMeasure(), itsPrimaryColumn, itsSecondaryColumn);
-			Log.logCommandLine("base model: y = " + (float) itsBaseRM.getIntercept() + " + " + (float) itsBaseRM.getSlope()+ " * x");
+			itsBaseRM = new RegressionMeasure(itsSearchParameters.getQualityMeasure(), aTC);
+			//Log.logCommandLine("base model: y = " + (float) itsBaseRM.getIntercept() + " + " + (float) itsBaseRM.getSlope()+ " * x");
 		}
 		else
 			itsBaseCM = new CorrelationMeasure(itsSearchParameters.getQualityMeasure(), itsPrimaryColumn, itsSecondaryColumn);
@@ -345,12 +345,12 @@ public class SubgroupDiscovery extends MiningAlgorithm
 			{
 				switch (itsBaseRM.itsType)
 				{
-					case QualityMeasure.LINEAR_REGRESSION:
+/*					case QualityMeasure.LINEAR_REGRESSION:
 					{
 						RegressionMeasure aRM = new RegressionMeasure(itsBaseRM, theNewSubgroup.getMembers());
 						aQuality = (float) aRM.getEvaluationMeasureValue();
 						break;
-					}
+					}*/
 					case QualityMeasure.COOKS_DISTANCE:
 					{
 						aQuality = (float) itsBaseRM.calculate(theNewSubgroup);

@@ -111,7 +111,7 @@ public class QualityMeasure
 			case SINGLE_ORDINAL		: return AUC;
 			case MULTI_LABEL		: return WEED;
 			case DOUBLE_CORRELATION	: return CORRELATION_R;
-			case DOUBLE_REGRESSION 	: return LINEAR_REGRESSION;
+			case DOUBLE_REGRESSION 	: return COOKS_DISTANCE;
 			default					: return NOVELTY;
 		}
 	}

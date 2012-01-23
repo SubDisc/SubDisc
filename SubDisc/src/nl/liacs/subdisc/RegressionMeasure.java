@@ -20,13 +20,15 @@ public class RegressionMeasure
 
 	private double itsCorrelation;
 
-	private ArrayList<DataPoint> itsData;//Stores all the datapoints for this measure
-	private ArrayList<DataPoint> itsComplementData = new ArrayList<DataPoint>();//Stores all the datapoints for the complement
+//	private ArrayList<DataPoint> itsData;//Stores all the datapoints for this measure
+//	private ArrayList<DataPoint> itsComplementData = new ArrayList<DataPoint>();//Stores all the datapoints for the complement
 
 	public static int itsType;
 	private RegressionMeasure itsBase = null;
 	
-	private Matrix itsDataMatrix;
+//	private Matrix itsDataMatrix;
+	private Matrix itsXMatrix;
+	private Matrix itsYMatrix;
 	private Matrix itsBetaHat;
 	private Matrix itsHatMatrix;
 	private Matrix itsResidualMatrix;
@@ -42,60 +44,119 @@ public class RegressionMeasure
 	private int itsBoundFiveCount;
 	private int itsBoundFourCount;
 	private int itsRankDefCount;
+	
+	private int itsI; // = itsNrSecondaryTargets
+	private int itsJ; // = itsNrTertiaryTargets
+						// maar dat ga ik niet iedere keer uittypen.
+	
+	private String itsPrimaryName;
+	private List<String> itsSecondaryNames;
+	private List<String> itsTertiaryNames;
 
-	//make a base model from two columns
-	public RegressionMeasure(int theType, Column thePrimaryColumn, Column theSecondaryColumn)
-	{
+	//make a base model from multiple columns
+	public RegressionMeasure(int theType, TargetConcept theTargetConcept)
+	{//TODO: Either remove legacy code, or make something decent out of it. For now, it is hacked.
+		//get target data
+		Column aPrimaryTarget = theTargetConcept.getPrimaryTarget(); 
+		List<Column> aSecondaryTargets = theTargetConcept.getSecondaryTargets();
+		List<Column> aTertiaryTargets = theTargetConcept.getTertiaryTargets();
+
+		itsI = aSecondaryTargets.size();
+		itsJ = aTertiaryTargets.size();
+		
+		itsPrimaryName = aPrimaryTarget.getName();
+		itsSecondaryNames = new ArrayList<String>(itsI);
+		itsTertiaryNames = new ArrayList<String>(itsJ);
+		for (Column c : aSecondaryTargets)
+			itsSecondaryNames.add(c.getName());
+		for (Column c : aTertiaryTargets)
+			itsTertiaryNames.add(c.getName());
+
 		itsType = theType;
-		itsSampleSize = thePrimaryColumn.size();
-		itsData = new ArrayList<DataPoint>(itsSampleSize);
+		itsSampleSize = aPrimaryTarget.size();
+/*		itsData = new ArrayList<DataPoint>(itsSampleSize);
 		for(int i=0; i<itsSampleSize; i++)
 		{
-			itsXSum += thePrimaryColumn.getFloat(i);
+/*			itsXSum += thePrimaryColumn.getFloat(i);
 			itsYSum += theSecondaryColumn.getFloat(i);
 			itsXYSum += thePrimaryColumn.getFloat(i)*theSecondaryColumn.getFloat(i);
 			itsXSquaredSum += thePrimaryColumn.getFloat(i)*thePrimaryColumn.getFloat(i);
 			itsYSquaredSum += theSecondaryColumn.getFloat(i)*theSecondaryColumn.getFloat(i);
 
 			itsData.add(new DataPoint(thePrimaryColumn.getFloat(i), theSecondaryColumn.getFloat(i)) );
-		}
+		}*/
 			
 		switch(itsType)
 		{
 			case QualityMeasure.LINEAR_REGRESSION:
-			{
+			{/* TODO: fix or remove
 				itsBase = null; //this *is* the base
 				itsComplementData = null; //will remain empty for the base RM
 				updateRegressionFunction();
-				updateErrorTerms();
+				updateErrorTerms();*/
 			}
 			case QualityMeasure.COOKS_DISTANCE:
 			{
-				updateRegressionFunction(); //updating error terms unnecessary since Cook's distance does not care
+				//updateRegressionFunction(); //updating error terms unnecessary since Cook's distance does not care
+				//"I see no reason for this to continue"
+				//  -- Electric Six, `Lenny Kravitz'
 				
-				double[][] aData = new double[itsSampleSize][2];
-				double[][] anXValues = new double[itsSampleSize][2];
-				for (int i=0; i<itsSampleSize; i++){
-					anXValues[i][0]=1;
-					anXValues[i][1]=itsData.get(i).getX();
-					aData[i][0] = anXValues[i][1];
-				}
+				/*fill arrays which will contain the data. Schematically it looks like this (where x denotes a secondary and x' a tertiary target):
+				 * aData =
+				 *   x_1^1 ... x_1^i  x'_1^1 ... x'_1^j  y_1 
+				 *     .   .     .       .   .      .     .
+				 *     .    .    .       .    .     .     .
+				 *     .     .   .       .     .    .     .   
+				 *   x_n^1 ... x_n^i  x'_n^1 ... x'_n^j  y_n
+				 * 
+				 * anXValues =
+				 *   1  x_1^1 ... x_1^i  x'_1^1 ... x'_1^j 
+				 *   .    .   .     .       .   .      .
+				 *   .    .    .    .       .    .     .
+				 *   .    .     .   .       .     .    .   
+				 *   1  x_n^1 ... x_n^i  x'_n^1 ... x'_n^j
+				 *
+				 * aYValues =
+				 *   y_1 
+				 *    .
+				 *    .
+				 *    .   
+				 *   y_n
+				 *   
+				 * the indices in the for-loops will correspond to the indices used here.  
+				 */
+				int aNrColumns = itsI+itsJ+1;
+//				double[][] aData = new double[itsSampleSize][aNrColumns];
+				double[][] anXValues = new double[itsSampleSize][aNrColumns];
 				double[][] aYValues = new double[itsSampleSize][1];
-				for (int i=0; i<itsSampleSize; i++)
+				for (int n=0; n<itsSampleSize; n++)
 				{
-					aYValues[i][0]=itsData.get(i).getY();
-					aData[i][1] = aYValues[i][0];
+					anXValues[n][0]=1;
+					for (int i=0; i<itsI; i++)
+					{	
+						Column aSecondaryColumn = aSecondaryTargets.get(i);
+						anXValues[n][1+i] = aSecondaryColumn.getFloat(n);
+//						aData[n][i] = anXValues[n][1+i];
+					}
+					for (int j=0; j<itsJ; j++)
+					{	
+						Column aTertiaryColumn = aTertiaryTargets.get(j);
+						anXValues[n][1+itsI+j] = aTertiaryColumn.getFloat(n);
+//						aData[n][itsI+j] = anXValues[n][1+itsI+j];
+					}
+					aYValues[n][0] = aPrimaryTarget.getFloat(n); 
+//					aData[n][itsI+itsJ] = aYValues[n][0];
 				}
-				Matrix anXMatrix = new Matrix(anXValues);
-				Matrix aYMatrix = new Matrix(aYValues);
+//				itsDataMatrix = new Matrix(aData);
+				itsXMatrix = new Matrix(anXValues);
+				itsYMatrix = new Matrix(aYValues);
 				
-				itsDataMatrix = new Matrix(aData);
-				itsBetaHat = (anXMatrix.transpose().times(anXMatrix)).inverse().times(anXMatrix.transpose()).times(aYMatrix);
-				itsHatMatrix = anXMatrix.times((anXMatrix.transpose().times(anXMatrix)).inverse()).times(anXMatrix.transpose());
-				itsResidualMatrix = (Matrix.identity(itsSampleSize,itsSampleSize).minus(itsHatMatrix)).times(aYMatrix);
+				//do the regression math
+				//TODO: refuse to do anything in the unlikely case that the data matrix is row deficient.
+				//      If this unlikely event is not caught, the program will crash.
+				computeRegression();
 				
-				itsP = itsBetaHat.getRowDimension();
-				itsSSquared = (itsResidualMatrix.transpose().times(itsResidualMatrix)).get(0,0)/((double) itsSampleSize-itsP);
+				spellFittedModel(itsBetaHat);
 				
 				//fill R^2 array
 				double[] aResiduals = new double[itsSampleSize];
@@ -131,20 +192,38 @@ public class RegressionMeasure
 			}
 		}
 	}
+	
+	public void spellFittedModel(Matrix theBetaHat)
+	{
+		String aRegressionModel = "  fitted model: "+ itsPrimaryName + " = " + theBetaHat.get(0,0);
+		for (int i=0; i<itsI; i++)
+			aRegressionModel = aRegressionModel + " + "+theBetaHat.get(i+1,0) + " * " + itsSecondaryNames.get(i);
+		for (int j=0; j<itsJ; j++)
+			aRegressionModel = aRegressionModel + " + "+theBetaHat.get(j+itsI+1,0) + " * " + itsTertiaryNames.get(j);
+		Log.logCommandLine(aRegressionModel);
+	}
+	
+	public void computeRegression()
+	{
+		itsBetaHat = (itsXMatrix.transpose().times(itsXMatrix)).inverse().times(itsXMatrix.transpose()).times(itsYMatrix);
+		itsHatMatrix = itsXMatrix.times((itsXMatrix.transpose().times(itsXMatrix)).inverse()).times(itsXMatrix.transpose());
+		itsResidualMatrix = (Matrix.identity(itsSampleSize,itsSampleSize).minus(itsHatMatrix)).times(itsYMatrix);
+		
+		itsP = itsBetaHat.getRowDimension();
+		itsSSquared = (itsResidualMatrix.transpose().times(itsResidualMatrix)).get(0,0)/((double) itsSampleSize-itsP);
+	}
 
 	//constructor for non-base RM. It derives from a base-RM
-	public RegressionMeasure(RegressionMeasure theBase, BitSet theMembers)
+/*	public RegressionMeasure(RegressionMeasure theBase, BitSet theMembers)
 	{
 		itsType = theBase.itsType;
 		itsBase = theBase;
 
 		//Create an empty measure
-		itsSampleSize = 0;
-		itsXSum = 0;
-		itsYSum = 0;
-		itsXYSum = 0;
-		itsXSquaredSum = 0;
-		itsYSquaredSum = 0;
+		itsSampleSize = theMembers.cardinality();
+
+		itsXMatrix;
+		private Matrix itsYMatrix;
 
 		itsData = new ArrayList<DataPoint>(theMembers.cardinality());
 		itsComplementData =
@@ -158,10 +237,10 @@ public class RegressionMeasure
 			else //complement
 				itsComplementData.add(anObservation);
 		}
-	}
+	}*/
 
 	//TODO test and verify method
-	public double getEvaluationMeasureValue()
+/*	public double getEvaluationMeasureValue()
 	{
 		updateRegressionFunction();
 		updateErrorTerms();
@@ -210,9 +289,10 @@ public class RegressionMeasure
 			return 0;
 		else {return aSlopeDifference / Math.sqrt(aVariance+aComplementVariance);}
 	}
-	
+*/	
 	public double calculate(Subgroup theNewSubgroup)
 	{
+		Log.logCommandLine("");
 		BitSet aMembers = theNewSubgroup.getMembers();
 		int aSampleSize = aMembers.cardinality();
 		
@@ -281,42 +361,31 @@ public class RegressionMeasure
 		double anSVPDistance = computeSVPDistance(itsSampleSize-aSampleSize, aRemovedIndices);
 		Log.logCommandLine("                   SVP est: " + anSVPDistance);
 
-		//start computing Cook's Distance
-		Matrix aNewDataMatrix = itsDataMatrix.getMatrix(anIndices,0,1);
+		//make submatrices
+		Matrix anXMatrix = itsXMatrix.getMatrix(anIndices,0,itsI+itsJ);
+		Matrix aYMatrix = itsYMatrix.getMatrix(anIndices,0,0);
 		
 		//filter out rank-deficient cases; these regressions cannot be computed, hence low quality
-		LUDecomposition itsDecomp = new LUDecomposition(aNewDataMatrix);
+		LUDecomposition itsDecomp = new LUDecomposition(anXMatrix);
 		if (!itsDecomp.isNonsingular())
 		{
 			itsRankDefCount++;
 			return Double.MIN_VALUE;
 		}
 		
-		//make submatrices
-		double[][] anXValues = new double[aSampleSize][2];
-		for (int i=0; i<aSampleSize; i++)
-		{
-			anXValues[i][0]=1;
-			anXValues[i][1]=aNewDataMatrix.get(i,0);
-		}
-		double[][] aYValues = new double[aSampleSize][1];
-		for (int i=0; i<aSampleSize; i++)
-			aYValues[i][0]=aNewDataMatrix.get(i,1);
-		Matrix anXMatrix = new Matrix(anXValues);
-		Matrix aYMatrix = new Matrix(aYValues);
-		
 		//compute regression
 		Matrix aBetaHat = (anXMatrix.transpose().times(anXMatrix)).inverse().times(anXMatrix.transpose()).times(aYMatrix);
 		Matrix aHatMatrix = anXMatrix.times((anXMatrix.transpose().times(anXMatrix)).inverse()).times(anXMatrix.transpose());
 		Matrix aResidualMatrix = (Matrix.identity(aSampleSize,aSampleSize).minus(aHatMatrix)).times(aYMatrix);
 		
+		spellFittedModel(aBetaHat);
+		
 		//compute Cook's distance
 		double aP = aBetaHat.getRowDimension();
 		double anSSquared = (aResidualMatrix.transpose().times(aResidualMatrix)).get(0,0)/((double) itsSampleSize-aP);
-		double[][] aParentValues = {{itsIntercept},{itsSlope}};
-		Matrix aParentBetaHat = new Matrix(aParentValues);
+//		Matrix aParentBetaHat = new Matrix(aParentValues);
 		
-		double aQuality = aBetaHat.minus(aParentBetaHat).transpose().times(anXMatrix.transpose()).times(anXMatrix).times(aBetaHat.minus(aParentBetaHat)).get(0,0)/(aP*anSSquared);
+		double aQuality = aBetaHat.minus(itsBetaHat).transpose().times(anXMatrix.transpose()).times(anXMatrix).times(aBetaHat.minus(itsBetaHat)).get(0,0)/(aP*anSSquared);
 		//N.B.: Temporary line for fetching Cook's experimental statistics
 		Log.logRefinement(""+aQuality+","+anSVPDistance+","+aSampleSize);
 		return aQuality;
@@ -399,7 +468,7 @@ public class RegressionMeasure
 	 * @param theY the Y-value, the target
 	 * @param theX the X-value
 	 */
-	public void addObservation(float theY, float theX)
+/*	public void addObservation(float theY, float theX)
 	{
 		//adjust the sums
 		itsSampleSize++;
@@ -435,13 +504,13 @@ public class RegressionMeasure
 	{
 		return itsData.get(theIndex);
 	}
-
+*/
  	/**
 	 * calculates the error terms for the distribution and recomputes the
 	 * sum of the squared error term
 	 *
 	 */
-	private void updateErrorTerms()
+/*	private void updateErrorTerms()
 	{
 		itsErrorTermSquaredSum = 0;
 		for(int i=0; i<itsSampleSize; i++)
@@ -463,7 +532,7 @@ public class RegressionMeasure
 			}
 		}
 
-	}
+	}*/
 
 	/**
 	 * Determine the error term for a given point
