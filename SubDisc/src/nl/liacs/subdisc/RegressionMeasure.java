@@ -1,5 +1,6 @@
 package nl.liacs.subdisc;
 
+import java.text.*;
 import java.util.*;
 import nl.liacs.subdisc.Jama.*;
 
@@ -52,6 +53,9 @@ public class RegressionMeasure
 	private String itsPrimaryName;
 	private List<String> itsSecondaryNames;
 	private List<String> itsTertiaryNames;
+	
+	private String itsGlobalModel;
+	private static final DecimalFormat aDf = new DecimalFormat("#.#####");
 
 	//make a base model from multiple columns
 	public RegressionMeasure(int theType, TargetConcept theTargetConcept)
@@ -156,7 +160,7 @@ public class RegressionMeasure
 				//      If this unlikely event is not caught, the program will crash.
 				computeRegression();
 				
-				spellFittedModel(itsBetaHat);
+				theTargetConcept.setGlobalRegressionModel(spellFittedModel(itsBetaHat));
 				
 				//fill R^2 array
 				double[] aResiduals = new double[itsSampleSize];
@@ -193,14 +197,15 @@ public class RegressionMeasure
 		}
 	}
 	
-	public void spellFittedModel(Matrix theBetaHat)
+	public String spellFittedModel(Matrix theBetaHat)
 	{
-		String aRegressionModel = "  fitted model: "+ itsPrimaryName + " = " + theBetaHat.get(0,0);
+		String aRegressionModel = "  fitted model: "+ itsPrimaryName + " = " + aDf.format(theBetaHat.get(0,0));
 		for (int i=0; i<itsI; i++)
-			aRegressionModel = aRegressionModel + " + "+theBetaHat.get(i+1,0) + " * " + itsSecondaryNames.get(i);
+			aRegressionModel = aRegressionModel + " + " + aDf.format(theBetaHat.get(i+1,0)) + " * " + itsSecondaryNames.get(i);
 		for (int j=0; j<itsJ; j++)
-			aRegressionModel = aRegressionModel + " + "+theBetaHat.get(j+itsI+1,0) + " * " + itsTertiaryNames.get(j);
+			aRegressionModel = aRegressionModel + " + " + aDf.format(theBetaHat.get(j+itsI+1,0)) + " * " + itsTertiaryNames.get(j);
 		Log.logCommandLine(aRegressionModel);
+		return aRegressionModel;
 	}
 	
 	public void computeRegression()
@@ -378,7 +383,7 @@ public class RegressionMeasure
 		Matrix aHatMatrix = anXMatrix.times((anXMatrix.transpose().times(anXMatrix)).inverse()).times(anXMatrix.transpose());
 		Matrix aResidualMatrix = (Matrix.identity(aSampleSize,aSampleSize).minus(aHatMatrix)).times(aYMatrix);
 		
-		spellFittedModel(aBetaHat);
+		theNewSubgroup.setRegressionModel(spellFittedModel(aBetaHat));
 		
 		//compute Cook's distance
 		double aP = aBetaHat.getRowDimension();
@@ -617,4 +622,6 @@ public class RegressionMeasure
 	public int getNrBoundFive() { return itsBoundFiveCount; }
 	public int getNrBoundFour() { return itsBoundFourCount; }
 	public int getNrRankDef() { return itsRankDefCount; }
+	
+	public String getGlobalModel() { return itsGlobalModel; }
 }

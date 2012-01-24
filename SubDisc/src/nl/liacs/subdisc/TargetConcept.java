@@ -30,6 +30,7 @@ public class TargetConcept implements XMLNodeInterface
 	private List<Column> itsSecondaryTargets;
 	private List<Column> itsTertiaryTargets;
 	private boolean		 itsInterceptRelevance;
+	private String		 itsGlobalRegressionModel;
 
 	public TargetConcept()
 	{
@@ -221,4 +222,7 @@ public class TargetConcept implements XMLNodeInterface
 			XMLNode.addNodeTo(aNode, "tertiary_targets", sb.substring(0, sb.length() - 1));
 		}
 	}
+	
+	public String getGlobalRegressionModel() { return itsGlobalRegressionModel;	}
+	public void setGlobalRegressionModel(String theModel) {	itsGlobalRegressionModel = theModel; }
 }

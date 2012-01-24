@@ -30,6 +30,7 @@ public class Subgroup implements Comparable<Object>
 	// XXX not strictly need by setting itsPValue to NaN
 	private boolean isPValueComputed;
 	private double itsPValue;
+	private String itsRegressionModel;
 
 	/*
 	 * In case no SubgroupSet is provided an empty one is created, this avoids
@@ -348,4 +349,7 @@ public class Subgroup implements Comparable<Object>
 	{
 		isPValueComputed = false;
 	}
+	
+	public String getRegressionModel() { return itsRegressionModel; }
+	public void setRegressionModel(String theModel) { itsRegressionModel = theModel; }
 }

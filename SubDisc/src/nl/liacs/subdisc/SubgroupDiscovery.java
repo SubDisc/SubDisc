@@ -177,10 +177,6 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		itsResult = itsResult.postProcess(itsSearchParameters.getSearchStrategy());
 
 		itsResult.setIDs(); //assign 1 to n to subgroups, for future reference in subsets
-		
-		//N.B.: Temporary lines for fetching Cook's experimental statistics		
-		if (itsSearchParameters.getQualityMeasure() == QualityMeasure.COOKS_DISTANCE)
-			Log.closeFileOutputStreams();
 	}
 
 	private void evaluateNumericRefinements(Subgroup theSubgroup, Refinement theRefinement)

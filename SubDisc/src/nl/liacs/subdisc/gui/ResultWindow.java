@@ -298,8 +298,28 @@ public class ResultWindow extends JFrame implements ActionListener
 				break;
 			}
 			case DOUBLE_REGRESSION :
-				//TODO implement modelwindow with scatterplot and line
+			{
+				int i=0;
+				Log.logCommandLine("======================================================");
+				Log.logCommandLine("Global model:");
+				Log.logCommandLine(itsSearchParameters.getTargetConcept().getGlobalRegressionModel());
+				Log.logCommandLine("------------------------------------------------------");
+				while (i<aSelectionIndex.length)
+				{
+					Log.logCommandLine("Model for subgroup " + (aSelectionIndex[i]+1) + ":");
+					int aCount = 0;
+					for (Subgroup s : itsSubgroupSet)
+					{
+						if (aCount == aSelectionIndex[i])
+							Log.logCommandLine(s.getRegressionModel());
+						aCount++;
+					}
+
+					i++;
+				}
+				Log.logCommandLine("======================================================");
 				break;
+			}
 			default :
 				break;
 		}
