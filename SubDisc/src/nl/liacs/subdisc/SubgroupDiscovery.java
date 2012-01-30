@@ -25,6 +25,16 @@ public class SubgroupDiscovery extends MiningAlgorithm
 	private List<Column> itsTargets;	//MULTI_LABEL
 //	private DAG itsBaseDAG;				//MULTI_LABEL
 
+	private int itsBoundSevenCount;
+	private int itsBoundSixCount;
+	private int itsBoundFiveCount;
+	private int itsBoundFourCount;
+	private int itsBoundSevenFired;
+	private int itsBoundSixFired;
+	private int itsBoundFiveFired;
+	private int itsBoundFourFired;
+	private int itsRankDefCount;
+
 	//SINGLE_NOMINAL
 	public SubgroupDiscovery(SearchParameters theSearchParameters, Table theTable, int theNrPositive)
 	{
@@ -82,7 +92,17 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		if (isRegression)
 		{
 			itsBaseRM = new RegressionMeasure(itsSearchParameters.getQualityMeasure(), aTC);
-			//Log.logCommandLine("base model: y = " + (float) itsBaseRM.getIntercept() + " + " + (float) itsBaseRM.getSlope()+ " * x");
+
+			//initialize bounds
+			itsBoundSevenCount=0;
+			itsBoundSixCount=0;
+			itsBoundFiveCount=0;
+			itsBoundFourCount=0;
+			itsBoundSevenFired=0;
+			itsBoundSixFired=0;
+			itsBoundFiveFired=0;
+			itsBoundFourFired=0;
+			itsRankDefCount=0;
 		}
 		else
 			itsBaseCM = new CorrelationMeasure(itsSearchParameters.getQualityMeasure(), itsPrimaryColumn, itsSecondaryColumn);
@@ -161,11 +181,15 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		Log.logCommandLine("number of candidates: " + itsCandidateCount.get());
 		if (itsSearchParameters.getQualityMeasure() == QualityMeasure.COOKS_DISTANCE)
 		{
-			Log.logCommandLine("Bound seven fired " + itsBaseRM.getNrBoundSeven() + " times");
-			Log.logCommandLine("Bound six   fired " + itsBaseRM.getNrBoundSix() + " times");
-			Log.logCommandLine("Bound five  fired " + itsBaseRM.getNrBoundFive() + " times");
-			Log.logCommandLine("Bound four  fired " + itsBaseRM.getNrBoundFour() + " times");
-			Log.logCommandLine("Rank deficient models: " + itsBaseRM.getNrRankDef());
+			Log.logCommandLine("Bound seven computed " + getNrBoundSeven() + " times");
+			Log.logCommandLine("Bound six   computed " + getNrBoundSix() + " times");
+			Log.logCommandLine("Bound five  computed " + getNrBoundFive() + " times");
+			Log.logCommandLine("Bound four  computed " + getNrBoundFour() + " times");
+			Log.logCommandLine("Bound seven fired " + getNrBoundSevenFired() + " times");
+			Log.logCommandLine("Bound six   fired " + getNrBoundSixFired() + " times");
+			Log.logCommandLine("Bound five  fired " + getNrBoundFiveFired() + " times");
+			Log.logCommandLine("Bound four  fired " + getNrBoundFourFired() + " times");
+			Log.logCommandLine("Rank deficient models: " + getNrRankDef());
 		}
 		Log.logCommandLine("number of subgroups: " + getNumberOfSubgroups());
 
@@ -349,7 +373,102 @@ public class SubgroupDiscovery extends MiningAlgorithm
 					}*/
 					case QualityMeasure.COOKS_DISTANCE:
 					{
-						aQuality = (float) itsBaseRM.calculate(theNewSubgroup);
+						// initialize variables
+						double aThreshold = -Double.MAX_VALUE;
+						boolean aNeedToComputeRegression = true;
+						boolean aNeedToComputeBounds = true;
+						
+						// check what the pruning quality will be, if this exists at all
+						if ( itsResult.size() >= itsSearchParameters.getMaximumSubgroups() )
+							aThreshold = itsResult.last().getMeasureValue();
+						else { aNeedToComputeBounds = false; }
+						
+						// start actual computation
+						Log.logCommandLine("");
+						BitSet aMembers = theNewSubgroup.getMembers();
+						int aSampleSize = aMembers.cardinality();
+						
+						// filter out rank deficient model that crash matrix multiplication library
+						if (aSampleSize<2)
+						{
+							itsRankDefCount++;
+							return -Float.MAX_VALUE;
+						}
+						
+						itsBaseRM.computeRemovedIndices(aMembers, aSampleSize);
+
+						// calculate the upper bound values. Before each bound, only the necessary computations are done.
+						if (aNeedToComputeBounds)
+						{
+							double aT = itsBaseRM.getT(aSampleSize);
+							double aRSquared = itsBaseRM.getRSquared(aSampleSize);
+							
+							// bound seven
+							double aBoundSeven = itsBaseRM.computeBoundSeven(aSampleSize, aT, aRSquared);
+							if (aBoundSeven<Double.MAX_VALUE)
+							{
+								Log.logCommandLine("                   Bound 7: " + aBoundSeven);
+								itsBoundSevenCount++;
+							}
+							
+							if (aBoundSeven < aThreshold)
+							{
+								aNeedToComputeRegression = false;
+								itsBoundSevenFired++;
+							}
+							else
+							{	// bound six
+								double aBoundSix = itsBaseRM.computeBoundSix(aSampleSize, aT);
+								if (aBoundSix<Double.MAX_VALUE)
+								{
+									Log.logCommandLine("                   Bound 6: " + aBoundSix);
+									itsBoundSixCount++;
+								}
+								if (aBoundSix < aThreshold)
+								{
+									aNeedToComputeRegression = false;
+									itsBoundSixFired++;
+								}
+								else
+								{	// bound five
+									double aBoundFive = itsBaseRM.computeBoundFive(aSampleSize, aRSquared);
+									if (aBoundFive<Double.MAX_VALUE)
+									{
+										Log.logCommandLine("                   Bound 5: " + aBoundFive);
+										itsBoundFiveCount++;
+									}
+									if (aBoundFive < aThreshold)
+									{
+										aNeedToComputeRegression = false;
+										itsBoundFiveFired++;
+									}
+									else
+									{	// bound four
+										double aBoundFour = itsBaseRM.computeBoundFour(aSampleSize, aT);
+										if (aBoundFour<Double.MAX_VALUE)
+										{
+											Log.logCommandLine("                   Bound 4: " + aBoundFour);
+											itsBoundFourCount++;
+										}
+										if (aBoundFour < aThreshold)
+										{
+											aNeedToComputeRegression = false;
+											itsBoundFourFired++;
+										}
+									}
+								}
+							}
+						}
+						
+						// finally, compute regression
+						if (aNeedToComputeRegression)
+						{
+							double aDoubleQuality = itsBaseRM.calculate(theNewSubgroup);
+							if (aDoubleQuality == -Double.MAX_VALUE)
+								itsRankDefCount += 1;
+							aQuality = (float) aDoubleQuality; 
+						}
+						else aQuality = -Float.MAX_VALUE;
 					}
 				}
 
@@ -515,11 +634,15 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		Log.logCommandLine("number of candidates: " + itsCandidateCount.get());
 		if (itsSearchParameters.getQualityMeasure() == QualityMeasure.COOKS_DISTANCE)
 		{
-			Log.logCommandLine("Bound seven fired " + itsBaseRM.getNrBoundSeven() + " times");
-			Log.logCommandLine("Bound six   fired " + itsBaseRM.getNrBoundSix() + " times");
-			Log.logCommandLine("Bound five  fired " + itsBaseRM.getNrBoundFive() + " times");
-			Log.logCommandLine("Bound four  fired " + itsBaseRM.getNrBoundFour() + " times");
-			Log.logCommandLine("Rank deficient models: " + itsBaseRM.getNrRankDef());
+			Log.logCommandLine("Bound seven computed " + getNrBoundSeven() + " times");
+			Log.logCommandLine("Bound six   computed " + getNrBoundSix() + " times");
+			Log.logCommandLine("Bound five  computed " + getNrBoundFive() + " times");
+			Log.logCommandLine("Bound four  computed " + getNrBoundFour() + " times");
+			Log.logCommandLine("Bound seven fired " + getNrBoundSevenFired() + " times");
+			Log.logCommandLine("Bound six   fired " + getNrBoundSixFired() + " times");
+			Log.logCommandLine("Bound five  fired " + getNrBoundFiveFired() + " times");
+			Log.logCommandLine("Bound four  fired " + getNrBoundFourFired() + " times");
+			Log.logCommandLine("Rank deficient models: " + getNrRankDef());
 		}
 		Log.logCommandLine("number of subgroups: " + getNumberOfSubgroups());
 
@@ -582,4 +705,14 @@ public class SubgroupDiscovery extends MiningAlgorithm
 			itsSemaphore.release();
 		}
 	}
+	
+	public int getNrBoundSeven() { return itsBoundSevenCount; }
+	public int getNrBoundSix() { return itsBoundSixCount; }
+	public int getNrBoundFive() { return itsBoundFiveCount; }
+	public int getNrBoundFour() { return itsBoundFourCount; }
+	public int getNrBoundSevenFired() { return itsBoundSevenFired; }
+	public int getNrBoundSixFired() { return itsBoundSixFired; }
+	public int getNrBoundFiveFired() { return itsBoundFiveFired; }
+	public int getNrBoundFourFired() { return itsBoundFourFired; }
+	public int getNrRankDef() { return itsRankDefCount; }
 }

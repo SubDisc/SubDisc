@@ -42,11 +42,11 @@ public class RegressionMeasure
 	private double[] itsT;
 	private double[] itsSVP;
 	
-	private int itsBoundSevenCount;
-	private int itsBoundSixCount;
-	private int itsBoundFiveCount;
-	private int itsBoundFourCount;
-	private int itsRankDefCount;
+	private int[] itsIndices;
+	private int[] itsRemovedIndices;
+	
+	private double itsSquaredResidualSum;
+	private double itsRemovedTrace;
 	
 	private int itsI; // = itsNrSecondaryTargets
 	private int itsJ; // = itsNrTertiaryTargets
@@ -209,13 +209,6 @@ public class RegressionMeasure
 				for (int i=0; i<itsSampleSize; i++)
 					aSVP[i] = itsResidualMatrix.get(i,0)*itsResidualMatrix.get(i,0)/itsP * itsHatMatrix.get(i,i)/(1-itsHatMatrix.get(i,i));
 				itsSVP = aSVP;
-				
-				//initialize bounds
-				itsBoundSevenCount=0;
-				itsBoundSixCount=0;
-				itsBoundFiveCount=0;
-				itsBoundFourCount=0;
-				itsRankDefCount=0;
 			}
 		}
 	}
@@ -323,95 +316,22 @@ public class RegressionMeasure
 */	
 	public double calculate(Subgroup theNewSubgroup)
 	{
-		Log.logCommandLine("");
-		BitSet aMembers = theNewSubgroup.getMembers();
-		int aSampleSize = aMembers.cardinality();
+		int aSampleSize = theNewSubgroup.getCoverage();
 		
-		//filter out rank deficient model that crash matrix multiplication library
-		if (aSampleSize<2)
-		{
-			itsRankDefCount++;
-			return -Double.MAX_VALUE;
-		}
-		
-		//calculate the upper bound values. Before each bound, only the necessary computations are done.
-		double aT = itsT[aSampleSize];
-		double aRSquared = itsRSquared[aSampleSize];
-		
-		double aBoundSeven = computeBoundSeven(aSampleSize, aT, aRSquared);
-		if (aBoundSeven>-Double.MAX_VALUE)
-		{
-			Log.logCommandLine("                   Bound 7: " + aBoundSeven);
-			itsBoundSevenCount++;
-		}
-		
-		int[] anIndices = new int[aSampleSize];
-		int[] aRemovedIndices = new int[itsSampleSize-aSampleSize];
-		int anIndex=0;
-		int aRemovedIndex=0;
-		for (int i=0; i<itsSampleSize; i++)
-		{
-			if (aMembers.get(i))
-			{
-				anIndices[anIndex] = i;
-				anIndex++;
-			}
-			else
-			{
-				aRemovedIndices[aRemovedIndex] = i;
-				aRemovedIndex++;
-			}
-		}
-
-		Matrix aRemovedResiduals = itsResidualMatrix.getMatrix(aRemovedIndices,0,0);
-		double aSquaredResidualSum = squareSum(aRemovedResiduals);
-		double aBoundSix = computeBoundSix(aSampleSize, aT, aSquaredResidualSum);		
-		if (aBoundSix>-Double.MAX_VALUE)
-		{
-			Log.logCommandLine("                   Bound 6: " + aBoundSix);
-			itsBoundSixCount++;
-		}
-		
-		Matrix aRemovedHatMatrix = itsHatMatrix.getMatrix(aRemovedIndices,aRemovedIndices);
-		double aRemovedTrace = aRemovedHatMatrix.trace();
-		double aBoundFive = computeBoundFive(aSampleSize, aRemovedTrace, aRSquared);
-		if (aBoundFive>-Double.MAX_VALUE)
-		{
-			Log.logCommandLine("                   Bound 5: " + aBoundFive);
-			itsBoundFiveCount++;
-		}
-		
-		double aBoundFour = computeBoundFour(aSampleSize, aRemovedTrace, aSquaredResidualSum);
-		if (aBoundFour>-Double.MAX_VALUE)
-		{
-			Log.logCommandLine("                   Bound 4: " + aBoundFour);
-			itsBoundFourCount++;
-		}
-		
-		//compute estimate based on projection of single influence values 
-//		double anSVPDistance = computeSVPDistance(itsSampleSize-aSampleSize, aRemovedIndices);
-//		Log.logCommandLine("                   SVP est: " + anSVPDistance);
-
 		//make submatrices
-		Matrix anXMatrix = itsXMatrix.getMatrix(anIndices,0,itsI+itsJ);
-		Matrix aYMatrix = itsYMatrix.getMatrix(anIndices,0,0);
+		Matrix anXMatrix = itsXMatrix.getMatrix(itsIndices,0,itsI+itsJ);
+		Matrix aYMatrix = itsYMatrix.getMatrix(itsIndices,0,0);
 		
 		//filter out rank-deficient cases; these regressions cannot be computed, hence low quality
 		LUDecomposition itsDecomp = new LUDecomposition(anXMatrix);
 		if (!itsDecomp.isNonsingular())
-		{
-			itsRankDefCount++;
 			return -Double.MAX_VALUE;
-		}
 		
 		//compute regression
 		Matrix anXTXMatrix = anXMatrix.transpose().times(anXMatrix); 
 		LUDecomposition itsXTXDecomp = new LUDecomposition(anXTXMatrix);
 		if (!itsXTXDecomp.isNonsingular())
-		{
-			itsRankDefCount++;
 			return -Double.MAX_VALUE;
-		}
 		Matrix anXTXInverseMatrix = anXTXMatrix.inverse();
 		
 		Matrix aBetaHat = anXTXInverseMatrix.times(anXMatrix.transpose()).times(aYMatrix);
@@ -428,10 +348,7 @@ public class RegressionMeasure
 		Matrix aZXTXInverseZTInverseMatrix = itsZMatrix.times(anXTXInverseMatrix.times(itsZMatrix.transpose())); 
 		LUDecomposition itsOtherDecomp = new LUDecomposition(aZXTXInverseZTInverseMatrix);
 		if (!itsOtherDecomp.isNonsingular())
-		{
-			itsRankDefCount++;
 			return -Double.MAX_VALUE;
-		}
 		
 		double aQuality = aBetaHat.minus(itsBetaHat).transpose().times(
 			itsZMatrix.transpose()
@@ -442,32 +359,36 @@ public class RegressionMeasure
 		return aQuality;
 	}
 	
-	private double computeBoundSeven(int theSampleSize, double theT, double theRSquared)
+	public double computeBoundSeven(int theSampleSize, double theT, double theRSquared)
 	{
 		if (theT>=1)
-			return -Double.MAX_VALUE;
+			return Double.MAX_VALUE;
 		return itsP/itsQ*theT/((1-theT)*(1-theT))*theRSquared/(itsP*itsSSquared);
 	}
 
-	private double computeBoundSix(int theSampleSize, double theT, double theSquaredResidualSum)
+	public double computeBoundSix(int theSampleSize, double theT)
 	{
+		Matrix aRemovedResiduals = itsResidualMatrix.getMatrix(itsRemovedIndices,0,0);
+		itsSquaredResidualSum = squareSum(aRemovedResiduals);
 		if (theT>=1)
-			return -Double.MAX_VALUE;
-		return itsP/itsQ*theT/((1-theT)*(1-theT))*theSquaredResidualSum/(itsP*itsSSquared);
+			return Double.MAX_VALUE;
+		return itsP/itsQ*theT/((1-theT)*(1-theT))*itsSquaredResidualSum/(itsP*itsSSquared);
 	}
 
-	private double computeBoundFive(int theSampleSize, double theRemovedTrace, double theRSquared)
+	public double computeBoundFive(int theSampleSize, double theRSquared)
 	{
-		if (theRemovedTrace>=1)
-			return -Double.MAX_VALUE;
-		return itsP/itsQ*theRemovedTrace/((1-theRemovedTrace)*(1-theRemovedTrace))*theRSquared/(itsP*itsSSquared);
+		Matrix aRemovedHatMatrix = itsHatMatrix.getMatrix(itsRemovedIndices,itsRemovedIndices);
+		itsRemovedTrace = aRemovedHatMatrix.trace();
+		if (itsRemovedTrace>=1)
+			return Double.MAX_VALUE;
+		return itsP/itsQ*itsRemovedTrace/((1-itsRemovedTrace)*(1-itsRemovedTrace))*theRSquared/(itsP*itsSSquared);
 	}
 	
-	private double computeBoundFour(int theSampleSize, double theRemovedTrace, double theSquaredResidualSum)
+	public double computeBoundFour(int theSampleSize, double theT)
 	{
-		if (theRemovedTrace>=1)
-			return -Double.MAX_VALUE;
-		return itsP/itsQ*theRemovedTrace/((1-theRemovedTrace)*(1-theRemovedTrace))*theSquaredResidualSum/(itsP*itsSSquared);
+		if (itsRemovedTrace>=1 || theT>=1)
+			return Double.MAX_VALUE;
+		return itsP/itsQ*itsRemovedTrace/((1-itsRemovedTrace)*(1-itsRemovedTrace))*itsSquaredResidualSum/(itsP*itsSSquared);
 	}
 	
 	private double computeSVPDistance(int theNrRemoved, int[] theIndices)
@@ -663,11 +584,31 @@ public class RegressionMeasure
 		return theX*itsSlope + itsIntercept;
 	}
 	
-	public int getNrBoundSeven() { return itsBoundSevenCount; }
-	public int getNrBoundSix() { return itsBoundSixCount; }
-	public int getNrBoundFive() { return itsBoundFiveCount; }
-	public int getNrBoundFour() { return itsBoundFourCount; }
-	public int getNrRankDef() { return itsRankDefCount; }
-	
 	public String getGlobalModel() { return itsGlobalModel; }
+	
+	public double getT(int theSampleSize) { return itsT[theSampleSize]; }
+	public double getRSquared(int theSampleSize) { return itsRSquared[theSampleSize]; }
+
+	public void computeRemovedIndices(BitSet theMembers, int theSampleSize)
+	{
+		int[] anIndices = new int[theSampleSize];
+		int[] aRemovedIndices = new int[itsSampleSize-theSampleSize];
+		int anIndex=0;
+		int aRemovedIndex=0;
+		for (int i=0; i<itsSampleSize; i++)
+		{
+			if (theMembers.get(i))
+			{
+				anIndices[anIndex] = i;
+				anIndex++;
+			}
+			else
+			{
+				aRemovedIndices[aRemovedIndex] = i;
+				aRemovedIndex++;
+			}
+		}
+		itsIndices = anIndices;
+		itsRemovedIndices = aRemovedIndices;
+	}
 }
