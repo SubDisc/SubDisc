@@ -15,6 +15,9 @@ import nl.liacs.subdisc.FileHandler.Action;
 import nl.liacs.subdisc.XMLAutoRun.*;
 import nl.liacs.subdisc.cui.*;
 
+/*
+ * TODO correlation info field is not updated when changing primary target
+ */
 public class MiningWindow extends JFrame
 {
 	static final long serialVersionUID = 1L;
@@ -781,10 +784,10 @@ public class MiningWindow extends JFrame
 		jLabelSearchCoverageMaximum = initJLabel(" coverage fraction");
 		jPanelSearchParameterLabels.add(jLabelSearchCoverageMaximum);
 
-		jLabelSubgroupsMaximum = initJLabel(" maximum subgroups");
+		jLabelSubgroupsMaximum = initJLabel("<html> maximum subgroups (0 = &#8734;)</html>)");
 		jPanelSearchParameterLabels.add(jLabelSubgroupsMaximum);
 
-		jLabelSearchTimeMaximum = initJLabel(" maximum time (min)");
+		jLabelSearchTimeMaximum = initJLabel("<html> maximum time (min) (0 = &#8734;)</html>)");
 		jPanelSearchParameterLabels.add(jLabelSearchTimeMaximum);
 
 		jPanelSearchParameters.add(jPanelSearchParameterLabels);
@@ -2043,6 +2046,7 @@ public class MiningWindow extends JFrame
 	private JButton jButtonSubgroupDiscovery;
 	private JButton jButtonThreshold;
 	private JPanel jPanelCenter;
+
 	private JPanel jPanelRuleTarget;
 	private JPanel jPanelRuleTargetLabels;
 	private JPanel jPanelRuleTargetButtons;

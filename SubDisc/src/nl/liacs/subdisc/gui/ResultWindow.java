@@ -30,41 +30,38 @@ public class ResultWindow extends JFrame implements ActionListener
 //	public ResultWindow(Table theTable, SubgroupDiscovery theSubgroupDiscovery, DAGView theDAGView, BinaryTable theBinaryTable, int theFold, BitSet theBitSet)
 	public ResultWindow(Table theTable, SubgroupDiscovery theSubgroupDiscovery, BinaryTable theBinaryTable, int theFold, BitSet theBitSet)
 	{
-		if (theTable == null ||theSubgroupDiscovery == null)
+		if (theTable == null || theSubgroupDiscovery == null)
 		{
 			Log.logCommandLine("ResultWindow Constructor: parameter(s) can not be 'null'.");
-
 			return;
 		}
-		else
-		{
-			itsTable = theTable;
-			itsNrRecords = itsTable.getNrRows();
-			itsSubgroupSet = theSubgroupDiscovery.getResult();
-			itsSearchParameters = theSubgroupDiscovery.getSearchParameters();
-			itsQualityMeasure = theSubgroupDiscovery.getQualityMeasure();
+
+		itsTable = theTable;
+		itsNrRecords = itsTable.getNrRows();
+		itsSubgroupSet = theSubgroupDiscovery.getResult();
+		itsSearchParameters = theSubgroupDiscovery.getSearchParameters();
+		itsQualityMeasure = theSubgroupDiscovery.getQualityMeasure();
 //			itsDAGView = theDAGView;
-			itsBinaryTable = theBinaryTable;
+		itsBinaryTable = theBinaryTable;
 
-			// only used in MULTI_LABEL setting for now
-			// if theFold == 0, itsBitSet is never used
-			itsFold = theFold;
-			itsBitSet = theBitSet;
+		// only used in MULTI_LABEL setting for now
+		// if theFold == 0, itsBitSet is never used
+		itsFold = theFold;
+		itsBitSet = theBitSet;
 
-			itsResultTableModel = new ResultTableModel(itsSubgroupSet);
-			itsSubgroupTable = new JTable(itsResultTableModel);
-			if (!itsSubgroupSet.isEmpty())
-				itsSubgroupTable.addRowSelectionInterval(0, 0);
+		itsResultTableModel = new ResultTableModel(itsSubgroupSet);
+		itsSubgroupTable = new JTable(itsResultTableModel);
+		if (!itsSubgroupSet.isEmpty())
+			itsSubgroupTable.addRowSelectionInterval(0, 0);
 
-			initComponents ();
-			initialise();
-			setTitle();
-			setIconImage(MiningWindow.ICON);
-			setLocation(100, 100);
-			setSize(GUI.WINDOW_DEFAULT_SIZE);
-			setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-			setVisible(true);
-		}
+		initComponents ();
+		initialise();
+		setTitle();
+		setIconImage(MiningWindow.ICON);
+		setLocation(100, 100);
+		setSize(GUI.WINDOW_DEFAULT_SIZE);
+		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		setVisible(true);
 	}
 
 	public void setTitle()

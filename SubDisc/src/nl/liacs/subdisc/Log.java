@@ -8,15 +8,15 @@ public class Log
 	public static boolean DEBUG = true;		// Logs debug in file < LOGPATH + "debug" + timeStamp + ".log" >
 	public static boolean ERROR = true;		// logs error in file < LOGPATH + "error" + timeStamp + ".log" >
 
-	public static boolean			   SQLLOG = false;		// Logs all sql-queries in file < LOGPATH + "sql.log" >
-	public static boolean		 SQLRESULTLOG = false;		// If (SQLLOG = true) : Logs all sql-query results same file
-	public static boolean		REFINEMENTLOG = false;		// Logs all refinements in file < LOGPATH + "refinement.log" >
-	public static boolean	   COMMANDLINELOG = true;		// Logs a few things to dos commandline
+	public static boolean SQLLOG = false;		// Logs all sql-queries in file < LOGPATH + "sql.log" >
+	public static boolean SQLRESULTLOG = false;	// If (SQLLOG = true) : Logs all sql-query results same file
+	public static boolean REFINEMENTLOG = false;	// Logs all refinements in file < LOGPATH + "refinement.log" >
+	public static boolean COMMANDLINELOG = true;	// Logs a few things to dos commandline
 
-	public static boolean				  LOG = true;		// Basket of all the (...LOG = false) log attempts
-	public static boolean FORCECOMMANDLINELOG = false;		// If (LOG = false) all its content is put on the commandline
+	public static boolean LOG = true;			// Basket of all the (...LOG = false) log attempts
+	public static boolean FORCECOMMANDLINELOG = false;	// If (LOG = false) all its content is put on the commandline
 
-	private static String LOGPATH = new String("../log/"); // NB: this path of direcories will be created
+	private static String LOGPATH = new String("../log/");	// NB: this path of direcories will be created
 
 	static java.io.OutputStream debugStream = System.out;
 	static java.io.OutputStream errorStream = System.err;
