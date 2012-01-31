@@ -206,7 +206,7 @@ public class Table
 	 */
 	/**
 	 * Updates this Table. This means the number of rows and columns are set,
-	 * and this Tables' list of {@link Attribute Attribute}s is updated.
+	 * and this Tables' list of {@link Column Column}s is updated.
 	 */
 	public void update()
 	{
