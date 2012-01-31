@@ -4,9 +4,7 @@ import java.awt.*;
 import java.io.*;
 import java.util.*;
 
-import javax.swing.*;
-
-import nl.liacs.subdisc.FileHandler.Action;
+import nl.liacs.subdisc.FileHandler.*;
 import nl.liacs.subdisc.XMLDocument.*;
 import nl.liacs.subdisc.gui.*;
 
@@ -133,7 +131,7 @@ public class XMLAutoRun
 	 * Loads an <code>AutoRun File</code> and runs a SubgroupDiscovery
 	 * based on the information contained in the file.
 	 * 
-	 * @param the <code>String[]</code> containing the command-line
+	 * @param args the <code>String[]</code> containing the command-line
 	 * parameters.
 	 * 
 	 * @return <code>true</code> if the parameters are valid,

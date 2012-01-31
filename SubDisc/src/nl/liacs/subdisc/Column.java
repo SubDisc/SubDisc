@@ -412,9 +412,10 @@ public class Column implements XMLNodeInterface
 
 	/**
 	 * Sets a new type for this Column. This is done by changing the
-	 * {@link AttributeType AttributeType} of this Columns'
-	 * {@link Attribute Attribute}.
+	 * {@link AttributeType AttributeType} of this Column.
+	 * 
 	 * @param theAttributeType a valid AttributeType.
+	 * 
 	 * @return <code>true</code> if the change was successful,
 	 * <code>false</code> otherwise.
 	 */

@@ -11,8 +11,7 @@ import nl.liacs.subdisc.*;
  * straightforward. The only noteworthy change is the return <code>String</code>
  * for the {@link #getColumnName(int) getColumnName()} method, which returns a
  * 2-line <code>String</code> that contains both the name of the
- * {@link Attribute Attribute} of that {@link Column Column}, and the number of
- * distinct values for that Attribute.
+ * {@link Column Column}, and its number of distinct values.
   */
 public class BrowseTableModel extends AbstractTableModel
 {

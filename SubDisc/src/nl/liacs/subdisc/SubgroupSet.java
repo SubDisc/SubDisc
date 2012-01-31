@@ -7,10 +7,11 @@ import java.io.*;
  * A SubgroupSet is a <code>TreeSet</code> of {@link Subgroup Subgroup}s. If its
  * size is set to <= 0, the SubgroupSet has no maximum size, else the number of
  * Subgroups it can contain is limited by its size. In a nominal target setting
- * ({@link nl.liacs.subdisc.TargetConcept.TargetType TargetType}) a
+ * ({@link nl.liacs.subdisc.TargetType TargetType}) a
  * {@link ROCList ROCList} can be obtained from this SubgroupSet to create a
  * {@link nl.liacs.subdisc.gui.ROCCurve ROCCurve} in a
  * {@link nl.liacs.subdisc.gui.ROCCurveWindow ROCCurveWindow}.
+ * 
  * @see ROCList
  * @see nl.liacs.subdisc.gui.ROCCurve
  * @see nl.liacs.subdisc.gui.ROCCurveWindow
@@ -117,7 +118,7 @@ public class SubgroupSet extends TreeSet<Subgroup>
 			boolean aResult = super.add(theSubgroup);
 			if ((itsMaximumSize > 0) && (size() > itsMaximumSize))
 				remove(last());
-			
+
 			return aResult;
 		}
 	}
@@ -209,7 +210,7 @@ public class SubgroupSet extends TreeSet<Subgroup>
 	 * Returns a <b>copy of</b> this SubgroupSets' BinaryTarget
 	 * <code>BitSet</code>. SubgroupSets only have a BinaryTarget
 	 * <code>BitSet<code> in a nominal target setting, meaning the
-	 * {@link nl.liacs.subdisc.Attribute.AttributeType AttributeType} of the
+	 * {@link nl.liacs.subdisc.AttributeType AttributeType} of the
 	 * PrimaryTarget in the {@link TargetConcept TargetConcept} is of type
 	 * AttributeType.NOMINAL.
 	 *
@@ -313,7 +314,7 @@ public class SubgroupSet extends TreeSet<Subgroup>
 	 * Returns a new {@link ROCList ROCList}. If {@link Subgroup Subgroup}s are
 	 * removed from this SubgroupSet, this new ROCList reflects these changes.
 	 * This method only returns a ROCList in a nominal target setting, meaning
-	 * the {@link nl.liacs.subdisc.Attribute.AttributeType AttributeType} of the
+	 * the {@link nl.liacs.subdisc.AttributeType AttributeType} of the
 	 * PrimaryTarget in the {@link TargetConcept TargetConcept} is of type
 	 * AttributeType.NOMINAL.
 	 *
