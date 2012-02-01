@@ -1755,7 +1755,7 @@ public class MiningWindow extends JFrame
 
 	private void initTargetAttributeItems()
 	{
-		TargetType aTargetType = itsTargetConcept.getTargetType();
+		final TargetType aTargetType = itsTargetConcept.getTargetType();
 
 		// clear all
 		removeAllTargetAttributeItems();
@@ -1777,10 +1777,10 @@ public class MiningWindow extends JFrame
 					(aTargetType == TargetType.MULTI_BINARY_CLASSIFICATION && anAttribute.isBinaryType()) ||
 					(aTargetType == TargetType.MULTI_BINARY_CLASSIFICATION && anAttribute.isNominalType()))
 			{
-				addTargetAttributeItem(itsTable.getColumn(i).getName());
+				addTargetAttributeItem(anAttribute.getName());
 				if ((aTargetType == TargetType.DOUBLE_REGRESSION) ||
 						(aTargetType == TargetType.DOUBLE_CORRELATION))
-					addMiscFieldItem(itsTable.getColumn(i).getName());
+					addMiscFieldItem(anAttribute.getName());
 
 				isEmpty = false;
 			}

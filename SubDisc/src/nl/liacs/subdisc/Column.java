@@ -462,7 +462,6 @@ public class Column implements XMLNodeInterface
 			case NUMERIC :
 			case ORDINAL :
 			{
-				itsNominals = new ArrayList<String>(itsSize);
 				int aNrTrueIntegers = 0;
 
 				// 2 loops over itsFloats to check if all are actually integers
@@ -470,6 +469,7 @@ public class Column implements XMLNodeInterface
 					if (Float.toString(f).matches(trueInteger))
 						++aNrTrueIntegers ;
 
+				itsSize = 0;
 				// NOTE uses add(String) to populate itsDistinctValues
 				if (aNrTrueIntegers == itsSize)
 				{
