@@ -150,18 +150,14 @@ public class RegressionMeasure
 					{	
 						Column aSecondaryColumn = aSecondaryTargets.get(i);
 						anXValues[n][1+i] = aSecondaryColumn.getFloat(n);
-//						aData[n][i] = anXValues[n][1+i];
 					}
 					for (int j=0; j<itsJ; j++)
 					{	
 						Column aTertiaryColumn = aTertiaryTargets.get(j);
 						anXValues[n][1+itsI+j] = aTertiaryColumn.getFloat(n);
-//						aData[n][itsI+j] = anXValues[n][1+itsI+j];
 					}
 					aYValues[n][0] = aPrimaryTarget.getFloat(n); 
-//					aData[n][itsI+itsJ] = aYValues[n][0];
 				}
-//				itsDataMatrix = new Matrix(aData);
 
 				// build Z-matrix values; indicating which subset of beta we're interested in
 				int anOffset = 1;
@@ -205,24 +201,24 @@ public class RegressionMeasure
 				itsT = aT;
 				
 				//fill SVP array; this would be Cook's distance when removing only single points. Cf. Cook&Weisberg p.117, Cook1977a
-				double[] aSVP = new double[itsSampleSize];
-				for (int i=0; i<itsSampleSize; i++)
-					aSVP[i] = itsResidualMatrix.get(i,0)*itsResidualMatrix.get(i,0)/itsP * itsHatMatrix.get(i,i)/(1-itsHatMatrix.get(i,i));
-				itsSVP = aSVP;
+//				double[] aSVP = new double[itsSampleSize];
+//				for (int i=0; i<itsSampleSize; i++)
+//					aSVP[i] = itsResidualMatrix.get(i,0)*itsResidualMatrix.get(i,0)/itsP * itsHatMatrix.get(i,i)/(1-itsHatMatrix.get(i,i));
+//				itsSVP = aSVP;
 			}
 		}
 	}
 	
 	public String spellFittedModel(Matrix theBetaHat)
 	{
-//		String aRegressionModel = "  fitted model: "+ itsPrimaryName + " = " + aDf.format(theBetaHat.get(0,0));
-		String aRegressionModel = "  fitted model: "+ itsPrimaryName + " = " + theBetaHat.get(0,0);
+		String aRegressionModel = "  fitted model: "+ itsPrimaryName + " = " + aDf.format(theBetaHat.get(0,0));
+//		String aRegressionModel = "  fitted model: "+ itsPrimaryName + " = " + theBetaHat.get(0,0);
 		for (int i=0; i<itsI; i++)
-//			aRegressionModel = aRegressionModel + " + " + aDf.format(theBetaHat.get(i+1,0)) + " * " + itsSecondaryNames.get(i);
-			aRegressionModel = aRegressionModel + " + " + theBetaHat.get(i+1,0) + " * " + itsSecondaryNames.get(i);
+			aRegressionModel = aRegressionModel + " + " + aDf.format(theBetaHat.get(i+1,0)) + " * " + itsSecondaryNames.get(i);
+//			aRegressionModel = aRegressionModel + " + " + theBetaHat.get(i+1,0) + " * " + itsSecondaryNames.get(i);
 		for (int j=0; j<itsJ; j++)
-//			aRegressionModel = aRegressionModel + " + " + aDf.format(theBetaHat.get(j+itsI+1,0)) + " * " + itsTertiaryNames.get(j);
-			aRegressionModel = aRegressionModel + " + " + theBetaHat.get(j+itsI+1,0) + " * " + itsTertiaryNames.get(j);
+			aRegressionModel = aRegressionModel + " + " + aDf.format(theBetaHat.get(j+itsI+1,0)) + " * " + itsTertiaryNames.get(j);
+//			aRegressionModel = aRegressionModel + " + " + theBetaHat.get(j+itsI+1,0) + " * " + itsTertiaryNames.get(j);
 		Log.logCommandLine(aRegressionModel);
 		return aRegressionModel;
 	}
@@ -341,21 +337,21 @@ public class RegressionMeasure
 		theNewSubgroup.setRegressionModel(spellFittedModel(aBetaHat));
 		
 		//compute Cook's distance
-		double aP = aBetaHat.getRowDimension();
-		double anSSquared = (aResidualMatrix.transpose().times(aResidualMatrix)).get(0,0)/((double) itsSampleSize-aP);
+//		double aP = aBetaHat.getRowDimension();
+		double anSSquared = (aResidualMatrix.transpose().times(aResidualMatrix)).get(0,0)/((double) aSampleSize-itsP);
 		
-		//double aQuality = aBetaHat.minus(itsBetaHat).transpose().times(anXMatrix.transpose()).times(anXMatrix).times(aBetaHat.minus(itsBetaHat)).get(0,0)/(aP*anSSquared);
-		Matrix aZXTXInverseZTInverseMatrix = itsZMatrix.times(anXTXInverseMatrix.times(itsZMatrix.transpose())); 
-		LUDecomposition itsOtherDecomp = new LUDecomposition(aZXTXInverseZTInverseMatrix);
+//		double anOldQuality = aBetaHat.minus(itsBetaHat).transpose().times(anXMatrix.transpose()).times(anXMatrix).times(aBetaHat.minus(itsBetaHat)).get(0,0)/(itsP*anSSquared);
+		Matrix aZXTXInverseZTMatrix = itsZMatrix.times(anXTXInverseMatrix).times(itsZMatrix.transpose()); 
+		LUDecomposition itsOtherDecomp = new LUDecomposition(aZXTXInverseZTMatrix);
 		if (!itsOtherDecomp.isNonsingular())
 			return -Double.MAX_VALUE;
 		
 		double aQuality = aBetaHat.minus(itsBetaHat).transpose().times(
 			itsZMatrix.transpose()
-			).times(aZXTXInverseZTInverseMatrix.inverse()
+			).times(aZXTXInverseZTMatrix.inverse()
 			).times(itsZMatrix).times(aBetaHat.minus(itsBetaHat)).get(0,0)/(itsQ*anSSquared);
 		//N.B.: Temporary line for fetching Cook's experimental statistics
-//		Log.logRefinement(""+aQuality+","+anSVPDistance+","+aSampleSize);
+		Log.logRefinement(""+aQuality+","+aSampleSize);
 		return aQuality;
 	}
 	
@@ -391,14 +387,14 @@ public class RegressionMeasure
 		return itsP/itsQ*itsRemovedTrace/((1-itsRemovedTrace)*(1-itsRemovedTrace))*itsSquaredResidualSum/(itsP*itsSSquared);
 	}
 	
-	private double computeSVPDistance(int theNrRemoved, int[] theIndices)
+/*	private double computeSVPDistance(int theNrRemoved, int[] theIndices)
 	{
 		double result = 0.0;
 		for (int i=0; i<theNrRemoved; i++)
 			result += itsSVP[theIndices[i]];
 		return result;
 	}
-	
+*/	
 	private double squareSum(Matrix itsMatrix)
 	{
 		int aSampleSize = itsMatrix.getRowDimension();

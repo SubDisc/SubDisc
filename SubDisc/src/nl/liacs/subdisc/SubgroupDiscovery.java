@@ -83,7 +83,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		{
 			Log.REFINEMENTLOG = true;
 			Log.openFileOutputStreams();
-			Log.logRefinement("Cook,SVP,SubgroupSize");
+			Log.logRefinement("Cook,SubgroupSize");
 		}
 		
 		TargetConcept aTC = itsSearchParameters.getTargetConcept();
