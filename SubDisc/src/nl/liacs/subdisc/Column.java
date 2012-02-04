@@ -1175,5 +1175,140 @@ public class Column implements XMLNodeInterface
 		if (itsType == AttributeType.NUMERIC)
 			itsTargetStatus = theTargetStatus;
 	}
+
+	/**
+	 * Returns the statistics needed in the computation of quality measures
+	 * for Columns of {@link AttributeType AttributeType} NUMERIC and
+	 * ORDINAL.
+	 * 
+	 * The bits set in the BitSet supplied as argument indicate which values
+	 * of this Column should be used for the calculation.
+	 * When the BitSet represents the members of a {@link Subgroup Subgroup}
+	 * , this method calculates the relevant arguments to determine the
+	 * quality of that Subgroup.
+	 * 
+	 * Based on the parameter theQualityMeasure this method determines what
+	 * statistics need to be calculated.
+	 * 
+	 * The resulting float[] is always of length 4, and, in order, holds the
+	 * following values: sum, sum of squared deviation, median and median
+	 * absolute deviation. Of these, the last two are only calculated for
+	 * the quality measure MMAD, and set to Float.NaN otherwise.
+	 * 
+	 * @param theBitSet the BitSet indicating what values of this Column to
+	 * use to use in the calculations.
+	 * 
+	 * @param theQualityMeasure the <code>int</code> corresponding to the
+	 * quality measure for which the arguments are needed.
+	 *
+	 * @return a float[4], holding the arguments relevant for the quality
+	 * measure supplied as argument.
+	 * 
+	 * @see QualityMeasure
+	 * @see Subgroup
+	 */
+	// TODO Table has a getDomain/ getUniqueDomain function, merge code
+	public float[] getQMRequiredStatistics(BitSet theBitSet, int theQualityMeasure)
+	{
+		if (!(itsType == AttributeType.NUMERIC || itsType == AttributeType.ORDINAL))
+		{
+			Log.logCommandLine("Column.getRequiredQMStatistics() should only be called on Columns of type NUMERIC/ORDINAL.");
+			return new float[]{ Float.NaN, Float.NaN, Float.NaN, Float.NaN };
+		}
+		else if (theBitSet == null)
+			throw new IllegalArgumentException("Column.getQualityMeasureCounts(BitSet): Argument can not be 'null'");
+		else if (theBitSet.length() > itsSize)
+			throw new IllegalArgumentException(String.format(
+				"Column.getQualityMeasureCounts(BitSet): BitSet can not be bigger then %s.size() (%d)",
+				itsName,
+				itsSize));
+		// not all methods below are safe for divide by 0
+		else if (theBitSet.cardinality() == 0)
+			return new float[]{ Float.NaN, Float.NaN, Float.NaN, Float.NaN };
+
+		// sum, sumSquaredDeviations, median, medianAbsoluteDeveviation
+		final float[] aResult = new float[4];
+		// if (!MMAD) do not store and sort the values, else do
+		if (theQualityMeasure != QualityMeasure.MMAD)
+		{
+			// this code path does no make copies of the data
+			aResult[0] = computeSum(theBitSet);
+			aResult[1] = computeSumSquaredDeviations(aResult[0], theBitSet);
+			aResult[2] = Float.NaN;
+			aResult[3] = Float.NaN;
+		}
+		else
+		{
+			// this code path needs a copy of the data for median
+			// get relevant values and do summing in single loop
+			float aSum = 0.0f;
+			float[] aValues = new float[theBitSet.size()];
+			for (int i = theBitSet.nextSetBit(0), j = -1; i >= 0; i = theBitSet.nextSetBit(i + 1))
+				aSum += (aValues[++j] = itsFloats.get(i));
+			Arrays.sort(aValues);
+
+			aResult[0] = aSum;
+			aResult[1] = computeSumSquaredDeviations(aSum, aValues);
+			aResult[2] = computeMedian(aValues);
+			aResult[3] = computeMedianAbsoluteDeviations(aResult[2], aValues);
+		}
+		return aResult;
+	}
+
+	private float computeSum(BitSet theBitSet)
+	{
+		float aSum = 0.0f;
+		for (int i = theBitSet.nextSetBit(0); i >= 0; i = theBitSet.nextSetBit(i + 1))
+			aSum += itsFloats.get(i);
+		return aSum;
+	}
+
+	// always called after computeSum for !MMAD
+	// not safe for divide by 0 (theBitSet.cardinality() == 0)
+	private float computeSumSquaredDeviations(float theSum, BitSet theBitSet)
+	{
+		float aMean = theSum / theBitSet.cardinality();
+		float aSum = 0.0f;
+		for (int i = theBitSet.nextSetBit(0); i >= 0; i = theBitSet.nextSetBit(i + 1))
+			aSum += Math.pow((itsFloats.get(i)-aMean), 2);
+		return aSum;
+	}
+
+	// always called after computeSum for MMAD
+	// not safe for divide by 0 (theSortedValues.length == 0)
+	private float computeSumSquaredDeviations(float theSum, float[] theSortedValues)
+	{
+		float aMean = theSum / theSortedValues.length;
+		float aSum = 0.0f;
+		for (float f : theSortedValues)
+			aSum += Math.pow((f-aMean), 2);
+		return aSum;
+	}
+
+	// always called after computeSumSquaredDeviations for MMAD
+	// throws indexOutOfBoundsException if (theSortedValues.length == 0)
+	private float computeMedian(float[] theSortedValue)
+	{
+		int aLength = theSortedValue.length;
+		// even, bit check (even numbers end with 0 as last bit)
+		if ((aLength & 1) == 0)
+			return (theSortedValue[(aLength/2)-1] + theSortedValue[aLength/2]) / 2;
+		else
+			return theSortedValue[aLength/2];
+	}
+
+	// always called after computeMedian for MMAD
+	// may re-throw computeMedian()'s indexOutOfBoundsException
+	private float computeMedianAbsoluteDeviations(float theMedian, float[] theSortedValues)
+	{
+		// compute absolute deviations of the elements in the subgroup
+		// store these in the original array for efficiency
+		for (int i = 0, j = theSortedValues.length; i < j; ++i)
+			theSortedValues[i] = Math.abs(theSortedValues[i]-theMedian);
+
+		//compute the MAD: the median of absolute deviations
+		Arrays.sort(theSortedValues);
+		return computeMedian(theSortedValues);
+	}
 }
 

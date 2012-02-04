@@ -480,6 +480,8 @@ public class Table
 
 	// Misc ===============================
 
+	// TODO this does exactly what NumericDomain did, merge this code with
+	// Column.getQMRequiredStatistics
 	public float[] getNumericDomain(int theColumn, BitSet theSubset)
 	{
 		float[] aResult = new float[theSubset.cardinality()];

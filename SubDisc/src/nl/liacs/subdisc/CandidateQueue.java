@@ -2,13 +2,29 @@ package nl.liacs.subdisc;
 
 import java.util.*;
 
+/*
+ * NOTE As it stands, this class has deadlock potential.
+ * Always obtain lock in fixed order: itsQueue -> itsNextQueue -> itsTempQueue.
+ * 
+ * TODO Queue classes in Concurrency framework allow for better concurrency. Eg.
+ * Higher concurrency through non-locking algorithms and compareAndSwap methods.
+ */
+/**
+ * A CandidateQueue holds a collection of {@link Candidate Candidate}s for
+ * future processing. These are ordered as dictated by Candidate's
+ * {@link Candidate#compareTo(Candidate) compareTo(Candidate)} method.
+ * 
+ * This class is thread save.
+ * 
+ * @see Candidate
+ */
 public class CandidateQueue
 {
 	private SearchStrategy itsSearchStrategy;
 	private TreeSet<Candidate> itsQueue;
 	private TreeSet<Candidate> itsNextQueue;
 	private TreeSet<Candidate> itsTempQueue;
-	private int itsMaximumQueueSize = 1000;
+	private final int itsMaximumQueueSize;
 
 	public CandidateQueue(SearchParameters theSearchParameters, Candidate theRootCandidate)
 	{
@@ -23,12 +39,25 @@ public class CandidateQueue
 		itsMaximumQueueSize = theSearchParameters.getSearchStrategyWidth();
 	}
 
+	/**
+	 * Adds a {@link Candidate Candidate} to this CandidateQueue.
+	 * The add() and removeFirst() methods are thread save.
+	 * 
+	 * @param theCandidate the Candidate to add.
+	 * 
+	 * @return <code>true</code> if Candidate is added, <code>false</code>
+	 * otherwise.
+	 * 
+	 * @see CandidateQueue#removeFirst()
+	 * @see Candidate
+	 */
 	public boolean add(Candidate theCandidate)
 	{
 		if (itsSearchStrategy == SearchStrategy.BEAM)
 			return addToQueue(itsNextQueue, theCandidate);
 		else if (itsSearchStrategy == SearchStrategy.COVER_BASED_BEAM_SELECTION)
-			return itsTempQueue.add(theCandidate); //simply add candidate, regardless of the current size of itsTempQueue
+			//simply add candidate, regardless of the current size of itsTempQueue
+			synchronized (itsTempQueue) { return itsTempQueue.add(theCandidate); }
 		else
 			return addToQueue(itsQueue, theCandidate);
 	}
@@ -36,47 +65,56 @@ public class CandidateQueue
 	//add candidate and trim queue to specified size itsMaximumQueueSize
 	private boolean addToQueue(TreeSet<Candidate> theQueue, Candidate theCandidate)
 	{
-		boolean isAdded = theQueue.add(theCandidate);
-
-		if (isAdded && (theQueue.size() > itsMaximumQueueSize))
+		boolean isAdded;
+		synchronized (theQueue)
 		{
-			Iterator<Candidate> anIterator = theQueue.descendingIterator();
-			anIterator.next();
-			anIterator.remove();
-		}
+			isAdded = theQueue.add(theCandidate);
 
+			if (isAdded && (theQueue.size() > itsMaximumQueueSize))
+				theQueue.pollLast();
+		}
 		return isAdded;
 	}
 
-	/*
-	 * TODO itsQueue.remove(aFirstCandidate) does not work properly because of
-	 * the incomplete Candicate.compareTo() method.
-	 */
 	 /**
-	 * Retrieves first candidate from Queue, and moves to next level if required.
+	 * Retrieves first {@link Candidate Candidate} from this CandidateQueue,
+	 * and moves to next level if required.
+	 * The add() and removeFirst() methods are thread save.
+	 * 
+	 * @return the Candidate at the head of this CandidateQueue.
+	 * 
+	 * @see CandidateQueue#add(Candidate)
+	 * @see Candidate
 	 */
 	public Candidate removeFirst()
 	{
-		if (itsSearchStrategy.isBeam() && itsQueue.size() == 0)
-			moveToNextLevel();
+		synchronized (itsQueue)
+		{
+			if (itsSearchStrategy.isBeam() && itsQueue.size() == 0)
+				moveToNextLevel();
 
-		Candidate aFirstCandidate = itsQueue.first();
-		Iterator<Candidate> anIterator = itsQueue.iterator();
-		anIterator.next();
-		anIterator.remove();
-		return aFirstCandidate;
+			return itsQueue.pollFirst();
+		}
 	}
 
-	public void moveToNextLevel()
+	/*
+	 * removeFirst locks itsQueue, additional locks are acquired here
+	 * NOTE to avoid potential deadlock always obtain locks in fixed order:
+	 * itsQueue -> itsNextQueue -> itsTempQueue
+	 */
+	private void moveToNextLevel()
 	{
 		Log.logCommandLine("\nLevel finished --------------------------------------------\n");
 		if (itsSearchStrategy == SearchStrategy.BEAM) //make next level current
 		{
 			itsQueue = itsNextQueue;
-			itsNextQueue = new TreeSet<Candidate>();
+			synchronized (itsNextQueue) { itsNextQueue = new TreeSet<Candidate>(); }
 		}
 		else // COVER_BASED_BEAM_SELECTION
 		{
+		// lock in fixed order to avoid deadlock, excuse indenting
+		synchronized (itsNextQueue) {
+		synchronized (itsTempQueue) {
 			Log.logCommandLine("candidates: " + itsTempQueue.size());
 			itsNextQueue = new TreeSet<Candidate>();
 			int aLoopSize = Math.min(itsMaximumQueueSize, itsTempQueue.size());
@@ -117,34 +155,65 @@ public class CandidateQueue
 			itsNextQueue = new TreeSet<Candidate>();
 			itsTempQueue = new TreeSet<Candidate>();
 		}
+		}
+		}
 	}
 
+	/**
+	 * Returns the total number of {@link Candidate Candidate}s in this
+	 * CandidateQueue.
+	 * Thread save with respect to add() and removeFirst().
+	 * 
+	 * @return the size of the current queue level.
+	 * 
+	 * @see CandidateQueue#add(Candidate)
+	 * @see CandidateQueue#removeFirst
+	 * @see Candidate
+	 */
 	public int size()
 	{
-		if (itsSearchStrategy == SearchStrategy.BEAM)
-			return itsQueue.size() + itsNextQueue.size();
-		else if (itsSearchStrategy == SearchStrategy.COVER_BASED_BEAM_SELECTION)
-			return itsQueue.size() + itsTempQueue.size();
-		else
-			return itsQueue.size();
+		synchronized (itsQueue)
+		{
+			if (itsSearchStrategy == SearchStrategy.BEAM)
+				synchronized (itsNextQueue) { return itsQueue.size() + itsNextQueue.size(); }
+			else if (itsSearchStrategy == SearchStrategy.COVER_BASED_BEAM_SELECTION)
+				synchronized (itsTempQueue) { return itsQueue.size() + itsTempQueue.size(); }
+			else
+				return itsQueue.size();
+		}
 	}
 
-	public void setMaximumQueueSize(int theMax) { itsMaximumQueueSize = theMax; }
+	/**
+	 * Returns the number of {@link Candidate Candidate}s in the current
+	 * queue level of this CandidateQueue.
+	 * Thread save with respect to add() and removeFirst().
+	 * 
+	 * @return the size of the current queue level.
+	 * 
+	 * @see CandidateQueue#add(Candidate)
+	 * @see CandidateQueue#removeFirst
+	 * @see Candidate
+	 */
+	public int currentLevelQueueSize()
+	{
+		synchronized (itsQueue) { return itsQueue.size(); }
+	}
 
 	/**
 	* Computes the cover count of a particular example: the number of times this example is a member of a subgroup. \n
 	* See van Leeuwen & Knobbe, ECML PKDD 2011. \n
 	*/
-	public int computeCoverCount(int theRow)
+	private int computeCoverCount(int theRow)
 	{
 		int aResult = 0;
 
-		for (Candidate aCandidate: itsNextQueue)
+		synchronized (itsNextQueue)
 		{
-			Subgroup aSubgroup = aCandidate.getSubgroup();
-			if (aSubgroup.covers (theRow))
-				aResult++;
+			for (Candidate aCandidate: itsNextQueue)
+				if (aCandidate.getSubgroup().covers(theRow))
+					++aResult;
 		}
+
 		return aResult;
 	}
 
@@ -152,7 +221,7 @@ public class CandidateQueue
 	* Computes the multiplicative weight of a subgroup \n
 	* See van Leeuwen & Knobbe, ECML PKDD 2011. \n
 	*/
-	public double computeMultiplicativeWeight(Candidate theCandidate)
+	private double computeMultiplicativeWeight(Candidate theCandidate)
 	{
 		double aResult = 0;
 		double anAlpha = 0.9;
@@ -160,10 +229,8 @@ public class CandidateQueue
 		BitSet aMember = aSubgroup.getMembers();
 
 		for(int i=aMember.nextSetBit(0); i>=0; i=aMember.nextSetBit(i+1))
-		{
-			int aCoverCount = computeCoverCount(i);
-			aResult += Math.pow(anAlpha, aCoverCount);
-		}
+			aResult += Math.pow(anAlpha, computeCoverCount(i));
+
 		return aResult/aSubgroup.getCoverage();
 	}
 }
