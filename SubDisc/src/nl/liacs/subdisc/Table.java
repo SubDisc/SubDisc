@@ -309,6 +309,8 @@ public class Table
 */
 
 	// as above, but only checks type once
+	// NOTE for maintainability + efficiency this is moved to Column
+	// DO NOT USE
 	public BitSet evaluate(Condition theCondition)
 	{
 		BitSet aSet = new BitSet(itsNrRows);
@@ -316,7 +318,7 @@ public class Table
 
 		switch (aColumn.getType())
 		{
-			case NOMINAL :;
+			case NOMINAL :
 			{
 				for (int j = 0; j < itsNrRows; ++j)
 					if (theCondition.evaluate(aColumn.getNominal(j)))
@@ -426,6 +428,8 @@ public class Table
 	}
 
 	//returns a complete column (as long as it is binary)
+	// NOTE for maintainability + efficiency this is moved to Column
+	// DO NOT USE
 	public BitSet getBinaryColumn(int i)
 	{
 		return itsColumns.get(i).getBinaries();
@@ -458,23 +462,18 @@ public class Table
 
 	//TODO this code is overly complex, due to its Safarii-background
 	//Arno needs to fix this, at some point.
-
 	public Condition getNextCondition(Condition theCurrentCondition)
 	{
-		Condition aCondition;
-
 		if (theCurrentCondition.hasNextOperator())
-			aCondition = new Condition(theCurrentCondition.getAttribute(), theCurrentCondition.getNextOperator());
+			return new Condition(theCurrentCondition.getAttribute(), theCurrentCondition.getNextOperator());
 		else
 		{
 			int anIndex = theCurrentCondition.getAttribute().getIndex();
 			if (anIndex == itsNrColumns-1) // No more attributes
-				aCondition = null;
+				return null;
 			else
-				aCondition = new Condition(itsColumns.get(anIndex + 1));
+				return new Condition(itsColumns.get(anIndex + 1));
 		}
-
-		return aCondition;
 	}
 
 
@@ -482,7 +481,9 @@ public class Table
 
 	// TODO this does exactly what NumericDomain did, merge this code with
 	// Column.getQMRequiredStatistics
-	public float[] getNumericDomain(int theColumn, BitSet theSubset)
+	// NOTE for maintainability + efficiency this is moved to Column
+	// DO NOT USE
+	private float[] getNumericDomain(int theColumn, BitSet theSubset)
 	{
 		float[] aResult = new float[theSubset.cardinality()];
 
@@ -497,6 +498,8 @@ public class Table
 
 	// does not handle float.NaN well, but neither does the rest of the code
 	//returns the unique, sorted domain
+	// NOTE for maintainability + efficiency this is moved to Column
+	// DO NOT USE
 	public float[] getUniqueNumericDomain(int theColumn, BitSet theSubset)
 	{
 		//get domain including doubles
@@ -544,11 +547,15 @@ public class Table
 	}
 
 	// TODO check for out of range
+	// NOTE for maintainability + efficiency this is moved to Column
+	// DO NOT USE
 	public TreeSet<String> getDomain(int theColumn)
 	{
 		return itsColumns.get(theColumn).getDomain();
 	}
 
+	// NOTE for maintainability + efficiency this is moved to Column
+	// DO NOT USE
 	public float[] getSplitPoints(int theColumn, BitSet theSubset, int theNrSplits)
 	{
 		float[] aDomain = getNumericDomain(theColumn, theSubset);
@@ -559,6 +566,8 @@ public class Table
 	}
 
 	//only works for nominals and binary
+	// NOTE for maintainability + efficiency this is moved to Column
+	// DO NOT USE
 	public int countValues(int theColumn, String theValue)
 	{
 		int aResult = 0;
@@ -609,6 +618,8 @@ public class Table
 		return aResult;
 	}
 */
+	// NOTE for maintainability + efficiency this is moved to Column
+	// DO NOT USE
 	public float getAverage(int theColumn)
 	{
 		float aResult = 0;

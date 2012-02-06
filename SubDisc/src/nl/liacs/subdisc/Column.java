@@ -1176,27 +1176,79 @@ public class Column implements XMLNodeInterface
 			itsTargetStatus = theTargetStatus;
 	}
 
+
+	/**
+	 * TODO
+	 * 
+	 * @param theCondition
+	 * @return
+	 */
+	public BitSet evaluate(Condition theCondition)
+	{
+		BitSet aSet = new BitSet(itsSize);
+
+		switch (itsType)
+		{
+			case NOMINAL :
+			{
+				for (int i = 0, j = itsSize; i < j; ++i)
+					if (theCondition.evaluate(itsNominals.get(i)))
+						aSet.set(i);
+				break;
+			}
+			case NUMERIC :
+			case ORDINAL :
+			{
+				for (int i = 0, j = itsSize; i < j; ++i)
+					if (theCondition.evaluate(Float.toString(itsFloats.get(i))))
+						aSet.set(i);
+				break;
+			}
+			case BINARY :
+			{
+				for (int i = 0, j = itsSize; i < j; ++i)
+						if (theCondition.evaluate(itsBinaries.get(i)))
+							aSet.set(i);
+				break;
+			}
+			default :
+			{
+				logMessage("evaluate", String.format("unknown AttributeType '%s'", itsType));
+					break;
+			}
+		}
+
+		return aSet;
+	}
+
 	/**
 	 * Returns the statistics needed in the computation of quality measures
 	 * for Columns of {@link AttributeType AttributeType} NUMERIC and
 	 * ORDINAL.
 	 * 
 	 * The bits set in the BitSet supplied as argument indicate which values
-	 * of this Column should be used for the calculation.
+	 * of the Column should be used for the calculation.
 	 * When the BitSet represents the members of a {@link Subgroup Subgroup}
 	 * , this method calculates the relevant arguments to determine the
 	 * quality of that Subgroup.
 	 * 
 	 * Based on the parameter theQualityMeasure this method determines what
-	 * statistics need to be calculated.
+	 * statistics need to be computed.
 	 * 
 	 * The resulting float[] is always of length 4, and, in order, holds the
 	 * following values: sum, sum of squared deviation, median and median
-	 * absolute deviation. Of these, the last two are only calculated for
+	 * absolute deviation. Of these, the last two are only computed for
 	 * the quality measure MMAD, and set to Float.NaN otherwise.
 	 * 
+	 * When the {@link java.lang.BitSet#cardinality() BitSet.cardinality()}
+	 * is 0, no meaningful statistics can be computed, and a float[4]
+	 * containing 4 Float.NaNs will be returned.
+	 * 
+	 * When the Column is not of type NUMERIC or ORDINAL a float[4]
+	 * containing 4 Float.NaNs will be returned.
+	 * 
 	 * @param theBitSet the BitSet indicating what values of this Column to
-	 * use to use in the calculations.
+	 * use in the calculations.
 	 * 
 	 * @param theQualityMeasure the <code>int</code> corresponding to the
 	 * quality measure for which the arguments are needed.
@@ -1206,22 +1258,13 @@ public class Column implements XMLNodeInterface
 	 * 
 	 * @see QualityMeasure
 	 * @see Subgroup
+	 * @see java.lang.BitSet
 	 */
-	// TODO Table has a getDomain/ getUniqueDomain function, merge code
 	public float[] getQMRequiredStatistics(BitSet theBitSet, int theQualityMeasure)
 	{
-		if (!(itsType == AttributeType.NUMERIC || itsType == AttributeType.ORDINAL))
-		{
-			Log.logCommandLine("Column.getRequiredQMStatistics() should only be called on Columns of type NUMERIC/ORDINAL.");
+
+		if (!isValidCall("getQMRequiredStatistics", theBitSet))
 			return new float[]{ Float.NaN, Float.NaN, Float.NaN, Float.NaN };
-		}
-		else if (theBitSet == null)
-			throw new IllegalArgumentException("Column.getQualityMeasureCounts(BitSet): Argument can not be 'null'");
-		else if (theBitSet.length() > itsSize)
-			throw new IllegalArgumentException(String.format(
-				"Column.getQualityMeasureCounts(BitSet): BitSet can not be bigger then %s.size() (%d)",
-				itsName,
-				itsSize));
 		// not all methods below are safe for divide by 0
 		else if (theBitSet.cardinality() == 0)
 			return new float[]{ Float.NaN, Float.NaN, Float.NaN, Float.NaN };
@@ -1310,5 +1353,186 @@ public class Column implements XMLNodeInterface
 		Arrays.sort(theSortedValues);
 		return computeMedian(theSortedValues);
 	}
-}
 
+	/**
+	 * Returns the unique, sorted domain for Columns of
+	 * {@link AttributeType AttributeType} NUMERIC and ORDINAL.
+	 * 
+	 * The bits set in the BitSet supplied as argument indicate which values
+	 * of the Column should be used for the creation of the domain.
+	 * When the BitSet represents the members of a {@link Subgroup Subgroup}
+	 * , this method returns the domain covered by that Subgroup.
+	 * 
+	 * The resulting float[] has a maximum size of the
+	 * {@link java.lang.BitSet#cardinality() BitSet.cardinality()}. The
+	 * minimum size is 0, if the BitSet has cardinality 0 or is
+	 * <code>null</code>.
+	 *
+	 * When the Column is not of type NUMERIC or ORDINAL a
+	 * <code>new float[0]</code> will be returned.
+	 * 
+	 * @param theBitSet the BitSet indicating what values of this Column to
+	 * use for the creation of the domain.
+	 * 
+	 * @return a float[], holding the distinct values for the domain.
+	 * 
+	 * @see Subgroup
+	 * @see java.lang.BitSet
+	 */
+	// does not handle float.NaN well, but neither does the rest of the code
+	// maybe it does now, uses Float instead of float
+	// (NaN equals NaN) versus (NaN != NaN)
+	public float[] getUniqueNumericDomain(BitSet theBitSet)
+	{
+		if (!isValidCall("getUniqueNumericDomain", theBitSet))
+			return new float[0];
+
+		// First create TreeSet<Float>, then copy to float[], not ideal,
+		// but I lack the inspiration to write a RB-tree for floats 
+		Set<Float> aUniqueValues = new TreeSet<Float>();
+		for (int i = theBitSet.nextSetBit(0); i >= 0; i = theBitSet.nextSetBit(i + 1))
+			aUniqueValues.add(itsFloats.get(i));
+
+		float[] aResult = new float[aUniqueValues.size()];
+		int i = -1;
+		for (Float f : aUniqueValues)
+			aResult[++i] = f.floatValue();
+
+		return aResult;
+	}
+
+	/**
+	 * Returns the split-points for Columns of
+	 * {@link AttributeType AttributeType} NUMERIC and ORDINAL.
+	 * 
+	 * The bits set in the BitSet supplied as argument indicate which values
+	 * of the Column should be used for the creation of the split-points.
+	 * When the BitSet represents the members of a {@link Subgroup Subgroup}
+	 * , this method returns the split-points relevant to that Subgroup.
+	 * 
+	 * The resulting float[] has the size of the supplied theNrSplits
+	 * parameter. If
+	 * {@link java.lang.BitSet#cardinality() BitSet.cardinality()} is 0, the
+	 * float[theNrSplits] will contain only <code>0.0f</code>'s.
+	 * If the BitSet is <code>null</code> a <code>new float[0]</code> is
+	 * returned.
+	 * 
+	 * When the Column is not of type NUMERIC or ORDINAL a
+	 * <code>new float[0]</code> will be returned.
+	 * 
+	 * @param theBitSet the BitSet indicating what values of this Column to
+	 * use for the creation of the domain.
+	 * 
+	 * @param theNrSplits the number of split-point to return.
+	 * 
+	 * @return a float[], holding the distinct split-point.
+	 * 
+	 * @see Subgroup
+	 * @see java.lang.BitSet
+	 */
+	// TODO theNrSplits >= 0
+	public float[] getSplitPoints(BitSet theBitSet, int theNrSplits)
+	{
+		if (!isValidCall("getSplitPoints", theBitSet))
+			return new float[0];
+
+		float[] aDomain = new float[theBitSet.cardinality()];
+		for (int i = theBitSet.nextSetBit(0), j = -1; i >= 0; i = theBitSet.nextSetBit(i + 1))
+			aDomain[++j] = itsFloats.get(i).floatValue();
+
+		float[] aSplitPoints = new float[theNrSplits];
+		// N.B. Order matters to prevent integer division from yielding zero.
+		for (int j=0; j<theNrSplits; j++)
+			aSplitPoints[j] = aDomain[aDomain.length*(j+1)/(theNrSplits+1)];
+
+		return aSplitPoints;
+	}
+
+	/**
+	 * Returns the average of all values for Columns of
+	 * {@link AttributeType AttributeType} NUMERIC and ORDINAL.
+	 * 
+	 * @return the average, or <code>Float.NaN</code> if this Column
+	 * is not of type NUMERIC or ORDINAL.
+	 */
+	public float getAverage()
+	{
+		if (!(itsType == AttributeType.NUMERIC || itsType == AttributeType.ORDINAL))
+		{
+			logMessage("countValues", getTypeError("NUMERIC or ORDINAL"));
+			return Float.NaN;
+		}
+
+		float aResult = 0.0f;
+		for (int i = 0, j = itsSize; i < j; ++i)
+			aResult += itsFloats.get(i);
+		return aResult / itsSize;
+	}
+
+	private boolean isValidCall(String theSource, BitSet theBitSet)
+	{
+		String anError = null;
+		if (!(itsType == AttributeType.NUMERIC || itsType == AttributeType.ORDINAL))
+			anError = getTypeError("NUMERIC or ORDINAL");
+		else if (theBitSet == null)
+			anError = "Argument can not be 'null'";
+		else if (theBitSet.length() > itsSize)
+			anError = String.format("BitSet can not be bigger then: %s", itsSize);
+
+		if (anError != null)
+			logMessage(theSource, anError);
+		return (anError == null);
+	}
+
+	/**
+	 * Returns the number of times the value supplied as parameter occurs in
+	 * the Column. This method only works on Columns of type
+	 * {@link AttributeType AttributeType} NOMINAL and BINARY.
+	 * 
+	 * @param theValue the value to count the number of occurrences for.
+	 * 
+	 * @return an <code>int</code> indicating the number of occurrences of
+	 * the value supplied as parameter, or 0 if the Column is not of type
+	 * NOMINAL or BINARY.
+	 */
+	public int countValues(String theValue)
+	{
+		int aResult = 0;
+
+		switch (itsType)
+		{
+			case NOMINAL :
+			{
+				for (String s : itsNominals)
+					if (s.equals(theValue))
+						++aResult;
+				break;
+			}
+			case BINARY :
+			{
+				final boolean b = "1".equals(theValue);
+				for (int i = itsBinaries.nextSetBit(0); i >= 0; i = itsBinaries.nextSetBit(i + 1))
+					if (itsBinaries.get(i) == b)
+						++aResult;
+				break;
+			}
+			default :
+			{
+				logMessage("countValues", getTypeError("NOMINAL or BINARY"));
+				break;
+			}
+		}
+
+		return aResult;
+	}
+
+	private String getTypeError(String theValidType)
+	{
+		return String.format("Column can no be of type: %s, must be %s", itsType, theValidType);
+	}
+
+	private void logMessage(String theSource, String theError)
+	{
+		Log.logCommandLine(String.format("%s.%s(): %s", itsName, theSource, theError));
+	}
+}
