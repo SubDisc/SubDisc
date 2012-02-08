@@ -396,7 +396,11 @@ public class SubgroupDiscovery extends MiningAlgorithm
 						boolean aNeedToComputeBounds = true;
 						
 						// check what the pruning quality will be, if this exists at all
-						if ( itsResult.size() >= itsSearchParameters.getMaximumSubgroups() )
+						int aBorderlineSubgroupNumber;
+						if (theNewSubgroup.itsDepth < itsSearchParameters.getSearchDepth())
+							aBorderlineSubgroupNumber = itsSearchParameters.getSearchStrategyWidth();
+						else aBorderlineSubgroupNumber = itsSearchParameters.getMaximumSubgroups(); 
+						if ( itsResult.size() >= aBorderlineSubgroupNumber )
 							aThreshold = itsResult.last().getMeasureValue();
 						else { aNeedToComputeBounds = false; }
 						
