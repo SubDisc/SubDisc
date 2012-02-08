@@ -34,6 +34,8 @@ public class SubgroupDiscovery extends MiningAlgorithm
 	private int itsBoundFiveFired;
 	private int itsBoundFourFired;
 	private int itsRankDefCount;
+	
+	private TreeSet<Candidate> itsBuffer;
 
 	//SINGLE_NOMINAL
 	public SubgroupDiscovery(SearchParameters theSearchParameters, Table theTable, int theNrPositive)
@@ -83,12 +85,11 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		{
 			Log.REFINEMENTLOG = true;
 			Log.openFileOutputStreams();
-			Log.logRefinement("Cook,SubgroupSize");
+//			Log.logRefinement("Bound graph for "+itsTable.getName());
+//			Log.logRefinement("SubgroupSize,AvgRegressionTime,AvgCook,AvgBoundSeven,AvgBoundSix,AvgBoundFive,AvgBoundFour,CookComputable,BoundSevenComputable,BoundSixComputable,BoundFiveComputable,BoundFourComputable");
 		}
 		
 		TargetConcept aTC = itsSearchParameters.getTargetConcept();
-		itsPrimaryColumn = aTC.getPrimaryTarget();
-		itsSecondaryColumn = aTC.getSecondaryTarget();
 		if (isRegression)
 		{
 			itsBaseRM = new RegressionMeasure(itsSearchParameters.getQualityMeasure(), aTC);
@@ -103,9 +104,18 @@ public class SubgroupDiscovery extends MiningAlgorithm
 			itsBoundFiveFired=0;
 			itsBoundFourFired=0;
 			itsRankDefCount=0;
+			
+			itsBuffer = new TreeSet<Candidate>();
+
+// temp for testing
+			//generateBoundGraph();
 		}
 		else
+		{
+			itsPrimaryColumn = aTC.getPrimaryTarget();
+			itsSecondaryColumn = aTC.getSecondaryTarget();
 			itsBaseCM = new CorrelationMeasure(itsSearchParameters.getQualityMeasure(), itsPrimaryColumn, itsSecondaryColumn);
+		}
 
 		itsResult = new SubgroupSet(itsSearchParameters.getMaximumSubgroups());
 	}
@@ -177,6 +187,9 @@ public class SubgroupDiscovery extends MiningAlgorithm
 						evaluateNominalBinaryRefinements(aSubgroup, aRefinement);
 				}
 			}
+			
+			if (itsCandidateQueue.size() ==0)
+				flushBuffer();
 		}
 		Log.logCommandLine("number of candidates: " + itsCandidateCount.get());
 		if (itsSearchParameters.getQualityMeasure() == QualityMeasure.COOKS_DISTANCE)
@@ -218,7 +231,8 @@ public class SubgroupDiscovery extends MiningAlgorithm
 				for (float aSplit : aSplitPoints)
 				{
 					Subgroup aNewSubgroup = makeNewSubgroup(Float.toString(aSplit), theRefinement);
-					checkAndLog(aNewSubgroup, aMinimumCoverage, anOldCoverage, aQualityMeasureMinimum);
+					addToBuffer(aNewSubgroup);
+					//checkAndLog(aNewSubgroup, aMinimumCoverage, anOldCoverage, aQualityMeasureMinimum);
 				}
 				break;
 			}
@@ -232,7 +246,8 @@ public class SubgroupDiscovery extends MiningAlgorithm
 					if (first || aSplitPoints[j] != aSplitPoints[j-1])
 					{
 						Subgroup aNewSubgroup = makeNewSubgroup(Float.toString(aSplitPoints[j]), theRefinement);
-						checkAndLog(aNewSubgroup, aMinimumCoverage, anOldCoverage, aQualityMeasureMinimum);
+						addToBuffer(aNewSubgroup);
+						//checkAndLog(aNewSubgroup, aMinimumCoverage, anOldCoverage, aQualityMeasureMinimum);
 					}
 					first = false;
 				}
@@ -264,8 +279,9 @@ public class SubgroupDiscovery extends MiningAlgorithm
 
 				//add best
 				if (aBestSubgroup!=null) //at least one threshold found that has enough quality and coverage
+					addToBuffer(aBestSubgroup);
 					// unnecessarily re-evaluates result
-					checkAndLog(aBestSubgroup, aMinimumCoverage, anOldCoverage, aQualityMeasureMinimum);
+					//checkAndLog(aBestSubgroup, aMinimumCoverage, anOldCoverage, aQualityMeasureMinimum);
 
 				break;
 			}
@@ -282,7 +298,8 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		for (String aConditionValue : aDomain)
 		{
 			Subgroup aNewSubgroup = makeNewSubgroup(aConditionValue, theRefinement);
-			checkAndLog(aNewSubgroup, aMinimumCoverage, anOldCoverage, aQualityMeasureMinimum);
+			addToBuffer(aNewSubgroup);
+			//checkAndLog(aNewSubgroup, aMinimumCoverage, anOldCoverage, aQualityMeasureMinimum);
 		}
 	}
 
@@ -388,7 +405,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 						BitSet aMembers = theNewSubgroup.getMembers();
 						int aSampleSize = aMembers.cardinality();
 						
-						// filter out rank deficient model that crash matrix multiplication library
+						// filter out rank deficient model that crash matrix multiplication library // TODO: should read <itsP instead of <2!!!
 						if (aSampleSize<2)
 						{
 							itsRankDefCount++;
@@ -444,7 +461,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 									}
 									else
 									{	// bound four
-										double aBoundFour = itsBaseRM.computeBoundFour(aSampleSize, aT);
+										double aBoundFour = itsBaseRM.computeBoundFour(aSampleSize);
 										if (aBoundFour<Double.MAX_VALUE)
 										{
 											Log.logCommandLine("                   Bound 4: " + aBoundFour);
@@ -465,7 +482,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 						{
 							double aDoubleQuality = itsBaseRM.calculate(theNewSubgroup);
 							if (aDoubleQuality == -Double.MAX_VALUE)
-								itsRankDefCount += 1;
+								itsRankDefCount++;
 							aQuality = (float) aDoubleQuality; 
 						}
 						else aQuality = -Float.MAX_VALUE;
@@ -494,6 +511,80 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		return aQuality;
 	}
 
+	private void generateBoundGraph()
+	{
+		for (int aSampleSize = itsMaximumCoverage-1; aSampleSize >= 2; aSampleSize--)
+		{
+			Log.logCommandLine("aSampleSize = " + aSampleSize);
+			int aBoundSevenComputable = 0;
+			int aBoundSixComputable = 0;
+			int aBoundFiveComputable = 0;
+			int aBoundFourComputable = 0;
+			int aCookComputable = 0;
+			double avgBoundSeven = 0.0;
+			double avgBoundSix = 0.0;
+			double avgBoundFive = 0.0;
+			double avgBoundFour = 0.0;
+			double avgCook = 0.0;
+			long avgRegressionTime = 0;
+			for (int i=0; i<100; i++)
+			{
+				Subgroup aSubgroup = itsTable.getRandomSubgroup(aSampleSize);
+				BitSet aMembers = aSubgroup.getMembers();
+				itsBaseRM.computeRemovedIndices(aMembers, aSampleSize);
+				double aT = itsBaseRM.getT(aSampleSize);
+				double aRSquared = itsBaseRM.getRSquared(aSampleSize);
+				double aBoundSeven = itsBaseRM.computeBoundSeven(aSampleSize, aT, aRSquared);
+				double aBoundSix = itsBaseRM.computeBoundSix(aSampleSize, aT);
+				double aBoundFive = itsBaseRM.computeBoundFive(aSampleSize, aRSquared);
+				double aBoundFour = itsBaseRM.computeBoundFour(aSampleSize);
+				long aStartTime = System.currentTimeMillis();
+				double aDoubleQuality = itsBaseRM.calculate(aSubgroup);
+				long anEndTime = System.currentTimeMillis();
+				if (aBoundSeven<Double.MAX_VALUE)
+				{
+					aBoundSevenComputable++;
+					avgBoundSeven += aBoundSeven;
+				}
+				if (aBoundSix<Double.MAX_VALUE)
+				{
+					aBoundSixComputable++;
+					avgBoundSix += aBoundSix;
+				}
+				if (aBoundFive<Double.MAX_VALUE)
+				{
+					aBoundFiveComputable++;
+					avgBoundFive += aBoundFive;
+				}
+				if (aBoundFour<Double.MAX_VALUE)
+				{
+					aBoundFourComputable++;
+					avgBoundFour += aBoundFour;
+				}
+				if (aDoubleQuality > -Double.MAX_VALUE)
+				{
+					aCookComputable++;
+					avgCook += aDoubleQuality;
+					avgRegressionTime += (anEndTime - aStartTime);
+				}
+			}
+			if (aBoundSevenComputable>0)
+				avgBoundSeven /= aBoundSevenComputable;
+			if (aBoundSixComputable>0)
+				avgBoundSix /= aBoundSixComputable;
+			if (aBoundFiveComputable>0)
+				avgBoundFive /= aBoundFiveComputable;
+			if (aBoundFourComputable>0)
+				avgBoundFour /= aBoundFourComputable;
+			if (aCookComputable>0)
+			{
+				avgCook /= aCookComputable;
+				avgRegressionTime /= aCookComputable;
+			}
+			Log.logRefinement(""+aSampleSize+","+avgRegressionTime+","+avgCook+","+avgBoundSeven+","+avgBoundSix+","+avgBoundFive+","+avgBoundFour+","+aCookComputable+","+aBoundSevenComputable+","+aBoundSixComputable+","+aBoundFiveComputable+","+aBoundFourComputable);
+		}
+	}
+	
 	private float weightedEntropyEditDistance(Subgroup theSubgroup)
 	{
 		BinaryTable aBinaryTable = itsBinaryTable.selectRows(theSubgroup.getMembers());
@@ -704,6 +795,32 @@ public class SubgroupDiscovery extends MiningAlgorithm
 			}
 			itsSemaphore.release();
 		}
+	}
+	
+	private void addToBuffer( Subgroup theSubgroup )
+	{
+		int aCoverage = theSubgroup.getCoverage();
+		itsBaseRM.computeRemovedIndices(theSubgroup.getMembers(),aCoverage);
+		itsBaseRM.updateSquaredResidualSum();
+		itsBaseRM.updateRemovedTrace();
+		double aPriority = itsBaseRM.computeBoundFour(aCoverage);
+		Log.logCommandLine(""+theSubgroup.getConditions().toString() + " --- bound : " + aPriority);
+		itsBuffer.add(new Candidate(theSubgroup,aPriority));
+	}
+	
+	private void flushBuffer()
+	{
+		Iterator<Candidate> anIterator = itsBuffer.iterator();
+		while (anIterator.hasNext())
+		{
+			Candidate aCandidate = anIterator.next();
+			Subgroup aSubgroup = aCandidate.getSubgroup();
+			int aMinimumCoverage = itsSearchParameters.getMinimumCoverage();
+			int anOldCoverage = itsTable.getNrRows();
+			float aQualityMeasureMinimum = itsSearchParameters.getQualityMeasureMinimum();
+			checkAndLog(aSubgroup, aMinimumCoverage, anOldCoverage, aQualityMeasureMinimum);
+		}
+		itsBuffer = new TreeSet<Candidate>();
 	}
 	
 	public int getNrBoundSeven() { return itsBoundSevenCount; }

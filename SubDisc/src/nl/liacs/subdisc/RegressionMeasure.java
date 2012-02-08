@@ -350,8 +350,6 @@ public class RegressionMeasure
 			itsZMatrix.transpose()
 			).times(aZXTXInverseZTMatrix.inverse()
 			).times(itsZMatrix).times(aBetaHat.minus(itsBetaHat)).get(0,0)/(itsQ*anSSquared);
-		//N.B.: Temporary line for fetching Cook's experimental statistics
-		Log.logRefinement(""+aQuality+","+aSampleSize);
 		return aQuality;
 	}
 	
@@ -364,8 +362,7 @@ public class RegressionMeasure
 
 	public double computeBoundSix(int theSampleSize, double theT)
 	{
-		Matrix aRemovedResiduals = itsResidualMatrix.getMatrix(itsRemovedIndices,0,0);
-		itsSquaredResidualSum = squareSum(aRemovedResiduals);
+		updateSquaredResidualSum();
 		if (theT>=1)
 			return Double.MAX_VALUE;
 		return itsP/itsQ*theT/((1-theT)*(1-theT))*itsSquaredResidualSum/(itsP*itsSSquared);
@@ -373,16 +370,15 @@ public class RegressionMeasure
 
 	public double computeBoundFive(int theSampleSize, double theRSquared)
 	{
-		Matrix aRemovedHatMatrix = itsHatMatrix.getMatrix(itsRemovedIndices,itsRemovedIndices);
-		itsRemovedTrace = aRemovedHatMatrix.trace();
+		updateRemovedTrace();
 		if (itsRemovedTrace>=1)
 			return Double.MAX_VALUE;
 		return itsP/itsQ*itsRemovedTrace/((1-itsRemovedTrace)*(1-itsRemovedTrace))*theRSquared/(itsP*itsSSquared);
 	}
 	
-	public double computeBoundFour(int theSampleSize, double theT)
+	public double computeBoundFour(int theSampleSize)
 	{
-		if (itsRemovedTrace>=1 || theT>=1)
+		if (itsRemovedTrace>=1)
 			return Double.MAX_VALUE;
 		return itsP/itsQ*itsRemovedTrace/((1-itsRemovedTrace)*(1-itsRemovedTrace))*itsSquaredResidualSum/(itsP*itsSSquared);
 	}
@@ -606,5 +602,17 @@ public class RegressionMeasure
 		}
 		itsIndices = anIndices;
 		itsRemovedIndices = aRemovedIndices;
+	}
+	
+	public void updateSquaredResidualSum()
+	{
+		Matrix aRemovedResiduals = itsResidualMatrix.getMatrix(itsRemovedIndices,0,0);
+		itsSquaredResidualSum = squareSum(aRemovedResiduals);
+	}
+	
+	public void updateRemovedTrace()
+	{
+		Matrix aRemovedHatMatrix = itsHatMatrix.getMatrix(itsRemovedIndices,itsRemovedIndices);
+		itsRemovedTrace = aRemovedHatMatrix.trace();
 	}
 }
