@@ -173,7 +173,7 @@ public class RegressionMeasure
 				itsXMatrix = new Matrix(anXValues);
 				itsYMatrix = new Matrix(aYValues);
 				itsZMatrix = new Matrix(aZValues);
-				
+
 				//do the regression math
 				//TODO: refuse to do anything in the unlikely case that the data matrix is row deficient.
 				//      If this unlikely event is not caught, the program will crash.
@@ -312,7 +312,7 @@ public class RegressionMeasure
 */	
 	public double calculate(Subgroup theNewSubgroup)
 	{
-		int aSampleSize = theNewSubgroup.getCoverage();
+//		int aSampleSize = theNewSubgroup.getCoverage();
 		
 		//make submatrices
 		Matrix anXMatrix = itsXMatrix.getMatrix(itsIndices,0,itsI+itsJ);
@@ -331,25 +331,26 @@ public class RegressionMeasure
 		Matrix anXTXInverseMatrix = anXTXMatrix.inverse();
 		
 		Matrix aBetaHat = anXTXInverseMatrix.times(anXMatrix.transpose()).times(aYMatrix);
-		Matrix aHatMatrix = anXMatrix.times(anXTXInverseMatrix).times(anXMatrix.transpose());
-		Matrix aResidualMatrix = (Matrix.identity(aSampleSize,aSampleSize).minus(aHatMatrix)).times(aYMatrix);
+//		Matrix aHatMatrix = anXMatrix.times(anXTXInverseMatrix).times(anXMatrix.transpose());
+//		Matrix aResidualMatrix = (Matrix.identity(aSampleSize,aSampleSize).minus(aHatMatrix)).times(aYMatrix);
 		
 		theNewSubgroup.setRegressionModel(spellFittedModel(aBetaHat));
 		
 		//compute Cook's distance
 //		double aP = aBetaHat.getRowDimension();
-		double anSSquared = (aResidualMatrix.transpose().times(aResidualMatrix)).get(0,0)/((double) aSampleSize-itsP);
+//		double anSSquared = (aResidualMatrix.transpose().times(aResidualMatrix)).get(0,0)/((double) aSampleSize-itsP);
 		
 //		double anOldQuality = aBetaHat.minus(itsBetaHat).transpose().times(anXMatrix.transpose()).times(anXMatrix).times(aBetaHat.minus(itsBetaHat)).get(0,0)/(itsP*anSSquared);
-		Matrix aZXTXInverseZTMatrix = itsZMatrix.times(anXTXInverseMatrix).times(itsZMatrix.transpose()); 
+		Matrix aZXTXInverseZTMatrix = itsZMatrix.times(itsXTXInverseMatrix).times(itsZMatrix.transpose()); 
 		LUDecomposition itsOtherDecomp = new LUDecomposition(aZXTXInverseZTMatrix);
 		if (!itsOtherDecomp.isNonsingular())
 			return -Double.MAX_VALUE;
 		
-		double aQuality = aBetaHat.minus(itsBetaHat).transpose().times(
-			itsZMatrix.transpose()
-			).times(aZXTXInverseZTMatrix.inverse()
-			).times(itsZMatrix).times(aBetaHat.minus(itsBetaHat)).get(0,0)/(itsQ*anSSquared);
+		Matrix anM = itsZMatrix.transpose().times(aZXTXInverseZTMatrix.inverse()).times(itsZMatrix);
+//		logMatrix(anM);
+//		logMatrixDimensions(anM, "Zt(Z(XtX)-1Zt)-1Z");
+		
+		double aQuality = (aBetaHat.minus(itsBetaHat).transpose().times(anM).times(aBetaHat.minus(itsBetaHat))).get(0,0)/(itsQ*itsSSquared);
 		return aQuality;
 	}
 	
@@ -614,5 +615,21 @@ public class RegressionMeasure
 	{
 		Matrix aRemovedHatMatrix = itsHatMatrix.getMatrix(itsRemovedIndices,itsRemovedIndices);
 		itsRemovedTrace = aRemovedHatMatrix.trace();
+	}
+	
+	public void logMatrix( Matrix theMatrix )
+	{
+		for (int i=0; i<theMatrix.getRowDimension(); i++)
+		{
+			String aRow = ""+theMatrix.get(i, 0);
+			for (int j=1; j<theMatrix.getColumnDimension(); j++)
+				aRow += ", " + theMatrix.get(i,j);
+			Log.logCommandLine(aRow);
+		}
+	}
+
+	public void logMatrixDimensions(Matrix theMatrix, String theName)
+	{
+		Log.logCommandLine("Dimensions of Matrix " + theName + " : " + theMatrix.getRowDimension() + ", " + theMatrix.getColumnDimension());
 	}
 }
