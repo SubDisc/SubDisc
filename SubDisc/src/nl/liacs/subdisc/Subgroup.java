@@ -17,7 +17,7 @@ import java.util.BitSet;
  * @see SubgroupSet
  * @see Condition
  */
-public class Subgroup // implements Comparable<Subgroup> MM: LEAVE THIS IN
+public class Subgroup implements Comparable<Subgroup>
 {
 	private ConditionList itsConditions;
 	private BitSet itsMembers;
@@ -149,12 +149,12 @@ public class Subgroup // implements Comparable<Subgroup> MM: LEAVE THIS IN
 
 	public int getDepth() { return itsDepth; }
 
-	public int compareTo(Object o)
+	@Override
+	public int compareTo(Subgroup theSubgroup)
 	{
-		if(!(o instanceof Subgroup) || (o == null))
+		Subgroup s = theSubgroup;
+		if (s == null)
 			return 1;
-
-		Subgroup s = (Subgroup) o;
 
 		if(getMeasureValue() > s.getMeasureValue())
 			return -1;

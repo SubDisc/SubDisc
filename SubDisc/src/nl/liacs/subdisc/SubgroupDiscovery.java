@@ -34,7 +34,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 	private int itsBoundFiveFired;
 	private int itsBoundFourFired;
 	private int itsRankDefCount;
-	
+
 	private TreeSet<Candidate> itsBuffer;
 
 	//SINGLE_NOMINAL
@@ -109,7 +109,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 			itsBoundFiveFired=0;
 			itsBoundFourFired=0;
 			itsRankDefCount=0;
-			
+
 			itsBuffer = new TreeSet<Candidate>();
 
 // temp for testing
@@ -194,7 +194,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 				}
 			}
 
-			if (itsCandidateQueue.size() ==0)
+			if (itsCandidateQueue.size() == 0)
 				flushBuffer();
 		}
 		Log.logCommandLine("number of candidates: " + itsCandidateCount.get());
@@ -862,6 +862,8 @@ public class SubgroupDiscovery extends MiningAlgorithm
 
 	private void flushBuffer()
 	{
+		if (itsBuffer == null)
+			return;
 		Iterator<Candidate> anIterator = itsBuffer.iterator();
 		while (anIterator.hasNext())
 		{

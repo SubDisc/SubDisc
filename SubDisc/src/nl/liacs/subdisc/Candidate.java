@@ -1,6 +1,6 @@
 package nl.liacs.subdisc;
 
-public class Candidate// implements Comparable<Candidate> // MM: LEAVE THIS IN
+public class Candidate implements Comparable<Candidate>
 {
 	private Subgroup itsSubgroup;
 	private double itsPriority;
@@ -23,16 +23,17 @@ public class Candidate// implements Comparable<Candidate> // MM: LEAVE THIS IN
 	 * TODO this implementation is to narrow. This prevents CandidateQueue's
 	 * internal TreeSet<Candidate> .remove(Object o) from working correctly.
 	 */
-	public int compareTo(Object theObject)
+	@Override
+	public int compareTo(Candidate theCandidate)
 	{
-		if (itsPriority > ((Candidate)theObject).itsPriority)
+		if (itsPriority > theCandidate.itsPriority)
 			return -1;
 
-		if (itsPriority < ((Candidate)theObject).itsPriority)
+		if (itsPriority < theCandidate.itsPriority)
 			return 1;
 
 		//equal priorities
-		if (itsSubgroup.getDepth() > ((Candidate)theObject).itsSubgroup.getDepth())
+		if (itsSubgroup.getDepth() > theCandidate.itsSubgroup.getDepth())
 			return -1;
 
 		return 1;
