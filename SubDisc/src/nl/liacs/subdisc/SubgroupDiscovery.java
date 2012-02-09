@@ -237,8 +237,8 @@ public class SubgroupDiscovery extends MiningAlgorithm
 				for (float aSplit : aSplitPoints)
 				{
 					Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(Float.toString(aSplit));
-					//addToBuffer(aNewSubgroup);
-					checkAndLog(aNewSubgroup, aMinimumCoverage, anOldCoverage, aQualityMeasureMinimum);
+					addToBuffer(aNewSubgroup);
+					//checkAndLog(aNewSubgroup, aMinimumCoverage, anOldCoverage, aQualityMeasureMinimum);
 				}
 				break;
 			}
@@ -255,8 +255,8 @@ public class SubgroupDiscovery extends MiningAlgorithm
 					if (first || aSplitPoints[j] != aSplitPoints[j-1])
 					{
 						Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(Float.toString(aSplitPoints[j]));
-						//addToBuffer(aNewSubgroup);
-						checkAndLog(aNewSubgroup, aMinimumCoverage, anOldCoverage, aQualityMeasureMinimum);
+						addToBuffer(aNewSubgroup);
+						//checkAndLog(aNewSubgroup, aMinimumCoverage, anOldCoverage, aQualityMeasureMinimum);
 					}
 					first = false;
 				}
@@ -289,9 +289,9 @@ public class SubgroupDiscovery extends MiningAlgorithm
 
 				//add best
 				if (aBestSubgroup!=null) //at least one threshold found that has enough quality and coverage
-					//addToBuffer(aBestSubgroup);
+					addToBuffer(aBestSubgroup);
 					// unnecessarily re-evaluates result
-					checkAndLog(aBestSubgroup, aMinimumCoverage, anOldCoverage, aQualityMeasureMinimum);
+					//checkAndLog(aBestSubgroup, aMinimumCoverage, anOldCoverage, aQualityMeasureMinimum);
 
 				break;
 			}
@@ -314,8 +314,8 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		for (String aConditionValue : aDomain)
 		{
 			Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(aConditionValue);
-			//addToBuffer(aNewSubgroup);
-			checkAndLog(aNewSubgroup, aMinimumCoverage, anOldCoverage, aQualityMeasureMinimum);
+			addToBuffer(aNewSubgroup);
+			//checkAndLog(aNewSubgroup, aMinimumCoverage, anOldCoverage, aQualityMeasureMinimum);
 		}
 	}
 
