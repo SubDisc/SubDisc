@@ -84,7 +84,7 @@ public class BrowseWindow extends JFrame implements ActionListener//, MouseListe
 		else
 		{
 			itsSubgroupMembers = theSubgroup.getMembers();
-			String aName = theSubgroup.getConditions().get(0).getAttribute().getName();
+			String aName = theSubgroup.getConditions().get(0).getColumn().getName();
 			((JTextComponent)itsColumnsBox.getEditor().getEditorComponent()).setText(aName);
 			itsColumnsBox.setSelectedItem(aName);
 		}

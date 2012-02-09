@@ -1129,7 +1129,7 @@ public class Column implements XMLNodeInterface
 
 		return aCopy;
 	}
-	
+
 	public void makeNoTarget() { if (itsType == AttributeType.NUMERIC) itsTargetStatus = NONE; }
 	public void makePrimaryTarget() { if (itsType == AttributeType.NUMERIC) itsTargetStatus = PRIMARY; }
 	public void makeSecondaryTarget() { if (itsType == AttributeType.NUMERIC) itsTargetStatus = SECONDARY; }
@@ -1139,7 +1139,7 @@ public class Column implements XMLNodeInterface
 	{
 		return getTargetText(itsTargetStatus);
 	}
-	
+
 	public static String getTargetText(int theTargetStatus)
 	{
 		String aResult;
@@ -1153,7 +1153,7 @@ public class Column implements XMLNodeInterface
 		}
 		return aResult;
 	}
-	
+
 	public void setTargetStatus(String theTargetStatus)
 	{
 		if (itsType == AttributeType.NUMERIC)
@@ -1440,6 +1440,8 @@ public class Column implements XMLNodeInterface
 		for (int i = theBitSet.nextSetBit(0), j = -1; i >= 0; i = theBitSet.nextSetBit(i + 1))
 			aDomain[++j] = itsFloats.get(i).floatValue();
 
+		Arrays.sort(aDomain);
+
 		float[] aSplitPoints = new float[theNrSplits];
 		// N.B. Order matters to prevent integer division from yielding zero.
 		for (int j=0; j<theNrSplits; j++)
@@ -1455,6 +1457,7 @@ public class Column implements XMLNodeInterface
 	 * @return the average, or <code>Float.NaN</code> if this Column
 	 * is not of type NUMERIC or ORDINAL.
 	 */
+
 	public float getAverage()
 	{
 		if (!(itsType == AttributeType.NUMERIC || itsType == AttributeType.ORDINAL))
@@ -1467,21 +1470,6 @@ public class Column implements XMLNodeInterface
 		for (int i = 0, j = itsSize; i < j; ++i)
 			aResult += itsFloats.get(i);
 		return aResult / itsSize;
-	}
-
-	private boolean isValidCall(String theSource, BitSet theBitSet)
-	{
-		String anError = null;
-		if (!(itsType == AttributeType.NUMERIC || itsType == AttributeType.ORDINAL))
-			anError = getTypeError("NUMERIC or ORDINAL");
-		else if (theBitSet == null)
-			anError = "Argument can not be 'null'";
-		else if (theBitSet.length() > itsSize)
-			anError = String.format("BitSet can not be bigger then: %s", itsSize);
-
-		if (anError != null)
-			logMessage(theSource, anError);
-		return (anError == null);
 	}
 
 	/**
@@ -1524,6 +1512,21 @@ public class Column implements XMLNodeInterface
 		}
 
 		return aResult;
+	}
+
+	private boolean isValidCall(String theSource, BitSet theBitSet)
+	{
+		String anError = null;
+		if (!(itsType == AttributeType.NUMERIC || itsType == AttributeType.ORDINAL))
+			anError = getTypeError("NUMERIC or ORDINAL");
+		else if (theBitSet == null)
+			anError = "Argument can not be 'null'";
+		else if (theBitSet.length() > itsSize)
+			anError = String.format("BitSet can not be bigger then: %s", itsSize);
+
+		if (anError != null)
+			logMessage(theSource, anError);
+		return (anError == null);
 	}
 
 	private String getTypeError(String theValidType)

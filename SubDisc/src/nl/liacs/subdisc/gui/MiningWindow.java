@@ -1248,7 +1248,8 @@ public class MiningWindow extends JFrame
 
 	private void jComboBoxTargetAttributeActionPerformed()
 	{
-		itsTargetConcept.setPrimaryTarget(itsTable.getAttribute(getTargetAttributeName()));
+		//itsTargetConcept.setPrimaryTarget(itsTable.getAttribute(getTargetAttributeName()));
+		itsTargetConcept.setPrimaryTarget(itsTable.getColumn(getTargetAttributeName()));
 		itsSearchParameters.setTargetConcept(itsTargetConcept);
 
 		TargetType aTargetType = itsTargetConcept.getTargetType();
@@ -1283,7 +1284,8 @@ public class MiningWindow extends JFrame
 			case DOUBLE_REGRESSION :
 			case DOUBLE_CORRELATION :
 			{
-				itsTargetConcept.setSecondaryTarget(itsTable.getAttribute(getTargetAttributeName()));
+				//itsTargetConcept.setSecondaryTarget(itsTable.getAttribute(getTargetAttributeName()));
+				itsTargetConcept.setSecondaryTarget(itsTable.getColumn(getTargetAttributeName()));
 				break;
 			}
 			default : break;
@@ -1296,7 +1298,9 @@ public class MiningWindow extends JFrame
 
 	private void jButtonMultiRegressionTargetsActionPerformed()
 	{
-		itsTable.getAttribute(getTargetAttributeName()).makePrimaryTarget();
+		//itsTable.getAttribute(getTargetAttributeName()).makePrimaryTarget();
+		itsTable.getColumn(getTargetAttributeName()).makePrimaryTarget();
+		//itsTable.getColumn(getTargetAttributeName()).makePrimaryTarget();
 		new MultiRegressionTargetsWindow(jListMultiRegressionTargets, itsSearchParameters, itsTable, this);
 	}
 	
@@ -1397,7 +1401,8 @@ public class MiningWindow extends JFrame
 			{
 				TargetConcept aTargetConcept = theSearchParameters.getTargetConcept();
 				//recompute this number, as we may be dealing with cross-validation here, and hence a smaller number
-				int itsPositiveCount = theTable.countValues(theTable.getIndex(aTargetConcept.getPrimaryTarget().getName()), aTargetConcept.getTargetValue());
+				//int itsPositiveCount = theTable.countValues(theTable.getIndex(aTargetConcept.getPrimaryTarget().getName()), aTargetConcept.getTargetValue());
+				int itsPositiveCount = aTargetConcept.getPrimaryTarget().countValues(aTargetConcept.getTargetValue());
 				Log.logCommandLine("positive count: " + itsPositiveCount);
 				aSubgroupDiscovery = new SubgroupDiscovery(theSearchParameters, theTable, itsPositiveCount);
 				break;
@@ -1407,7 +1412,8 @@ public class MiningWindow extends JFrame
 			{
 				TargetConcept aTargetConcept = theSearchParameters.getTargetConcept();
 				//recompute this number, as we may be dealing with cross-validation here, and hence a different value
-				float itsTargetAverage = theTable.getAverage(theTable.getIndex(aTargetConcept.getPrimaryTarget().getName()));
+				//float itsTargetAverage = theTable.getAverage(theTable.getIndex(aTargetConcept.getPrimaryTarget().getName()));
+				float itsTargetAverage = theSearchParameters.getTargetConcept().getPrimaryTarget().getAverage();
 				Log.logCommandLine("average: " + itsTargetAverage);
 				aSubgroupDiscovery = new SubgroupDiscovery(theSearchParameters, theTable, itsTargetAverage);
 				break;
@@ -1711,7 +1717,8 @@ public class MiningWindow extends JFrame
 	// Obsolete, this info is already up to date through *ActionPerformed methods
 	private void initTargetConcept()
 	{
-		itsTargetConcept.setPrimaryTarget(itsTable.getAttribute(getTargetAttributeName()));
+		//itsTargetConcept.setPrimaryTarget(itsTable.getAttribute(getTargetAttributeName()));
+		itsTargetConcept.setPrimaryTarget(itsTable.getColumn(getTargetAttributeName()));
 
 		// target value
 		switch (itsTargetConcept.getTargetType())
@@ -1722,7 +1729,8 @@ public class MiningWindow extends JFrame
 				break;
 			case DOUBLE_CORRELATION :
 			case DOUBLE_REGRESSION :
-				itsTargetConcept.setSecondaryTarget(itsTable.getAttribute(getMiscFieldName()));
+				//itsTargetConcept.setSecondaryTarget(itsTable.getAttribute(getMiscFieldName()));
+				itsTargetConcept.setSecondaryTarget(itsTable.getColumn(getMiscFieldName()));
 				break;
 			default : break;
 		}
@@ -1848,9 +1856,10 @@ public class MiningWindow extends JFrame
 		// single target attribute
 		// if(!TargetConcept.isEMM(getTargetTypeName()))
 		// {
-		TreeSet<String> aValues =
-			itsTable.getDomain(
-				itsTable.getIndex(getTargetAttributeName()));
+		//TreeSet<String> aValues =
+		//	itsTable.getDomain(
+		//		itsTable.getIndex(getTargetAttributeName()));
+		TreeSet<String> aValues = itsTable.getColumn(getTargetAttributeName()).getDomain();
 		for (String aValue : aValues)
 			addMiscFieldItem(aValue);
 		// }
@@ -1863,7 +1872,8 @@ public class MiningWindow extends JFrame
 			case SINGLE_NOMINAL :
 			{
 				itsPositiveCount =
-					itsTable.countValues(itsTable.getIndex(getTargetAttributeName()), getMiscFieldName());
+					//itsTable.countValues(itsTable.getIndex(getTargetAttributeName()), getMiscFieldName());
+					itsTable.getColumn(getTargetAttributeName()).countValues(getMiscFieldName());
 				float aPercentage = ((float) itsPositiveCount * 100.0f) / (float) itsTotalCount;
 				NumberFormat aFormatter = NumberFormat.getNumberInstance();
 				aFormatter.setMaximumFractionDigits(1);
@@ -1876,7 +1886,8 @@ public class MiningWindow extends JFrame
 				String aTarget = getTargetAttributeName();
 				if (aTarget != null) //initTargetInfo might be called before item is actually selected
 				{
-					itsTargetAverage = itsTable.getAverage(itsTable.getIndex(aTarget));
+					//itsTargetAverage = itsTable.getAverage(itsTable.getIndex(aTarget));
+					itsTargetAverage = itsTable.getColumn(aTarget).getAverage();
 					jLabelTargetInfo.setText(" average");
 					jLFieldTargetInfo.setText(String.valueOf(itsTargetAverage));
 				}

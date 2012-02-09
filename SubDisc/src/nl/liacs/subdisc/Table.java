@@ -278,6 +278,7 @@ public class Table
 //	public int getNrOrdinals() {};
 //	public int getNrBinaries() {};
 /*
+	// CHANGE CHECKED AND APPROVED - SAFE FOR DELETION
 	public BitSet evaluate(Condition theCondition)
 	{
 		BitSet aSet = new BitSet(itsNrRows);
@@ -308,9 +309,11 @@ public class Table
 	}
 */
 
+/*
 	// as above, but only checks type once
 	// NOTE for maintainability + efficiency this is moved to Column
 	// DO NOT USE
+	// CHANGE CHECKED AND OK - SAFE FOR DELETION
 	public BitSet evaluate(Condition theCondition)
 	{
 		BitSet aSet = new BitSet(itsNrRows);
@@ -352,8 +355,10 @@ public class Table
 
 		return aSet;
 	}
+*/
 
 /*
+	// CHANGE CHECKED AND APPROVED - SAFE FOR DELETION
 	public BitSet evaluate(ConditionList theList)
 	{
 		BitSet aSet = new BitSet(itsNrRows);
@@ -379,9 +384,34 @@ public class Table
 	}
 */
 
+	/*
+	 * This method is too expensive in most cases,
+	 * Validation.randomConditions and SubgroupDiscovery.makeNewSubgroup use
+	 * it.
+	 * Actually, when making a refinement (in makeNewSubgroup), the new
+	 * BitSet can be created from
+	 * old_Subgroup.getMembers().and(new_condition.getAttribute.evaluate(new_condition))
+	 * This makes the algorithm much faster, as only a single loop over the
+	 * new_condition.getAttribute() is needed + 1 and(), instead of the
+	 * current conditionList.size() loops + and()'s.
+	 * Also it prevents the need to reload all Columns that occur in the
+	 * Condition that form the ConditionList.
+	 */
 	// as above but only checks type once
 	public BitSet evaluate(ConditionList theList)
 	{
+		// Validation.randomConditions does not check for null
+		if (theList == null || theList.isEmpty())
+			return new BitSet(0);
+
+		// these 3 lines replace all code below, sleightly less efficient
+		BitSet aSet = theList.get(0).getColumn().evaluate(theList.get(0));
+		for (int i = 1, j =  theList.size(); i < j; ++i)
+			aSet.and(theList.get(i).getColumn().evaluate(theList.get(i)));
+
+		return aSet;
+/*
+		// CHANGE CHECKED AND APPROVED - SAFE FOR DELETION
 		BitSet aSet = new BitSet(itsNrRows);
 		aSet.set(0, itsNrRows); //set all to true first, because of conjunction
 
@@ -425,19 +455,24 @@ public class Table
 		}
 
 		return aSet;
+*/
 	}
 
+/*
 	//returns a complete column (as long as it is binary)
 	// NOTE for maintainability + efficiency this is moved to Column
 	// DO NOT USE
+	// CHANGE CHECKED AND APPROVED - SAFE FOR DELETION
 	public BitSet getBinaryColumn(int i)
 	{
 		return itsColumns.get(i).getBinaries();
 	}
+*/
 
 	//Data Model ===========================================================================
 
-	public Column getAttribute(String theName)
+	// CHANGE CHECKED AND APPROVED
+	public Column getColumn(String theName)
 	{
 		for (Column c : itsColumns)
 		{
@@ -465,10 +500,10 @@ public class Table
 	public Condition getNextCondition(Condition theCurrentCondition)
 	{
 		if (theCurrentCondition.hasNextOperator())
-			return new Condition(theCurrentCondition.getAttribute(), theCurrentCondition.getNextOperator());
+			return new Condition(theCurrentCondition.getColumn(), theCurrentCondition.getNextOperator());
 		else
 		{
-			int anIndex = theCurrentCondition.getAttribute().getIndex();
+			int anIndex = theCurrentCondition.getColumn().getIndex();
 			if (anIndex == itsNrColumns-1) // No more attributes
 				return null;
 			else
@@ -479,10 +514,12 @@ public class Table
 
 	// Misc ===============================
 
+/*
 	// TODO this does exactly what NumericDomain did, merge this code with
 	// Column.getQMRequiredStatistics
 	// NOTE for maintainability + efficiency this is moved to Column
 	// DO NOT USE
+	// CHANGE CHECKED AND APPROVED - SAFE FOR DELETION
 	private float[] getNumericDomain(int theColumn, BitSet theSubset)
 	{
 		float[] aResult = new float[theSubset.cardinality()];
@@ -500,11 +537,11 @@ public class Table
 	//returns the unique, sorted domain
 	// NOTE for maintainability + efficiency this is moved to Column
 	// DO NOT USE
+	// CHANGE CHECKED AND APPROVED - SAFE FOR DELETION
 	public float[] getUniqueNumericDomain(int theColumn, BitSet theSubset)
 	{
 		//get domain including doubles
 		float[] aDomain = getNumericDomain(theColumn, theSubset);
-/*
 		//count uniques
 		float aCurrent = aDomain[0];
 		int aCount = 1;
@@ -526,7 +563,6 @@ public class Table
 				aResult[aCount] = aFloat;
 				aCount++;
 			}
- */
 		int aCount = itsColumns.get(theColumn).getCardinality();
 		float[] aResult = new float[aCount];
 		float aCurrent = aResult[0] = aDomain[0];
@@ -545,17 +581,23 @@ public class Table
 
 		return aResult;
 	}
+ */
 
+/*
 	// TODO check for out of range
 	// NOTE for maintainability + efficiency this is moved to Column
 	// DO NOT USE
+	// CHANGE CHECKED AND APPROVED - SAFE FOR DELETION
 	public TreeSet<String> getDomain(int theColumn)
 	{
 		return itsColumns.get(theColumn).getDomain();
 	}
+*/
 
+/*
 	// NOTE for maintainability + efficiency this is moved to Column
 	// DO NOT USE
+ 	// CHANGE CHECKED AND APPROVED - SAFE FOR DELETION
 	public float[] getSplitPoints(int theColumn, BitSet theSubset, int theNrSplits)
 	{
 		float[] aDomain = getNumericDomain(theColumn, theSubset);
@@ -564,10 +606,13 @@ public class Table
 			aSplitPoints[j] = aDomain[aDomain.length*(j+1)/(theNrSplits+1)];	// N.B. Order matters to prevent integer division from yielding zero.
 		return aSplitPoints;
 	}
+*/
 
+/*
 	//only works for nominals and binary
 	// NOTE for maintainability + efficiency this is moved to Column
 	// DO NOT USE
+	// CHANGE CHECKED AND APPROVED - SAFE FOR DELETION
 	public int countValues(int theColumn, String theValue)
 	{
 		int aResult = 0;
@@ -601,8 +646,11 @@ public class Table
 
 		return aResult;
 	}
+*/
+
 /*
 	//only works for nominals and binary
+	// CHANGE CHECKED AND APPROVED - SAFE FOR DELETION
 	public int countValues(int theColumn, String theValue)
 	{
 		int aResult = 0;
@@ -618,8 +666,10 @@ public class Table
 		return aResult;
 	}
 */
+/*
 	// NOTE for maintainability + efficiency this is moved to Column
 	// DO NOT USE
+	// CHANGE CHECKED AND APPROVED - SAFE FOR DELETION
 	public float getAverage(int theColumn)
 	{
 		float aResult = 0;
@@ -628,7 +678,7 @@ public class Table
 			aResult += aColumn.getFloat(i);
 		return aResult/itsNrRows;
 	}
-
+*/
 	public Subgroup getRandomSubgroup(int theSize)
 	{
 		BitSet aSample = new BitSet(itsNrRows);
@@ -651,8 +701,8 @@ public class Table
 			else
 				t++;
 		}
-		Subgroup aSubgroup = new Subgroup(0.0, theSize, 0, null);
-		aSubgroup.setMembers(aSample);
+		Subgroup aSubgroup = new Subgroup(0.0, theSize, 0, null, aSample);
+		//aSubgroup.setMembers(aSample);
 		return aSubgroup;
 	}
 

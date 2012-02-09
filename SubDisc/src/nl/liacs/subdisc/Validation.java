@@ -35,7 +35,8 @@ public class Validation
 				Column aTarget = itsTargetConcept.getPrimaryTarget();
 				Condition aCondition = new Condition(aTarget, Condition.EQUALS);
 				aCondition.setValue(itsTargetConcept.getTargetValue());
-				BitSet aBinaryTarget = itsTable.evaluate(aCondition);
+				//BitSet aBinaryTarget = itsTable.evaluate(aCondition);
+				BitSet aBinaryTarget = aTarget.evaluate(aCondition);
 
 				for (int i=0; i<theNrRepetitions; i++)
 				{
@@ -127,7 +128,8 @@ public class Validation
 				Column aTarget = itsTargetConcept.getPrimaryTarget();
 				Condition aCondition = new Condition(aTarget, Condition.EQUALS);
 				aCondition.setValue(itsTargetConcept.getTargetValue());
-				BitSet aBinaryTarget = itsTable.evaluate(aCondition);
+				//BitSet aBinaryTarget = itsTable.evaluate(aCondition);
+				BitSet aBinaryTarget = aTarget.evaluate(aCondition);
 
 				for (int i=0; i<theNrRepetitions; i++)
 				{
@@ -241,7 +243,8 @@ public class Validation
 				// back up column that will be swap randomized
 				Column aPrimaryCopy = itsTargetConcept.getPrimaryTarget().copy();
 				int aPositiveCount =
-					itsTable.countValues(itsTargetConcept.getPrimaryTarget().getIndex(), itsTargetConcept.getTargetValue());
+					//itsTable.countValues(itsTargetConcept.getPrimaryTarget().getIndex(), itsTargetConcept.getTargetValue());
+					itsTargetConcept.getPrimaryTarget().countValues(itsTargetConcept.getTargetValue());
 
 				// generate swap randomized random results
 				for (int i = 0, j = theNrRepetitions; i < j; ++i)
@@ -264,7 +267,8 @@ public class Validation
 				// back up column that will be swap randomized
 				Column aPrimaryCopy = itsTargetConcept.getPrimaryTarget().copy();
 				float aTargetAverage =
-					itsTable.getAverage(itsTargetConcept.getPrimaryTarget().getIndex());
+					//itsTable.getAverage(itsTargetConcept.getPrimaryTarget().getIndex());
+					itsTargetConcept.getPrimaryTarget().getAverage();
 
 				// generate swap randomized random results
 				for (int i = 0, j = theNrRepetitions; i < j; ++i)

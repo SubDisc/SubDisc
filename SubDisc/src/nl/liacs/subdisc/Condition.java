@@ -1,28 +1,27 @@
 package nl.liacs.subdisc;
 
-public class Condition
+public class Condition implements Comparable<Condition>
 {
 	// Operator Constants
-	public static final int DOES_NOT_EQUAL			= -1;
-	public static final int EQUALS                  = 0;
-	public static final int LESS_THAN_OR_EQUAL      = 1;
-	public static final int GREATER_THAN_OR_EQUAL   = 2;
-	public static final int NOT_AN_OPERATOR			= 99;
+	public static final int DOES_NOT_EQUAL		= -1;
+	public static final int EQUALS			= 0;
+	public static final int LESS_THAN_OR_EQUAL	= 1;
+	public static final int GREATER_THAN_OR_EQUAL	= 2;
+	public static final int NOT_AN_OPERATOR		= 99;
 
 	// Binary Operator Constants
 	public static final int FIRST_BINARY_OPERATOR	= EQUALS;
 	public static final int LAST_BINARY_OPERATOR	= EQUALS;
 	
 	// Nominal Operator  Constants
-	public static final int FIRST_NOMINAL_OPERATOR  = DOES_NOT_EQUAL;
-	public static final int LAST_NOMINAL_OPERATOR  	= EQUALS;
+	public static final int FIRST_NOMINAL_OPERATOR	= DOES_NOT_EQUAL;
+	public static final int LAST_NOMINAL_OPERATOR	= EQUALS;
 
 	// Numeric Operator  Constants
 	//this allows =, <= and >=
-	public static final int FIRST_NUMERIC_OPERATOR  = EQUALS;
-	public static final int LAST_NUMERIC_OPERATOR   = GREATER_THAN_OR_EQUAL;
+	public static final int FIRST_NUMERIC_OPERATOR	= EQUALS;
+	public static final int LAST_NUMERIC_OPERATOR	= GREATER_THAN_OR_EQUAL;
 
-//	private Attribute itsAttribute;
 	private Column itsColumn;
 	private int itsOperator;
 	private String itsValue = null;
@@ -31,14 +30,22 @@ public class Condition
 	{
 		// TODO null check
 		itsColumn = theColumn;
-		if (itsColumn.isNumericType())
-			itsOperator = FIRST_NUMERIC_OPERATOR;
-		else 
+		switch (itsColumn.getType())
 		{
-			if (itsColumn.isNominalType())
+			case NOMINAL : itsOperator = FIRST_NOMINAL_OPERATOR; return;
+			case NUMERIC : itsOperator = FIRST_NUMERIC_OPERATOR; return;
+			case ORDINAL : itsOperator = FIRST_NUMERIC_OPERATOR; return;
+			case BINARY : itsOperator = FIRST_BINARY_OPERATOR; return;
+			default :
+			{
 				itsOperator = FIRST_NOMINAL_OPERATOR;
-			else
-				itsOperator = FIRST_BINARY_OPERATOR;
+				Log.logCommandLine(
+					String.format(
+						"Condition<init>: unknown AttributeType '%s'. Returning '%s'. ",
+						itsColumn.getType(),
+						getOperatorString()));
+				return;
+			}
 		}
 	}
 
@@ -49,22 +56,64 @@ public class Condition
 		itsOperator = theOperator;
 	}
 
+	// obviously does not deep-copy itsColumn
+	// itsOperator is primitive type, no need for deep-copy
+	// itsValue new String not really needed, as none of current code ever
+	// changes it, beside it can be overridden through setValue anyway.
 	public Condition copy()
 	{
 		Condition aNewCondition = new Condition(itsColumn, itsOperator);
-		aNewCondition.setValue(new String(getValue()));
+		// new for deep-copy? not strictly needed for code
+		aNewCondition.setValue(itsValue == null ? null : new String(getValue()));
 		return aNewCondition;
 	}
 
+	/*
+	 * NOTE
+	 * Never override equals() without also overriding hashCode().
+	 * Some (Collection) classes use equals to determine equality, others
+	 * use hashCode() (eg. java.lang.HashMap).
+	 * Failing to override both methods will result in strange behaviour.
+	 * 
+	 * Used by ConditionList.findCondition().
+	 * @see java.lang.Object#equals(java.lang.Object)
+	 */
+	@Override
 	public boolean equals(Object theObject)
 	{
-		if (theObject.getClass() != this.getClass())
+		if (theObject == null || this.getClass() != theObject.getClass())
 			return false;
 		Condition aCondition = (Condition) theObject;
-		if (itsColumn == aCondition.getAttribute() && itsOperator == aCondition.getOperator() &&
+		if (itsColumn == aCondition.getColumn() &&
+			itsOperator == aCondition.getOperator() &&
 			itsValue.equals(aCondition.getValue()))
 			return true;
 		return false;
+	}
+
+	@Override
+	public int compareTo(Condition theCondition)
+	{
+		if (this == theCondition)
+			return 0;
+		if (this.getColumn().getIndex() < theCondition.getColumn().getIndex())
+			return -1;
+		if (this.getColumn().getIndex() > theCondition.getColumn().getIndex())
+			return 1;
+		// same column, check operator
+		if (this.getOperator() < theCondition.getOperator())
+			return -1;
+		if (this.getOperator() > theCondition.getOperator())
+			return 1;
+		// same column, same operator, check on value
+		if (this.getColumn().isNumericType())
+			return (Float.valueOf(this.getValue()).compareTo(Float.valueOf(theCondition.getValue())));
+		else
+		{
+			// String.compareTo() does not strictly return -1, 0, 1
+			int aCompare = this.getValue().compareTo(theCondition.getValue());
+			return (aCompare < 0 ? -1 : aCompare > 0 ? 1 : 0);
+		}
 	}
 
 	public boolean hasNextOperator()
@@ -75,66 +124,59 @@ public class Condition
 			return false;
 		if (itsOperator == LAST_NUMERIC_OPERATOR && itsColumn.isNumericType())
 			return false;
-
 		return true;
 	}
 
 	public int getNextOperator()
 	{
-		if (hasNextOperator())
-			return itsOperator+1;
-		else	// No Next Operators
-			return NOT_AN_OPERATOR;
+		return hasNextOperator() ? itsOperator+1 : NOT_AN_OPERATOR;
 	}
 
 	public String getValue() { return itsValue; }
 
-	public void setValue(String theValue)
-	{
-		itsValue = theValue;
-	}
+	public void setValue(String theValue) { itsValue = theValue; }
 
-	public Column getAttribute() { return itsColumn; }
+	public Column getColumn() { return itsColumn; }
 
+	// never used
 	public String getAggregateString()
 	{
-		String anAggregateString = null;
 		switch(itsOperator)
 		{
-			case LESS_THAN_OR_EQUAL		: { anAggregateString = "MIN"; break; }
-			case GREATER_THAN_OR_EQUAL	: { anAggregateString = "MAX"; break; }
+			case LESS_THAN_OR_EQUAL		: return "MIN";
+			case GREATER_THAN_OR_EQUAL	: return "MAX";
+			default : return null;
 		}
-		return anAggregateString;
 	}
 
-	// this is used by ConditionList.toString()
+	// used by ConditionList.toString()
+	@Override
 	public String toString()
 	{
-		return itsColumn.getName() + " " + getOperatorString() + " '" + itsValue + "'";
+		return String.format("%s %s '%s'", itsColumn.getName(), getOperatorString(), itsValue);
 	}
 
-	// this is never used atm
+	// never used atm
 	public String toCleanString()
 	{
 		String aName = itsColumn.hasShort() ? itsColumn.getShort() : itsColumn.getName();
 
 		if (itsColumn.isNumericType())
-			return aName  + " " + getOperatorString() + " " + itsValue;
+			return String.format("%s %s %s", aName, getOperatorString(), itsValue);
 		else
-			return aName + " " + getOperatorString() + " '" + itsValue + "'";
+			return String.format("%s %s '%s'", aName, getOperatorString(), itsValue);
 	}
 
 	public String getOperatorString()
 	{
-		String anOperatorString = "";
 		switch(itsOperator)
 		{
-			case DOES_NOT_EQUAL			: { anOperatorString = "!="; break; } 
-			case EQUALS					: { anOperatorString = "="; break; }
-			case LESS_THAN_OR_EQUAL		: { anOperatorString = "<="; break; }
-			case GREATER_THAN_OR_EQUAL	: { anOperatorString = ">="; break; }
+			case DOES_NOT_EQUAL		: return "!="; 
+			case EQUALS			: return "=";
+			case LESS_THAN_OR_EQUAL		: return "<=";
+			case GREATER_THAN_OR_EQUAL	: return ">=";
+			default : return "";
 		}
-		return anOperatorString;
 	}
 
 	public int getOperator() { return itsOperator; }
@@ -145,37 +187,24 @@ public class Condition
 	{
 		switch(itsOperator)
 		{
-			case DOES_NOT_EQUAL			:
-			{
+			case DOES_NOT_EQUAL :
 				return (!theValue.equals(itsValue));
-			}
-			case EQUALS					:
-			{
+			case EQUALS :
 				return (theValue.equals(itsValue));
-			}
-			case LESS_THAN_OR_EQUAL		:
-			{
+			case LESS_THAN_OR_EQUAL :
 				return (Float.parseFloat(theValue) <= Float.parseFloat(itsValue));
-			}
-			case GREATER_THAN_OR_EQUAL	:
-			{
+			case GREATER_THAN_OR_EQUAL :
 				return (Float.parseFloat(theValue) >= Float.parseFloat(itsValue));
-			}
+			default : return false;
 		}
-		return false;
 	}
 
 	//for boolean values only
 	public boolean evaluate(boolean theValue)
 	{
-		boolean aResult;
 		if (itsOperator != EQUALS)
 			Log.error("incorrect operator for boolean attribute");
-		if (theValue) //value=1
-			aResult = itsValue.equals("1");
-		else
-			aResult = itsValue.equals("0");
-
-		return aResult;
+		return itsValue.equals(theValue ? "1" : "0");
 	}
 }
+

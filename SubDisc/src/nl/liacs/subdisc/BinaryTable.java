@@ -8,11 +8,11 @@ public class BinaryTable
 	private int itsNrRecords; //Nr. of examples
 
 	//From Table
-	public BinaryTable(Table theTable, List<Column> theAttributes)
+	public BinaryTable(Table theTable, List<Column> theColumns)
 	{
-		itsColumns = new ArrayList<BitSet>(theAttributes.size());
-		for (Column anAttribute : theAttributes)
-			itsColumns.add(theTable.getBinaryColumn(anAttribute.getIndex()));
+		itsColumns = new ArrayList<BitSet>(theColumns.size());
+		for (Column aColumn : theColumns)
+			itsColumns.add(aColumn.getBinaries());
 		itsNrRecords = theTable.getNrRows();
 	}
 

@@ -17,7 +17,7 @@ public class RefinementList extends ArrayList<Refinement>
 		Condition aCondition = itsTable.getFirstCondition();
 		do
 		{
-			Column aColumn = aCondition.getAttribute();
+			Column aColumn = aCondition.getColumn();
 			if (aColumn.getIsEnabled() && !theSearchParameters.getTargetConcept().isTargetAttribute(aColumn))
 			{
 				Refinement aRefinement = new Refinement(aCondition, itsSubgroup);

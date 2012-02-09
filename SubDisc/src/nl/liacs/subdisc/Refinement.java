@@ -13,9 +13,13 @@ public class Refinement
 
 	public Subgroup getRefinedSubgroup(String theValue)
 	{
-		Subgroup aRefinedSubgroup = itsSubgroup.copy(); // TODO: deep copy
-		itsCondition.setValue(theValue);
-		aRefinedSubgroup.addCondition(itsCondition.copy());
+		// see remarks at Subgroup.copy about deep-copy
+		Subgroup aRefinedSubgroup = itsSubgroup.copy();
+		// see remarks at Condition.copy about deep-copy
+		Condition aCondition = itsCondition.copy();
+		// only set new value for copied Condition, not for itsCondition
+		aCondition.setValue(theValue);
+		aRefinedSubgroup.addCondition(aCondition);
 		return aRefinedSubgroup;
 	}
 

@@ -17,12 +17,12 @@ import java.util.BitSet;
  * @see SubgroupSet
  * @see Condition
  */
-public class Subgroup implements Comparable<Object>
+public class Subgroup // implements Comparable<Subgroup> MM: LEAVE THIS IN
 {
 	private ConditionList itsConditions;
 	private BitSet itsMembers;
 	private int itsID = 0;
-	private int itsCoverage;
+	private int itsCoverage; // crucial to keep it in sync with itsMembers
 	private DAG itsDAG;
 	private double itsMeasureValue;
 	int itsDepth;
@@ -46,12 +46,13 @@ public class Subgroup implements Comparable<Object>
 	 * @param theDepth
 	 * @param theSubgroupSet the SubgroupSet this Subgroup is contained in.
 	 */
-	public Subgroup(double theMeasureValue, int theCoverage, int theDepth, SubgroupSet theSubgroupSet)
+	// TODO null checks/ merge with other constructor
+	public Subgroup(double theMeasureValue, int theCoverage, int theDepth, SubgroupSet theSubgroupSet, BitSet theBitSet)
 	{
 		itsConditions = new ConditionList();
 		itsMeasureValue = theMeasureValue;
 		itsCoverage = theCoverage;
-		itsMembers = new BitSet(1000); // TODO > theCoverage && theSubgroupSet.binaryTarget
+		itsMembers = theBitSet;
 		itsDepth = theDepth;
 		itsDAG = null;	//not set yet
 		itsParentSet = (theSubgroupSet == null ? new SubgroupSet(0) : theSubgroupSet);
@@ -70,6 +71,7 @@ public class Subgroup implements Comparable<Object>
 	 * @param theMembers
 	 * @param theDepth
 	 */
+	// TODO null checks/ merge with other constructor
 	public Subgroup(ConditionList theConditions, BitSet theMembers, int theDepth)
 	{
 		itsConditions = (theConditions == null ? new ConditionList() : theConditions);	// TODO warning
@@ -82,18 +84,35 @@ public class Subgroup implements Comparable<Object>
 		isPValueComputed = false;
 	}
 
+	// significant speedup in mining algorithm
+	// use old_subgroup.members and update it for new Condition
 	public void addCondition(Condition theCondition)
 	{
+		if (theCondition == null)
+		{
+			Log.logCommandLine("Subgroup.addCondition(): argument can not be 'null', no Condition added.");
+			return;
+		}
+
 		itsConditions.addCondition(theCondition);
-		itsDepth++;
+
+		itsMembers.and(theCondition.getColumn().evaluate(theCondition));
+		// crucial to keep it in sync with itsMembers
+		itsCoverage = itsMembers.cardinality();
+
+		++itsDepth;
 	}
 
-	//TODO: check correctheid van diepe copy
+	// itsMeasureValue, itsCoverage, itsDepth are primitive types, no need
+	// to deep-copy
+	// itsParentSet must not be deep-copied
+	// see remarks for ConditionList/ Condition, which are not true complete
+	// deep-copies, but in current code this is no problem
+	// itsMembers is deep-copied
 	public Subgroup copy()
 	{
-		Subgroup aReturn = new Subgroup(itsMeasureValue, itsCoverage, itsDepth, itsParentSet);
+		Subgroup aReturn = new Subgroup(itsMeasureValue, itsCoverage, itsDepth, itsParentSet, (BitSet) itsMembers.clone());
 		aReturn.itsConditions = itsConditions.copy();
-		aReturn.itsMembers = (BitSet) itsMembers.clone();
 		return aReturn;
 	}
 
@@ -103,19 +122,14 @@ public class Subgroup implements Comparable<Object>
 		Log.logCommandLine("bitset: " + itsMembers.toString());
 	}
 
+	/**
+	 * Most callers should not want to modify the returned
+	 * {@link BitSet BitSet}.
+	 * 
+	 * @return a BitSet representing this Subgroups members.
+	 */
+	// TODO return clone is feasible.
 	public BitSet getMembers() { return itsMembers; }
-
-	public void setMembers(BitSet theMembers)
-	{
-		if (theMembers == null)
-			Log.logCommandLine("Subgroup.setMembers(theMembers), theMembers " +
-					"can not be 'null'. Not setting theMembers.");
-		else
-		{
-			itsMembers = theMembers;
-			itsCoverage = theMembers.cardinality();
-		}
-	}
 
 	public boolean covers(int theRow) { return itsMembers.get(theRow); }
 
@@ -160,7 +174,7 @@ public class Subgroup implements Comparable<Object>
 			boolean hasSameAttributeAndOperator = false;
 			for(Condition sc : s.itsConditions)
 			{
-				if(c.getAttribute().getName().equals(sc.getAttribute().getName()) &&
+				if(c.getColumn().getName().equals(sc.getColumn().getName()) &&
 						c.getOperatorString().equals(sc.getOperatorString()))
 				{
 					hasSameAttributeAndOperator = true;
@@ -169,6 +183,36 @@ public class Subgroup implements Comparable<Object>
 			}
 			if(!hasSameAttributeAndOperator)
 				return 1;	// TODO arbitrary, could have been -1 also
+		}
+		return 0;
+	}
+
+	// MM: LEAVE THIS IN IT WILL REPLACE OLD CODE
+	// @Override
+	public int compareTo2(Subgroup theSubgroup)
+	{
+		if (theSubgroup == null)
+			return 1;
+
+		if (getMeasureValue() > theSubgroup.getMeasureValue())
+			return -1;
+		else if (getMeasureValue() < theSubgroup.getMeasureValue())
+			return 1;
+		else if (getCoverage() > theSubgroup.getCoverage())
+			return -1;
+		else if (getCoverage() < theSubgroup.getCoverage())
+			return 1;
+		else if (itsConditions.size() < theSubgroup.itsConditions.size())
+			return -1;
+		else if (itsConditions.size() > theSubgroup.itsConditions.size())
+			return 1;
+
+		ConditionList aList = theSubgroup.getConditions();
+		for (int i = 0, j = itsConditions.size(); i < j; ++i)
+		{
+			int res = itsConditions.get(i).compareTo(aList.get(i));
+			if (res != 0)
+				return res;
 		}
 
 		return 0;

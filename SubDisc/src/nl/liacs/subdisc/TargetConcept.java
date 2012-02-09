@@ -53,18 +53,21 @@ public class TargetConcept implements XMLNodeInterface
 			if ("target_type".equalsIgnoreCase(aNodeName))
 				itsTargetType = (TargetType.getTargetType(aSetting.getTextContent()));
 			else if ("primary_target".equalsIgnoreCase(aNodeName))
-				itsPrimaryTarget = theTable.getAttribute(aSetting.getTextContent());
+				//itsPrimaryTarget = theTable.getAttribute(aSetting.getTextContent());
+				itsPrimaryTarget = theTable.getColumn(aSetting.getTextContent());
 			else if ("target_value".equalsIgnoreCase(aNodeName))
 				itsTargetValue = aSetting.getTextContent();
 			else if ("secondary_target".equalsIgnoreCase(aNodeName))
-				itsSecondaryTarget = theTable.getAttribute(aSetting.getTextContent());
+				//itsSecondaryTarget = theTable.getAttribute(aSetting.getTextContent());
+				itsSecondaryTarget = theTable.getColumn(aSetting.getTextContent());
 			else if ("multi_targets".equalsIgnoreCase(aNodeName))
 			{
 				if (!aSetting.getTextContent().isEmpty())
 				{
 					itsMultiTargets = new ArrayList<Column>();
 					for (String s : aSetting.getTextContent().split(",", -1))
-						itsMultiTargets.add(theTable.getAttribute(s));
+						//itsMultiTargets.add(theTable.getAttribute(s));
+						itsMultiTargets.add(theTable.getColumn(s));
 				}
 			}
 			else if ("multi_regression_targets".equalsIgnoreCase(aNodeName))
@@ -74,7 +77,8 @@ public class TargetConcept implements XMLNodeInterface
 					itsSecondaryTargets = new ArrayList<Column>();
 					itsTertiaryTargets = new ArrayList<Column>();
 					for (String s : aSetting.getTextContent().split(",", -1))
-						itsSecondaryTargets.add(theTable.getAttribute(s));
+						//itsSecondaryTargets.add(theTable.getAttribute(s));
+						itsSecondaryTargets.add(theTable.getColumn(s));
 				}
 			}
 			else
