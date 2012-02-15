@@ -1,6 +1,6 @@
 package nl.liacs.subdisc;
 
-public enum QM
+public enum QM implements EnumInterface
 {
 	// ENUM		GUI text		default measure minimum
 	// SINGLE_NOMINAL quality measures

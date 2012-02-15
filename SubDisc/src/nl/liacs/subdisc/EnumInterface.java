@@ -1,10 +1,9 @@
 package nl.liacs.subdisc;
 
 /*
- * Known implementing enums: AttributeType, NumericStrategy, SearchStrategy,
- * TargetType.
+ * Known implementing enums: AttributeType,NumericOperators, NumericStrategy,
+ * QM, SearchStrategy, TargetType.
  */
-
 public interface EnumInterface
 {
 	/**
