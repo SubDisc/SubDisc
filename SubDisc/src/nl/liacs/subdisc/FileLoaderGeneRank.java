@@ -15,6 +15,9 @@ import nl.liacs.subdisc.gui.*;
 // TODO rename this class to generic FileLoaderRank
 public class FileLoaderGeneRank implements FileLoaderInterface
 {
+	// TODO should come from GUI, values below threshold are set to 0.0f
+	public static final Float THRESHOLD = new Float(0.01);
+
 	private static Map<String, Integer> itsCui2LineNrMap;	// TODO generify
 	private static Map<String, String> itsCui2NameMap;	// TODO generify
 
@@ -56,14 +59,14 @@ public class FileLoaderGeneRank implements FileLoaderInterface
 			{
 				// TODO remove debug only
 				System.gc();
-				// TODO wrong calculation if more memory is clamained @runtime
-				long freePre = Runtime.getRuntime().freeMemory();
+				// NOTE extra memory can be claimed at runtime
+				Runtime r = Runtime.getRuntime();
+				long usedPre = r.totalMemory() - r.freeMemory();
 				long start = System.currentTimeMillis();
 				foo();
 				System.gc();
-				System.out.println((freePre - Runtime.getRuntime().freeMemory())/1048576 + "MB used after adding domain info.");
+				System.out.println(((r.totalMemory()-r.freeMemory()) - usedPre) / 1048576 + "MB used after adding domain info.");
 				System.out.println((System.currentTimeMillis() - start)/1000 + "s. for loading of domain file.");
-				
 			}
 		}
 	}
@@ -258,7 +261,7 @@ public class FileLoaderGeneRank implements FileLoaderInterface
 				Integer aLineNr = itsCui2LineNrMap.get(aCui);
 				aDomainColumn.add(itsCui2NameMap.get(aCui));
 
-				// no mapping may exist in some ENTREZ/GO case
+				// no mapping may exist in some ENTREZ/GO cases
 				if (aLineNr != null)
 					aLineNrMap.put(aLineNr, i);
 			}
@@ -281,7 +284,9 @@ public class FileLoaderGeneRank implements FileLoaderInterface
 				 */
 				String[] anArray = aReader.readLine().split("\t", -1);
 				for (int j = aNrCUIColumns - 1, k = aNrColumns; j > 0; --j)
-					itsTable.getColumn(--k).set(anEntry.getValue(), Float.valueOf(anArray[j]));
+					// TODO THIS IS THE CRUCIAL THRESHOLD CHECK, THRESHOLD SHOULD COME FROM GUI
+					if (Float.valueOf(anArray[j]) > THRESHOLD)
+						itsTable.getColumn(--k).set(anEntry.getValue(), Float.valueOf(anArray[j]));
 			}
 		}
 		// TODO

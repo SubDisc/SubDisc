@@ -60,6 +60,7 @@ public class FileLoaderTXT implements FileLoaderInterface
 			{
 				aReader = new BufferedReader(new FileReader(theFile));
 				String aLine;
+				int aLineNr = 0;// TODO remove
 
 				//skip header, make sure line is not empty/null
 				while ((aLine = aReader.readLine()) != null)
@@ -98,6 +99,9 @@ public class FileLoaderTXT implements FileLoaderInterface
 							default : break; // TODO ERROR
 						}
 					}
+					++aLineNr;
+					if (aLineNr % 10000 == 0)
+						System.out.println(aLineNr + " lines read");
 				}
 			}
 			catch (IOException e)

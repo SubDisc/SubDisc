@@ -214,7 +214,10 @@ public class Table
 		itsNrColumns = itsColumns.size();	// needed for MiningWindow
 
 		for (Column c : itsColumns)
+		{
+			c.close();
 			c.getCardinality();
+		}
 	}
 
 	/**

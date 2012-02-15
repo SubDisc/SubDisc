@@ -146,13 +146,17 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		itsResult = new SubgroupSet(itsSearchParameters.getMaximumSubgroups());
 	}
 
-	/**
+	/*
 	 * Only the top result is used in this setting. Maximum coverage and
 	 * binary target constructor parameters are not needed.
+	 * NOTE this is a failed attempt to speedup calculation in the
+	 * swap-randomise setting. Storing just the top-1 result is only
+	 * sufficient for the last depth.
+	 * It may be enabled again in the future, LEAVE IT IN.
 	 */
-	protected void useSwapRandomisationSetting() {
-		itsResult.useSwapRandomisationSetting();
-	}
+	//protected void useSwapRandomisationSetting() {
+	//	itsResult.useSwapRandomisationSetting();
+	//}
 
 	public void mine(long theBeginTime)
 	{
@@ -216,6 +220,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 			postprocess();
 
 		//now just for cover-based beam search post selection
+		// TODO MM see note at SubgroupSet.postProcess(), all itsResults will remain in memory
 		itsResult = itsResult.postProcess(itsSearchParameters.getSearchStrategy());
 
 		itsResult.setIDs(); //assign 1 to n to subgroups, for future reference in subsets
@@ -237,8 +242,8 @@ public class SubgroupDiscovery extends MiningAlgorithm
 				for (float aSplit : aSplitPoints)
 				{
 					Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(Float.toString(aSplit));
-					addToBuffer(aNewSubgroup);
-					//checkAndLog(aNewSubgroup, aMinimumCoverage, anOldCoverage, aQualityMeasureMinimum);
+					//addToBuffer(aNewSubgroup);
+					checkAndLog(aNewSubgroup, aMinimumCoverage, anOldCoverage, aQualityMeasureMinimum);
 				}
 				break;
 			}
@@ -255,8 +260,8 @@ public class SubgroupDiscovery extends MiningAlgorithm
 					if (first || aSplitPoints[j] != aSplitPoints[j-1])
 					{
 						Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(Float.toString(aSplitPoints[j]));
-						addToBuffer(aNewSubgroup);
-						//checkAndLog(aNewSubgroup, aMinimumCoverage, anOldCoverage, aQualityMeasureMinimum);
+						//addToBuffer(aNewSubgroup);
+						checkAndLog(aNewSubgroup, aMinimumCoverage, anOldCoverage, aQualityMeasureMinimum);
 					}
 					first = false;
 				}
@@ -289,15 +294,15 @@ public class SubgroupDiscovery extends MiningAlgorithm
 
 				//add best
 				if (aBestSubgroup!=null) //at least one threshold found that has enough quality and coverage
-					addToBuffer(aBestSubgroup);
+					//addToBuffer(aBestSubgroup);
 					// unnecessarily re-evaluates result
-					//checkAndLog(aBestSubgroup, aMinimumCoverage, anOldCoverage, aQualityMeasureMinimum);
+					checkAndLog(aBestSubgroup, aMinimumCoverage, anOldCoverage, aQualityMeasureMinimum);
 
 				break;
 			}
 			default :
 			{
-				Log.logCommandLine("SubgroupDiscovery.evaluateNumericRefinements(): unknown Numeriric Strategy: " +
+				Log.logCommandLine("SubgroupDiscovery.evaluateNumericRefinements(): unknown Numeric Strategy: " +
 							itsSearchParameters.getNumericStrategy());
 				break;
 			}
@@ -314,8 +319,8 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		for (String aConditionValue : aDomain)
 		{
 			Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(aConditionValue);
-			addToBuffer(aNewSubgroup);
-			//checkAndLog(aNewSubgroup, aMinimumCoverage, anOldCoverage, aQualityMeasureMinimum);
+			//addToBuffer(aNewSubgroup);
+			checkAndLog(aNewSubgroup, aMinimumCoverage, anOldCoverage, aQualityMeasureMinimum);
 		}
 	}
 
@@ -325,8 +330,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 //	}
 
 	/*
-	 * Access to itsResult is synchronized, as many threads may try to add
-	 * results concurrently.
+	 * SubgroupsSet's add() method is thread save.
 	 * 
 	 * CandidateQueue's add() method is thread save.
 	 * 
@@ -341,10 +345,10 @@ public class SubgroupDiscovery extends MiningAlgorithm
 			float aQuality = evaluateCandidate(theSubgroup);
 			theSubgroup.setMeasureValue(aQuality);
 
+			// could make aQualityMeasureMinimum a parameter of SubgroupSet
 			if (aQuality > aQualityMeasureMinimum)
-			{
-				synchronized (itsResult) { itsResult.add(theSubgroup); }
-			}
+				itsResult.add(theSubgroup);
+
 			itsCandidateQueue.add(new Candidate(theSubgroup));
 
 			logCandidateAddition(theSubgroup);
@@ -362,8 +366,8 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		Log.logCommandLine(sb.toString());
 
 		Log.logCommandLine(String.format("  subgroup nr. %d; quality %s",
-											itsCandidateCount.get(),
-											Double.toString(theSubgroup.getMeasureValue())));
+							itsCandidateCount.get(),
+							Double.toString(theSubgroup.getMeasureValue())));
 	}
 
 	private float evaluateCandidate(Subgroup theNewSubgroup)
@@ -374,9 +378,15 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		{
 			case SINGLE_NOMINAL :
 			{
-				BitSet aTarget = (BitSet)itsBinaryTarget.clone();
-				aTarget.and(theNewSubgroup.getMembers());
-				int aCountHeadBody = aTarget.cardinality();
+				//BitSet aTarget = (BitSet)itsBinaryTarget.clone();
+				//aTarget.and(theNewSubgroup.getMembers());
+				//int aCountHeadBody = aTarget.cardinality();
+				int aCountHeadBody = 0;
+				final BitSet aMembers = theNewSubgroup.getMembers();
+				for (int i = aMembers.nextSetBit(0); i >= 0; i = aMembers.nextSetBit(i+1))
+					if (itsBinaryTarget.get(i))
+						++aCountHeadBody;
+
 				aQuality = itsQualityMeasure.calculate(aCountHeadBody, theNewSubgroup.getCoverage());
 				break;
 			}
@@ -417,7 +427,9 @@ public class SubgroupDiscovery extends MiningAlgorithm
 						int aBorderlineSubgroupNumber;
 						if (theNewSubgroup.itsDepth < itsSearchParameters.getSearchDepth())
 							aBorderlineSubgroupNumber = itsSearchParameters.getSearchStrategyWidth();
-						else aBorderlineSubgroupNumber = itsSearchParameters.getMaximumSubgroups(); 
+						else aBorderlineSubgroupNumber = itsSearchParameters.getMaximumSubgroups();
+						// TODO these methods on itsResult are not (yet) thread save and will will cause
+						// problems during concurrent access, easy to fix
 						if ( itsResult.size() >= aBorderlineSubgroupNumber )
 							aThreshold = itsResult.last().getMeasureValue();
 						else { aNeedToComputeBounds = false; }
@@ -638,6 +650,11 @@ public class SubgroupDiscovery extends MiningAlgorithm
 
 		// Iterate over subgroups
 		SubgroupSet aNewSubgroupSet = new SubgroupSet(itsSearchParameters.getMaximumSubgroups());
+		// most methods of SubgroupSet are not thread save, but this is
+		// no problem for this method as it is run by a single thread
+		// however all itsResult sets, of all refinement depths,  will
+		// be kept in memory
+		// see comment in SubgroupSet.postProcess()
 		for (Subgroup s : itsResult)
 		{
 			Log.logCommandLine("Postprocessing subgroup " + s.getID());
@@ -797,6 +814,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 			postprocess();
 
 		//now just for cover-based beam search post selection
+		// TODO MM see note at SubgroupSet.postProcess(), all itsResults will remain in memory 
 		itsResult = itsResult.postProcess(itsSearchParameters.getSearchStrategy());
 
 		itsResult.setIDs(); //assign 1 to n to subgroups, for future reference in subsets

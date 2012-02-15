@@ -148,7 +148,7 @@ public class Subgroup implements Comparable<Subgroup>
 	public int getNrConditions() { return itsConditions.size(); }
 
 	public int getDepth() { return itsDepth; }
-
+/*
 	@Override
 	public int compareTo(Subgroup theSubgroup)
 	{
@@ -186,10 +186,10 @@ public class Subgroup implements Comparable<Subgroup>
 		}
 		return 0;
 	}
-
+*/
 	// MM: LEAVE THIS IN IT WILL REPLACE OLD CODE
-	// @Override
-	public int compareTo2(Subgroup theSubgroup)
+	@Override
+	public int compareTo(Subgroup theSubgroup)
 	{
 		if (theSubgroup == null)
 			return 1;

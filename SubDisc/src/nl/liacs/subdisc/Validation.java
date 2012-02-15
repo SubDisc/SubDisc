@@ -384,14 +384,14 @@ public class Validation
 			--theRepetition; // if no subgroups are found, try again.
 		else
 		{
-			theQualities[theRepetition] = aSubgroupSet.getBestSubgroup().getMeasureValue();
+			theQualities[theRepetition] = aSubgroupSet.getBestScore();
 			Log.logCommandLine((theRepetition + 1) + "," + theQualities[theRepetition]);
 		}
 
 		return theRepetition;
 	}
 
-	public double performRegressionTest(double[] theQualities, int theK, SubgroupSet theSubgroupSet)
+	private double performRegressionTest(double[] theQualities, int theK, SubgroupSet theSubgroupSet)
 	{
 		//extract average quality
 		double aTopKQuality = 0.0;
@@ -482,7 +482,7 @@ public class Validation
 		return aCount/(double)theQualities.length;
 	}
 
-	public ConditionList getRandomConditionList(int theDepth, Random theRandom)
+	private ConditionList getRandomConditionList(int theDepth, Random theRandom)
 	{
 		ConditionList aCL = new ConditionList();
 

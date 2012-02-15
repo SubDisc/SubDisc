@@ -62,7 +62,7 @@ public class ROCList extends ArrayList<SubgroupROCPoint>
 		return true;
 	}
 
-	public float getTruePositiveRateAt(int theIndex)
+	private float getTruePositiveRateAt(int theIndex)
 	{
 		if (theIndex == -1)
 			return 0.0f;

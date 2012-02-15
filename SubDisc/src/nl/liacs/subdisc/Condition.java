@@ -78,7 +78,8 @@ public class Condition implements Comparable<Condition>
 	 * Used by ConditionList.findCondition().
 	 * @see java.lang.Object#equals(java.lang.Object)
 	 */
-	@Override
+
+/*	@Override
 	public boolean equals(Object theObject)
 	{
 		if (theObject == null || this.getClass() != theObject.getClass())
@@ -90,7 +91,7 @@ public class Condition implements Comparable<Condition>
 			return true;
 		return false;
 	}
-
+*/
 	@Override
 	public int compareTo(Condition theCondition)
 	{

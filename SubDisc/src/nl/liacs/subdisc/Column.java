@@ -15,7 +15,7 @@ import org.w3c.dom.*;
  */
 public class Column implements XMLNodeInterface
 {
-	public static final int DEFAULT_INIT_SIZE = 1000;
+	public static final int DEFAULT_INIT_SIZE = 2500;
 
 	private AttributeType itsType;
 	private String itsName;
@@ -23,7 +23,8 @@ public class Column implements XMLNodeInterface
 	private int itsIndex;
 
 	// when adding/removing members be sure to update addNodeTo() and loadNode()
-	private List<Float> itsFloats;
+	//private List<Float> itsFloats;
+	private float[] itsFloatz;
 	private List<String> itsNominals;
 	private BitSet itsBinaries;
 	// TODO new needs field tests (eg. when switching AttributeTypes)
@@ -66,7 +67,7 @@ public class Column implements XMLNodeInterface
 		checkAndSetType(theType);
 
 		setupColumn(theNrRows <= 0 ? DEFAULT_INIT_SIZE : theNrRows);
-		
+
 		if (itsType == AttributeType.NUMERIC)
 			itsTargetStatus = SECONDARY;
 		else itsTargetStatus = NONE;
@@ -161,13 +162,15 @@ public class Column implements XMLNodeInterface
 			}
 			case NUMERIC :
 			{
-				itsFloats = new ArrayList<Float>(theNrRows);
+				//itsFloats = new ArrayList<Float>(theNrRows);
+				itsFloatz = new float[theNrRows];
 				itsMissingValue = AttributeType.NUMERIC.DEFAULT_MISSING_VALUE;
 				break;
 			}
 			case ORDINAL :
 			{
-				itsFloats = new ArrayList<Float>(theNrRows);
+				//itsFloats = new ArrayList<Float>(theNrRows);
+				itsFloatz = new float[theNrRows];
 				itsMissingValue = AttributeType.ORDINAL.DEFAULT_MISSING_VALUE;
 				break;
 			}
@@ -203,9 +206,12 @@ public class Column implements XMLNodeInterface
 			case NUMERIC :
 			case ORDINAL :
 			{
-				aColumn.itsFloats = new ArrayList<Float>(aColumnsSize);
-				for (int i = theSet.nextSetBit(0); i >= 0 && i < itsSize; i = theSet.nextSetBit(i + 1))
-					aColumn.itsFloats.add(getFloat(i));
+				//aColumn.itsFloats = new ArrayList<Float>(aColumnsSize);
+				//for (int i = theSet.nextSetBit(0); i >= 0 && i < itsSize; i = theSet.nextSetBit(i + 1))
+				//	aColumn.itsFloats.add(getFloat(i));
+				aColumn.itsFloatz = new float[aColumnsSize];
+				for (int i = theSet.nextSetBit(0), j = -1; i >= 0 && i < itsSize; i = theSet.nextSetBit(i + 1))
+					aColumn.itsFloatz[++j] = this.itsFloatz[i];
 				break;
 			}
 			case BINARY :
@@ -236,24 +242,35 @@ public class Column implements XMLNodeInterface
 	}
 	public void add(float theFloat)
 	{
-		itsFloats.add(new Float(theFloat));
+		if (itsSize == itsFloatz.length)
+		{
+			itsFloatz = Arrays.copyOf(itsFloatz, itsSize*2);
+		}
+		//itsFloats.add(new Float(theFloat));
+		itsFloatz[itsSize] = theFloat;
 		++itsSize;
 	}
+
+	/**
+	 * Always call this after creating a Column.
+	 */
+	public void close()
+	{
+		if ((itsFloatz != null) && (itsFloatz.length > itsSize))
+			itsFloatz = Arrays.copyOf(itsFloatz, itsSize);
+	}
+
 	public void add(boolean theBinary)
 	{
 		if (theBinary)
 			itsBinaries.set(itsSize);
 		++itsSize;
 	}
-//	public void set(int theIndex, String theValue)
-//	{
-//		if (!isOutOfBounds(theIndex))
-//			itsNominals.set(theIndex, theValue);
-//	}
 	public void set(int theIndex, float theValue)
 	{
 		if (!isOutOfBounds(theIndex))
-			itsFloats.set(theIndex, theValue);
+			//itsFloats.set(theIndex, theValue);
+			itsFloatz[theIndex] = theValue;
 	}
 	public int size() { return itsSize; }
 	public String getName() { return itsName; }
@@ -273,7 +290,8 @@ public class Column implements XMLNodeInterface
 	{
 		return isOutOfBounds(theIndex) ?
 					Float.NaN :
-					itsFloats.get(theIndex).floatValue();
+					//itsFloats.get(theIndex).floatValue();
+					itsFloatz[theIndex];
 	}
 	public boolean getBinary(int theIndex)
 	{
@@ -346,10 +364,13 @@ public class Column implements XMLNodeInterface
 				break;
 			case NUMERIC :
 			case ORDINAL :
-				ArrayList<Float> aFloats = new ArrayList<Float>(thePermutation.length);
-				for (int i : thePermutation)
-					aFloats.add(itsFloats.get(i));
-				itsFloats = aFloats;
+				//ArrayList<Float> aFloats = new ArrayList<Float>(thePermutation.length);
+				//for (int i : thePermutation)
+				//	aFloats.add(itsFloats.get(i));
+
+				float[] aFloats = new float[thePermutation.length];
+				for (int i =0, j = thePermutation.length; i < j; ++i)
+					itsFloatz[i] = itsFloatz[thePermutation[i]];
 				break;
 			case BINARY :
 				int n = thePermutation.length;
@@ -370,7 +391,8 @@ public class Column implements XMLNodeInterface
 		{
 			case NOMINAL : Log.logCommandLine(itsNominals.toString()); break;
 			case NUMERIC :
-			case ORDINAL : Log.logCommandLine(itsFloats.toString()); break;
+			//case ORDINAL : Log.logCommandLine(itsFloats.toString()); break;
+			case ORDINAL : Log.logCommandLine(Arrays.toString(itsFloatz)); break;
 			case BINARY : Log.logCommandLine(itsBinaries.toString()); break;
 			default : logTypeError("Column.print()"); break;
 		}
@@ -389,7 +411,8 @@ public class Column implements XMLNodeInterface
 			}
 			case NUMERIC :
 			{
-				for (Float f : itsFloats)
+				//for (Float f : itsFloats)
+				for (float f : itsFloatz)
 					aResult.add(Float.toString(f));
 				break;
 			}
@@ -465,7 +488,8 @@ public class Column implements XMLNodeInterface
 				int aNrTrueIntegers = 0;
 
 				// 2 loops over itsFloats to check if all are actually integers
-				for (Float f : itsFloats)
+				//for (Float f : itsFloats)
+				for (float f : itsFloatz)
 					if (Float.toString(f).matches(trueInteger))
 						++aNrTrueIntegers ;
 
@@ -473,18 +497,22 @@ public class Column implements XMLNodeInterface
 				// NOTE uses add(String) to populate itsDistinctValues
 				if (aNrTrueIntegers == itsSize)
 				{
-					for (Float f : itsFloats)
-						add(String.valueOf(f.intValue()));
+					//for (Float f : itsFloats)
+					//	add(String.valueOf(f.intValue()));
+					for (float f : itsFloatz)
+						add(Float.toString(f).split(".")[0]);
 
 					// no missing values or itsMissingValue is a true Integer
 					itsMissingValue = String.valueOf(Float.valueOf(itsMissingValue).intValue());
 				}
 				else
-					for (Float f : itsFloats)
+					//for (Float f : itsFloats)
+					for (float f : itsFloatz)
 						add(Float.toString(f));
 
 				// Cleanup (for GarbageCollector).
-				itsFloats = null;
+				//itsFloats = null;
+				itsFloatz = null;
 				break;
 			}
 			case BINARY :
@@ -530,19 +558,23 @@ public class Column implements XMLNodeInterface
 		{
 			case NOMINAL :
 			{
-				itsFloats = new ArrayList<Float>(itsSize);
-				for (String s : itsNominals)
+				//itsFloats = new ArrayList<Float>(itsSize);
+				itsFloatz = new float[itsSize];
+				//for (String s : itsNominals)
+				for (int i =0; i < itsSize; ++i)
 				{
 					// TODO '?' could be caught here and replaced by DEFAULT_MISSING_VALUE
 					// complicates cardinality logic
-					try { itsFloats.add(Float.valueOf(s)); }
+					//try { itsFloats.add(Float.valueOf(s)); }
+					try { itsFloatz[i] = Float.valueOf(itsNominals.get(i)); }
 					catch (NumberFormatException e)
 					{
 						/*
 						 * If there is a value that can not be parsed as Float:
 						 * abort, cleanup (for GarbageCollector) and return.
 						 */
-						itsFloats = null;
+						//itsFloats = null;
+						itsFloatz = null;
 						return false;
 					}
 				}
@@ -557,7 +589,18 @@ public class Column implements XMLNodeInterface
 				{
 					itsMissingValue = theNewType.DEFAULT_MISSING_VALUE;
 					// check could be done in for-loop above
-					itsMissingValueIsUnique = !itsFloats.contains(Float.valueOf(itsMissingValue));
+					//itsMissingValueIsUnique = !itsFloats.contains(Float.valueOf(itsMissingValue));
+					// XXX may give rounding issues
+					itsMissingValueIsUnique = true;
+					float aMissingValue = Float.parseFloat(itsMissingValue);
+					for (float f : itsFloatz)
+					{
+						if (f == aMissingValue)
+						{
+							itsMissingValueIsUnique = false;
+							break;
+						}
+					}
 				}
 				/*
 				 * else old ArrayList<?> contained only valid Floats, also for
@@ -575,10 +618,12 @@ public class Column implements XMLNodeInterface
 				 * Initialise to 0.0f, then update only set bits in itsBitSet.
 				 * Cleanup (for GarbageCollector).
 				 */
-				itsFloats = new ArrayList<Float>(Collections.nCopies(itsSize, 0.0f));
+				//itsFloats = new ArrayList<Float>(Collections.nCopies(itsSize, 0.0f));
+				itsFloatz = new float[itsSize];
 
 				for (int i = itsBinaries.nextSetBit(0); i >= 0; i = itsBinaries.nextSetBit(i + 1))
-					itsFloats.set(i, 1.0f);
+					//itsFloats.set(i, 1.0f);
+					itsFloatz[i] = 1.0f;
 
 				itsBinaries = null;
 				itsMissingValue = Float.valueOf(itsMissingValue).toString();
@@ -678,20 +723,23 @@ public class Column implements XMLNodeInterface
 
 					if (itsSize > 0)
 					{
-						float aValue = itsFloats.get(0).floatValue();
+						//float aValue = itsFloats.get(0).floatValue();
+						float aValue = itsFloatz[0];
 
-						if (aValue == 1f)
+						if (aValue == 1.0f)
 						{
 							// All false initially, only set 'true' bits.
 							for (int i = 0; i < itsSize; i++)
-								if (itsFloats.get(i).floatValue() == 1f)
+								//if (itsFloats.get(i).floatValue() == 1.0f)
+								if (itsFloatz[i] == 1.0f)
 									itsBinaries.set(i);
 						}
-						else if (aValue == 0f)
+						else if (aValue == 0.0f)
 						{
 							// All false initially, only set 'true' bits.
 							for (int i = 0; i < itsSize; i++)
-								if (itsFloats.get(i) != 0f)
+								//if (itsFloats.get(i) != 0.0f)
+								if (itsFloatz[i] != 0.0f)
 									itsBinaries.set(i);
 						}
 						// TODO ask user which value to use as 'true'
@@ -700,7 +748,8 @@ public class Column implements XMLNodeInterface
 						{
 							if (itsMissing.cardinality() < itsSize)
 							{
-								if (itsFloats.get(itsMissing.nextClearBit(0)).toString().matches(trueFloat))
+								//if (itsFloats.get(itsMissing.nextClearBit(0)).toString().matches(trueFloat))
+								if (Float.toString(itsFloatz[itsMissing.nextClearBit(0)]).matches(trueFloat))
 									// All false initially, only set non-missing values to 'true'.
 									for (int i = itsMissing.nextClearBit(0); i >= 0 && i < itsSize; i = itsMissing.nextClearBit(i + 1))
 										itsBinaries.set(i);
@@ -712,7 +761,8 @@ public class Column implements XMLNodeInterface
 						{
 							// All false initially, only set 'true' bits.
 							for (int i = 0; i < itsSize; i++)
-								if (!itsFloats.get(i).isNaN())
+								//if (!itsFloats.get(i).isNaN())
+								if (!Float.isNaN(itsFloatz[i]))
 										itsBinaries.set(i);
 						}
 						// TODO ask user which value to use as 'true'
@@ -721,11 +771,13 @@ public class Column implements XMLNodeInterface
 						{
 							// All false initially, only set 'true' bits.
 							for (int i = 0; i < itsSize; i++)
-								if (itsFloats.get(i).floatValue() == aValue)
+								//if (itsFloats.get(i).floatValue() == aValue)
+								if (itsFloatz[i] == aValue)
 									itsBinaries.set(i);
 						}
 					}
-					itsFloats = null;
+					//itsFloats = null;
+					itsFloatz = null;
 					break;
 				}
 				case BINARY : break;	// should not happen
@@ -871,10 +923,13 @@ public class Column implements XMLNodeInterface
 				case ORDINAL :
 				{
 					itsMissingValue = Float.valueOf(theNewValue).toString();
-					updateCardinality(itsFloats);
+					// TODO not sure this works correctly
+					//updateCardinality(itsFloats);
+					updateCardinality(Arrays.asList(itsFloatz));
 					Float aNewValue = Float.valueOf(itsMissingValue);
 					for (int i = itsMissing.nextSetBit(0); i >= 0; i = itsMissing.nextSetBit(i + 1))
-						itsFloats.set(i, aNewValue);
+						//itsFloats.set(i, aNewValue);
+						itsFloatz[i] = aNewValue;
 					return true;
 				}
 				case BINARY :
@@ -982,14 +1037,19 @@ public class Column implements XMLNodeInterface
 						float aMissingValue = Float.valueOf(itsType.DEFAULT_MISSING_VALUE).floatValue();
 						for (int i = 0; i < itsSize; i++)
 						{
-							if (itsFloats.get(i).floatValue() == aMissingValue && !itsMissing.get(i))
+							//if (itsFloats.get(i).floatValue() == aMissingValue && !itsMissing.get(i))
+							if (itsFloatz[i] == aMissingValue && !itsMissing.get(i))
 							{
 								itsMissingValueIsUnique = false;
 								break;
 							}
 						}
 
-						return new HashSet<Float>(itsFloats).size();
+						//return new HashSet<Float>(itsFloats).size();
+						// XXX inefficient
+						BitSet b = new BitSet();
+						b.set(0, itsSize);
+						return getUniqueNumericDomain(b).length;
 					}
 					case BINARY :
 					{
@@ -1115,7 +1175,8 @@ public class Column implements XMLNodeInterface
 	public Column copy()
 	{
 		Column aCopy = new Column(itsName, itsShort, itsType, itsIndex, itsSize);
-		aCopy.itsFloats = itsFloats;
+		//aCopy.itsFloats = itsFloats;
+		aCopy.itsFloatz = itsFloatz;
 		aCopy.itsNominals = itsNominals;
 		aCopy.itsBinaries = itsBinaries;
 		aCopy.itsMissingValue = itsMissingValue;
@@ -1200,7 +1261,8 @@ public class Column implements XMLNodeInterface
 			case ORDINAL :
 			{
 				for (int i = 0, j = itsSize; i < j; ++i)
-					if (theCondition.evaluate(Float.toString(itsFloats.get(i))))
+					//if (theCondition.evaluate(Float.toString(itsFloats.get(i))))
+					if (theCondition.evaluate(Float.toString(itsFloatz[i])))
 						aSet.set(i);
 				break;
 			}
@@ -1287,7 +1349,8 @@ public class Column implements XMLNodeInterface
 			float aSum = 0.0f;
 			float[] aValues = new float[theBitSet.size()];
 			for (int i = theBitSet.nextSetBit(0), j = -1; i >= 0; i = theBitSet.nextSetBit(i + 1))
-				aSum += (aValues[++j] = itsFloats.get(i));
+				//aSum += (aValues[++j] = itsFloats.get(i));
+				aSum += (aValues[++j] = itsFloatz[i]);
 			Arrays.sort(aValues);
 
 			aResult[0] = aSum;
@@ -1302,7 +1365,8 @@ public class Column implements XMLNodeInterface
 	{
 		float aSum = 0.0f;
 		for (int i = theBitSet.nextSetBit(0); i >= 0; i = theBitSet.nextSetBit(i + 1))
-			aSum += itsFloats.get(i);
+			//aSum += itsFloats.get(i);
+			aSum += itsFloatz[i];
 		return aSum;
 	}
 
@@ -1313,7 +1377,8 @@ public class Column implements XMLNodeInterface
 		float aMean = theSum / theBitSet.cardinality();
 		float aSum = 0.0f;
 		for (int i = theBitSet.nextSetBit(0); i >= 0; i = theBitSet.nextSetBit(i + 1))
-			aSum += Math.pow((itsFloats.get(i)-aMean), 2);
+			//aSum += Math.pow((itsFloats.get(i)-aMean), 2);
+			aSum += Math.pow((itsFloatz[i]-aMean), 2);
 		return aSum;
 	}
 
@@ -1391,7 +1456,8 @@ public class Column implements XMLNodeInterface
 		// but I lack the inspiration to write a RB-tree for floats 
 		Set<Float> aUniqueValues = new TreeSet<Float>();
 		for (int i = theBitSet.nextSetBit(0); i >= 0; i = theBitSet.nextSetBit(i + 1))
-			aUniqueValues.add(itsFloats.get(i));
+			//aUniqueValues.add(itsFloats.get(i));
+			aUniqueValues.add(itsFloatz[i]);
 
 		float[] aResult = new float[aUniqueValues.size()];
 		int i = -1;
@@ -1438,7 +1504,8 @@ public class Column implements XMLNodeInterface
 
 		float[] aDomain = new float[theBitSet.cardinality()];
 		for (int i = theBitSet.nextSetBit(0), j = -1; i >= 0; i = theBitSet.nextSetBit(i + 1))
-			aDomain[++j] = itsFloats.get(i).floatValue();
+			//aDomain[++j] = itsFloats.get(i).floatValue();
+			aDomain[++j] = itsFloatz[i];
 
 		Arrays.sort(aDomain);
 
@@ -1468,7 +1535,8 @@ public class Column implements XMLNodeInterface
 
 		float aResult = 0.0f;
 		for (int i = 0, j = itsSize; i < j; ++i)
-			aResult += itsFloats.get(i);
+			//aResult += itsFloats.get(i);
+			aResult += itsFloatz[i];
 		return aResult / itsSize;
 	}
 

@@ -1,7 +1,8 @@
 package nl.liacs.subdisc;
 
-import java.util.*;
 import java.io.*;
+import java.util.*;
+import java.util.concurrent.*;
 
 /**
  * A SubgroupSet is a <code>TreeSet</code> of {@link Subgroup Subgroup}s. If its
@@ -11,6 +12,10 @@ import java.io.*;
  * {@link ROCList ROCList} can be obtained from this SubgroupSet to create a
  * {@link nl.liacs.subdisc.gui.ROCCurve ROCCurve} in a
  * {@link nl.liacs.subdisc.gui.ROCCurveWindow ROCCurveWindow}.
+ *
+ * Note that only the add method is thread safe with respect to concurrent
+ * access, and possible additions. None of the other methods of this class
+ * currently are.
  * 
  * @see ROCList
  * @see nl.liacs.subdisc.gui.ROCCurve
@@ -24,10 +29,18 @@ public class SubgroupSet extends TreeSet<Subgroup>
 	// For SubgroupSet in nominal target setting (used for TPR/FPR in ROCList)
 	private final boolean nominalTargetSetting;
 	private final int itsTotalCoverage;
-	private final float itsTotalTargetCoverage;
 	private final BitSet itsBinaryTarget;
 	private int itsMaximumSize;
 	private ROCList itsROCList;
+	// used as quick check for add(), tests on NaN always return false
+	// could use AtomicLong.doubleBits
+	private double itsLowestScore = Double.NaN;
+	// this is the long way around, new Subgroups are added to QUEUE
+	// when QUEUE.size() >= itsMaximumSize all Subgroups in QUEUE
+	// are added to this SubgroupSet, much better for concurrency
+	private final int MAX_QUEUE_SIZE = 1000; // arbitrarily chosen
+	private final BlockingQueue<Subgroup> QUEUE =
+			new ArrayBlockingQueue<Subgroup>(MAX_QUEUE_SIZE);
 
 	/*
 	 * SubgroupSets' other members are only used in a nominal target setting,
@@ -35,32 +48,35 @@ public class SubgroupSet extends TreeSet<Subgroup>
 	 */
 	/**
 	 * Create a SubgroupSet of a certain size.
+	 * 
 	 * @param theSize the size of this SubgroupSet, use theSize <= 0 for no
-	 * maximum size.
+	 * maximum size (technically it is limited to Integer.MAX_VALUE).
 	 */
+	// TODO optionally this class could take a MINSCORE threshold parameter
 	public SubgroupSet(int theSize)
 	{
 		nominalTargetSetting = false;
-		itsMaximumSize = theSize;
+		itsMaximumSize = theSize <= 0 ? Integer.MAX_VALUE : theSize;
 		itsTotalCoverage = -1;
 		itsBinaryTarget = null;
-		itsTotalTargetCoverage = -1;
 	}
 
 	/**
 	 * Creates a SubgroupSet of a certain size, but in a nominal target setting
 	 * theTotalCoverage and theBinaryTarget should also be set.
+	 * 
 	 * @param theSize the size of this SubgroupSet, use theSize <= 0 for no
-	 * maximum size.
+	 * maximum size (technically it is limited to Integer.MAX_VALUE).
 	 * @param theTotalCoverage the total number of instances in the data (number
 	 * of rows in the {@link Table Table}).
 	 * @param theBinaryTarget a <code>BitSet</code> with <code>bit</code>s set
 	 * for the instances covered by the target value.
 	 */
+	// TODO optionally this class could take a MINSCORE threshold parameter
 	public SubgroupSet(int theSize, int theTotalCoverage, BitSet theBinaryTarget)
 	{
 		nominalTargetSetting = true;
-		itsMaximumSize = theSize;
+		itsMaximumSize = theSize <= 0 ? Integer.MAX_VALUE : theSize;
 		itsTotalCoverage = theTotalCoverage;
 		itsBinaryTarget = theBinaryTarget;
 
@@ -70,135 +86,230 @@ public class SubgroupSet extends TreeSet<Subgroup>
 
 		if (itsBinaryTarget == null)
 		{
-			itsTotalTargetCoverage = -1.0f;
-			Log.logCommandLine("SubgroupSet constructor() ERROR");	// TODO this gives an error when running SINGLE_NUMERIC
+			// TODO this gives an error when running SINGLE_NUMERIC
+			Log.logCommandLine("SubgroupSet constructor(): no BinaryTarget set");
 		}
-		else
-			itsTotalTargetCoverage = (float)theBinaryTarget.cardinality();
 	}
 
 	/**
 	 * Creates a SubgroupSet just like the argument, except empty.
 	 */
-	public SubgroupSet(SubgroupSet theOriginal)
+	// used only by postProcess()
+	private SubgroupSet(SubgroupSet theOriginal)
 	{
 		nominalTargetSetting = theOriginal.nominalTargetSetting;
 		itsMaximumSize = theOriginal.itsMaximumSize;
 		itsTotalCoverage = theOriginal.itsTotalCoverage;
 		itsBinaryTarget = theOriginal.itsBinaryTarget;
-		itsTotalTargetCoverage = theOriginal.itsTotalTargetCoverage;
+		//itsTotalTargetCoverage = theOriginal.itsTotalTargetCoverage;
 		itsROCList = theOriginal.itsROCList;
+		// needs to be set by postProcess()
+		//double itsLowestScore = Double.NaN;
 	}
 
-	/**
+	/*
 	 * Only the top result is needed in this setting. Setting maximum size
 	 * to 1 saves memory and insertion lookup time (Olog(n) for Java's 
 	 * red-black tree implementation of TreeSet).
+	 * 
+	 * NOTE this is a failed attempt to speedup calculation in the
+	 * swap-randomise setting. Storing just the top-1 result is only
+	 * sufficient for the last depth.
+	 * It may be enabled again in the future.
+	 * 
+	 * LEAVE THIS IN.
 	 */
-	protected void useSwapRandomisationSetting() {
-		itsMaximumSize = 1;
-	}
+	//protected void useSwapRandomisationSetting() {
+	//	itsMaximumSize = 1;
+	//}
 
 	/**
-	 * Tries to add the {@link Subgroup Subgroup} passed in as parameter to this
-	 * SubgroupSet. Also ensures this SubgroupSet never exceeds its maximum size
-	 * (if one is set).
+	 * Tries to add the {@link Subgroup Subgroup} passed in as parameter to
+	 * this SubgroupSet. Also ensures this SubgroupSet never exceeds its
+	 * maximum size (if one is set).
+	 * 
+	 * Note that this method is thread safe with respect to concurrent
+	 * access, and possible additions. However, none of the other methods of
+	 * this class currently are.
+	 * 
 	 * @param theSubgroup theSubgroup to add to this SubgroupSet.
-	 * @return <code>true</code> if this SubgroupSet did not already contain the
-	 * specified SubGroup, <code>false</code> otherwise and if the Subgroup is
-	 * <code>null</code>.
+	 * 
+	 * @return <code>true</code> if this SubgroupSet did not already contain
+	 * the specified {@link Subgroup Subgroup}, <code>false</code> if the
+	 * Subgroup is <code>null</code>, if its score is lower than the score
+	 * of the lowest scoring Subgroup in this SubgroupSet, and if this
+	 * SubgroupSet already contains the specified Subgroup.
+	 * 
+	 * NOTE DO NOT RELY ON RETURN VALUE
+	 * <code>false</code> means failure,
+	 * but <code>true</code> only means the Subgroup is added to the
+	 * internal Queue for processing later, it might not get added to this
+	 * SubgroupSet.
 	 */
 	@Override
 	public boolean add(Subgroup theSubgroup)
 	{
 		if (theSubgroup == null)
 			return false;
+		// avoid log(n) of TreeMap.put() (called by TreeSet.add())
+		// NOTE itsLowestScore is un-synchronized / non-volatile
+		// so some of these tests may succeed erroneously and the else
+		// below is run, this may be faster than synchronized/ volatile
+		else if (theSubgroup.getMeasureValue() < itsLowestScore)
+			return false;
 		else
 		{
-			boolean aResult = super.add(theSubgroup);
-			if ((itsMaximumSize > 0) && (size() > itsMaximumSize))
-				remove(last());
+			/*
+			 * using ConcurrentSkipList would be problematic because
+			 * of resetting of itsWorseScore as the add and poll
+			 * operations of concurrent threads might be interleaved
+			 * 
+			 * similar problems arise from fixed maxSize (when used)
+			 * a soft maxSize would handle concurrent adds better
+			 * 
+			 * NOTE calls to add() and size() need to be a compound
+			 * action to prevent concurrency related problems
+			 * but synchronized(this) would result in concurrent
+			 * threads being blocked from calling this method
+			 * during the lock
+			 * even though they might fail fast (when the score of
+			 * the candidate Subgroup is lower than the lowest
+			 * scoring Subgroup present in this SubgroupSet)
+			 * in the light of concurrent access, a splitting the
+			 * check and add into two methods would be a bad idea
+			 */
+			try { QUEUE.put(theSubgroup); }
+			catch (InterruptedException e) { e.printStackTrace(); }
+			/*
+			 * NOTE drainTo/ addAll do not work, as they calls this
+			 * add() method again
+			 * 
+			 * NOTE although MAX_QUEUE_SIZE prevents a lock after
+			 * every addition, it may actually be detrimental to
+			 * execution speed, as all threads will have to wait
+			 * till the QUEUE is completely emptied, update() after
+			 * each addition may actually be faster, but there is no
+			 * good way (access to massive concurrent systems) to
+			 * test this
+			 */
+			if (QUEUE.size() >= MAX_QUEUE_SIZE)
+				update();
 
-			return aResult;
+			return true;
 		}
 	}
 
-	public Subgroup getBestSubgroup() { return first(); }
+	private void update()
+	{
+		// make all put()'s wait until this QUEUE is empty again
+		synchronized (QUEUE)
+		{
+			while (QUEUE.size() > 0)
+			{
+				Subgroup s = QUEUE.poll();
+				if (s.getMeasureValue() < itsLowestScore)
+					QUEUE.clear();
+				super.add(s);
+			}
+			// outside synchronized block leads to troubles if
+			// multiple (QUEUE.size() > MAX) call update 
+			while (itsMaximumSize < size())
+				remove(last());
+			// null safe as itsMaximumSize is always > 0
+			if (itsMaximumSize == size())
+				itsLowestScore = last().getMeasureValue();
+		}
+	}
+
+	public double getBestScore()
+	{
+		update();
+		return isEmpty() ? Float.NaN : first().getMeasureValue();
+	}
 
 	public void setIDs()
 	{
-		int aCount = 1;
+		update();
+		int aCount = 0;
 		for(Subgroup s : this)
-			s.setID(aCount++);
+			s.setID(++aCount);
 	}
 
 	public void print()
 	{
+		update();
 		for (Subgroup s : this)
 			Log.logCommandLine(String.format("%d,%d,%d",
-												s.getID(),
-												s.getCoverage(),
-												s.getMeasureValue()));
+								s.getID(),
+								s.getCoverage(),
+								s.getMeasureValue()));
 	}
 
 	public void saveExtent(BufferedWriter theWriter, Table theTable, BitSet theSubset, TargetConcept theTargetConcept)
 	{
+		update();
 		Log.logCommandLine("saving extent...");
 		try
 		{
-			for (int i = 0, j = theTable.getNrRows(); i < j; ++i)
+			final Column aPrimaryTarget = theTargetConcept.getPrimaryTarget();
+			final Column aSecondaryTarget = theTargetConcept.getSecondaryTarget();
+			final List<Column> aMultiTargets = theTargetConcept.getMultiTargets();
+
+			// j = 5 + aNrRows*(,1) + 2*float
+			for (int i = 0, j = theTable.getNrRows()*2 + 100; i < j; ++i)
 			{
-				// 5 + aNrRows*(,1) + 2*float
-				StringBuilder aRow = new StringBuilder(j*2 + 100);
+				StringBuilder aRow = new StringBuilder(j);
 				aRow.append(theSubset.get(i) ? "train":"test ");
-				//aRow.append(",");
-				//aRow.append(i);
 
 				//add subgroup extents to current row
 				for (Subgroup aSubgroup: this)
 					aRow.append(aSubgroup.getMembers().get(i) ? ",1" : ",0");
 
-				//add targets
-
-				Column aPrimaryAttribute = theTargetConcept.getPrimaryTarget(); //almost always there is a primary target
+				// add targets
 				switch (theTargetConcept.getTargetType())
 				{
 					case SINGLE_NOMINAL :
 					{
 						aRow.append(",");
-						aRow.append(aPrimaryAttribute.getNominal(i));
+						aRow.append(aPrimaryTarget.getNominal(i));
 						break;
 					}
 					case SINGLE_NUMERIC :
 					{
 						aRow.append(",");
-						aRow.append(aPrimaryAttribute.getFloat(i));
+						aRow.append(aPrimaryTarget.getFloat(i));
 						break;
 					}
 					case DOUBLE_REGRESSION :
 					case DOUBLE_CORRELATION :
 					{
 						aRow.append(",");
-						aRow.append(aPrimaryAttribute.getFloat(i));
+						aRow.append(aPrimaryTarget.getFloat(i));
 						aRow.append(",");
-						aRow.append(theTargetConcept.getSecondaryTarget().getFloat(i));
+						aRow.append(aSecondaryTarget.getFloat(i));
 						break;
 					}
 					case MULTI_LABEL :
 					{
-						for (Column aTarget: theTargetConcept.getMultiTargets())
+						for (Column aTarget: aMultiTargets)
 							aRow.append(aTarget.getBinary(i) ? ",1" : ",0");
+						break;
+					}
+					default :
+					{
+						Log.logCommandLine("SubgroupSet.saveExtent(): unknown TargetType: " +
+									theTargetConcept.getTargetType());
+						aRow.append(" - ERROR: unknown TargetType");
 						break;
 					}
 				}
 
-				//Log.logCommandLine(aRow.toString());
 				theWriter.write(aRow.append("\n").toString());
 			}
 		}
 		catch (IOException e)
 		{
-			Log.logCommandLine("Error on file: " + e.getMessage());
+			Log.logCommandLine("SubgroupSet.saveExtent(): error on file: " +e.getMessage());
 		}
 	}
 
@@ -225,14 +336,25 @@ public class SubgroupSet extends TreeSet<Subgroup>
 		else
 			return (BitSet) itsBinaryTarget.clone();
 	}
+
 	public int getTotalCoverage() { return itsTotalCoverage; }
-	public float getTotalTargetCoverage() { return itsTotalTargetCoverage; }
 
+	public int getTotalTargetCoverage()
+	{
+		return itsBinaryTarget == null ? -1 : itsBinaryTarget.cardinality();
+	}
 
-
-
+	/**
+	* Computes the multiplicative weight of a subgroup \n
+	* See van Leeuwen & Knobbe, ECML PKDD 2011.
+	*/
+	/**
+	* Computes the cover count of a particular example: the number of times this example is a member of a subgroup
+	* See van Leeuwen & Knobbe, ECML PKDD 2011
+	*/
 	public SubgroupSet postProcess(SearchStrategy theSearchStrategy)
 	{
+		update();
 		if (theSearchStrategy != SearchStrategy.COVER_BASED_BEAM_SELECTION) //only valid for COVER_BASED_BEAM_SELECTION
 			return this;
 
@@ -256,6 +378,55 @@ public class SubgroupSet extends TreeSet<Subgroup>
 					if (aQuality > aMaxQuality)
 					{
 						aMaxQuality = aQuality;
+						/*
+						 * MM hunge, to be followed up
+						 * 
+						 * as a result of the line below
+						 * the present itsResult can never be removed by GC
+						 * as references to it (its members) remain
+						 * leading to both the old and new set remaining in memory
+						 * for each level
+						 * if after the next level ANY of the candidates remain
+						 * yet another set will be created, without allowing the GC
+						 * to clean up any old one
+						 * 
+						 * 2 strategies to fix this:
+						 * 
+						 * 1.
+						 * aBest = aSubgroup.copy()
+						 * allows GC to remove the old SubgroupSet
+						 * PRO: easy
+						 * CON: needs a lot of copying (up to aLoopSize)
+						 * 	and (temporarily) a lot of memory
+						 * 
+						 * 2.
+						 * explicitly remove all non-used Subgroups from current SubgroupSet
+						 * after selecting all relevant ones (outer for-loop completes)
+						 * and return this SubgroupSet (make method void :) )
+						 * 
+						 * int i = 0;
+						 * for (Subgroup s : this) // uses TreeSet iterator
+						 * 	if (!aUsed.get(i))
+						 * 		remove(s); // may not work on for-each loop
+						 * 
+						 * but this requires another change:
+						 * computeMultiplicativeWeight(SubgroupSet, Subgroup) becomes
+						 * computeMultiplicativeWeight(BitSet aUsed, Subgroup)
+						 * where the loops in computeMultiplicativeWeight/ computeCover
+						 * does its magic only on Subgroups in the 'new SubgroupSet':
+						 * 
+						 * int i = 0;
+						 * for (Subgroup s : this)
+						 * 	if (aUsed.get(i))
+						 * 		doMagic();
+						 * 
+						 * PRO: super efficient
+						 * CON: more complex code changes
+						 * 
+						 * NOTE loops can be aborted when 
+						 * (aMember.nextSetBit() = -1) in computeMultiplicativeWeight
+						 * (aUsed.nextSetBit() = -1) in computeCoverCount 
+						 */
 						aBest = aSubgroup;
 						aChosen = aCount;
 					}
@@ -266,6 +437,7 @@ public class SubgroupSet extends TreeSet<Subgroup>
 			aUsed.set(aChosen, true);
 			aResult.add(aBest);
 		}
+		aResult.itsLowestScore = aResult.last().getMeasureValue();
 
 		Log.logCommandLine("========================================================");
 		Log.logCommandLine("used: " + aUsed.toString());
@@ -278,7 +450,7 @@ public class SubgroupSet extends TreeSet<Subgroup>
 	* Computes the cover count of a particular example: the number of times this example is a member of a subgroup
 	* See van Leeuwen & Knobbe, ECML PKDD 2011
 	*/
-	public int computeCoverCount(SubgroupSet theSet, int theRow)
+	private int computeCoverCount(SubgroupSet theSet, int theRow)
 	{
 		int aResult = 0;
 		for (Subgroup aSubgroup : theSet)
@@ -293,7 +465,7 @@ public class SubgroupSet extends TreeSet<Subgroup>
 	* Computes the multiplicative weight of a subgroup \n
 	* See van Leeuwen & Knobbe, ECML PKDD 2011.
 	*/
-	public double computeMultiplicativeWeight(SubgroupSet theSet, Subgroup theSubgroup)
+	private double computeMultiplicativeWeight(SubgroupSet theSet, Subgroup theSubgroup)
 	{
 		double aResult = 0;
 		double anAlpha = 0.9;
@@ -306,9 +478,6 @@ public class SubgroupSet extends TreeSet<Subgroup>
 		}
 		return aResult/theSubgroup.getCoverage();
 	}
-
-
-
 
 	/**
 	 * Returns a new {@link ROCList ROCList}. If {@link Subgroup Subgroup}s are
@@ -327,6 +496,7 @@ public class SubgroupSet extends TreeSet<Subgroup>
 			return null;
 		else
 		{
+			update();
 			itsROCList = new ROCList(this);
 			return itsROCList;
 		}
@@ -341,6 +511,7 @@ public class SubgroupSet extends TreeSet<Subgroup>
 	public static final Object[] ROC_HEADER = { "ID", "FPR", "TPR", "Conditions" };
 	public Object[][] getROCListSubgroups()
 	{
+		update();
 		int aSize = itsROCList.size();
 		Object[][] aSubgroupList = new Object[aSize][ROC_HEADER.length];
 
