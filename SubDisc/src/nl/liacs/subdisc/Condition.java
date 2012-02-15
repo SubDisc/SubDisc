@@ -68,55 +68,6 @@ public class Condition implements Comparable<Condition>
 		return aNewCondition;
 	}
 
-	/*
-	 * NOTE
-	 * Never override equals() without also overriding hashCode().
-	 * Some (Collection) classes use equals to determine equality, others
-	 * use hashCode() (eg. java.lang.HashMap).
-	 * Failing to override both methods will result in strange behaviour.
-	 * 
-	 * Used by ConditionList.findCondition().
-	 * @see java.lang.Object#equals(java.lang.Object)
-	 */
-
-/*	@Override
-	public boolean equals(Object theObject)
-	{
-		if (theObject == null || this.getClass() != theObject.getClass())
-			return false;
-		Condition aCondition = (Condition) theObject;
-		if (itsColumn == aCondition.getColumn() &&
-			itsOperator == aCondition.getOperator() &&
-			itsValue.equals(aCondition.getValue()))
-			return true;
-		return false;
-	}
-*/
-	@Override
-	public int compareTo(Condition theCondition)
-	{
-		if (this == theCondition)
-			return 0;
-		if (this.getColumn().getIndex() < theCondition.getColumn().getIndex())
-			return -1;
-		if (this.getColumn().getIndex() > theCondition.getColumn().getIndex())
-			return 1;
-		// same column, check operator
-		if (this.getOperator() < theCondition.getOperator())
-			return -1;
-		if (this.getOperator() > theCondition.getOperator())
-			return 1;
-		// same column, same operator, check on value
-		if (this.getColumn().isNumericType())
-			return (Float.valueOf(this.getValue()).compareTo(Float.valueOf(theCondition.getValue())));
-		else
-		{
-			// String.compareTo() does not strictly return -1, 0, 1
-			int aCompare = this.getValue().compareTo(theCondition.getValue());
-			return (aCompare < 0 ? -1 : aCompare > 0 ? 1 : 0);
-		}
-	}
-
 	public boolean hasNextOperator()
 	{
 		if (itsOperator == LAST_BINARY_OPERATOR && itsColumn.isBinaryType())
@@ -148,24 +99,6 @@ public class Condition implements Comparable<Condition>
 			case GREATER_THAN_OR_EQUAL	: return "MAX";
 			default : return null;
 		}
-	}
-
-	// used by ConditionList.toString()
-	@Override
-	public String toString()
-	{
-		return String.format("%s %s '%s'", itsColumn.getName(), getOperatorString(), itsValue);
-	}
-
-	// never used atm
-	public String toCleanString()
-	{
-		String aName = itsColumn.hasShort() ? itsColumn.getShort() : itsColumn.getName();
-
-		if (itsColumn.isNumericType())
-			return String.format("%s %s %s", aName, getOperatorString(), itsValue);
-		else
-			return String.format("%s %s '%s'", aName, getOperatorString(), itsValue);
 	}
 
 	public String getOperatorString()
@@ -206,6 +139,77 @@ public class Condition implements Comparable<Condition>
 		if (itsOperator != EQUALS)
 			Log.error("incorrect operator for boolean attribute");
 		return itsValue.equals(theValue ? "1" : "0");
+	}
+
+	// never used atm
+	public String toCleanString()
+	{
+		String aName = itsColumn.hasShort() ? itsColumn.getShort() : itsColumn.getName();
+
+		if (itsColumn.isNumericType())
+			return String.format("%s %s %s", aName, getOperatorString(), itsValue);
+		else
+			return String.format("%s %s '%s'", aName, getOperatorString(), itsValue);
+	}
+
+	// used by ConditionList.toString()
+	@Override
+	public String toString()
+	{
+		return String.format("%s %s '%s'", itsColumn.getName(), getOperatorString(), itsValue);
+	}
+
+	/*
+	 * NOTE
+	 * Never override equals() without also overriding hashCode().
+	 * Some (Collection) classes use equals to determine equality, others
+	 * use hashCode() (eg. java.lang.HashMap).
+	 * Failing to override both methods will result in strange behaviour.
+	 * 
+ 	 * NOTE
+	 * Map interface expects compareTo and equals to be consistent.
+	 * 
+	 * Used by ConditionList.findCondition().
+	 * @see java.lang.Object#equals(java.lang.Object)
+	 */
+
+/*	@Override
+	public boolean equals(Object theObject)
+	{
+		if (theObject == null || this.getClass() != theObject.getClass())
+			return false;
+		Condition aCondition = (Condition) theObject;
+		if (itsColumn == aCondition.getColumn() &&
+			itsOperator == aCondition.getOperator() &&
+			itsValue.equals(aCondition.getValue()))
+			return true;
+		return false;
+	}
+*/
+	// throws NullPointerException if theCondition is null.
+	@Override
+	public int compareTo(Condition theCondition)
+	{
+		if (this == theCondition)
+			return 0;
+		else if (this.getColumn().getIndex() < theCondition.getColumn().getIndex())
+			return -1;
+		else if (this.getColumn().getIndex() > theCondition.getColumn().getIndex())
+			return 1;
+		// same column, check operator
+		else if (this.getOperator() < theCondition.getOperator())
+			return -1;
+		else if (this.getOperator() > theCondition.getOperator())
+			return 1;
+		// same column, same operator, check on value
+		else if (this.getColumn().isNumericType())
+			return (Float.valueOf(this.getValue()).compareTo(Float.valueOf(theCondition.getValue())));
+		else
+		{
+			// String.compareTo() does not strictly return -1, 0, 1
+			int aCompare = this.getValue().compareTo(theCondition.getValue());
+			return (aCompare < 0 ? -1 : aCompare > 0 ? 1 : 0);
+		}
 	}
 }
 

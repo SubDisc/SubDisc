@@ -40,19 +40,22 @@ public class Candidate implements Comparable<Candidate>
 	}
 
 	// MM: LEAVE THIS IN IT WILL REPLACE OLD CODE
+	// throws NullPointerException if theCandidate is null.
 	//@Override
 	public int compareTo2(Candidate theCandidate)
 	{
-		if (itsPriority > theCandidate.itsPriority)
+		if (this == theCandidate)
+			return 0;
+		else if (itsPriority > theCandidate.itsPriority)
 			return -1;
-		if (itsPriority < theCandidate.itsPriority)
+		else if (itsPriority < theCandidate.itsPriority)
 			return 1;
 		//equal priorities
 		int aTest = itsSubgroup.compareTo(theCandidate.getSubgroup());
 		if (aTest != 0)
 			return aTest;
 
-		return 1;
+		return 1; // ?
 	}
 
 	public double getPriority() { return itsPriority; }

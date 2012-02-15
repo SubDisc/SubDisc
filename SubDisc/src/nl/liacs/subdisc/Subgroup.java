@@ -187,14 +187,14 @@ public class Subgroup implements Comparable<Subgroup>
 		return 0;
 	}
 */
-	// MM: LEAVE THIS IN IT WILL REPLACE OLD CODE
+	// NOTE Map interface expects compareTo and equals to be consistent.
 	@Override
 	public int compareTo(Subgroup theSubgroup)
 	{
+		// why not throw NullPointerException if theCondition is null?
 		if (theSubgroup == null)
 			return 1;
-
-		if (getMeasureValue() > theSubgroup.getMeasureValue())
+		else if (getMeasureValue() > theSubgroup.getMeasureValue())
 			return -1;
 		else if (getMeasureValue() < theSubgroup.getMeasureValue())
 			return 1;
@@ -202,17 +202,11 @@ public class Subgroup implements Comparable<Subgroup>
 			return -1;
 		else if (getCoverage() < theSubgroup.getCoverage())
 			return 1;
-		else if (itsConditions.size() < theSubgroup.itsConditions.size())
-			return -1;
-		else if (itsConditions.size() > theSubgroup.itsConditions.size())
-			return 1;
-
-		ConditionList aList = theSubgroup.getConditions();
-		for (int i = 0, j = itsConditions.size(); i < j; ++i)
+		else
 		{
-			int res = itsConditions.get(i).compareTo(aList.get(i));
-			if (res != 0)
-				return res;
+			int aTest = itsConditions.compareTo(theSubgroup.itsConditions);
+			if (aTest != 0)
+				return aTest;
 		}
 
 		return 0;

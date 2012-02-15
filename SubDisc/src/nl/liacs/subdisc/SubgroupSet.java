@@ -213,10 +213,10 @@ public class SubgroupSet extends TreeSet<Subgroup>
 			}
 			// outside synchronized block leads to troubles if
 			// multiple (QUEUE.size() > MAX) call update 
-			while (itsMaximumSize < size())
+			while (itsMaximumSize < super.size())
 				remove(last());
 			// null safe as itsMaximumSize is always > 0
-			if (itsMaximumSize == size())
+			if (itsMaximumSize == super.size())
 				itsLowestScore = last().getMeasureValue();
 		}
 	}
@@ -531,5 +531,12 @@ public class SubgroupSet extends TreeSet<Subgroup>
 		}
 
 		return aSubgroupList;
+	}
+
+	@Override
+	public int size()
+	{
+		update();
+		return super.size();
 	}
 }
