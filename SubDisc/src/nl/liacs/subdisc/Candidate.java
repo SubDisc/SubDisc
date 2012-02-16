@@ -19,30 +19,9 @@ public class Candidate implements Comparable<Candidate>
 		itsPriority = thePriority;
 	}
 
-	/*
-	 * TODO this implementation is to narrow. This prevents CandidateQueue's
-	 * internal TreeSet<Candidate> .remove(Object o) from working correctly.
-	 */
-	@Override
-	public int compareTo(Candidate theCandidate)
-	{
-		if (itsPriority > theCandidate.itsPriority)
-			return -1;
-
-		if (itsPriority < theCandidate.itsPriority)
-			return 1;
-
-		//equal priorities
-		if (itsSubgroup.getDepth() > theCandidate.itsSubgroup.getDepth())
-			return -1;
-
-		return 1;
-	}
-
-	// MM: LEAVE THIS IN IT WILL REPLACE OLD CODE
 	// throws NullPointerException if theCandidate is null.
 	//@Override
-	public int compareTo2(Candidate theCandidate)
+	public int compareTo(Candidate theCandidate)
 	{
 		if (this == theCandidate)
 			return 0;

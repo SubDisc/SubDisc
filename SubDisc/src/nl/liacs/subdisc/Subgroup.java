@@ -148,45 +148,7 @@ public class Subgroup implements Comparable<Subgroup>
 	public int getNrConditions() { return itsConditions.size(); }
 
 	public int getDepth() { return itsDepth; }
-/*
-	@Override
-	public int compareTo(Subgroup theSubgroup)
-	{
-		Subgroup s = theSubgroup;
-		if (s == null)
-			return 1;
 
-		if(getMeasureValue() > s.getMeasureValue())
-			return -1;
-		else if(getMeasureValue() < s.getMeasureValue())
-			return 1;
-		else if(getCoverage() > s.getCoverage())
-			return -1;
-		else if(getCoverage() < s.getCoverage())
-			return 1;
-		else if(itsConditions.size() > s.itsConditions.size())
-			return -1;
-		else if(itsConditions.size() < s.itsConditions.size())
-			return 1;
-
-		for(Condition c : itsConditions)
-		{
-			boolean hasSameAttributeAndOperator = false;
-			for(Condition sc : s.itsConditions)
-			{
-				if(c.getColumn().getName().equals(sc.getColumn().getName()) &&
-						c.getOperatorString().equals(sc.getOperatorString()))
-				{
-					hasSameAttributeAndOperator = true;
-					break;
-				}
-			}
-			if(!hasSameAttributeAndOperator)
-				return 1;	// TODO arbitrary, could have been -1 also
-		}
-		return 0;
-	}
-*/
 	// NOTE Map interface expects compareTo and equals to be consistent.
 	@Override
 	public int compareTo(Subgroup theSubgroup)
@@ -212,27 +174,7 @@ public class Subgroup implements Comparable<Subgroup>
 		return 0;
 //		return itsMembers.equals(s.itsMembers);
 	}
-/*
-	public int compareTo(Object theObject)
-	{
-		Subgroup A = this;
-		Subgroup B = (Subgroup)theObject;	// TODO null safe?
 
-		if (A.getMeasureValue() > B.getMeasureValue())
-			return -1;
-		else
-			if (A.getMeasureValue() < B.getMeasureValue())
-				return 1;
-			else
-				if (A.getCoverage() > B.getCoverage())
-					return -1;
-				else
-					if (A.getCoverage() < B.getCoverage())
-						return 1;
-							else
-								return -1; // TODO set to -1, 0 does not work as expected
-	}
-*/
 	/**
 	 * NOTE For now this equals implementation is only used for the ROCList
 	 * HashSet implementation.

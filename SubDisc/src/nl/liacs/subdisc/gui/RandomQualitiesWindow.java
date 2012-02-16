@@ -18,10 +18,10 @@ public class RandomQualitiesWindow extends JDialog implements ActionListener
 	private JTextField itsAmountField;
 	private String[] itsSettings;
 
-	public RandomQualitiesWindow(String theSetting)
+	public RandomQualitiesWindow()
 	{
 		super.setModalityType(DEFAULT_MODALITY_TYPE);
-		itsSettings = new String[] { theSetting, null };
+		itsSettings = new String[2];
 		initComponents();
 		setTitle("Which method?");
 		setIconImage(MiningWindow.ICON);
@@ -78,12 +78,8 @@ public class RandomQualitiesWindow extends JDialog implements ActionListener
 		getContentPane().add(aButtonPanel);
 
 		// select appropriate radio button, focus itsAmountField
-/*		if (RANDOM_DESCRIPTIONS.equals(itsSettings[0]))
-			((JRadioButton) aRadioButtonPanel.getComponent(1)).setSelected(true);
-		else
-			((JRadioButton) aRadioButtonPanel.getComponent(0)).setSelected(true);
-*/		((JRadioButton) aRadioButtonPanel.getComponent(2)).setSelected(true);
-		
+		((JRadioButton) aRadioButtonPanel.getComponent(2)).setSelected(true);
+
 		addWindowListener(new WindowAdapter()
 		{
 			@Override
@@ -129,5 +125,24 @@ public class RandomQualitiesWindow extends JDialog implements ActionListener
 	public String[] getSettings()
 	{
 		return itsSettings;
+	}
+
+	public static boolean isValidRandomQualitiesSetup(String[] theSetup)
+	{
+		try
+		{
+			return (!((theSetup == null) ||
+					(theSetup[0] == null) ||
+					(theSetup[1] == null)) &&
+				(theSetup.length == 2) &&
+				((RANDOM_SUBSETS.equals(theSetup[0])) ||
+					RANDOM_DESCRIPTIONS.equals(theSetup[0]) ||
+					SWAP_RANDOMIZATION.equals(theSetup[0])) &&
+				!(Integer.parseInt(theSetup[1]) <= 1));
+		}
+		catch (NumberFormatException e)
+		{
+			return false;
+		}
 	}
 }

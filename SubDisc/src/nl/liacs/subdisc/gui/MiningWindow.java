@@ -929,8 +929,7 @@ public class MiningWindow extends JFrame
 		jButtonThreshold = initButton("Compute Threshold", 'R');
 		jButtonThreshold.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
-//				jButtonRandomSubgroupsActionPerformed();
-				jButtonRandomQualitiesActionPerformed(RandomQualitiesWindow.RANDOM_SUBSETS);
+				jButtonRandomQualitiesActionPerformed();
 			}
 		});
 		jPanelMineButtons.add(jButtonThreshold);
@@ -1538,29 +1537,17 @@ public class MiningWindow extends JFrame
 		}
 	}
 */
-	private void jButtonRandomQualitiesActionPerformed(String theMethod)
+	private void jButtonRandomQualitiesActionPerformed()
 	{
-		boolean aSubgroupAction;
-		if (RandomQualitiesWindow.RANDOM_SUBSETS.equals(theMethod))
-			aSubgroupAction = true;
-		else if (RandomQualitiesWindow.RANDOM_DESCRIPTIONS.equals(theMethod))
-			aSubgroupAction = false;
-		else
+		String[] aSetup = new RandomQualitiesWindow().getSettings();
+		if (!RandomQualitiesWindow.isValidRandomQualitiesSetup(aSetup))
 			return;
 
-		String aNrRepetitionsString = new RandomQualitiesWindow(theMethod).getSettings()[1];
-		int aNrRepetitions = 0;
-		// null if RandomQualitiesWindow was cancelled/closed
-		// else RandomQualitiesWindow ensured parseInt succeeds
-		if (aNrRepetitionsString == null )
-			return;
-		else if ((aNrRepetitions = Integer.parseInt(aNrRepetitionsString)) <= 1)
-			return;
-
+		// same as setup for runSubgroupDiscovery?
 		setupSearchParameters();
 
 		QualityMeasure aQualityMeasure;
-		switch(itsTargetConcept.getTargetType())
+		switch (itsTargetConcept.getTargetType())
 		{
 			case SINGLE_NOMINAL :
 			{
@@ -1592,12 +1579,9 @@ public class MiningWindow extends JFrame
 		}
 
 		Validation aValidation = new Validation(itsSearchParameters, itsTable, aQualityMeasure);
-		double[] aQualities;
-
-		if (aSubgroupAction)
-			aQualities = aValidation.randomSubgroups(aNrRepetitions);
-		else
-			aQualities = aValidation.randomConditions(aNrRepetitions);
+		double[] aQualities = aValidation.getQualities(aSetup);
+		if (aQualities == null)
+			return;
 
 		NormalDistribution aDistro = new NormalDistribution(aQualities);
 

@@ -2,6 +2,8 @@ package nl.liacs.subdisc;
 
 import java.util.*;
 
+import nl.liacs.subdisc.gui.*;
+
 /**
  * Functionality related to the statistical validation of subgroups
  */
@@ -20,7 +22,25 @@ public class Validation
 		itsQualityMeasure = theQualityMeasure;
 	}
 
-	public double[] randomSubgroups(int theNrRepetitions)
+	public double[] getQualities(String[] theSetup)
+	{
+		if (!RandomQualitiesWindow.isValidRandomQualitiesSetup(theSetup))
+			return null;
+
+		String aMethod = theSetup[0];
+		int aNrRepetitions = Integer.parseInt(theSetup[1]);
+
+		if (RandomQualitiesWindow.RANDOM_SUBSETS.equals(aMethod))
+			return randomSubgroups(aNrRepetitions);
+		else if (RandomQualitiesWindow.RANDOM_DESCRIPTIONS.equals(aMethod))
+			return randomConditions(aNrRepetitions);
+		else if (RandomQualitiesWindow.SWAP_RANDOMIZATION.equals(aMethod))
+			return swapRandomization(aNrRepetitions);
+
+		return null;
+	}
+
+	private double[] randomSubgroups(int theNrRepetitions)
 	{
 		double[] aQualities = new double[theNrRepetitions];
 		Random aRandom = new Random(System.currentTimeMillis());
@@ -113,7 +133,7 @@ public class Validation
 	* For each of the subgroups related to the random conditions, the quality is computed.
 	* @return the computed qualities.
 	*/
-	public double[] randomConditions(int theNrRepetitions)
+	private double[] randomConditions(int theNrRepetitions)
 	{
 		double[] aQualities = new double[theNrRepetitions];
 		Random aRandom = new Random(System.currentTimeMillis());
@@ -229,7 +249,7 @@ public class Validation
 	 * @return an array holding the qualities of the best scoring
 	 * {@link Subgroup Subgroup} of each permutation.
 	 */
-	public double[] swapRandomization(int theNrRepetitions)
+	private double[] swapRandomization(int theNrRepetitions)
 	{
 		// Memorize COMMANDLINELOG setting
 		boolean aCOMMANDLINELOGmem = Log.COMMANDLINELOG;

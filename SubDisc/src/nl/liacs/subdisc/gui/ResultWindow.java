@@ -420,27 +420,13 @@ public class ResultWindow extends JFrame implements ActionListener
 
 	private double[] obtainRandomQualities()
 	{
-		String[] aSettings = new RandomQualitiesWindow(null).getSettings();
-		String aMethod = aSettings[0];
-		String aNrRepetitionsString = aSettings[1];
-		int aNrRepetitions = 0;
-
-		if (aMethod == null || aNrRepetitionsString == null ||
-			((aNrRepetitions = Integer.parseInt(aNrRepetitionsString)) <= 1))
+		String[] aSetup = new RandomQualitiesWindow().getSettings();
+		if (!RandomQualitiesWindow.isValidRandomQualitiesSetup(aSetup))
 			return null;
-		else
-		{
-			// Compute qualities
-			Validation aValidation = new Validation(itsSearchParameters, itsTable, itsQualityMeasure);
-			if (RandomQualitiesWindow.RANDOM_SUBSETS.equals(aMethod))
-				return aValidation.randomSubgroups(aNrRepetitions);
-			else if (RandomQualitiesWindow.RANDOM_DESCRIPTIONS.equals(aMethod))
-				return aValidation.randomConditions(aNrRepetitions);
-			else if (RandomQualitiesWindow.SWAP_RANDOMIZATION.equals(aMethod))
-				return aValidation.swapRandomization(aNrRepetitions);
-			else
-				return null;
-		}
+
+		// Compute qualities
+		Validation aValidation = new Validation(itsSearchParameters, itsTable, itsQualityMeasure);
+		return aValidation.getQualities(aSetup);
 	}
 
 	private void jButtonSaveActionPerformed()
