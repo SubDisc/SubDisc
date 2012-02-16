@@ -280,7 +280,6 @@ public class MiningWindow extends JFrame
 		jButtonBrowse = new JButton();
 		jButtonExplore = new JButton();
 		jButtonMetaData = new JButton();
-		jButtonSwapRandomize = new JButton();
 		jButtonCrossValidate = new JButton();
 
 		// target concept
@@ -781,7 +780,7 @@ public class MiningWindow extends JFrame
 		jLabelSearchCoverageMinimum = initJLabel(" minimum coverage");
 		jPanelSearchParameterLabels.add(jLabelSearchCoverageMinimum);
 
-		jLabelSearchCoverageMaximum = initJLabel(" coverage fraction");
+		jLabelSearchCoverageMaximum = initJLabel(" maximum coverage (fraction)");
 		jPanelSearchParameterLabels.add(jLabelSearchCoverageMaximum);
 
 		jLabelSubgroupsMaximum = initJLabel("<html> maximum subgroups (0 = &#8734;)</html>)");
@@ -919,14 +918,6 @@ public class MiningWindow extends JFrame
 		});
 		jPanelMineButtons.add(jButtonSubgroupDiscovery);
 
-		jButtonSwapRandomize = initButton("Swap Randomize", 'R');
-		jButtonSwapRandomize.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent evt) {
-				jButtonSwapRandomizeActionPerformed();
-			}
-		});
-		jPanelMineButtons.add(jButtonSwapRandomize);
-
 		jButtonCrossValidate = initButton("Cross-Validate", 'V');
 		jButtonCrossValidate.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
@@ -968,7 +959,6 @@ public class MiningWindow extends JFrame
 									jButtonBrowse,
 									jButtonExplore,
 									jButtonMetaData,
-									jButtonSwapRandomize,
 									jButtonCrossValidate,
 									jButtonSubgroupDiscovery,
 									jButtonThreshold,
@@ -1652,12 +1642,6 @@ public class MiningWindow extends JFrame
 		Log.logCommandLine("sigma: " + aDistro.getSigma());
 	}
 
-	private void jButtonSwapRandomizeActionPerformed()
-	{
-		itsTable.swapRandomizeTarget(itsTargetConcept);
-		JOptionPane.showMessageDialog(null, "Target column(s) have been swap-randomized.");
-	}
-
 	private void jButtonCrossValidateActionPerformed()
 	{
 		int aK = 10; //TODO set k from GUI
@@ -2052,7 +2036,6 @@ public class MiningWindow extends JFrame
 	private JButton jButtonBrowse;
 	private JButton jButtonExplore;
 	private JButton jButtonMetaData;
-	private JButton jButtonSwapRandomize;
 	private JButton jButtonCrossValidate;
 	private JButton jButtonSubgroupDiscovery;
 	private JButton jButtonThreshold;

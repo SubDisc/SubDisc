@@ -2,7 +2,7 @@ package nl.liacs.subdisc;
 
 import java.util.ArrayList;
 
-public class ConditionList extends ArrayList<Condition>
+public class ConditionList extends ArrayList<Condition> implements Comparable<ConditionList>
 {
 	private static final long serialVersionUID = 1L;
 
@@ -14,16 +14,45 @@ public class ConditionList extends ArrayList<Condition>
 		return aNewConditionList;
 	}
 
-	@Override
-	public String toString()
+	public boolean addCondition(Condition aCondition)
 	{
-		StringBuilder aResult = new StringBuilder(size() * 25);
-		for(Condition aCondition : this)
+		if (indexOf(aCondition) == -1) //already present?
 		{
-			aResult.append(aCondition);
-			aResult.append(" AND ");
+			add(aCondition);
+			return true;
 		}
-		return aResult.substring(0, aResult.length() - 5);
+		else
+			return false;
+	}
+
+	private boolean findCondition(Condition theCondition)
+	{
+		for (Condition aCondition : this)
+			if (theCondition.equals(aCondition))
+				return true;
+		return false;
+	}
+
+	// throws NullPointerException if theCondition is null.
+	@Override
+	public int compareTo(ConditionList theConditionList)
+	{
+		if (this == theConditionList)
+			return 0;
+
+		else if (this.size() < theConditionList.size())
+			return -1;
+		else if (this.size() > theConditionList.size())
+			return 1;
+
+		for (int i = 0, j = size(); i < j; ++i)
+		{
+			int aTest = this.get(i).compareTo(theConditionList.get(i));
+			if (aTest != 0)
+				return aTest;
+		}
+
+		return 0;
 	}
 
 	//this method computes logical equivalence. This means that the actual number of conditions or the order may differ.
@@ -49,22 +78,15 @@ public class ConditionList extends ArrayList<Condition>
 		return true;
 	}
 
-	public boolean findCondition(Condition theCondition)
+	@Override
+	public String toString()
 	{
-		for (Condition aCondition : this)
-			if (theCondition.equals(aCondition))
-				return true;
-		return false;
-	}
-
-	public boolean addCondition(Condition aCondition)
-	{
-		if (indexOf(aCondition) == -1) //already present?
+		StringBuilder aResult = new StringBuilder(size() * 25);
+		for(Condition aCondition : this)
 		{
-			add(aCondition);
-			return true;
+			aResult.append(aCondition);
+			aResult.append(" AND ");
 		}
-		else
-			return false;
+		return aResult.substring(0, aResult.length() - 5);
 	}
 }
