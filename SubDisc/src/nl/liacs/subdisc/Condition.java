@@ -12,7 +12,7 @@ public class Condition implements Comparable<Condition>
 	// Binary Operator Constants
 	public static final int FIRST_BINARY_OPERATOR	= EQUALS;
 	public static final int LAST_BINARY_OPERATOR	= EQUALS;
-	
+
 	// Nominal Operator  Constants
 	public static final int FIRST_NOMINAL_OPERATOR	= DOES_NOT_EQUAL;
 	public static final int LAST_NOMINAL_OPERATOR	= EQUALS;
@@ -105,7 +105,7 @@ public class Condition implements Comparable<Condition>
 	{
 		switch(itsOperator)
 		{
-			case DOES_NOT_EQUAL		: return "!="; 
+			case DOES_NOT_EQUAL		: return "!=";
 			case EQUALS			: return "=";
 			case LESS_THAN_OR_EQUAL		: return "<=";
 			case GREATER_THAN_OR_EQUAL	: return ">=";
@@ -114,6 +114,7 @@ public class Condition implements Comparable<Condition>
 	}
 
 	public int getOperator() { return itsOperator; }
+	public boolean checksNotEquals() { return (itsOperator==DOES_NOT_EQUAL); }
 
 	// TODO theValue for <= and >= is converted from Float to String in Table
 	// and converted from String to Float here
@@ -165,10 +166,10 @@ public class Condition implements Comparable<Condition>
 	 * Some (Collection) classes use equals to determine equality, others
 	 * use hashCode() (eg. java.lang.HashMap).
 	 * Failing to override both methods will result in strange behaviour.
-	 * 
+	 *
  	 * NOTE
 	 * Map interface expects compareTo and equals to be consistent.
-	 * 
+	 *
 	 * Used by ConditionList.findCondition().
 	 * @see java.lang.Object#equals(java.lang.Object)
 	 */

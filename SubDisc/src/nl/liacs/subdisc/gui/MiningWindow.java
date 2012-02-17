@@ -331,13 +331,15 @@ public class MiningWindow extends JFrame
 		jPanelSearchStrategyLabels = new JPanel();
 		jLabelStrategyType = new JLabel();
 		jLabelStrategyWidth = new JLabel();
+		jLabelNotEquals = new JLabel();
 		jLabelNumericOperators = new JLabel();
-		jLabelSearchStrategyNumericFrr = new JLabel();
+		jLabelSearchStrategyNumeric = new JLabel();
 		jLabelSearchStrategyNrBins = new JLabel();
 		// search strategy - fields
 		jPanelSearchStrategyFields = new JPanel();
 		jComboBoxSearchStrategyType = new JComboBox();
 		jTextFieldSearchStrategyWidth = new JTextField();
+		jCheckBoxNotEquals = new javax.swing.JCheckBox();
 		jComboBoxNumericOperators = new JComboBox();
 		jComboBoxSearchStrategyNumeric = new JComboBox();
 		jTextFieldSearchStrategyNrBins = new JTextField();
@@ -535,22 +537,22 @@ public class MiningWindow extends JFrame
 
 		jPanelRuleTargetLabels.setLayout(new GridLayout(7, 1));
 
-		jLabelTargetTable = initJLabel(" target table");
+		jLabelTargetTable = initJLabel("target table");
 		jPanelRuleTargetLabels.add(jLabelTargetTable);
 
-		jLabelNrExamples = initJLabel(" # examples");
+		jLabelNrExamples = initJLabel("# examples");
 		jPanelRuleTargetLabels.add(jLabelNrExamples);
 
-		jLabelNrColumns = initJLabel(" # columns");
+		jLabelNrColumns = initJLabel("# columns");
 		jPanelRuleTargetLabels.add(jLabelNrColumns);
 
-		jLabelNrNominals = initJLabel(" # nominals");
+		jLabelNrNominals = initJLabel("# nominals");
 		jPanelRuleTargetLabels.add(jLabelNrNominals);
 
-		jLabelNrNumerics = initJLabel(" # numerics");
+		jLabelNrNumerics = initJLabel("# numerics");
 		jPanelRuleTargetLabels.add(jLabelNrNumerics);
 
-		jLabelNrBinaries = initJLabel(" # binaries");
+		jLabelNrBinaries = initJLabel("# binaries");
 		jPanelRuleTargetLabels.add(jLabelNrBinaries);
 
 		jPanelRuleTarget.add(jPanelRuleTargetLabels, BorderLayout.WEST);
@@ -666,25 +668,25 @@ public class MiningWindow extends JFrame
 		});
 		jPanelEvaluationFields.add(jComboBoxTargetType);
 
-		jLabelTargetType = initJLabel(" target type");
+		jLabelTargetType = initJLabel("target type");
 		jPanelEvaluationLabels.add(jLabelTargetType);
 
-		jLabelQualityMeasure = initJLabel(" quality measure");
+		jLabelQualityMeasure = initJLabel("quality measure");
 		jPanelEvaluationLabels.add(jLabelQualityMeasure);
 
-		jLabelEvaluationThreshold = initJLabel(" measure minimum");
+		jLabelEvaluationThreshold = initJLabel("measure minimum");
 		jPanelEvaluationLabels.add(jLabelEvaluationThreshold);
 
-		jLabelTargetAttribute = initJLabel(" primary target");
+		jLabelTargetAttribute = initJLabel("primary target");
 		jPanelEvaluationLabels.add(jLabelTargetAttribute);
 
 		jLabelMiscField = initJLabel("");
 		jPanelEvaluationLabels.add(jLabelMiscField);
 
-		jLabelMultiRegressionTargets = initJLabel(" secondary/tertiary targets");
+		jLabelMultiRegressionTargets = initJLabel("secondary/tertiary targets");
 		jPanelEvaluationLabels.add(jLabelMultiRegressionTargets);
 
-		jLabelMultiTargets = initJLabel(" targets and settings");
+		jLabelMultiTargets = initJLabel("targets and settings");
 		jPanelEvaluationLabels.add(jLabelMultiTargets);
 
 		jLabelTargetInfo = initJLabel("");;
@@ -774,13 +776,13 @@ public class MiningWindow extends JFrame
 
 		jPanelSearchParameterLabels.setLayout(new GridLayout(7, 1));
 
-		jLabelSearchDepth = initJLabel(" refinement depth");
+		jLabelSearchDepth = initJLabel("refinement depth");
 		jPanelSearchParameterLabels.add(jLabelSearchDepth);
 
-		jLabelSearchCoverageMinimum = initJLabel(" minimum coverage");
+		jLabelSearchCoverageMinimum = initJLabel("minimum coverage");
 		jPanelSearchParameterLabels.add(jLabelSearchCoverageMinimum);
 
-		jLabelSearchCoverageMaximum = initJLabel(" maximum coverage (fraction)");
+		jLabelSearchCoverageMaximum = initJLabel("maximum coverage (fraction)");
 		jPanelSearchParameterLabels.add(jLabelSearchCoverageMaximum);
 
 		jLabelSubgroupsMaximum = initJLabel("<html> maximum subgroups (0 = &#8734;)</html>)");
@@ -839,19 +841,22 @@ public class MiningWindow extends JFrame
 
 		jPanelSearchStrategyLabels.setLayout(new GridLayout(7, 1));
 
-		jLabelStrategyType = initJLabel(" strategy type");
+		jLabelStrategyType = initJLabel("strategy type");
 		jPanelSearchStrategyLabels.add(jLabelStrategyType);
 
-		jLabelStrategyWidth = initJLabel(" search width");
+		jLabelStrategyWidth = initJLabel("search width");
 		jPanelSearchStrategyLabels.add(jLabelStrategyWidth);
 
-		jLabelNumericOperators = initJLabel(" numeric operators");
+		jLabelNotEquals = initJLabel("<html>include &ne; (nominal)</html>");
+		jPanelSearchStrategyLabels.add(jLabelNotEquals);
+
+		jLabelNumericOperators = initJLabel("numeric operators");
 		jPanelSearchStrategyLabels.add(jLabelNumericOperators);
 
-		jLabelSearchStrategyNumericFrr = initJLabel(" numeric strategy");
-		jPanelSearchStrategyLabels.add(jLabelSearchStrategyNumericFrr);
+		jLabelSearchStrategyNumeric = initJLabel("numeric strategy");
+		jPanelSearchStrategyLabels.add(jLabelSearchStrategyNumeric);
 
-		jLabelSearchStrategyNrBins = initJLabel(" number of bins");
+		jLabelSearchStrategyNrBins = initJLabel("number of bins");
 		jPanelSearchStrategyLabels.add(jLabelSearchStrategyNrBins);
 
 		jPanelSearchStrategy.add(jPanelSearchStrategyLabels);
@@ -874,6 +879,11 @@ public class MiningWindow extends JFrame
 		jTextFieldSearchStrategyWidth.setHorizontalAlignment(SwingConstants.RIGHT);
 		jTextFieldSearchStrategyWidth.setMinimumSize(new Dimension(86, 22));
 		jPanelSearchStrategyFields.add(jTextFieldSearchStrategyWidth);
+
+		jCheckBoxNotEquals.setHorizontalTextPosition(javax.swing.SwingConstants.RIGHT);
+		jCheckBoxNotEquals.setForeground(new java.awt.Color (102, 102, 153));
+		jCheckBoxNotEquals.setFont(GUI.DEFAULT_TEXT_FONT);
+		jPanelSearchStrategyFields.add(jCheckBoxNotEquals);
 
 		jComboBoxNumericOperators.setPreferredSize(new Dimension(86, 22));
 		jComboBoxNumericOperators.setMinimumSize(new Dimension(86, 22));
@@ -1217,7 +1227,7 @@ public class MiningWindow extends JFrame
 		// disable if not enough numeric attributes TODO should be itsTable.field
 		// jListMultiRegressionTargets is populated through initTargetAttributeItems above
 		jButtonMultiRegressionTargets.setEnabled(jListMultiRegressionTargets.getSelectedIndices().length > 1);
-		
+
 		// has secondary targets (JList)?
 		boolean hasMultiTargets = TargetType.hasMultiTargets(aTargetType);
 		jLabelMultiTargets.setVisible(hasMultiTargets);
@@ -1249,12 +1259,12 @@ public class MiningWindow extends JFrame
 		{
 			initTargetValueItems();
 		}
-		
+
 		//itsTable.getAttribute(getTargetAttributeName()).makePrimaryTarget();
-		
+
 		if (getTargetAttributeName() != null && aTargetType == TargetType.DOUBLE_REGRESSION)
 			computeMultiRegressionTargets();
-		
+
 		//update misc field? Other types are updated through action listeners
 		if (aTargetType == TargetType.SINGLE_NUMERIC)
 			initTargetInfo();
@@ -1292,7 +1302,7 @@ public class MiningWindow extends JFrame
 		//itsTable.getColumn(getTargetAttributeName()).makePrimaryTarget();
 		new MultiRegressionTargetsWindow(jListMultiRegressionTargets, itsSearchParameters, itsTable, this);
 	}
-	
+
 	private void jButtonMultiTargetsActionPerformed()
 	{
 		// is modal, blocks all input to other windows until closed
@@ -1665,6 +1675,7 @@ public class MiningWindow extends JFrame
 
 		itsSearchParameters.setSearchStrategy(getSearchStrategyName());
 		itsSearchParameters.setSearchStrategyWidth(getSearchStrategyWidth());
+		itsSearchParameters.setNominalNotEquals(getNominalNotEquals());
 		itsSearchParameters.setNumericStrategy(getNumericStrategy());
 		itsSearchParameters.setNrBins(getSearchStrategyNrBins());
 /*
@@ -1768,7 +1779,7 @@ public class MiningWindow extends JFrame
 		{
 			computeMultiRegressionTargets();
 		}
-		
+
 		// multi targets =======================================
 		if (aTargetType == TargetType.MULTI_LABEL)
 		{
@@ -1795,7 +1806,7 @@ public class MiningWindow extends JFrame
 			jLFieldTargetInfo.setText(String.valueOf(aCount));
 		}
 	}
-	
+
 	private void computeMultiRegressionTargets()
 	{
 		((DefaultListModel) jListMultiRegressionTargets.getModel()).clear();
@@ -1969,9 +1980,11 @@ public class MiningWindow extends JFrame
 	private int getSearchStrategyWidth() { return getValue(100, jTextFieldSearchStrategyWidth.getText()); }
 	private void setSearchStrategyWidth(String aValue) { jTextFieldSearchStrategyWidth.setText(aValue); }
 
+	// search strategy - nominal not equals
+	private boolean getNominalNotEquals() { return jCheckBoxNotEquals.isSelected(); }
+
 	// search strategy - numeric operators
 	private String getNumericOperators() { return (String) jComboBoxNumericOperators.getSelectedItem(); }
-	//private void setNumericOperators(String theOperators) { jComboBoxNumericOperators.setSelectedItem(theOperators); }
 
 	// search strategy - numeric strategy
 	private String getNumericStrategy() { return (String) jComboBoxSearchStrategyNumeric.getSelectedItem(); }
@@ -2085,12 +2098,14 @@ public class MiningWindow extends JFrame
 	private JPanel jPanelSearchStrategyLabels;
 	private JLabel jLabelStrategyType;
 	private JLabel jLabelStrategyWidth;
+	private JLabel jLabelNotEquals;
 	private JLabel jLabelNumericOperators;
-	private JLabel jLabelSearchStrategyNumericFrr;
+	private JLabel jLabelSearchStrategyNumeric;
 	private JLabel jLabelSearchStrategyNrBins;
 	private JPanel jPanelSearchStrategyFields;
 	private JComboBox jComboBoxSearchStrategyType;
 	private JTextField jTextFieldSearchStrategyWidth;
+	private JCheckBox jCheckBoxNotEquals;
 	private JComboBox jComboBoxNumericOperators;
 	private JComboBox jComboBoxSearchStrategyNumeric;
 	private JTextField jTextFieldSearchStrategyNrBins;

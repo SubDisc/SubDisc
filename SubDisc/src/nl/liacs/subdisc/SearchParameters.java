@@ -25,6 +25,7 @@ public class SearchParameters implements XMLNodeInterface
 
 	private SearchStrategy	itsSearchStrategy;
 	private int				itsSearchStrategyWidth;
+	private boolean			itsNominalNotEquals;
 	private NumericOperators itsNumericOperators;
 	private NumericStrategy	itsNumericStrategy;
 	private int				itsNrBins;
@@ -88,6 +89,8 @@ public class SearchParameters implements XMLNodeInterface
 		itsSearchStrategy = SearchStrategy.getSearchStrategy(theSearchStrategyName);
 	}
 
+	public void setNominalNotEquals(boolean theValue) {itsNominalNotEquals = theValue;}
+	public boolean getNominalNotEquals() {return itsNominalNotEquals;}
 	public NumericOperators getNumericOperators() { return itsNumericOperators; }
 	public void setNumericOperators(String theNumericOperatorsName)
 	{

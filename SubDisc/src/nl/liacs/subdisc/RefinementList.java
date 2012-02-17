@@ -23,8 +23,14 @@ public class RefinementList extends ArrayList<Refinement>
 				Refinement aRefinement = new Refinement(aCondition, itsSubgroup);
 
 				//check validity of operator
-				if (!aColumn.isNumericType() ||
-					NumericOperators.check(theSearchParameters.getNumericOperators(), aCondition.getOperator()))
+				//numeric
+				if (aColumn.isNumericType() && NumericOperators.check(theSearchParameters.getNumericOperators(), aCondition.getOperator()))
+				{
+					add(aRefinement);
+					Log.logCommandLine("   condition: " + aCondition.toString());
+				}
+				//nominal
+				if (!aColumn.isNumericType() && (theSearchParameters.getNominalNotEquals() || !aCondition.checksNotEquals()))
 				{
 					add(aRefinement);
 					Log.logCommandLine("   condition: " + aCondition.toString());

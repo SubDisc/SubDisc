@@ -32,49 +32,50 @@ public class QualityMeasure
 	public static final int ABSNOVELTY  = 1;
 	public static final int CHI_SQUARED    = 2;
 	public static final int INFORMATION_GAIN    = 3;
-	public static final int ACCURACY    = 4;
-	public static final int PURITY 		= 5;
-	public static final int JACCARD     = 6;
-	public static final int COVERAGE    = 7;
-	public static final int SPECIFICITY = 8;
-	public static final int SENSITIVITY = 9;
-	public static final int LAPLACE     = 10;
-	public static final int F_MEASURE   = 11;
-	public static final int G_MEASURE   = 12;
-	public static final int CORRELATION = 13;
+	public static final int BINOMIAL    = 4;
+	public static final int ACCURACY    = 5;
+	public static final int PURITY 		= 6;
+	public static final int JACCARD     = 7;
+	public static final int COVERAGE    = 8;
+	public static final int SPECIFICITY = 9;
+	public static final int SENSITIVITY = 10;
+	public static final int LAPLACE     = 11;
+	public static final int F_MEASURE   = 12;
+	public static final int G_MEASURE   = 13;
+	public static final int CORRELATION = 14;
 	//SINGLE_NUMERIC quality measures
-	public static final int Z_SCORE = 14;
-	public static final int INVERSE_Z_SCORE = 15;
-	public static final int ABS_Z_SCORE = 16;
-	public static final int AVERAGE = 17;
-	public static final int INVERSE_AVERAGE = 18;
-	public static final int MEAN_TEST = 19;
-	public static final int INVERSE_MEAN_TEST = 20;
-	public static final int ABS_MEAN_TEST = 21;
-	public static final int T_TEST = 22;
-	public static final int INVERSE_T_TEST = 23;
-	public static final int ABS_T_TEST = 24;
-	public static final int CHI2_TEST = 25;
+	public static final int Z_SCORE = 15;
+	public static final int INVERSE_Z_SCORE = 16;
+	public static final int ABS_Z_SCORE = 17;
+	public static final int AVERAGE = 18;
+	public static final int INVERSE_AVERAGE = 19;
+	public static final int MEAN_TEST = 20;
+	public static final int INVERSE_MEAN_TEST = 21;
+	public static final int ABS_MEAN_TEST = 22;
+	public static final int T_TEST = 23;
+	public static final int INVERSE_T_TEST = 24;
+	public static final int ABS_T_TEST = 25;
+	public static final int CHI2_TEST = 26;
 	//SINGLE_ORDINAL quality measures
-	public static final int AUC = 26;
-	public static final int WMW_RANKS = 27;
-	public static final int INVERSE_WMW_RANKS = 28;
-	public static final int ABS_WMW_RANKS = 29;
-	public static final int MMAD = 30;
+	public static final int AUC = 27;
+	public static final int WMW_RANKS = 28;
+	public static final int INVERSE_WMW_RANKS = 29;
+	public static final int ABS_WMW_RANKS = 30;
+	public static final int MMAD = 31;
 	//MULTI_LABEL quality measures
-	public static final int WEED = 31;
-	public static final int EDIT_DISTANCE = 32;
+	public static final int WEED = 32;
+	public static final int EDIT_DISTANCE = 33;
 	//DOUBLE_CORRELATION
-	public static final int CORRELATION_R = 33;
-	public static final int CORRELATION_R_NEG = 34;
-	public static final int CORRELATION_R_NEG_SQ = 35;
-	public static final int CORRELATION_R_SQ = 36;
-	public static final int CORRELATION_DISTANCE = 37;
-	public static final int CORRELATION_P = 38;
-	public static final int CORRELATION_ENTROPY = 39;
+	public static final int CORRELATION_R = 34;
+	public static final int CORRELATION_R_NEG = 35;
+	public static final int CORRELATION_R_NEG_SQ = 36;
+	public static final int CORRELATION_R_SQ = 37;
+	public static final int CORRELATION_DISTANCE = 38;
+	public static final int CORRELATION_P = 39;
+	public static final int CORRELATION_ENTROPY = 40;
 	//DOUBLE_REGRESSION
-	public static final int LINEAR_REGRESSION = 40;
-	public static final int COOKS_DISTANCE = 41;
+	public static final int LINEAR_REGRESSION = 41;
+	public static final int COOKS_DISTANCE = 42;
 
 	//SINGLE =========================================================================================
 
@@ -197,6 +198,11 @@ public class QualityMeasure
 			case INFORMATION_GAIN:
 			{
 				returnValue = calculateInformationGain(theTotalCoverage, aCountHead, aCountBody, aCountHeadBody);
+				break;
+			}
+			case BINOMIAL:
+			{
+				returnValue = ((float) Math.sqrt(aCountBody/theTotalCoverage)) * (aCountHeadBody/aCountBody - aCountHead/theTotalCoverage);
 				break;
 			}
 			case JACCARD: {		returnValue = aCountHeadBody /(aCountHeadBody + aCountNotHeadBody + aCountHeadNotBody);
@@ -451,6 +457,7 @@ public class QualityMeasure
 			case ABSNOVELTY : 		{ anEvaluationMinimum = "0.01"; break; }
 			case CHI_SQUARED: 		{ anEvaluationMinimum = "50"; break; }
 			case INFORMATION_GAIN: 	{ anEvaluationMinimum = "0.2"; break; }
+			case BINOMIAL: 			{ anEvaluationMinimum = "0.0"; break; }
 			case JACCARD	: 		{ anEvaluationMinimum = "0.2"; break; }
 			case COVERAGE	: 		{ anEvaluationMinimum = "10"; break; }
 			case ACCURACY	: 		{ anEvaluationMinimum = "0.8"; break; }
@@ -507,6 +514,7 @@ public class QualityMeasure
 			case ABSNOVELTY : { anEvaluationMeasure = "Abs WRAcc"; break; }
 			case CHI_SQUARED: { anEvaluationMeasure = "Chi-squared"; break; }
 			case INFORMATION_GAIN: { anEvaluationMeasure = "Information gain"; break; }
+			case BINOMIAL: { anEvaluationMeasure = "Binomial test"; break; }
 			case JACCARD	: { anEvaluationMeasure = "Jaccard"; break; }
 			case COVERAGE	: { anEvaluationMeasure = "Coverage"; break; }
 			case ACCURACY	: { anEvaluationMeasure = "Accuracy"; break; }
@@ -561,6 +569,7 @@ public class QualityMeasure
 		else if ("abs wracc".equals(anEvaluationMeasure)) return ABSNOVELTY;
 		else if ("chi-squared".equals(anEvaluationMeasure)) return CHI_SQUARED;
 		else if ("information gain".equals(anEvaluationMeasure)) return INFORMATION_GAIN;
+		else if ("binomial test".equals(anEvaluationMeasure)) return BINOMIAL;
 		else if ("coverage".equals(anEvaluationMeasure)) return COVERAGE;
 		else if ("jaccard".equals(anEvaluationMeasure)) return JACCARD;
 		else if ("accuracy".equals(anEvaluationMeasure)) return ACCURACY;
