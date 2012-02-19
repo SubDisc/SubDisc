@@ -13,12 +13,10 @@ public enum AttributeType implements EnumInterface
 	BINARY("0");
 
 	// used for FileLoading/Column setMissingValue
-	private static final List<String> BOOLEAN_POSITIVES =
-		new ArrayList<String>(
-				Arrays.asList(new String[] { "1", "true", "t", "yes" }));
-	private static final List<String> BOOLEAN_NEGATIVES =
-		new ArrayList<String>(
-				Arrays.asList(new String[] { "0", "false", "f", "no" }));
+	private static final Set<String> BOOLEAN_POSITIVES =
+		new HashSet<String>(Arrays.asList(new String[] { "1", "true", "t", "yes" }));
+	private static final Set<String> BOOLEAN_NEGATIVES =
+		new HashSet<String>(Arrays.asList(new String[] { "0", "false", "f", "no" }));
 
 	/*
 	 * NOTE if DEFAULT_MISSING_VALUE is changed for NUMERIC/ORDINAL, check
@@ -98,6 +96,12 @@ public enum AttributeType implements EnumInterface
 	public static boolean isValidBinaryFalseValue(String theBooleanValue)
 	{
 		return BOOLEAN_NEGATIVES.contains(theBooleanValue.toLowerCase().trim());
+	}
+
+	public static boolean isValidBinaryValue(String theBooleanValue)
+	{
+		return BOOLEAN_POSITIVES.contains(theBooleanValue.toLowerCase().trim()) ||
+			BOOLEAN_NEGATIVES.contains(theBooleanValue.toLowerCase().trim());
 	}
 
 	/**

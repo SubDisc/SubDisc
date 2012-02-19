@@ -2,7 +2,7 @@ package nl.liacs.subdisc;
 
 public class Refinement
 {
-	protected Subgroup itsSubgroup;
+	private Subgroup itsSubgroup;
 	private Condition itsCondition;
 
 	public Refinement(Condition aCondition, Subgroup aSubgroup)

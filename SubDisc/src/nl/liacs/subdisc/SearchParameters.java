@@ -14,27 +14,27 @@ public class SearchParameters implements XMLNodeInterface
 
 	// when adding/removing members be sure to update addNodeTo() and loadNode()
 	private TargetConcept	itsTargetConcept;
-	private int				itsQualityMeasure;
-	private float			itsQualityMeasureMinimum;
+	private int		itsQualityMeasure;
+	private float		itsQualityMeasureMinimum;
 
-	private int				itsSearchDepth;
-	private int				itsMinimumCoverage;
-	private float			itsMaximumCoverage;
-	private int				itsMaximumSubgroups;
-	private float			itsMaximumTime;
+	private int		itsSearchDepth;
+	private int		itsMinimumCoverage;
+	private float		itsMaximumCoverage;
+	private int		itsMaximumSubgroups;
+	private float		itsMaximumTime;
 
 	private SearchStrategy	itsSearchStrategy;
-	private int				itsSearchStrategyWidth;
-	private boolean			itsNominalNotEquals;
+	private int		itsSearchStrategyWidth;
+	private boolean		itsNominalNotEquals;	// TODO this is not added to XML yet
 	private NumericOperators itsNumericOperators;
 	private NumericStrategy	itsNumericStrategy;
-	private int				itsNrBins;
+	private int		itsNrBins;
 
-	private float			itsAlpha;
-	private float			itsBeta;
-	private boolean			itsPostProcessingDoAutoRun;
-	private int				itsPostProcessingCount;
-//	private int				itsMaximumPostProcessingSubgroups; // TODO not used
+	private float		itsAlpha;
+	private float		itsBeta;
+	private boolean		itsPostProcessingDoAutoRun;
+	private int		itsPostProcessingCount;
+//	private int		itsMaximumPostProcessingSubgroups; // TODO not used
 
 	public SearchParameters(Node theSearchParametersNode)
 	{
