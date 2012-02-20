@@ -98,12 +98,12 @@ public class FileHandler
 			{
 				if (itsTable == null )
 				{
-					itsTable = new DataLoaderTXT(itsFile).getTable();
-					//itsTable = new FileLoaderTXT(itsFile).getTable();
+					//itsTable = new DataLoaderTXT(itsFile).getTable();
+					itsTable = new FileLoaderTXT(itsFile).getTable();
 				}
 				else
-					itsTable = new DataLoaderTXT(itsFile).getTable();
-					//new FileLoaderTXT(itsFile, itsTable);
+					//itsTable = new DataLoaderTXT(itsFile).getTable();
+					new FileLoaderTXT(itsFile, itsTable);
 				break;
 			}
 			case ARFF :
