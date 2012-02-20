@@ -158,9 +158,10 @@ public class DataLoaderTXT implements FileLoaderInterface
 					// is it binary
 					if (aBinaries.get(aColumn))
 					{
+						// TODO set itsMissing
 						if (isEmptyString(s))
 						{
-							aColumns.get(aColumn).add(AttributeType.BINARY.DEFAULT_MISSING_VALUE);
+							aColumns.get(aColumn).add(Boolean.parseBoolean(AttributeType.BINARY.DEFAULT_MISSING_VALUE));
 							continue;
 						}
 						else if (AttributeType.isValidBinaryValue(s))
@@ -171,8 +172,10 @@ public class DataLoaderTXT implements FileLoaderInterface
 
 						// no longer a binary type
 						aBinaries.set(aColumn, false);
-						// set to numeric, use fall through
+						// set to numeric
 						aFloats.set(aColumn, true);
+						// TODO Column.toNumeric()
+						// FALL THROUGH
 					}
 
 					// is it numeric
@@ -180,15 +183,21 @@ public class DataLoaderTXT implements FileLoaderInterface
 					{
 						try
 						{
+							// TODO set itsMissing
 							if (isEmptyString(s))
-								aColumns.get(aColumn).add(AttributeType.NUMERIC.DEFAULT_MISSING_VALUE);
+								aColumns.get(aColumn).add(Float.parseFloat(AttributeType.NUMERIC.DEFAULT_MISSING_VALUE));
 							else
-								aColumns.get(aColumn).add(Float.parseFloat(s));
+							{
+								float f = Float.parseFloat(s);
+								aColumns.get(aColumn).add(f);
+							}
 							continue;
 						}
 						catch (NumberFormatException e)
 						{
 							aFloats.set(aColumn, false);
+							// TODO Column.toNominal()
+							// FALL THROUGH
 						}
 					}
 
@@ -203,15 +212,13 @@ public class DataLoaderTXT implements FileLoaderInterface
 				}
 				if (aColumn != aNrColumns-1)
 					message("loadFile", "error on line " + aLineNr);
-				if (aLineNr % 10000 == 0)
+				//if (aLineNr % 10000 == 0)
 					message("loadFile", aLineNr + " lines read");
 			}
 
 			// one final check about the validity of the XML file
 			if (anOriginalTypes != null)
-			{
 				evaluateXMLLoading(anOriginalTypes, theFile);
-			}
 		}
 		catch (IOException e)
 		{
@@ -274,7 +281,7 @@ public class DataLoaderTXT implements FileLoaderInterface
 		}
 		catch (IOException e)
 		{
-			message("analyse", "IOException caused by file: " + theFile.getPath());
+			message("analyse", "IOException caused by file: " + theFile.getAbsolutePath());
 			e.printStackTrace();
 		}
 		finally
@@ -286,7 +293,7 @@ public class DataLoaderTXT implements FileLoaderInterface
 			}
 			catch (IOException e)
 			{
-				message("analyse", "IOException caused by file: " + theFile.getPath());
+				message("analyse", "IOException caused by file: " + theFile.getAbsolutePath());
 				e.printStackTrace();
 			}
 		}
@@ -404,6 +411,7 @@ public class DataLoaderTXT implements FileLoaderInterface
 			removeQuotes(s);
 
 			// is it binary (or empty String)
+			// TODO set itsMissing
 			if (AttributeType.isValidBinaryValue(s) || isEmptyString(s))
 			{
 				aColumns.add(new Column(aHeaders[i],
@@ -418,6 +426,7 @@ public class DataLoaderTXT implements FileLoaderInterface
 			// is it numeric
 			try
 			{
+				// empty String is handled by BINARY case
 				float f = Float.parseFloat(s);
 				aColumns.add(new Column(aHeaders[i],
 							null,
@@ -446,7 +455,7 @@ public class DataLoaderTXT implements FileLoaderInterface
 	private void removeQuotes(String theString)
 	{
 		// fail fast
-		if ((theString.charAt(0) != '\"') && (theString.charAt(0) != '\''))
+		if (theString.isEmpty() || ((theString.charAt(0) != '\"') && (theString.charAt(0) != '\'')))
 			return;
 
 		int aLength = theString.length();
@@ -471,7 +480,7 @@ public class DataLoaderTXT implements FileLoaderInterface
 							itsTable.getColumn(i).getName(),
 							theOriginalTypes[i].toString(),
 							itsTable.getColumn(i).getType(),
-							theFile.getPath()));
+							theFile.getAbsolutePath()));
 	}
 
 	@Override

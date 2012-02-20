@@ -114,7 +114,7 @@ public enum AttributeType implements EnumInterface
 		return AttributeType.NOMINAL;
 	}
 
-	// used Javadoc from EnumInterface
+	// uses Javadoc from EnumInterface
 	@Override
 	public String toString()
 	{

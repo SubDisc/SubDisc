@@ -90,29 +90,26 @@ public class FileHandler
 		}
 
 		FileType aFileType = FileType.getFileType(itsFile);
+		Timer aTimer = new Timer();
+
 		switch (aFileType)
 		{
 			case TXT :
 			{
 				if (itsTable == null )
 				{
-					Timer t = new Timer();
 					itsTable = new DataLoaderTXT(itsFile).getTable();
 					//itsTable = new FileLoaderTXT(itsFile).getTable();
-					Log.logCommandLine(t.getElapsedTimeString());
-					printLoadingInfo();
 				}
 				else
-					new FileLoaderTXT(itsFile, itsTable);
+					itsTable = new DataLoaderTXT(itsFile).getTable();
+					//new FileLoaderTXT(itsFile, itsTable);
 				break;
 			}
 			case ARFF :
 			{
 				if (itsTable == null )
-				{
 					itsTable = new FileLoaderARFF(itsFile).getTable();
-					printLoadingInfo();
-				}
 				else
 					new FileLoaderARFF(itsFile, itsTable);
 				break;
@@ -122,19 +119,19 @@ public class FileHandler
 				FileLoaderXML aLoader = new FileLoaderXML(itsFile);
 				itsTable = aLoader.getTable();
 				itsSearchParameters = aLoader.getSearchParameters();
-				printLoadingInfo();
 				break;
 			}
 			// unknown FileType, log error
 			default :
 			{
 				Log.logCommandLine(
-					String.format(
-								"FileHandler: unknown FileType for File '%s'.",
-								itsFile.getName()));
-				break;
+					String.format("FileHandler: unknown FileType for File '%s'.",
+							itsFile.getName()));
+				return;
 			}
 		}
+		Log.logCommandLine("Loading time: " + aTimer.getElapsedTimeString());
+		printLoadingInfo();
 	}
 
 	private void openDatabase()
@@ -215,5 +212,4 @@ public class FileHandler
 	{
 		return itsSearchParameters;
 	};
-
 }
