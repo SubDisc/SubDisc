@@ -96,7 +96,10 @@ public class FileHandler
 			{
 				if (itsTable == null )
 				{
-					itsTable = new FileLoaderTXT(itsFile).getTable();
+					Timer t = new Timer();
+					itsTable = new DataLoaderTXT(itsFile).getTable();
+					//itsTable = new FileLoaderTXT(itsFile).getTable();
+					Log.logCommandLine(t.getElapsedTimeString());
 					printLoadingInfo();
 				}
 				else

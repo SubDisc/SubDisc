@@ -32,7 +32,7 @@ public enum AttributeType implements EnumInterface
 
 	private AttributeType(String theDefaultMissingValue)
 	{
-		DEFAULT_MISSING_VALUE = theDefaultMissingValue; 
+		DEFAULT_MISSING_VALUE = theDefaultMissingValue;
 	}
 
 	/**
