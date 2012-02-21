@@ -174,7 +174,7 @@ public class DataLoaderTXT implements FileLoaderInterface
 						aBinaries.set(aColumn, false);
 						// set to numeric
 						aFloats.set(aColumn, true);
-						// TODO Column.toNumeric()
+						aColumns.get(aColumn).setType(AttributeType.NUMERIC);
 						// FALL THROUGH
 					}
 
@@ -196,7 +196,7 @@ public class DataLoaderTXT implements FileLoaderInterface
 						catch (NumberFormatException e)
 						{
 							aFloats.set(aColumn, false);
-							// TODO Column.toNominal()
+							aColumns.get(aColumn).setType(AttributeType.NOMINAL);
 							// FALL THROUGH
 						}
 					}

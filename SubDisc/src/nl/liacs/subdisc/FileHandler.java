@@ -17,7 +17,7 @@ public class FileHandler
 	public static enum Action
 	{
 		OPEN_FILE, OPEN_DATABASE, SAVE
-	};
+	}
 
 	// remember the directory of the last used file, defaults to users' 
 	// (platform specific) home directory if the the path cannot be resolved
@@ -96,20 +96,24 @@ public class FileHandler
 		{
 			case TXT :
 			{
+				// regular loading
 				if (itsTable == null )
 				{
-					//itsTable = new DataLoaderTXT(itsFile).getTable();
-					itsTable = new FileLoaderTXT(itsFile).getTable();
+					itsTable = new DataLoaderTXT(itsFile).getTable();
+					//itsTable = new FileLoaderTXT(itsFile).getTable();
 				}
+				// load from XML, see Table(XMLNode, pathToXML)
 				else
-					//itsTable = new DataLoaderTXT(itsFile).getTable();
-					new FileLoaderTXT(itsFile, itsTable);
+					new DataLoaderTXT(itsFile, itsTable);
+					//new FileLoaderTXT(itsFile, itsTable);
 				break;
 			}
 			case ARFF :
 			{
+				// regular loading
 				if (itsTable == null )
 					itsTable = new FileLoaderARFF(itsFile).getTable();
+				// load from XML, see Table(XMLNode, pathToXML)
 				else
 					new FileLoaderARFF(itsFile, itsTable);
 				break;
@@ -119,7 +123,8 @@ public class FileHandler
 				FileLoaderXML aLoader = new FileLoaderXML(itsFile);
 				itsTable = aLoader.getTable();
 				itsSearchParameters = aLoader.getSearchParameters();
-				break;
+				//itsTable.update();
+				return; // does not printLoadingInfo/ ~Time
 			}
 			// unknown FileType, log error
 			default :
@@ -130,7 +135,9 @@ public class FileHandler
 				return;
 			}
 		}
-		Log.logCommandLine("Loading time: " + aTimer.getElapsedTimeString());
+		Log.logCommandLine(String.format("loading time '%s': %s",
+							itsFile.getPath(),
+							aTimer.getElapsedTimeString()));
 		printLoadingInfo();
 	}
 

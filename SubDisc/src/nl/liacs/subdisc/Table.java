@@ -78,7 +78,7 @@ public class Table
 				itsColumns.add(new Column(aSetting));
 		}
 		/*
-		 * now all columns are know, check if data (Attributes) is valid by
+		 * now all columns are know, check if data (Columns) is valid by
 		 * loading actual data from itsSource
 		 */
 		new FileHandler(new File(theXMLFileDirectory + "/" + itsSource), this);
