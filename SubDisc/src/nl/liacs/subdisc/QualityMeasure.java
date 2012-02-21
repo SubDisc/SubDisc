@@ -111,8 +111,10 @@ public class QualityMeasure
 			case SINGLE_NUMERIC		: return Z_SCORE;
 			case SINGLE_ORDINAL		: return AUC;
 			case MULTI_LABEL		: return WEED;
-			case DOUBLE_CORRELATION	: return CORRELATION_R;
-			case DOUBLE_REGRESSION 	: return COOKS_DISTANCE;
+			case DOUBLE_CORRELATION		: return CORRELATION_R;
+			case DOUBLE_REGRESSION		: return LINEAR_REGRESSION;
+			// TODO for stable jar, disabled
+			//case DOUBLE_REGRESSION 	: return COOKS_DISTANCE;
 			default					: return NOVELTY;
 		}
 	}
@@ -129,7 +131,9 @@ public class QualityMeasure
 			case SINGLE_ORDINAL		: return MMAD;
 			case MULTI_LABEL		: return EDIT_DISTANCE;
 			case DOUBLE_CORRELATION	: return CORRELATION_ENTROPY;
-			case DOUBLE_REGRESSION	: return COOKS_DISTANCE;
+			case DOUBLE_REGRESSION		: return LINEAR_REGRESSION;
+			// TODO for stable jar, disabled
+			//case DOUBLE_REGRESSION 	: return COOKS_DISTANCE;
 			default					: return NOVELTY;
 		}
 	}

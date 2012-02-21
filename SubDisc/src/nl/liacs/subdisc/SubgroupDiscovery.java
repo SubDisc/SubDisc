@@ -93,11 +93,17 @@ public class SubgroupDiscovery extends MiningAlgorithm
 //			Log.logRefinement("Bound graph for "+itsTable.getName());
 //			Log.logRefinement("SubgroupSize,AvgRegressionTime,AvgCook,AvgBoundSeven,AvgBoundSix,AvgBoundFive,AvgBoundFour,CookComputable,BoundSevenComputable,BoundSixComputable,BoundFiveComputable,BoundFourComputable");
 		}
-		
+
 		TargetConcept aTC = itsSearchParameters.getTargetConcept();
+// TODO for stable jar, initiated here, SubgroupDiscovery revision 893 moved this to else below
+		itsPrimaryColumn = aTC.getPrimaryTarget();
+		itsSecondaryColumn = aTC.getSecondaryTarget();
 		if (isRegression)
 		{
-			itsBaseRM = new RegressionMeasure(itsSearchParameters.getQualityMeasure(), aTC);
+// TODO RegressionMeasure revision 851 introduces the new RegressionMeasure constructor below (not mentioned in log)
+			itsBaseRM = new RegressionMeasure(itsSearchParameters.getQualityMeasure(), itsPrimaryColumn, itsSecondaryColumn);
+// TODO for stable jar, disabled, causes comple errors, reinstate later
+//			itsBaseRM = new RegressionMeasure(itsSearchParameters.getQualityMeasure(), aTC);
 
 			//initialize bounds
 			itsBoundSevenCount=0;
@@ -117,8 +123,9 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		}
 		else
 		{
-			itsPrimaryColumn = aTC.getPrimaryTarget();
-			itsSecondaryColumn = aTC.getSecondaryTarget();
+// TODO for stable jar, disabled, initiated above, reinstate later as per SubgroupDiscovery revision 893
+//			itsPrimaryColumn = aTC.getPrimaryTarget();
+//			itsSecondaryColumn = aTC.getSecondaryTarget();
 			itsBaseCM = new CorrelationMeasure(itsSearchParameters.getQualityMeasure(), itsPrimaryColumn, itsSecondaryColumn);
 		}
 
@@ -410,12 +417,13 @@ public class SubgroupDiscovery extends MiningAlgorithm
 			{
 				switch (itsBaseRM.itsType)
 				{
-/*					case QualityMeasure.LINEAR_REGRESSION:
+					case QualityMeasure.LINEAR_REGRESSION:
 					{
 						RegressionMeasure aRM = new RegressionMeasure(itsBaseRM, theNewSubgroup.getMembers());
 						aQuality = (float) aRM.getEvaluationMeasureValue();
 						break;
-					}*/
+					}
+/*
 					case QualityMeasure.COOKS_DISTANCE:
 					{
 						// initialize variables
@@ -510,7 +518,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 								}
 							}
 						}
-						
+
 						// finally, compute regression
 						if (aNeedToComputeRegression)
 						{
@@ -521,8 +529,8 @@ public class SubgroupDiscovery extends MiningAlgorithm
 						}
 						else aQuality = -Float.MAX_VALUE;
 					}
+*/
 				}
-
 				break;
 			}
 			case DOUBLE_CORRELATION :
@@ -544,7 +552,8 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		}
 		return aQuality;
 	}
-
+/*
+TODO for stable jar, disabled, causes comple errors, reinstate later
 	private void generateBoundGraph()
 	{
 		for (int aSampleSize = itsMaximumCoverage-1; aSampleSize >= 2; aSampleSize--)
@@ -618,7 +627,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 			Log.logRefinement(""+aSampleSize+","+avgRegressionTime+","+avgCook+","+avgBoundSeven+","+avgBoundSix+","+avgBoundFive+","+avgBoundFour+","+aCookComputable+","+aBoundSevenComputable+","+aBoundSixComputable+","+aBoundFiveComputable+","+aBoundFourComputable);
 		}
 	}
-	
+*/
 	private float weightedEntropyEditDistance(Subgroup theSubgroup)
 	{
 		BinaryTable aBinaryTable = itsBinaryTable.selectRows(theSubgroup.getMembers());
@@ -865,7 +874,8 @@ public class SubgroupDiscovery extends MiningAlgorithm
 			itsSemaphore.release();
 		}
 	}
-
+/*
+TODO for stable jar, disabled, causes comple errors, reinstate later
 	private void addToBuffer(Subgroup theSubgroup )
 	{
 		int aCoverage = theSubgroup.getCoverage();
@@ -877,7 +887,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		// @deprecated constructor
 		itsBuffer.add(new Candidate(theSubgroup, aPriority));
 	}
-
+*/
 	private void flushBuffer()
 	{
 		if (itsBuffer == null)

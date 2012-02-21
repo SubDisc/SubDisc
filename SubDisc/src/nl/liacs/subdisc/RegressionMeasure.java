@@ -23,168 +23,83 @@ public class RegressionMeasure
 
 	private double itsCorrelation;
 
-	// Stores all the datapoints for this measure
-	//private List<Point2D.Float> itsData;
-	// Stores all the datapoints for the complement // TODO initialise in constructor
-	//private List<Point2D.Float> itsComplementData = new ArrayList<Point2D.Float>();
+	private ArrayList<Point2D.Float> itsData;//Stores all the datapoints for this measure
+	private ArrayList<Point2D.Float> itsComplementData = new ArrayList<Point2D.Float>();//Stores all the datapoints for the complement
 
 	public static int itsType;
 	private RegressionMeasure itsBase = null;
-
-	private Matrix itsXMatrix;
-	private Matrix itsYMatrix;
-	private Matrix itsXTXInverseMatrix;
-	private Matrix itsZMatrix;
+	
+	private Matrix itsDataMatrix;
 	private Matrix itsBetaHat;
 	private Matrix itsHatMatrix;
 	private Matrix itsResidualMatrix;
-
+	
 	private double itsP;
-	private double itsQ;
 	private double itsSSquared;
 	private double[] itsRSquared;
 	private double[] itsT;
 	private double[] itsSVP;
+	
+	private int itsBoundSevenCount;
+	private int itsBoundSixCount;
+	private int itsBoundFiveCount;
+	private int itsBoundFourCount;
+	private int itsRankDefCount;
 
-	private int[] itsIndices;
-	private int[] itsRemovedIndices;
-
-	private double itsSquaredResidualSum;
-	private double itsRemovedTrace;
-
-	private int itsI; // = itsNrSecondaryTargets
-	private int itsJ; // = itsNrTertiaryTargets
-						// maar dat ga ik niet iedere keer uittypen.
-
-	private boolean itsInterceptRelevance;
-
-	private String itsPrimaryName;
-	private List<String> itsSecondaryNames;
-	private List<String> itsTertiaryNames;
-
-	private String itsGlobalModel;
-	private static final DecimalFormat aDf = new DecimalFormat("#.#####");
-
-	//make a base model from multiple columns
-	public RegressionMeasure(int theType, TargetConcept theTargetConcept)
-	{//TODO: Either remove legacy code, or make something decent out of it. For now, it is hacked.
-		//get target data
-		Column aPrimaryTarget = theTargetConcept.getPrimaryTarget(); 
-		List<Column> aSecondaryTargets = theTargetConcept.getSecondaryTargets();
-		List<Column> aTertiaryTargets = theTargetConcept.getTertiaryTargets();
-
-		itsI = aSecondaryTargets.size();
-		itsJ = aTertiaryTargets.size();
-		itsP = 1+itsI+itsJ;
-		itsQ = itsI;
-		itsInterceptRelevance = theTargetConcept.getInterceptRelevance(); 
-		if (itsInterceptRelevance)
-			itsQ++;
-
-		itsPrimaryName = aPrimaryTarget.getName();
-		itsSecondaryNames = new ArrayList<String>(itsI);
-		itsTertiaryNames = new ArrayList<String>(itsJ);
-		for (Column c : aSecondaryTargets)
-			itsSecondaryNames.add(c.getName());
-		for (Column c : aTertiaryTargets)
-			itsTertiaryNames.add(c.getName());
-
+	//make a base model from two columns
+	public RegressionMeasure(int theType, Column thePrimaryColumn, Column theSecondaryColumn)
+	{
 		itsType = theType;
-		itsSampleSize = aPrimaryTarget.size();
-/*		itsData = new ArrayList<Point2D.Float>(itsSampleSize);
+		itsSampleSize = thePrimaryColumn.size();
+		itsData = new ArrayList<Point2D.Float>(itsSampleSize);
 		for(int i=0; i<itsSampleSize; i++)
 		{
-/*			itsXSum += thePrimaryColumn.getFloat(i);
+			itsXSum += thePrimaryColumn.getFloat(i);
 			itsYSum += theSecondaryColumn.getFloat(i);
 			itsXYSum += thePrimaryColumn.getFloat(i)*theSecondaryColumn.getFloat(i);
 			itsXSquaredSum += thePrimaryColumn.getFloat(i)*thePrimaryColumn.getFloat(i);
 			itsYSquaredSum += theSecondaryColumn.getFloat(i)*theSecondaryColumn.getFloat(i);
 
 			itsData.add(new Point2D.Float(thePrimaryColumn.getFloat(i), theSecondaryColumn.getFloat(i)) );
-		}*/
-
+		}
+			
 		switch(itsType)
 		{
 			case QualityMeasure.LINEAR_REGRESSION:
-			{/* TODO: fix or remove
+			{
 				itsBase = null; //this *is* the base
 				itsComplementData = null; //will remain empty for the base RM
 				updateRegressionFunction();
-				updateErrorTerms();*/
+				updateErrorTerms();
 			}
 			case QualityMeasure.COOKS_DISTANCE:
 			{
-				//updateRegressionFunction(); //updating error terms unnecessary since Cook's distance does not care
-				//"I see no reason for this to continue"
-				//  -- Electric Six, `Lenny Kravitz'
+				updateRegressionFunction(); //updating error terms unnecessary since Cook's distance does not care
 				
-				/*fill arrays which will contain the data. Schematically it looks like this (where x denotes a secondary and x' a tertiary target):
-				 * aData =
-				 *   x_1^1 ... x_1^i  x'_1^1 ... x'_1^j  y_1 
-				 *     .   .     .       .   .      .     .
-				 *     .    .    .       .    .     .     .
-				 *     .     .   .       .     .    .     .   
-				 *   x_n^1 ... x_n^i  x'_n^1 ... x'_n^j  y_n
-				 * 
-				 * anXValues =
-				 *   1  x_1^1 ... x_1^i  x'_1^1 ... x'_1^j 
-				 *   .    .   .     .       .   .      .
-				 *   .    .    .    .       .    .     .
-				 *   .    .     .   .       .     .    .   
-				 *   1  x_n^1 ... x_n^i  x'_n^1 ... x'_n^j
-				 *
-				 * aYValues =
-				 *   y_1 
-				 *    .
-				 *    .
-				 *    .   
-				 *   y_n
-				 *   
-				 * the indices in the for-loops will correspond to the indices used here.  
-				 */
-
-				double[][] anXValues = new double[itsSampleSize][(int) itsP];
-				double[][] aYValues = new double[itsSampleSize][1];
-				double[][] aZValues = new double[(int) itsQ][(int) itsP];
-
-				for (int n=0; n<itsSampleSize; n++)
-				{
-					anXValues[n][0]=1;
-					for (int i=0; i<itsI; i++)
-					{
-						Column aSecondaryColumn = aSecondaryTargets.get(i);
-						anXValues[n][1+i] = aSecondaryColumn.getFloat(n);
-					}
-					for (int j=0; j<itsJ; j++)
-					{
-						Column aTertiaryColumn = aTertiaryTargets.get(j);
-						anXValues[n][1+itsI+j] = aTertiaryColumn.getFloat(n);
-					}
-					aYValues[n][0] = aPrimaryTarget.getFloat(n); 
+				double[][] aData = new double[itsSampleSize][2];
+				double[][] anXValues = new double[itsSampleSize][2];
+				for (int i=0; i<itsSampleSize; i++){
+					anXValues[i][0]=1;
+					anXValues[i][1]=itsData.get(i).getX();
+					aData[i][0] = anXValues[i][1];
 				}
-
-				// build Z-matrix values; indicating which subset of beta we're interested in
-				int anOffset = 1;
-				if (itsInterceptRelevance)
-					anOffset--;
-				for (int q=0; q<itsQ; q++)
-					for (int p=0; p<itsP; p++)
-						if (p==q+anOffset)
-							aZValues[q][p] = 1;
-						else
-							aZValues[q][p] = 0;
-
-				itsXMatrix = new Matrix(anXValues);
-				itsYMatrix = new Matrix(aYValues);
-				itsZMatrix = new Matrix(aZValues);
-
-				//do the regression math
-				//TODO: refuse to do anything in the unlikely case that the data matrix is row deficient.
-				//      If this unlikely event is not caught, the program will crash.
-				computeRegression();
-
-				theTargetConcept.setGlobalRegressionModel(spellFittedModel(itsBetaHat));
-
+				double[][] aYValues = new double[itsSampleSize][1];
+				for (int i=0; i<itsSampleSize; i++)
+				{
+					aYValues[i][0]=itsData.get(i).getY();
+					aData[i][1] = aYValues[i][0];
+				}
+				Matrix anXMatrix = new Matrix(anXValues);
+				Matrix aYMatrix = new Matrix(aYValues);
+				
+				itsDataMatrix = new Matrix(aData);
+				itsBetaHat = (anXMatrix.transpose().times(anXMatrix)).inverse().times(anXMatrix.transpose()).times(aYMatrix);
+				itsHatMatrix = anXMatrix.times((anXMatrix.transpose().times(anXMatrix)).inverse()).times(anXMatrix.transpose());
+				itsResidualMatrix = (Matrix.identity(itsSampleSize,itsSampleSize).minus(itsHatMatrix)).times(aYMatrix);
+				
+				itsP = itsBetaHat.getRowDimension();
+				itsSSquared = (itsResidualMatrix.transpose().times(itsResidualMatrix)).get(0,0)/((double) itsSampleSize-itsP);
+				
 				//fill R^2 array
 				double[] aResiduals = new double[itsSampleSize];
 				for (int i=0; i<itsSampleSize; i++)
@@ -194,7 +109,7 @@ public class RegressionMeasure
 				for (int i=itsSampleSize-2; i>=0; i--)
 					aResiduals[i] += aResiduals[i+1];
 				itsRSquared = aResiduals;
-
+				
 				//fill T array
 				double[] aT = new double[itsSampleSize];
 				for (int i=0; i<itsSampleSize; i++)
@@ -203,51 +118,36 @@ public class RegressionMeasure
 				for (int i=itsSampleSize-2; i>=0; i--)
 					aT[i] += aT[i+1];
 				itsT = aT;
-
+				
 				//fill SVP array; this would be Cook's distance when removing only single points. Cf. Cook&Weisberg p.117, Cook1977a
-//				double[] aSVP = new double[itsSampleSize];
-//				for (int i=0; i<itsSampleSize; i++)
-//					aSVP[i] = itsResidualMatrix.get(i,0)*itsResidualMatrix.get(i,0)/itsP * itsHatMatrix.get(i,i)/(1-itsHatMatrix.get(i,i));
-//				itsSVP = aSVP;
+				double[] aSVP = new double[itsSampleSize];
+				for (int i=0; i<itsSampleSize; i++)
+					aSVP[i] = itsResidualMatrix.get(i,0)*itsResidualMatrix.get(i,0)/itsP * itsHatMatrix.get(i,i)/(1-itsHatMatrix.get(i,i));
+				itsSVP = aSVP;
+				
+				//initialize bounds
+				itsBoundSevenCount=0;
+				itsBoundSixCount=0;
+				itsBoundFiveCount=0;
+				itsBoundFourCount=0;
+				itsRankDefCount=0;
 			}
 		}
 	}
 
-	public String spellFittedModel(Matrix theBetaHat)
-	{
-		String aRegressionModel = "  fitted model: "+ itsPrimaryName + " = " + aDf.format(theBetaHat.get(0,0));
-//		String aRegressionModel = "  fitted model: "+ itsPrimaryName + " = " + theBetaHat.get(0,0);
-		for (int i=0; i<itsI; i++)
-			aRegressionModel = aRegressionModel + " + " + aDf.format(theBetaHat.get(i+1,0)) + " * " + itsSecondaryNames.get(i);
-//			aRegressionModel = aRegressionModel + " + " + theBetaHat.get(i+1,0) + " * " + itsSecondaryNames.get(i);
-		for (int j=0; j<itsJ; j++)
-			aRegressionModel = aRegressionModel + " + " + aDf.format(theBetaHat.get(j+itsI+1,0)) + " * " + itsTertiaryNames.get(j);
-//			aRegressionModel = aRegressionModel + " + " + theBetaHat.get(j+itsI+1,0) + " * " + itsTertiaryNames.get(j);
-		Log.logCommandLine(aRegressionModel);
-		return aRegressionModel;
-	}
-
-	public void computeRegression()
-	{
-		itsXTXInverseMatrix = (itsXMatrix.transpose().times(itsXMatrix)).inverse();
-		itsBetaHat = itsXTXInverseMatrix.times(itsXMatrix.transpose()).times(itsYMatrix);
-		itsHatMatrix = itsXMatrix.times(itsXTXInverseMatrix).times(itsXMatrix.transpose());
-		itsResidualMatrix = (Matrix.identity(itsSampleSize,itsSampleSize).minus(itsHatMatrix)).times(itsYMatrix);
-		
-		itsSSquared = (itsResidualMatrix.transpose().times(itsResidualMatrix)).get(0,0)/((double) itsSampleSize-itsP);
-	}
-
 	//constructor for non-base RM. It derives from a base-RM
-/*	public RegressionMeasure(RegressionMeasure theBase, BitSet theMembers)
+	public RegressionMeasure(RegressionMeasure theBase, BitSet theMembers)
 	{
 		itsType = theBase.itsType;
 		itsBase = theBase;
 
 		//Create an empty measure
-		itsSampleSize = theMembers.cardinality();
-
-		itsXMatrix;
-		private Matrix itsYMatrix;
+		itsSampleSize = 0;
+		itsXSum = 0;
+		itsYSum = 0;
+		itsXYSum = 0;
+		itsXSquaredSum = 0;
+		itsYSquaredSum = 0;
 
 		itsData = new ArrayList<Point2D.Float>(theMembers.cardinality());
 		itsComplementData =
@@ -261,16 +161,16 @@ public class RegressionMeasure
 			else //complement
 				itsComplementData.add(anObservation);
 		}
-	}*/
+	}
 
 	//TODO test and verify method
-/*	public double getEvaluationMeasureValue()
+	public double getEvaluationMeasureValue()
 	{
 		updateRegressionFunction();
 		updateErrorTerms();
 		return getSSD();
 	}
-
+	
 	//TODO turn this t-value into a p-value.
 	public double getSSD()
 	{
@@ -289,7 +189,7 @@ public class RegressionMeasure
 		//if we divided by zero along the way, we are considering a degenerate candidate subgroup, hence quality=0 
 		if (itsSampleSize==0 || itsSampleSize==2 || aDenominator==0)
 			return 0;
-
+		
 		//determine variance for the complement distribution
 		aNumerator = getErrorTermVariance(itsComplementErrorTermSquaredSum, aComplementSampleSize);
 		aDenominator = aComplementXSquaredSum - 2*aComplementXSum*aComplementXSum/aComplementSampleSize + aComplementXSum*aComplementXSum/aComplementSampleSize;
@@ -298,7 +198,7 @@ public class RegressionMeasure
 		//if we divided by zero along the way, we are considering a degenerate candidate subgroup complement, hence quality=0 
 		if (aComplementSampleSize==0 || aComplementSampleSize==2 || aDenominator==0)
 			return 0;
-
+		
 		//calculate the difference between slopes of this measure and its complement
 		double aSlope = getSlope(itsXSum, itsYSum, itsXSquaredSum, itsXYSum, itsSampleSize);
 		double aComplementSlope = getSlope(aComplementXSum, aComplementYSum, aComplementXSquaredSum, aComplementXYSum, aComplementSampleSize);
@@ -313,89 +213,154 @@ public class RegressionMeasure
 			return 0;
 		else {return aSlopeDifference / Math.sqrt(aVariance+aComplementVariance);}
 	}
-*/	
+	
 	public double calculate(Subgroup theNewSubgroup)
 	{
-//		int aSampleSize = theNewSubgroup.getCoverage();
+		BitSet aMembers = theNewSubgroup.getMembers();
+		int aSampleSize = aMembers.cardinality();
+		
+		//filter out rank deficient model that crash matrix multiplication library
+		if (aSampleSize<2)
+		{
+			itsRankDefCount++;
+			return Double.MIN_VALUE;
+		}
+		
+		//calculate the upper bound values. Before each bound, only the necessary computations are done.
+		double aT = itsT[aSampleSize];
+		double aRSquared = itsRSquared[aSampleSize];
+		
+		double aBoundSeven = computeBoundSeven(aSampleSize, aT, aRSquared);
+		if (aBoundSeven>Double.MIN_VALUE)
+		{
+			Log.logCommandLine("                   Bound 7: " + aBoundSeven);
+			itsBoundSevenCount++;
+		}
+		
+		int[] anIndices = new int[aSampleSize];
+		int[] aRemovedIndices = new int[itsSampleSize-aSampleSize];
+		int anIndex=0;
+		int aRemovedIndex=0;
+		for (int i=0; i<itsSampleSize; i++)
+		{
+			if (aMembers.get(i))
+			{
+				anIndices[anIndex] = i;
+				anIndex++;
+			}
+			else
+			{
+				aRemovedIndices[aRemovedIndex] = i;
+				aRemovedIndex++;
+			}
+		}
 
-		//make submatrices
-		Matrix anXMatrix = itsXMatrix.getMatrix(itsIndices,0,itsI+itsJ);
-		Matrix aYMatrix = itsYMatrix.getMatrix(itsIndices,0,0);
+		Matrix aRemovedResiduals = itsResidualMatrix.getMatrix(aRemovedIndices,0,0);
+		double aSquaredResidualSum = squareSum(aRemovedResiduals);
+		double aBoundSix = computeBoundSix(aSampleSize, aT, aSquaredResidualSum);		
+		if (aBoundSix>Double.MIN_VALUE)
+		{
+			Log.logCommandLine("                   Bound 6: " + aBoundSix);
+			itsBoundSixCount++;
+		}
+		
+		Matrix aRemovedHatMatrix = itsHatMatrix.getMatrix(aRemovedIndices,aRemovedIndices);
+		double aRemovedTrace = aRemovedHatMatrix.trace();
+		double aBoundFive = computeBoundFive(aSampleSize, aRemovedTrace, aRSquared);
+		if (aBoundFive>Double.MIN_VALUE)
+		{
+			Log.logCommandLine("                   Bound 5: " + aBoundFive);
+			itsBoundFiveCount++;
+		}
+		
+		double aBoundFour = computeBoundFour(aSampleSize, aRemovedTrace, aSquaredResidualSum);
+		if (aBoundFour>Double.MIN_VALUE)
+		{
+			Log.logCommandLine("                   Bound 4: " + aBoundFour);
+			itsBoundFourCount++;
+		}
+		
+		//compute estimate based on projection of single influence values 
+		double anSVPDistance = computeSVPDistance(itsSampleSize-aSampleSize, aRemovedIndices);
+		Log.logCommandLine("                   SVP est: " + anSVPDistance);
 
+		//start computing Cook's Distance
+		Matrix aNewDataMatrix = itsDataMatrix.getMatrix(anIndices,0,1);
+		
 		//filter out rank-deficient cases; these regressions cannot be computed, hence low quality
-		LUDecomposition itsDecomp = new LUDecomposition(anXMatrix);
+		LUDecomposition itsDecomp = new LUDecomposition(aNewDataMatrix);
 		if (!itsDecomp.isNonsingular())
-			return -Double.MAX_VALUE;
-
+		{
+			itsRankDefCount++;
+			return Double.MIN_VALUE;
+		}
+		
+		//make submatrices
+		double[][] anXValues = new double[aSampleSize][2];
+		for (int i=0; i<aSampleSize; i++)
+		{
+			anXValues[i][0]=1;
+			anXValues[i][1]=aNewDataMatrix.get(i,0);
+		}
+		double[][] aYValues = new double[aSampleSize][1];
+		for (int i=0; i<aSampleSize; i++)
+			aYValues[i][0]=aNewDataMatrix.get(i,1);
+		Matrix anXMatrix = new Matrix(anXValues);
+		Matrix aYMatrix = new Matrix(aYValues);
+		
 		//compute regression
-		Matrix anXTXMatrix = anXMatrix.transpose().times(anXMatrix); 
-		LUDecomposition itsXTXDecomp = new LUDecomposition(anXTXMatrix);
-		if (!itsXTXDecomp.isNonsingular())
-			return -Double.MAX_VALUE;
-		Matrix anXTXInverseMatrix = anXTXMatrix.inverse();
-
-		Matrix aBetaHat = anXTXInverseMatrix.times(anXMatrix.transpose()).times(aYMatrix);
-//		Matrix aHatMatrix = anXMatrix.times(anXTXInverseMatrix).times(anXMatrix.transpose());
-//		Matrix aResidualMatrix = (Matrix.identity(aSampleSize,aSampleSize).minus(aHatMatrix)).times(aYMatrix);
-
-		theNewSubgroup.setRegressionModel(spellFittedModel(aBetaHat));
-
+		Matrix aBetaHat = (anXMatrix.transpose().times(anXMatrix)).inverse().times(anXMatrix.transpose()).times(aYMatrix);
+		Matrix aHatMatrix = anXMatrix.times((anXMatrix.transpose().times(anXMatrix)).inverse()).times(anXMatrix.transpose());
+		Matrix aResidualMatrix = (Matrix.identity(aSampleSize,aSampleSize).minus(aHatMatrix)).times(aYMatrix);
+		
 		//compute Cook's distance
-//		double aP = aBetaHat.getRowDimension();
-//		double anSSquared = (aResidualMatrix.transpose().times(aResidualMatrix)).get(0,0)/((double) aSampleSize-itsP);
-
-//		double anOldQuality = aBetaHat.minus(itsBetaHat).transpose().times(anXMatrix.transpose()).times(anXMatrix).times(aBetaHat.minus(itsBetaHat)).get(0,0)/(itsP*anSSquared);
-		Matrix aZXTXInverseZTMatrix = itsZMatrix.times(itsXTXInverseMatrix).times(itsZMatrix.transpose()); 
-		LUDecomposition itsOtherDecomp = new LUDecomposition(aZXTXInverseZTMatrix);
-		if (!itsOtherDecomp.isNonsingular())
-			return -Double.MAX_VALUE;
-
-		Matrix anM = itsZMatrix.transpose().times(aZXTXInverseZTMatrix.inverse()).times(itsZMatrix);
-//		logMatrix(anM);
-//		logMatrixDimensions(anM, "Zt(Z(XtX)-1Zt)-1Z");
-
-		double aQuality = (aBetaHat.minus(itsBetaHat).transpose().times(anM).times(aBetaHat.minus(itsBetaHat))).get(0,0)/(itsQ*itsSSquared);
+		double aP = aBetaHat.getRowDimension();
+		double anSSquared = (aResidualMatrix.transpose().times(aResidualMatrix)).get(0,0)/((double) itsSampleSize-aP);
+		double[][] aParentValues = {{itsIntercept},{itsSlope}};
+		Matrix aParentBetaHat = new Matrix(aParentValues);
+		
+		double aQuality = aBetaHat.minus(aParentBetaHat).transpose().times(anXMatrix.transpose()).times(anXMatrix).times(aBetaHat.minus(aParentBetaHat)).get(0,0)/(aP*anSSquared);
+		//N.B.: Temporary line for fetching Cook's experimental statistics
+		Log.logRefinement(""+aQuality+","+anSVPDistance+","+aSampleSize);
 		return aQuality;
 	}
-
-	public double computeBoundSeven(int theSampleSize, double theT, double theRSquared)
+	
+	private double computeBoundSeven(int theSampleSize, double theT, double theRSquared)
 	{
 		if (theT>=1)
-			return Double.MAX_VALUE;
-		return itsP/itsQ*theT/((1-theT)*(1-theT))*theRSquared/(itsP*itsSSquared);
+			return Double.MIN_VALUE;
+		return theT/((1-theT)*(1-theT))*theRSquared/(itsP*itsSSquared);
 	}
 
-	public double computeBoundSix(int theSampleSize, double theT)
+	private double computeBoundSix(int theSampleSize, double theT, double theSquaredResidualSum)
 	{
-		updateSquaredResidualSum();
 		if (theT>=1)
-			return Double.MAX_VALUE;
-		return itsP/itsQ*theT/((1-theT)*(1-theT))*itsSquaredResidualSum/(itsP*itsSSquared);
+			return Double.MIN_VALUE;
+		return theT/((1-theT)*(1-theT))*theSquaredResidualSum/(itsP*itsSSquared);
 	}
 
-	public double computeBoundFive(int theSampleSize, double theRSquared)
+	private double computeBoundFive(int theSampleSize, double theRemovedTrace, double theRSquared)
 	{
-		updateRemovedTrace();
-		if (itsRemovedTrace>=1)
-			return Double.MAX_VALUE;
-		return itsP/itsQ*itsRemovedTrace/((1-itsRemovedTrace)*(1-itsRemovedTrace))*theRSquared/(itsP*itsSSquared);
+		if (theRemovedTrace>=1)
+			return Double.MIN_VALUE;
+		return theRemovedTrace/((1-theRemovedTrace)*(1-theRemovedTrace))*theRSquared/(itsP*itsSSquared);
 	}
-
-	public double computeBoundFour(int theSampleSize)
+	
+	private double computeBoundFour(int theSampleSize, double theRemovedTrace, double theSquaredResidualSum)
 	{
-		if (itsRemovedTrace>=1)
-			return Double.MAX_VALUE;
-		return itsP/itsQ*itsRemovedTrace/((1-itsRemovedTrace)*(1-itsRemovedTrace))*itsSquaredResidualSum/(itsP*itsSSquared);
+		if (theRemovedTrace>=1)
+			return Double.MIN_VALUE;
+		return theRemovedTrace/((1-theRemovedTrace)*(1-theRemovedTrace))*theSquaredResidualSum/(itsP*itsSSquared);
 	}
-
-/*	private double computeSVPDistance(int theNrRemoved, int[] theIndices)
+	
+	private double computeSVPDistance(int theNrRemoved, int[] theIndices)
 	{
 		double result = 0.0;
 		for (int i=0; i<theNrRemoved; i++)
 			result += itsSVP[theIndices[i]];
 		return result;
 	}
-*/
+	
 	private double squareSum(Matrix itsMatrix)
 	{
 		int aSampleSize = itsMatrix.getRowDimension();
@@ -437,7 +402,7 @@ public class RegressionMeasure
 	 * @param theY the Y-value, the target
 	 * @param theX the X-value
 	 */
-/*	public void addObservation(float theY, float theX)
+	public void addObservation(float theY, float theX)
 	{
 		//adjust the sums
 		itsSampleSize++;
@@ -448,14 +413,14 @@ public class RegressionMeasure
 		itsYSquaredSum += theY*theY;
 
 		//Add to its own lists
-		Point2D.Float aPoint = new Point2D.Float(theX,theY);
-		itsData.add(aPoint);
+		Point2D.Float aDataPoint = new Point2D.Float(theX,theY);
+		itsData.add(aDataPoint);
 	}
 
-	public void addObservation(Point2d.Float theObservation)
+	public void addObservation(Point2D.Float theObservation)
 	{
-		float anX = theObservation.getX();
-		float aY = theObservation.getY();
+		float anX = (float) theObservation.getX();
+		float aY = (float) theObservation.getY();
 
 		//adjust the sums
 		itsSampleSize++;
@@ -473,13 +438,13 @@ public class RegressionMeasure
 	{
 		return itsData.get(theIndex);
 	}
-*/
+
  	/**
 	 * calculates the error terms for the distribution and recomputes the
 	 * sum of the squared error term
 	 *
 	 */
-/*	private void updateErrorTerms()
+	private void updateErrorTerms()
 	{
 		itsErrorTermSquaredSum = 0;
 		for(int i=0; i<itsSampleSize; i++)
@@ -501,7 +466,7 @@ public class RegressionMeasure
 			}
 		}
 
-	}*/
+	}
 
 	/**
 	 * Determine the error term for a given point
@@ -515,8 +480,6 @@ public class RegressionMeasure
 		return theY - (itsSlope*theX+itsIntercept);
 	}
 
-	@Deprecated
-	// call getErrorTerm(double theX, double theY) directly
 	private double getErrorTerm(Point2D.Float theDataPoint)
 	{
 		return getErrorTerm(theDataPoint.getX(), theDataPoint.getY());
@@ -583,59 +546,9 @@ public class RegressionMeasure
 		return theX*itsSlope + itsIntercept;
 	}
 	
-	public String getGlobalModel() { return itsGlobalModel; }
-	
-	public double getT(int theSampleSize) { return itsT[theSampleSize]; }
-	public double getRSquared(int theSampleSize) { return itsRSquared[theSampleSize]; }
-
-	public void computeRemovedIndices(BitSet theMembers, int theSampleSize)
-	{
-		int[] anIndices = new int[theSampleSize];
-		int[] aRemovedIndices = new int[itsSampleSize-theSampleSize];
-		int anIndex=0;
-		int aRemovedIndex=0;
-		for (int i=0; i<itsSampleSize; i++)
-		{
-			if (theMembers.get(i))
-			{
-				anIndices[anIndex] = i;
-				anIndex++;
-			}
-			else
-			{
-				aRemovedIndices[aRemovedIndex] = i;
-				aRemovedIndex++;
-			}
-		}
-		itsIndices = anIndices;
-		itsRemovedIndices = aRemovedIndices;
-	}
-	
-	public void updateSquaredResidualSum()
-	{
-		Matrix aRemovedResiduals = itsResidualMatrix.getMatrix(itsRemovedIndices,0,0);
-		itsSquaredResidualSum = squareSum(aRemovedResiduals);
-	}
-	
-	public void updateRemovedTrace()
-	{
-		Matrix aRemovedHatMatrix = itsHatMatrix.getMatrix(itsRemovedIndices,itsRemovedIndices);
-		itsRemovedTrace = aRemovedHatMatrix.trace();
-	}
-	
-	public void logMatrix( Matrix theMatrix )
-	{
-		for (int i=0; i<theMatrix.getRowDimension(); i++)
-		{
-			String aRow = ""+theMatrix.get(i, 0);
-			for (int j=1; j<theMatrix.getColumnDimension(); j++)
-				aRow += ", " + theMatrix.get(i,j);
-			Log.logCommandLine(aRow);
-		}
-	}
-
-	public void logMatrixDimensions(Matrix theMatrix, String theName)
-	{
-		Log.logCommandLine("Dimensions of Matrix " + theName + " : " + theMatrix.getRowDimension() + ", " + theMatrix.getColumnDimension());
-	}
+	public int getNrBoundSeven() { return itsBoundSevenCount; }
+	public int getNrBoundSix() { return itsBoundSixCount; }
+	public int getNrBoundFive() { return itsBoundFiveCount; }
+	public int getNrBoundFour() { return itsBoundFourCount; }
+	public int getNrRankDef() { return itsRankDefCount; }
 }
