@@ -51,8 +51,8 @@ public enum TargetType implements EnumInterface
 		 */
 		Log.logCommandLine(
 			String.format("'%s' is not a valid TargetType. Returning '%s'.",
-							theType,
-							TargetType.getDefault().GUI_TEXT));
+					theType,
+					TargetType.getDefault().GUI_TEXT));
 		return TargetType.getDefault();
 	}
 
@@ -77,13 +77,13 @@ public enum TargetType implements EnumInterface
 	{
 		switch (theType)
 		{
-			case SINGLE_NOMINAL					: return true;
-			case SINGLE_NUMERIC					: return true;
-			case SINGLE_ORDINAL					: return false;
-			case DOUBLE_REGRESSION				: return true;
-			case DOUBLE_CORRELATION				: return true;
-			case MULTI_LABEL					: return true;
-			case MULTI_BINARY_CLASSIFICATION	: return false;
+			case SINGLE_NOMINAL		: return true;
+			case SINGLE_NUMERIC		: return true;
+			case SINGLE_ORDINAL		: return false;
+			case DOUBLE_REGRESSION		: return true;
+			case DOUBLE_CORRELATION		: return true;
+			case MULTI_LABEL		: return true;
+			case MULTI_BINARY_CLASSIFICATION: return false;
 			default :
 			{
 				unknownTargetType("isImplemented", theType.GUI_TEXT);
@@ -97,13 +97,13 @@ public enum TargetType implements EnumInterface
 	{
 		switch (theType)
 		{
-			case SINGLE_NOMINAL					: return false;
-			case SINGLE_NUMERIC					: return false;
-			case SINGLE_ORDINAL					: return false;
-			case DOUBLE_REGRESSION				: return true;
-			case DOUBLE_CORRELATION				: return true;
-			case MULTI_LABEL					: return false;
-			case MULTI_BINARY_CLASSIFICATION	: return false;
+			case SINGLE_NOMINAL		: return false;
+			case SINGLE_NUMERIC		: return false;
+			case SINGLE_ORDINAL		: return false;
+			case DOUBLE_REGRESSION		: return true;
+			case DOUBLE_CORRELATION		: return true;
+			case MULTI_LABEL		: return false;
+			case MULTI_BINARY_CLASSIFICATION: return false;
 			default :
 			{
 				unknownTargetType("hasSecondaryTarget", theType.GUI_TEXT);
@@ -117,13 +117,13 @@ public enum TargetType implements EnumInterface
 	{
 		switch (theType)
 		{
-			case SINGLE_NOMINAL					: return false;
-			case SINGLE_NUMERIC					: return false;
-			case SINGLE_ORDINAL					: return false;
-			case DOUBLE_REGRESSION				: return false;
-			case DOUBLE_CORRELATION				: return false;
-			case MULTI_LABEL					: return true;
-			case MULTI_BINARY_CLASSIFICATION	: return true;
+			case SINGLE_NOMINAL		: return false;
+			case SINGLE_NUMERIC		: return false;
+			case SINGLE_ORDINAL		: return false;
+			case DOUBLE_REGRESSION		: return false;
+			case DOUBLE_CORRELATION		: return false;
+			case MULTI_LABEL		: return true;
+			case MULTI_BINARY_CLASSIFICATION: return true;
 			default :
 			{
 				unknownTargetType("hasMultiTargets", theType.GUI_TEXT);
@@ -137,13 +137,13 @@ public enum TargetType implements EnumInterface
 	{
 		switch (theType)
 		{
-			case SINGLE_NOMINAL					: return false;
-			case SINGLE_NUMERIC					: return false;
-			case SINGLE_ORDINAL					: return false;
-			case DOUBLE_REGRESSION				: return true;
-			case DOUBLE_CORRELATION				: return false;
-			case MULTI_LABEL					: return false;
-			case MULTI_BINARY_CLASSIFICATION	: return false;
+			case SINGLE_NOMINAL		: return false;
+			case SINGLE_NUMERIC		: return false;
+			case SINGLE_ORDINAL		: return false;
+			case DOUBLE_REGRESSION		: return true;
+			case DOUBLE_CORRELATION		: return false;
+			case MULTI_LABEL		: return false;
+			case MULTI_BINARY_CLASSIFICATION: return false;
 			default :
 			{
 				unknownTargetType("hasMultiTargets", theType.GUI_TEXT);
@@ -157,13 +157,13 @@ public enum TargetType implements EnumInterface
 	{
 		switch (theType)
 		{
-			case SINGLE_NOMINAL					: return true;
-			case SINGLE_NUMERIC					: return false;
-			case SINGLE_ORDINAL					: return false;
-			case DOUBLE_REGRESSION				: return true;
-			case DOUBLE_CORRELATION				: return true;
-			case MULTI_LABEL					: return false;
-			case MULTI_BINARY_CLASSIFICATION	: return true;	// TODO true?
+			case SINGLE_NOMINAL		: return true;
+			case SINGLE_NUMERIC		: return false;
+			case SINGLE_ORDINAL		: return false;
+			case DOUBLE_REGRESSION		: return true;
+			case DOUBLE_CORRELATION		: return true;
+			case MULTI_LABEL		: return false;
+			case MULTI_BINARY_CLASSIFICATION: return true;	// TODO true?
 			default :
 			{
 				unknownTargetType("hasMiscField", theType.GUI_TEXT);
@@ -177,13 +177,13 @@ public enum TargetType implements EnumInterface
 	{
 		switch (theType)
 		{
-			case SINGLE_NOMINAL					: return true;
-			case SINGLE_NUMERIC					: return true;
-			case SINGLE_ORDINAL					: return true;
-			case DOUBLE_REGRESSION				: return true;
-			case DOUBLE_CORRELATION				: return true;
-			case MULTI_LABEL					: return false;
-			case MULTI_BINARY_CLASSIFICATION	: return false;	// TODO true?
+			case SINGLE_NOMINAL		: return true;
+			case SINGLE_NUMERIC		: return true;
+			case SINGLE_ORDINAL		: return true;
+			case DOUBLE_REGRESSION		: return true;
+			case DOUBLE_CORRELATION		: return true;
+			case MULTI_LABEL		: return false;
+			case MULTI_BINARY_CLASSIFICATION: return false;	// TODO true?
 			default :
 			{
 				unknownTargetType("hasTargetAttribute", theType.GUI_TEXT);
@@ -197,13 +197,13 @@ public enum TargetType implements EnumInterface
 	{
 		switch (theType)
 		{
-			case SINGLE_NOMINAL					: return true;
-			case SINGLE_NUMERIC					: return false;
-			case SINGLE_ORDINAL					: return false;
-			case DOUBLE_REGRESSION				: return true;
-			case DOUBLE_CORRELATION				: return true;
-			case MULTI_LABEL					: return false;
-			case MULTI_BINARY_CLASSIFICATION	: return false;	// TODO true?
+			case SINGLE_NOMINAL		: return true;
+			case SINGLE_NUMERIC		: return false;
+			case SINGLE_ORDINAL		: return false;
+			case DOUBLE_REGRESSION		: return true;
+			case DOUBLE_CORRELATION		: return true;
+			case MULTI_LABEL		: return false;
+			case MULTI_BINARY_CLASSIFICATION: return false;	// TODO true?
 			default :
 			{
 				unknownTargetType("hasTargetValue", theType.GUI_TEXT);
@@ -218,13 +218,13 @@ public enum TargetType implements EnumInterface
 	{
 		switch (theType)
 		{
-			case SINGLE_NOMINAL					: return false;
-			case SINGLE_NUMERIC					: return false;
-			case SINGLE_ORDINAL					: return false;
-			case DOUBLE_REGRESSION				: return true;
-			case DOUBLE_CORRELATION				: return true;
-			case MULTI_LABEL					: return true;
-			case MULTI_BINARY_CLASSIFICATION	: return false;	// TODO true?
+			case SINGLE_NOMINAL		: return false;
+			case SINGLE_NUMERIC		: return false;
+			case SINGLE_ORDINAL		: return false;
+			case DOUBLE_REGRESSION		: return true;
+			case DOUBLE_CORRELATION		: return true;
+			case MULTI_LABEL		: return true;
+			case MULTI_BINARY_CLASSIFICATION: return false;	// TODO true?
 			default :
 			{
 				unknownTargetType("hasBaseModel", theType.GUI_TEXT);

@@ -358,8 +358,8 @@ public class MiningWindow extends JFrame
 
 		jMenuItemOpenFile.setFont(GUI.DEFAULT_TEXT_FONT);
 		jMenuItemOpenFile.setText("Open File");
-		jMenuItemOpenFile.setMnemonic('O');
-		jMenuItemOpenFile.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, InputEvent.CTRL_MASK));
+		jMenuItemOpenFile.setMnemonic(Mnemonic.OPEN_FILE.MNEMONIC);
+		jMenuItemOpenFile.setAccelerator(KeyStroke.getKeyStroke(Mnemonic.OPEN_FILE.MNEMONIC, InputEvent.CTRL_MASK));
 		jMenuItemOpenFile.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
 				jMenuItemOpenFileActionPerformed();
@@ -369,8 +369,8 @@ public class MiningWindow extends JFrame
 
 		jMenuItemBrowse.setFont(GUI.DEFAULT_TEXT_FONT);
 		jMenuItemBrowse.setText("Browse...");
-		jMenuItemBrowse.setMnemonic('B');
-		jMenuItemBrowse.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_B, InputEvent.CTRL_MASK));
+		jMenuItemBrowse.setMnemonic(Mnemonic.BROWSE.MNEMONIC);
+		jMenuItemBrowse.setAccelerator(KeyStroke.getKeyStroke(Mnemonic.BROWSE.MNEMONIC, InputEvent.CTRL_MASK));
 		jMenuItemBrowse.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
 				browseActionPerformed();
@@ -380,8 +380,8 @@ public class MiningWindow extends JFrame
 
 		jMenuItemExplore.setFont(GUI.DEFAULT_TEXT_FONT);
 		jMenuItemExplore.setText("Explore...");
-		jMenuItemExplore.setMnemonic('E');
-		jMenuItemExplore.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_E, InputEvent.CTRL_MASK));
+		jMenuItemExplore.setMnemonic(Mnemonic.EXPLORE.MNEMONIC);
+		jMenuItemExplore.setAccelerator(KeyStroke.getKeyStroke(Mnemonic.EXPLORE.MNEMONIC, InputEvent.CTRL_MASK));
 		jMenuItemExplore.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
 				exploreActionPerformed();
@@ -391,8 +391,8 @@ public class MiningWindow extends JFrame
 
 		jMenuItemMetaData.setFont(GUI.DEFAULT_TEXT_FONT);
 		jMenuItemMetaData.setText("Meta Data...");
-		jMenuItemMetaData.setMnemonic('M');
-		jMenuItemMetaData.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_M, InputEvent.CTRL_MASK));
+		jMenuItemMetaData.setMnemonic(Mnemonic.META_DATA.MNEMONIC);
+		jMenuItemMetaData.setAccelerator(KeyStroke.getKeyStroke(Mnemonic.META_DATA.MNEMONIC, InputEvent.CTRL_MASK));
 		jMenuItemMetaData.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
 				metaDataActionPerformed();
@@ -404,8 +404,8 @@ public class MiningWindow extends JFrame
 
 		jMenuItemSubgroupDiscovery.setFont(GUI.DEFAULT_TEXT_FONT);
 		jMenuItemSubgroupDiscovery.setText("Subgroup Discovery");
-		jMenuItemSubgroupDiscovery.setMnemonic('S');
-		jMenuItemSubgroupDiscovery.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_MASK));
+		jMenuItemSubgroupDiscovery.setMnemonic(Mnemonic.SUBGROUP_DISCOVERY.MNEMONIC);
+		jMenuItemSubgroupDiscovery.setAccelerator(KeyStroke.getKeyStroke(Mnemonic.SUBGROUP_DISCOVERY.MNEMONIC, InputEvent.CTRL_MASK));
 		jMenuItemSubgroupDiscovery.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
 				jButtonSubgroupDiscoveryActionPerformed();
@@ -417,8 +417,8 @@ public class MiningWindow extends JFrame
 
 		jMenuItemCreateAutoRunFile.setFont(GUI.DEFAULT_TEXT_FONT);
 		jMenuItemCreateAutoRunFile.setText("Create Autorun File");
-		jMenuItemCreateAutoRunFile.setMnemonic('C');
-		jMenuItemCreateAutoRunFile.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.CTRL_MASK));
+		jMenuItemCreateAutoRunFile.setMnemonic(Mnemonic.CREATE_AUTORUN_FILE.MNEMONIC);
+		jMenuItemCreateAutoRunFile.setAccelerator(KeyStroke.getKeyStroke(Mnemonic.CREATE_AUTORUN_FILE.MNEMONIC, InputEvent.CTRL_MASK));
 		jMenuItemCreateAutoRunFile.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
 				jMenuItemAutoRunFileActionPerformed(AutoRun.CREATE);
@@ -428,8 +428,8 @@ public class MiningWindow extends JFrame
 
 		jMenuItemAddToAutoRunFile.setFont(GUI.DEFAULT_TEXT_FONT);
 		jMenuItemAddToAutoRunFile.setText("Add to Autorun File");
-		jMenuItemAddToAutoRunFile.setMnemonic('A');
-		jMenuItemAddToAutoRunFile.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A, InputEvent.CTRL_MASK));
+		jMenuItemAddToAutoRunFile.setMnemonic(Mnemonic.ADD_TO_AUTORUN_FILE.MNEMONIC);
+		jMenuItemAddToAutoRunFile.setAccelerator(KeyStroke.getKeyStroke(Mnemonic.ADD_TO_AUTORUN_FILE.MNEMONIC, InputEvent.CTRL_MASK));
 		jMenuItemAddToAutoRunFile.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
 				jMenuItemAutoRunFileActionPerformed(AutoRun.ADD);
@@ -441,8 +441,8 @@ public class MiningWindow extends JFrame
 
 		jMenuItemExit.setFont(GUI.DEFAULT_TEXT_FONT);
 		jMenuItemExit.setText("Exit");
-		jMenuItemExit.setMnemonic('X');
-		jMenuItemExit.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q, InputEvent.CTRL_MASK));
+		jMenuItemExit.setMnemonic(Mnemonic.EXIT.MNEMONIC);
+		jMenuItemExit.setAccelerator(KeyStroke.getKeyStroke(Mnemonic.EXIT.MNEMONIC, InputEvent.CTRL_MASK));
 		jMenuItemExit.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
 				jMenuItemExitActionPerformed();
@@ -510,8 +510,8 @@ public class MiningWindow extends JFrame
 
 		jMenuItemAboutCortana.setFont(GUI.DEFAULT_TEXT_FONT);
 		jMenuItemAboutCortana.setText("Cortana");
-		jMenuItemAboutCortana.setMnemonic('I');
-		jMenuItemAboutCortana.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_I, InputEvent.CTRL_MASK));
+		jMenuItemAboutCortana.setMnemonic(Mnemonic.ABOUT_CORTANA.MNEMONIC);
+		jMenuItemAboutCortana.setAccelerator(KeyStroke.getKeyStroke(Mnemonic.ABOUT_CORTANA.MNEMONIC, InputEvent.CTRL_MASK));
 		jMenuItemAboutCortana.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
 				jMenuItemAboutCortanaActionPerformed();
@@ -618,7 +618,7 @@ public class MiningWindow extends JFrame
 		final JPanel aButtonPanel = new JPanel();
 		aButtonPanel.setLayout(new GridLayout(2, 2));
 
-		jButtonBrowse = initButton("Browse...", 'B');
+		jButtonBrowse = initButton("Browse...", Mnemonic.BROWSE);
 		jButtonBrowse.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
 				browseActionPerformed();
@@ -627,7 +627,7 @@ public class MiningWindow extends JFrame
 		//jPanelRuleTargetButtons.add(jButtonBrowse);
 		aButtonPanel.add(jButtonBrowse);
 
-		jButtonExplore = initButton("Explore...", 'E');
+		jButtonExplore = initButton("Explore...", Mnemonic.EXPLORE);
 		jButtonExplore.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
 				exploreActionPerformed();
@@ -636,7 +636,7 @@ public class MiningWindow extends JFrame
 		//jPanelRuleTargetButtons.add(jButtonExplore);
 		aButtonPanel.add(jButtonExplore);
 
-		jButtonMetaData = initButton("Meta Data...", 'M');
+		jButtonMetaData = initButton("Meta Data...", Mnemonic.META_DATA);
 		jButtonMetaData.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
 				metaDataActionPerformed();
@@ -686,6 +686,9 @@ public class MiningWindow extends JFrame
 		jLabelMultiRegressionTargets = initJLabel("secondary/tertiary targets");
 		jPanelEvaluationLabels.add(jLabelMultiRegressionTargets);
 
+		// TODO for stable jar, disable
+		jLabelMultiRegressionTargets.setVisible(false);
+
 		jLabelMultiTargets = initJLabel("targets and settings");
 		jPanelEvaluationLabels.add(jLabelMultiTargets);
 
@@ -734,7 +737,7 @@ public class MiningWindow extends JFrame
 		});
 		jPanelEvaluationFields.add(jComboBoxMiscField);
 
-		jButtonMultiRegressionTargets = initButton("Secondary/Tertiary Targets", 'S');
+		jButtonMultiRegressionTargets = initButton("Secondary/Tertiary Targets", Mnemonic.SECONDARY_TERTIARY_TARGETS);
 		jButtonMultiRegressionTargets.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
 				jButtonMultiRegressionTargetsActionPerformed();
@@ -742,7 +745,10 @@ public class MiningWindow extends JFrame
 		});
 		jPanelEvaluationFields.add(jButtonMultiRegressionTargets);
 
-		jButtonMultiTargets = initButton("Targets and Settings", 'T');
+		// TODO for stable jar, disable
+		jButtonMultiRegressionTargets.setVisible(false);
+
+		jButtonMultiTargets = initButton("Targets and Settings", Mnemonic.TARGETS_AND_SETTINGS);
 		jButtonMultiTargets.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
 				jButtonMultiTargetsActionPerformed();
@@ -754,10 +760,7 @@ public class MiningWindow extends JFrame
 		jLFieldTargetInfo.setFont(GUI.DEFAULT_TEXT_FONT);
 		jPanelEvaluationFields.add(jLFieldTargetInfo);
 
-//		jButtonBaseModel.setPreferredSize(new Dimension(86, 22));
-//		jButtonBaseModel.setMaximumSize(new Dimension(95, 25));
-//		jButtonBaseModel.setMinimumSize(new Dimension(82, 25));
-		jButtonBaseModel = initButton("Base Model", 'B');
+		jButtonBaseModel = initButton("Base Model", Mnemonic.BASE_MODEL);
 		jButtonBaseModel.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
 				jButtonBaseModelActionPerformed();
@@ -920,7 +923,7 @@ public class MiningWindow extends JFrame
 
 		jPanelMineButtons.setMinimumSize(new Dimension(0, 40));
 
-		jButtonSubgroupDiscovery = initButton("Subgroup Discovery", 'S');
+		jButtonSubgroupDiscovery = initButton("Subgroup Discovery", Mnemonic.SUBGROUP_DISCOVERY);
 		jButtonSubgroupDiscovery.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
 				jButtonSubgroupDiscoveryActionPerformed();
@@ -928,7 +931,7 @@ public class MiningWindow extends JFrame
 		});
 		jPanelMineButtons.add(jButtonSubgroupDiscovery);
 
-		jButtonCrossValidate = initButton("Cross-Validate", 'V');
+		jButtonCrossValidate = initButton("Cross-Validate", Mnemonic.CROSS_VALIDATE);
 		jButtonCrossValidate.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
 				jButtonCrossValidateActionPerformed();
@@ -936,7 +939,7 @@ public class MiningWindow extends JFrame
 		});
 		jPanelMineButtons.add(jButtonCrossValidate);
 
-		jButtonThreshold = initButton("Compute Threshold", 'R');
+		jButtonThreshold = initButton("Compute Threshold", Mnemonic.COMPUTE_THRESHOLD);
 		jButtonThreshold.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
 				jButtonRandomQualitiesActionPerformed();
@@ -957,22 +960,22 @@ public class MiningWindow extends JFrame
 	{
 		AbstractButton[] anAbstractButtonArray =
 			new AbstractButton[] {	jMenuItemBrowse,
-									jMenuItemExplore,
-									jMenuItemMetaData,
-									jMenuItemSubgroupDiscovery,
-									jMenuItemCreateAutoRunFile,
-									jMenuItemAddToAutoRunFile,
-									jMenuItemAddCuiEnrichmentSource,
-									jMenuItemAddGoEnrichmentSource,
-									jMenuItemAddCustomEnrichmentSource,
-									jButtonBrowse,
-									jButtonExplore,
-									jButtonMetaData,
-									jButtonCrossValidate,
-									jButtonSubgroupDiscovery,
-									jButtonThreshold,
-									jButtonMultiTargets,
-									jButtonMultiRegressionTargets};
+						jMenuItemExplore,
+						jMenuItemMetaData,
+						jMenuItemSubgroupDiscovery,
+						jMenuItemCreateAutoRunFile,
+						jMenuItemAddToAutoRunFile,
+						jMenuItemAddCuiEnrichmentSource,
+						jMenuItemAddGoEnrichmentSource,
+						jMenuItemAddCustomEnrichmentSource,
+						jButtonBrowse,
+						jButtonExplore,
+						jButtonMetaData,
+						jButtonCrossValidate,
+						jButtonSubgroupDiscovery,
+						jButtonThreshold,
+						jButtonMultiTargets,
+						jButtonMultiRegressionTargets};
 		enableBaseModelButtonCheck();
 
 		for (AbstractButton a : anAbstractButtonArray)
@@ -1221,12 +1224,15 @@ public class MiningWindow extends JFrame
 			}
 		}
 
+// TODO for stable jar, disable, was added in revision 848
+/*
 		boolean hasMultiRegressionTargets = TargetType.hasMultiRegressionTargets(aTargetType);
 		jLabelMultiRegressionTargets.setVisible(hasMultiRegressionTargets);
 		jButtonMultiRegressionTargets.setVisible(hasMultiRegressionTargets);
 		// disable if not enough numeric attributes TODO should be itsTable.field
 		// jListMultiRegressionTargets is populated through initTargetAttributeItems above
 		jButtonMultiRegressionTargets.setEnabled(jListMultiRegressionTargets.getSelectedIndices().length > 1);
+*/
 
 		// has secondary targets (JList)?
 		boolean hasMultiTargets = TargetType.hasMultiTargets(aTargetType);
@@ -1255,7 +1261,7 @@ public class MiningWindow extends JFrame
 
 		if (getTargetAttributeName() != null &&
 			(aTargetType == TargetType.SINGLE_NOMINAL ||
-				aTargetType == TargetType.MULTI_BINARY_CLASSIFICATION) )
+				aTargetType == TargetType.MULTI_BINARY_CLASSIFICATION))
 		{
 			initTargetValueItems();
 		}
@@ -1333,14 +1339,14 @@ public class MiningWindow extends JFrame
 		switch (itsTargetConcept.getTargetType())
 		{
 			case DOUBLE_REGRESSION :
-			{//TODO: Fix
-			/*	Column aPrimaryColumn = itsTable.getColumn(itsTargetConcept.getPrimaryTarget().getIndex());
+			{
+				Column aPrimaryColumn = itsTable.getColumn(itsTargetConcept.getPrimaryTarget().getIndex());
 				Column aSecondaryColumn = itsTable.getColumn(itsTargetConcept.getSecondaryTarget().getIndex());
 
 				RegressionMeasure anRM =
 					new RegressionMeasure(itsSearchParameters.getQualityMeasure(), aPrimaryColumn, aSecondaryColumn);
 
-				new ModelWindow(aPrimaryColumn, aSecondaryColumn, anRM, null); //trendline, no subset*/
+				new ModelWindow(aPrimaryColumn, aSecondaryColumn, anRM, null); //trendline, no subset
 				break;
 			}
 			case DOUBLE_CORRELATION :
@@ -2111,7 +2117,7 @@ public class MiningWindow extends JFrame
 	private JTextField jTextFieldSearchStrategyNrBins;
 
 	// GUI defaults and convenience methods
-	private static JButton initButton(String theName, int theMnemonic)
+	private static JButton initButton(String theName, Mnemonic theMnemonic)
 	{
 		JButton aButton = new JButton();
 		aButton.setPreferredSize(GUI.BUTTON_DEFAULT_SIZE);
@@ -2120,33 +2126,37 @@ public class MiningWindow extends JFrame
 		aButton.setMaximumSize(GUI.BUTTON_MAXIMUM_SIZE);
 		aButton.setFont(GUI.DEFAULT_BUTTON_FONT);
 		aButton.setText(theName);
-		aButton.setMnemonic(theMnemonic);
+		aButton.setMnemonic(theMnemonic.MNEMONIC);
 		return aButton;
 	}
 
 	// TODO include accelerator
 	private enum Mnemonic
 	{
-		FILE('F'),	// (no accelerator)
-		OPEN_FILE('O'),
-		OPEN_GENE_RANK('G'),
-		BROWSE('B'),
-		EXPLORE('E'),
-		META_DATA('M'),
-		DATA_EXPLORER('D'),
-		SUBGROUP_DISCOVERY('S'),
-		CREATE_AUTORUN_FILE('C'),
-		ADD_TO_AUTORUN_FILE('A'),
-		EXIT('X'),
-		ABOUT('A'),	// 2x (no accelerator)
-		ABOUT_CORTANA('I'),
-		SECONDARY_TARGETS('T'),
-		BASE_MODEL('B'),	// 2x (no accelerator)
-		RANDOM_SUBGROUPS('R'),
-		RANDOM_CONDITIONS('C');	// 2x (no accelerator)
+		// never use accelerator for TargetType/ setting dependent items
+		FILE('F'),			// no accelerator
+		OPEN_FILE('O'),			// accelerator
+		OPEN_GENE_RANK('G'),		// not used for now
+		BROWSE('B'),			// accelerator
+		EXPLORE('E'),			// accelerator
+		META_DATA('D'),			// accelerator // TODO does not work?
+		SUBGROUP_DISCOVERY('S'),	// accelerator
+		CREATE_AUTORUN_FILE('C'),	// accelerator
+		ADD_TO_AUTORUN_FILE('A'),	// accelerator
+		EXIT('X'),			// accelerator
+		ABOUT('A'),			// no accelerator, 'A' used 2x
+		ABOUT_CORTANA('I'),		// accelerator
+		TARGETS_AND_SETTINGS('T'),	// no accelerator
+		SECONDARY_TERTIARY_TARGETS('Y'),// not used for now
+		BASE_MODEL('M'),		// no accelerator
+		CROSS_VALIDATE('V'),		// no accelerator
+		COMPUTE_THRESHOLD('P'),		// no accelerator
+		RANDOM_SUBGROUPS('R'),		// not used for now
+		RANDOM_CONDITIONS('C'),		// not used for now, 'C' used 2x
+		SWAP_RANDOMISE('W');		// not used for now
 
-		final int mnemonic;
-		private Mnemonic(int theMnemonic) { mnemonic = theMnemonic; }
+		final int MNEMONIC;
+		private Mnemonic(int theMnemonic) { MNEMONIC = theMnemonic; }
 	}
 
 	private static JLabel initJLabel(String theName)
@@ -2156,7 +2166,7 @@ public class MiningWindow extends JFrame
 		return aJLable;
 	}
 
-	// XXX for GUI testing only
+	// XXX for GUI debugging only, DO NOT REMOVE
 	private void initJMenuGui()
 	{
 		JRadioButtonMenuItem aLookAndFeel;

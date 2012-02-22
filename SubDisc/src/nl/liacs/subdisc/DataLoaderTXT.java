@@ -3,6 +3,9 @@ package nl.liacs.subdisc;
 import java.io.*;
 import java.util.*;
 
+// TODO
+// set MissingValues
+// DELIMITERs should be available to all Loaders
 public class DataLoaderTXT implements FileLoaderInterface
 {
 	// should be made available to all loaders (through FileLoaderInterface)
