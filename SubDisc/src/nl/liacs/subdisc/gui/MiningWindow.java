@@ -343,6 +343,7 @@ public class MiningWindow extends JFrame
 		jComboBoxNumericOperators = new JComboBox();
 		jComboBoxSearchStrategyNumeric = new JComboBox();
 		jTextFieldSearchStrategyNrBins = new JTextField();
+		jTextFieldNrThreads = new JTextField();
 
 		// mining buttons
 		jPanelMineButtons = new JPanel();
@@ -850,7 +851,7 @@ public class MiningWindow extends JFrame
 		jLabelStrategyWidth = initJLabel("search width");
 		jPanelSearchStrategyLabels.add(jLabelStrategyWidth);
 
-		jLabelNotEquals = initJLabel("<html>include &ne; (nominal)</html>");
+		jLabelNotEquals = initJLabel("<html>include &#8800; (nominal)</html>");
 		jPanelSearchStrategyLabels.add(jLabelNotEquals);
 
 		jLabelNumericOperators = initJLabel("numeric operators");
@@ -861,6 +862,9 @@ public class MiningWindow extends JFrame
 
 		jLabelSearchStrategyNrBins = initJLabel("number of bins");
 		jPanelSearchStrategyLabels.add(jLabelSearchStrategyNrBins);
+
+		jLabelNrThreads = initJLabel("threads (0 = all available)");
+		jPanelSearchStrategyLabels.add(jLabelNrThreads);
 
 		jPanelSearchStrategy.add(jPanelSearchStrategyLabels);
 
@@ -914,6 +918,13 @@ public class MiningWindow extends JFrame
 		jTextFieldSearchStrategyNrBins.setHorizontalAlignment(SwingConstants.RIGHT);
 		jTextFieldSearchStrategyNrBins.setMinimumSize(new Dimension(86, 22));
 		jPanelSearchStrategyFields.add(jTextFieldSearchStrategyNrBins);
+
+		jTextFieldNrThreads.setPreferredSize(new Dimension(86, 22));
+		jTextFieldNrThreads.setFont(GUI.DEFAULT_TEXT_FONT);
+		jTextFieldNrThreads.setText(String.valueOf(Runtime.getRuntime().availableProcessors()));
+		jTextFieldNrThreads.setHorizontalAlignment(SwingConstants.RIGHT);
+		jTextFieldNrThreads.setMinimumSize(new Dimension(86, 22));
+		jPanelSearchStrategyFields.add(jTextFieldNrThreads);
 
 		jPanelSearchStrategy.add(jPanelSearchStrategyFields);
 		jPanelCenter.add(jPanelSearchStrategy);	// MM
@@ -1385,7 +1396,7 @@ public class MiningWindow extends JFrame
 	private void runSubgroupDiscovery(Table theTable, int theFold, BitSet theBitSet)
 	{
 		setupSearchParameters();
-		runSubgroupDiscovery(theTable, theFold, theBitSet, itsSearchParameters, true, 0);
+		runSubgroupDiscovery(theTable, theFold, theBitSet, itsSearchParameters, true, getNrThreads());
 	}
 
 	// public, but does not perform ANY sanity checks
@@ -1684,6 +1695,8 @@ public class MiningWindow extends JFrame
 		itsSearchParameters.setNominalNotEquals(getNominalNotEquals());
 		itsSearchParameters.setNumericStrategy(getNumericStrategy());
 		itsSearchParameters.setNrBins(getSearchStrategyNrBins());
+		// TODO
+		//itsSearchParameters.setNrThreads(getSearchStrategyNrBins());
 /*
  * These values are no longer 'static', but can be changed in MultiTargetsWindow
 		itsSearchParameters.setPostProcessingCount(SearchParameters.POST_PROCESSING_COUNT_DEFAULT);
@@ -2000,6 +2013,10 @@ public class MiningWindow extends JFrame
 	private int getSearchStrategyNrBins() { return getValue(8, jTextFieldSearchStrategyNrBins.getText()); }
 	private void setSearchStrategyNrBins(String aValue) { jTextFieldSearchStrategyNrBins.setText(aValue); }
 
+	// search strategy - number of threads
+	private int getNrThreads() { return getValue(Runtime.getRuntime().availableProcessors(), jTextFieldNrThreads.getText()); }
+	private void setNrThreads(String aValue) { jTextFieldNrThreads.setText(aValue); }
+
 	private int getValue(int theDefaultValue, String theText)
 	{
 		int aValue = theDefaultValue;
@@ -2108,6 +2125,7 @@ public class MiningWindow extends JFrame
 	private JLabel jLabelNumericOperators;
 	private JLabel jLabelSearchStrategyNumeric;
 	private JLabel jLabelSearchStrategyNrBins;
+	private JLabel jLabelNrThreads;
 	private JPanel jPanelSearchStrategyFields;
 	private JComboBox jComboBoxSearchStrategyType;
 	private JTextField jTextFieldSearchStrategyWidth;
@@ -2115,6 +2133,7 @@ public class MiningWindow extends JFrame
 	private JComboBox jComboBoxNumericOperators;
 	private JComboBox jComboBoxSearchStrategyNumeric;
 	private JTextField jTextFieldSearchStrategyNrBins;
+	private JTextField jTextFieldNrThreads;
 
 	// GUI defaults and convenience methods
 	private static JButton initButton(String theName, Mnemonic theMnemonic)
