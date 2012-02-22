@@ -2,10 +2,10 @@ package nl.liacs.subdisc;
 
 public enum NumericOperators implements EnumInterface
 {
-	NUMERIC_NORMAL("<html>&le, &ge</html>"),
-	NUMERIC_LEQ("<html>&le</html>"),
-	NUMERIC_GEQ("<html>&ge</html>"),
-	NUMERIC_ALL("<html> &le, &ge, =</html>"),
+	NUMERIC_NORMAL("<html>&#8804;, &#8805;</html>"),
+	NUMERIC_LEQ("<html>&#8804;</html>"),
+	NUMERIC_GEQ("<html>&#8805;</html>"),
+	NUMERIC_ALL("<html>&#8804;, &#8805;, =</html>"),
 	NUMERIC_EQ("=");
 
 	/**
