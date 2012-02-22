@@ -169,7 +169,11 @@ public class QualityMeasure
 	 */
 	public float calculate(int theCountHeadBody, int theCoverage)
 	{
-		return calculate(itsMeasure, itsNrRecords, itsTotalTargetCoverage, theCountHeadBody, theCoverage);
+		float aResult = calculate(itsMeasure, itsNrRecords, itsTotalTargetCoverage, theCountHeadBody, theCoverage);
+		if (Float.isNaN(aResult))
+			return 0.0f;
+		else
+			return aResult;
 	}
 
 	//SINGLE_NOMINAL ============================================================
@@ -329,7 +333,8 @@ public class QualityMeasure
 			- (1-aFraction)*calculateConditionalEntropy(aNotBodySupport, aHeadNotBodySupport); //the complement
 	}
 
-
+	public int getNrRecords() { return itsNrRecords; }
+	public int getNrPositives() { return itsTotalTargetCoverage; }
 
 	//SINGLE_NUMERIC ===============================================
 
@@ -460,14 +465,14 @@ public class QualityMeasure
 			case NOVELTY	: 		{ anEvaluationMinimum = "0.01"; break; }
 			case ABSNOVELTY : 		{ anEvaluationMinimum = "0.01"; break; }
 			case CHI_SQUARED: 		{ anEvaluationMinimum = "50"; break; }
-			case INFORMATION_GAIN: 	{ anEvaluationMinimum = "0.2"; break; }
+			case INFORMATION_GAIN: 	{ anEvaluationMinimum = "0.0"; break; }
 			case BINOMIAL: 			{ anEvaluationMinimum = "0.0"; break; }
 			case JACCARD	: 		{ anEvaluationMinimum = "0.2"; break; }
 			case COVERAGE	: 		{ anEvaluationMinimum = "10"; break; }
-			case ACCURACY	: 		{ anEvaluationMinimum = "0.8"; break; }
-			case SPECIFICITY: 		{ anEvaluationMinimum = "0.8"; break; }
-			case SENSITIVITY: 		{ anEvaluationMinimum = "0.8"; break; }
-			case PURITY		: 		{ anEvaluationMinimum = "0.8"; break; }
+			case ACCURACY	: 		{ anEvaluationMinimum = "0.0"; break; }
+			case SPECIFICITY: 		{ anEvaluationMinimum = "0.5"; break; }
+			case SENSITIVITY: 		{ anEvaluationMinimum = "0.5"; break; }
+			case PURITY		: 		{ anEvaluationMinimum = "0.5"; break; }
 			case LAPLACE	:		{ anEvaluationMinimum = "0.2"; break; }
 			case F_MEASURE	:		{ anEvaluationMinimum = "0.2"; break; }
 			case G_MEASURE	:		{ anEvaluationMinimum = "0.2"; break; }

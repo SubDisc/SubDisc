@@ -11,9 +11,9 @@ public class ROCCurveWindow extends JFrame implements ActionListener
 {
 	private static final long serialVersionUID = 1L;
 
-	public ROCCurveWindow(SubgroupSet theSubgroupSet, SearchParameters theSearchParameters)
+	public ROCCurveWindow(SubgroupSet theSubgroupSet, SearchParameters theSearchParameters, QualityMeasure theQualityMeasure)
 	{
-		ROCCurve aROCCurve = new ROCCurve(theSubgroupSet, theSearchParameters);
+		ROCCurve aROCCurve = new ROCCurve(theSubgroupSet, theSearchParameters, theQualityMeasure);
 
 		JPanel aClosePanel = new JPanel();
 		aClosePanel.add(GUI.buildButton("Close", 'C', "close", this));

@@ -19,9 +19,11 @@ public class ROCCurve extends JPanel
 	private ArrayList<Arc2D.Float> itsPoints;
 	private String itsAreaUnderCurve;
 	private float itsXMin, itsXMax, itsYMin, itsYMax;
+	private float itsXStart, itsYStart, itsXEnd, itsYEnd;
 	private int itsMin, itsMax;
+	private QualityMeasure itsQualityMeasure;
 
-	public ROCCurve(SubgroupSet theSubgroupSet, SearchParameters theSearchParameters)
+	public ROCCurve(SubgroupSet theSubgroupSet, SearchParameters theSearchParameters, QualityMeasure theQualityMeasure)
 	{
 		super();
 		setBackground(Color.white);
@@ -52,27 +54,42 @@ public class ROCCurve extends JPanel
 		int aTotalCoverage = theSubgroupSet.getTotalCoverage();
 		float aTotalTargetCoverage = theSubgroupSet.getTotalTargetCoverage();
 		int aMinCoverage = theSearchParameters.getMinimumCoverage();
-		int aMaxCoverage = aTotalCoverage * (int)theSearchParameters.getMaximumCoverage();
+		int aMaxCoverage = (int) (aTotalCoverage * theSearchParameters.getMaximumCoverage());
 		float aFalseCoverage = aTotalCoverage - aTotalTargetCoverage;
-
-		itsXMin = aMinCoverage/aFalseCoverage;
-		itsXMax = aMaxCoverage/aFalseCoverage;
-		itsYMin = aMinCoverage/aTotalTargetCoverage;
-		itsYMax = aMaxCoverage/aTotalTargetCoverage;
 		itsMin = aMinCoverage;
 		itsMax = aMaxCoverage;
 
+		itsQualityMeasure = theQualityMeasure;
+
+		itsXMin = aMinCoverage/aFalseCoverage;
+		itsYMin = aMinCoverage/aTotalTargetCoverage;
+		itsXMax = aMaxCoverage/aFalseCoverage;
+		itsYMax = aMaxCoverage/aTotalTargetCoverage;
+		itsXStart = (itsYMax-1f)*(itsXMax/itsYMax);
+		itsYStart = 1f;
+		if (itsYMax < 1f) // crosses left boundary, rather than top boundary
+		{
+			itsXStart = 0f;
+			itsYStart = itsYMax;
+		}
+		itsXEnd = 1f;
+		itsYEnd = itsYMax-(itsYMax/itsXMax);
+		if (itsXMax < 1f) // crosses bottom boundary, rather than right boundary
+		{
+			itsXEnd = itsXMax;
+			itsYEnd = 0f;
+		}
+
 		itsLines = new GeneralPath();
-		itsLines.moveTo(itsXMin, 0);
-		itsLines.lineTo(0, -itsYMin);
-		itsLines.moveTo(itsXMax, 0);
-		itsLines.lineTo(0, -itsYMax);
+		itsLines.moveTo(itsXMin, 0);	//min cov
+		itsLines.lineTo(0, -itsYMin);	//min cov
+		itsLines.moveTo(itsXStart, -itsYStart);	//max cov
+		itsLines.lineTo(itsXEnd, -itsYEnd);		//max cov
 		itsLines.moveTo(0, 0);
 		itsLines.lineTo(0, -1);
 		itsLines.lineTo(1, -1);
 		itsLines.lineTo(1, 0);
 		itsLines.lineTo(0, 0);
-		//PathIterator p = itsLines.getPathIterator(new AffineTransform());
 		for(int i=0; i<11; i++)
 		{
 			itsLines.moveTo(i*0.1f, 0.0f);
@@ -96,11 +113,40 @@ public class ROCCurve extends JPanel
 		aGraphic.translate(0.15, 1.05);
 		aGraphic.setStroke(new BasicStroke(3.0f/aSize));
 
-		if (itsPoints != null)
+		//isometrics
+		int N = itsQualityMeasure.getNrRecords();
+		int p = itsQualityMeasure.getNrPositives();
+		int aResolution = 400;
+		float aMax = Math.max(itsQualityMeasure.calculate(p, p), itsQualityMeasure.calculate(p, N));
+		aMax = Math.max(aMax, itsQualityMeasure.calculate(0, p-N));
+		for (int i=0; i<aResolution; i++)
 		{
+			float anX = i/(float)aResolution;
+			int aNegatives = (int) (anX*(N-p));
+			for (int j=0; j<aResolution; j++)
+			{
+				float aY = -(j+1)/(float)aResolution;
+				int aPositives = (int) (-aY*p);
+				int aValue = (int) (255*itsQualityMeasure.calculate(aPositives, aNegatives+aPositives)/aMax);
+				boolean isNegative = (aValue<0);
+				if (isNegative)
+					aValue = -aValue;
+				aValue = Math.min(aValue, 255);
+				aValue = Math.max(aValue, 0);
+				aValue = 15*(Math.round(aValue/15));
+				if (isNegative)
+					aGraphic.setColor(new Color(255, 255-aValue, 255-aValue)); //red
+				else
+					aGraphic.setColor(new Color(255-aValue, 255, 255-aValue)); //green
+				aGraphic.fill(new Rectangle2D.Double(anX, aY, 1/(float)aResolution, 1/(float)aResolution));
+			}
+		}
+
+		aGraphic.setColor(Color.black);
+
+		if (itsPoints != null)
 			for(Arc2D aPoint : itsPoints)
 				aGraphic.draw(aPoint);
-		}
 
 		aGraphic.setStroke(new BasicStroke(2.0f/aSize));
 		aGraphic.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
@@ -117,7 +163,7 @@ public class ROCCurve extends JPanel
 		aGraphic.drawString("TPR", -0.1f, -0.44f);
 
 		aGraphic.drawString(Integer.toString(itsMin), itsXMin, -0.03f);
-		aGraphic.drawString(Integer.toString(itsMax), itsXMax, -0.03f);
+		aGraphic.drawString(Integer.toString(itsMax), itsXEnd+0.01f, -Math.max(itsYEnd, 0.03f));
 
 		NumberFormat aFormatter = NumberFormat.getNumberInstance();
 		aFormatter.setMaximumFractionDigits(1);

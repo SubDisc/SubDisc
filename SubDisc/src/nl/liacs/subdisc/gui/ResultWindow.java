@@ -324,7 +324,7 @@ public class ResultWindow extends JFrame implements ActionListener
 
 	private void jButtonROCActionPerformed()
 	{
-		new ROCCurveWindow(itsSubgroupSet, itsSearchParameters);
+		new ROCCurveWindow(itsSubgroupSet, itsSearchParameters, itsQualityMeasure);
 	}
 
 	private void jButtonBrowseSubgroupsActionPerformed() {
