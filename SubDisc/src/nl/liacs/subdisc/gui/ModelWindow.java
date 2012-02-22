@@ -27,9 +27,9 @@ public class ModelWindow extends JFrame implements ActionListener
 	{
 		initComponents();
 		String aName = (theRM == null ? "2D distribution" :
-										String.format("y = %f + %f * x",
-													(float)theRM.getIntercept(),
-													(float)theRM.getSlope()));
+						String.format("y = %f + %f * x",
+								(float) theRM.getIntercept(),
+								(float) theRM.getSlope()));
 
 		//data
 		BitSet aMembers = (theSubgroup == null) ? null : theSubgroup.getMembers();

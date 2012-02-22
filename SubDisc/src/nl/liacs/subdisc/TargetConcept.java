@@ -142,7 +142,8 @@ public class TargetConcept implements XMLNodeInterface
 			case SINGLE_NUMERIC :
 				return (theColumn == itsPrimaryTarget);
 			case DOUBLE_REGRESSION :
-				return (theColumn == itsPrimaryTarget || itsSecondaryTargets.contains(theColumn) || itsTertiaryTargets.contains(theColumn) );
+// TODO for stable jar, disable, added in revision 848
+				// return (theColumn == itsPrimaryTarget || itsSecondaryTargets.contains(theColumn) || itsTertiaryTargets.contains(theColumn) );
 			case DOUBLE_CORRELATION :
 				return (theColumn == itsPrimaryTarget || theColumn == itsSecondaryTarget);
 			case MULTI_LABEL :

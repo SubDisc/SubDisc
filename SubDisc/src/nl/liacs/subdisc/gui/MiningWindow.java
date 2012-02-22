@@ -1340,8 +1340,8 @@ public class MiningWindow extends JFrame
 		{
 			case DOUBLE_REGRESSION :
 			{
-				Column aPrimaryColumn = itsTable.getColumn(itsTargetConcept.getPrimaryTarget().getIndex());
-				Column aSecondaryColumn = itsTable.getColumn(itsTargetConcept.getSecondaryTarget().getIndex());
+				Column aPrimaryColumn = itsTargetConcept.getPrimaryTarget();
+				Column aSecondaryColumn = itsTargetConcept.getSecondaryTarget();
 
 				RegressionMeasure anRM =
 					new RegressionMeasure(itsSearchParameters.getQualityMeasure(), aPrimaryColumn, aSecondaryColumn);
@@ -1351,10 +1351,10 @@ public class MiningWindow extends JFrame
 			}
 			case DOUBLE_CORRELATION :
 			{
-				new ModelWindow(itsTable.getColumn(itsTargetConcept.getPrimaryTarget().getIndex()),
-								itsTable.getColumn(itsTargetConcept.getSecondaryTarget().getIndex()),
-								null,
-								null); //no trendline, no subset
+				new ModelWindow(itsTargetConcept.getPrimaryTarget(),
+						itsTargetConcept.getSecondaryTarget(),
+						null,
+						null); //no trendline, no subset
 				break;
 			}
 			case MULTI_LABEL :

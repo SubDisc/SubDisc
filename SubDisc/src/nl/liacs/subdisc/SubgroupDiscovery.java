@@ -102,7 +102,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		{
 // TODO RegressionMeasure revision 851 introduces the new RegressionMeasure constructor below (not mentioned in log)
 			itsBaseRM = new RegressionMeasure(itsSearchParameters.getQualityMeasure(), itsPrimaryColumn, itsSecondaryColumn);
-// TODO for stable jar, disabled, causes comple errors, reinstate later
+// TODO for stable jar, disabled, causes compile errors, reinstate later
 //			itsBaseRM = new RegressionMeasure(itsSearchParameters.getQualityMeasure(), aTC);
 
 			//initialize bounds
@@ -917,4 +917,18 @@ TODO for stable jar, disabled, causes comple errors, reinstate later
 	public int getNrBoundFiveFired() { return itsBoundFiveFired; }
 	public int getNrBoundFourFired() { return itsBoundFourFired; }
 	public int getNrRankDef() { return itsRankDefCount; }
+
+	/**
+	 * Return the base {@link RegressionMeasure RegressionMeasure} for this
+	 * SubgroupDiscovery.
+	 * 
+	 * @return the base RegressionMeasure, if this SubgroupDiscovery is of
+	 * {@link TargetType TargetType}
+	 * {@value TargetType#DOUBLE_REGRESSION DOUBLE_REGRESSION},
+	 * <code>null</code> otherwise.
+	 */
+	public RegressionMeasure getRegressionMeasureBase()
+	{
+		return itsBaseRM;
+	}
 }

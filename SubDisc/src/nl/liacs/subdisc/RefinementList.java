@@ -10,27 +10,35 @@ public class RefinementList extends ArrayList<Refinement>
 
 	public RefinementList(Subgroup theSubgroup, Table theTable, SearchParameters theSearchParameters)
 	{
+		Log.logCommandLine("refinementlist");
+
 		itsSubgroup = theSubgroup;
 		itsTable = theTable;
-		Log.logCommandLine("refinementlist");
+
+		final SearchParameters aSP = theSearchParameters;
+		final TargetConcept aTC = aSP.getTargetConcept();
+		final NumericOperators aNO = aSP.getNumericOperators();
+		final boolean useNotEquals = theSearchParameters.getNominalNotEquals();
 
 		Condition aCondition = itsTable.getFirstCondition();
 		do
 		{
+			boolean add = false;
 			Column aColumn = aCondition.getColumn();
-			if (aColumn.getIsEnabled() && !theSearchParameters.getTargetConcept().isTargetAttribute(aColumn))
+
+			if (aColumn.getIsEnabled() && !aTC.isTargetAttribute(aColumn))
 			{
 				Refinement aRefinement = new Refinement(aCondition, itsSubgroup);
 
 				//check validity of operator
 				//numeric
-				if (aColumn.isNumericType() && NumericOperators.check(theSearchParameters.getNumericOperators(), aCondition.getOperator()))
-				{
-					add(aRefinement);
-					Log.logCommandLine("   condition: " + aCondition.toString());
-				}
+				if (aColumn.isNumericType() && NumericOperators.check(aNO, aCondition.getOperator()))
+					add = true;
 				//nominal
-				if (!aColumn.isNumericType() && (theSearchParameters.getNominalNotEquals() || !aCondition.checksNotEquals()))
+				else if (!aColumn.isNumericType() && (useNotEquals || !aCondition.checksNotEquals()))
+					add = true;
+
+				if (add)
 				{
 					add(aRefinement);
 					Log.logCommandLine("   condition: " + aCondition.toString());

@@ -1,7 +1,6 @@
 package nl.liacs.subdisc;
 
 import java.awt.geom.*;
-import java.text.*;
 import java.util.*;
 
 import nl.liacs.subdisc.Jama.*;
@@ -28,18 +27,18 @@ public class RegressionMeasure
 
 	public static int itsType;
 	private RegressionMeasure itsBase = null;
-	
+
 	private Matrix itsDataMatrix;
 	private Matrix itsBetaHat;
 	private Matrix itsHatMatrix;
 	private Matrix itsResidualMatrix;
-	
+
 	private double itsP;
 	private double itsSSquared;
 	private double[] itsRSquared;
 	private double[] itsT;
 	private double[] itsSVP;
-	
+
 	private int itsBoundSevenCount;
 	private int itsBoundSixCount;
 	private int itsBoundFiveCount;
@@ -62,7 +61,7 @@ public class RegressionMeasure
 
 			itsData.add(new Point2D.Float(thePrimaryColumn.getFloat(i), theSecondaryColumn.getFloat(i)) );
 		}
-			
+
 		switch(itsType)
 		{
 			case QualityMeasure.LINEAR_REGRESSION:
@@ -75,7 +74,7 @@ public class RegressionMeasure
 			case QualityMeasure.COOKS_DISTANCE:
 			{
 				updateRegressionFunction(); //updating error terms unnecessary since Cook's distance does not care
-				
+
 				double[][] aData = new double[itsSampleSize][2];
 				double[][] anXValues = new double[itsSampleSize][2];
 				for (int i=0; i<itsSampleSize; i++){
@@ -91,15 +90,15 @@ public class RegressionMeasure
 				}
 				Matrix anXMatrix = new Matrix(anXValues);
 				Matrix aYMatrix = new Matrix(aYValues);
-				
+
 				itsDataMatrix = new Matrix(aData);
 				itsBetaHat = (anXMatrix.transpose().times(anXMatrix)).inverse().times(anXMatrix.transpose()).times(aYMatrix);
 				itsHatMatrix = anXMatrix.times((anXMatrix.transpose().times(anXMatrix)).inverse()).times(anXMatrix.transpose());
 				itsResidualMatrix = (Matrix.identity(itsSampleSize,itsSampleSize).minus(itsHatMatrix)).times(aYMatrix);
-				
+
 				itsP = itsBetaHat.getRowDimension();
 				itsSSquared = (itsResidualMatrix.transpose().times(itsResidualMatrix)).get(0,0)/((double) itsSampleSize-itsP);
-				
+
 				//fill R^2 array
 				double[] aResiduals = new double[itsSampleSize];
 				for (int i=0; i<itsSampleSize; i++)
@@ -109,7 +108,7 @@ public class RegressionMeasure
 				for (int i=itsSampleSize-2; i>=0; i--)
 					aResiduals[i] += aResiduals[i+1];
 				itsRSquared = aResiduals;
-				
+
 				//fill T array
 				double[] aT = new double[itsSampleSize];
 				for (int i=0; i<itsSampleSize; i++)
@@ -118,13 +117,13 @@ public class RegressionMeasure
 				for (int i=itsSampleSize-2; i>=0; i--)
 					aT[i] += aT[i+1];
 				itsT = aT;
-				
+
 				//fill SVP array; this would be Cook's distance when removing only single points. Cf. Cook&Weisberg p.117, Cook1977a
 				double[] aSVP = new double[itsSampleSize];
 				for (int i=0; i<itsSampleSize; i++)
 					aSVP[i] = itsResidualMatrix.get(i,0)*itsResidualMatrix.get(i,0)/itsP * itsHatMatrix.get(i,i)/(1-itsHatMatrix.get(i,i));
 				itsSVP = aSVP;
-				
+
 				//initialize bounds
 				itsBoundSevenCount=0;
 				itsBoundSixCount=0;
@@ -170,7 +169,7 @@ public class RegressionMeasure
 		updateErrorTerms();
 		return getSSD();
 	}
-	
+
 	//TODO turn this t-value into a p-value.
 	public double getSSD()
 	{
@@ -189,7 +188,7 @@ public class RegressionMeasure
 		//if we divided by zero along the way, we are considering a degenerate candidate subgroup, hence quality=0 
 		if (itsSampleSize==0 || itsSampleSize==2 || aDenominator==0)
 			return 0;
-		
+
 		//determine variance for the complement distribution
 		aNumerator = getErrorTermVariance(itsComplementErrorTermSquaredSum, aComplementSampleSize);
 		aDenominator = aComplementXSquaredSum - 2*aComplementXSum*aComplementXSum/aComplementSampleSize + aComplementXSum*aComplementXSum/aComplementSampleSize;
@@ -198,7 +197,7 @@ public class RegressionMeasure
 		//if we divided by zero along the way, we are considering a degenerate candidate subgroup complement, hence quality=0 
 		if (aComplementSampleSize==0 || aComplementSampleSize==2 || aDenominator==0)
 			return 0;
-		
+
 		//calculate the difference between slopes of this measure and its complement
 		double aSlope = getSlope(itsXSum, itsYSum, itsXSquaredSum, itsXYSum, itsSampleSize);
 		double aComplementSlope = getSlope(aComplementXSum, aComplementYSum, aComplementXSquaredSum, aComplementXYSum, aComplementSampleSize);
@@ -213,7 +212,7 @@ public class RegressionMeasure
 			return 0;
 		else {return aSlopeDifference / Math.sqrt(aVariance+aComplementVariance);}
 	}
-	
+
 	public double calculate(Subgroup theNewSubgroup)
 	{
 		BitSet aMembers = theNewSubgroup.getMembers();
@@ -225,7 +224,7 @@ public class RegressionMeasure
 			itsRankDefCount++;
 			return Double.MIN_VALUE;
 		}
-		
+
 		//calculate the upper bound values. Before each bound, only the necessary computations are done.
 		double aT = itsT[aSampleSize];
 		double aRSquared = itsRSquared[aSampleSize];
@@ -236,7 +235,7 @@ public class RegressionMeasure
 			Log.logCommandLine("                   Bound 7: " + aBoundSeven);
 			itsBoundSevenCount++;
 		}
-		
+
 		int[] anIndices = new int[aSampleSize];
 		int[] aRemovedIndices = new int[itsSampleSize-aSampleSize];
 		int anIndex=0;
@@ -263,7 +262,7 @@ public class RegressionMeasure
 			Log.logCommandLine("                   Bound 6: " + aBoundSix);
 			itsBoundSixCount++;
 		}
-		
+
 		Matrix aRemovedHatMatrix = itsHatMatrix.getMatrix(aRemovedIndices,aRemovedIndices);
 		double aRemovedTrace = aRemovedHatMatrix.trace();
 		double aBoundFive = computeBoundFive(aSampleSize, aRemovedTrace, aRSquared);
@@ -272,21 +271,21 @@ public class RegressionMeasure
 			Log.logCommandLine("                   Bound 5: " + aBoundFive);
 			itsBoundFiveCount++;
 		}
-		
+
 		double aBoundFour = computeBoundFour(aSampleSize, aRemovedTrace, aSquaredResidualSum);
 		if (aBoundFour>Double.MIN_VALUE)
 		{
 			Log.logCommandLine("                   Bound 4: " + aBoundFour);
 			itsBoundFourCount++;
 		}
-		
+
 		//compute estimate based on projection of single influence values 
 		double anSVPDistance = computeSVPDistance(itsSampleSize-aSampleSize, aRemovedIndices);
 		Log.logCommandLine("                   SVP est: " + anSVPDistance);
 
 		//start computing Cook's Distance
 		Matrix aNewDataMatrix = itsDataMatrix.getMatrix(anIndices,0,1);
-		
+
 		//filter out rank-deficient cases; these regressions cannot be computed, hence low quality
 		LUDecomposition itsDecomp = new LUDecomposition(aNewDataMatrix);
 		if (!itsDecomp.isNonsingular())
@@ -294,7 +293,7 @@ public class RegressionMeasure
 			itsRankDefCount++;
 			return Double.MIN_VALUE;
 		}
-		
+
 		//make submatrices
 		double[][] anXValues = new double[aSampleSize][2];
 		for (int i=0; i<aSampleSize; i++)
@@ -307,24 +306,24 @@ public class RegressionMeasure
 			aYValues[i][0]=aNewDataMatrix.get(i,1);
 		Matrix anXMatrix = new Matrix(anXValues);
 		Matrix aYMatrix = new Matrix(aYValues);
-		
+
 		//compute regression
 		Matrix aBetaHat = (anXMatrix.transpose().times(anXMatrix)).inverse().times(anXMatrix.transpose()).times(aYMatrix);
 		Matrix aHatMatrix = anXMatrix.times((anXMatrix.transpose().times(anXMatrix)).inverse()).times(anXMatrix.transpose());
 		Matrix aResidualMatrix = (Matrix.identity(aSampleSize,aSampleSize).minus(aHatMatrix)).times(aYMatrix);
-		
+
 		//compute Cook's distance
 		double aP = aBetaHat.getRowDimension();
 		double anSSquared = (aResidualMatrix.transpose().times(aResidualMatrix)).get(0,0)/((double) itsSampleSize-aP);
 		double[][] aParentValues = {{itsIntercept},{itsSlope}};
 		Matrix aParentBetaHat = new Matrix(aParentValues);
-		
+
 		double aQuality = aBetaHat.minus(aParentBetaHat).transpose().times(anXMatrix.transpose()).times(anXMatrix).times(aBetaHat.minus(aParentBetaHat)).get(0,0)/(aP*anSSquared);
 		//N.B.: Temporary line for fetching Cook's experimental statistics
 		Log.logRefinement(""+aQuality+","+anSVPDistance+","+aSampleSize);
 		return aQuality;
 	}
-	
+
 	private double computeBoundSeven(int theSampleSize, double theT, double theRSquared)
 	{
 		if (theT>=1)
@@ -345,14 +344,14 @@ public class RegressionMeasure
 			return Double.MIN_VALUE;
 		return theRemovedTrace/((1-theRemovedTrace)*(1-theRemovedTrace))*theRSquared/(itsP*itsSSquared);
 	}
-	
+
 	private double computeBoundFour(int theSampleSize, double theRemovedTrace, double theSquaredResidualSum)
 	{
 		if (theRemovedTrace>=1)
 			return Double.MIN_VALUE;
 		return theRemovedTrace/((1-theRemovedTrace)*(1-theRemovedTrace))*theSquaredResidualSum/(itsP*itsSSquared);
 	}
-	
+
 	private double computeSVPDistance(int theNrRemoved, int[] theIndices)
 	{
 		double result = 0.0;
@@ -360,7 +359,7 @@ public class RegressionMeasure
 			result += itsSVP[theIndices[i]];
 		return result;
 	}
-	
+
 	private double squareSum(Matrix itsMatrix)
 	{
 		int aSampleSize = itsMatrix.getRowDimension();
@@ -402,7 +401,8 @@ public class RegressionMeasure
 	 * @param theY the Y-value, the target
 	 * @param theX the X-value
 	 */
-	public void addObservation(float theY, float theX)
+	// never used
+	private void addObservation(float theY, float theX)
 	{
 		//adjust the sums
 		itsSampleSize++;
@@ -417,7 +417,7 @@ public class RegressionMeasure
 		itsData.add(aDataPoint);
 	}
 
-	public void addObservation(Point2D.Float theObservation)
+	private void addObservation(Point2D.Float theObservation)
 	{
 		float anX = (float) theObservation.getX();
 		float aY = (float) theObservation.getY();
@@ -434,12 +434,12 @@ public class RegressionMeasure
 		itsData.add(theObservation);
 	}
 
-	public Point2D.Float getObservation(int theIndex)
+	private Point2D.Float getObservation(int theIndex)
 	{
 		return itsData.get(theIndex);
 	}
 
- 	/**
+	/**
 	 * calculates the error terms for the distribution and recomputes the
 	 * sum of the squared error term
 	 *
@@ -490,32 +490,33 @@ public class RegressionMeasure
 		return theErrorTermSquaredSum / (theSampleSize - 2 );
 	}
 
-	public int getSampleSize()
+	private int getSampleSize()
 	{
 		return itsSampleSize;
 	}
 
-	public double getXSum()
+	private double getXSum()
 	{
 		return itsXSum;
 	}
 
-	public double getYSum()
+	private double getYSum()
 	{
 		return itsYSum;
 	}
 
-	public double getXYSum()
+	private double getXYSum()
 	{
 		return itsXYSum;
 	}
 
-	public double getXSquaredSum()
+	private double getXSquaredSum()
 	{
 		return itsXSquaredSum;
 	}
 
-	public double getYSquaredSum()
+	// never used
+	private double getYSquaredSum()
 	{
 		return itsYSquaredSum;
 	}
@@ -524,7 +525,8 @@ public class RegressionMeasure
 	 * Computes and returns the correlation given the observations contained by CorrelationMeasure
 	 * @return the computed correlation
 	 */
-	public double getCorrelation()
+	// never used
+	private double getCorrelation()
 	{
 		itsCorrelation = (itsSampleSize*itsXYSum - itsXSum*itsYSum)/Math.sqrt((itsSampleSize*itsXSquaredSum - itsXSum*itsXSum) * (itsSampleSize*itsYSquaredSum - itsYSum*itsYSum));
 		//itsCorrelationIsOutdated = false; //set flag to false, so subsequent calls to getCorrelation don't need anymore computation.

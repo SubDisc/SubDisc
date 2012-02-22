@@ -15,17 +15,21 @@ public class ResultWindow extends JFrame implements ActionListener
 {
 	private static final long serialVersionUID = 1L;
 
-	private SearchParameters itsSearchParameters;
-	private ResultTableModel itsResultTableModel;
-	private JTable itsSubgroupTable;
-	private SubgroupSet itsSubgroupSet;
-//	private DAGView itsDAGView; //layout of the graph on the whole database
 	private Table itsTable;
-	private BinaryTable itsBinaryTable;
+	private SearchParameters itsSearchParameters;
+	private SubgroupSet itsSubgroupSet;
 	private QualityMeasure itsQualityMeasure;
 	private int itsNrRecords;
+
+	private RegressionMeasure itsRegressionMeasureBase;
+	private BinaryTable itsBinaryTable;
+
 	private int itsFold;
 	private BitSet itsBitSet;
+
+	private ResultTableModel itsResultTableModel;
+	private JTable itsSubgroupTable;
+//	private DAGView itsDAGView; //layout of the graph on the whole database
 
 //	public ResultWindow(Table theTable, SubgroupDiscovery theSubgroupDiscovery, DAGView theDAGView, BinaryTable theBinaryTable, int theFold, BitSet theBitSet)
 	public ResultWindow(Table theTable, SubgroupDiscovery theSubgroupDiscovery, BinaryTable theBinaryTable, int theFold, BitSet theBitSet)
@@ -41,7 +45,11 @@ public class ResultWindow extends JFrame implements ActionListener
 		itsSubgroupSet = theSubgroupDiscovery.getResult();
 		itsSearchParameters = theSubgroupDiscovery.getSearchParameters();
 		itsQualityMeasure = theSubgroupDiscovery.getQualityMeasure();
-//			itsDAGView = theDAGView;
+
+		// only for DOUBLE_REGRESSION, avoids recalculation
+		itsRegressionMeasureBase = theSubgroupDiscovery.getRegressionMeasureBase();
+
+//		itsDAGView = theDAGView;
 		itsBinaryTable = theBinaryTable;
 
 		// only used in MULTI_LABEL setting for now
@@ -251,22 +259,7 @@ public class ResultWindow extends JFrame implements ActionListener
 		{
 			case DOUBLE_CORRELATION :
 			{
-				int aCount = 0;
-				for (Subgroup aSubgroup : itsSubgroupSet)
-				{
-					if (aCount == aSelectionIndex[0]) //just the first selection gets a window
-					{
-						TargetConcept aTargetConcept = itsSearchParameters.getTargetConcept();
-
-						//no trendline
-						new ModelWindow(aTargetConcept.getPrimaryTarget(),
-										aTargetConcept.getSecondaryTarget(),
-										null,
-										aSubgroup).setTitle("Subgroup " + (aCount + 1));
-						break;
-					}
-					aCount++;
-				}
+				modelWindowHelper(TargetType.DOUBLE_CORRELATION);
 				break;
 			}
 			case MULTI_LABEL :
@@ -296,6 +289,10 @@ public class ResultWindow extends JFrame implements ActionListener
 			}
 			case DOUBLE_REGRESSION :
 			{
+				modelWindowHelper(TargetType.DOUBLE_REGRESSION);
+				break;
+// TODO for stable jar, disable, added in revision 844
+/*
 				int i=0;
 				Log.logCommandLine("======================================================");
 				Log.logCommandLine("Global model:");
@@ -316,9 +313,29 @@ public class ResultWindow extends JFrame implements ActionListener
 				}
 				Log.logCommandLine("======================================================");
 				break;
+*/
 			}
 			default :
 				break;
+		}
+	}
+
+	private void modelWindowHelper(TargetType theTargetType)
+	{
+		final TargetConcept aTargetConcept = itsSearchParameters.getTargetConcept();
+		final boolean isRegressionSetting = (theTargetType == TargetType.DOUBLE_REGRESSION);
+		RegressionMeasure aRM = null;
+		int aCount = 0;
+
+		for (Subgroup aSubgroup : itsSubgroupSet)
+		{
+			if (isRegressionSetting)
+				aRM = new RegressionMeasure(itsRegressionMeasureBase, aSubgroup.getMembers());
+
+			new ModelWindow(aTargetConcept.getPrimaryTarget(),
+					aTargetConcept.getSecondaryTarget(),
+					aRM,
+					aSubgroup).setTitle("Subgroup " + ++aCount);
 		}
 	}
 
