@@ -3,6 +3,9 @@
  */
 package nl.liacs.subdisc;
 
+import java.awt.*;
+import java.awt.event.*;
+import java.beans.*;
 import java.io.*;
 
 import javax.swing.*;
@@ -92,6 +95,10 @@ public class FileHandler
 		FileType aFileType = FileType.getFileType(itsFile);
 		Timer aTimer = new Timer();
 
+		JFrame aLoaderDialog = null;
+		if (!GraphicsEnvironment.isHeadless() && aFileType != FileType.XML)
+			aLoaderDialog = showFileLoaderDialog(itsFile);
+
 		switch (aFileType)
 		{
 			case TXT :
@@ -139,11 +146,42 @@ public class FileHandler
 							itsFile.getPath(),
 							aTimer.getElapsedTimeString()));
 		printLoadingInfo();
+		aLoaderDialog.setVisible(false);
+		aLoaderDialog = null;
 	}
 
 	private void openDatabase()
 	{
 
+	}
+
+	private JFrame showFileLoaderDialog(File theFile)
+	{
+		final JOptionPane aPane =
+			new JOptionPane(String.format("<html>Loading file:<br><br>'%s'<br><br>(Window closes when loading completes.)</html>",
+							theFile.getAbsolutePath()),
+					JOptionPane.DEFAULT_OPTION,
+					JOptionPane.INFORMATION_MESSAGE,
+					null,
+					new Object[] {},
+					null);
+
+		final JFrame aFrame = new JFrame("File Loading in progress...");
+		aFrame.setContentPane(aPane);
+		aFrame.addWindowListener(new WindowAdapter()
+		{
+			public void windowClosing(WindowEvent e)
+			{
+				aFrame.setTitle("Window closes automatically after loading completes");
+			}
+		});
+		aFrame.setIconImage(MiningWindow.ICON);
+		aFrame.setLocation(100, 100);
+		aFrame.pack();
+		aFrame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+		aFrame.setVisible(true);
+
+		return aFrame;
 	}
 
 	private File save()
@@ -178,7 +216,7 @@ public class FileHandler
 		}
 	}
 
-	public void printLoadingInfo()
+	private void printLoadingInfo()
 	{
 		itsTable.update();
 

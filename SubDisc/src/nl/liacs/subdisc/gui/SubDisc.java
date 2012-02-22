@@ -10,13 +10,6 @@ public class SubDisc
 		if (XMLAutoRun.autoRunSetting(args))
 			return;
 
-		//FREEZE
-		try
-		{
-			Thread.sleep(3000);
-		}
-		catch(Exception theException) {}
-
 		FileHandler aLoader = new FileHandler(Action.OPEN_FILE);
 		Table aTable = aLoader.getTable();
 		SearchParameters aSearchParameters = aLoader.getSearchParameters();
