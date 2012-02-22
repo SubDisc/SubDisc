@@ -1567,7 +1567,7 @@ public class Column implements XMLNodeInterface
 			case BINARY :
 			{
 				final boolean b = "1".equals(theValue);
-				for (int i = itsBinaries.nextSetBit(0); i >= 0; i = itsBinaries.nextSetBit(i + 1))
+				for (int i = 0, j = itsSize; i < j; ++i)
 					if (itsBinaries.get(i) == b)
 						++aResult;
 				break;
