@@ -1,6 +1,5 @@
 package nl.liacs.subdisc;
 
-import java.awt.*;
 import java.io.*;
 import java.util.*;
 
@@ -139,12 +138,6 @@ public class XMLAutoRun
 	 */
 	public static boolean autoRunSetting(String[] args)
 	{
-		// remove it as fast as possible, gives a short blink
-		if (!GraphicsEnvironment.isHeadless()) {
-			if (SplashScreen.getSplashScreen() != null)
-				SplashScreen.getSplashScreen().close();
-		}
-
 		File aFile = null;
 		boolean showWindows = false;
 		int aNrThreads = 0;
@@ -156,14 +149,18 @@ public class XMLAutoRun
 			else
 				aFile = new File(args[0]);
 
-			if (args.length == 2)
+			if (args.length >= 2)
 				showWindows = AttributeType.isValidBinaryTrueValue(args[1]);
 
 			if (args.length == 3)
+			{
 				try { aNrThreads = Integer.parseInt(args[2]); }
 				catch (NumberFormatException e) { showHelp(); }
+			}
 
 			runAllFromFile(aFile, showWindows, aNrThreads);
+			if (!showWindows)
+				System.exit(0);
 			return true;
 		}
 		else
@@ -224,7 +221,8 @@ public class XMLAutoRun
 				aWriter.write(aDelimiter);
 				aWriter.write(String.valueOf(aSubgroup.getPValue()));
 				aWriter.write(aDelimiter);
-				aWriter.write(aSubgroup.getConditions().toString());
+				//aWriter.write(aSubgroup.getConditions().toString());
+				aWriter.write(aSubgroup.getConditions().toNaturalOrderString());	// TODO for testing only
 				aWriter.write("\n");
 			}
 		}
@@ -253,12 +251,16 @@ public class XMLAutoRun
 		Log.logCommandLine("");
 		Log.logCommandLine("filepath can be relative");
 		Log.logCommandLine("filename must end with '.xml'");
+		Log.logCommandLine("");
 		Log.logCommandLine("optional showWindows:");
 		Log.logCommandLine("'true' to show result window");
 		Log.logCommandLine("'false' to suppress all GUI elements (default)");
+		Log.logCommandLine("");
 		Log.logCommandLine("optional nrThreads:");
 		Log.logCommandLine("positive integer indicating the number of threads to use");
-		Log.logCommandLine("default is 1");
+		Log.logCommandLine("default is " + Runtime.getRuntime().availableProcessors());
+		Log.logCommandLine("(determined through java.lang.Runtime.getRuntime().availableProcessors())");
+		Log.logCommandLine("");
 		System.exit(0);
 	}
 }

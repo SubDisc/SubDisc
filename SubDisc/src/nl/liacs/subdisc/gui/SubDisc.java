@@ -1,5 +1,7 @@
 package nl.liacs.subdisc.gui;
 
+import java.awt.*;
+
 import nl.liacs.subdisc.*;
 import nl.liacs.subdisc.FileHandler.Action;
 
@@ -7,6 +9,19 @@ public class SubDisc
 {
 	public static void main(String[] args)
 	{
+		if (!GraphicsEnvironment.isHeadless() && (SplashScreen.getSplashScreen() != null))
+		{
+			// assume it is an XML-autorun experiment
+			if (args.length > 1)
+				SplashScreen.getSplashScreen().close();
+			else
+			{
+				try { Thread.sleep(3000); }
+				catch (InterruptedException e) {};
+				SplashScreen.getSplashScreen().close();
+			}
+		}
+
 		if (XMLAutoRun.autoRunSetting(args))
 			return;
 
