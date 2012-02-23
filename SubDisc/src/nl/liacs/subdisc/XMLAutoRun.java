@@ -48,9 +48,9 @@ public class XMLAutoRun
 
 		// do this only after trying to insert new node
 		((Element) anAutorunNode).setAttribute("nr_experiments",
-												String.valueOf(anAutorunNode
-																.getChildNodes()
-																.getLength()));
+							String.valueOf(anAutorunNode
+									.getChildNodes()
+									.getLength()));
 
 		XMLDocument.saveDocument(itsDocument, theFile);
 	}
@@ -65,8 +65,7 @@ public class XMLAutoRun
 			((Element) aNodeList.item(i)).setAttribute("id", String.valueOf(i));
 
 		Node anExperimentNode = itsDocument.createElement("experiment");
-		((Element) anExperimentNode).setAttribute("id",
-													String.valueOf(aLength));
+		((Element) anExperimentNode).setAttribute("id", String.valueOf(aLength));
 //		((Element) anExperimentNode).setIdAttribute("id", true);
 
 		for (XMLNode aNode : XMLNode.values())
@@ -221,8 +220,8 @@ public class XMLAutoRun
 				aWriter.write(aDelimiter);
 				aWriter.write(String.valueOf(aSubgroup.getPValue()));
 				aWriter.write(aDelimiter);
-				//aWriter.write(aSubgroup.getConditions().toString());
-				aWriter.write(aSubgroup.getConditions().toNaturalOrderString());	// TODO for testing only
+				aWriter.write(aSubgroup.getConditions().toString());
+				//aWriter.write(aSubgroup.getConditions().toNaturalOrderString());	// TODO for testing only
 				aWriter.write("\n");
 			}
 		}
