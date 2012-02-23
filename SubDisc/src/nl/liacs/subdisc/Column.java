@@ -1529,7 +1529,7 @@ public class Column implements XMLNodeInterface
 	{
 		if (!(itsType == AttributeType.NUMERIC || itsType == AttributeType.ORDINAL))
 		{
-			logMessage("countValues", getTypeError("NUMERIC or ORDINAL"));
+			logMessage("getAverage", getTypeError("NUMERIC or ORDINAL"));
 			return Float.NaN;
 		}
 
