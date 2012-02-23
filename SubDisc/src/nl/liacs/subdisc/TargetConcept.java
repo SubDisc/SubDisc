@@ -65,6 +65,7 @@ public class TargetConcept implements XMLNodeInterface
 						itsMultiTargets.add(theTable.getColumn(s));
 				}
 			}
+// TODO NOTE these are not present in the XML
 			else if ("multi_regression_targets".equalsIgnoreCase(aNodeName))
 			{
 				if (!aSetting.getTextContent().isEmpty())
@@ -142,7 +143,7 @@ public class TargetConcept implements XMLNodeInterface
 			case SINGLE_NUMERIC :
 				return (theColumn == itsPrimaryTarget);
 			case DOUBLE_REGRESSION :
-// TODO for stable jar, disable, added in revision 848
+// TODO for stable jar, disable, setting were originally added in revision 848
 				// return (theColumn == itsPrimaryTarget || itsSecondaryTargets.contains(theColumn) || itsTertiaryTargets.contains(theColumn) );
 			case DOUBLE_CORRELATION :
 				return (theColumn == itsPrimaryTarget || theColumn == itsSecondaryTarget);
@@ -187,6 +188,7 @@ public class TargetConcept implements XMLNodeInterface
 			XMLNode.addNodeTo(aNode, "multi_targets", sb.substring(0, sb.length() - 1));
 		}
 
+/* TODO for stable jar, disable, setting were originally added in revision 848
 		if (itsMultiRegressionTargets == null || itsMultiRegressionTargets.size() == 0)
 			XMLNode.addNodeTo(aNode, "multi_regression_targets");
 		else
@@ -216,8 +218,9 @@ public class TargetConcept implements XMLNodeInterface
 				sb.append(c.getName() + ",");
 			XMLNode.addNodeTo(aNode, "tertiary_targets", sb.substring(0, sb.length() - 1));
 		}
+ */
 	}
-	
-	public String getGlobalRegressionModel() { return itsGlobalRegressionModel;	}
-	public void setGlobalRegressionModel(String theModel) {	itsGlobalRegressionModel = theModel; }
+
+	public String getGlobalRegressionModel() { return itsGlobalRegressionModel; }
+	public void setGlobalRegressionModel(String theModel) { itsGlobalRegressionModel = theModel; }
 }

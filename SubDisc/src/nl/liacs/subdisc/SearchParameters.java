@@ -19,22 +19,22 @@ public class SearchParameters implements XMLNodeInterface
 
 	private int		itsSearchDepth;
 	private int		itsMinimumCoverage;
-	private float		itsMaximumCoverage;
+	private float		itsMaximumCoverageFraction;
 	private int		itsMaximumSubgroups;
 	private float		itsMaximumTime;
 
 	private SearchStrategy	itsSearchStrategy;
 	private int		itsSearchStrategyWidth;
-	private boolean		itsNominalNotEquals;	// TODO this is not added to XML yet
+	private boolean		itsNominalNotEquals;
 	private NumericOperators itsNumericOperators;
 	private NumericStrategy	itsNumericStrategy;
 	private int		itsNrBins;
+	private int		itsNrThreads;
 
 	private float		itsAlpha;
 	private float		itsBeta;
 	private boolean		itsPostProcessingDoAutoRun;
 	private int		itsPostProcessingCount;
-//	private int		itsMaximumPostProcessingSubgroups; // TODO not used
 
 	public SearchParameters(Node theSearchParametersNode)
 	{
@@ -74,8 +74,8 @@ public class SearchParameters implements XMLNodeInterface
 	public void setSearchDepth(int theSearchDepth) { itsSearchDepth = theSearchDepth; }
 	public int getMinimumCoverage() { return itsMinimumCoverage; }
 	public void setMinimumCoverage(int theMinimumCoverage) { itsMinimumCoverage = theMinimumCoverage; }
-	public float getMaximumCoverage() { return itsMaximumCoverage; }
-	public void setMaximumCoverage(float theMaximumCoverage) { itsMaximumCoverage = theMaximumCoverage; }
+	public float getMaximumCoverageFraction() { return itsMaximumCoverageFraction; }
+	public void setMaximumCoverageFraction(float theMaximumCoverageFraction) { itsMaximumCoverageFraction = theMaximumCoverageFraction; }
 	public int getMaximumSubgroups() { return itsMaximumSubgroups; }
 	public void setMaximumSubgroups(int theMaximumSubgroups) { itsMaximumSubgroups  = theMaximumSubgroups; }
 	public float getMaximumTime() { return itsMaximumTime; }
@@ -89,8 +89,8 @@ public class SearchParameters implements XMLNodeInterface
 		itsSearchStrategy = SearchStrategy.getSearchStrategy(theSearchStrategyName);
 	}
 
-	public void setNominalNotEquals(boolean theValue) {itsNominalNotEquals = theValue;}
 	public boolean getNominalNotEquals() {return itsNominalNotEquals;}
+	public void setNominalNotEquals(boolean theValue) {itsNominalNotEquals = theValue;}
 	public NumericOperators getNumericOperators() { return itsNumericOperators; }
 	public void setNumericOperators(String theNumericOperatorsName)
 	{
@@ -103,20 +103,20 @@ public class SearchParameters implements XMLNodeInterface
 		itsNumericStrategy = NumericStrategy.getNumericStrategy(theNumericStrategyName);
 	}
 
-	public int getSearchStrategyWidth()					{ return itsSearchStrategyWidth; }
+	public int getSearchStrategyWidth()			{ return itsSearchStrategyWidth; }
 	public void setSearchStrategyWidth(int theWidth)	{ itsSearchStrategyWidth = theWidth; }
 	public int getNrBins()					{ return itsNrBins; }
-	public void setNrBins(int theNr)		{ itsNrBins = theNr; }
+	public void setNrBins(int theNrBins)			{ itsNrBins = theNrBins; }
+	public int getNrThreads()				{ return itsNrThreads; }
+	public void setNrThreads(int theNrThreads)		{ itsNrThreads = theNrThreads; }
 	public float getAlpha()					{ return itsAlpha; }
-	public void setAlpha(float theAlpha)	{ itsAlpha = theAlpha; }
+	public void setAlpha(float theAlpha)			{ itsAlpha = theAlpha; }
 	public float getBeta()					{ return itsBeta; }
-	public void setBeta(float theBeta)		{ itsBeta = theBeta; }
-	public boolean getPostProcessingDoAutoRun()							{ return itsPostProcessingDoAutoRun; }
-	public void setPostProcessingDoAutoRun(boolean theAutoRunSetting)	{ itsPostProcessingDoAutoRun = theAutoRunSetting; }
-	public int getPostProcessingCount()				{ return itsPostProcessingCount; }
-	public void setPostProcessingCount(int theNr)	{ itsPostProcessingCount = theNr; }
-//	public int getMaximumPostProcessingSubgroups()	{ return itsMaximumPostProcessingSubgroups; } // TODO not used
-//	public void setMaximumPostProcessingSubgroups(int theNr)	{ itsMaximumPostProcessingSubgroups = theNr; } // TODO not used
+	public void setBeta(float theBeta)			{ itsBeta = theBeta; }
+	public boolean getPostProcessingDoAutoRun()		{ return itsPostProcessingDoAutoRun; }
+	public void setPostProcessingDoAutoRun(boolean theAutoRunSetting) { itsPostProcessingDoAutoRun = theAutoRunSetting; }
+	public int getPostProcessingCount()			{ return itsPostProcessingCount; }
+	public void setPostProcessingCount(int theNr)		{ itsPostProcessingCount = theNr; }
 
 	/**
 	 * Creates an {@link XMLNode XMLNode} representation of this
@@ -133,19 +133,20 @@ public class SearchParameters implements XMLNodeInterface
 		XMLNode.addNodeTo(aNode, "quality_measure_minimum", getQualityMeasureMinimum());
 		XMLNode.addNodeTo(aNode, "search_depth", getSearchDepth());
 		XMLNode.addNodeTo(aNode, "minimum_coverage", getMinimumCoverage());
-		XMLNode.addNodeTo(aNode, "maximum_coverage", getMaximumCoverage());
+		XMLNode.addNodeTo(aNode, "maximum_coverage_fraction", getMaximumCoverageFraction());
 		XMLNode.addNodeTo(aNode, "maximum_subgroups", getMaximumSubgroups());
 		XMLNode.addNodeTo(aNode, "maximum_time", getMaximumTime());
 		XMLNode.addNodeTo(aNode, "search_strategy", getSearchStrategy().GUI_TEXT);
+		XMLNode.addNodeTo(aNode, "use_nominal_not_equals", getNominalNotEquals());
 		XMLNode.addNodeTo(aNode, "search_strategy_width", getSearchStrategyWidth());
 		XMLNode.addNodeTo(aNode, "numeric_operators", getNumericOperators().GUI_TEXT);
 		XMLNode.addNodeTo(aNode, "numeric_strategy", getNumericStrategy().GUI_TEXT);
 		XMLNode.addNodeTo(aNode, "nr_bins", getNrBins());
+		XMLNode.addNodeTo(aNode, "nr_threads", getNrThreads());
 		XMLNode.addNodeTo(aNode, "alpha", getAlpha());
 		XMLNode.addNodeTo(aNode, "beta", getBeta());
 		XMLNode.addNodeTo(aNode, "post_processing_do_autorun", getPostProcessingDoAutoRun());
 		XMLNode.addNodeTo(aNode, "post_processing_count", getPostProcessingCount());
-//		XMLNode.addNodeTo(aNode, "maximum_post_processing_subgroups", getMaximumPostProcessingSubgroups()); // TODO not used
 	}
 
 	private void loadData(Node theSearchParametersNode)
@@ -163,14 +164,16 @@ public class SearchParameters implements XMLNodeInterface
 				itsSearchDepth = Integer.parseInt(aSetting.getTextContent());
 			else if("minimum_coverage".equalsIgnoreCase(aNodeName))
 				itsMinimumCoverage = Integer.parseInt(aSetting.getTextContent());
-			else if("maximum_coverage".equalsIgnoreCase(aNodeName))
-				itsMaximumCoverage = Float.parseFloat(aSetting.getTextContent());
+			else if("maximum_coverage_fraction".equalsIgnoreCase(aNodeName))
+				itsMaximumCoverageFraction = Float.parseFloat(aSetting.getTextContent());
 			else if("maximum_subgroups".equalsIgnoreCase(aNodeName))
 				itsMaximumSubgroups = Integer.parseInt(aSetting.getTextContent());
 			else if("maximum_time".equalsIgnoreCase(aNodeName))
 				itsMaximumTime = Float.parseFloat(aSetting.getTextContent());
 			else if("search_strategy".equalsIgnoreCase(aNodeName))
 				itsSearchStrategy = (SearchStrategy.getSearchStrategy(aSetting.getTextContent()));
+			else if("use_nominal_not_equals".equalsIgnoreCase(aNodeName))
+				itsNominalNotEquals = Boolean.parseBoolean(aSetting.getTextContent());
 			else if("search_strategy_width".equalsIgnoreCase(aNodeName))
 				itsSearchStrategyWidth = Integer.parseInt(aSetting.getTextContent());
 			else if("numeric_operators".equalsIgnoreCase(aNodeName))
@@ -179,6 +182,8 @@ public class SearchParameters implements XMLNodeInterface
 				itsNumericStrategy = (NumericStrategy.getNumericStrategy(aSetting.getTextContent()));
 			else if("nr_bins".equalsIgnoreCase(aNodeName))
 				itsNrBins = Integer.parseInt(aSetting.getTextContent());
+			else if("nr_threads".equalsIgnoreCase(aNodeName))
+				itsNrThreads = Integer.parseInt(aSetting.getTextContent());
 			else if("alpha".equalsIgnoreCase(aNodeName))
 				itsAlpha = Float.parseFloat(aSetting.getTextContent());
 			else if("beta".equalsIgnoreCase(aNodeName))
@@ -187,8 +192,6 @@ public class SearchParameters implements XMLNodeInterface
 				itsPostProcessingDoAutoRun = Boolean.parseBoolean(aSetting.getTextContent());
 			else if("post_processing_count".equalsIgnoreCase(aNodeName))
 				itsPostProcessingCount = Integer.parseInt(aSetting.getTextContent());
-//			else if("maximum_post_processing_subgroups".equalsIgnoreCase(aNodeName))
-//				itsMaximumPostProcessingSubgroups = Integer.parseInt(aSetting.getTextContent());
 			else
 				;	// TODO throw warning dialog
 		}

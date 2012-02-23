@@ -59,7 +59,7 @@ public enum XMLNodeSearchParameter
 		@Override
 		public String getValueFromData(SearchParameters theSearchParameters)
 		{
-			return String.valueOf(theSearchParameters.getMaximumCoverage());
+			return String.valueOf(theSearchParameters.getMaximumCoverageFraction());
 		}
 
 		@Override

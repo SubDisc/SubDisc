@@ -147,8 +147,11 @@ public class MiningWindow extends JFrame
 		// search strategy
 		setSearchStrategyType(itsSearchParameters.getSearchStrategy().GUI_TEXT);
 		setSearchStrategyWidth(String.valueOf(itsSearchParameters.getSearchStrategyWidth()));
+		setNominalNotEquals(String.valueOf(itsSearchParameters.getNominalNotEquals()));
+		setNumericOperators(itsSearchParameters.getNumericOperators().GUI_TEXT);
 		setNumericStrategy(itsSearchParameters.getNumericStrategy().GUI_TEXT);
 		setSearchStrategyNrBins(String.valueOf(itsSearchParameters.getNrBins()));
+		setNrThreads(String.valueOf(itsSearchParameters.getNrThreads()));
 
 		// search conditions
 		/*
@@ -158,7 +161,7 @@ public class MiningWindow extends JFrame
 		 */
 		setSearchDepthMaximum(String.valueOf(itsSearchParameters.getSearchDepth()));
 		setSearchCoverageMinimum(String.valueOf(itsSearchParameters.getMinimumCoverage()));
-		setSearchCoverageMaximum(String.valueOf(itsSearchParameters.getMaximumCoverage()));
+		setSearchCoverageMaximum(String.valueOf(itsSearchParameters.getMaximumCoverageFraction()));
 		setSubgroupsMaximum(String.valueOf(itsSearchParameters.getMaximumSubgroups()));
 		setSearchTimeMaximum(String.valueOf(itsSearchParameters.getMaximumTime()));
 
@@ -1686,7 +1689,7 @@ public class MiningWindow extends JFrame
 
 		itsSearchParameters.setSearchDepth(getSearchDepthMaximum());
 		itsSearchParameters.setMinimumCoverage(getSearchCoverageMinimum());
-		itsSearchParameters.setMaximumCoverage(getSearchCoverageMaximum());
+		itsSearchParameters.setMaximumCoverageFraction(getSearchCoverageMaximum());
 		itsSearchParameters.setMaximumSubgroups(getSubgroupsMaximum());
 		itsSearchParameters.setMaximumTime(getSearchTimeMaximum());
 
@@ -1945,6 +1948,7 @@ public class MiningWindow extends JFrame
 	}
 
 	/* FIELD METHODS OF CORTANA COMPONENTS */
+	// all setters take a String argument for now
 
 	// target type - target type
 	private String getTargetTypeName() { return (String) jComboBoxTargetType.getSelectedItem(); }
@@ -2001,9 +2005,11 @@ public class MiningWindow extends JFrame
 
 	// search strategy - nominal not equals
 	private boolean getNominalNotEquals() { return jCheckBoxNotEquals.isSelected(); }
+	private void setNominalNotEquals(String aValue) { jCheckBoxNotEquals.setSelected(Boolean.parseBoolean(aValue)); }
 
 	// search strategy - numeric operators
 	private String getNumericOperators() { return (String) jComboBoxNumericOperators.getSelectedItem(); }
+	private void setNumericOperators(String aValue) { jComboBoxNumericOperators.setSelectedItem(aValue); }
 
 	// search strategy - numeric strategy
 	private String getNumericStrategy() { return (String) jComboBoxSearchStrategyNumeric.getSelectedItem(); }

@@ -54,7 +54,7 @@ public class ROCCurve extends JPanel
 		int aTotalCoverage = theSubgroupSet.getTotalCoverage();
 		float aTotalTargetCoverage = theSubgroupSet.getTotalTargetCoverage();
 		int aMinCoverage = theSearchParameters.getMinimumCoverage();
-		int aMaxCoverage = (int) (aTotalCoverage * theSearchParameters.getMaximumCoverage());
+		int aMaxCoverage = (int) (aTotalCoverage * theSearchParameters.getMaximumCoverageFraction());
 		float aFalseCoverage = aTotalCoverage - aTotalTargetCoverage;
 		itsMin = aMinCoverage;
 		itsMax = aMaxCoverage;
