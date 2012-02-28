@@ -57,7 +57,7 @@ public class ResultWindow extends JFrame implements ActionListener
 		itsFold = theFold;
 		itsBitSet = theBitSet;
 
-		itsResultTableModel = new ResultTableModel(itsSubgroupSet);
+		itsResultTableModel = new ResultTableModel(itsSubgroupSet, itsSearchParameters.getTargetConcept().getTargetType());
 		itsSubgroupTable = new JTable(itsResultTableModel);
 		if (!itsSubgroupSet.isEmpty())
 			itsSubgroupTable.addRowSelectionInterval(0, 0);
@@ -110,8 +110,10 @@ public class ResultWindow extends JFrame implements ActionListener
 		itsSubgroupTable.getColumnModel().getColumn(1).setPreferredWidth(aUnitWidth);
 		itsSubgroupTable.getColumnModel().getColumn(2).setPreferredWidth((int)(1.5f * aUnitWidth));
 		itsSubgroupTable.getColumnModel().getColumn(3).setPreferredWidth((int)(1.5f * aUnitWidth));
-		itsSubgroupTable.getColumnModel().getColumn(4).setPreferredWidth(2 * aUnitWidth);
-		itsSubgroupTable.getColumnModel().getColumn(5).setPreferredWidth(13 * aUnitWidth);
+		itsSubgroupTable.getColumnModel().getColumn(4).setPreferredWidth((int)(1.5f * aUnitWidth));
+		itsSubgroupTable.getColumnModel().getColumn(5).setPreferredWidth((int)(1.5f * aUnitWidth));
+		itsSubgroupTable.getColumnModel().getColumn(6).setPreferredWidth((int)(1.5f * aUnitWidth));
+		itsSubgroupTable.getColumnModel().getColumn(7).setPreferredWidth(13 * aUnitWidth);
 
 		itsScrollPane.add(itsSubgroupTable);
 		itsScrollPane.setViewportView(itsSubgroupTable);

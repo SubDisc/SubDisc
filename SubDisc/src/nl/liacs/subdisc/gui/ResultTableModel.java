@@ -11,10 +11,12 @@ public class ResultTableModel extends AbstractTableModel
 	private static final long serialVersionUID = 1L;
 
 	private SubgroupSet itsSubgroupSet;
+	private TargetType itsTargetType;
 
-	public ResultTableModel(SubgroupSet theSubgroupSet)
+	public ResultTableModel(SubgroupSet theSubgroupSet, TargetType theType)
 	{
 		itsSubgroupSet = theSubgroupSet;
+		itsTargetType = theType;
 	}
 
 	@Override
@@ -24,19 +26,60 @@ public class ResultTableModel extends AbstractTableModel
 	}
 
 	@Override
-	public int getColumnCount() { return 6; }
+	public int getColumnCount()
+	{
+		return 8;
+	}
 
 	@Override
 	public String getColumnName(int theColumnIndex)
 	{
+		if (itsTargetType == TargetType.SINGLE_NOMINAL)
+		{
+			if (theColumnIndex == 4)
+				return "Prob.";
+			else if (theColumnIndex == 5)
+				return "Positives";
+		}
+		else if (itsTargetType == TargetType.SINGLE_NUMERIC)
+		{
+			if (theColumnIndex == 4)
+				return "Average";
+			else if (theColumnIndex == 5)
+				return "St. Dev.";
+		}
+		else if (itsTargetType == TargetType.DOUBLE_REGRESSION)
+		{
+			if (theColumnIndex == 4)
+				return "Slope";
+			else if (theColumnIndex == 5)
+				return "Intercept";
+		}
+		else if (itsTargetType == TargetType.DOUBLE_CORRELATION)
+		{
+			if (theColumnIndex == 4)
+				return "Correlation";
+			else if (theColumnIndex == 5)
+				return "Distance";
+		}
+		else if (itsTargetType == TargetType.MULTI_LABEL)
+		{
+			if (theColumnIndex == 4)
+				return "Edit Dist.";
+			else if (theColumnIndex == 5)
+				return "Entropy";
+		}
+
 		switch(theColumnIndex)
 		{
 			case 0 : return "Nr.";
 			case 1 : return "Depth";
 			case 2 : return "Coverage";
-			case 3 : return "Measure";
-			case 4 : return "p-value";
-			case 5 : return "Conditions";
+			case 3 : return "Quality";
+			case 4 : return "-";
+			case 5 : return "-";
+			case 6 : return "p-Value";
+			case 7 : return "Conditions";
 			default : return "";
 		}
 	}
@@ -44,16 +87,6 @@ public class ResultTableModel extends AbstractTableModel
 	@Override
 	public Object getValueAt(int theRowIndex, int theColumnIndex)
 	{
-/*
-		Iterator<Subgroup> anIterator = itsSubgroupSet.iterator();
-		// Good way to walk through sorted list?
-		// will crash if (!anIterator.hasNext())
-		for (int i = 0 ; i < theRowIndex; i++)
-			anIterator.next();
-
-		// Next Subgroup is the one
-		Subgroup aSubgroup = anIterator.next();
-*/
 		// will crash if (!anIterator.hasNext())
 		// !(0 <= theRowIndex < itsSubgroupSet.size())
 		Iterator<Subgroup> anIterator;
@@ -63,7 +96,7 @@ public class ResultTableModel extends AbstractTableModel
 			for (int i = 0 ; i < theRowIndex; ++i)
 				anIterator.next();
 		}
-		else 
+		else
 		{
 			anIterator = itsSubgroupSet.descendingIterator();
 			for (int i = itsSubgroupSet.size()-1; i > theRowIndex; --i)
@@ -77,12 +110,14 @@ public class ResultTableModel extends AbstractTableModel
 			case 1: return aSubgroup.getNrConditions();
 			case 2: return aSubgroup.getCoverage();
 			case 3: return RendererNumber.FORMATTER.format(aSubgroup.getMeasureValue());
-			case 4:
+			case 4: return RendererNumber.FORMATTER.format(aSubgroup.getSecondaryStatistic());
+			case 5: return RendererNumber.FORMATTER.format(aSubgroup.getTertiaryStatistic());
+			case 6:
 			{
 				double aPValue = aSubgroup.getPValue();
 				return ((Double.isNaN(aPValue)) ? "  -" : (float)aPValue);
 			}
-			case 5: return aSubgroup.getConditions().toString();
+			case 7: return aSubgroup.getConditions().toString();
 			default : return "---";
 		}
 	}

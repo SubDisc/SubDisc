@@ -68,12 +68,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		int aQualityMeasure = itsSearchParameters.getQualityMeasure();
 		float[] aCounts = itsNumericTarget.getQMRequiredStatistics(aBitSet, aQualityMeasure);
 
-		itsQualityMeasure = new QualityMeasure(aQualityMeasure,
-							itsMaximumCoverage,
-							aCounts[0],
-							aCounts[1],
-							aCounts[2],
-							aCounts[3]);
+		itsQualityMeasure = new QualityMeasure(aQualityMeasure,	itsMaximumCoverage,	aCounts[0],	aCounts[1],	aCounts[2],	aCounts[3]);
 		itsResult = new SubgroupSet(itsSearchParameters.getMaximumSubgroups(), itsMaximumCoverage, null); //TODO
 	}
 
@@ -168,10 +163,8 @@ public class SubgroupDiscovery extends MiningAlgorithm
 	public void mine(long theBeginTime)
 	{
 		//make subgroup to start with, containing all elements
-		//Subgroup aStart = new Subgroup(0.0, itsMaximumCoverage, 0, itsResult);
 		BitSet aBitSet = new BitSet(itsMaximumCoverage);
 		aBitSet.set(0,itsMaximumCoverage);
-		//aStart.setMembers(aBitSet);
 		Subgroup aStart = new Subgroup(0.0, itsMaximumCoverage, 0, itsResult, aBitSet);
 
 		itsCandidateQueue = new CandidateQueue(itsSearchParameters, new Candidate(aStart));
@@ -397,22 +390,16 @@ public class SubgroupDiscovery extends MiningAlgorithm
 						++aCountHeadBody;
 
 				aQuality = itsQualityMeasure.calculate(aCountHeadBody, theNewSubgroup.getCoverage());
+				theNewSubgroup.setSecondaryStatistic(aCountHeadBody/(double)theNewSubgroup.getCoverage()); //relative occurence of positives in subgroup
+				theNewSubgroup.setTertiaryStatistic(aCountHeadBody); //count of positives in the subgroup
 				break;
 			}
 			case SINGLE_NUMERIC :
 			{
-				float[] aCounts =
-					itsNumericTarget.getQMRequiredStatistics(
-						theNewSubgroup.getMembers(),
-						itsSearchParameters.getQualityMeasure());
-
-				aQuality = itsQualityMeasure.calculate(
-						theNewSubgroup.getCoverage(),
-						aCounts[0],
-						aCounts[1],
-						aCounts[2],
-						aCounts[3],
-						null); //TODO fix this parameter. only used by X2
+				float[] aCounts = itsNumericTarget.getQMRequiredStatistics(theNewSubgroup.getMembers(),	itsSearchParameters.getQualityMeasure());
+				aQuality = itsQualityMeasure.calculate(theNewSubgroup.getCoverage(), aCounts[0], aCounts[1], aCounts[2], aCounts[3],null); //TODO fix this parameter. only used by X2
+				theNewSubgroup.setSecondaryStatistic(aCounts[0]/(double)theNewSubgroup.getCoverage()); //average
+				theNewSubgroup.setTertiaryStatistic(Math.sqrt(aCounts[1]/(double)theNewSubgroup.getCoverage())); //stdev //TODO is this correct?
 				break;
 			}
 			case DOUBLE_REGRESSION :
@@ -423,6 +410,9 @@ public class SubgroupDiscovery extends MiningAlgorithm
 					{
 						RegressionMeasure aRM = new RegressionMeasure(itsBaseRM, theNewSubgroup.getMembers());
 						aQuality = (float) aRM.getEvaluationMeasureValue();
+						theNewSubgroup.setSecondaryStatistic(aRM.getSlope()); //slope
+						theNewSubgroup.setTertiaryStatistic(aRM.getIntercept()); //intercept
+
 						break;
 					}
 /*
@@ -541,13 +531,16 @@ public class SubgroupDiscovery extends MiningAlgorithm
 				for (int i = 0; i < itsMaximumCoverage; i++)
 					if (theNewSubgroup.getMembers().get(i))
 						aCM.addObservation(itsPrimaryColumn.getFloat(i), itsSecondaryColumn.getFloat(i));
-
+				theNewSubgroup.setSecondaryStatistic(aCM.getCorrelation()); //correlation
+				theNewSubgroup.setTertiaryStatistic(aCM.computeCorrelationDistance()); //intercept
 				aQuality = (float) aCM.getEvaluationMeasureValue();
 				break;
 			}
 			case MULTI_LABEL :
 			{
 				aQuality = weightedEntropyEditDistance(theNewSubgroup); //also stores DAG in Subgroup
+				theNewSubgroup.setSecondaryStatistic(itsQualityMeasure.calculateEditDistance(theNewSubgroup.getDAG())); //edit distance
+				theNewSubgroup.setTertiaryStatistic(itsQualityMeasure.calculateEntropy(itsMaximumCoverage, theNewSubgroup.getCoverage())); //entropy
 				break;
 			}
 			default : break;
@@ -713,10 +706,8 @@ TODO for stable jar, disabled, causes comple errors, reinstate later
 			theNrThreads = Runtime.getRuntime().availableProcessors();
 
 		// make subgroup to start with, containing all elements
-		//Subgroup aStart = new Subgroup(0.0, itsMaximumCoverage, 0, itsResult);
 		BitSet aBitSet = new BitSet(itsMaximumCoverage);
 		aBitSet.set(0, itsMaximumCoverage);
-		//aStart.setMembers(aBitSet);
 		Subgroup aStart = new Subgroup(0.0, itsMaximumCoverage, 0, itsResult, aBitSet);
 
 		itsCandidateQueue = new CandidateQueue(itsSearchParameters, new Candidate(aStart));
@@ -923,7 +914,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	/**
 	 * Return the base {@link RegressionMeasure RegressionMeasure} for this
 	 * SubgroupDiscovery.
-	 * 
+	 *
 	 * @return the base RegressionMeasure, if this SubgroupDiscovery is of
 	 * {@link TargetType TargetType}
 	 * {@value TargetType#DOUBLE_REGRESSION DOUBLE_REGRESSION},

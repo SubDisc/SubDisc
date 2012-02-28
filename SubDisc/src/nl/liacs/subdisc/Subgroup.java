@@ -25,6 +25,8 @@ public class Subgroup implements Comparable<Subgroup>
 	private int itsCoverage; // crucial to keep it in sync with itsMembers
 	private DAG itsDAG;
 	private double itsMeasureValue;
+	private double itsSecondaryStatistic = 0;
+	private double itsTertiaryStatistic = 0;
 	int itsDepth;
 	private final SubgroupSet itsParentSet;
 	// XXX not strictly need by setting itsPValue to NaN
@@ -113,6 +115,8 @@ public class Subgroup implements Comparable<Subgroup>
 	{
 		Subgroup aReturn = new Subgroup(itsMeasureValue, itsCoverage, itsDepth, itsParentSet, (BitSet) itsMembers.clone());
 		aReturn.itsConditions = itsConditions.copy();
+		aReturn.itsSecondaryStatistic = itsSecondaryStatistic;
+		aReturn.itsTertiaryStatistic = itsTertiaryStatistic;
 		return aReturn;
 	}
 
@@ -125,7 +129,7 @@ public class Subgroup implements Comparable<Subgroup>
 	/**
 	 * Most callers should not want to modify the returned
 	 * {@link BitSet BitSet}.
-	 * 
+	 *
 	 * @return a BitSet representing this Subgroups members.
 	 */
 	// TODO return clone is feasible.
@@ -138,6 +142,10 @@ public class Subgroup implements Comparable<Subgroup>
 
 	public double getMeasureValue() { return itsMeasureValue; }
 	public void setMeasureValue(double theMeasureValue) { itsMeasureValue = theMeasureValue; }
+	public double getSecondaryStatistic() { return itsSecondaryStatistic; }
+	public void setSecondaryStatistic(double theSecondaryStatistic) { itsSecondaryStatistic = theSecondaryStatistic; }
+	public double getTertiaryStatistic() { return itsTertiaryStatistic; }
+	public void setTertiaryStatistic(double theTertiaryStatistic) { itsTertiaryStatistic = theTertiaryStatistic; }
 
 	public void setDAG(DAG theDAG) { itsDAG = theDAG; }
 	public DAG getDAG() { return itsDAG; }
@@ -329,7 +337,7 @@ public class Subgroup implements Comparable<Subgroup>
 	{
 		isPValueComputed = false;
 	}
-	
+
 	public String getRegressionModel() { return itsRegressionModel; }
 	public void setRegressionModel(String theModel) { itsRegressionModel = theModel; }
 }
