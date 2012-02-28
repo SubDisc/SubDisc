@@ -80,8 +80,8 @@ public class XMLAutoRun
 	 * TODO Make a Node for MRML?
 	 * TODO Make a Node for TARGET_CONCEPT
 	 * TODO Make a Node for SEARCH_PARAMETERS
-	 * TODO Make a Node for the whole table. --- 
-	 * 
+	 * TODO Make a Node for the whole table. ---
+	 *
 	 * XMLNode lists all items that will go into the autorun.xml. It contains;
 	 * 1. all searchParameters
 	 * 2. an XML version of the original Table
@@ -128,10 +128,10 @@ public class XMLAutoRun
 	/**
 	 * Loads an <code>AutoRun File</code> and runs a SubgroupDiscovery
 	 * based on the information contained in the file.
-	 * 
+	 *
 	 * @param args the <code>String[]</code> containing the command-line
 	 * parameters.
-	 * 
+	 *
 	 * @return <code>true</code> if the parameters are valid,
 	 * <code>false</code> otherwise.
 	 */
@@ -202,7 +202,7 @@ public class XMLAutoRun
 			aWriter = new BufferedWriter(new FileWriter(theFileName));
 
 			// hardcoded
-			aWriter.write("nr\tdepth\tcoverage\tmeasure\tp-value\tconditionlist\n");
+			aWriter.write("nr\tdepth\tcoverage\tquality\tsecondary\ttertiary\tp-value\tconditionlist\n");
 
 			Iterator<Subgroup> anIterator = theSubgroupSet.iterator();
 			Subgroup aSubgroup;
@@ -217,6 +217,10 @@ public class XMLAutoRun
 				aWriter.write(String.valueOf(aSubgroup.getCoverage()));
 				aWriter.write(aDelimiter);
 				aWriter.write(String.valueOf(aSubgroup.getMeasureValue()));
+				aWriter.write(aDelimiter);
+				aWriter.write(String.valueOf(aSubgroup.getSecondaryStatistic()));
+				aWriter.write(aDelimiter);
+				aWriter.write(String.valueOf(aSubgroup.getTertiaryStatistic()));
 				aWriter.write(aDelimiter);
 				aWriter.write(String.valueOf(aSubgroup.getPValue()));
 				aWriter.write(aDelimiter);
