@@ -28,8 +28,8 @@ public class QualityMeasure
 	private static boolean[][] itsVStructures;
 
 	//SINGLE_NOMINAL quality measures
-	public static final int NOVELTY     = 0;
-	public static final int ABSNOVELTY  = 1;
+	public static final int WRACC     = 0;
+	public static final int ABSWRACC  = 1;
 	public static final int CHI_SQUARED    = 2;
 	public static final int INFORMATION_GAIN    = 3;
 	public static final int BINOMIAL    = 4;
@@ -103,11 +103,11 @@ public class QualityMeasure
 	public static int getFirstEvaluationMeasure(TargetType theTargetType)
 	{
 		if(theTargetType == null)
-			return NOVELTY;	// MM TODO for now
+			return WRACC;	// MM TODO for now
 
 		switch(theTargetType)
 		{
-			case SINGLE_NOMINAL		: return NOVELTY;
+			case SINGLE_NOMINAL		: return WRACC;
 			case SINGLE_NUMERIC		: return Z_SCORE;
 			case SINGLE_ORDINAL		: return AUC;
 			case MULTI_LABEL		: return WEED;
@@ -115,14 +115,14 @@ public class QualityMeasure
 			case DOUBLE_REGRESSION		: return LINEAR_REGRESSION;
 			// TODO for stable jar, disabled
 			//case DOUBLE_REGRESSION 	: return COOKS_DISTANCE;
-			default					: return NOVELTY;
+			default					: return WRACC;
 		}
 	}
 
 	public static int getLastEvaluationMesure(TargetType theTargetType)
 	{
 		if(theTargetType == null)
-			return NOVELTY;	// MM TODO for now
+			return WRACC;	// MM TODO for now
 
 		switch(theTargetType)
 		{
@@ -134,7 +134,7 @@ public class QualityMeasure
 			case DOUBLE_REGRESSION		: return LINEAR_REGRESSION;
 			// TODO for stable jar, disabled
 			//case DOUBLE_REGRESSION 	: return COOKS_DISTANCE;
-			default					: return NOVELTY;
+			default					: return WRACC;
 		}
 	}
 
@@ -167,7 +167,7 @@ public class QualityMeasure
 	 * 	</tr>
 	 * </table>
 	 */
-	public float calculate(int theCountHeadBody, int theCoverage)
+	public float calculate(float theCountHeadBody, float theCoverage)
 	{
 		float aResult = calculate(itsMeasure, itsNrRecords, itsTotalTargetCoverage, theCountHeadBody, theCoverage);
 		if (Float.isNaN(aResult))
@@ -178,71 +178,69 @@ public class QualityMeasure
 
 	//SINGLE_NOMINAL ============================================================
 
-	public static float calculate(int theMeasure, int theTotalCoverage, int theTotalTargetCoverage,
-							int theCountHeadBody, int theCoverage)
+	public static float calculate(int theMeasure, int theTotalCoverage, float theTotalTargetCoverage,
+							float theCountHeadBody, float theCoverage)
 	{
-		float aCoverage				= (float)theCoverage;
-		float aCountHeadBody		= (float)theCountHeadBody;
-		float aCountHead			= (float)theTotalTargetCoverage;
-		float aCountNotHeadBody		= aCoverage - aCountHeadBody;
-		float aCountHeadNotBody		= aCountHead - aCountHeadBody;
-		float aCountNotHeadNotBody	= theTotalCoverage - (aCountHead + aCountNotHeadBody);
-		float aCountBody			= aCountNotHeadBody + aCountHeadBody;
+		float aCountNotHeadBody		= theCoverage - theCountHeadBody;
+		float theTotalTargetCoverageNotBody		= theTotalTargetCoverage - theCountHeadBody;
+		float aCountNotHeadNotBody	= theTotalCoverage - (theTotalTargetCoverage + aCountNotHeadBody);
+		float aCountBody			= aCountNotHeadBody + theCountHeadBody;
 
-		float returnValue = (float)-10.0; //Bad measure value for default
+		float returnValue = -10f; //Bad measure value for default
 		switch(theMeasure)
 		{
-			case NOVELTY:
+			case WRACC:
 			{
-				returnValue =(aCountHeadBody / (float)theTotalCoverage) -
-							  ((aCountHead / (float)theTotalCoverage) *	(aCountBody/(float)theTotalCoverage));
+				returnValue =(theCountHeadBody/theTotalCoverage)-(theTotalTargetCoverage/theTotalCoverage)*(aCountBody/theTotalCoverage);
 				break;
 			}
 			case CHI_SQUARED:
 			{
-				returnValue = calculateChiSquared(theTotalCoverage, aCountHead, aCountBody, aCountHeadBody);
+				returnValue = calculateChiSquared(theTotalCoverage, theTotalTargetCoverage, aCountBody, theCountHeadBody);
 				break;
 			}
 			case INFORMATION_GAIN:
 			{
-				returnValue = calculateInformationGain(theTotalCoverage, aCountHead, aCountBody, aCountHeadBody);
+				returnValue = calculateInformationGain(theTotalCoverage, theTotalTargetCoverage, aCountBody, theCountHeadBody);
 				break;
 			}
 			case BINOMIAL:
 			{
-				returnValue = ((float) Math.sqrt(aCountBody/theTotalCoverage)) * (aCountHeadBody/aCountBody - aCountHead/theTotalCoverage);
+				returnValue = ((float) Math.sqrt(aCountBody/theTotalCoverage)) * (theCountHeadBody/aCountBody - theTotalTargetCoverage/theTotalCoverage);
 				break;
 			}
-			case JACCARD: {		returnValue = aCountHeadBody /(aCountHeadBody + aCountNotHeadBody + aCountHeadNotBody);
+			case JACCARD: {		returnValue = theCountHeadBody /(theCountHeadBody + aCountNotHeadBody + theTotalTargetCoverageNotBody);
 								break; }
 			case COVERAGE: {	returnValue = aCountBody;
 								break; }
-			case ACCURACY: {	returnValue = aCountHeadBody /aCountBody;
+			case ACCURACY: {	returnValue = theCountHeadBody /aCountBody;
 								break; }
-			case SPECIFICITY: {	returnValue = aCountNotHeadNotBody / ((float)theTotalCoverage - aCountHead);
+			case SPECIFICITY: {	returnValue = aCountNotHeadNotBody / (theTotalCoverage - theTotalTargetCoverage);
 								break; }
-			case SENSITIVITY: {	returnValue = aCountHeadBody / aCountHead;
+			case SENSITIVITY: {	returnValue = theCountHeadBody / theTotalTargetCoverage;
 								break; }
-			case LAPLACE: {		returnValue = (aCountHeadBody+1)/(aCountBody+2);
+			case LAPLACE: {		returnValue = (theCountHeadBody+1)/(aCountBody+2);
 								break; }
-			case F_MEASURE: {	returnValue = aCountHeadBody/(aCountHead+aCountBody);
+			case F_MEASURE: {	returnValue = theCountHeadBody/(theTotalTargetCoverage+aCountBody);
 								break; }
-			case G_MEASURE: {	returnValue = aCountHeadBody/(aCountNotHeadBody+aCountHead);
+			case G_MEASURE: {	returnValue = theCountHeadBody/(aCountNotHeadBody+theTotalTargetCoverage);
 								break; }
-			case CORRELATION: {	float aCountNotHead = (float)theTotalCoverage-aCountHead;
-								returnValue = (aCountHeadBody*aCountNotHead - aCountHead*aCountNotHeadBody)/((float)Math.sqrt(aCountHead*aCountNotHead*aCountBody*((float)theTotalCoverage-aCountBody)));
-								break; }
+			case CORRELATION:
+			{
+				float aCountNotHead = theTotalCoverage-theTotalTargetCoverage;
+				returnValue = (theCountHeadBody*aCountNotHead - theTotalTargetCoverage*aCountNotHeadBody)/((float)Math.sqrt(theTotalTargetCoverage*aCountNotHead*aCountBody*(theTotalCoverage-aCountBody)));
+				break;
+			}
 			case PURITY:
 			{
-				returnValue = aCountHeadBody /aCountBody;
+				returnValue = theCountHeadBody /aCountBody;
 				if (returnValue < 0.5)
 					returnValue = 1.0F - returnValue;
 				break;
 			}
-			case ABSNOVELTY:
+			case ABSWRACC:
 			{
-				returnValue =(aCountHeadBody / (float)theTotalCoverage) -
-							  ((aCountHead / (float)theTotalCoverage) * (aCountBody / (float)theTotalCoverage));
+				returnValue = theCountHeadBody/theTotalCoverage - ((theTotalTargetCoverage/theTotalCoverage) * aCountBody/theTotalCoverage);
 				returnValue = Math.abs(returnValue);
 				break;
 			}
@@ -462,8 +460,8 @@ public class QualityMeasure
 		switch(getMeasureCode(theEvaluationMeasure))
 		{
 			//NOMINAL
-			case NOVELTY	: 		{ anEvaluationMinimum = "0.01"; break; }
-			case ABSNOVELTY : 		{ anEvaluationMinimum = "0.01"; break; }
+			case WRACC	: 		{ anEvaluationMinimum = "0.01"; break; }
+			case ABSWRACC : 		{ anEvaluationMinimum = "0.01"; break; }
 			case CHI_SQUARED: 		{ anEvaluationMinimum = "50"; break; }
 			case INFORMATION_GAIN: 	{ anEvaluationMinimum = "0.0"; break; }
 			case BINOMIAL: 			{ anEvaluationMinimum = "0.0"; break; }
@@ -519,8 +517,8 @@ public class QualityMeasure
 		switch(aEvaluationMeasure)
 		{
 			//NOMINAL
-			case NOVELTY	: { anEvaluationMeasure = "WRAcc"; break; }
-			case ABSNOVELTY : { anEvaluationMeasure = "Abs WRAcc"; break; }
+			case WRACC	: { anEvaluationMeasure = "WRAcc"; break; }
+			case ABSWRACC : { anEvaluationMeasure = "Abs WRAcc"; break; }
 			case CHI_SQUARED: { anEvaluationMeasure = "Chi-squared"; break; }
 			case INFORMATION_GAIN: { anEvaluationMeasure = "Information gain"; break; }
 			case BINOMIAL: { anEvaluationMeasure = "Binomial test"; break; }
@@ -574,8 +572,8 @@ public class QualityMeasure
 	{
 		String anEvaluationMeasure = theEvaluationMeasure.toLowerCase().trim();
 		//NOMINAL
-		if ("wracc".equals(anEvaluationMeasure)) return NOVELTY;
-		else if ("abs wracc".equals(anEvaluationMeasure)) return ABSNOVELTY;
+		if ("wracc".equals(anEvaluationMeasure)) return WRACC;
+		else if ("abs wracc".equals(anEvaluationMeasure)) return ABSWRACC;
 		else if ("chi-squared".equals(anEvaluationMeasure)) return CHI_SQUARED;
 		else if ("information gain".equals(anEvaluationMeasure)) return INFORMATION_GAIN;
 		else if ("binomial test".equals(anEvaluationMeasure)) return BINOMIAL;
@@ -623,7 +621,7 @@ public class QualityMeasure
 		else if ("significance of slope difference".equals(anEvaluationMeasure)) return LINEAR_REGRESSION;
 		else if ("cook's distance".equals(anEvaluationMeasure)) return COOKS_DISTANCE;
 
-		return NOVELTY;
+		return WRACC;
 	}
 
 

@@ -122,11 +122,11 @@ public class ROCCurve extends JPanel
 		for (int i=0; i<aResolution; i++)
 		{
 			float anX = i/(float)aResolution;
-			int aNegatives = (int) (anX*(N-p));
+			float aNegatives = anX*(N-p); //this can be fractional, even though the counts are always integer, picture looks nicer this way
 			for (int j=0; j<aResolution; j++)
 			{
 				float aY = -(j+1)/(float)aResolution;
-				int aPositives = (int) (-aY*p);
+				float aPositives = -aY*p; //this can be fractional, even though the counts are always integer
 				int aValue = (int) (255*itsQualityMeasure.calculate(aPositives, aNegatives+aPositives)/aMax);
 				boolean isNegative = (aValue<0);
 				if (isNegative)

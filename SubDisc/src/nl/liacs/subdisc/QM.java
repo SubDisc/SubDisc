@@ -4,8 +4,8 @@ public enum QM implements EnumInterface
 {
 	// ENUM		GUI text		default measure minimum
 	// SINGLE_NOMINAL quality measures
-	NOVELTY		("WRAcc",		"0.01"),
-	ABSNOVELTY	("Abs WRAcc",		"0.01"),
+	WRACC		("WRAcc",		"0.01"),
+	ABSWRACC	("Abs WRAcc",		"0.01"),
 	CHI_SQUARED	("Chi-squared",		"50"),
 	INFORMATION_GAIN("Information gain",	"0"),
 	BINOMIAL	("Binomial test",	"0.0"),
@@ -65,7 +65,7 @@ public enum QM implements EnumInterface
 	public static final QM getFirstEvaluationMeasure(TargetType theTargetType)
 	{
 		// TODO
-		return NOVELTY;
+		return WRACC;
 	}
 
 	public static final QM getLastEvaluationMesure(TargetType theTargetType)
