@@ -7,8 +7,13 @@ import java.util.concurrent.atomic.*;
 public class SubgroupDiscovery extends MiningAlgorithm
 {
 	private final Table itsTable;
-	private final int itsMaximumCoverage;	// itsTable.getNrRows()
+	private final int itsNrRows;		// itsTable.getNrRows()
+	private final int itsMinimumCoverage;	// itsSearchParameters.getMinimumCoverage();
+	private final int itsMaximumCoverage;	// itsNrRows * itsSearchParameters.getMaximumCoverageFraction();
+
 	private final QualityMeasure itsQualityMeasure;
+	private final float itsQualityMeasureMinimum;	// itsSearchParameters.getQualityMeasureMinimum();
+
 	private SubgroupSet itsResult;
 	private CandidateQueue itsCandidateQueue;
 	private AtomicInteger itsCandidateCount= new AtomicInteger(0);
@@ -42,8 +47,11 @@ public class SubgroupDiscovery extends MiningAlgorithm
 	{
 		super(theSearchParameters);
 		itsTable = theTable;
-		itsMaximumCoverage = itsTable.getNrRows();
-		itsQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), itsMaximumCoverage, theNrPositive);
+		itsNrRows = itsTable.getNrRows();
+		itsMinimumCoverage = itsSearchParameters.getMinimumCoverage();
+		itsMaximumCoverage = (int) (itsNrRows * itsSearchParameters.getMaximumCoverageFraction());
+		itsQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), itsNrRows, theNrPositive);
+		itsQualityMeasureMinimum = itsSearchParameters.getQualityMeasureMinimum();
 
 		TargetConcept aTC = itsSearchParameters.getTargetConcept();
 		Condition aCondition = new Condition(aTC.getPrimaryTarget(), Condition.EQUALS);
@@ -51,7 +59,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		//itsBinaryTarget = itsTable.evaluate(aCondition);
 		itsBinaryTarget = aTC.getPrimaryTarget().evaluate(aCondition);
 
-		itsResult = new SubgroupSet(itsSearchParameters.getMaximumSubgroups(), itsMaximumCoverage, itsBinaryTarget);
+		itsResult = new SubgroupSet(itsSearchParameters.getMaximumSubgroups(), itsNrRows, itsBinaryTarget);
 	}
 
 	//SINGLE_NUMERIC
@@ -59,17 +67,21 @@ public class SubgroupDiscovery extends MiningAlgorithm
 	{
 		super(theSearchParameters);
 		itsTable = theTable;
-		itsMaximumCoverage = itsTable.getNrRows();
+		itsNrRows = itsTable.getNrRows();
+		itsMinimumCoverage = itsSearchParameters.getMinimumCoverage();
+		itsMaximumCoverage = (int) (itsNrRows * itsSearchParameters.getMaximumCoverageFraction());
 		TargetConcept aTC = itsSearchParameters.getTargetConcept();
 		itsNumericTarget = aTC.getPrimaryTarget();
 
 		BitSet aBitSet = new BitSet();
-		aBitSet.set(0, itsMaximumCoverage);
+		aBitSet.set(0, itsNrRows);
 		int aQualityMeasure = itsSearchParameters.getQualityMeasure();
 		float[] aCounts = itsNumericTarget.getQMRequiredStatistics(aBitSet, aQualityMeasure);
 
-		itsQualityMeasure = new QualityMeasure(aQualityMeasure,	itsMaximumCoverage,	aCounts[0],	aCounts[1],	aCounts[2],	aCounts[3]);
-		itsResult = new SubgroupSet(itsSearchParameters.getMaximumSubgroups(), itsMaximumCoverage, null); //TODO
+		itsQualityMeasure = new QualityMeasure(aQualityMeasure, itsNrRows, aCounts[0], aCounts[1], aCounts[2], aCounts[3]);
+		itsQualityMeasureMinimum = itsSearchParameters.getQualityMeasureMinimum();
+
+		itsResult = new SubgroupSet(itsSearchParameters.getMaximumSubgroups(), itsNrRows, null); //TODO
 	}
 
 	//DOUBLE_CORRELATION and DOUBLE_REGRESSION
@@ -77,8 +89,11 @@ public class SubgroupDiscovery extends MiningAlgorithm
 	{
 		super(theSearchParameters);
 		itsTable = theTable;
-		itsMaximumCoverage = itsTable.getNrRows();
-		itsQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), itsMaximumCoverage, 100); //TODO
+		itsNrRows = itsTable.getNrRows();
+		itsMinimumCoverage = itsSearchParameters.getMinimumCoverage();
+		itsMaximumCoverage = (int) (itsNrRows * itsSearchParameters.getMaximumCoverageFraction());
+		itsQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), itsNrRows, 100); //TODO
+		itsQualityMeasureMinimum = itsSearchParameters.getQualityMeasureMinimum();
 
 		//N.B.: Temporary lines for fetching Cook's experimental statistics
 		if (theSearchParameters.getQualityMeasure() == QualityMeasure.COOKS_DISTANCE)
@@ -132,7 +147,9 @@ public class SubgroupDiscovery extends MiningAlgorithm
 	{
 		super(theSearchParameters);
 		itsTable = theTable;
-		itsMaximumCoverage = itsTable.getNrRows();
+		itsNrRows = itsTable.getNrRows();
+		itsMinimumCoverage = itsSearchParameters.getMinimumCoverage();
+		itsMaximumCoverage = (int) (itsNrRows * itsSearchParameters.getMaximumCoverageFraction());
 
 		//compute base model
 		itsTargets = itsSearchParameters.getTargetConcept().getMultiTargets();
@@ -143,7 +160,8 @@ public class SubgroupDiscovery extends MiningAlgorithm
 
 		itsQualityMeasure = new QualityMeasure(itsSearchParameters,
 							aBayesian.getDAG(),
-							itsMaximumCoverage);
+							itsNrRows);
+		itsQualityMeasureMinimum = itsSearchParameters.getQualityMeasureMinimum();
 
 		itsResult = new SubgroupSet(itsSearchParameters.getMaximumSubgroups());
 	}
@@ -163,9 +181,9 @@ public class SubgroupDiscovery extends MiningAlgorithm
 	public void mine(long theBeginTime)
 	{
 		//make subgroup to start with, containing all elements
-		BitSet aBitSet = new BitSet(itsMaximumCoverage);
-		aBitSet.set(0,itsMaximumCoverage);
-		Subgroup aStart = new Subgroup(0.0, itsMaximumCoverage, 0, itsResult, aBitSet);
+		BitSet aBitSet = new BitSet(itsNrRows);
+		aBitSet.set(0, itsNrRows);
+		Subgroup aStart = new Subgroup(0.0, itsNrRows, 0, itsResult, aBitSet);
 
 		itsCandidateQueue = new CandidateQueue(itsSearchParameters, new Candidate(aStart));
 
@@ -228,11 +246,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 
 	private void evaluateNumericRefinements(Subgroup theSubgroup, Refinement theRefinement)
 	{
-		//int anAttributeIndex = theRefinement.getCondition().getColumn().getIndex();
-		final int aMinimumCoverage = itsSearchParameters.getMinimumCoverage();
-		final int aMaximumCoverage = (int) (itsMaximumCoverage * itsSearchParameters.getMaximumCoverageFraction());
 		final int anOldCoverage = theSubgroup.getCoverage();
-		final float aQualityMeasureMinimum = itsSearchParameters.getQualityMeasureMinimum();
 
 		switch (itsSearchParameters.getNumericStrategy())
 		{
@@ -244,7 +258,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 				{
 					Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(Float.toString(aSplit));
 					//addToBuffer(aNewSubgroup);
-					checkAndLog(aNewSubgroup, aMinimumCoverage, aMaximumCoverage, anOldCoverage, aQualityMeasureMinimum);
+					checkAndLog(aNewSubgroup, anOldCoverage);
 				}
 				break;
 			}
@@ -262,7 +276,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 					{
 						Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(Float.toString(aSplitPoints[j]));
 						//addToBuffer(aNewSubgroup);
-						checkAndLog(aNewSubgroup, aMinimumCoverage, aMaximumCoverage, anOldCoverage, aQualityMeasureMinimum);
+						checkAndLog(aNewSubgroup, anOldCoverage);
 					}
 					first = false;
 				}
@@ -279,8 +293,8 @@ public class SubgroupDiscovery extends MiningAlgorithm
 				{
 					Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(Float.toString(aSplit));
 
-					int aNewCoverage = aNewSubgroup.getCoverage();
-					if (aNewCoverage >= aMinimumCoverage && aNewCoverage <= aMaximumCoverage && aNewCoverage < anOldCoverage)
+					final int aNewCoverage = aNewSubgroup.getCoverage();
+					if (aNewCoverage >= itsMinimumCoverage && aNewCoverage <= itsMaximumCoverage && aNewCoverage < anOldCoverage)
 					{
 						float aQuality = evaluateCandidate(aNewSubgroup);
 						if (aQuality > aMax)
@@ -297,7 +311,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 				if (aBestSubgroup!=null) //at least one threshold found that has enough quality and coverage
 					//addToBuffer(aBestSubgroup);
 					// unnecessarily re-evaluates result
-					checkAndLog(aBestSubgroup, aMinimumCoverage, aMaximumCoverage, anOldCoverage, aQualityMeasureMinimum);
+					checkAndLog(aBestSubgroup, anOldCoverage);
 
 				break;
 			}
@@ -313,16 +327,13 @@ public class SubgroupDiscovery extends MiningAlgorithm
 	private void evaluateNominalBinaryRefinements(Subgroup theSubgroup, Refinement theRefinement)
 	{
 		TreeSet<String> aDomain = theRefinement.getCondition().getColumn().getDomain();
-		final int aMinimumCoverage = itsSearchParameters.getMinimumCoverage();
-		final int aMaximumCoverage = (int) (itsMaximumCoverage * itsSearchParameters.getMaximumCoverageFraction());
 		int anOldCoverage = theSubgroup.getCoverage();
-		float aQualityMeasureMinimum = itsSearchParameters.getQualityMeasureMinimum();
 
 		for (String aConditionValue : aDomain)
 		{
 			Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(aConditionValue);
 			//addToBuffer(aNewSubgroup);
-			checkAndLog(aNewSubgroup, aMinimumCoverage, aMaximumCoverage, anOldCoverage, aQualityMeasureMinimum);
+			checkAndLog(aNewSubgroup, anOldCoverage);
 		}
 	}
 
@@ -338,17 +349,17 @@ public class SubgroupDiscovery extends MiningAlgorithm
 	 *
 	 * itsCandidateCount is Atomic (synchronized by nature).
 	 */
-	private void checkAndLog(Subgroup theSubgroup, int aMinimumCoverage, int theMaximumCoverage, int theOldCoverage, float aQualityMeasureMinimum)
+	private void checkAndLog(Subgroup theSubgroup, int theOldCoverage)
 	{
-		int aNewCoverage = theSubgroup.getCoverage();
+		final int aNewCoverage = theSubgroup.getCoverage();
 
-		if (aNewCoverage >= aMinimumCoverage && aNewCoverage < theOldCoverage)
+		if (aNewCoverage < theOldCoverage && aNewCoverage >= itsMinimumCoverage)
 		{
 			float aQuality = evaluateCandidate(theSubgroup);
 			theSubgroup.setMeasureValue(aQuality);
 
 			// could make aQualityMeasureMinimum a parameter of SubgroupSet
-			if (aNewCoverage <= theMaximumCoverage && aQuality > aQualityMeasureMinimum)
+			if (aQuality > itsQualityMeasureMinimum && aNewCoverage <= itsMaximumCoverage)
 				itsResult.add(theSubgroup);
 
 			itsCandidateQueue.add(new Candidate(theSubgroup));
@@ -396,7 +407,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 			}
 			case SINGLE_NUMERIC :
 			{
-				float[] aCounts = itsNumericTarget.getQMRequiredStatistics(theNewSubgroup.getMembers(),	itsSearchParameters.getQualityMeasure());
+				float[] aCounts = itsNumericTarget.getQMRequiredStatistics(theNewSubgroup.getMembers(), itsSearchParameters.getQualityMeasure());
 				aQuality = itsQualityMeasure.calculate(theNewSubgroup.getCoverage(), aCounts[0], aCounts[1], aCounts[2], aCounts[3],null); //TODO fix this parameter. only used by X2
 				theNewSubgroup.setSecondaryStatistic(aCounts[0]/(double)theNewSubgroup.getCoverage()); //average
 				theNewSubgroup.setTertiaryStatistic(Math.sqrt(aCounts[1]/(double)theNewSubgroup.getCoverage())); //stdev //TODO is this correct?
@@ -528,7 +539,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 			case DOUBLE_CORRELATION :
 			{
 				CorrelationMeasure aCM = new CorrelationMeasure(itsBaseCM);
-				for (int i = 0; i < itsMaximumCoverage; i++)
+				for (int i = 0; i < itsNrRows; i++)
 					if (theNewSubgroup.getMembers().get(i))
 						aCM.addObservation(itsPrimaryColumn.getFloat(i), itsSecondaryColumn.getFloat(i));
 				theNewSubgroup.setSecondaryStatistic(aCM.getCorrelation()); //correlation
@@ -540,7 +551,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 			{
 				aQuality = weightedEntropyEditDistance(theNewSubgroup); //also stores DAG in Subgroup
 				theNewSubgroup.setSecondaryStatistic(itsQualityMeasure.calculateEditDistance(theNewSubgroup.getDAG())); //edit distance
-				theNewSubgroup.setTertiaryStatistic(itsQualityMeasure.calculateEntropy(itsMaximumCoverage, theNewSubgroup.getCoverage())); //entropy
+				theNewSubgroup.setTertiaryStatistic(QualityMeasure.calculateEntropy(itsNrRows, theNewSubgroup.getCoverage())); //entropy
 				break;
 			}
 			default : break;
@@ -706,9 +717,9 @@ TODO for stable jar, disabled, causes comple errors, reinstate later
 			theNrThreads = Runtime.getRuntime().availableProcessors();
 
 		// make subgroup to start with, containing all elements
-		BitSet aBitSet = new BitSet(itsMaximumCoverage);
-		aBitSet.set(0, itsMaximumCoverage);
-		Subgroup aStart = new Subgroup(0.0, itsMaximumCoverage, 0, itsResult, aBitSet);
+		BitSet aBitSet = new BitSet(itsNrRows);
+		aBitSet.set(0, itsNrRows);
+		Subgroup aStart = new Subgroup(0.0, itsNrRows, 0, itsResult, aBitSet);
 
 		itsCandidateQueue = new CandidateQueue(itsSearchParameters, new Candidate(aStart));
 
@@ -892,11 +903,8 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		{
 			Candidate aCandidate = anIterator.next();
 			Subgroup aSubgroup = aCandidate.getSubgroup();
-			int aMinimumCoverage = itsSearchParameters.getMinimumCoverage();
-			final int aMaximumCoverage = (int) (itsMaximumCoverage * itsSearchParameters.getMaximumCoverageFraction());
-			int anOldCoverage = itsTable.getNrRows();
-			float aQualityMeasureMinimum = itsSearchParameters.getQualityMeasureMinimum();
-			checkAndLog(aSubgroup, aMinimumCoverage, aMaximumCoverage, anOldCoverage, aQualityMeasureMinimum);
+			int anOldCoverage = itsTable.getNrRows(); // MM ?
+			checkAndLog(aSubgroup, anOldCoverage);
 		}
 		itsBuffer = new TreeSet<Candidate>();
 	}

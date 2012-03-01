@@ -139,7 +139,7 @@ public class XMLAutoRun
 	{
 		File aFile = null;
 		boolean showWindows = false;
-		int aNrThreads = 0;
+		int aNrThreads = -1;
 
 		if (args.length == 1 || args.length == 2 || args.length == 3)
 		{
@@ -180,6 +180,9 @@ public class XMLAutoRun
 		Table aTable = new Table(aSettings.item(2), theFile.getParent() == null ? "." : theFile.getParent());
 		aTable.update();
 		SearchParameters aSearchParameters = new SearchParameters(aSettings.item(1));
+		// allows to overwrite the number defined in the XML file
+		if (theNrThreads < 0)
+			theNrThreads = aSearchParameters.getNrThreads();
 		aSearchParameters.setTargetConcept(new TargetConcept(aSettings.item(0), aTable));
 
 		long aBegin = System.currentTimeMillis();

@@ -12,7 +12,7 @@ public class SubDisc
 		if (!GraphicsEnvironment.isHeadless() && (SplashScreen.getSplashScreen() != null))
 		{
 			// assume it is an XML-autorun experiment
-			if (args.length > 1)
+			if (args.length > 0)
 				SplashScreen.getSplashScreen().close();
 			else
 			{

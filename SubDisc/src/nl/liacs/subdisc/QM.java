@@ -8,7 +8,7 @@ public enum QM implements EnumInterface
 	ABSNOVELTY	("Abs WRAcc",		"0.01"),
 	CHI_SQUARED	("Chi-squared",		"50"),
 	INFORMATION_GAIN("Information gain",	"0"),
-	BINOMIAL	("Binomial test", "0.0"),
+	BINOMIAL	("Binomial test",	"0.0"),
 	ACCURACY	("Accuracy",		"0.0"),
 	PURITY		("Purity",		"0.5"),
 	JACCARD		("Jaccard",		"0.2"),

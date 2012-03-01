@@ -22,8 +22,8 @@ public class RegressionMeasure
 
 	private double itsCorrelation;
 
-	private ArrayList<Point2D.Float> itsData;//Stores all the datapoints for this measure
-	private ArrayList<Point2D.Float> itsComplementData = new ArrayList<Point2D.Float>();//Stores all the datapoints for the complement
+	private List<Point2D.Float> itsData;//Stores all the datapoints for this measure
+	private List<Point2D.Float> itsComplementData = new ArrayList<Point2D.Float>();//Stores all the datapoints for the complement
 
 	public static int itsType;
 	private RegressionMeasure itsBase = null;

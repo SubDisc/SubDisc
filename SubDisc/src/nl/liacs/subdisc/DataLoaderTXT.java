@@ -84,6 +84,8 @@ public class DataLoaderTXT implements FileLoaderInterface
 			String aHeaderLine = null;
 			String aLine;
 			int aLineNr = 0;
+			final boolean aMissingBinary = Boolean.parseBoolean(AttributeType.BINARY.DEFAULT_MISSING_VALUE);
+			final float aMissingNumeric = Float.parseFloat(AttributeType.NUMERIC.DEFAULT_MISSING_VALUE);
 
 			// skip header, make sure line is not empty/ null
 			while ((aLine = aReader.readLine()) != null)
@@ -164,7 +166,7 @@ public class DataLoaderTXT implements FileLoaderInterface
 						// TODO set itsMissing
 						if (isEmptyString(s))
 						{
-							aColumns.get(aColumn).add(Boolean.parseBoolean(AttributeType.BINARY.DEFAULT_MISSING_VALUE));
+							aColumns.get(aColumn).add(aMissingBinary);
 							continue;
 						}
 						else if (AttributeType.isValidBinaryValue(s))
@@ -188,7 +190,7 @@ public class DataLoaderTXT implements FileLoaderInterface
 						{
 							// TODO set itsMissing
 							if (isEmptyString(s))
-								aColumns.get(aColumn).add(Float.parseFloat(AttributeType.NUMERIC.DEFAULT_MISSING_VALUE));
+								aColumns.get(aColumn).add(aMissingNumeric);
 							else
 							{
 								float f = Float.parseFloat(s);

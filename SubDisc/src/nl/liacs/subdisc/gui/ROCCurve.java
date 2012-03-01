@@ -16,7 +16,7 @@ public class ROCCurve extends JPanel
 
 	private GeneralPath itsCurve;
 	private GeneralPath itsLines;
-	private ArrayList<Arc2D.Float> itsPoints;
+	private List<Arc2D.Float> itsPoints;
 	private String itsAreaUnderCurve;
 	private float itsXMin, itsXMax, itsYMin, itsYMax;
 	private float itsXStart, itsYStart, itsXEnd, itsYEnd;
@@ -81,10 +81,10 @@ public class ROCCurve extends JPanel
 		}
 
 		itsLines = new GeneralPath();
-		itsLines.moveTo(itsXMin, 0);	//min cov
-		itsLines.lineTo(0, -itsYMin);	//min cov
+		itsLines.moveTo(itsXMin, 0);		//min cov
+		itsLines.lineTo(0, -itsYMin);		//min cov
 		itsLines.moveTo(itsXStart, -itsYStart);	//max cov
-		itsLines.lineTo(itsXEnd, -itsYEnd);		//max cov
+		itsLines.lineTo(itsXEnd, -itsYEnd);	//max cov
 		itsLines.moveTo(0, 0);
 		itsLines.lineTo(0, -1);
 		itsLines.lineTo(1, -1);

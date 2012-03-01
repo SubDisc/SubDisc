@@ -146,7 +146,7 @@ public enum TargetType implements EnumInterface
 			case MULTI_BINARY_CLASSIFICATION: return false;
 			default :
 			{
-				unknownTargetType("hasMultiTargets", theType.GUI_TEXT);
+				unknownTargetType("hasMultiRegressionTargets", theType.GUI_TEXT);
 				return false;
 			}
 		}
@@ -192,6 +192,7 @@ public enum TargetType implements EnumInterface
 		}
 	}
 
+	// used by MiningWindow initGuiComponentsFromFile()
 	// used by ResultWindow.setTitle()
 	public static boolean hasTargetValue(TargetType theType)
 	{

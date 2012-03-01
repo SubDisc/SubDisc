@@ -166,19 +166,34 @@ public class MiningWindow extends JFrame
 		setSearchTimeMaximum(String.valueOf(itsSearchParameters.getMaximumTime()));
 
 		// target concept
-		/*
-		 * Remember for later reference, value will be overwritten by both
-		 * setTargetTypeName() and setQualityMeasure()
-		 */
+		TargetType aTargetType = itsTargetConcept.getTargetType();
+
+		// NOTE remember some original values, they will be overwritten
+		// remember for later reference, value will be overwritten by ...
+		String aPrimaryTarget = null;
+		String aTargetValue = null;
+		if (TargetType.hasTargetAttribute(aTargetType))
+		{
+			aPrimaryTarget = itsTargetConcept.getPrimaryTarget().getName();
+			// Remember for later reference, value will be overwritten by ...
+			if (TargetType.hasTargetValue(aTargetType))
+			{
+				if (aTargetType == TargetType.SINGLE_NOMINAL)
+					aTargetValue = itsTargetConcept.getTargetValue();
+				else // DOUBLE_REGRESSION or DOUBLE_CORRELATION
+					aTargetValue = itsTargetConcept.getSecondaryTarget().getName();
+			}
+		}
+		// remember for later reference, value will be overwritten by both
+		// setTargetTypeName() and setQualityMeasure()
 		float originalMinimum = itsSearchParameters.getQualityMeasureMinimum();
 
+		// setTargetType causes havoc, it overwrites some other values
 		setTargetTypeName(itsTargetConcept.getTargetType().GUI_TEXT);
 		setQualityMeasure(itsSearchParameters.getQualityMeasureString());
 		// reset original value
 		itsSearchParameters.setQualityMeasureMinimum(originalMinimum);
 		setQualityMeasureMinimum(String.valueOf(itsSearchParameters.getQualityMeasureMinimum()));
-		if (TargetType.hasTargetValue(itsTargetConcept.getTargetType()))
-			setTargetAttribute(itsTargetConcept.getPrimaryTarget().getName());
 
 		/*
 		 * Text in jTextFieldSearchCoverageMinimum is overwritten by
@@ -187,8 +202,15 @@ public class MiningWindow extends JFrame
 		 */
 		setSearchCoverageMinimum(String.valueOf(itsSearchParameters.getMinimumCoverage()));
 
-//		setMiscField(itsTargetConcept.getSecondaryTarget());
-//		setMiscField(itsTargetConcept.getTargetValue());
+// TODO NOTE THESE ARE THIS OVERWRITTEN
+		if (aPrimaryTarget != null)
+			setTargetAttribute(aPrimaryTarget);
+		if (aTargetValue != null)
+			setMiscFieldName(aTargetValue);
+		System.out.println("==== " + aPrimaryTarget);
+		System.out.println("==== " + aTargetValue);
+
+// TODO other TargetTypes do not get loaded properly
 //		setSecondaryTargets(); // TODO initialised from primaryTargetList
 	}
 
@@ -1429,7 +1451,6 @@ public class MiningWindow extends JFrame
 
 			case SINGLE_NUMERIC:
 			{
-				TargetConcept aTargetConcept = theSearchParameters.getTargetConcept();
 				//recompute this number, as we may be dealing with cross-validation here, and hence a different value
 				//float itsTargetAverage = theTable.getAverage(theTable.getIndex(aTargetConcept.getPrimaryTarget().getName()));
 				float itsTargetAverage = theSearchParameters.getTargetConcept().getPrimaryTarget().getAverage();
@@ -1974,6 +1995,7 @@ public class MiningWindow extends JFrame
 	private void addMiscFieldItem(String anItem) { jComboBoxMiscField.addItem(anItem); }
 	private void removeAllMiscFieldItems() { jComboBoxMiscField.removeAllItems(); }
 	private String getMiscFieldName() { return (String) jComboBoxMiscField.getSelectedItem(); }
+	private void setMiscFieldName(String aValue) { jComboBoxMiscField.setSelectedItem(aValue); }
 
 	// target type - jList secondary targets
 	private void addMultiTargetsItem(String theItem) { ((DefaultListModel) jListMultiTargets.getModel()).addElement(theItem); }
