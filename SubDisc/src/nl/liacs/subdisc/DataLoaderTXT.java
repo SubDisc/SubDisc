@@ -171,7 +171,7 @@ public class DataLoaderTXT implements FileLoaderInterface
 						}
 						else if (AttributeType.isValidBinaryValue(s))
 						{
-							aColumns.get(aColumn).add("1".equals(s));
+							aColumns.get(aColumn).add(AttributeType.isValidBinaryTrueValue(s));
 							continue;
 						}
 
