@@ -103,17 +103,17 @@ public class ResultWindow extends JFrame implements ActionListener
 
 	public void initialise()
 	{
-		// NOTE scaling is based on the assumption of 6 columns being present
+		// NOTE scaling is based on 8 columns, there are 20 unitWidths
 		int aUnitWidth = (int)(0.05f * GUI.WINDOW_DEFAULT_SIZE.width);
 
 		itsSubgroupTable.getColumnModel().getColumn(0).setPreferredWidth(aUnitWidth);
 		itsSubgroupTable.getColumnModel().getColumn(1).setPreferredWidth(aUnitWidth);
-		itsSubgroupTable.getColumnModel().getColumn(2).setPreferredWidth((int)(1.5f * aUnitWidth));
-		itsSubgroupTable.getColumnModel().getColumn(3).setPreferredWidth((int)(1.5f * aUnitWidth));
-		itsSubgroupTable.getColumnModel().getColumn(4).setPreferredWidth((int)(1.5f * aUnitWidth));
-		itsSubgroupTable.getColumnModel().getColumn(5).setPreferredWidth((int)(1.5f * aUnitWidth));
-		itsSubgroupTable.getColumnModel().getColumn(6).setPreferredWidth((int)(1.5f * aUnitWidth));
-		itsSubgroupTable.getColumnModel().getColumn(7).setPreferredWidth(13 * aUnitWidth);
+		itsSubgroupTable.getColumnModel().getColumn(2).setPreferredWidth((int)(1.75f * aUnitWidth));
+		itsSubgroupTable.getColumnModel().getColumn(3).setPreferredWidth((int)(1.75f * aUnitWidth));
+		itsSubgroupTable.getColumnModel().getColumn(4).setPreferredWidth((int)(1.75f * aUnitWidth));
+		itsSubgroupTable.getColumnModel().getColumn(5).setPreferredWidth((int)(1.75f * aUnitWidth));
+		itsSubgroupTable.getColumnModel().getColumn(6).setPreferredWidth((int)(2 * aUnitWidth));
+		itsSubgroupTable.getColumnModel().getColumn(7).setPreferredWidth(9 * aUnitWidth);
 
 		itsScrollPane.add(itsSubgroupTable);
 		itsScrollPane.setViewportView(itsSubgroupTable);
