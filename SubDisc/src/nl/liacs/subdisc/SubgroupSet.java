@@ -437,6 +437,7 @@ public class SubgroupSet extends TreeSet<Subgroup>
 			aUsed.set(aChosen, true);
 			aResult.add(aBest);
 		}
+		aResult.update();
 		aResult.itsLowestScore = aResult.last().getMeasureValue();
 
 		Log.logCommandLine("========================================================");

@@ -32,7 +32,11 @@ public class CandidateQueue
 		if (itsSearchStrategy == SearchStrategy.BEAM)
 			itsNextQueue = new TreeSet<Candidate>();
 		if (itsSearchStrategy == SearchStrategy.COVER_BASED_BEAM_SELECTION)
+		{
+			// initialise now, avoids nullPointerException later
+			itsNextQueue = new TreeSet<Candidate>();
 			itsTempQueue = new TreeSet<Candidate>();
+		}
 		itsQueue = new TreeSet<Candidate>();
 		itsQueue.add(theRootCandidate);
 
@@ -116,7 +120,6 @@ public class CandidateQueue
 		synchronized (itsNextQueue) {
 		synchronized (itsTempQueue) {
 			Log.logCommandLine("candidates: " + itsTempQueue.size());
-			itsNextQueue = new TreeSet<Candidate>();
 			int aLoopSize = Math.min(itsMaximumQueueSize, itsTempQueue.size());
 			BitSet aUsed = new BitSet(itsTempQueue.size());
 			for (int i=0; i<aLoopSize; i++) //copy candidates into itsNextQueue
