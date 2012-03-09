@@ -424,7 +424,7 @@ public class DataLoaderTXT implements FileLoaderInterface
 							AttributeType.BINARY,
 							i,
 							itsNrLines));
-				aColumns.get(i).add("1".equals(s));
+				aColumns.get(i).add(AttributeType.isValidBinaryTrueValue(s));
 				continue;
 			}
 
