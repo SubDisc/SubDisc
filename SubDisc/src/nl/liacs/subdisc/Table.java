@@ -11,6 +11,7 @@ import org.w3c.dom.*;
 
 public class Table
 {
+	// NOTE when adding members, update constructors AND Table.select()
 	// all but Random can be made final
 	private String itsSource;
 	private String itsName;
@@ -32,8 +33,6 @@ public class Table
 	public int getNrRows() { return itsNrRows; }
 	public int getNrColumns() { return itsNrColumns; } //just the descriptors
 
-//	public Attribute getAttribute(int i) { return itsColumns.get(i).getAttribute(); }
-//	public Column getColumn(Attribute theAttribute) { return itsColumns.get(theAttribute.getIndex()); }
 	public Column getColumn(int theIndex) { return itsColumns.get(theIndex); }
 
 	public ArrayList<Column> getColumns() { return itsColumns; };
@@ -306,10 +305,9 @@ public class Table
 	public Column getColumn(String theName)
 	{
 		for (Column c : itsColumns)
-		{
 			if (c.getName().equals(theName))
 				return c;
-		}
+
 		return null; //not found
 	}
 
@@ -318,6 +316,7 @@ public class Table
 		for (Column c : itsColumns)
 			if (c.getName().equals(theName))
 				return c.getIndex();
+
 		return -1; // not found (causes ArrayIndexOutOfBounds)
 	}
 
@@ -537,6 +536,16 @@ public class Table
 		return aSubgroup;
 	}
 
+	/**
+	 * Creates a new Table, where records are selected based on the bits set
+	 * in the {@link BitSet BitSet} passed in as argument.
+	 * <p>
+	 * NOTE the new Table is not a true deep-copy.
+	 * 
+	 * @param theSet BitSet indicating which records to use.
+	 * 
+	 * @return a new Table consisting of a selection of the original one.
+	 */
 	public Table select(BitSet theSet)
 	{
 		Table aResult = new Table(itsName);
@@ -544,13 +553,29 @@ public class Table
 		aResult.itsNrColumns = itsNrColumns;
 		aResult.itsNrRows = theSet.cardinality();
 
+		aResult.itsDomains = this.itsDomains;
+		aResult.itsDomainIndices = this.itsDomainIndices;
+
 		//copy each column, while leaving out some of the data
 		for (Column aColumn : itsColumns)
 			aResult.itsColumns.add(aColumn.select(theSet));
 
+		aResult.update();
+
 		return aResult;
 	}
 
+	/**
+	 * NOTE this method is destructive to the
+	 * {@link TargetConcept TargetConcept} passed in as parameter. If the
+	 * TargetConcept needs to be restored to its original state, be sure to
+	 * back it up before calling this method.
+	 * 
+	 * @param theTC the TargetConcept to swapRandomize.
+	 * 
+	 * @see Column.permute
+	 * @see Validation.swapRandomization
+	 */
 	public void swapRandomizeTarget(TargetConcept theTC)
 	{
 		List<Column> aTargets = new ArrayList<Column>(2);

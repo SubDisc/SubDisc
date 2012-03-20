@@ -17,6 +17,7 @@ public class Column implements XMLNodeInterface
 {
 	public static final int DEFAULT_INIT_SIZE = 2500;
 
+	// NOTE when adding members, update constructors AND Column.select()
 	private AttributeType itsType;
 	private String itsName;
 	private String itsShort;
@@ -186,18 +187,54 @@ public class Column implements XMLNodeInterface
 
 	/**
 	 * Creates a copy of the current column with some records removed.
-	 * @param theSet
+	 * <p>
+	 * NOTE the new Column is not a true deep-copy.
+	 * 
+	 * @param theSet BitSet indicating which records to use.
+	 * 
+	 * @return a new Column consisting of a selection of the original one.
 	*/
+	/*
+	 * NOTE not all members are copied.
+	 * 
+	 * COPIED:
+	 * 	private AttributeType itsType;
+	 * 	private String itsName;
+	 * 	private String itsShort;
+	 * 	private int itsIndex;
+	 * 	private float[] itsFloatz;
+	 * 	private List<String> itsNominals;
+	 * 	private BitSet itsBinaries;
+	 * 	private List<String> itsDistinctValues; (shallow copy)
+	 * 	private String itsMissingValue;
+	 * 	...
+	 * 	private int itsSize; (as Column.add() is by-passed completely)
+	 * 	...
+	 * 	private boolean isEnabled;
+	 * 	private int itsTargetStatus;
+	 * 
+	 * NOT COPIED (should be re-assessed after selection):
+	 * 	private BitSet itsMissing = new BitSet();
+	 * 	private boolean itsMissingValueIsUnique = true;
+	 * 	private int itsCardinality = 0;
+	 * 	private float itsMin = Float.POSITIVE_INFINITY;
+	 * 	private float itsMax = Float.NEGATIVE_INFINITY;
+	 */
 	public Column select(BitSet theSet)
 	{
-		int aColumnsSize = theSet.cardinality();
-		Column aColumn = new Column(itsName, itsShort, itsType, itsIndex, aColumnsSize);
+		int aColumnSize = theSet.cardinality();
+		Column aColumn = new Column(itsName, itsShort, itsType, itsIndex, aColumnSize);
+		aColumn.itsDistinctValues = this.itsDistinctValues;
+		aColumn.itsMissingValue = this.itsMissingValue;
+		aColumn.itsSize = aColumnSize;
+		aColumn.isEnabled = this.isEnabled;
+		aColumn.itsTargetStatus = this.itsTargetStatus;
 
 		switch(itsType)
 		{
 			case NOMINAL :
 			{
-				aColumn.itsNominals = new ArrayList<String>(aColumnsSize);
+				aColumn.itsNominals = new ArrayList<String>(aColumnSize);
 				//preferred way to loop over BitSet (itsSize for safety)
 				for (int i = theSet.nextSetBit(0); i >= 0 && i < itsSize; i = theSet.nextSetBit(i + 1))
 					aColumn.itsNominals.add(getNominal(i));
@@ -209,7 +246,7 @@ public class Column implements XMLNodeInterface
 				//aColumn.itsFloats = new ArrayList<Float>(aColumnsSize);
 				//for (int i = theSet.nextSetBit(0); i >= 0 && i < itsSize; i = theSet.nextSetBit(i + 1))
 				//	aColumn.itsFloats.add(getFloat(i));
-				aColumn.itsFloatz = new float[aColumnsSize];
+				aColumn.itsFloatz = new float[aColumnSize];
 				for (int i = theSet.nextSetBit(0), j = -1; i >= 0 && i < itsSize; i = theSet.nextSetBit(i + 1))
 					aColumn.itsFloatz[++j] = this.itsFloatz[i];
 				break;
@@ -223,6 +260,10 @@ public class Column implements XMLNodeInterface
 			}
 			default : logTypeError("Column.select()"); break;
 		}
+
+		// not needed Column.add() is bypassed, but itsSize=aColumnSize
+		// aColumn.close();
+
 		return aColumn;
 	}
 
@@ -243,9 +284,8 @@ public class Column implements XMLNodeInterface
 	public void add(float theFloat)
 	{
 		if (itsSize == itsFloatz.length)
-		{
 			itsFloatz = Arrays.copyOf(itsFloatz, itsSize*2);
-		}
+
 		//itsFloats.add(new Float(theFloat));
 		itsFloatz[itsSize] = theFloat;
 		++itsSize;
@@ -352,6 +392,16 @@ public class Column implements XMLNodeInterface
 			}
 	}
 
+	/**
+	 * NOTE this method is destructive. If the Column needs to be restored
+	 * to its original state, be sure to back it up before calling this
+	 * method.
+	 * 
+	 * @param the int[] indicative of how to perform the swap randomization.
+	 * 
+	 * @see Table.swapRandomization
+	 * @see Validation.swapRandomization
+	 */
 	public void permute(int[] thePermutation)
 	{
 		switch (itsType)
@@ -369,8 +419,9 @@ public class Column implements XMLNodeInterface
 				//	aFloats.add(itsFloats.get(i));
 
 				float[] aFloats = new float[thePermutation.length];
-				for (int i =0, j = thePermutation.length; i < j; ++i)
-					itsFloatz[i] = itsFloatz[thePermutation[i]];
+				for (int i = 0, j = thePermutation.length; i < j; ++i)
+					aFloats[i] = itsFloatz[thePermutation[i]];
+				itsFloatz = aFloats;
 				break;
 			case BINARY :
 				int n = thePermutation.length;
