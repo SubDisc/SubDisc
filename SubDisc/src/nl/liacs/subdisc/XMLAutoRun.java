@@ -189,10 +189,10 @@ public class XMLAutoRun
 		SubgroupDiscovery aSubgroupDiscovery =
 			MiningWindow.runSubgroupDiscovery(aTable, 0, null, aSearchParameters, showWindows, theNrThreads);
 		// always save result TODO search parameters based filename
-		save(aSubgroupDiscovery.getResult(), (theFile.getAbsolutePath().replace(".xml", ("_"+ aBegin + ".txt"))));
+		save(aSubgroupDiscovery.getResult(), theFile.getAbsolutePath().replace(".xml", ("_"+ aBegin + ".txt")), aSearchParameters.getTargetType());
 	}
 
-	public static void save(SubgroupSet theSubgroupSet, String theFileName)
+	public static void save(SubgroupSet theSubgroupSet, String theFileName, TargetType theTargetType)
 	{
 		if (theSubgroupSet == null || theFileName == null)
 			return;
@@ -204,8 +204,13 @@ public class XMLAutoRun
 			String aDelimiter = "\t";
 			aWriter = new BufferedWriter(new FileWriter(theFileName));
 
-			// hardcoded
-			aWriter.write("nr\tdepth\tcoverage\tquality\tsecondary\ttertiary\tp-value\tconditionlist\n");
+			aWriter.write(ResultTableModel.getColumnName(0, theTargetType));
+			for (int i = 1, j = ResultTableModel.COLUMN_COUNT; i < j; ++i)
+			{
+				aWriter.write(aDelimiter);
+				aWriter.write(ResultTableModel.getColumnName(i, theTargetType));
+			}
+			aWriter.write("\n");
 
 			Iterator<Subgroup> anIterator = theSubgroupSet.iterator();
 			Subgroup aSubgroup;

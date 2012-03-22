@@ -9,6 +9,7 @@ import nl.liacs.subdisc.*;
 public class ResultTableModel extends AbstractTableModel
 {
 	private static final long serialVersionUID = 1L;
+	public static final int COLUMN_COUNT = 8;
 
 	private SubgroupSet itsSubgroupSet;
 	private TargetType itsTargetType;
@@ -28,56 +29,44 @@ public class ResultTableModel extends AbstractTableModel
 	@Override
 	public int getColumnCount()
 	{
-		return 8;
+		return COLUMN_COUNT;
 	}
 
 	@Override
 	public String getColumnName(int theColumnIndex)
 	{
-		if (itsTargetType == TargetType.SINGLE_NOMINAL)
-		{
-			if (theColumnIndex == 4)
-				return "Prob.";
-			else if (theColumnIndex == 5)
-				return "Positives";
-		}
-		else if (itsTargetType == TargetType.SINGLE_NUMERIC)
-		{
-			if (theColumnIndex == 4)
-				return "Average";
-			else if (theColumnIndex == 5)
-				return "St. Dev.";
-		}
-		else if (itsTargetType == TargetType.DOUBLE_REGRESSION)
-		{
-			if (theColumnIndex == 4)
-				return "Slope";
-			else if (theColumnIndex == 5)
-				return "Intercept";
-		}
-		else if (itsTargetType == TargetType.DOUBLE_CORRELATION)
-		{
-			if (theColumnIndex == 4)
-				return "Correlation";
-			else if (theColumnIndex == 5)
-				return "Distance";
-		}
-		else if (itsTargetType == TargetType.MULTI_LABEL)
-		{
-			if (theColumnIndex == 4)
-				return "Edit Dist.";
-			else if (theColumnIndex == 5)
-				return "Entropy";
-		}
+		return getColumnName(theColumnIndex, itsTargetType);
+	}
 
+	// used by XMLAutoRun.save() to retrieve correct column name
+	public static String getColumnName(int theColumnIndex, TargetType theTargetType)
+	{
 		switch(theColumnIndex)
 		{
 			case 0 : return "Nr.";
 			case 1 : return "Depth";
 			case 2 : return "Coverage";
 			case 3 : return "Quality";
-			case 4 : return "-";
-			case 5 : return "-";
+			case 4 : {
+				switch (theTargetType) {
+					case SINGLE_NOMINAL : return "Probability";
+					case SINGLE_NUMERIC : return "Average";
+					case DOUBLE_CORRELATION : return "Correlation";
+					case DOUBLE_REGRESSION : return "Slope";
+					case MULTI_LABEL : return "Edit Distance";
+					default : return "";
+				}
+			}
+			case 5 : {
+				switch (theTargetType) {
+					case SINGLE_NOMINAL : return "Positives";
+					case SINGLE_NUMERIC : return "St. Dev.";
+					case DOUBLE_CORRELATION : return "Distance";
+					case DOUBLE_REGRESSION : return "Intercept";
+					case MULTI_LABEL : return "Entropy";
+					default : return "";
+				}
+			}
 			case 6 : return "p-Value";
 			case 7 : return "Conditions";
 			default : return "";

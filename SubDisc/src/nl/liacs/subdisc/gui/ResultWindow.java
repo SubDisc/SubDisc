@@ -454,7 +454,7 @@ public class ResultWindow extends JFrame implements ActionListener
 		if (aFile == null)
 			return; // cancelled
 
-		XMLAutoRun.save(itsSubgroupSet, aFile.getAbsolutePath());
+		XMLAutoRun.save(itsSubgroupSet, aFile.getAbsolutePath(), itsSearchParameters.getTargetType());
 	}
 
 	private void jButtonPrintActionPerformed()
@@ -466,9 +466,9 @@ public class ResultWindow extends JFrame implements ActionListener
 		catch (PrinterException e)
 		{
 			JOptionPane.showMessageDialog(this,
-											"Print error!",
-											"Warning",
-											JOptionPane.WARNING_MESSAGE);
+							"Print error!",
+							"Warning",
+							JOptionPane.WARNING_MESSAGE);
 			e.printStackTrace();
 		}
 	}
