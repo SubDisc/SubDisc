@@ -18,7 +18,7 @@ public class QualityMeasure
 	private float itsTotalSSD;
 	private float itsTotalMedian;
 	private float itsTotalMedianAD;
-	private int[] itsPopulationCounts;
+	private int[] itsPopulationCounts;	// TODO implement for CHI2_TEST
 
 	//Bayesian
 	private DAG itsDAG;
@@ -55,7 +55,7 @@ public class QualityMeasure
 	public static final int T_TEST = 23;
 	public static final int INVERSE_T_TEST = 24;
 	public static final int ABS_T_TEST = 25;
-	public static final int CHI2_TEST = 26;
+	public static final int CHI2_TEST = 26;	// TODO see itsPopulationCounts
 	//SINGLE_ORDINAL quality measures
 	public static final int AUC = 27;
 	public static final int WMW_RANKS = 28;
@@ -96,6 +96,7 @@ public class QualityMeasure
 		itsTotalSSD = theTotalSSD;
 		itsTotalMedian = theTotalMedian;
 		itsTotalMedianAD = theTotalMedianAD;
+		//itsPopulationCounts = null;	// TODO see itsPopulationCounts
 	}
 
 //	public void setTotalTargetCoverage(int theCount) { itsTotalTargetCoverage = theCount; }
@@ -127,7 +128,8 @@ public class QualityMeasure
 		switch(theTargetType)
 		{
 			case SINGLE_NOMINAL		: return CORRELATION;
-			case SINGLE_NUMERIC		: return CHI2_TEST;
+			//case SINGLE_NUMERIC		: return CHI2_TEST;	// TODO see itsPopulationCounts
+			case SINGLE_NUMERIC		: return ABS_T_TEST;
 			case SINGLE_ORDINAL		: return MMAD;
 			case MULTI_LABEL		: return EDIT_DISTANCE;
 			case DOUBLE_CORRELATION	: return CORRELATION_ENTROPY;
@@ -414,6 +416,12 @@ public class QualityMeasure
 			}
 			case CHI2_TEST :
 			{
+				if (itsPopulationCounts == null) {
+					Log.logCommandLine("--- ERROR! QualityMeasure.calculate(): unimplemented method. ---");
+					aReturn = Float.NaN;
+					break;
+				}
+				// TODO see itsPopulationCounts
 				float a = ((theSubgroupCounts[0]-itsPopulationCounts[0])*(theSubgroupCounts[0]-itsPopulationCounts[0]))/(float)itsPopulationCounts[0];
 				float b = ((theSubgroupCounts[1]-itsPopulationCounts[1])*(theSubgroupCounts[1]-itsPopulationCounts[1]))/(float)itsPopulationCounts[1];
 				aReturn = a+b; break;
