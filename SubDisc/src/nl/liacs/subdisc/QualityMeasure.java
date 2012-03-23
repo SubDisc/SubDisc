@@ -16,8 +16,6 @@ public class QualityMeasure
 	//SINGLE_NUMERIC and SINGLE_ORDINAL
 	private float itsTotalSum;
 	private float itsTotalSSD;
-	private float itsTotalMedian;
-	private float itsTotalMedianAD;
 	private int[] itsPopulationCounts;	// TODO implement for CHI2_TEST
 
 	//Bayesian
@@ -88,14 +86,12 @@ public class QualityMeasure
 	}
 
 	//SINGLE_NUMERIC
-	public QualityMeasure(int theMeasure, int theTotalCoverage, float theTotalSum, float theTotalSSD, float theTotalMedian, float theTotalMedianAD)
+	public QualityMeasure(int theMeasure, int theTotalCoverage, float theTotalSum, float theTotalSSD)
 	{
 		itsMeasure = theMeasure;
 		itsNrRecords = theTotalCoverage;
 		itsTotalSum = theTotalSum;
 		itsTotalSSD = theTotalSSD;
-		itsTotalMedian = theTotalMedian;
-		itsTotalMedianAD = theTotalMedianAD;
 		//itsPopulationCounts = null;	// TODO see itsPopulationCounts
 	}
 

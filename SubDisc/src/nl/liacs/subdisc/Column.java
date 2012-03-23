@@ -1345,8 +1345,10 @@ public class Column implements XMLNodeInterface
 	 * , this method calculates the relevant arguments to determine the
 	 * quality of that Subgroup.
 	 * 
-	 * Based on the parameter theQualityMeasure this method determines what
-	 * statistics need to be computed.
+	 * The <code>getMedianAndMedianAD</code> parameter controls what
+	 * statistics are to be computed. <code>getMedianAndMedianAD</code>
+	 * needs only be <code>true</code> in case of QualityMeasure.calculate()
+	 * for Median MAD metric (MMAD).
 	 * 
 	 * The resulting float[] is always of length 4, and, in order, holds the
 	 * following values: sum, sum of squared deviation, median and median
@@ -1373,7 +1375,7 @@ public class Column implements XMLNodeInterface
 	 * @see Subgroup
 	 * @see java.lang.BitSet
 	 */
-	public float[] getQMRequiredStatistics(BitSet theBitSet, int theQualityMeasure)
+	public float[] getQMRequiredStatistics(BitSet theBitSet, boolean getMedianAndMedianAD)
 	{
 
 		if (!isValidCall("getQMRequiredStatistics", theBitSet))
@@ -1385,7 +1387,7 @@ public class Column implements XMLNodeInterface
 		// sum, sumSquaredDeviations, median, medianAbsoluteDeveviation
 		final float[] aResult = new float[4];
 		// if (!MMAD) do not store and sort the values, else do
-		if (theQualityMeasure != QualityMeasure.MMAD)
+		if (!getMedianAndMedianAD)
 		{
 			// this code path does no make copies of the data
 			aResult[0] = computeSum(theBitSet);
