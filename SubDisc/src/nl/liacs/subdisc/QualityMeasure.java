@@ -1,6 +1,6 @@
 package nl.liacs.subdisc;
 
-// TODO put Contigency table here without screwing up package classes layout.
+// TODO put Contingency table here without screwing up package classes layout.
 /**
  * The QualityMeasure class includes all quality measures used
  * ({@link #calculate(int, int) contingency table}).
@@ -14,8 +14,8 @@ public class QualityMeasure
 	private int itsTotalTargetCoverage;
 
 	//SINGLE_NUMERIC and SINGLE_ORDINAL
-	private float itsTotalSum;
-	private float itsTotalSSD;
+	private float itsTotalAverage = 0.0f;
+	private double itsTotalSampleStandardDeviation = 0.0;
 	private int[] itsPopulationCounts;	// TODO implement for CHI2_TEST
 
 	//Bayesian
@@ -90,8 +90,10 @@ public class QualityMeasure
 	{
 		itsMeasure = theMeasure;
 		itsNrRecords = theTotalCoverage;
-		itsTotalSum = theTotalSum;
-		itsTotalSSD = theTotalSSD;
+		if (itsNrRecords > 0)
+			itsTotalAverage = theTotalSum/itsNrRecords;
+		if (itsNrRecords > 1)
+			itsTotalSampleStandardDeviation = Math.sqrt(theTotalSSD/(itsNrRecords-1));
 		//itsPopulationCounts = null;	// TODO see itsPopulationCounts
 	}
 
@@ -345,44 +347,44 @@ public class QualityMeasure
 			case INVERSE_AVERAGE	: { aReturn = -theSum/theCoverage; break; }
 			case MEAN_TEST			:
 			{
-				aReturn = (float) Math.sqrt(theCoverage) * (theSum/theCoverage-itsTotalSum/itsNrRecords);
+				aReturn = (float) Math.sqrt(theCoverage) * (theSum/theCoverage-itsTotalAverage);
 				break;
 			}
 			case INVERSE_MEAN_TEST :
 			{
-				aReturn = (float) -(Math.sqrt(theCoverage)*(theSum/theCoverage-itsTotalSum/itsNrRecords));
+				aReturn = (float) -(Math.sqrt(theCoverage)*(theSum/theCoverage-itsTotalAverage));
 				break;
 			}
 			case ABS_MEAN_TEST :
 			{
-				aReturn = (float) Math.abs(Math.sqrt(theCoverage)*(theSum/theCoverage-itsTotalSum/itsNrRecords));
+				aReturn = (float) Math.abs(Math.sqrt(theCoverage)*(theSum/theCoverage-itsTotalAverage));
 				break;
 			}
 			case Z_SCORE	:
 			{
 				if(itsNrRecords <= 1)
-					aReturn = 0;
+					aReturn = 0.0f;
 				else
-					aReturn = (float) ((Math.sqrt(theCoverage) * (theSum/theCoverage-itsTotalSum/itsNrRecords))/
-								Math.sqrt(itsTotalSSD/(itsNrRecords-1)));
+					aReturn = (float) ((Math.sqrt(theCoverage) * (theSum/theCoverage-itsTotalAverage))/
+								itsTotalSampleStandardDeviation);
 				break;
 			}
 			case INVERSE_Z_SCORE :
 			{
 				if(itsNrRecords <= 1)
-					aReturn = 0;
+					aReturn = 0.0f;
 				else
-					aReturn = (float) -((Math.sqrt(theCoverage)*(theSum/theCoverage-itsTotalSum/itsNrRecords))/
-								Math.sqrt(itsTotalSSD/(itsNrRecords-1)));
+					aReturn = (float) -((Math.sqrt(theCoverage)*(theSum/theCoverage-itsTotalAverage))/
+								itsTotalSampleStandardDeviation);
 				break;
 			}
 			case ABS_Z_SCORE :
 			{
 				if(itsNrRecords <= 1)
-					aReturn = 0;
+					aReturn = 0.0f;
 				else
-					aReturn = (float) Math.abs((Math.sqrt(theCoverage)*(theSum/theCoverage-itsTotalSum/itsNrRecords))/
-											   Math.sqrt(itsTotalSSD/(itsNrRecords-1)));
+					aReturn = (float) Math.abs((Math.sqrt(theCoverage)*(theSum/theCoverage-itsTotalAverage))/
+									itsTotalSampleStandardDeviation);
 				break;
 			}
 			case T_TEST	:
@@ -390,8 +392,8 @@ public class QualityMeasure
 				if(theCoverage <= 1)
 					aReturn = 0;
 				else
-					aReturn = (float) ((Math.sqrt(theCoverage)*(theSum/theCoverage-itsTotalSum/itsNrRecords))/
-									   Math.sqrt(theSSD/(theCoverage-1)));
+					aReturn = (float) ((Math.sqrt(theCoverage)*(theSum/theCoverage-itsTotalAverage))/
+								Math.sqrt(theSSD/(theCoverage-1)));
 				break;
 			}
 			case INVERSE_T_TEST	:
@@ -399,7 +401,7 @@ public class QualityMeasure
 				if(theCoverage <= 1)
 					aReturn = 0;
 				else
-					aReturn = (float) -((Math.sqrt(theCoverage)*(theSum/theCoverage-itsTotalSum/itsNrRecords))/Math.sqrt(theSSD/(theCoverage-1)));
+					aReturn = (float) -((Math.sqrt(theCoverage)*(theSum/theCoverage-itsTotalAverage))/Math.sqrt(theSSD/(theCoverage-1)));
 				break;
 			}
 			case ABS_T_TEST	:
@@ -407,7 +409,7 @@ public class QualityMeasure
 				if(theCoverage <= 1)
 					aReturn = 0;
 				else
-					aReturn = (float) Math.abs((Math.sqrt(theCoverage)*(theSum/theCoverage-itsTotalSum/itsNrRecords))/Math.sqrt(theSSD/(theCoverage-1)));
+					aReturn = (float) Math.abs((Math.sqrt(theCoverage)*(theSum/theCoverage-itsTotalAverage))/Math.sqrt(theSSD/(theCoverage-1)));
 				break;
 			}
 			case CHI2_TEST :

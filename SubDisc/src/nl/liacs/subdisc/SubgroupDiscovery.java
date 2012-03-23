@@ -409,7 +409,11 @@ public class SubgroupDiscovery extends MiningAlgorithm
 				float[] aCounts = itsNumericTarget.getQMRequiredStatistics(theNewSubgroup.getMembers(), itsSearchParameters.getQualityMeasure() == QualityMeasure.MMAD);
 				aQuality = itsQualityMeasure.calculate(theNewSubgroup.getCoverage(), aCounts[0], aCounts[1], aCounts[2], aCounts[3],null); //TODO fix this parameter. only used by X2
 				theNewSubgroup.setSecondaryStatistic(aCounts[0]/(double)theNewSubgroup.getCoverage()); //average
-				theNewSubgroup.setTertiaryStatistic(Math.sqrt(aCounts[1]/(double)theNewSubgroup.getCoverage())); //stdev //TODO is this correct?
+				//stdev //TODO is this correct?
+				// MM this uses population SD, not sample SD
+				// NOTE QualityMeasure's Z-Score / T-Test use coverage-1
+				// using it might be more consistent
+				theNewSubgroup.setTertiaryStatistic(Math.sqrt(aCounts[1]/(double)theNewSubgroup.getCoverage()));
 				break;
 			}
 			case DOUBLE_REGRESSION :
