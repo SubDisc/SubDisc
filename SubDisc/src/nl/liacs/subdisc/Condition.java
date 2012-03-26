@@ -26,6 +26,16 @@ public class Condition implements Comparable<Condition>
 	private int itsOperator;
 	private String itsValue = null;
 
+	/*
+	 * Conditions are evaluated often (ie. for each item of the Column)
+	 * the constant parsing of a String to float makes evaluate(float)
+	 * extremely inefficient.
+	 * Performance of evaluate(boolean) is also sub-optimal, and return
+	 * values may be unexpected.
+	 */
+	// private float itsNumericValue;
+	// private boolean itsBooleanValue;
+
 	public Condition(Column theColumn)
 	{
 		// TODO null check
@@ -41,7 +51,7 @@ public class Condition implements Comparable<Condition>
 				itsOperator = FIRST_NOMINAL_OPERATOR;
 				Log.logCommandLine(
 					String.format(
-						"Condition<init>: unknown AttributeType '%s'. Returning '%s'. ",
+						"Condition<init>: unknown AttributeType '%s'. Returning '%s'.",
 						itsColumn.getType(),
 						getOperatorString()));
 				return;
@@ -68,6 +78,19 @@ public class Condition implements Comparable<Condition>
 		return aNewCondition;
 	}
 
+	public Column getColumn() { return itsColumn; }
+
+	public int getOperator() { return itsOperator; }
+
+	private String getValue() { return itsValue; }
+
+	// Refinement getRefinedSubgroup
+	// SubgroupDiscovery single nominal constructor
+	// Validation getRandomConditionList randomConditions randomSubgroups
+	public void setValue(String theValue) { itsValue = theValue; }
+
+	public boolean checksNotEquals() { return itsOperator == DOES_NOT_EQUAL; }
+
 	public boolean hasNextOperator()
 	{
 		if (itsOperator == LAST_BINARY_OPERATOR && itsColumn.isBinaryType())
@@ -84,24 +107,95 @@ public class Condition implements Comparable<Condition>
 		return hasNextOperator() ? itsOperator+1 : NOT_AN_OPERATOR;
 	}
 
-	public String getValue() { return itsValue; }
-
-	public void setValue(String theValue) { itsValue = theValue; }
-
-	public Column getColumn() { return itsColumn; }
-
-	// never used
-	public String getAggregateString()
+	/**
+	 * Evaluate Condition for {@link Column Column} of type
+	 * {@link AttributeType#NOMINAL AttributeType.NOMINAL}.
+	 * <p>
+	 * The evaluation is performed using the operator and value set for this
+	 * Condition, and {@link String#equals(Object) String.equals()}.
+	 * 
+	 * @param theValue the value to compare to the value of this Condition.
+	 * 
+	 * @return <code>true</code> if the evaluation yields <code>true</code>,
+	 * <code>false</code> otherwise.
+	 */
+	public boolean evaluate(String theValue)
 	{
 		switch(itsOperator)
 		{
-			case LESS_THAN_OR_EQUAL		: return "MIN";
-			case GREATER_THAN_OR_EQUAL	: return "MAX";
-			default : return null;
+			case DOES_NOT_EQUAL :
+				return (!theValue.equals(itsValue));
+			case EQUALS :
+				return (theValue.equals(itsValue));
+			case LESS_THAN_OR_EQUAL :
+			case GREATER_THAN_OR_EQUAL :
+			{
+				logError("nominal");
+				return false;
+			}
+			default : return false;
 		}
 	}
 
-	public String getOperatorString()
+	/**
+	 * Evaluate Condition for {@link Column Column} of type
+	 * {@link AttributeType#NUMERIC AttributeType.NUMERIC}.
+	 * <p>
+	 * The evaluation is performed using the operator and value set for this
+	 * Condition.
+	 * 
+	 * @param theValue the value to compare to the value of this Condition.
+	 * 
+	 * @return <code>true</code> if the evaluation yields <code>true</code>,
+	 * <code>false</code> otherwise.
+	 */
+	public boolean evaluate(Float theValue)
+	{
+		switch(itsOperator)
+		{
+			case DOES_NOT_EQUAL :
+			{
+				logError("numeric");
+				return false;
+			}
+			case EQUALS :
+				return theValue == Float.parseFloat(itsValue);
+			case LESS_THAN_OR_EQUAL :
+				return theValue <= Float.parseFloat(itsValue);
+			case GREATER_THAN_OR_EQUAL :
+				return theValue >= Float.parseFloat(itsValue);
+			default : return false;
+		}
+	}
+
+	/**
+	 * Evaluate Condition for {@link Column Column} of type
+	 * {@link AttributeType#BINARY AttributeType.BINARY}.
+	 * <p>
+	 * The evaluation is performed using the operator and value set for this
+	 * Condition.
+	 * 
+	 * @param theValue the value to compare to the value of this Condition.
+	 * 
+	 * @return <code>true</code> if the evaluation yields <code>true</code>,
+	 * <code>false</code> otherwise.
+	 */
+	public boolean evaluate(boolean theValue)
+	{
+		if (itsOperator != EQUALS)
+			logError("binary");
+		// MM 'boolean' test may return true for numeric columns?
+		// all evaluate()'s should test on ColumnType, not on Operator
+		return itsValue.equals(theValue ? "1" : "0");
+	}
+
+	private void logError(String theColumnType)
+	{
+		Log.error(String.format("incorrect operator for %s column",
+					theColumnType));
+	}
+
+	private String getOperatorString()
 	{
 		switch(itsOperator)
 		{
@@ -113,37 +207,8 @@ public class Condition implements Comparable<Condition>
 		}
 	}
 
-	public int getOperator() { return itsOperator; }
-	public boolean checksNotEquals() { return (itsOperator==DOES_NOT_EQUAL); }
-
-	// TODO theValue for <= and >= is converted from Float to String in Table
-	// and converted from String to Float here
-	public boolean evaluate(String theValue)
-	{
-		switch(itsOperator)
-		{
-			case DOES_NOT_EQUAL :
-				return (!theValue.equals(itsValue));
-			case EQUALS :
-				return (theValue.equals(itsValue));
-			case LESS_THAN_OR_EQUAL :
-				return (Float.parseFloat(theValue) <= Float.parseFloat(itsValue));
-			case GREATER_THAN_OR_EQUAL :
-				return (Float.parseFloat(theValue) >= Float.parseFloat(itsValue));
-			default : return false;
-		}
-	}
-
-	//for boolean values only
-	public boolean evaluate(boolean theValue)
-	{
-		if (itsOperator != EQUALS)
-			Log.error("incorrect operator for boolean attribute");
-		return itsValue.equals(theValue ? "1" : "0");
-	}
-
 	// never used atm
-	public String toCleanString()
+	private String toCleanString()
 	{
 		String aName = itsColumn.hasShort() ? itsColumn.getShort() : itsColumn.getName();
 

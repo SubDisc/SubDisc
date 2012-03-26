@@ -1312,8 +1312,9 @@ public class Column implements XMLNodeInterface
 			case ORDINAL :
 			{
 				for (int i = 0, j = itsSize; i < j; ++i)
-					//if (theCondition.evaluate(Float.toString(itsFloats.get(i))))
-					if (theCondition.evaluate(Float.toString(itsFloatz[i])))
+					// if (theCondition.evaluate(Float.toString(itsFloats.get(i))))
+					// if (theCondition.evaluate(Float.toString(itsFloatz[i])))
+					if (theCondition.evaluate(itsFloatz[i]))
 						aSet.set(i);
 				break;
 			}
@@ -1375,10 +1376,10 @@ public class Column implements XMLNodeInterface
 	 * @see Subgroup
 	 * @see java.lang.BitSet
 	 */
-	public float[] getQMRequiredStatistics(BitSet theBitSet, boolean getMedianAndMedianAD)
+	public float[] getStatistics(BitSet theBitSet, boolean getMedianAndMedianAD)
 	{
 
-		if (!isValidCall("getQMRequiredStatistics", theBitSet))
+		if (!isValidCall("getStatistics", theBitSet))
 			return new float[]{ Float.NaN, Float.NaN, Float.NaN, Float.NaN };
 		// not all methods below are safe for divide by 0
 		else if (theBitSet.cardinality() == 0)

@@ -75,7 +75,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 
 		BitSet aBitSet = new BitSet();
 		aBitSet.set(0, itsNrRows);
-		float[] aCounts = itsNumericTarget.getQMRequiredStatistics(aBitSet, false);
+		float[] aCounts = itsNumericTarget.getStatistics(aBitSet, false);
 
 		itsQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), itsNrRows, aCounts[0], aCounts[1]);
 		itsQualityMeasureMinimum = itsSearchParameters.getQualityMeasureMinimum();
@@ -406,7 +406,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 			}
 			case SINGLE_NUMERIC :
 			{
-				float[] aCounts = itsNumericTarget.getQMRequiredStatistics(theNewSubgroup.getMembers(), itsSearchParameters.getQualityMeasure() == QualityMeasure.MMAD);
+				float[] aCounts = itsNumericTarget.getStatistics(theNewSubgroup.getMembers(), itsSearchParameters.getQualityMeasure() == QualityMeasure.MMAD);
 				aQuality = itsQualityMeasure.calculate(theNewSubgroup.getCoverage(), aCounts[0], aCounts[1], aCounts[2], aCounts[3],null); //TODO fix this parameter. only used by X2
 				theNewSubgroup.setSecondaryStatistic(aCounts[0]/(double)theNewSubgroup.getCoverage()); //average
 				//stdev //TODO is this correct?
