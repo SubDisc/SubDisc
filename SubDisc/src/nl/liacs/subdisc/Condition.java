@@ -22,24 +22,27 @@ public class Condition implements Comparable<Condition>
 	public static final int FIRST_NUMERIC_OPERATOR	= EQUALS;
 	public static final int LAST_NUMERIC_OPERATOR	= GREATER_THAN_OR_EQUAL;
 
-	private Column itsColumn;
-	private int itsOperator;
-	private String itsValue = null;
+	private final Column itsColumn;
+	private final int itsOperator;
 
-	/*
-	 * Conditions are evaluated often (ie. for each item of the Column)
-	 * the constant parsing of a String to float makes evaluate(float)
-	 * extremely inefficient.
-	 * Performance of evaluate(boolean) is also sub-optimal, and return
-	 * values may be unexpected.
+	private String itsNominalValue = null;		// ColumnType = NOMINAL
+	private float itsNumericValue = Float.NaN;	// ColumnType = NUMERIC
+	private boolean itsBinaryValue = false;		// ColumnType = BINARY
+
+	/**
+	 * Default initialisation values for {@Column Column} of
+	 * {@link AttributeType Attribute}:<br>
+	 * NOMINAL = <code>null</code>,<br>
+	 * NUMERIC = Float.NaN,<br>
+	 * BINARY = <code>false</code>.
+	 * 
+	 * @param theColumn
 	 */
-	// private float itsNumericValue;
-	// private boolean itsBooleanValue;
-
 	public Condition(Column theColumn)
 	{
 		// TODO null check
 		itsColumn = theColumn;
+
 		switch (itsColumn.getType())
 		{
 			case NOMINAL : itsOperator = FIRST_NOMINAL_OPERATOR; return;
@@ -49,19 +52,24 @@ public class Condition implements Comparable<Condition>
 			default :
 			{
 				itsOperator = FIRST_NOMINAL_OPERATOR;
-				Log.logCommandLine(
-					String.format(
-						"Condition<init>: unknown AttributeType '%s'. Returning '%s'.",
-						itsColumn.getType(),
-						getOperatorString()));
+				logTypeError("<init>");
 				return;
 			}
 		}
 	}
 
-	// TODO null check
+	/**
+	 * Default initialisation values for {@Column Column} of
+	 * {@link AttributeType Attribute}:<br>
+	 * NOMINAL = <code>null</code>,<br>
+	 * NUMERIC = Float.NaN,<br>
+	 * BINARY = <code>false</code>.
+	 * 
+	 * @param theColumn
+	 */
 	public Condition(Column theColumn, int theOperator)
 	{
+		// TODO null check, operator valid for ColumnType
 		itsColumn = theColumn;
 		itsOperator = theOperator;
 	}
@@ -72,22 +80,66 @@ public class Condition implements Comparable<Condition>
 	// changes it, beside it can be overridden through setValue anyway.
 	public Condition copy()
 	{
-		Condition aNewCondition = new Condition(itsColumn, itsOperator);
+		Condition aCopy = new Condition(itsColumn, itsOperator);
 		// new for deep-copy? not strictly needed for code
-		aNewCondition.setValue(itsValue == null ? null : new String(getValue()));
-		return aNewCondition;
+		if (itsNominalValue != null)
+			aCopy.itsNominalValue = new String(itsNominalValue);
+		aCopy.itsNumericValue = this.itsNumericValue;
+		aCopy.itsBinaryValue = this.itsBinaryValue;
+		return aCopy;
 	}
 
 	public Column getColumn() { return itsColumn; }
 
 	public int getOperator() { return itsOperator; }
 
-	private String getValue() { return itsValue; }
+	private String getValue()
+	{
+		switch (itsColumn.getType())
+		{
+			case NOMINAL : return itsNominalValue;
+			case NUMERIC : return Float.toString(itsNumericValue);
+			case ORDINAL : return Float.toString(itsNumericValue);
+			case BINARY : return itsBinaryValue ? "1" : "0";
+			default : logTypeError("getValue"); return "";
+		}
+	}
 
-	// Refinement getRefinedSubgroup
-	// SubgroupDiscovery single nominal constructor
-	// Validation getRandomConditionList randomConditions randomSubgroups
-	public void setValue(String theValue) { itsValue = theValue; }
+	/**
+	 * Set the value for this Condition, use:<br>
+	 * Floats.toString(theFloatValue) for a <code>float</code>,<br>
+	 * "0" or "1" for <code>false</code> and <code>true</code> respectively.
+	 */
+	/*
+	 * Setting the value using a (parsed) String is still sub-optimal, but
+	 * unlikely to be a performance drawback. It is done only once per
+	 * condition, contrary to subgroup.size()-calls to evaluate().
+	 * 
+	 * Method is called by:
+	 * Refinement getRefinedSubgroup
+	 * SubgroupDiscovery single nominal constructor
+	 * Validation getRandomConditionList randomConditions randomSubgroups
+	 */
+	public void setValue(String theValue)
+	{
+		switch (itsColumn.getType())
+		{
+			case NOMINAL : itsNominalValue = theValue; return;
+			case NUMERIC :
+			case ORDINAL :
+			{
+				try { itsNumericValue = Float.parseFloat(theValue); }
+				catch (NumberFormatException e) {} // remains NaN
+				return;
+			}
+			case BINARY :
+			{
+				itsBinaryValue = theValue.equals("1");
+				return;
+			}
+			default : logTypeError("setValue"); return;
+		}
+	}
 
 	public boolean checksNotEquals() { return itsOperator == DOES_NOT_EQUAL; }
 
@@ -124,9 +176,9 @@ public class Condition implements Comparable<Condition>
 		switch(itsOperator)
 		{
 			case DOES_NOT_EQUAL :
-				return (!theValue.equals(itsValue));
+				return (!theValue.equals(itsNominalValue));
 			case EQUALS :
-				return (theValue.equals(itsValue));
+				return (theValue.equals(itsNominalValue));
 			case LESS_THAN_OR_EQUAL :
 			case GREATER_THAN_OR_EQUAL :
 			{
@@ -159,11 +211,11 @@ public class Condition implements Comparable<Condition>
 				return false;
 			}
 			case EQUALS :
-				return theValue == Float.parseFloat(itsValue);
+				return theValue == itsNumericValue;
 			case LESS_THAN_OR_EQUAL :
-				return theValue <= Float.parseFloat(itsValue);
+				return theValue <= itsNumericValue;
 			case GREATER_THAN_OR_EQUAL :
-				return theValue >= Float.parseFloat(itsValue);
+				return theValue >= itsNumericValue;
 			default : return false;
 		}
 	}
@@ -184,15 +236,22 @@ public class Condition implements Comparable<Condition>
 	{
 		if (itsOperator != EQUALS)
 			logError("binary");
-		// MM 'boolean' test may return true for numeric columns?
-		// all evaluate()'s should test on ColumnType, not on Operator
-		return itsValue.equals(theValue ? "1" : "0");
+		return itsBinaryValue == theValue;
 	}
 
 	private void logError(String theColumnType)
 	{
 		Log.error(String.format("incorrect operator for %s column",
 					theColumnType));
+	}
+
+	private void logTypeError(String theMethod)
+	{
+		Log.logCommandLine(String.format("%s.%s(): unknown AttributeType '%s'. Returning '%s'.",
+							getClass().getSimpleName(),
+							theMethod,
+							itsColumn.getType(),
+							getOperatorString()));
 	}
 
 	private String getOperatorString()
@@ -210,19 +269,29 @@ public class Condition implements Comparable<Condition>
 	// never used atm
 	private String toCleanString()
 	{
-		String aName = itsColumn.hasShort() ? itsColumn.getShort() : itsColumn.getName();
+		String aName = itsColumn.hasShort() ? itsColumn.getShort() :
+							itsColumn.getName();
 
 		if (itsColumn.isNumericType())
-			return String.format("%s %s %s", aName, getOperatorString(), itsValue);
+			return String.format("%s %s %s",
+						aName,
+						getOperatorString(),
+						getValue());
 		else
-			return String.format("%s %s '%s'", aName, getOperatorString(), itsValue);
+			return String.format("%s %s '%s'",
+						aName,
+						getOperatorString(),
+						getValue());
 	}
 
 	// used by ConditionList.toString()
 	@Override
 	public String toString()
 	{
-		return String.format("%s %s '%s'", itsColumn.getName(), getOperatorString(), itsValue);
+		return String.format("%s %s '%s'",
+					itsColumn.getName(),
+					getOperatorString(),
+					getValue());
 	}
 
 	/*
@@ -258,16 +327,17 @@ public class Condition implements Comparable<Condition>
 	{
 		if (this == theCondition)
 			return 0;
-		else if (this.getColumn().getIndex() < theCondition.getColumn().getIndex())
+		else if (this.itsColumn.getIndex() < theCondition.itsColumn.getIndex())
 			return -1;
-		else if (this.getColumn().getIndex() > theCondition.getColumn().getIndex())
+		else if (this.itsColumn.getIndex() > theCondition.itsColumn.getIndex())
 			return 1;
 		// same column, check operator
-		else if (this.getOperator() < theCondition.getOperator())
+		else if (this.itsOperator < theCondition.itsOperator)
 			return -1;
-		else if (this.getOperator() > theCondition.getOperator())
+		else if (this.itsOperator > theCondition.itsOperator)
 			return 1;
 		// same column, same operator, check on value
+		/*
 		else if (this.getColumn().isNumericType())
 			return (Float.valueOf(this.getValue()).compareTo(Float.valueOf(theCondition.getValue())));
 		else
@@ -275,6 +345,34 @@ public class Condition implements Comparable<Condition>
 			// String.compareTo() does not strictly return -1, 0, 1
 			int aCompare = this.getValue().compareTo(theCondition.getValue());
 			return (aCompare < 0 ? -1 : aCompare > 0 ? 1 : 0);
+		}
+		*/
+		switch (itsColumn.getType())
+		{
+			case NOMINAL :
+			{
+				// String.compareTo() does not strictly return -1, 0, 1
+				int aCompare = itsNominalValue.compareTo(theCondition.itsNominalValue);
+				return (aCompare < 0 ? -1 : aCompare > 0 ? 1 : 0);
+			}
+			case NUMERIC :
+			case ORDINAL : 
+			{
+				return Float.compare(itsNumericValue, theCondition.itsNumericValue);
+			}
+			case BINARY :
+			{
+				if (!itsBinaryValue)
+					return theCondition.itsBinaryValue ? -1 : 0;
+				else
+					return theCondition.itsBinaryValue ? 0 : 1;
+			}
+			// should never happen
+			default :
+			{
+				logTypeError("compareTo");
+				return 0;
+			}
 		}
 	}
 }
