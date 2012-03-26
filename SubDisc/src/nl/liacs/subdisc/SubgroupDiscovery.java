@@ -233,6 +233,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		}
 		Log.logCommandLine("number of subgroups: " + getNumberOfSubgroups());
 
+		itsResult.setIDs(); //assign 1 to n to subgroups, for future reference in subsets
 		if ((itsSearchParameters.getTargetType() == TargetType.MULTI_LABEL) && itsSearchParameters.getPostProcessingDoAutoRun())
 			postprocess();
 
@@ -240,6 +241,8 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		// TODO MM see note at SubgroupSet.postProcess(), all itsResults will remain in memory
 		itsResult = itsResult.postProcess(itsSearchParameters.getSearchStrategy());
 
+		// in MULTI_LABEL, order may have changed 
+		// in COVER_BASED_BEAM_SELECTION, subgroups may have been removed
 		itsResult.setIDs(); //assign 1 to n to subgroups, for future reference in subsets
 	}
 
@@ -827,7 +830,7 @@ TODO for stable jar, disabled, causes comple errors, reinstate later
 		}
 		Log.logCommandLine("number of subgroups: " + getNumberOfSubgroups());
 
-
+		itsResult.setIDs(); //assign 1 to n to subgroups, for future reference in subsets
 		if ((itsSearchParameters.getTargetType() == TargetType.MULTI_LABEL) && itsSearchParameters.getPostProcessingDoAutoRun())
 			postprocess();
 
@@ -835,6 +838,8 @@ TODO for stable jar, disabled, causes comple errors, reinstate later
 		// TODO MM see note at SubgroupSet.postProcess(), all itsResults will remain in memory
 		itsResult = itsResult.postProcess(itsSearchParameters.getSearchStrategy());
 
+		// in MULTI_LABEL, order may have changed 
+		// in COVER_BASED_BEAM_SELECTION, subgroups may have been removed
 		itsResult.setIDs(); //assign 1 to n to subgroups, for future reference in subsets
 	}
 
