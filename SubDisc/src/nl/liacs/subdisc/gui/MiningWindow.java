@@ -2,7 +2,6 @@ package nl.liacs.subdisc.gui;
 
 import java.awt.*;
 import java.awt.event.*;
-import java.io.*;
 import java.text.*;
 import java.util.*;
 import java.util.List;
@@ -1419,14 +1418,14 @@ public class MiningWindow extends JFrame
 		runSubgroupDiscovery(itsTable, 0, null);
 	}
 
-	private SubgroupSet runSubgroupDiscovery(Table theTable, int theFold, BitSet theBitSet)
+	private void runSubgroupDiscovery(Table theTable, int theFold, BitSet theBitSet)
 	{
 		setupSearchParameters();
-		return runSubgroupDiscovery(theTable, theFold, theBitSet, itsSearchParameters, true, getNrThreads());
+		runSubgroupDiscovery(theTable, theFold, theBitSet, itsSearchParameters, true, getNrThreads());
 	}
 
 	// public, but does not perform ANY sanity checks
-	public static SubgroupSet runSubgroupDiscovery(Table theTable, int theFold, BitSet theBitSet, SearchParameters theSearchParameters, boolean showWindows, int theNrThreads)
+	public static SubgroupDiscovery runSubgroupDiscovery(Table theTable, int theFold, BitSet theBitSet, SearchParameters theSearchParameters, boolean showWindows, int theNrThreads)
 	{
 		TargetType aTargetType = theSearchParameters.getTargetConcept().getTargetType();
 		//TODO other types not implemented yet
@@ -1508,7 +1507,7 @@ public class MiningWindow extends JFrame
 			new ResultWindow(theTable, aSubgroupDiscovery, aBinaryTable, theFold, theBitSet);
 		}
 
-		return aSubgroupDiscovery.getResult();
+		return aSubgroupDiscovery;
 	}
 /*
 	private void runSubgroupDiscovery(Table aTable, int theFold, BitSet theBitSet)
@@ -1680,54 +1679,16 @@ public class MiningWindow extends JFrame
 
 	private void jButtonCrossValidateActionPerformed()
 	{
-		int aStore = JOptionPane.showConfirmDialog(null, "Would you like to store binary tables for each fold in a file?",
-			"Store results", JOptionPane.YES_NO_OPTION);
-		long itsTimeStamp = System.currentTimeMillis();
-
 		int aK = 10; //TODO set k from GUI
 		CrossValidation aCV = new CrossValidation(itsTable.getNrRows(), aK);
-
-		BufferedWriter aWriter = null;
-		String aFileName = itsTable.getName() + "_folds_" + itsTimeStamp +".txt";
-
-		if (aStore == 0)
-			try
-			{
-				aWriter = new BufferedWriter(new FileWriter(aFileName));
-			}
-			catch (IOException e)
-			{
-				Log.logCommandLine("Error on file: " + aFileName);
-			}
-			
 		for (int i=0; i<aK; i++)
 		{
 			BitSet aSet = aCV.getSet(i, true);
+			Log.logCommandLine("size: " + aSet.cardinality());
 			Table aTable = itsTable.select(aSet);
-			SubgroupSet aResult = runSubgroupDiscovery(aTable, (i+1), aSet);
 
-			if (aStore == 0)
-			{
-				try
-				{
-					aWriter.write("Fold " + (i+1) + ":\n" + aSet.toString() + "\n");
-				}
-				catch (IOException e)
-				{
-					Log.logCommandLine("File writer error: " + e.getMessage());
-				}
-				aResult.saveExtent(aWriter, itsTable, aSet, itsTargetConcept);
-			}
+			runSubgroupDiscovery(aTable, (i+1), aSet);
 		}
-		if (aStore == 0)
-			try
-			{
-				aWriter.close();
-			}
-			catch (IOException e)
-			{
-				Log.logCommandLine("File writer error: " + e.getMessage());
-			}
 	}
 
 	/* Setups */
@@ -2042,7 +2003,7 @@ public class MiningWindow extends JFrame
 
 	// target type - jList secondary targets
 	private void addMultiRegressionTargetsItem(String theItem) { ((DefaultListModel) jListMultiRegressionTargets.getModel()).addElement(theItem); }
-	//private void removeAllMultiRegressionTargetsItems() { ((DefaultListModel) jListMultiRegressionTargets.getModel()).clear(); }
+	private void removeAllMultiRegressionTargetsItems() { ((DefaultListModel) jListMultiRegressionTargets.getModel()).clear(); }
 
 
 	private void setSearchDepthMaximum(String aValue) { jTextFieldSearchDepth.setText(aValue); }

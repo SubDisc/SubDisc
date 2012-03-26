@@ -207,6 +207,7 @@ public class SubgroupSet extends TreeSet<Subgroup>
 			while (QUEUE.size() > 0)
 			{
 				Subgroup s = QUEUE.poll();
+				if (s.getMeasureValue() < itsLowestScore)
 					QUEUE.clear();
 				super.add(s);
 			}
@@ -250,24 +251,21 @@ public class SubgroupSet extends TreeSet<Subgroup>
 		Log.logCommandLine("saving extent...");
 		try
 		{
-/*			final Column aPrimaryTarget = theTargetConcept.getPrimaryTarget();
+			final Column aPrimaryTarget = theTargetConcept.getPrimaryTarget();
 			final Column aSecondaryTarget = theTargetConcept.getSecondaryTarget();
 			final List<Column> aMultiTargets = theTargetConcept.getMultiTargets();
-*/
-			//WD: okay, wtf gebeurt hier? Waarom wordt deze j zo gedefinieerd? Ik krijg hierdoor (NrRows+100)*folds teveel regels in mijn resultaat. 
+
 			// j = 5 + aNrRows*(,1) + 2*float
-			//for (int i = 0, j = theTable.getNrRows()*2 + 100; i < j; ++i)
-			
-			for (int i=0, j=theTable.getNrRows(), k=j*2+100; i<j; ++i)
+			for (int i = 0, j = theTable.getNrRows()*2 + 100; i < j; ++i)
 			{
-				StringBuilder aRow = new StringBuilder(k);
+				StringBuilder aRow = new StringBuilder(j);
 				aRow.append(theSubset.get(i) ? "train":"test ");
 
 				//add subgroup extents to current row
 				for (Subgroup aSubgroup: this)
 					aRow.append(aSubgroup.getMembers().get(i) ? ",1" : ",0");
 
-/*				// add targets
+				// add targets
 				switch (theTargetConcept.getTargetType())
 				{
 					case SINGLE_NOMINAL :
@@ -304,7 +302,7 @@ public class SubgroupSet extends TreeSet<Subgroup>
 						aRow.append(" - ERROR: unknown TargetType");
 						break;
 					}
-				}*/
+				}
 
 				theWriter.write(aRow.append("\n").toString());
 			}

@@ -186,10 +186,10 @@ public class XMLAutoRun
 		aSearchParameters.setTargetConcept(new TargetConcept(aSettings.item(0), aTable));
 
 		long aBegin = System.currentTimeMillis();
-		SubgroupSet aSubgroupSet =
+		SubgroupDiscovery aSubgroupDiscovery =
 			MiningWindow.runSubgroupDiscovery(aTable, 0, null, aSearchParameters, showWindows, theNrThreads);
 		// always save result TODO search parameters based filename
-		save(aSubgroupSet, theFile.getAbsolutePath().replace(".xml", ("_"+ aBegin + ".txt")), aSearchParameters.getTargetType());
+		save(aSubgroupDiscovery.getResult(), theFile.getAbsolutePath().replace(".xml", ("_"+ aBegin + ".txt")), aSearchParameters.getTargetType());
 	}
 
 	public static void save(SubgroupSet theSubgroupSet, String theFileName, TargetType theTargetType)
