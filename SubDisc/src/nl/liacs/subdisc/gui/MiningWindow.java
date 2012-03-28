@@ -2,6 +2,7 @@ package nl.liacs.subdisc.gui;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.io.*;
 import java.text.*;
 import java.util.*;
 import java.util.List;
@@ -1679,16 +1680,56 @@ public class MiningWindow extends JFrame
 
 	private void jButtonCrossValidateActionPerformed()
 	{
+		int aStore = JOptionPane.showConfirmDialog(null, "Would you like to store binary tables for each fold in a file?",
+			"Store results", JOptionPane.YES_NO_OPTION);
+		long itsTimeStamp = System.currentTimeMillis();
+
 		int aK = 10; //TODO set k from GUI
 		CrossValidation aCV = new CrossValidation(itsTable.getNrRows(), aK);
+
+		BufferedWriter aWriter = null;
+		String aFileName = itsTable.getName() + "_folds_" + itsTimeStamp +".txt";
+
+		if (aStore == 0)
+			try
+			{
+				aWriter = new BufferedWriter(new FileWriter(aFileName));
+			}
+			catch (IOException e)
+			{
+				Log.logCommandLine("Error on file: " + aFileName);
+			}
+
 		for (int i=0; i<aK; i++)
 		{
 			BitSet aSet = aCV.getSet(i, true);
-			Log.logCommandLine("size: " + aSet.cardinality());
 			Table aTable = itsTable.select(aSet);
 
-			runSubgroupDiscovery(aTable, (i+1), aSet);
+			setupSearchParameters();
+			SubgroupDiscovery aResult = runSubgroupDiscovery(aTable, (i+1), aSet, itsSearchParameters, true, getNrThreads());
+			
+			if (aStore == 0)
+			{
+				try
+				{
+					aWriter.write("Fold " + (i+1) + ":\n" + aSet.toString() + "\n");
+				}
+				catch (IOException e)
+				{
+					Log.logCommandLine("File writer error: " + e.getMessage());
+				}
+				aResult.getResult().saveExtent(aWriter, itsTable, aSet, itsTargetConcept);
+			}
 		}
+		if (aStore == 0)
+			try
+			{
+				aWriter.close();
+			}
+			catch (IOException e)
+			{
+				Log.logCommandLine("File writer error: " + e.getMessage());
+			}
 	}
 
 	/* Setups */
