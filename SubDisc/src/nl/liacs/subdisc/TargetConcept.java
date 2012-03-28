@@ -135,20 +135,29 @@ public class TargetConcept implements XMLNodeInterface
 
 	public boolean isSingleNominal() { return (itsTargetType == TargetType.SINGLE_NOMINAL); }
 
+	// when crossvalidating, the columns in the target concept are the size of the dataset, but the columns that are
+	// being tested here are 90% of the size of the dataset. Hence the columns were never equal. I propose to use the
+	// column index as identifier, to circumvent this problem.
 	public boolean isTargetAttribute(Column theColumn)
 	{
+		int anIndex = theColumn.getIndex();
 		switch (itsTargetType)
 		{
 			case SINGLE_NOMINAL :
 			case SINGLE_NUMERIC :
-				return (theColumn == itsPrimaryTarget);
+				return (anIndex == itsPrimaryTarget.getIndex());
 			case DOUBLE_REGRESSION :
 // TODO for stable jar, disable, setting were originally added in revision 848
 				// return (theColumn == itsPrimaryTarget || itsSecondaryTargets.contains(theColumn) || itsTertiaryTargets.contains(theColumn) );
 			case DOUBLE_CORRELATION :
-				return (theColumn == itsPrimaryTarget || theColumn == itsSecondaryTarget);
+				return (anIndex == itsPrimaryTarget.getIndex() || anIndex == itsSecondaryTarget.getIndex());
 			case MULTI_LABEL :
-				return (itsMultiTargets.contains(theColumn));
+			{
+				for (Column aColumn : itsMultiTargets)
+					if (anIndex == aColumn.getIndex())
+						return true;
+				return false;
+			}
 			default :
 				return false;
 		}

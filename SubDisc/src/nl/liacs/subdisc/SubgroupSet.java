@@ -259,9 +259,9 @@ public class SubgroupSet extends TreeSet<Subgroup>
 			// WD: Okay, wanneer dit zo wordt gedefinieerd, zou iemand er dan even bij kunnen zetten wat deze j is en waarom hij zo gedefinieerd is?
 			//     Het maakt zonder context weinig sense om verder te loopen dan j=theTable.getNrRows(), dus als daar toch een goede reden voor is, hoor ik het graag. 
 //			for (int i = 0, j = theTable.getNrRows()*2 + 100; i < j; ++i)
-			for (int i = 0, j = theTable.getNrRows(); i < j; ++i)
+			for (int i = 0, j = theTable.getNrRows(), k=j*2+100; i < j; ++i)
 			{
-				StringBuilder aRow = new StringBuilder(j);
+				StringBuilder aRow = new StringBuilder(k);
 				aRow.append(theSubset.get(i) ? "train":"test ");
 
 				//add subgroup extents to current row
@@ -306,8 +306,8 @@ public class SubgroupSet extends TreeSet<Subgroup>
 						aRow.append(" - ERROR: unknown TargetType");
 						break;
 					}
-				}*/
-
+				}
+*/
 				theWriter.write(aRow.append("\n").toString());
 			}
 		}
