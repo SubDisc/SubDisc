@@ -291,7 +291,7 @@ public class Table
 		if (theList == null || theList.isEmpty())
 			return new BitSet(0);
 
-		// these 3 lines replace all code below, sleightly less efficient
+		// these 3 lines replace all code below, slightly less efficient
 		BitSet aSet = theList.get(0).getColumn().evaluate(theList.get(0));
 		for (int i = 1, j =  theList.size(); i < j; ++i)
 			aSet.and(theList.get(i).getColumn().evaluate(theList.get(i)));

@@ -259,55 +259,26 @@ public class SubgroupSet extends TreeSet<Subgroup>
 			// WD: Okay, wanneer dit zo wordt gedefinieerd, zou iemand er dan even bij kunnen zetten wat deze j is en waarom hij zo gedefinieerd is?
 			//     Het maakt zonder context weinig sense om verder te loopen dan j=theTable.getNrRows(), dus als daar toch een goede reden voor is, hoor ik het graag. 
 //			for (int i = 0, j = theTable.getNrRows()*2 + 100; i < j; ++i)
-			for (int i = 0, j = theTable.getNrRows(), k=j*2+100; i < j; ++i)
+			for (int i = 0, j = theTable.getNrRows(), k=j*2+100, l = 0; i < j; ++i)
 			{
 				StringBuilder aRow = new StringBuilder(k);
-				aRow.append(theSubset.get(i) ? "train":"test ");
 
 				//add subgroup extents to current row
-				for (Subgroup aSubgroup: this)
-					aRow.append(aSubgroup.getMembers().get(i) ? ",1" : ",0");
-
-				// DO NOT add targets. Why would we want to add targets?
-/*				// add targets
-				switch (theTargetConcept.getTargetType())
+				// since the crossvalidation Columns are shorter than the original columns, we need to pad
+				if (theSubset.get(i))
 				{
-					case SINGLE_NOMINAL :
-					{
-						aRow.append(",");
-						aRow.append(aPrimaryTarget.getNominal(i));
-						break;
-					}
-					case SINGLE_NUMERIC :
-					{
-						aRow.append(",");
-						aRow.append(aPrimaryTarget.getFloat(i));
-						break;
-					}
-					case DOUBLE_REGRESSION :
-					case DOUBLE_CORRELATION :
-					{
-						aRow.append(",");
-						aRow.append(aPrimaryTarget.getFloat(i));
-						aRow.append(",");
-						aRow.append(aSecondaryTarget.getFloat(i));
-						break;
-					}
-					case MULTI_LABEL :
-					{
-						for (Column aTarget: aMultiTargets)
-							aRow.append(aTarget.getBinary(i) ? ",1" : ",0");
-						break;
-					}
-					default :
-					{
-						Log.logCommandLine("SubgroupSet.saveExtent(): unknown TargetType: " +
-									theTargetConcept.getTargetType());
-						aRow.append(" - ERROR: unknown TargetType");
-						break;
-					}
+					aRow.append("train");
+					for (Subgroup aSubgroup: this)
+						aRow.append(aSubgroup.getMembers().get(l) ? ",1" : ",0");
+					l++;
 				}
-*/
+				else
+				{
+					aRow.append("test ");
+					for (Subgroup aSubgroup: this)
+						aRow.append(",0");
+				}
+
 				theWriter.write(aRow.append("\n").toString());
 			}
 		}
