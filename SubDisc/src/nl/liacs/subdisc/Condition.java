@@ -3,10 +3,11 @@ package nl.liacs.subdisc;
 public class Condition implements Comparable<Condition>
 {
 	// Operator Constants
-	public static final int DOES_NOT_EQUAL		= -1;
-	public static final int EQUALS			= 0;
-	public static final int LESS_THAN_OR_EQUAL	= 1;
-	public static final int GREATER_THAN_OR_EQUAL	= 2;
+	public static final int ELEMENT_OF		= 0;
+	public static final int DOES_NOT_EQUAL		= 1;
+	public static final int EQUALS			= 2;
+	public static final int LESS_THAN_OR_EQUAL	= 3;
+	public static final int GREATER_THAN_OR_EQUAL	= 4;
 	public static final int NOT_AN_OPERATOR		= 99;
 
 	// Binary Operator Constants
@@ -14,6 +15,8 @@ public class Condition implements Comparable<Condition>
 	public static final int LAST_BINARY_OPERATOR	= EQUALS;
 
 	// Nominal Operator  Constants
+	//MiMa swap these two definitions to get set-valued behaviour
+//	public static final int FIRST_NOMINAL_OPERATOR	= ELEMENT_OF;
 	public static final int FIRST_NOMINAL_OPERATOR	= DOES_NOT_EQUAL;
 	public static final int LAST_NOMINAL_OPERATOR	= EQUALS;
 
@@ -26,6 +29,7 @@ public class Condition implements Comparable<Condition>
 	private final int itsOperator;
 
 	private String itsNominalValue = null;		// ColumnType = NOMINAL
+	private ValueSet itsNominalValueSet = null;		// ColumnType = NOMINAL
 	private float itsNumericValue = Float.NaN;	// ColumnType = NUMERIC
 	private boolean itsBinaryValue = false;		// ColumnType = BINARY
 
@@ -35,7 +39,7 @@ public class Condition implements Comparable<Condition>
 	 * NOMINAL = <code>null</code>,<br>
 	 * NUMERIC = Float.NaN,<br>
 	 * BINARY = <code>false</code>.
-	 * 
+	 *
 	 * @param theColumn
 	 */
 	public Condition(Column theColumn)
@@ -64,7 +68,7 @@ public class Condition implements Comparable<Condition>
 	 * NOMINAL = <code>null</code>,<br>
 	 * NUMERIC = Float.NaN,<br>
 	 * BINARY = <code>false</code>.
-	 * 
+	 *
 	 * @param theColumn
 	 */
 	public Condition(Column theColumn, int theOperator)
@@ -84,6 +88,7 @@ public class Condition implements Comparable<Condition>
 		// new for deep-copy? not strictly needed for code
 		if (itsNominalValue != null)
 			aCopy.itsNominalValue = new String(itsNominalValue);
+		aCopy.itsNominalValueSet = this.itsNominalValueSet; //shallow copy!
 		aCopy.itsNumericValue = this.itsNumericValue;
 		aCopy.itsBinaryValue = this.itsBinaryValue;
 		return aCopy;
@@ -97,7 +102,13 @@ public class Condition implements Comparable<Condition>
 	{
 		switch (itsColumn.getType())
 		{
-			case NOMINAL : return itsNominalValue;
+			case NOMINAL :
+				if (itsNominalValue != null) //single value?
+					return itsNominalValue;
+				else if (itsNominalValueSet != null) //value set?
+					return itsNominalValueSet.toString();
+				else
+					return null;
 			case NUMERIC : return Float.toString(itsNumericValue);
 			case ORDINAL : return Float.toString(itsNumericValue);
 			case BINARY : return itsBinaryValue ? "1" : "0";
@@ -114,7 +125,7 @@ public class Condition implements Comparable<Condition>
 	 * Setting the value using a (parsed) String is still sub-optimal, but
 	 * unlikely to be a performance drawback. It is done only once per
 	 * condition, contrary to subgroup.size()-calls to evaluate().
-	 * 
+	 *
 	 * Method is called by:
 	 * Refinement getRefinedSubgroup
 	 * SubgroupDiscovery single nominal constructor
@@ -141,6 +152,11 @@ public class Condition implements Comparable<Condition>
 		}
 	}
 
+	/**
+	 * Set the value for this Condition, specifically for nominal value sets
+	 */
+	public void setValue(ValueSet theValue)	{ itsNominalValueSet = theValue; }
+
 	public boolean checksNotEquals() { return itsOperator == DOES_NOT_EQUAL; }
 
 	public boolean hasNextOperator()
@@ -165,9 +181,9 @@ public class Condition implements Comparable<Condition>
 	 * <p>
 	 * The evaluation is performed using the operator and value set for this
 	 * Condition, and {@link String#equals(Object) String.equals()}.
-	 * 
+	 *
 	 * @param theValue the value to compare to the value of this Condition.
-	 * 
+	 *
 	 * @return <code>true</code> if the evaluation yields <code>true</code>,
 	 * <code>false</code> otherwise.
 	 */
@@ -175,10 +191,12 @@ public class Condition implements Comparable<Condition>
 	{
 		switch(itsOperator)
 		{
+			case ELEMENT_OF :
+				return itsNominalValueSet.contains(theValue);
 			case DOES_NOT_EQUAL :
-				return (!theValue.equals(itsNominalValue));
+				return !theValue.equals(itsNominalValue);
 			case EQUALS :
-				return (theValue.equals(itsNominalValue));
+				return theValue.equals(itsNominalValue);
 			case LESS_THAN_OR_EQUAL :
 			case GREATER_THAN_OR_EQUAL :
 			{
@@ -195,9 +213,9 @@ public class Condition implements Comparable<Condition>
 	 * <p>
 	 * The evaluation is performed using the operator and value set for this
 	 * Condition.
-	 * 
+	 *
 	 * @param theValue the value to compare to the value of this Condition.
-	 * 
+	 *
 	 * @return <code>true</code> if the evaluation yields <code>true</code>,
 	 * <code>false</code> otherwise.
 	 */
@@ -226,9 +244,9 @@ public class Condition implements Comparable<Condition>
 	 * <p>
 	 * The evaluation is performed using the operator and value set for this
 	 * Condition.
-	 * 
+	 *
 	 * @param theValue the value to compare to the value of this Condition.
-	 * 
+	 *
 	 * @return <code>true</code> if the evaluation yields <code>true</code>,
 	 * <code>false</code> otherwise.
 	 */
@@ -258,6 +276,7 @@ public class Condition implements Comparable<Condition>
 	{
 		switch(itsOperator)
 		{
+			case ELEMENT_OF		: return "in";
 			case DOES_NOT_EQUAL		: return "!=";
 			case EQUALS			: return "=";
 			case LESS_THAN_OR_EQUAL		: return "<=";
@@ -351,12 +370,20 @@ public class Condition implements Comparable<Condition>
 		{
 			case NOMINAL :
 			{
-				// String.compareTo() does not strictly return -1, 0, 1
-				int aCompare = itsNominalValue.compareTo(theCondition.itsNominalValue);
-				return (aCompare < 0 ? -1 : aCompare > 0 ? 1 : 0);
+				if (itsNominalValue != null) //single value
+				{
+					// String.compareTo() does not strictly return -1, 0, 1
+					int aCompare = itsNominalValue.compareTo(theCondition.itsNominalValue);
+					return (aCompare < 0 ? -1 : aCompare > 0 ? 1 : 0);
+				}
+				else
+				{
+					//TODO how to compare two sets of values?
+					return Float.compare(itsNominalValueSet.size(), theCondition.itsNominalValueSet.size());
+				}
 			}
 			case NUMERIC :
-			case ORDINAL : 
+			case ORDINAL :
 			{
 				return Float.compare(itsNumericValue, theCondition.itsNumericValue);
 			}

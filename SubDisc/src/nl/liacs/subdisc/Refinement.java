@@ -23,6 +23,14 @@ public class Refinement
 		return aRefinedSubgroup;
 	}
 
+	public Subgroup getRefinedSubgroup(ValueSet theValue)
+	{
+		Subgroup aRefinedSubgroup = itsSubgroup.copy();
+		Condition aCondition = itsCondition.copy();
+		aCondition.setValue(theValue);
+		aRefinedSubgroup.addCondition(aCondition);
+		return aRefinedSubgroup;
+	}
 	public Condition getCondition() { return itsCondition; }
 
 	public void setCondition(Condition theCondition) { itsCondition = theCondition; }
