@@ -1147,7 +1147,7 @@ public class Column implements XMLNodeInterface
 		else
 		{
 			Object aValue;
-			if (itsType.equals(AttributeType.NOMINAL))
+			if (itsType == AttributeType.NOMINAL)
 				aValue = itsMissingValue;
 			else
 				aValue = Float.valueOf(itsMissingValue);
@@ -1658,5 +1658,32 @@ public class Column implements XMLNodeInterface
 	private void logMessage(String theSource, String theError)
 	{
 		Log.logCommandLine(String.format("%s.%s(): %s", itsName, theSource, theError));
+	}
+
+	/*
+	 * NOTE No checks on (itsType == AttributeType.NOMINAL), use with care.
+	 * 
+	 * Avoids recreation of TreeSet aDomain in
+	 * SubgroupDiscovery.evaluateNominalBinaryRefinement().
+	 * Memory usage is minimal.
+	 * 
+	 * Bits set in i represent value-indices go retrieve from
+	 * itsDistinctValues. This just works.
+	 */
+	public String[] getSubset(int i) {
+		// Don Clugston approves
+		// count bits set in integer type (12 ops instead of naive 32)
+		// http://graphics.stanford.edu/~seander/bithacks.html#CountBitsSetParallel
+		int v = i;
+		v = v - ((v >> 1) & 0x55555555);			// reuse input as temporary
+		v = (v & 0x33333333) + ((v >> 2) & 0x33333333);		// temp
+		v = ((v + (v >> 4) & 0xF0F0F0F) * 0x1010101) >> 24;	// count
+
+		String[] aResult = new String[v];
+		for (int j = -1, k = v, m = itsDistinctValues.size()-1; k > 0; --m)
+			if (((i >>> ++j) & 1) == 1) // so no shift in first loop
+				aResult[--k] = itsDistinctValues.get(m);
+
+		return aResult;
 	}
 }

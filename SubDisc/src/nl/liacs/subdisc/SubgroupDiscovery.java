@@ -337,7 +337,6 @@ public class SubgroupDiscovery extends MiningAlgorithm
 			//MiMa enumerate a bunch of subsets of aDomain
 			//as a test, consider all 2^n subsets
 			ValueSet aValueSet = new ValueSet();
-			int aCount = 0;
 			for (String aValue : aDomain)
 				aValueSet.add(aValue);
 
@@ -349,6 +348,43 @@ public class SubgroupDiscovery extends MiningAlgorithm
 				Log.logCommandLine("values:"  + aSubset);
 				checkAndLog(aNewSubgroup, anOldCoverage);
 			}
+
+			// Two alternatives that use virtually no memory.
+/*
+			// DO NOT USE, superseded by Column.getSubset(int)
+			// alternative using ValueSet.getSubset(int)
+			// order of {v0, ..., vn} = identical to code above
+			for (int i = 1, j = (int) Math.pow(2, aDomain.size())-1; i < j; ++i)
+			{
+				final ValueSet vs = new ValueSet();
+				vs.addAll(Arrays.asList(aValueSet.getSubset(i)));
+				Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(vs);
+				Log.logCommandLine("values:"  + vs.toString());
+				checkAndLog(aNewSubgroup, anOldCoverage);
+			}
+*/
+/*
+			// MM alternative using Column directly
+			// results are the identical to code above
+			// NOTE order of {v0, ..., vn} = differs from code above
+			// but this is trivial to fix
+			// code does not generate 'no-values' and 'all-values'
+			// subsets, as they are pointless to test anyway.
+			final Column aColumn = aCondition.getColumn();
+			for (int i = 1, j = (int) Math.pow(2, aColumn.getCardinality())-1; i < j; ++i)
+			{
+				final String[] aSubset = aColumn.getSubset(i);
+				// because i am lazy
+				// ValueSet class can be removed completely
+				// but I do not want to modify Refinement and
+				// Condition.setValue() / getValue().
+				final ValueSet vs = new ValueSet();
+				vs.addAll(Arrays.asList(aSubset));
+				Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(vs);
+				Log.logCommandLine("values:"  + vs.toString());
+				checkAndLog(aNewSubgroup, anOldCoverage);
+			}
+*/
 		}
 		else //regular single-value conditions
 			for (String aValue : aDomain)
