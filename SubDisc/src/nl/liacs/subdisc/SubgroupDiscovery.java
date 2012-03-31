@@ -354,7 +354,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 			// DO NOT USE, superseded by Column.getSubset(int)
 			// alternative using ValueSet.getSubset(int)
 			// order of {v0, ..., vn} = identical to code above
-			for (int i = 1, j = (int) Math.pow(2, aDomain.size())-1; i < j; ++i)
+			for (int i = 1, j = (1 << aDomain.size())-1; i < j; ++i)
 			{
 				final ValueSet vs = new ValueSet();
 				vs.addAll(Arrays.asList(aValueSet.getSubset(i)));
@@ -371,7 +371,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 			// code does not generate 'no-values' and 'all-values'
 			// subsets, as they are pointless to test anyway.
 			final Column aColumn = aCondition.getColumn();
-			for (int i = 1, j = (int) Math.pow(2, aColumn.getCardinality())-1; i < j; ++i)
+			for (int i = 1, j = (1 << aColumn.getCardinality())-1; i < j; ++i)
 			{
 				final String[] aSubset = aColumn.getSubset(i);
 				// because i am lazy
