@@ -327,17 +327,24 @@ public class ResultWindow extends JFrame implements ActionListener
 		final TargetConcept aTargetConcept = itsSearchParameters.getTargetConcept();
 		final boolean isRegressionSetting = (theTargetType == TargetType.DOUBLE_REGRESSION);
 		RegressionMeasure aRM = null;
-		int aCount = 0;
 
-		for (Subgroup aSubgroup : itsSubgroupSet)
+		int[] aSelection = itsSubgroupTable.getSelectedRows();
+		Iterator<Subgroup> anIterator = itsSubgroupSet.iterator();
+
+		for (int i = 0, j = aSelection.length, k = 0; i < j; ++k)
 		{
+			int aNext = aSelection[k];
+			while (i++ < aNext)
+				anIterator.next();
+			Subgroup aSubgroup = anIterator.next();
+
 			if (isRegressionSetting)
 				aRM = new RegressionMeasure(itsRegressionMeasureBase, aSubgroup.getMembers());
 
 			new ModelWindow(aTargetConcept.getPrimaryTarget(),
 					aTargetConcept.getSecondaryTarget(),
 					aRM,
-					aSubgroup).setTitle("Subgroup " + ++aCount);
+					aSubgroup).setTitle("Subgroup " + aSubgroup.getID());
 		}
 	}
 
@@ -346,7 +353,8 @@ public class ResultWindow extends JFrame implements ActionListener
 		new ROCCurveWindow(itsSubgroupSet, itsSearchParameters, itsQualityMeasure);
 	}
 
-	private void jButtonBrowseSubgroupsActionPerformed() {
+	private void jButtonBrowseSubgroupsActionPerformed()
+	{
 		if (itsSubgroupSet.isEmpty())
 			return;
 
