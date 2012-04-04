@@ -6,7 +6,8 @@ public enum NumericOperators implements EnumInterface
 	NUMERIC_LEQ("<html>&#8804;</html>"),
 	NUMERIC_GEQ("<html>&#8805;</html>"),
 	NUMERIC_ALL("<html>&#8804;, &#8805;, =</html>"),
-	NUMERIC_EQ("=");
+	NUMERIC_EQ("="),
+	NUMERIC_INTERVAL("in");
 
 	/**
 	 * For each NumericOperators, this is the text that will be used in the GUI.
@@ -68,16 +69,17 @@ public enum NumericOperators implements EnumInterface
 
 	public static boolean check(NumericOperators theNO, int theOperator)
 	{
-		if (theNO == NUMERIC_NORMAL && (theOperator == Condition.LESS_THAN_OR_EQUAL ||
-										theOperator == Condition.GREATER_THAN_OR_EQUAL))
+		if (theNO == NUMERIC_NORMAL && (theOperator == Condition.LESS_THAN_OR_EQUAL || theOperator == Condition.GREATER_THAN_OR_EQUAL))
 			return true;
-		if (theNO == NUMERIC_LEQ && (theOperator == Condition.LESS_THAN_OR_EQUAL))
+		if (theNO == NUMERIC_LEQ && theOperator == Condition.LESS_THAN_OR_EQUAL)
 			return true;
-		if (theNO == NUMERIC_GEQ && (theOperator == Condition.GREATER_THAN_OR_EQUAL))
+		if (theNO == NUMERIC_GEQ && theOperator == Condition.GREATER_THAN_OR_EQUAL)
 			return true;
-		if (theNO == NUMERIC_EQ && (theOperator == Condition.EQUALS))
+		if (theNO == NUMERIC_EQ && theOperator == Condition.EQUALS)
 			return true;
 		if (theNO == NUMERIC_ALL )
+			return true;
+		if (theNO == NUMERIC_INTERVAL && theOperator == Condition.BETWEEN)
 			return true;
 
 		return false;

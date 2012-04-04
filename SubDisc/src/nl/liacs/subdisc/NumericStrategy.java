@@ -7,7 +7,8 @@ public enum NumericStrategy implements EnumInterface
 {
 	NUMERIC_BINS("bins"),
 	NUMERIC_BEST("best"),
-	NUMERIC_ALL("all");
+	NUMERIC_ALL("all"),
+	NUMERIC_INTERVALS("intervals");
 
 	/**
 	 * For each NumericStrategy, this is the text that will be used in the GUI.
@@ -24,10 +25,10 @@ public enum NumericStrategy implements EnumInterface
 	/**
 	 * Returns the NumericStrategy corresponding to the <code>String</code>
 	 * parameter. This method is case insensitive.
-	 * 
+	 *
 	 * @param theType the <code>String</code> corresponding to a
 	 * NumericStrategy.
-	 * 
+	 *
 	 * @return the NumericStrategy corresponding to the <code>String</code>
 	 * parameter, or the default NumericStrategy <code>NUMERIC_BINS</code> if no
 	 * corresponding NumericStrategy can not be found.
@@ -52,7 +53,7 @@ public enum NumericStrategy implements EnumInterface
 
 	/**
 	 * Returns the default NumericStrategy.
-	 * 
+	 *
 	 * @return the default NumericStrategy.
 	 */
 	public static NumericStrategy getDefault()

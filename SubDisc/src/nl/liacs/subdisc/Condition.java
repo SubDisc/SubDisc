@@ -8,6 +8,7 @@ public class Condition implements Comparable<Condition>
 	public static final int EQUALS			= 2;
 	public static final int LESS_THAN_OR_EQUAL	= 3;
 	public static final int GREATER_THAN_OR_EQUAL	= 4;
+	public static final int BETWEEN = 5;
 	public static final int NOT_AN_OPERATOR		= 99;
 
 	// Binary Operator Constants
@@ -23,7 +24,9 @@ public class Condition implements Comparable<Condition>
 	// Numeric Operator  Constants
 	//this allows =, <= and >=
 	public static final int FIRST_NUMERIC_OPERATOR	= EQUALS;
-	public static final int LAST_NUMERIC_OPERATOR	= GREATER_THAN_OR_EQUAL;
+	//MiMa swap these two definitions to get set-valued behaviour
+	public static final int LAST_NUMERIC_OPERATOR	= BETWEEN;
+//	public static final int LAST_NUMERIC_OPERATOR	= GREATER_THAN_OR_EQUAL;
 
 	private final Column itsColumn;
 	private final int itsOperator;
@@ -31,6 +34,7 @@ public class Condition implements Comparable<Condition>
 	private String itsNominalValue = null;		// ColumnType = NOMINAL
 	private ValueSet itsNominalValueSet = null;		// ColumnType = NOMINAL
 	private float itsNumericValue = Float.NaN;	// ColumnType = NUMERIC
+	private Interval itsInterval = null;		// ColumnType = NUMERIC
 	private boolean itsBinaryValue = false;		// ColumnType = BINARY
 
 	/**
@@ -90,6 +94,7 @@ public class Condition implements Comparable<Condition>
 			aCopy.itsNominalValue = new String(itsNominalValue);
 		aCopy.itsNominalValueSet = this.itsNominalValueSet; //shallow copy!
 		aCopy.itsNumericValue = this.itsNumericValue;
+		aCopy.itsInterval = this.itsInterval; //shallow copy!
 		aCopy.itsBinaryValue = this.itsBinaryValue;
 		return aCopy;
 	}
@@ -109,7 +114,15 @@ public class Condition implements Comparable<Condition>
 					return itsNominalValueSet.toString();
 				else
 					return null;
-			case NUMERIC : return Float.toString(itsNumericValue);
+
+			case NUMERIC :
+				if (!Float.isNaN(itsNumericValue)) //single value?
+					return Float.toString(itsNumericValue);
+				else if (itsInterval != null) //interval?
+					return itsInterval.toString();
+				else
+					return null;
+
 			case ORDINAL : return Float.toString(itsNumericValue);
 			case BINARY : return itsBinaryValue ? "1" : "0";
 			default : logTypeError("getValue"); return "";
@@ -156,6 +169,11 @@ public class Condition implements Comparable<Condition>
 	 * Set the value for this Condition, specifically for nominal value sets
 	 */
 	public void setValue(ValueSet theValue)	{ itsNominalValueSet = theValue; }
+
+	/**
+	 * Set the value for this Condition, specifically for numeric intervals
+	 */
+	public void setValue(Interval theValue)	{ itsInterval = theValue; }
 
 	public boolean checksNotEquals() { return itsOperator == DOES_NOT_EQUAL; }
 
@@ -234,6 +252,8 @@ public class Condition implements Comparable<Condition>
 				return theValue <= itsNumericValue;
 			case GREATER_THAN_OR_EQUAL :
 				return theValue >= itsNumericValue;
+			case BETWEEN:
+				return itsInterval.between(theValue);
 			default : return false;
 		}
 	}
@@ -281,6 +301,7 @@ public class Condition implements Comparable<Condition>
 			case EQUALS			: return "=";
 			case LESS_THAN_OR_EQUAL		: return "<=";
 			case GREATER_THAN_OR_EQUAL	: return ">=";
+			case BETWEEN	: return "in";
 			default : return "";
 		}
 	}

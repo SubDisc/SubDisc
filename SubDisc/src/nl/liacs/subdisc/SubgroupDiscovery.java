@@ -269,7 +269,6 @@ public class SubgroupDiscovery extends MiningAlgorithm
 				//this is the crucial translation from nr bins to nr splitpoint
 				int aNrSplitPoints = itsSearchParameters.getNrBins() - 1;
 
-				//float[] aSplitPoints = itsTable.getSplitPoints(anAttributeIndex, theSubgroup.getMembers(), aNrSplitPoints);
 				float[] aSplitPoints = theRefinement.getCondition().getColumn().getSplitPoints(theSubgroup.getMembers(), aNrSplitPoints);
 				boolean first = true;
 				for (int j=0; j<aNrSplitPoints; j++)
@@ -286,7 +285,6 @@ public class SubgroupDiscovery extends MiningAlgorithm
 			}
 			case NUMERIC_BEST :
 			{
-				//float[] aSplitPoints = itsTable.getUniqueNumericDomain(anAttributeIndex, theSubgroup.getMembers());
 				float[] aSplitPoints = theRefinement.getCondition().getColumn().getUniqueNumericDomain(theSubgroup.getMembers());
 				float aMax = Float.NEGATIVE_INFINITY;
 				float aBest = aSplitPoints[0];
@@ -315,6 +313,20 @@ public class SubgroupDiscovery extends MiningAlgorithm
 					// unnecessarily re-evaluates result
 					checkAndLog(aBestSubgroup, anOldCoverage);
 
+				break;
+			}
+			case NUMERIC_INTERVALS : //AK: what this strategy should do exactly is to be determine. For the moment, all intervals are tested
+			{
+				float[] aSplitPoints = theRefinement.getCondition().getColumn().getUniqueNumericDomain(theSubgroup.getMembers());
+				aSplitPoints[0] = Float.NEGATIVE_INFINITY;
+				aSplitPoints[aSplitPoints.length-1] = Float.POSITIVE_INFINITY;
+				for (float aLower : aSplitPoints)
+					for (float anUpper : aSplitPoints)
+					{
+						Interval anInterval = new Interval(aLower, anUpper);
+						Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(anInterval);
+						checkAndLog(aNewSubgroup, anOldCoverage);
+					}
 				break;
 			}
 			default :
