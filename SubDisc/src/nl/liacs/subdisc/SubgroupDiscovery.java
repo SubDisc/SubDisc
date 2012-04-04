@@ -351,8 +351,81 @@ public class SubgroupDiscovery extends MiningAlgorithm
 			aNCT.print();
 			int aP = aNCT.getPositiveCount();
 			int aN = aNCT.getNegativeCount();
-			float aRatio = aP/(float)aN; //TODO handle aN=0
-
+			float aRatio = aP / (float)(aP + aN); // equivalent to checking aP/(float)aN
+			
+			// this only refines the subgroup if its quality improves
+			double aMaxQuality = theSubgroup.getMeasureValue();
+			ValueSet aMaxSubset = new ValueSet();
+			
+			if (itsSearchParameters.getQualityMeasure() == QualityMeasure.WRACC)
+			{
+				for (int i = 0; i < aNCT.size(); i++)
+				{
+					int aPi = aNCT.getPositiveCount(i);
+					int aNi = aNCT.getNegativeCount(i);
+					// Note: include values for which == aRatio too, 
+					// since this results in equal WRAcc but higher support
+					if (aPi / (float)(aPi + aNi) >= aRatio)
+						aMaxSubset.add(aNCT.getValue(i));
+				}
+				
+				Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(aMaxSubset);
+				Log.logCommandLine("values: "  + aMaxSubset);
+				checkAndLog(aNewSubgroup, anOldCoverage);
+			}
+			else // not WRACC
+			{
+				// construct and check all subsets on the convex hull
+				ArrayList<String> aSortedDomain = aNCT.getSortedDomain();
+				
+				// upper part of the hull
+				ValueSet aSubset = new ValueSet();
+				for (int i = 0; i < aSortedDomain.size() - 1; i++) 
+				{
+					String aValue = aSortedDomain.get(i);
+					aSubset.add(aValue);
+					Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(aSubset);
+					double aQuality = evaluateCandidate(aNewSubgroup);
+					if (aQuality > aMaxQuality)
+					{
+						aMaxQuality = aQuality;
+						aMaxSubset = new ValueSet();
+						for (String aVal : aSubset)
+							aMaxSubset.add(aVal);
+					}
+				}
+				
+				// lower part of the hull
+				// for many quality measures this is actually unnecessary
+				// or at best gives a valueset which is the complement of the
+				// best valueset on the upper hull and has the same quality
+				aSubset = new ValueSet();
+				for (int i = aSortedDomain.size() - 1; i > 0; i--)
+				{
+					String aValue = aSortedDomain.get(i);
+					aSubset.add(aValue);
+					Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(aSubset);
+					double aQuality = evaluateCandidate(aNewSubgroup);
+					if (aQuality > aMaxQuality)
+					{
+						aMaxQuality = aQuality;
+						aMaxSubset = new ValueSet();
+						for (String aVal : aSubset)
+							aMaxSubset.add(aVal);
+					}
+				}
+				
+				// TODO: how shall we handle ValueSets of size 1 or domainsize-1 ?
+				if (aMaxSubset.size() != 0)
+				{
+					Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(aMaxSubset);
+					Log.logCommandLine("values: "  + aMaxSubset);
+					checkAndLog(aNewSubgroup, anOldCoverage);
+				}
+				
+			}
+			
+			/*
 			//MiMa enumerate a bunch of subsets of aDomain
 			//as a test, consider all 2^k subsets
 			ValueSet aValueSet = new ValueSet();
@@ -367,6 +440,8 @@ public class SubgroupDiscovery extends MiningAlgorithm
 				Log.logCommandLine("values: "  + aSubset);
 				checkAndLog(aNewSubgroup, anOldCoverage);
 			}
+			*/
+			
 		}
 		else //regular single-value conditions
 			for (String aValue : aDomain)
