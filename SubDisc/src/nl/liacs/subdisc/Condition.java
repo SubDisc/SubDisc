@@ -17,8 +17,8 @@ public class Condition implements Comparable<Condition>
 
 	// Nominal Operator  Constants
 	//MiMa swap these two definitions to get set-valued behaviour
-//	public static final int FIRST_NOMINAL_OPERATOR	= ELEMENT_OF;
-	public static final int FIRST_NOMINAL_OPERATOR	= DOES_NOT_EQUAL;
+	public static final int FIRST_NOMINAL_OPERATOR	= ELEMENT_OF;
+//	public static final int FIRST_NOMINAL_OPERATOR	= DOES_NOT_EQUAL;
 	public static final int LAST_NOMINAL_OPERATOR	= EQUALS;
 
 	// Numeric Operator  Constants

@@ -29,11 +29,11 @@ public class NominalCrossTable
 			if (theSubgroup.covers(i))
 			{
 				String aValue = theColumn.getNominal(i);
-				int theIndex = Arrays.binarySearch(itsValues, aValue);
+				int anIndex = Arrays.binarySearch(itsValues, aValue);
 				if (theTarget.get(i))
-					itsPositiveCounts[theIndex]++;
+					itsPositiveCounts[anIndex]++;
 				else
-					itsNegativeCounts[theIndex]++;
+					itsNegativeCounts[anIndex]++;
 			}
 		}
 		for (int i=0; i<size(); i++)

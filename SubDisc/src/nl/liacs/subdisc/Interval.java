@@ -13,13 +13,16 @@ public class Interval
 
 	public boolean between(float theValue)
 	{
-		return (theValue >= itsLower) && (theValue <= itsUpper);
+		return (itsLower < theValue) && (theValue <= itsUpper);
 	}
 
 	public String toString()
 	{
-		String aLeft = (itsLower == Float.NEGATIVE_INFINITY) ? "<inf" : ("[" + itsLower);
+		String aLeft = (itsLower == Float.NEGATIVE_INFINITY) ? "<-inf" : ("]" + itsLower);
 		String aRight = (itsUpper == Float.POSITIVE_INFINITY) ? "inf>" : (Float.toString(itsUpper) + "]");
 		return aLeft + ", " + aRight;
 	}
+	
+	public float getLower() { return itsLower; }
+	public float getUpper() { return itsUpper; }
 }
