@@ -318,8 +318,21 @@ public class SubgroupDiscovery extends MiningAlgorithm
 			case NUMERIC_INTERVALS : //AK: what this strategy should do exactly is to be determine. For the moment, all intervals are tested
 			{
 				float[] aSplitPoints = theRefinement.getCondition().getColumn().getUniqueNumericDomain(theSubgroup.getMembers());
-				
 				RealBaseIntervalCrossTable aRBICT = new RealBaseIntervalCrossTable(aSplitPoints, theRefinement.getCondition().getColumn(), theSubgroup, itsBinaryTarget);
+				
+				// prune splitpoints for which adjacent base intervals have equal class distribution
+				ArrayList<Float> aNewSplitPoints = new ArrayList<Float>();
+				for (int i = 0; i < aSplitPoints.length; i++)
+					if (aRBICT.getPositiveCount(i) * aRBICT.getNegativeCount(i+1) != aRBICT.getPositiveCount(i+1) * aRBICT.getNegativeCount(i))
+						aNewSplitPoints.add(new Float(aSplitPoints[i]));
+				if (aNewSplitPoints.size() > 0)
+				{
+					aSplitPoints = new float[aNewSplitPoints.size()];
+					for (int i = 0; i < aNewSplitPoints.size(); i++)
+						aSplitPoints[i] = aNewSplitPoints.get(i).floatValue();
+					aRBICT = new RealBaseIntervalCrossTable(aSplitPoints, theRefinement.getCondition().getColumn(), theSubgroup, itsBinaryTarget);
+				}
+				// else {nothing to see here?}
 				
 				// construct aggregated cross table
 				int aCount = Math.max(1, (int)Math.ceil(Math.log(aSplitPoints.length)/Math.log(2.0)));
