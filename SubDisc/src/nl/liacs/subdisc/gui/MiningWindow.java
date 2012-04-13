@@ -1425,6 +1425,9 @@ public class MiningWindow extends JFrame
 		runSubgroupDiscovery(theTable, theFold, theBitSet, itsSearchParameters, true, getNrThreads());
 	}
 
+	// leave at false in svn head
+	private static final boolean CAUC_LIGHT = true;
+	private static final boolean CAUC_HEAVY = false; // not implemented yet
 	// public, but does not perform ANY sanity checks
 	public static SubgroupDiscovery runSubgroupDiscovery(Table theTable, int theFold, BitSet theBitSet, SearchParameters theSearchParameters, boolean showWindows, int theNrThreads)
 	{
@@ -1452,11 +1455,46 @@ public class MiningWindow extends JFrame
 
 			case SINGLE_NUMERIC:
 			{
-				//recompute this number, as we may be dealing with cross-validation here, and hence a different value
-				//float itsTargetAverage = theTable.getAverage(theTable.getIndex(aTargetConcept.getPrimaryTarget().getName()));
-				float itsTargetAverage = theSearchParameters.getTargetConcept().getPrimaryTarget().getAverage();
-				Log.logCommandLine("average: " + itsTargetAverage);
-				aSubgroupDiscovery = new SubgroupDiscovery(theSearchParameters, theTable, itsTargetAverage);
+				// new runCAUC() receives result after SD.mine()
+				// not fully implemented yet
+				if (CAUC_HEAVY)
+				{
+					Column aBackup = theSearchParameters.getTargetConcept().getPrimaryTarget().copy();
+
+					BitSet aMembers;
+					if (theBitSet == null) {
+						aMembers = new BitSet(aBackup.size());
+						aMembers.set(0, aBackup.size());
+					} else {
+						aMembers = theBitSet;
+					}
+
+					final String aName = aBackup.getName();
+					final String aShort = aBackup.getShort();
+					final int anIndex = aBackup.getIndex();
+					final int aNrRows = aBackup.getIndex();
+
+					float[] aDomain = aBackup.getUniqueNumericDomain(theBitSet);
+					for (float f : aDomain)
+					{
+						Column tempCol = new Column(aName,
+										aShort,
+										AttributeType.BINARY,
+										anIndex,
+										aNrRows);
+						// TODO stuff here
+					}
+					// dump results
+					return null; // no wondow etc.
+				}
+				else
+				{
+					//recompute this number, as we may be dealing with cross-validation here, and hence a different value
+					//float itsTargetAverage = theTable.getAverage(theTable.getIndex(aTargetConcept.getPrimaryTarget().getName()));
+					float itsTargetAverage = theSearchParameters.getTargetConcept().getPrimaryTarget().getAverage();
+					Log.logCommandLine("average: " + itsTargetAverage);
+					aSubgroupDiscovery = new SubgroupDiscovery(theSearchParameters, theTable, itsTargetAverage);
+				}
 				break;
 			}
 			case MULTI_LABEL :
@@ -1508,87 +1546,59 @@ public class MiningWindow extends JFrame
 			new ResultWindow(theTable, aSubgroupDiscovery, aBinaryTable, theFold, theBitSet);
 		}
 
+		if (CAUC_LIGHT)
+			caucWriter(aSubgroupDiscovery, theBitSet);
+
 		return aSubgroupDiscovery;
 	}
-/*
-	private void runSubgroupDiscovery(Table aTable, int theFold, BitSet theBitSet)
+
+	private static void caucWriter(SubgroupDiscovery theSubgroupDiscovery, BitSet theBitSet)
 	{
-		setupSearchParameters();
-		TargetType aTargetType = itsTargetConcept.getTargetType();
+		assert theSubgroupDiscovery.getSearchParameters().getTargetConcept().getTargetType() == TargetType.SINGLE_NUMERIC;
+		Column aTarget = theSubgroupDiscovery.getSearchParameters().getTargetConcept().getPrimaryTarget();
+		SubgroupSet aSet = theSubgroupDiscovery.getResult();
 
-		//TODO other types not implemented yet
-		if (!TargetType.isImplemented(aTargetType))
-			return;
-
-		echoMiningStart();
-		long aBegin = System.currentTimeMillis();
-
-		SubgroupDiscovery aSubgroupDiscovery;
-		String aTarget = getTargetAttributeName();
-
-		switch(aTargetType)
-		{
-			case SINGLE_NOMINAL :
-			{
-				//recompute this number, as we may be dealing with cross-validation here, and hence a smaller number
-				itsPositiveCount = aTable.countValues(aTable.getIndex(aTarget), getMiscFieldName());
-				Log.logCommandLine("positive count: " + itsPositiveCount);
-				aSubgroupDiscovery = new SubgroupDiscovery(itsSearchParameters, aTable, itsPositiveCount);
-				break;
-			}
-
-			case SINGLE_NUMERIC:
-			{
-				//recompute this number, as we may be dealing with cross-validation here, and hence a different value
-				itsTargetAverage = itsTable.getAverage(itsTable.getIndex(aTarget));
-				Log.logCommandLine("average: " + itsTargetAverage);
-				aSubgroupDiscovery = new SubgroupDiscovery(itsSearchParameters, aTable, itsTargetAverage);
-				break;
-			}
-			case MULTI_LABEL :
-			{
-				aSubgroupDiscovery = new SubgroupDiscovery(itsSearchParameters, aTable);
-				break;
-			}
-			case DOUBLE_REGRESSION :
-			{
-				aSubgroupDiscovery = new SubgroupDiscovery(itsSearchParameters, aTable, true);
-				break;
-			}
-			case DOUBLE_CORRELATION :
-			{
-				aSubgroupDiscovery = new SubgroupDiscovery(itsSearchParameters, aTable, false);
-				break;
-			}
-			default : return; // TODO should never get here, throw warning
+		BitSet aMembers;
+		if (theBitSet == null) {
+			aMembers = new BitSet(aTarget.size());
+			aMembers.set(0, aTarget.size());
+		} else {
+			aMembers = theBitSet;
 		}
-		aSubgroupDiscovery.mine(System.currentTimeMillis(), 0);
-		// if 2nd argument to above mine() is 0, you effectively run:
-		//aSubgroupDiscovery.mine(System.currentTimeMillis());
 
-		long anEnd = System.currentTimeMillis();
-		if (itsSearchParameters.getMaximumTime() > 0.0f)
-			if (anEnd > aBegin + (((long) itsSearchParameters.getMaximumTime()) * 60 * 1000))
-			JOptionPane.showMessageDialog(null, "Mining process ended prematurely due to time limit.",
-											"Time Limit", JOptionPane.INFORMATION_MESSAGE);
+		float[] aDomain = aTarget.getUniqueNumericDomain(aMembers);
 
-		echoMiningEnd(anEnd - aBegin, aSubgroupDiscovery.getNumberOfSubgroups());
-
-		switch (aTargetType)
+		// last index is whole dataset
+		List<List<Float>> statistics = new ArrayList<List<Float>>(aDomain.length-1);
+		for (int i = 0, j = aDomain.length-1; i < j; ++i)
 		{
-			case MULTI_LABEL :
+			BitSet tmp = (BitSet) aMembers.clone();
+			for (int k = tmp.nextSetBit(0); k >= 0; k = tmp.nextSetBit(k + 1))
+				if (aTarget.getFloat(k) > aDomain[i])
+					tmp.clear(k);
+
+			// hack to use binary target for numeric target
+			aSet.setBinaryTarget(tmp);
+			// [threshold, n, AUC, fpr_1, tpr_1, ..., fpr_h, tpr_h] 
+			List<Float> stats = new ArrayList<Float>();
+			stats.add(aDomain[i]);
+			stats.add((float) tmp.cardinality());
+			stats.add(aSet.getROCList().getAreaUnderCurve());
+			for (Object[] oa : aSet.getROCListSubgroups())
 			{
-				BinaryTable aBinaryTable = new BinaryTable(aTable, itsTargetConcept.getMultiTargets());
-				new ResultWindow(itsTable, aSubgroupDiscovery, aBinaryTable, theFold, theBitSet);
-				break;
+				stats.add((Float) oa[1]);
+				stats.add((Float) oa[2]);
 			}
-			default :
-			{
-				new ResultWindow(aTable, aSubgroupDiscovery, null, theFold, theBitSet);
-			}
+			statistics.add(stats);
 		}
+
+		// write or print to std.out
+		System.out.println("#" + aTarget.getName());
+		System.out.println("#threshold\tn\tAUC\tfrp_1\ttpr_1\t,...,\tfpr_h\t\tpr_h");
+		for (List<Float> l : statistics)
+			System.out.println(l.toString().replaceAll(", ", "\t"));
 	}
-*/
+
 	private void jButtonRandomQualitiesActionPerformed()
 	{
 		String[] aSetup = new RandomQualitiesWindow().getSettings();

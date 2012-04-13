@@ -29,7 +29,7 @@ public class SubgroupSet extends TreeSet<Subgroup>
 	// For SubgroupSet in nominal target setting (used for TPR/FPR in ROCList)
 	private final boolean nominalTargetSetting;
 	private final int itsTotalCoverage;
-	private final BitSet itsBinaryTarget;
+	private BitSet itsBinaryTarget; // no longer final for CAUC
 	private int itsMaximumSize;
 	private ROCList itsROCList;
 	// used as quick check for add(), tests on NaN always return false
@@ -306,10 +306,24 @@ public class SubgroupSet extends TreeSet<Subgroup>
 	 */
 	public BitSet getBinaryTargetClone()
 	{
-		if (!nominalTargetSetting || itsBinaryTarget == null)
+		// TODO not so wise may break other code
+		//if (!nominalTargetSetting || itsBinaryTarget == null)
+		if (itsBinaryTarget == null)
 			return null;
 		else
 			return (BitSet) itsBinaryTarget.clone();
+	}
+
+	/**
+	 * Destructive method. When called always reset the binary target to its
+	 * original state, else all ROC related functionalities break down, and
+	 * and probably much more.
+	 * 
+	 * @param theBinaryTarget the new binary target members.
+	 * */
+	public void setBinaryTarget(BitSet theBinaryTarget)
+	{
+		itsBinaryTarget = theBinaryTarget;
 	}
 
 	public int getTotalCoverage() { return itsTotalCoverage; }

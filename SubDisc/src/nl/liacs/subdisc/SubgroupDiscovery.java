@@ -62,7 +62,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		itsResult = new SubgroupSet(itsSearchParameters.getMaximumSubgroups(), itsNrRows, itsBinaryTarget);
 	}
 
-	//SINGLE_NUMERIC
+	//SINGLE_NUMERIC, float > signature differs from multi-label constructor
 	public SubgroupDiscovery(SearchParameters theSearchParameters, Table theTable, float theAverage)
 	{
 		super(theSearchParameters);
