@@ -36,7 +36,10 @@ public class RefinementList extends ArrayList<Refinement>
 					add = true;
 				//nominal
 				else if (!aColumn.isNumericType() && (useNotEquals || !aCondition.checksNotEquals()))
-					add = true;
+				{
+					if (aTC.isSingleNominal() || aCondition.getOperator() != Condition.ELEMENT_OF) // set-valued only allowed for SINGLE_NOMINAL
+						add = true;
+				}
 
 				if (add)
 				{
