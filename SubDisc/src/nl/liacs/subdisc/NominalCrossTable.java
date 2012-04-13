@@ -1,7 +1,7 @@
 package nl.liacs.subdisc;
 
 import java.util.*;
-import java.lang.Integer;
+import java.lang.*;
 
 public class NominalCrossTable
 {
@@ -57,7 +57,7 @@ public class NominalCrossTable
 			aSet.add(itsValues[i]);
         return aSet;
     }
-	
+
 	// Get the domain sorted by p/n
 	// Michael says: rather cumbersome, there must be a cleaner way to do this
 	public ArrayList<String> getSortedDomain()
@@ -65,7 +65,7 @@ public class NominalCrossTable
 		ArrayList<Integer> aSortedIndexList = new ArrayList<Integer>(itsValues.length);
 		for (int i = 0; i < itsValues.length; i++)
 			aSortedIndexList.add(new Integer(i));
-		
+
 		Collections.sort(aSortedIndexList, new Comparator() {
 					public int compare(Object i1, Object i2)
 					{
@@ -75,17 +75,16 @@ public class NominalCrossTable
 					}
 				}
 		);
-		
+
 		ArrayList<String> aSortedDomain = new ArrayList<String>();
 		for (int i = 0; i < itsValues.length; i++)
 			aSortedDomain.add(new String(itsValues[aSortedIndexList.get(i).intValue()]));
-		
+
 		return aSortedDomain;
 	}
 
 	public void print()
 	{
-
 		for (int i = 0; i < size(); i++)
 			Log.logCommandLine(itsValues[i] + ": (" + itsPositiveCounts[i] + ", " + itsNegativeCounts[i] + ")");
 	}

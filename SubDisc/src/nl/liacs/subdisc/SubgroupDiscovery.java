@@ -315,11 +315,11 @@ public class SubgroupDiscovery extends MiningAlgorithm
 
 				break;
 			}
-			case NUMERIC_INTERVALS : //AK: what this strategy should do exactly is to be determine. For the moment, all intervals are tested
+			case NUMERIC_INTERVALS :
 			{
 				float[] aSplitPoints = theRefinement.getCondition().getColumn().getUniqueNumericDomain(theSubgroup.getMembers());
 				RealBaseIntervalCrossTable aRBICT = new RealBaseIntervalCrossTable(aSplitPoints, theRefinement.getCondition().getColumn(), theSubgroup, itsBinaryTarget);
-				
+
 				// prune splitpoints for which adjacent base intervals have equal class distribution
 				ArrayList<Float> aNewSplitPoints = new ArrayList<Float>();
 				for (int i = 0; i < aSplitPoints.length; i++)
@@ -333,45 +333,45 @@ public class SubgroupDiscovery extends MiningAlgorithm
 					aRBICT = new RealBaseIntervalCrossTable(aSplitPoints, theRefinement.getCondition().getColumn(), theSubgroup, itsBinaryTarget);
 				}
 				// else {nothing to see here?}
-				
+
 				// construct aggregated cross table
 				int aCount = Math.max(1, (int)Math.ceil(Math.log(aSplitPoints.length)/Math.log(2.0)));
 				float[] aCoarseSplitPoints = new float[aCount];
 				for (int i = 0; i < aCount; i++)
 					aCoarseSplitPoints[i] = aSplitPoints[(int)((i+0.5) * (aSplitPoints.length/aCount))];
 				RealBaseIntervalCrossTable aCRBICT = new RealBaseIntervalCrossTable(aCoarseSplitPoints, theRefinement.getCondition().getColumn(), theSubgroup, itsBinaryTarget);
-				
+
 				double aBestQuality = Double.NEGATIVE_INFINITY;
 				Interval aBestInterval = new Interval(Float.NEGATIVE_INFINITY, Float.POSITIVE_INFINITY);
-				
+
 				float[] aLowerCandidates = new float[aSplitPoints.length+1];
 				int aLowerCandCounter = 0;
-				
+
 				int aK = 0;
 				int aPos = aRBICT.getPositiveCount(aK);
 				int aNeg = aRBICT.getNegativeCount(aK);
-				
+
 				for (int j = 0; j <= aSplitPoints.length; j++)
 				{
 					float anUpper = (j == aSplitPoints.length) ? Float.POSITIVE_INFINITY : aSplitPoints[j];
 					float aLower = (j == 0) ? Float.NEGATIVE_INFINITY : aSplitPoints[j-1];
 					aLowerCandidates[aLowerCandCounter++] = aLower;
-					
+
 					if ( j > 0 && aK < aCount && aSplitPoints[j-1] == aCoarseSplitPoints[aK] )
 					{
 						aK++;
 						aPos = aCRBICT.getPositiveCount(aK);
 						aNeg = aCRBICT.getNegativeCount(aK);
 					}
-					
+
 					aPos -= aRBICT.getPositiveCount(j);
 					aNeg -= aRBICT.getNegativeCount(j);
 					int aPruneCounter = 0;
-					
+
 					// only for WRACC
 					double aBestCandQuality = Double.NEGATIVE_INFINITY;
 					int aBestCandIndex = -1;
-					
+
 					for (int i = 0; i < aLowerCandCounter; i++)
 					{
 						float aLowerCand = aLowerCandidates[i];
@@ -383,7 +383,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 							aBestQuality = aQuality;
 							aBestInterval = new Interval(anInterval.getLower(), anInterval.getUpper());
 						}
-						
+
 						// candidate pruning
 						if (itsSearchParameters.getQualityMeasure() == QualityMeasure.WRACC)
 						{
@@ -397,14 +397,14 @@ public class SubgroupDiscovery extends MiningAlgorithm
 						{
 							int aCoverage = aNewSubgroup.getCoverage();
 							double aPosCount = aNewSubgroup.getTertiaryStatistic();
-							
+
 							double aTopLeftBound = itsQualityMeasure.calculate((float)aPosCount+aPos, aCoverage+aPos);
 							double aBottomRightBound = itsQualityMeasure.calculate((float)aPosCount, aCoverage+aNeg);
 							double aQualityBound = Math.max(aTopLeftBound, aBottomRightBound);
-							
+
 							aCoverage += aPos + aNeg;
 							aPosCount += aPos;
-							
+
 							if ( j < aSplitPoints.length)
 							{
 								for (int k = aK+1; k < aCRBICT.size(); k++)
@@ -413,19 +413,19 @@ public class SubgroupDiscovery extends MiningAlgorithm
 									aQualityBound = Math.max(aQualityBound, aTopLeftBound);
 									aBottomRightBound = itsQualityMeasure.calculate((float)aPosCount, aCoverage+aCRBICT.getNegativeCount(k));
 									aQualityBound = Math.max(aQualityBound, aBottomRightBound);
-									
+
 									aCoverage += aCRBICT.getPositiveCount(k) + aCRBICT.getNegativeCount(k);
 									aPosCount += aCRBICT.getPositiveCount(k);
 								}
 							}
-							
+
 							if (aQualityBound < aBestQuality)
 								aPruneCounter++;
 							else if (aPruneCounter > 0)
 								aLowerCandidates[i-aPruneCounter] = aLowerCandidates[i];
 						}
 					}
-					
+
 					if (itsSearchParameters.getQualityMeasure() == QualityMeasure.WRACC)
 					{
 						if (aBestCandIndex >= 0)
@@ -438,12 +438,12 @@ public class SubgroupDiscovery extends MiningAlgorithm
 					{
 						aLowerCandCounter -= aPruneCounter;
 					}
-					
+
 				}
-				
+
 				Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(aBestInterval);
 				checkAndLog(aNewSubgroup, anOldCoverage);
-				
+
 				break;
 			}
 			default :
@@ -469,22 +469,22 @@ public class SubgroupDiscovery extends MiningAlgorithm
 			int aP = aNCT.getPositiveCount();
 			int aN = aNCT.getNegativeCount();
 			float aRatio = aP / (float)(aP + aN); // equivalent to checking aP/(float)aN
-			
+
 			double aBestQuality = Double.NEGATIVE_INFINITY;
 			ValueSet aBestSubset = new ValueSet();
-			
+
 			if (itsSearchParameters.getQualityMeasure() == QualityMeasure.WRACC)
 			{
 				for (int i = 0; i < aNCT.size(); i++)
 				{
 					int aPi = aNCT.getPositiveCount(i);
 					int aNi = aNCT.getNegativeCount(i);
-					// Note: include values for which == aRatio too, 
+					// Note: include values for which == aRatio too,
 					// since this results in equal WRAcc but higher support
 					if (aPi / (float)(aPi + aNi) >= aRatio)
 						aBestSubset.add(aNCT.getValue(i));
 				}
-				
+
 				Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(aBestSubset);
 				Log.logCommandLine("values: "  + aBestSubset);
 				checkAndLog(aNewSubgroup, anOldCoverage);
@@ -493,16 +493,16 @@ public class SubgroupDiscovery extends MiningAlgorithm
 			{
 				// construct and check all subsets on the convex hull
 				ArrayList<String> aSortedDomain = aNCT.getSortedDomain();
-				
+
 				// upper part of the hull
 				ValueSet aSubset = new ValueSet();
-				for (int i = 0; i < aSortedDomain.size() - 1; i++) 
+				for (int i = 0; i < aSortedDomain.size() - 1; i++)
 				{
 					String aValue = aSortedDomain.get(i);
 					aSubset.add(aValue);
 					Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(aSubset);
 					double aQuality = evaluateCandidate(aNewSubgroup);
-					if (aQuality > aBestQuality /*&& aNewSubgroup.getCoverage() > itsMinimumCoverage*/)
+					if (aQuality > aBestQuality)
 					{
 						aBestQuality = aQuality;
 						aBestSubset = new ValueSet();
@@ -510,7 +510,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 							aBestSubset.add(aVal);
 					}
 				}
-				
+
 				// lower part of the hull
 				// for many quality measures this is actually unnecessary
 				// or at best gives a valueset which is the complement of the
@@ -522,7 +522,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 					aSubset.add(aValue);
 					Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(aSubset);
 					double aQuality = evaluateCandidate(aNewSubgroup);
-					if (aQuality > aBestQuality /*&& aNewSubgroup.getCoverage() > itsMinimumCoverage*/)
+					if (aQuality > aBestQuality)
 					{
 						aBestQuality = aQuality;
 						aBestSubset = new ValueSet();
@@ -530,34 +530,14 @@ public class SubgroupDiscovery extends MiningAlgorithm
 							aBestSubset.add(aVal);
 					}
 				}
-				
-				// TODO: how shall we handle ValueSets of size 1 or domainsize-1 ?
+
 				if (aBestSubset.size() != 0)
 				{
 					Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(aBestSubset);
 					Log.logCommandLine("values: "  + aBestSubset);
 					checkAndLog(aNewSubgroup, anOldCoverage);
 				}
-				
 			}
-			
-			/*
-			//MiMa enumerate a bunch of subsets of aDomain
-			//as a test, consider all 2^k subsets
-			ValueSet aValueSet = new ValueSet();
-			for (String aValue : aDomain)
-				aValueSet.add(aValue);
-
-			ArrayList<ValueSet> aSubsets = ValueSet.getPowerSet(aValueSet);
-
-			for (ValueSet aSubset : aSubsets)
-			{
-				Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(aSubset);
-				Log.logCommandLine("values: "  + aSubset);
-				checkAndLog(aNewSubgroup, anOldCoverage);
-			}
-			*/
-			
 		}
 		else //regular single-value conditions
 			for (String aValue : aDomain)
