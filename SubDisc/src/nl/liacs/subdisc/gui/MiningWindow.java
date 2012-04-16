@@ -1427,7 +1427,7 @@ public class MiningWindow extends JFrame
 
 	// leave at false in svn head
 	private static final boolean CAUC_LIGHT = false;
-	private static final boolean CAUC_HEAVY = false; // not implemented yet
+	private static boolean CAUC_HEAVY = false;
 	// public, but does not perform ANY sanity checks
 	public static SubgroupDiscovery runSubgroupDiscovery(Table theTable, int theFold, BitSet theBitSet, SearchParameters theSearchParameters, boolean showWindows, int theNrThreads)
 	{
@@ -1446,7 +1446,6 @@ public class MiningWindow extends JFrame
 			{
 				TargetConcept aTargetConcept = theSearchParameters.getTargetConcept();
 				//recompute this number, as we may be dealing with cross-validation here, and hence a smaller number
-				//int itsPositiveCount = theTable.countValues(theTable.getIndex(aTargetConcept.getPrimaryTarget().getName()), aTargetConcept.getTargetValue());
 				int itsPositiveCount = aTargetConcept.getPrimaryTarget().countValues(aTargetConcept.getTargetValue());
 				Log.logCommandLine("positive count: " + itsPositiveCount);
 				aSubgroupDiscovery = new SubgroupDiscovery(theSearchParameters, theTable, itsPositiveCount);
@@ -1459,38 +1458,12 @@ public class MiningWindow extends JFrame
 				// not fully implemented yet
 				if (CAUC_HEAVY)
 				{
-					Column aBackup = theSearchParameters.getTargetConcept().getPrimaryTarget().copy();
-
-					BitSet aMembers;
-					if (theBitSet == null) {
-						aMembers = new BitSet(aBackup.size());
-						aMembers.set(0, aBackup.size());
-					} else {
-						aMembers = theBitSet;
-					}
-
-					final String aName = aBackup.getName();
-					final String aShort = aBackup.getShort();
-					final int anIndex = aBackup.getIndex();
-					final int aNrRows = aBackup.getIndex();
-
-					float[] aDomain = aBackup.getUniqueNumericDomain(theBitSet);
-					for (float f : aDomain)
-					{
-						Column tempCol = new Column(aName,
-										aShort,
-										AttributeType.BINARY,
-										anIndex,
-										aNrRows);
-						// TODO stuff here
-					}
-					// dump results
-					return null; // no wondow etc.
+					caucHeavy(theTable, theFold, theBitSet, theSearchParameters, showWindows, theNrThreads);
+					return null;
 				}
 				else
 				{
 					//recompute this number, as we may be dealing with cross-validation here, and hence a different value
-					//float itsTargetAverage = theTable.getAverage(theTable.getIndex(aTargetConcept.getPrimaryTarget().getName()));
 					float itsTargetAverage = theSearchParameters.getTargetConcept().getPrimaryTarget().getAverage();
 					Log.logCommandLine("average: " + itsTargetAverage);
 					aSubgroupDiscovery = new SubgroupDiscovery(theSearchParameters, theTable, itsTargetAverage);
@@ -1547,55 +1520,168 @@ public class MiningWindow extends JFrame
 		}
 
 		if (CAUC_LIGHT)
-			caucWriter(aSubgroupDiscovery, theBitSet);
+			caucLight(aSubgroupDiscovery, theBitSet);
 
 		return aSubgroupDiscovery;
 	}
 
-	private static void caucWriter(SubgroupDiscovery theSubgroupDiscovery, BitSet theBitSet)
+	private static void caucLight(SubgroupDiscovery theSubgroupDiscovery, BitSet theBitSet)
 	{
 		assert theSubgroupDiscovery.getSearchParameters().getTargetConcept().getTargetType() == TargetType.SINGLE_NUMERIC;
-		Column aTarget = theSubgroupDiscovery.getSearchParameters().getTargetConcept().getPrimaryTarget();
-		SubgroupSet aSet = theSubgroupDiscovery.getResult();
 
-		BitSet aMembers;
-		if (theBitSet == null) {
-			aMembers = new BitSet(aTarget.size());
-			aMembers.set(0, aTarget.size());
-		} else {
-			aMembers = theBitSet;
-		}
-
-		float[] aDomain = aTarget.getUniqueNumericDomain(aMembers);
+		final Column aTarget = theSubgroupDiscovery.getSearchParameters().getTargetConcept().getPrimaryTarget();
+		final SubgroupSet aSet = theSubgroupDiscovery.getResult();
+		final BitSet aMembers = membersCheck(theBitSet, aTarget.size());
+		final float[] aDomain = aTarget.getUniqueNumericDomain(aMembers);
 
 		// last index is whole dataset
 		List<List<Float>> statistics = new ArrayList<List<Float>>(aDomain.length-1);
 		for (int i = 0, j = aDomain.length-1; i < j; ++i)
 		{
-			BitSet tmp = (BitSet) aMembers.clone();
-			for (int k = tmp.nextSetBit(0); k >= 0; k = tmp.nextSetBit(k + 1))
-				if (aTarget.getFloat(k) > aDomain[i])
-					tmp.clear(k);
+			BitSet aCAUCSet = (BitSet) aMembers.clone();
+			caucMembers(aTarget, aDomain[i], aCAUCSet);
 
 			// hack to use binary target for numeric target
-			aSet.setBinaryTarget(tmp);
-			// [threshold, n, AUC, fpr_1, tpr_1, ..., fpr_h, tpr_h] 
-			List<Float> stats = new ArrayList<Float>();
-			stats.add(aDomain[i]);
-			stats.add((float) tmp.cardinality());
-			stats.add(aSet.getROCList().getAreaUnderCurve());
-			for (Object[] oa : aSet.getROCListSubgroups())
-			{
-				stats.add((Float) oa[1]);
-				stats.add((Float) oa[2]);
-			}
-			statistics.add(stats);
-		}
+			aSet.setBinaryTarget(aCAUCSet);
 
+			statistics.add(compileStatistics(aDomain[i],
+							aCAUCSet.cardinality(),
+							aSet));
+		}
+		// dump results
+		caucWrite("caucLight", aTarget, statistics);
+	}
+
+	private static void caucHeavy(Table theTable, int theFold, BitSet theBitSet, SearchParameters theSearchParameters, boolean showWindows, int theNrThreads)
+	{
+		// set to false, so normal SD is run
+		CAUC_HEAVY = false;
+		// use 'showWindows = false' below to avoid numerous windows
+		final boolean showWindowsSetting = showWindows;
+
+		// TODO may not work correctly, as copy is not a deep-copy
+		final Column aBackup = theSearchParameters.getTargetConcept().getPrimaryTarget().copy();
+		final BitSet aMembers = membersCheck(theBitSet, aBackup.size());
+		final float[] aDomain = aBackup.getUniqueNumericDomain(aMembers);
+
+		final List<Column> aColumns = theTable.getColumns();
+		final String aName = aBackup.getName();
+		final String aShort = aBackup.getShort();
+		final int anIndex = aBackup.getIndex();
+		final int aNrRows = aBackup.getIndex();
+
+		// column will be binary instead of numeric
+		final TargetConcept tc = theSearchParameters.getTargetConcept();
+		tc.setTargetType(TargetType.SINGLE_NOMINAL.GUI_TEXT);
+		tc.setTargetValue("1");
+		// set an alternative quality measure
+		final int qm = theSearchParameters.getQualityMeasure();
+		final int altQM = QualityMeasure.WRACC;
+		theSearchParameters.setQualityMeasure(altQM);
+		// set an alternative quality measure minimum
+		final float mm = theSearchParameters.getQualityMeasureMinimum();
+		final String altName = QualityMeasure.getMeasureString(altQM);
+		theSearchParameters.setQualityMeasureMinimum(
+			Float.parseFloat(QualityMeasure.getMeasureMinimum(altName, 0)));
+
+		// last index is whole dataset
+		List<List<Float>> statistics = new ArrayList<List<Float>>(aDomain.length-1);
+		for (int i = 0, j = aDomain.length-1; i < j; ++i)
+		{
+			BitSet aCAUCSet = (BitSet) aMembers.clone();
+			caucMembers(aBackup, aDomain[i], aCAUCSet);
+
+			// create temporary Column
+			Column aColumn = new Column(aName,
+						aShort,
+						AttributeType.BINARY,
+						anIndex,
+						aNrRows);
+
+			// set Column members
+			for (int k = 0, m = aBackup.size(); k < m; ++k)
+				aColumn.add(aCAUCSet.get(k));
+
+			// use Column in Table
+			aColumns.set(anIndex, aColumn);
+
+			// set the new column as primary target
+			theSearchParameters.getTargetConcept().setPrimaryTarget(aColumn);
+
+			// run SD
+			SubgroupDiscovery sd =
+				runSubgroupDiscovery(theTable,
+							theFold,
+							aMembers,
+							theSearchParameters,
+							false,
+							theNrThreads);
+
+			// compile statistics
+			statistics.add(compileStatistics(aDomain[i],
+							aCAUCSet.cardinality(),
+							sd.getResult()));
+		}
+		// dump results
+		caucWrite("caucHeavy", aBackup, statistics);
+
+		// restore original Column
+		aColumns.set(anIndex, aBackup);
+		tc.setPrimaryTarget(aBackup);
+		tc.setTargetType(TargetType.SINGLE_NUMERIC.GUI_TEXT);
+		// restore original SearchParameters
+		theSearchParameters.setQualityMeasure(qm);
+		theSearchParameters.setQualityMeasureMinimum(mm);
+
+		// back to start
+		CAUC_HEAVY = true;
+		showWindows = showWindowsSetting;
+	}
+
+	private static BitSet membersCheck(BitSet theBitSet, int theSize)
+	{
+		if (theBitSet != null)
+			return theBitSet;
+		else
+		{
+			BitSet aMembers = new BitSet(theSize);
+			aMembers.set(0, theSize);
+			return aMembers;
+		}
+	}
+
+	// simple updating of members bitset is possible if threshold test loop
+	// is backwards, starting at before-last threshold, ending with first
+	private static void caucMembers(Column theColumn, float theThreshold, BitSet theBitSet)
+	{
+		for (int k = theBitSet.nextSetBit(0); k >= 0; k = theBitSet.nextSetBit(k + 1))
+			if (theColumn.getFloat(k) > theThreshold)
+				theBitSet.clear(k);
+	}
+
+	private static List<Float> compileStatistics(float theThreshold, int theNrMembers, SubgroupSet theSubgroupSet)
+	{
+		// [threshold, n, AUC, fpr_1, tpr_1, ..., fpr_h, tpr_h] 
+		List<Float> stats = new ArrayList<Float>();
+		stats.add(theThreshold);
+		stats.add((float) theNrMembers);
+		stats.add(theSubgroupSet.getROCList().getAreaUnderCurve());
+		for (Object[] oa : theSubgroupSet.getROCListSubgroups())
+		{
+			stats.add((Float) oa[1]);
+			stats.add((Float) oa[2]);
+		}
+		return stats;
+	}
+
+	// to std.out or file
+	private static void caucWrite(String theCaller, Column theTarget, List<List<Float>> theStatistics)
+	{
 		// write or print to std.out
-		System.out.println("#" + aTarget.getName());
-		System.out.println("#threshold\tn\tAUC\tfrp_1\ttpr_1\t,...,\tfpr_h\t\tpr_h");
-		for (List<Float> l : statistics)
+		System.out.println("#" + theCaller);
+		System.out.println("#" + theTarget.getName());
+		System.out.println("#threshold\tn\tAUC\tfrp_1\ttpr_1\t,...,\tfpr_h\t\ttpr_h");
+		for (List<Float> l : theStatistics)
 			System.out.println(l.toString().replaceAll(", ", "\t"));
 	}
 
