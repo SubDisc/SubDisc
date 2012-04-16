@@ -3,8 +3,7 @@ package nl.liacs.subdisc;
 public class Condition implements Comparable<Condition>
 {
 	// Operator Constants
-	public static final int ELEMENT_OF		= 0;
-	public static final int DOES_NOT_EQUAL		= 1;
+	public static final int ELEMENT_OF		= 1;
 	public static final int EQUALS			= 2;
 	public static final int LESS_THAN_OR_EQUAL	= 3;
 	public static final int GREATER_THAN_OR_EQUAL	= 4;
@@ -22,7 +21,6 @@ public class Condition implements Comparable<Condition>
 	// Numeric Operator  Constants
 	//this allows =, <= and >=
 	public static final int FIRST_NUMERIC_OPERATOR	= EQUALS;
-	//MiMa swap these two definitions to get set-valued behaviour
 	public static final int LAST_NUMERIC_OPERATOR	= BETWEEN;
 //	public static final int LAST_NUMERIC_OPERATOR	= GREATER_THAN_OR_EQUAL;
 
@@ -101,6 +99,9 @@ public class Condition implements Comparable<Condition>
 
 	public int getOperator() { return itsOperator; }
 
+	public boolean isElementOf() { return itsOperator == ELEMENT_OF; }
+	public boolean isEquals() { return itsOperator == EQUALS; }
+
 	private String getValue()
 	{
 		switch (itsColumn.getType())
@@ -173,8 +174,6 @@ public class Condition implements Comparable<Condition>
 	 */
 	public void setValue(Interval theValue)	{ itsInterval = theValue; }
 
-	public boolean checksNotEquals() { return itsOperator == DOES_NOT_EQUAL; }
-
 	public boolean hasNextOperator()
 	{
 		if (itsOperator == LAST_BINARY_OPERATOR && itsColumn.isBinaryType())
@@ -209,8 +208,6 @@ public class Condition implements Comparable<Condition>
 		{
 			case ELEMENT_OF :
 				return itsNominalValueSet.contains(theValue);
-			case DOES_NOT_EQUAL :
-				return !theValue.equals(itsNominalValue);
 			case EQUALS :
 				return theValue.equals(itsNominalValue);
 			case LESS_THAN_OR_EQUAL :
@@ -239,11 +236,6 @@ public class Condition implements Comparable<Condition>
 	{
 		switch(itsOperator)
 		{
-			case DOES_NOT_EQUAL :
-			{
-				logError("numeric");
-				return false;
-			}
 			case EQUALS :
 				return theValue == itsNumericValue;
 			case LESS_THAN_OR_EQUAL :
@@ -295,7 +287,6 @@ public class Condition implements Comparable<Condition>
 		switch(itsOperator)
 		{
 			case ELEMENT_OF		: return "in";
-			case DOES_NOT_EQUAL		: return "!=";
 			case EQUALS			: return "=";
 			case LESS_THAN_OR_EQUAL		: return "<=";
 			case GREATER_THAN_OR_EQUAL	: return ">=";

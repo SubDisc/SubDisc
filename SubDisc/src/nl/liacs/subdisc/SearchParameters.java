@@ -25,7 +25,7 @@ public class SearchParameters implements XMLNodeInterface
 
 	private SearchStrategy	itsSearchStrategy;
 	private int		itsSearchStrategyWidth;
-	private boolean		itsNominalNotEquals;
+	private boolean		itsNominalSets;
 	private NumericOperators itsNumericOperators;
 	private NumericStrategy	itsNumericStrategy;
 	private int		itsNrBins;
@@ -89,8 +89,8 @@ public class SearchParameters implements XMLNodeInterface
 		itsSearchStrategy = SearchStrategy.getSearchStrategy(theSearchStrategyName);
 	}
 
-	public boolean getNominalNotEquals() {return itsNominalNotEquals;}
-	public void setNominalNotEquals(boolean theValue) {itsNominalNotEquals = theValue;}
+	public boolean getNominalSets() {return itsNominalSets;}
+	public void setNominalSets(boolean theValue) {itsNominalSets = theValue;}
 	public NumericOperators getNumericOperators() { return itsNumericOperators; }
 	public void setNumericOperators(String theNumericOperatorsName)
 	{
@@ -137,7 +137,7 @@ public class SearchParameters implements XMLNodeInterface
 		XMLNode.addNodeTo(aNode, "maximum_subgroups", getMaximumSubgroups());
 		XMLNode.addNodeTo(aNode, "maximum_time", getMaximumTime());
 		XMLNode.addNodeTo(aNode, "search_strategy", getSearchStrategy().GUI_TEXT);
-		XMLNode.addNodeTo(aNode, "use_nominal_not_equals", getNominalNotEquals());
+		XMLNode.addNodeTo(aNode, "use_nominal_sets", getNominalSets());
 		XMLNode.addNodeTo(aNode, "search_strategy_width", getSearchStrategyWidth());
 		XMLNode.addNodeTo(aNode, "numeric_operators", getNumericOperators().GUI_TEXT);
 		XMLNode.addNodeTo(aNode, "numeric_strategy", getNumericStrategy().GUI_TEXT);
@@ -172,8 +172,8 @@ public class SearchParameters implements XMLNodeInterface
 				itsMaximumTime = Float.parseFloat(aSetting.getTextContent());
 			else if("search_strategy".equalsIgnoreCase(aNodeName))
 				itsSearchStrategy = (SearchStrategy.getSearchStrategy(aSetting.getTextContent()));
-			else if("use_nominal_not_equals".equalsIgnoreCase(aNodeName))
-				itsNominalNotEquals = Boolean.parseBoolean(aSetting.getTextContent());
+			else if("use_nominal_sets".equalsIgnoreCase(aNodeName))
+				itsNominalSets = Boolean.parseBoolean(aSetting.getTextContent());
 			else if("search_strategy_width".equalsIgnoreCase(aNodeName))
 				itsSearchStrategyWidth = Integer.parseInt(aSetting.getTextContent());
 			else if("numeric_operators".equalsIgnoreCase(aNodeName))

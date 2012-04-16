@@ -148,7 +148,7 @@ public class MiningWindow extends JFrame
 		// search strategy
 		setSearchStrategyType(itsSearchParameters.getSearchStrategy().GUI_TEXT);
 		setSearchStrategyWidth(String.valueOf(itsSearchParameters.getSearchStrategyWidth()));
-		setNominalNotEquals(String.valueOf(itsSearchParameters.getNominalNotEquals()));
+		setNominalSets(String.valueOf(itsSearchParameters.getNominalSets()));
 		setNumericOperators(itsSearchParameters.getNumericOperators().GUI_TEXT);
 		setNumericStrategy(itsSearchParameters.getNumericStrategy().GUI_TEXT);
 		setSearchStrategyNrBins(String.valueOf(itsSearchParameters.getNrBins()));
@@ -357,7 +357,7 @@ public class MiningWindow extends JFrame
 		jPanelSearchStrategyLabels = new JPanel();
 		jLabelStrategyType = new JLabel();
 		jLabelStrategyWidth = new JLabel();
-		jLabelNotEquals = new JLabel();
+		jLabelSets = new JLabel();
 		jLabelNumericOperators = new JLabel();
 		jLabelSearchStrategyNumeric = new JLabel();
 		jLabelSearchStrategyNrBins = new JLabel();
@@ -365,7 +365,7 @@ public class MiningWindow extends JFrame
 		jPanelSearchStrategyFields = new JPanel();
 		jComboBoxSearchStrategyType = new JComboBox();
 		jTextFieldSearchStrategyWidth = new JTextField();
-		jCheckBoxNotEquals = new javax.swing.JCheckBox();
+		jCheckBoxSets = new javax.swing.JCheckBox();
 		jComboBoxNumericOperators = new JComboBox();
 		jComboBoxSearchStrategyNumeric = new JComboBox();
 		jTextFieldSearchStrategyNrBins = new JTextField();
@@ -877,8 +877,8 @@ public class MiningWindow extends JFrame
 		jLabelStrategyWidth = initJLabel("search width");
 		jPanelSearchStrategyLabels.add(jLabelStrategyWidth);
 
-		jLabelNotEquals = initJLabel("<html>include &#8800; (nominal)</html>");
-		jPanelSearchStrategyLabels.add(jLabelNotEquals);
+		jLabelSets = initJLabel("set-valued nominals");
+		jPanelSearchStrategyLabels.add(jLabelSets);
 
 		jLabelNumericOperators = initJLabel("numeric operators");
 		jPanelSearchStrategyLabels.add(jLabelNumericOperators);
@@ -913,10 +913,10 @@ public class MiningWindow extends JFrame
 		jTextFieldSearchStrategyWidth.setMinimumSize(new Dimension(86, 22));
 		jPanelSearchStrategyFields.add(jTextFieldSearchStrategyWidth);
 
-		jCheckBoxNotEquals.setHorizontalTextPosition(javax.swing.SwingConstants.RIGHT);
-		jCheckBoxNotEquals.setForeground(new java.awt.Color (102, 102, 153));
-		jCheckBoxNotEquals.setFont(GUI.DEFAULT_TEXT_FONT);
-		jPanelSearchStrategyFields.add(jCheckBoxNotEquals);
+		jCheckBoxSets.setHorizontalTextPosition(javax.swing.SwingConstants.RIGHT);
+		jCheckBoxSets.setForeground(new java.awt.Color (102, 102, 153));
+		jCheckBoxSets.setFont(GUI.DEFAULT_TEXT_FONT);
+		jPanelSearchStrategyFields.add(jCheckBoxSets);
 
 		jComboBoxNumericOperators.setPreferredSize(new Dimension(86, 22));
 		jComboBoxNumericOperators.setMinimumSize(new Dimension(86, 22));
@@ -1717,7 +1717,7 @@ public class MiningWindow extends JFrame
 
 			setupSearchParameters();
 			SubgroupDiscovery aResult = runSubgroupDiscovery(aTable, (i+1), aSet, itsSearchParameters, true, getNrThreads());
-			
+
 			if (aStore == 0)
 			{
 				try
@@ -1767,7 +1767,7 @@ public class MiningWindow extends JFrame
 
 		itsSearchParameters.setSearchStrategy(getSearchStrategyName());
 		itsSearchParameters.setSearchStrategyWidth(getSearchStrategyWidth());
-		itsSearchParameters.setNominalNotEquals(getNominalNotEquals());
+		itsSearchParameters.setNominalSets(getNominalSets());
 		itsSearchParameters.setNumericStrategy(getNumericStrategy());
 		itsSearchParameters.setNrBins(getSearchStrategyNrBins());
 		// TODO
@@ -2077,8 +2077,8 @@ public class MiningWindow extends JFrame
 	private void setSearchStrategyWidth(String aValue) { jTextFieldSearchStrategyWidth.setText(aValue); }
 
 	// search strategy - nominal not equals
-	private boolean getNominalNotEquals() { return jCheckBoxNotEquals.isSelected(); }
-	private void setNominalNotEquals(String aValue) { jCheckBoxNotEquals.setSelected(Boolean.parseBoolean(aValue)); }
+	private boolean getNominalSets() { return jCheckBoxSets.isSelected(); }
+	private void setNominalSets(String aValue) { jCheckBoxSets.setSelected(Boolean.parseBoolean(aValue)); }
 
 	// search strategy - numeric operators
 	private String getNumericOperators() { return (String) jComboBoxNumericOperators.getSelectedItem(); }
@@ -2200,7 +2200,7 @@ public class MiningWindow extends JFrame
 	private JPanel jPanelSearchStrategyLabels;
 	private JLabel jLabelStrategyType;
 	private JLabel jLabelStrategyWidth;
-	private JLabel jLabelNotEquals;
+	private JLabel jLabelSets;
 	private JLabel jLabelNumericOperators;
 	private JLabel jLabelSearchStrategyNumeric;
 	private JLabel jLabelSearchStrategyNrBins;
@@ -2208,7 +2208,7 @@ public class MiningWindow extends JFrame
 	private JPanel jPanelSearchStrategyFields;
 	private JComboBox jComboBoxSearchStrategyType;
 	private JTextField jTextFieldSearchStrategyWidth;
-	private JCheckBox jCheckBoxNotEquals;
+	private JCheckBox jCheckBoxSets;
 	private JComboBox jComboBoxNumericOperators;
 	private JComboBox jComboBoxSearchStrategyNumeric;
 	private JTextField jTextFieldSearchStrategyNrBins;
