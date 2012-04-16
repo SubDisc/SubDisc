@@ -334,6 +334,8 @@ public class SubgroupDiscovery extends MiningAlgorithm
 				}
 				// else {nothing to see here?}
 
+				//Log.logCommandLine("cutpoints " + aNewSplitPoints.size());
+
 				// construct aggregated cross table
 				int aCount = Math.max(1, (int)Math.ceil(Math.log(aSplitPoints.length)/Math.log(2.0)));
 				float[] aCoarseSplitPoints = new float[aCount];
@@ -344,8 +346,8 @@ public class SubgroupDiscovery extends MiningAlgorithm
 				double aBestQuality = Double.NEGATIVE_INFINITY;
 				Interval aBestInterval = new Interval(Float.NEGATIVE_INFINITY, Float.POSITIVE_INFINITY);
 
-				float[] aLowerCandidates = new float[aSplitPoints.length+1];
-				int aLowerCandCounter = 0;
+				float[][][] aLowerCandidates = new float[2][aSplitPoints.length+1][3];
+				int[] aLowerCandCounter = {0, 0};
 
 				int aK = 0;
 				int aPos = aRBICT.getPositiveCount(aK);
@@ -355,7 +357,13 @@ public class SubgroupDiscovery extends MiningAlgorithm
 				{
 					float anUpper = (j == aSplitPoints.length) ? Float.POSITIVE_INFINITY : aSplitPoints[j];
 					float aLower = (j == 0) ? Float.NEGATIVE_INFINITY : aSplitPoints[j-1];
-					aLowerCandidates[aLowerCandCounter++] = aLower;
+					for (int aHull = 0; aHull < 2; aHull++)
+					{
+						aLowerCandidates[aHull][aLowerCandCounter[aHull]][0] = aLower;
+						aLowerCandidates[aHull][aLowerCandCounter[aHull]][1] = 0;
+						aLowerCandidates[aHull][aLowerCandCounter[aHull]][2] = 0;
+						aLowerCandCounter[aHull]++;
+					}
 
 					if ( j > 0 && aK < aCount && aSplitPoints[j-1] == aCoarseSplitPoints[aK] )
 					{
@@ -366,63 +374,88 @@ public class SubgroupDiscovery extends MiningAlgorithm
 
 					aPos -= aRBICT.getPositiveCount(j);
 					aNeg -= aRBICT.getNegativeCount(j);
-					int aPruneCounter = 0;
+					int [] aPruneCounter = {0, 0};
 
 					// only for WRACC
 					double aBestCandQuality = Double.NEGATIVE_INFINITY;
 					int aBestCandIndex = -1;
 
-					for (int i = 0; i < aLowerCandCounter; i++)
+					for (int aHull=0; aHull<2; aHull++)
 					{
-						float aLowerCand = aLowerCandidates[i];
-						Interval anInterval = new Interval(aLowerCand, anUpper);
-						Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(anInterval);
-						double aQuality = evaluateCandidate(aNewSubgroup);
-						if (aQuality > aBestQuality && aNewSubgroup.getCoverage() > itsMinimumCoverage)
+						if (itsSearchParameters.getQualityMeasure() == QualityMeasure.WRACC && aHull==1)
+							continue;
+						
+						for (int i = aLowerCandCounter[aHull]-1; i >= 0; i--)
 						{
-							aBestQuality = aQuality;
-							aBestInterval = new Interval(anInterval.getLower(), anInterval.getUpper());
-						}
-
-						// candidate pruning
-						if (itsSearchParameters.getQualityMeasure() == QualityMeasure.WRACC)
-						{
-							if (aQuality > aBestCandQuality /* && coverage ? */)
+							float aLowerCand = aLowerCandidates[aHull][i][0];
+							aLowerCandidates[aHull][i][1] += aRBICT.getPositiveCount(j);
+							aLowerCandidates[aHull][i][2] += aRBICT.getPositiveCount(j) + aRBICT.getNegativeCount(j);
+							int aNewSGPos = (int)aLowerCandidates[aHull][i][1];
+							int aNewSGCover = (int)aLowerCandidates[aHull][i][2];
+							double aQuality = itsQualityMeasure.calculate(aNewSGPos, aNewSGCover);
+							if (aQuality > aBestQuality && aNewSGCover > itsMinimumCoverage)
 							{
-								aBestCandQuality = aQuality;
-								aBestCandIndex = i;
+								aBestQuality = aQuality;
+								aBestInterval = new Interval(aLowerCand, anUpper);
 							}
-						}
-						else
-						{
-							int aCoverage = aNewSubgroup.getCoverage();
-							double aPosCount = aNewSubgroup.getTertiaryStatistic();
 
-							double aTopLeftBound = itsQualityMeasure.calculate((float)aPosCount+aPos, aCoverage+aPos);
-							double aBottomRightBound = itsQualityMeasure.calculate((float)aPosCount, aCoverage+aNeg);
-							double aQualityBound = Math.max(aTopLeftBound, aBottomRightBound);
-
-							aCoverage += aPos + aNeg;
-							aPosCount += aPos;
-
-							if ( j < aSplitPoints.length)
+							// candidate pruning
+							if (itsSearchParameters.getQualityMeasure() == QualityMeasure.WRACC)
 							{
-								for (int k = aK+1; k < aCRBICT.size(); k++)
+								if (aQuality > aBestCandQuality /* && coverage ? */)
 								{
-									aTopLeftBound = itsQualityMeasure.calculate((float)aPosCount+aCRBICT.getPositiveCount(k), aCoverage+aCRBICT.getPositiveCount(k));
-									aQualityBound = Math.max(aQualityBound, aTopLeftBound);
-									aBottomRightBound = itsQualityMeasure.calculate((float)aPosCount, aCoverage+aCRBICT.getNegativeCount(k));
-									aQualityBound = Math.max(aQualityBound, aBottomRightBound);
-
-									aCoverage += aCRBICT.getPositiveCount(k) + aCRBICT.getNegativeCount(k);
-									aPosCount += aCRBICT.getPositiveCount(k);
+									aBestCandQuality = aQuality;
+									aBestCandIndex = i;
 								}
 							}
+							else
+							{
+								int aCoverage = aNewSGCover;
+								double aPosCount = aNewSGPos;
 
-							if (aQualityBound < aBestQuality)
-								aPruneCounter++;
-							else if (aPruneCounter > 0)
-								aLowerCandidates[i-aPruneCounter] = aLowerCandidates[i];
+								double aTopLeftBound = itsQualityMeasure.calculate((float)aPosCount+aPos, aCoverage+aPos);
+								double aBottomRightBound = itsQualityMeasure.calculate((float)aPosCount, aCoverage+aNeg);
+								double aQualityBound = Math.max(aTopLeftBound, aBottomRightBound);
+
+								aCoverage += aPos + aNeg;
+								aPosCount += aPos;
+
+								if ( j < aSplitPoints.length)
+								{
+									for (int k = aK+1; k < aCRBICT.size(); k++)
+									{
+										aTopLeftBound = itsQualityMeasure.calculate((float)aPosCount+aCRBICT.getPositiveCount(k), aCoverage+aCRBICT.getPositiveCount(k));
+										aQualityBound = Math.max(aQualityBound, aTopLeftBound);
+										aBottomRightBound = itsQualityMeasure.calculate((float)aPosCount, aCoverage+aCRBICT.getNegativeCount(k));
+										aQualityBound = Math.max(aQualityBound, aBottomRightBound);
+
+										aCoverage += aCRBICT.getPositiveCount(k) + aCRBICT.getNegativeCount(k);
+										aPosCount += aCRBICT.getPositiveCount(k);
+									}
+								}
+
+								if (aQualityBound < aBestQuality) 
+								{
+									aPruneCounter[aHull]++;
+									for (int ii = i; ii < aLowerCandCounter[aHull]-aPruneCounter[aHull]; ii++)
+										for (int iii = 0; iii < 3; iii++)
+											aLowerCandidates[aHull][ii][iii] = aLowerCandidates[aHull][ii+1][iii];
+								}
+								else if (i > 0)
+								{
+									float aLowerPrevCand = aLowerCandidates[aHull][i-1][0];
+									int aLowerPrevPos = (int)aLowerCandidates[aHull][i-1][1];
+									int aLowerPrevCover = (int)aLowerCandidates[aHull][i-1][2];
+									double aNumber = aNewSGPos * aLowerPrevCover - aLowerPrevPos * aNewSGCover;
+									if ((aHull==0 && aNumber < 0) || (aHull==1 && aNumber > 0))
+									{
+										aPruneCounter[aHull]++;
+										for (int ii = i; ii < aLowerCandCounter[aHull]-aPruneCounter[aHull]; ii++)
+											for (int iii = 0; iii < 3; iii++)
+												aLowerCandidates[aHull][ii][iii] = aLowerCandidates[aHull][ii+1][iii];
+									}
+								}
+							}
 						}
 					}
 
@@ -430,15 +463,17 @@ public class SubgroupDiscovery extends MiningAlgorithm
 					{
 						if (aBestCandIndex >= 0)
 						{
-							aLowerCandidates[0] = aLowerCandidates[aBestCandIndex];
-							aLowerCandCounter = 1;
+							for (int iii = 0; iii < 3; iii++)
+								aLowerCandidates[0][0][iii] = aLowerCandidates[0][aBestCandIndex][iii];
+							aLowerCandCounter[0] = 1;
 						}
 					}
 					else
 					{
-						aLowerCandCounter -= aPruneCounter;
+						aLowerCandCounter[0] -= aPruneCounter[0];
+						aLowerCandCounter[1] -= aPruneCounter[1];
 					}
-
+					//Log.logCommandLine("hullsize " + aLowerCandCounter[0] + ' ' + aLowerCandCounter[1]);
 				}
 
 				Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(aBestInterval);
