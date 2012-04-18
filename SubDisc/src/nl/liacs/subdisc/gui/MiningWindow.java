@@ -1427,7 +1427,7 @@ public class MiningWindow extends JFrame
 
 	// leave at false in svn head
 	private static final boolean CAUC_LIGHT = false;
-	private static boolean CAUC_HEAVY = false;
+	private static boolean CAUC_HEAVY = true;
 	// public, but does not perform ANY sanity checks
 	public static SubgroupDiscovery runSubgroupDiscovery(Table theTable, int theFold, BitSet theBitSet, SearchParameters theSearchParameters, boolean showWindows, int theNrThreads)
 	{
@@ -1661,16 +1661,20 @@ public class MiningWindow extends JFrame
 
 	private static List<Float> compileStatistics(float theThreshold, int theNrMembers, SubgroupSet theSubgroupSet)
 	{
-		// [threshold, n, AUC, fpr_1, tpr_1, ..., fpr_h, tpr_h] 
+		// [threshold, n, AUC, fpr_1, tpr_1, ..., fpr_h, tpr_h]
 		List<Float> stats = new ArrayList<Float>();
 		stats.add(theThreshold);
 		stats.add((float) theNrMembers);
 		stats.add(theSubgroupSet.getROCList().getAreaUnderCurve());
+		stats.add(0.0f);
+		stats.add(0.0f);
 		for (Object[] oa : theSubgroupSet.getROCListSubgroups())
 		{
 			stats.add((Float) oa[1]);
 			stats.add((Float) oa[2]);
 		}
+		stats.add(1.0f);
+		stats.add(1.0f);
 		return stats;
 	}
 
@@ -1682,7 +1686,10 @@ public class MiningWindow extends JFrame
 		System.out.println("#" + theTarget.getName());
 		System.out.println("#threshold\tn\tAUC\tfrp_1\ttpr_1\t,...,\tfpr_h\t\ttpr_h");
 		for (List<Float> l : theStatistics)
-			System.out.println(l.toString().replaceAll(", ", "\t"));
+		{
+			String aTemp = l.toString().replaceAll(", ", "\t");
+			System.out.println(aTemp);
+		}
 	}
 
 	private void jButtonRandomQualitiesActionPerformed()
