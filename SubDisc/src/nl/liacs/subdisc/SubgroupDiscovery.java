@@ -335,6 +335,8 @@ public class SubgroupDiscovery extends MiningAlgorithm
 				// else {nothing to see here?}
 
 				//Log.logCommandLine("cutpoints " + aNewSplitPoints.size());
+				int aMaxHullSize = 0;
+				double anAverageHullSize = 0;
 
 				// construct aggregated cross table
 				int aCount = Math.max(1, (int)Math.ceil(Math.log(aSplitPoints.length)/Math.log(2.0)));
@@ -350,8 +352,8 @@ public class SubgroupDiscovery extends MiningAlgorithm
 				int[] aLowerCandCounter = {0, 0};
 
 				int aK = 0;
-				int aPos = aRBICT.getPositiveCount(aK);
-				int aNeg = aRBICT.getNegativeCount(aK);
+				int aPos = aCRBICT.getPositiveCount(aK);
+				int aNeg = aCRBICT.getNegativeCount(aK);
 
 				for (int j = 0; j <= aSplitPoints.length; j++)
 				{
@@ -382,9 +384,9 @@ public class SubgroupDiscovery extends MiningAlgorithm
 
 					for (int aHull=0; aHull<2; aHull++)
 					{
-						if (itsSearchParameters.getQualityMeasure() == QualityMeasure.WRACC && aHull==1)
+						if ((itsSearchParameters.getQualityMeasure() == QualityMeasure.WRACC || itsSearchParameters.getQualityMeasure() == QualityMeasure.BINOMIAL) && aHull==1)
 							continue;
-						
+
 						for (int i = aLowerCandCounter[aHull]-1; i >= 0; i--)
 						{
 							float aLowerCand = aLowerCandidates[aHull][i][0];
@@ -467,14 +469,24 @@ public class SubgroupDiscovery extends MiningAlgorithm
 								aLowerCandidates[0][0][iii] = aLowerCandidates[0][aBestCandIndex][iii];
 							aLowerCandCounter[0] = 1;
 						}
+						aLowerCandCounter[1] = 0;
+					}
+					else if (itsSearchParameters.getQualityMeasure() == QualityMeasure.BINOMIAL)
+					{
+						aLowerCandCounter[1] = 0;
 					}
 					else
 					{
 						aLowerCandCounter[0] -= aPruneCounter[0];
 						aLowerCandCounter[1] -= aPruneCounter[1];
 					}
-					//Log.logCommandLine("hullsize " + aLowerCandCounter[0] + ' ' + aLowerCandCounter[1]);
+
+					aMaxHullSize = Math.max(aMaxHullSize, aLowerCandCounter[0] + aLowerCandCounter[1]);
+					anAverageHullSize += aLowerCandCounter[0] + aLowerCandCounter[1];
 				}
+
+				anAverageHullSize /= (double)(aSplitPoints.length + 1);
+				//Log.logCommandLine("hullsize " + aMaxHullSize + ' ' + anAverageHullSize);
 
 				Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(aBestInterval);
 				checkAndLog(aNewSubgroup, anOldCoverage);
