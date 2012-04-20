@@ -1426,7 +1426,7 @@ public class MiningWindow extends JFrame
 	}
 
 	// leave at false in svn head
-	private static final boolean CAUC_LIGHT = true;
+	private static final boolean CAUC_LIGHT = false;
 	private static boolean CAUC_HEAVY = false;
 	// public, but does not perform ANY sanity checks
 	public static SubgroupDiscovery runSubgroupDiscovery(Table theTable, int theFold, BitSet theBitSet, SearchParameters theSearchParameters, boolean showWindows, int theNrThreads)

@@ -97,7 +97,7 @@ public class CAUCWindow extends JFrame implements ActionListener
 
 			// hard coded for now, needs to change
 			for (int i = 3, j = l.size(); i < j; ++i)
-				s.add(l.get(i), l.get(++i));
+				s.addOrUpdate(l.get(i), l.get(++i));
 	
 			c.addSeries(s);
 		}
