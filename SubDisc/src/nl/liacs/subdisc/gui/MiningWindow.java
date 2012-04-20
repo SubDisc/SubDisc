@@ -1684,10 +1684,10 @@ public class MiningWindow extends JFrame
 		// write or print to std.out
 		System.out.println("#" + theCaller);
 		System.out.println("#" + theTarget.getName());
-		System.out.println("#threshold\tn\tAUC\tfrp_1\ttpr_1\t,...,\tfpr_h\t\ttpr_h");
+		System.out.println("#threshold,n,AUC,frp_1,tpr_1,...,fpr_h,tpr_h");
 		for (List<Float> l : theStatistics)
 		{
-			String aTemp = l.toString().replaceAll(", ", "\t");
+			String aTemp = l.toString().replaceAll(", ", ",");
 			System.out.println(aTemp);
 		}
 		new CAUCWindow(theTarget, theStatistics);
