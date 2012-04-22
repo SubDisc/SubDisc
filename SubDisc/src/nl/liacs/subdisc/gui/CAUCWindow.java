@@ -24,12 +24,18 @@ public class CAUCWindow extends JFrame implements ActionListener
 		FORMATTER.setMaximumFractionDigits(2);
 	}
 
+	final private Column itsColumn;
+	final private List<List<Float>> itsStatistics;
+
 	public CAUCWindow(Column theTarget, List<List<Float>> theStatistics)
 	{
-		if (theTarget == null)
+		itsColumn = theTarget;
+		itsStatistics = theStatistics;
+
+		if (itsColumn == null || itsStatistics == null)
 			return;
 
-		initComponents(theTarget, theStatistics);
+		initComponents();
 
 		setTitle("CAUC Window " + theTarget.getName());
 		setIconImage(MiningWindow.ICON);
@@ -40,26 +46,28 @@ public class CAUCWindow extends JFrame implements ActionListener
 		setVisible(true);
 	}
 
-	private void initComponents(Column theTarget, List<List<Float>> theStatistics)
+	private void initComponents()
 	{
 		setLayout(new BorderLayout());
 
-		add(new JScrollPane(new ChartPanel(createChart(theTarget, theStatistics))),
+		add(new JScrollPane(new ChartPanel(createChart())),
 			BorderLayout.CENTER);
 
 		final JPanel aPanel = new JPanel();
+		//aPanel.add(GUI.buildButton("GnuPlot 2D", 'P',"plot", this));
+		aPanel.add(GUI.buildButton("GnuSplot 3D", 'S',"splot", this));
 		aPanel.add(GUI.buildButton("Close", 'C',"close", this));
 		add(aPanel, BorderLayout.SOUTH);
 	}
 
-	private JFreeChart createChart(Column theColumn, List<List<Float>> theStatistics)
+	private JFreeChart createChart()
 	{
 		// fastest + little memory
 		JFreeChart aChart =
 			ChartFactory.createXYLineChart("",
 							null,
 							null,
-							createDataset(theStatistics),
+							createDataset(),
 							PlotOrientation.VERTICAL,
 							false,
 							true,
@@ -87,11 +95,11 @@ public class CAUCWindow extends JFrame implements ActionListener
 		return aChart;
 	}
 
-	private XYSeriesCollection createDataset(List<List<Float>> theStatistics)
+	private XYSeriesCollection createDataset()
 	{
 		XYSeriesCollection c = new XYSeriesCollection();
 
-		for (List<Float> l : theStatistics)
+		for (List<Float> l : itsStatistics)
 		{
 			XYSeries s = new XYSeries(makeTitle(l), false, false);
 
@@ -116,7 +124,24 @@ public class CAUCWindow extends JFrame implements ActionListener
 	@Override
 	public void actionPerformed(ActionEvent theEvent)
 	{
-		if ("close".equals(theEvent.getActionCommand()))
+		String anEvent = theEvent.getActionCommand();
+		if ("plot".equals(anEvent))
+			create2DGnuplot();
+		if ("splot".equals(anEvent))
+			create3DGnuplot();
+		else if ("close".equals(anEvent))
 			dispose();
+	}
+
+	// TODO 2D / 3D will be controlled by a single boolean
+	private void create2DGnuplot()
+	{
+		;
+	}
+
+	// TODO 2D / 3D will be controlled by a single boolean
+	private void create3DGnuplot()
+	{
+		Gnuplot.writeSplotSccript(itsColumn, itsStatistics);
 	}
 }
