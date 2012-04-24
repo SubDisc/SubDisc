@@ -355,6 +355,12 @@ public class SubgroupDiscovery extends MiningAlgorithm
 				int aPos = aCRBICT.getPositiveCount(aK);
 				int aNeg = aCRBICT.getNegativeCount(aK);
 
+				int [][] aTranslation = new int[2][2];
+				aTranslation[0][0] = 0;
+				aTranslation[0][1] = 0;
+				aTranslation[1][0] = 0;
+				aTranslation[1][1] = 0;
+
 				for (int j = 0; j <= aSplitPoints.length; j++)
 				{
 					float anUpper = (j == aSplitPoints.length) ? Float.POSITIVE_INFINITY : aSplitPoints[j];
@@ -387,11 +393,15 @@ public class SubgroupDiscovery extends MiningAlgorithm
 						if ((itsSearchParameters.getQualityMeasure() == QualityMeasure.WRACC || itsSearchParameters.getQualityMeasure() == QualityMeasure.BINOMIAL) && aHull==1)
 							continue;
 
+						aTranslation[aHull][0] = aRBICT.getPositiveCount(j);
+						aTranslation[aHull][1] = aRBICT.getPositiveCount(j) + aRBICT.getNegativeCount(j);
+
+						// update (i.e., translate) the candidates and check for top quality
 						for (int i = aLowerCandCounter[aHull]-1; i >= 0; i--)
 						{
 							float aLowerCand = aLowerCandidates[aHull][i][0];
-							aLowerCandidates[aHull][i][1] += aRBICT.getPositiveCount(j);
-							aLowerCandidates[aHull][i][2] += aRBICT.getPositiveCount(j) + aRBICT.getNegativeCount(j);
+							aLowerCandidates[aHull][i][1] += aTranslation[aHull][0];
+							aLowerCandidates[aHull][i][2] += aTranslation[aHull][1];
 							int aNewSGPos = (int)aLowerCandidates[aHull][i][1];
 							int aNewSGCover = (int)aLowerCandidates[aHull][i][2];
 							double aQuality = itsQualityMeasure.calculate(aNewSGPos, aNewSGCover);
@@ -400,8 +410,15 @@ public class SubgroupDiscovery extends MiningAlgorithm
 								aBestQuality = aQuality;
 								aBestInterval = new Interval(aLowerCand, anUpper);
 							}
+						}
 
-							// candidate pruning
+						// candidate pruning
+						for (int i = aLowerCandCounter[aHull]-1; i >= 0; i--)
+						{
+							int aNewSGPos = (int)aLowerCandidates[aHull][i][1];
+							int aNewSGCover = (int)aLowerCandidates[aHull][i][2];
+							double aQuality = itsQualityMeasure.calculate(aNewSGPos, aNewSGCover);
+
 							if (itsSearchParameters.getQualityMeasure() == QualityMeasure.WRACC)
 							{
 								if (aQuality > aBestCandQuality /* && coverage ? */)
@@ -412,6 +429,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 							}
 							else
 							{
+								// first prune based on upper bound(s) on canidate extensions
 								int aCoverage = aNewSGCover;
 								double aPosCount = aNewSGPos;
 
@@ -443,6 +461,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 										for (int iii = 0; iii < 3; iii++)
 											aLowerCandidates[aHull][ii][iii] = aLowerCandidates[aHull][ii+1][iii];
 								}
+								// prune candidates that are not on the convex hull
 								else if (i > 0)
 								{
 									float aLowerPrevCand = aLowerCandidates[aHull][i-1][0];
