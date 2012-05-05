@@ -1444,10 +1444,10 @@ public class MiningWindow extends JFrame
 		{
 			case SINGLE_NOMINAL :
 			{
+				//recompute itsPositiveCount, as we may be dealing with cross-validation here, and hence a smaller number
 				TargetConcept aTargetConcept = theSearchParameters.getTargetConcept();
-				//recompute this number, as we may be dealing with cross-validation here, and hence a smaller number
-				int itsPositiveCount = aTargetConcept.getPrimaryTarget().countValues(aTargetConcept.getTargetValue());
-				Log.logCommandLine("positive count: " + itsPositiveCount);
+				String aTargetValue = aTargetConcept.getTargetValue();
+				int itsPositiveCount = aTargetConcept.getPrimaryTarget().countValues(aTargetValue);
 				aSubgroupDiscovery = new SubgroupDiscovery(theSearchParameters, theTable, itsPositiveCount);
 				break;
 			}
@@ -1610,12 +1610,7 @@ public class MiningWindow extends JFrame
 
 			// run SD
 			SubgroupDiscovery sd =
-				runSubgroupDiscovery(theTable,
-							theFold,
-							aMembers,
-							theSearchParameters,
-							false,
-							theNrThreads);
+				runSubgroupDiscovery(theTable, theFold,	aMembers, theSearchParameters, false, theNrThreads);
 
 			// compile statistics
 			statistics.add(compileStatistics(aDomain[i],
@@ -1808,8 +1803,9 @@ public class MiningWindow extends JFrame
 		{
 			BitSet aSet = aCV.getSet(i, true);
 			Table aTable = itsTable.select(aSet);
-
+			Log.logCommandLine("size of fold " + i + ": " + aTable.getNrRows());
 			setupSearchParameters();
+			itsTargetConcept.updateToNewTable(aTable); // make it point to the temporary table.
 			SubgroupDiscovery aResult = runSubgroupDiscovery(aTable, (i+1), aSet, itsSearchParameters, true, getNrThreads());
 
 			if (aStore == 0)
@@ -1825,6 +1821,7 @@ public class MiningWindow extends JFrame
 				aResult.getResult().saveExtent(aWriter, itsTable, aSet, itsTargetConcept);
 			}
 		}
+		itsTargetConcept.updateToNewTable(itsTable); //point it back to the original again
 		if (aStore == 0)
 			try
 			{

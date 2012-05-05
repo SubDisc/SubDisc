@@ -121,12 +121,12 @@ public class TargetConcept implements XMLNodeInterface
 	{
 		itsTertiaryTargets = theTertiaryTargets;
 	}
-	
+
 	public int getNrTargets()
 	{
 		return 1+itsSecondaryTargets.size()+itsTertiaryTargets.size();
 	}
-	
+
 	public boolean getInterceptRelevance() { return itsInterceptRelevance; }
 	public void setInterceptRelevance(boolean theInterceptRelevance)
 	{
@@ -135,9 +135,36 @@ public class TargetConcept implements XMLNodeInterface
 
 	public boolean isSingleNominal() { return (itsTargetType == TargetType.SINGLE_NOMINAL); }
 
-	// when crossvalidating, the columns in the target concept are the size of the dataset, but the columns that are
-	// being tested here are 90% of the size of the dataset. Hence the columns were never equal. I propose to use the
-	// column index as identifier, to circumvent this problem.
+	/**
+	 * Updates the TargetConcept to point to a new table that is a copy of the old table it was pointing to.
+	 * This method is used in the case of Cross Validation, where new tables are being generated for each fold.
+	 */
+	public void updateToNewTable(Table theTable)
+	{
+		if (itsPrimaryTarget != null)
+		{
+			int aColumnIndex = itsPrimaryTarget.getIndex();
+			itsPrimaryTarget = theTable.getColumn(aColumnIndex);
+		}
+		if (itsSecondaryTarget != null)
+		{
+			int aColumnIndex = itsSecondaryTarget.getIndex();
+			itsSecondaryTarget = theTable.getColumn(aColumnIndex);
+		}
+		if (itsMultiTargets != null) //replace entire list
+		{
+			List<Column> aList = new ArrayList<Column>(itsMultiTargets);
+			for (Column aColumn : itsMultiTargets)
+			{
+				int aColumnIndex = aColumn.getIndex();
+				aList.add(theTable.getColumn(aColumnIndex));
+			}
+			itsMultiTargets = aList;
+		}
+
+		//etc... for tertiary targets and multi-regression, when that is stable
+	}
+
 	public boolean isTargetAttribute(Column theColumn)
 	{
 		int anIndex = theColumn.getIndex();
@@ -147,8 +174,6 @@ public class TargetConcept implements XMLNodeInterface
 			case SINGLE_NUMERIC :
 				return (anIndex == itsPrimaryTarget.getIndex());
 			case DOUBLE_REGRESSION :
-// TODO for stable jar, disable, setting were originally added in revision 848
-				// return (theColumn == itsPrimaryTarget || itsSecondaryTargets.contains(theColumn) || itsTertiaryTargets.contains(theColumn) );
 			case DOUBLE_CORRELATION :
 				return (anIndex == itsPrimaryTarget.getIndex() || anIndex == itsSecondaryTarget.getIndex());
 			case MULTI_LABEL :

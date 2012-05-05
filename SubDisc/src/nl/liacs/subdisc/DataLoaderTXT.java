@@ -217,7 +217,7 @@ public class DataLoaderTXT implements FileLoaderInterface
 				}
 				if (aColumn != aNrColumns-1)
 					message("loadFile", "error on line " + aLineNr);
-				if (aLineNr % 10000 == 0)
+				if (aLineNr % 1000 == 0)
 					message("loadFile", aLineNr + " lines read");
 			}
 

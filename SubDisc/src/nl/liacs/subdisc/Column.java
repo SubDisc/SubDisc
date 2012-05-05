@@ -189,14 +189,14 @@ public class Column implements XMLNodeInterface
 	 * Creates a copy of the current column with some records removed.
 	 * <p>
 	 * NOTE the new Column is not a true deep-copy.
-	 * 
+	 *
 	 * @param theSet BitSet indicating which records to use.
-	 * 
+	 *
 	 * @return a new Column consisting of a selection of the original one.
 	*/
 	/*
 	 * NOTE not all members are copied.
-	 * 
+	 *
 	 * COPIED:
 	 * 	private AttributeType itsType;
 	 * 	private String itsName;
@@ -212,7 +212,7 @@ public class Column implements XMLNodeInterface
 	 * 	...
 	 * 	private boolean isEnabled;
 	 * 	private int itsTargetStatus;
-	 * 
+	 *
 	 * NOT COPIED (should be re-assessed after selection):
 	 * 	private BitSet itsMissing = new BitSet();
 	 * 	private boolean itsMissingValueIsUnique = true;
@@ -271,7 +271,8 @@ public class Column implements XMLNodeInterface
 	{
 		if (theNominal == null)
 			theNominal = "";
-		if (!itsDistinctValues.contains(theNominal)) {
+		if (!itsDistinctValues.contains(theNominal))
+		{
 			itsDistinctValues.add(theNominal);
 			// !contains so inserted at end of list
 			itsNominals.add(itsDistinctValues.get(itsDistinctValues.size()-1));
@@ -396,9 +397,9 @@ public class Column implements XMLNodeInterface
 	 * NOTE this method is destructive. If the Column needs to be restored
 	 * to its original state, be sure to back it up before calling this
 	 * method.
-	 * 
+	 *
 	 * @param the int[] indicative of how to perform the swap randomization.
-	 * 
+	 *
 	 * @see Table.swapRandomization
 	 * @see Validation.swapRandomization
 	 */
@@ -487,9 +488,9 @@ public class Column implements XMLNodeInterface
 	/**
 	 * Sets a new type for this Column. This is done by changing the
 	 * {@link AttributeType AttributeType} of this Column.
-	 * 
+	 *
 	 * @param theAttributeType a valid AttributeType.
-	 * 
+	 *
 	 * @return <code>true</code> if the change was successful,
 	 * <code>false</code> otherwise.
 	 */
@@ -1257,9 +1258,9 @@ public class Column implements XMLNodeInterface
 		String aResult;
 		switch (theTargetStatus)
 		{
-			case NONE	   : { aResult = " none"; break; } 	
-			case PRIMARY   : { aResult = " primary"; break; } 
-			case SECONDARY : { aResult = " secondary"; break; } 
+			case NONE	   : { aResult = " none"; break; }
+			case PRIMARY   : { aResult = " primary"; break; }
+			case SECONDARY : { aResult = " secondary"; break; }
 			case TERTIARY  : { aResult = " tertiary"; break; }
 			default        : { aResult = " undefined"; } // should be impossible
 		}
@@ -1281,7 +1282,7 @@ public class Column implements XMLNodeInterface
 			else itsTargetStatus = Integer.MAX_VALUE; // should be impossible
 		}
 	}
-	
+
 	public void setTargetStatus(int theTargetStatus)
 	{
 		if (itsType == AttributeType.NUMERIC)
@@ -1291,7 +1292,7 @@ public class Column implements XMLNodeInterface
 
 	/**
 	 * TODO
-	 * 
+	 *
 	 * @param theCondition
 	 * @return
 	 */
@@ -1339,39 +1340,39 @@ public class Column implements XMLNodeInterface
 	 * Returns the statistics needed in the computation of quality measures
 	 * for Columns of {@link AttributeType AttributeType} NUMERIC and
 	 * ORDINAL.
-	 * 
+	 *
 	 * The bits set in the BitSet supplied as argument indicate which values
 	 * of the Column should be used for the calculation.
 	 * When the BitSet represents the members of a {@link Subgroup Subgroup}
 	 * , this method calculates the relevant arguments to determine the
 	 * quality of that Subgroup.
-	 * 
+	 *
 	 * The <code>getMedianAndMedianAD</code> parameter controls what
 	 * statistics are to be computed. <code>getMedianAndMedianAD</code>
 	 * needs only be <code>true</code> in case of QualityMeasure.calculate()
 	 * for Median MAD metric (MMAD).
-	 * 
+	 *
 	 * The resulting float[] is always of length 4, and, in order, holds the
 	 * following values: sum, sum of squared deviation, median and median
 	 * absolute deviation. Of these, the last two are only computed for
 	 * the quality measure MMAD, and set to Float.NaN otherwise.
-	 * 
+	 *
 	 * When the {@link java.lang.BitSet#cardinality() BitSet.cardinality()}
 	 * is 0, no meaningful statistics can be computed, and a float[4]
 	 * containing 4 Float.NaNs will be returned.
-	 * 
+	 *
 	 * When the Column is not of type NUMERIC or ORDINAL a float[4]
 	 * containing 4 Float.NaNs will be returned.
-	 * 
+	 *
 	 * @param theBitSet the BitSet indicating what values of this Column to
 	 * use in the calculations.
-	 * 
+	 *
 	 * @param theQualityMeasure the <code>int</code> corresponding to the
 	 * quality measure for which the arguments are needed.
 	 *
 	 * @return a float[4], holding the arguments relevant for the quality
 	 * measure supplied as argument.
-	 * 
+	 *
 	 * @see QualityMeasure
 	 * @see Subgroup
 	 * @see java.lang.BitSet
@@ -1476,12 +1477,12 @@ public class Column implements XMLNodeInterface
 	/**
 	 * Returns the unique, sorted domain for Columns of
 	 * {@link AttributeType AttributeType} NUMERIC and ORDINAL.
-	 * 
+	 *
 	 * The bits set in the BitSet supplied as argument indicate which values
 	 * of the Column should be used for the creation of the domain.
 	 * When the BitSet represents the members of a {@link Subgroup Subgroup}
 	 * , this method returns the domain covered by that Subgroup.
-	 * 
+	 *
 	 * The resulting float[] has a maximum size of the
 	 * {@link java.lang.BitSet#cardinality() BitSet.cardinality()}. The
 	 * minimum size is 0, if the BitSet has cardinality 0 or is
@@ -1489,12 +1490,12 @@ public class Column implements XMLNodeInterface
 	 *
 	 * When the Column is not of type NUMERIC or ORDINAL a
 	 * <code>new float[0]</code> will be returned.
-	 * 
+	 *
 	 * @param theBitSet the BitSet indicating what values of this Column to
 	 * use for the creation of the domain.
-	 * 
+	 *
 	 * @return a float[], holding the distinct values for the domain.
-	 * 
+	 *
 	 * @see Subgroup
 	 * @see java.lang.BitSet
 	 */
@@ -1507,7 +1508,7 @@ public class Column implements XMLNodeInterface
 			return new float[0];
 
 		// First create TreeSet<Float>, then copy to float[], not ideal,
-		// but I lack the inspiration to write a RB-tree for floats 
+		// but I lack the inspiration to write a RB-tree for floats
 		Set<Float> aUniqueValues = new TreeSet<Float>();
 		for (int i = theBitSet.nextSetBit(0); i >= 0; i = theBitSet.nextSetBit(i + 1))
 			//aUniqueValues.add(itsFloats.get(i));
@@ -1524,29 +1525,29 @@ public class Column implements XMLNodeInterface
 	/**
 	 * Returns the split-points for Columns of
 	 * {@link AttributeType AttributeType} NUMERIC and ORDINAL.
-	 * 
+	 *
 	 * The bits set in the BitSet supplied as argument indicate which values
 	 * of the Column should be used for the creation of the split-points.
 	 * When the BitSet represents the members of a {@link Subgroup Subgroup}
 	 * , this method returns the split-points relevant to that Subgroup.
-	 * 
+	 *
 	 * The resulting float[] has the size of the supplied theNrSplits
 	 * parameter. If
 	 * {@link java.lang.BitSet#cardinality() BitSet.cardinality()} is 0, the
 	 * float[theNrSplits] will contain only <code>0.0f</code>'s.
 	 * If the BitSet is <code>null</code> a <code>new float[0]</code> is
 	 * returned.
-	 * 
+	 *
 	 * When the Column is not of type NUMERIC or ORDINAL a
 	 * <code>new float[0]</code> will be returned.
-	 * 
+	 *
 	 * @param theBitSet the BitSet indicating what values of this Column to
 	 * use for the creation of the domain.
-	 * 
+	 *
 	 * @param theNrSplits the number of split-point to return.
-	 * 
+	 *
 	 * @return a float[], holding the distinct split-point.
-	 * 
+	 *
 	 * @see Subgroup
 	 * @see java.lang.BitSet
 	 */
@@ -1574,7 +1575,7 @@ public class Column implements XMLNodeInterface
 	/**
 	 * Returns the average of all values for Columns of
 	 * {@link AttributeType AttributeType} NUMERIC and ORDINAL.
-	 * 
+	 *
 	 * @return the average, or <code>Float.NaN</code> if this Column
 	 * is not of type NUMERIC or ORDINAL.
 	 */
@@ -1598,9 +1599,9 @@ public class Column implements XMLNodeInterface
 	 * Returns the number of times the value supplied as parameter occurs in
 	 * the Column. This method only works on Columns of type
 	 * {@link AttributeType AttributeType} NOMINAL and BINARY.
-	 * 
+	 *
 	 * @param theValue the value to count the number of occurrences for.
-	 * 
+	 *
 	 * @return an <code>int</code> indicating the number of occurrences of
 	 * the value supplied as parameter, or 0 if the Column is not of type
 	 * NOMINAL or BINARY.
@@ -1662,11 +1663,11 @@ public class Column implements XMLNodeInterface
 
 	/*
 	 * NOTE No checks on (itsType == AttributeType.NOMINAL), use with care.
-	 * 
+	 *
 	 * Avoids recreation of TreeSet aDomain in
 	 * SubgroupDiscovery.evaluateNominalBinaryRefinement().
 	 * Memory usage is minimal.
-	 * 
+	 *
 	 * Bits set in i represent value-indices go retrieve from
 	 * itsDistinctValues. This just works.
 	 */

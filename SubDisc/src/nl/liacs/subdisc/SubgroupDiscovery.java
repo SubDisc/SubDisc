@@ -56,7 +56,6 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		TargetConcept aTC = itsSearchParameters.getTargetConcept();
 		Condition aCondition = new Condition(aTC.getPrimaryTarget(), Condition.EQUALS);
 		aCondition.setValue(aTC.getTargetValue());
-		//itsBinaryTarget = itsTable.evaluate(aCondition);
 		itsBinaryTarget = aTC.getPrimaryTarget().evaluate(aCondition);
 
 		itsResult = new SubgroupSet(itsSearchParameters.getMaximumSubgroups(), itsNrRows, itsBinaryTarget);
