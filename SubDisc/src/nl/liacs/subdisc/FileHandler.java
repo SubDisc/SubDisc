@@ -146,7 +146,6 @@ public class FileHandler
 							itsFile.getPath(),
 							aTimer.getElapsedTimeString()));
 		printLoadingInfo();
-		aLoaderDialog.setVisible(false);
 		aLoaderDialog = null;
 	}
 
