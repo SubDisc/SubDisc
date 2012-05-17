@@ -146,7 +146,8 @@ public class FileHandler
 							itsFile.getPath(),
 							aTimer.getElapsedTimeString()));
 		printLoadingInfo();
-		aLoaderDialog = null;
+		if (aLoaderDialog != null)
+			aLoaderDialog.setVisible(false);
 	}
 
 	private void openDatabase()

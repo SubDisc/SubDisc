@@ -80,7 +80,7 @@ public class Column implements XMLNodeInterface
 
 		if (!isValid)
 			Log.logCommandLine(
-				"Column Constructor: index can not be < 0. No index set.");
+				"Column<init>: index can not be < 0. No index set.");
 
 		return isValid;
 	}
@@ -111,9 +111,7 @@ public class Column implements XMLNodeInterface
 
 	private void constructorErrorLog(String theMessage, String theAlternative)
 	{
-		Log.logCommandLine("Column Constructor: " +
-							theMessage +
-							theAlternative);
+		Log.logCommandLine("Column<init>: " + theMessage + theAlternative);
 	}
 
 	//called after removing (domain) columns from Table
@@ -181,7 +179,7 @@ public class Column implements XMLNodeInterface
 				itsMissingValue = AttributeType.BINARY.DEFAULT_MISSING_VALUE;
 				break;
 			}
-			default : logTypeError("Column() Constructor"); break;
+			default : logTypeError("Column<init>"); break;
 		}
 	}
 

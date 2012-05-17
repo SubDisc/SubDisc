@@ -622,7 +622,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 			else // not WRACC
 			{
 				// construct and check all subsets on the convex hull
-				ArrayList<String> aSortedDomain = aNCT.getSortedDomain();
+				List<String> aSortedDomain = aNCT.getSortedDomain();
 
 				// upper part of the hull
 				ValueSet aSubset = new ValueSet();
