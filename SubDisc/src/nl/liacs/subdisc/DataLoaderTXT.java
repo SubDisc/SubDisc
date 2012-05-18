@@ -10,6 +10,7 @@ public class DataLoaderTXT implements FileLoaderInterface
 {
 	// should be made available to all loaders (through FileLoaderInterface)
 	private static final String[] DELIMITERS = { "\\s*\t\\s*", "\\s*,\\s*", "\\s*;\\s*" };
+	private static final String[] CLEAN_DELIMITERS = { "\t", ",", ";" };
 
 	private Table itsTable = null;
 	private String itsDelimiter = DELIMITERS[0];
@@ -310,7 +311,7 @@ public class DataLoaderTXT implements FileLoaderInterface
 		int aNrDelimiters = DELIMITERS.length;
 		int[] aCounts = new int[aNrDelimiters];
 		int aNrOptions = 0;
-		String aMessage;
+		String aMessage = "";
 
 		for (int i = 0, j = aNrDelimiters; i < j; ++i)
 		{
@@ -320,13 +321,15 @@ public class DataLoaderTXT implements FileLoaderInterface
 		}
 
 		if (aNrOptions == 0)
-			aMessage = "unable to determine delimiter, using: ";
+			aMessage = "unable to determine delimiter, using " + CLEAN_DELIMITERS[0];
 		else if (aNrOptions == 1)
 		{
 			for (int i = 0, j = aNrDelimiters; i < j; ++i)
 				if (aCounts[i] > 1)
+				{
 					itsDelimiter = DELIMITERS[i];
-			aMessage = "successfully established delimiter, using: ";
+					aMessage = "successfully established delimiter, using " + CLEAN_DELIMITERS[i];
+				}
 		}
 		else // (aNrOptions > 1)
 		{
@@ -338,15 +341,15 @@ public class DataLoaderTXT implements FileLoaderInterface
 					if (aCounts[i] == theSecondLine.split(DELIMITERS[i], -1).length)
 					{
 						itsDelimiter = DELIMITERS[i];
-						aMessage = "unsure about delimiter, using: ";
+						aMessage = "unsure about delimiter, using " + CLEAN_DELIMITERS[i];
 						break;
 					}
 				}
 			}
 
-			aMessage = "unable to determine delimiter, using: ";
+			aMessage = "unable to determine delimiter, using " + CLEAN_DELIMITERS[0];
 		}
-		message("establishDelimiter", aMessage + itsDelimiter);
+		message("establishDelimiter", aMessage);
 	}
 
 	// check the XML declared Table ColumnNames against the HeaderLine
