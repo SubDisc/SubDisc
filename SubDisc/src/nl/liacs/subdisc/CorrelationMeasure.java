@@ -169,6 +169,7 @@ public class CorrelationMeasure
 			case QualityMeasure.CORRELATION_DISTANCE: 	{ return computeCorrelationDistance(); }
 			case QualityMeasure.CORRELATION_P: 			{ return getPValue(); }
 			case QualityMeasure.CORRELATION_ENTROPY: 	{ return computeEntropy(); }
+			case QualityMeasure.ADAPTED_WRACC:			{ return 0.1f; } //TODO: Rob Konijn
 		}
 		return aCorrelation;
 	}
