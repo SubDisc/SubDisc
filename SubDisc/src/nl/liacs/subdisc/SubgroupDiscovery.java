@@ -445,17 +445,28 @@ public class SubgroupDiscovery extends MiningAlgorithm
 				}
 
 				// lower part of the hull
-				// for many quality measures this is actually unnecessary
-				// or at best gives a valueset which is the complement of the
-				// best valueset on the upper hull and has the same quality
-				// TODO: complete list, decide what to do for symmetric measures
-				boolean aSkipLower = false;
-				if (/*itsSearchParameters.getQualityMeasure() == QualityMeasure.WRACC || */
-					itsSearchParameters.getQualityMeasure() == QualityMeasure.BINOMIAL )
+				// TODO: complete list of QMs
+				boolean aLowIsNegativeQM = false;
+				boolean aSymmetricQM = false;
+				if (itsSearchParameters.getQualityMeasure() == QualityMeasure.BINOMIAL)
+					aLowIsNegativeQM = true;
+				if (itsSearchParameters.getQualityMeasure() == QualityMeasure.CHI_SQUARED ||
+					itsSearchParameters.getQualityMeasure() == QualityMeasure.INFORMATION_GAIN)
+					aSymmetricQM = true;
+
+				if (aSymmetricQM)
 				{
-					aSkipLower = true;
+					if (aBestSubset.size() > aNCT.size()/2) // prefer complement if smaller
+					{
+						aBestSubset.clear();
+						for (int j = aPrevBestI + 1; j < aSortedDomainIndices.size(); j++)
+						{
+							String aValue = aNCT.getValue(aSortedDomainIndices.get(j).intValue());
+							aBestSubset.add(aValue);
+						}
+					}
 				}
-				if (aSkipLower == false)
+				else if (!aLowIsNegativeQM)
 				{
 					aP = 0;
 					aN = 0;
