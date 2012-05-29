@@ -64,34 +64,18 @@ public class NominalCrossTable
 	// MM probably yes, will look at this later
 	// TODO using / auto-(un)boxing of integer <-> Integer is extremely slow
 	// TODO code inefficiently mixes / duplicates arrays (data) and List (view)
-	public List<String> getSortedDomain()
+	public List<Integer> getSortedDomainIndices()
 	{
 		List<Integer> aSortedIndexList = new ArrayList<Integer>(itsValues.length);
 		for (int i = 0; i < itsValues.length; i++)
 			aSortedIndexList.add(new Integer(i));
-/*
-		Collections.sort(aSortedIndexList, new Comparator() {
-					public int compare(Object i1, Object i2)
-					{
-						Integer index1 = (Integer) i1;
-						Integer index2 = (Integer) i2;
-						return itsPositiveCounts[index2.intValue()] * itsNegativeCounts[index1.intValue()] - itsPositiveCounts[index1.intValue()] * itsNegativeCounts[index2.intValue()];
-					}
-				}
-		);
-*/
+
 		// as long a itsPositiveCounts / itsNegativeCounts do not change
 		// CrossTableComparator could be saved as member of this class,
-		// instead of being recreated for each call to getSortedDomain
+		// instead of being recreated for each call to getSortedDomainIndices
 		Collections.sort(aSortedIndexList, new CrossTableComparator(itsPositiveCounts, itsNegativeCounts));
 
-		List<String> aSortedDomain = new ArrayList<String>(itsValues.length);
-//		for (int i = 0; i < itsValues.length; i++)
-//			aSortedDomain.add(new String(itsValues[aSortedIndexList.get(i).intValue()]));
-		for (Integer i : aSortedIndexList)
-			aSortedDomain.add(itsValues[i]);
-
-		return aSortedDomain;
+		return aSortedIndexList;
 	}
 
 	public void print()
