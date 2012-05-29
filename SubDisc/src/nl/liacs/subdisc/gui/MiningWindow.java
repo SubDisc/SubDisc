@@ -1517,6 +1517,9 @@ public class MiningWindow extends JFrame
 				aBinaryTable = new BinaryTable(theTable, theSearchParameters.getTargetConcept().getMultiTargets());
 
 			new ResultWindow(theTable, aSubgroupDiscovery, aBinaryTable, theFold, theBitSet);
+
+			//pattern team test
+			//aSubgroupDiscovery.getResult().getPatternTeam(theTable, 5); //k=5
 		}
 
 		if (CAUC_LIGHT)

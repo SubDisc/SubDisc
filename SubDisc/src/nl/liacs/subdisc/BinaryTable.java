@@ -22,6 +22,19 @@ public class BinaryTable
 		itsColumns = new ArrayList<BitSet>();
 	}
 
+	//turn subgroups into binary columns
+	public BinaryTable(Table theTable, SubgroupSet theSubgroups)
+	{
+		itsColumns = new ArrayList<BitSet>(theSubgroups.size());
+		itsNrRecords = theTable.getNrRows();
+
+		for (Subgroup aSubgroup : theSubgroups)
+		{
+			BitSet aColumn = theTable.evaluate(aSubgroup.getConditions());
+			itsColumns.add(aColumn);
+		}
+	}
+
 	//this assumes that theTargets is an ArrayList<BitSet>
 	public BinaryTable(ArrayList<BitSet> theTargets, int theNrRecords)
 	{
@@ -146,6 +159,40 @@ public class BinaryTable
 			aQuality += LogGam_alpha_ij - Function.logGamma(alpha_ij + aSum) + aPost;
 		}
 		return aQuality;
+	}
+
+	public ItemSet getApproximateMiki(int k)
+	{
+		long aCount = 0;
+		ItemSet aMaximallyInformativeItemSet = new ItemSet(getNrColumns(), 0);
+		double aMaximalEntropy = 0;
+
+		Log.logCommandLine("finding approximate " + k + "-itemsets");
+		for (int i=1; i<=k; i++)
+		{
+			ItemSet aTempItemSet = aMaximallyInformativeItemSet;
+			for (int j=0; j<getNrColumns(); j++)
+			{
+				if (!aMaximallyInformativeItemSet.get(j))
+				{
+					aCount++;
+					ItemSet anItemSet = aMaximallyInformativeItemSet.getExtension(j);
+					BinaryTable aTable = selectColumns(anItemSet);
+					CrossCube aCube = aTable.countCrossCube();
+					double anEntropy = aCube.getEntropy();
+
+					if (aMaximalEntropy < anEntropy)
+					{
+						aTempItemSet = anItemSet;
+						aMaximalEntropy = anEntropy;
+						Log.logCommandLine("found a new maximum: " + anItemSet + ": " + aMaximalEntropy);
+					}
+				}
+			}
+			aMaximallyInformativeItemSet = aTempItemSet;
+		}
+		Log.logCommandLine("nr of column scans: " + aCount);
+		return aMaximallyInformativeItemSet;
 	}
 
 	public void print()

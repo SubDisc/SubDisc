@@ -16,7 +16,7 @@ import java.util.concurrent.*;
  * Note that only the add method is thread safe with respect to concurrent
  * access, and possible additions. None of the other methods of this class
  * currently are.
- * 
+ *
  * @see ROCList
  * @see nl.liacs.subdisc.gui.ROCCurve
  * @see nl.liacs.subdisc.gui.ROCCurveWindow
@@ -48,7 +48,7 @@ public class SubgroupSet extends TreeSet<Subgroup>
 	 */
 	/**
 	 * Create a SubgroupSet of a certain size.
-	 * 
+	 *
 	 * @param theSize the size of this SubgroupSet, use theSize <= 0 for no
 	 * maximum size (technically it is limited to Integer.MAX_VALUE).
 	 */
@@ -64,7 +64,7 @@ public class SubgroupSet extends TreeSet<Subgroup>
 	/**
 	 * Creates a SubgroupSet of a certain size, but in a nominal target setting
 	 * theTotalCoverage and theBinaryTarget should also be set.
-	 * 
+	 *
 	 * @param theSize the size of this SubgroupSet, use theSize <= 0 for no
 	 * maximum size (technically it is limited to Integer.MAX_VALUE).
 	 * @param theTotalCoverage the total number of instances in the data (number
@@ -109,14 +109,14 @@ public class SubgroupSet extends TreeSet<Subgroup>
 
 	/*
 	 * Only the top result is needed in this setting. Setting maximum size
-	 * to 1 saves memory and insertion lookup time (Olog(n) for Java's 
+	 * to 1 saves memory and insertion lookup time (Olog(n) for Java's
 	 * red-black tree implementation of TreeSet).
-	 * 
+	 *
 	 * NOTE this is a failed attempt to speedup calculation in the
 	 * swap-randomise setting. Storing just the top-1 result is only
 	 * sufficient for the last depth.
 	 * It may be enabled again in the future.
-	 * 
+	 *
 	 * LEAVE THIS IN.
 	 */
 	//protected void useSwapRandomisationSetting() {
@@ -127,19 +127,19 @@ public class SubgroupSet extends TreeSet<Subgroup>
 	 * Tries to add the {@link Subgroup Subgroup} passed in as parameter to
 	 * this SubgroupSet. Also ensures this SubgroupSet never exceeds its
 	 * maximum size (if one is set).
-	 * 
+	 *
 	 * Note that this method is thread safe with respect to concurrent
 	 * access, and possible additions. However, none of the other methods of
 	 * this class currently are.
-	 * 
+	 *
 	 * @param theSubgroup theSubgroup to add to this SubgroupSet.
-	 * 
+	 *
 	 * @return <code>true</code> if this SubgroupSet did not already contain
 	 * the specified {@link Subgroup Subgroup}, <code>false</code> if the
 	 * Subgroup is <code>null</code>, if its score is lower than the score
 	 * of the lowest scoring Subgroup in this SubgroupSet, and if this
 	 * SubgroupSet already contains the specified Subgroup.
-	 * 
+	 *
 	 * NOTE DO NOT RELY ON RETURN VALUE
 	 * <code>false</code> means failure,
 	 * but <code>true</code> only means the Subgroup is added to the
@@ -163,10 +163,10 @@ public class SubgroupSet extends TreeSet<Subgroup>
 			 * using ConcurrentSkipList would be problematic because
 			 * of resetting of itsWorseScore as the add and poll
 			 * operations of concurrent threads might be interleaved
-			 * 
+			 *
 			 * similar problems arise from fixed maxSize (when used)
 			 * a soft maxSize would handle concurrent adds better
-			 * 
+			 *
 			 * NOTE calls to add() and size() need to be a compound
 			 * action to prevent concurrency related problems
 			 * but synchronized(this) would result in concurrent
@@ -183,7 +183,7 @@ public class SubgroupSet extends TreeSet<Subgroup>
 			/*
 			 * NOTE drainTo/ addAll do not work, as they calls this
 			 * add() method again
-			 * 
+			 *
 			 * NOTE although MAX_QUEUE_SIZE prevents a lock after
 			 * every addition, it may actually be detrimental to
 			 * execution speed, as all threads will have to wait
@@ -199,6 +199,31 @@ public class SubgroupSet extends TreeSet<Subgroup>
 		}
 	}
 
+	public BinaryTable getBinaryTable(Table theTable)
+	{
+		return new BinaryTable(theTable, this);
+	}
+
+	public SubgroupSet getPatternTeam(Table theTable, int k)
+	{
+		BinaryTable aBinaryTable = getBinaryTable(theTable);
+		ItemSet aSubset = aBinaryTable.getApproximateMiki(k);
+		SubgroupSet aResult = new SubgroupSet(this); //make empty copy
+		int index = 0;
+
+		Iterator<Subgroup> anIterator = this.iterator();
+		while (anIterator.hasNext())
+		{
+			Subgroup aSubgroup = anIterator.next();
+			if (aSubset.get(index))
+				aResult.add(aSubgroup);
+			index++;
+		}
+
+		return aResult;
+
+	}
+
 	private void update()
 	{
 		// make all put()'s wait until this QUEUE is empty again
@@ -212,7 +237,7 @@ public class SubgroupSet extends TreeSet<Subgroup>
 				super.add(s);
 			}
 			// outside synchronized block leads to troubles if
-			// multiple (QUEUE.size() > MAX) call update 
+			// multiple (QUEUE.size() > MAX) call update
 			while (itsMaximumSize < super.size())
 				remove(last());
 			// null safe as itsMaximumSize is always > 0
@@ -257,7 +282,7 @@ public class SubgroupSet extends TreeSet<Subgroup>
 */
 			// j = 5 + aNrRows*(,1) + 2*float
 			// WD: Okay, wanneer dit zo wordt gedefinieerd, zou iemand er dan even bij kunnen zetten wat deze j is en waarom hij zo gedefinieerd is?
-			//     Het maakt zonder context weinig sense om verder te loopen dan j=theTable.getNrRows(), dus als daar toch een goede reden voor is, hoor ik het graag. 
+			//     Het maakt zonder context weinig sense om verder te loopen dan j=theTable.getNrRows(), dus als daar toch een goede reden voor is, hoor ik het graag.
 //			for (int i = 0, j = theTable.getNrRows()*2 + 100; i < j; ++i)
 			for (int i = 0, j = theTable.getNrRows(), k=j*2+100, l = 0; i < j; ++i)
 			{
@@ -318,7 +343,7 @@ public class SubgroupSet extends TreeSet<Subgroup>
 	 * Destructive method. When called always reset the binary target to its
 	 * original state, else all ROC related functionalities break down, and
 	 * and probably much more.
-	 * 
+	 *
 	 * @param theBinaryTarget the new binary target members.
 	 * */
 	public void setBinaryTarget(BitSet theBinaryTarget)
@@ -369,7 +394,7 @@ public class SubgroupSet extends TreeSet<Subgroup>
 						aMaxQuality = aQuality;
 						/*
 						 * MM hunge, to be followed up
-						 * 
+						 *
 						 * as a result of the line below
 						 * the present itsResult can never be removed by GC
 						 * as references to it (its members) remain
@@ -378,43 +403,43 @@ public class SubgroupSet extends TreeSet<Subgroup>
 						 * if after the next level ANY of the candidates remain
 						 * yet another set will be created, without allowing the GC
 						 * to clean up any old one
-						 * 
+						 *
 						 * 2 strategies to fix this:
-						 * 
+						 *
 						 * 1.
 						 * aBest = aSubgroup.copy()
 						 * allows GC to remove the old SubgroupSet
 						 * PRO: easy
 						 * CON: needs a lot of copying (up to aLoopSize)
 						 * 	and (temporarily) a lot of memory
-						 * 
+						 *
 						 * 2.
 						 * explicitly remove all non-used Subgroups from current SubgroupSet
 						 * after selecting all relevant ones (outer for-loop completes)
 						 * and return this SubgroupSet (make method void :) )
-						 * 
+						 *
 						 * int i = 0;
 						 * for (Subgroup s : this) // uses TreeSet iterator
 						 * 	if (!aUsed.get(i))
 						 * 		remove(s); // may not work on for-each loop
-						 * 
+						 *
 						 * but this requires another change:
 						 * computeMultiplicativeWeight(SubgroupSet, Subgroup) becomes
 						 * computeMultiplicativeWeight(BitSet aUsed, Subgroup)
 						 * where the loops in computeMultiplicativeWeight/ computeCover
 						 * does its magic only on Subgroups in the 'new SubgroupSet':
-						 * 
+						 *
 						 * int i = 0;
 						 * for (Subgroup s : this)
 						 * 	if (aUsed.get(i))
 						 * 		doMagic();
-						 * 
+						 *
 						 * PRO: super efficient
 						 * CON: more complex code changes
-						 * 
-						 * NOTE loops can be aborted when 
+						 *
+						 * NOTE loops can be aborted when
 						 * (aMember.nextSetBit() = -1) in computeMultiplicativeWeight
-						 * (aUsed.nextSetBit() = -1) in computeCoverCount 
+						 * (aUsed.nextSetBit() = -1) in computeCoverCount
 						 */
 						aBest = aSubgroup;
 						aChosen = aCount;
