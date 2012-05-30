@@ -5,6 +5,7 @@ import java.awt.event.*;
 import java.awt.print.*;
 import java.io.*;
 import java.util.*;
+import java.text.*;
 
 import javax.swing.*;
 
@@ -17,22 +18,20 @@ public class ResultWindow extends JFrame implements ActionListener
 
 	private Table itsTable;
 	private SearchParameters itsSearchParameters;
+	private SubgroupDiscovery itsSubgroupDiscovery;
 	private SubgroupSet itsSubgroupSet;
 	private QualityMeasure itsQualityMeasure;
 	private int itsNrRecords;
 
 	private RegressionMeasure itsRegressionMeasureBase;
-	private BinaryTable itsBinaryTable;
-
 	private int itsFold;
 	private BitSet itsBitSet;
 
 	private ResultTableModel itsResultTableModel;
 	private JTable itsSubgroupTable;
-//	private DAGView itsDAGView; //layout of the graph on the whole database
 
-//	public ResultWindow(Table theTable, SubgroupDiscovery theSubgroupDiscovery, DAGView theDAGView, BinaryTable theBinaryTable, int theFold, BitSet theBitSet)
-	public ResultWindow(Table theTable, SubgroupDiscovery theSubgroupDiscovery, BinaryTable theBinaryTable, int theFold, BitSet theBitSet)
+	//from mining window
+	public ResultWindow(Table theTable, SubgroupDiscovery theSubgroupDiscovery, int theFold, BitSet theBitSet)
 	{
 		if (theTable == null || theSubgroupDiscovery == null)
 		{
@@ -42,15 +41,13 @@ public class ResultWindow extends JFrame implements ActionListener
 
 		itsTable = theTable;
 		itsNrRecords = itsTable.getNrRows();
+		itsSubgroupDiscovery = theSubgroupDiscovery;
 		itsSubgroupSet = theSubgroupDiscovery.getResult();
 		itsSearchParameters = theSubgroupDiscovery.getSearchParameters();
 		itsQualityMeasure = theSubgroupDiscovery.getQualityMeasure();
 
 		// only for DOUBLE_REGRESSION, avoids recalculation
 		itsRegressionMeasureBase = theSubgroupDiscovery.getRegressionMeasureBase();
-
-//		itsDAGView = theDAGView;
-		itsBinaryTable = theBinaryTable;
 
 		// only used in MULTI_LABEL setting for now
 		// if theFold == 0, itsBitSet is never used
@@ -61,48 +58,33 @@ public class ResultWindow extends JFrame implements ActionListener
 		itsSubgroupTable = new JTable(itsResultTableModel);
 		if (!itsSubgroupSet.isEmpty())
 			itsSubgroupTable.addRowSelectionInterval(0, 0);
-
-		initComponents ();
 		initialise();
-		setTitle();
-		setIconImage(MiningWindow.ICON);
-		setLocation(100, 100);
-		setSize(GUI.WINDOW_DEFAULT_SIZE);
-		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-		setVisible(true);
 	}
 
-	public void setTitle()
+	//from parent result window (pattern team)
+	public ResultWindow(ResultWindow theParentWindow, SubgroupSet thePatternTeam)
 	{
-		StringBuilder s = new StringBuilder(150);
-		if (itsSubgroupSet.isEmpty())
-			s.append("No subgroups found that match the set criterion");
-		else
-			s.append(itsSubgroupSet.size() + " subgroups found");
+		itsTable = theParentWindow.itsTable;
+		itsNrRecords = itsTable.getNrRows();
+		itsSubgroupDiscovery = theParentWindow.itsSubgroupDiscovery;
+		itsSubgroupSet = thePatternTeam;
+		itsSearchParameters = itsSubgroupDiscovery.getSearchParameters();
+		itsQualityMeasure = itsSubgroupDiscovery.getQualityMeasure();
 
-		s.append(";  target table = ");
-		s.append(itsTable.getName());
+		// only for DOUBLE_REGRESSION, avoids recalculation
+		itsRegressionMeasureBase = itsSubgroupDiscovery.getRegressionMeasureBase();
 
-		s.append(";  quality measure = ");
-		s.append(QualityMeasure.getMeasureString(itsSearchParameters.getQualityMeasure()));
-
-		TargetType aTargetType = itsSearchParameters.getTargetType();
-		if (TargetType.hasTargetValue(aTargetType))
-		{
-			s.append(";  target value = ");
-			if (aTargetType == TargetType.SINGLE_NOMINAL)
-				s.append(itsSearchParameters.getTargetConcept().getTargetValue());
-			// else DOUBLE_REGRESSION or DOUBLE_CORRELATION
-			else
-				s.append(itsSearchParameters.getTargetConcept().getSecondaryTarget().getName());
-		}
-		if (itsFold != 0)
-			s.append(";  fold = " + itsFold);
-		setTitle(s.toString());
+		itsResultTableModel = new ResultTableModel(itsSubgroupSet, itsSearchParameters.getTargetConcept().getTargetType());
+		itsSubgroupTable = new JTable(itsResultTableModel);
+		if (!itsSubgroupSet.isEmpty())
+			itsSubgroupTable.addRowSelectionInterval(0, 0);
+		initialise();
 	}
 
-	public void initialise()
+	private void initialise()
 	{
+		initComponents();
+
 		// NOTE scaling is based on 8 columns, there are 20 unitWidths
 		int aUnitWidth = (int)(0.05f * GUI.WINDOW_DEFAULT_SIZE.width);
 
@@ -138,54 +120,109 @@ public class ResultWindow extends JFrame implements ActionListener
 
 			public void keyTyped(KeyEvent key) {}
 		});
+
+		setTitle();
+		setIconImage(MiningWindow.ICON);
+		setLocation(100, 100);
+		setSize(GUI.WINDOW_DEFAULT_SIZE);
+		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		setVisible(true);
 	}
 
 	private void initComponents()
 	{
-		jPanelSouth = new JPanel(new GridLayout(2, 1));
+		jPanelSouth = new JPanel(new GridLayout(3, 1));
 		JPanel aSubgroupPanel = new JPanel();
 		JPanel aSubgroupSetPanel = new JPanel();
+		JPanel aClosePanel = new JPanel();
 
 		itsScrollPane = new JScrollPane();
+
+		//selected subgroups ********************************
 
 		jButtonShowModel = GUI.buildButton("Show Model", 'M', "model", this);
 		aSubgroupPanel.add(jButtonShowModel);
 
-		jButtonROC = GUI.buildButton("ROC", 'R', "roc", this);
-		aSubgroupPanel.add(jButtonROC);
-
-		jButtonBrowseSubgroups = GUI.buildButton("Browse Selected", 'B', "browse", this);
+		jButtonBrowseSubgroups = GUI.buildButton("Browse", 'B', "browse", this);
 		aSubgroupPanel.add(jButtonBrowseSubgroups);
 
-		jButtonDeleteSubgroups = GUI.buildButton("Delete Selected", 'D', "delete", this);
+		jButtonDeleteSubgroups = GUI.buildButton("Delete", 'D', "delete", this);
 		aSubgroupPanel.add(jButtonDeleteSubgroups);
 
-		jButtonPValues = GUI.buildButton("Gaussian p-Values", 'V', "compute_p", this);
-		aSubgroupPanel.add(jButtonPValues);
+		//subgroup set *********************************
 
-		jButtonRegressionTest = GUI.buildButton("Regression Test", 'T', "regression", this);
-		aSubgroupPanel.add(jButtonRegressionTest);
+		jButtonPatternTeam = GUI.buildButton("Pattern Team", 'P', "patternteam", this);
+		aSubgroupSetPanel.add(jButtonPatternTeam);
 
-		jButtonEmpirical = GUI.buildButton("Empirical p-Values", 'E', "empirical_p", this);
-		aSubgroupPanel.add(jButtonEmpirical);
-
-		jButtonFold = GUI.buildButton("Fold members", 'F', "fold", this);
-		aSubgroupPanel.add(jButtonFold);
+		jButtonROC = GUI.buildButton("ROC", 'R', "roc", this);
+		jButtonROC.setPreferredSize(GUI.BUTTON_MEDIUM_SIZE);
+		aSubgroupSetPanel.add(jButtonROC);
 
 		jButtonSave = GUI.buildButton("Save", 'S', "save", this);
-		aSubgroupPanel.add(jButtonSave);
+		jButtonSave.setPreferredSize(GUI.BUTTON_MEDIUM_SIZE);
+		aSubgroupSetPanel.add(jButtonSave);
 
-		jButtonPrint = GUI.buildButton("Print", 'P', "print", this);
-		aSubgroupPanel.add(jButtonPrint);
+		jButtonPrint = GUI.buildButton("Print", 'I', "print", this);
+		jButtonPrint.setPreferredSize(GUI.BUTTON_MEDIUM_SIZE);
+		aSubgroupSetPanel.add(jButtonPrint);
+
+		jButtonPValues = GUI.buildButton("Gaussian p-Values", 'V', "compute_p", this);
+		aSubgroupSetPanel.add(jButtonPValues);
+
+		jButtonRegressionTest = GUI.buildButton("Regression Test", 'T', "regression", this);
+		aSubgroupSetPanel.add(jButtonRegressionTest);
+
+		jButtonEmpirical = GUI.buildButton("Empirical p-Values", 'E', "empirical_p", this);
+		aSubgroupSetPanel.add(jButtonEmpirical);
+
+		jButtonFold = GUI.buildButton("Fold members", 'F', "fold", this);
+		aSubgroupSetPanel.add(jButtonFold);
+
+		//close *********************************
 
 		jButtonCloseWindow = GUI.buildButton("Close", 'C', "close", this);
-		aSubgroupSetPanel.add(jButtonCloseWindow);
+		aClosePanel.add(jButtonCloseWindow);
 
 		enableButtonsCheck();
 		jPanelSouth.add(aSubgroupPanel);
 		jPanelSouth.add(aSubgroupSetPanel);
+		jPanelSouth.add(aClosePanel);
 		getContentPane().add(jPanelSouth, BorderLayout.SOUTH);
 		getContentPane().add(itsScrollPane, BorderLayout.CENTER);
+	}
+
+	public void setTitle()
+	{
+		StringBuilder s = new StringBuilder(150);
+		if (itsSubgroupSet.isEmpty())
+			s.append("No subgroups found that match the set criterion");
+		else
+			s.append(itsSubgroupSet.size() + " subgroups found");
+
+		s.append(";  target table = ");
+		s.append(itsTable.getName());
+
+		s.append(";  quality measure = ");
+		s.append(QualityMeasure.getMeasureString(itsSearchParameters.getQualityMeasure()));
+
+		TargetType aTargetType = itsSearchParameters.getTargetType();
+		if (TargetType.hasTargetValue(aTargetType))
+		{
+			s.append(";  target value = ");
+			if (aTargetType == TargetType.SINGLE_NOMINAL)
+				s.append(itsSearchParameters.getTargetConcept().getTargetValue());
+			// else DOUBLE_REGRESSION or DOUBLE_CORRELATION
+			else
+				s.append(itsSearchParameters.getTargetConcept().getSecondaryTarget().getName());
+		}
+		if (itsFold != 0)
+			s.append(";  fold = " + itsFold);
+
+		NumberFormat aFormatter = NumberFormat.getNumberInstance();
+		aFormatter.setMaximumFractionDigits(3);
+		if (!Double.isNaN(itsSubgroupSet.getJointEntropy()))
+			s.append(";  joint entropy = " + aFormatter.format(itsSubgroupSet.getJointEntropy()));
+		setTitle(s.toString());
 	}
 
 	@Override
@@ -194,6 +231,8 @@ public class ResultWindow extends JFrame implements ActionListener
 		String aCommand = theEvent.getActionCommand();
 		if ("model".equals(aCommand))
 			jButtonShowModelActionPerformed();
+		else if ("patternteam".equals(aCommand))
+			jButtonPatternTeamActionPerformed();
 		else if ("roc".equals(aCommand))
 			jButtonROCActionPerformed();
 		else if ("browse".equals(aCommand))
@@ -222,6 +261,7 @@ public class ResultWindow extends JFrame implements ActionListener
 		{
 			jButtonShowModel.setEnabled(false);
 			jButtonROC.setEnabled(false);
+			jButtonPatternTeam.setEnabled(false);
 			jButtonBrowseSubgroups.setEnabled(false);
 			jButtonDeleteSubgroups.setEnabled(false);
 			jButtonPValues.setEnabled(false);
@@ -351,6 +391,25 @@ public class ResultWindow extends JFrame implements ActionListener
 	private void jButtonROCActionPerformed()
 	{
 		new ROCCurveWindow(itsSubgroupSet, itsSearchParameters, itsQualityMeasure);
+	}
+
+	private void jButtonPatternTeamActionPerformed()
+	{
+		String anInputString= JOptionPane.showInputDialog("Set pattern team size:");
+		if (anInputString == null || anInputString.equals(""))
+			return;
+
+		try
+		{
+			int aValue = new Integer(anInputString).intValue();
+			SubgroupSet aPatternTeam = itsSubgroupSet.getPatternTeam(itsTable, aValue);
+			new ResultWindow(this, aPatternTeam);
+		}
+		catch (Exception e)
+		{
+			Log.logCommandLine(e.toString());
+			JOptionPane.showMessageDialog(null, "Not a valid input value!", "Warning", JOptionPane.ERROR_MESSAGE);
+		}
 	}
 
 	private void jButtonBrowseSubgroupsActionPerformed()
@@ -489,6 +548,7 @@ public class ResultWindow extends JFrame implements ActionListener
 	private JButton jButtonPValues;
 	private JButton jButtonRegressionTest;
 	private JButton jButtonEmpirical;
+	private JButton jButtonPatternTeam;
 	private JButton jButtonROC;
 	private JButton jButtonSave;
 	private JButton jButtonPrint;

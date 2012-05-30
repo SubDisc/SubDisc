@@ -1508,19 +1508,8 @@ public class MiningWindow extends JFrame
 
 		echoMiningEnd(anEnd - aBegin, aSubgroupDiscovery.getNumberOfSubgroups());
 
-		// following is only needed if windows will be shown
 		if (showWindows)
-		{
-			BinaryTable aBinaryTable = null;
-
-			if (aTargetType == TargetType.MULTI_LABEL)
-				aBinaryTable = new BinaryTable(theTable, theSearchParameters.getTargetConcept().getMultiTargets());
-
-			new ResultWindow(theTable, aSubgroupDiscovery, aBinaryTable, theFold, theBitSet);
-
-			//pattern team test
-			//aSubgroupDiscovery.getResult().getPatternTeam(theTable, 5); //k=5
-		}
+			new ResultWindow(theTable, aSubgroupDiscovery, theFold, theBitSet);
 
 		if (CAUC_LIGHT)
 			caucLight(aSubgroupDiscovery, theBitSet);

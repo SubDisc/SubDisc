@@ -35,6 +35,8 @@ public class SubgroupSet extends TreeSet<Subgroup>
 	// used as quick check for add(), tests on NaN always return false
 	// could use AtomicLong.doubleBits
 	private double itsLowestScore = Double.NaN;
+	private double itsJointEntropy = Double.NaN; //initially not set
+
 	// this is the long way around, new Subgroups are added to QUEUE
 	// when QUEUE.size() >= itsMaximumSize all Subgroups in QUEUE
 	// are added to this SubgroupSet, much better for concurrency
@@ -220,8 +222,9 @@ public class SubgroupSet extends TreeSet<Subgroup>
 			index++;
 		}
 
+		aResult.itsJointEntropy = aSubset.getJointEntropy();
+		aResult.update();
 		return aResult;
-
 	}
 
 	private void update()
@@ -554,4 +557,6 @@ public class SubgroupSet extends TreeSet<Subgroup>
 		update();
 		return super.size();
 	}
+
+	public double getJointEntropy() { return itsJointEntropy; }
 }

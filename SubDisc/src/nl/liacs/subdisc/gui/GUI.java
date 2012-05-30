@@ -24,9 +24,10 @@ public class GUI
 	public static final Dimension WINDOW_DEFAULT_SIZE = new Dimension(1000, 600);
 	public static final Dimension ROC_WINDOW_DEFAULT_SIZE = new Dimension(600, 600);
 	// button
-	public static final Dimension BUTTON_DEFAULT_SIZE = new Dimension(130, 25);
-	public static final Dimension BUTTON_MINIMUM_SIZE = new Dimension(82, 25);
-	public static final Dimension BUTTON_MAXIMUM_SIZE = new Dimension(130, 25);
+	public static final Dimension BUTTON_DEFAULT_SIZE = new Dimension(120, 25);
+	public static final Dimension BUTTON_MINIMUM_SIZE = new Dimension(75, 25);
+	public static final Dimension BUTTON_MEDIUM_SIZE = new Dimension(100, 25);
+	public static final Dimension BUTTON_MAXIMUM_SIZE = new Dimension(120, 25);
 
 	public enum Event
 	{

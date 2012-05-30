@@ -26,9 +26,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 	private CorrelationMeasure itsBaseCM;	//DOUBLE_CORRELATION
 	private RegressionMeasure itsBaseRM;	//DOUBLE_REGRESSION
 	private BinaryTable itsBinaryTable;	//MULTI_LABEL
-//	private String[] itsTargets;		//MULTI_LABEL
 	private List<Column> itsTargets;	//MULTI_LABEL
-//	private DAG itsBaseDAG;			//MULTI_LABEL
 
 	private int itsBoundSevenCount;
 	private int itsBoundSixCount;

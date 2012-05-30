@@ -191,6 +191,8 @@ public class BinaryTable
 			}
 			aMaximallyInformativeItemSet = aTempItemSet;
 		}
+		aMaximallyInformativeItemSet.setJointEntropy(aMaximalEntropy);
+
 		Log.logCommandLine("nr of column scans: " + aCount);
 		return aMaximallyInformativeItemSet;
 	}

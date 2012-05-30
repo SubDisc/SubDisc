@@ -6,6 +6,7 @@ public class ItemSet extends BitSet
 {
 	private static final long serialVersionUID = 1L;
 	private int itsDimensions;
+	private double itsJointEntropy = Double.NaN;
 
 	//empty itemset
 	public ItemSet(int theDimensions)
@@ -174,4 +175,7 @@ public class ItemSet extends BitSet
 		else
 			return aSet;
 	}
+
+	public double getJointEntropy() { return itsJointEntropy; }
+	public void setJointEntropy(double theJointEntropy) { itsJointEntropy = theJointEntropy; }
 }
