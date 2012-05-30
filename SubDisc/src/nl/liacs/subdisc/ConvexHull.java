@@ -8,45 +8,85 @@ import java.util.*;
  */
 class HullPoint
 {
-	public float itsLabel1;
-	public float itsLabel2;
 	public float itsX;
 	public float itsY;
-	public HullPoint() { itsLabel1 = 0; itsLabel2 = 0; itsX = 0; itsY = 0; }
+	public float itsLabel1;
+	public float itsLabel2;
+
+	public HullPoint(float theX, float theY, float theLabel1, float theLabel2) 
+	{
+		itsX = theX;
+		itsY = theY;
+		itsLabel1 = theLabel1;
+		itsLabel2 = theLabel2;
+	}
+
+	public HullPoint() {
+		this(0, 0, 0, 0);
+	}
+
+	public HullPoint(HullPoint theOther)
+	{
+		this(theOther.itsX, theOther.itsY, theOther.itsLabel1, theOther.itsLabel2);
+	}
+	
+	public void print()
+	{
+		Log.logCommandLine("HullPoint (" + itsX + "," + itsY + ") " + itsLabel1 + ", " + itsLabel2);
+	}
+
 }
+
 
 
 /*
  Class containing for maintaining and constructing convex hulls in 2D.
  A hull is split into an upper and lower part for convenience.
+ Sorted by x coordinate.
  */
 public class ConvexHull
 {
 	private HullPoint [][] itsHullPoints;
 	private int[] itsLength;
+	private static final float itsDefaultLabel = Float.NEGATIVE_INFINITY;
 
-	/* thePoints structure:
-	 - constains upper & lower hull
-	 - points given as label;x;y
-	 - sorted by x coord
-	 */
-	public ConvexHull(float[][][] thePoints)
+
+	private ConvexHull()
 	{
 		itsHullPoints = new HullPoint[2][];
-		for (int aSide = 0; aSide < 2; aSide++)
-		{
-			itsLength[aSide] = thePoints[aSide].length;
-			itsHullPoints[aSide] = new HullPoint[itsLength[aSide]];
-			for (int i = 0; i < itsLength[aSide]; i++)
-			{
-				itsHullPoints[aSide][i].itsLabel1 = thePoints[aSide][i][0];
-				itsHullPoints[aSide][i].itsX = thePoints[aSide][i][1];
-				itsHullPoints[aSide][i].itsY = thePoints[aSide][i][2];
-			}
-		}
+		itsLength = new int[2];
 		
 		return;
 	}
+
+	/* construct single point hull
+	 */
+	public ConvexHull(float theX, float theY, float theLabel1, float theLabel2)
+	{
+		this();
+
+		for (int aSide = 0; aSide < 2; aSide++)
+		{
+			itsHullPoints[aSide] = new HullPoint[1];
+			itsLength[aSide] = 1;
+			itsHullPoints[aSide][0] = new HullPoint(theX, theY, theLabel1, theLabel2);
+		}
+
+		return;
+	}
+
+
+	public int getSize(int theSide)
+	{
+		return itsLength[theSide];
+	}
+
+
+	public HullPoint getPoint(int theSide, int theIndex)
+	{
+		return itsHullPoints[theSide][theIndex];
+	}
+
 
 	/* assumes points on upper and lower hull are already 
 	   sorted by x coord hence linear time complexity
@@ -69,7 +109,7 @@ public class ConvexHull
 			}
 
 			int aCurr = 0;
-			while (aNextList[aCurr] < itsLength[aSide] - 1)
+			while (aNextList[aCurr] < itsLength[aSide] && aNextList[aNextList[aCurr]] < itsLength[aSide] )
 			{
 				float aX1 = itsHullPoints[aSide][aCurr].itsX;
 				float aY1 = itsHullPoints[aSide][aCurr].itsY;
@@ -86,56 +126,68 @@ public class ConvexHull
 				{
 					aPrevList[aNextList[aNextList[aCurr]]] = aCurr;
 					aNextList[aCurr] = aNextList[aNextList[aCurr]];
-					if (aCurr > 0) {
+					aPruneCnt++;
+					if (aCurr > 0)
 						aCurr = aPrevList[aCurr];
-						aPruneCnt++;
-					}
 				}
 			}
 
 			// put convexhullpoints in a new list
 			itsLength[aSide] -= aPruneCnt;
-			itsHullPoints[aSide] = new HullPoint[itsLength[aSide]];
+			HullPoint [] aNewHullPoints = new HullPoint[itsLength[aSide]];
 			aCurr = 0;
 			int i = 0;
-			while (i < itsLength[aSide]) {
-				itsHullPoints[aSide][i] = itsHullPoints[aSide][aCurr];
+			while (i < itsLength[aSide])
+			{
+				aNewHullPoints[i] = itsHullPoints[aSide][aCurr];
 				aCurr = aNextList[aCurr];
 				i++;
 			}
+			itsHullPoints[aSide] = aNewHullPoints;
 
 		}
 
 		return;
 	}
+
 
 	/* assumes this.x < theOther.x, i.e., no overlap between the hulls
 	   hence linear time complexity
 	 */
-	public void appendOtherConvexHull(ConvexHull theOther)
+	public ConvexHull concatenate(ConvexHull theOther)
 	{
+		ConvexHull aResult = new ConvexHull();
+		
 		for (int aSide = 0; aSide < 2; aSide++)
 		{
-			HullPoint [] aNewHullPoints = new HullPoint[itsLength[aSide] + theOther.itsLength[aSide]];
+			aResult.itsLength[aSide] = itsLength[aSide] + theOther.itsLength[aSide];
+			aResult.itsHullPoints[aSide] = new HullPoint[aResult.itsLength[aSide]];
 			for (int i = 0; i < itsLength[aSide]; i++)
-				aNewHullPoints[i] = itsHullPoints[aSide][i];
+				aResult.itsHullPoints[aSide][i] = itsHullPoints[aSide][i];
 			for (int i = 0; i < theOther.itsLength[aSide]; i++)
-				aNewHullPoints[itsLength[aSide]+i] = theOther.itsHullPoints[aSide][i];
-			itsHullPoints[aSide] = aNewHullPoints;
-			itsLength[aSide] += theOther.itsLength[aSide];
+				aResult.itsHullPoints[aSide][itsLength[aSide]+i] = theOther.itsHullPoints[aSide][i];
 		}
 
-		grahamScanSorted();
+		aResult.grahamScanSorted();
 
-		return;
+		return aResult;
 	}
+
 
 	/*
 	 Compute the Minkowski difference of two convex polygons.
 	 Again, linear time complexity.
 	 */
-	private void minkowskiDifference(ConvexHull theOther)
+	public ConvexHull minkowskiDifference(ConvexHull theOther)
 	{
+		return minkowskiDifference(theOther, true);
+	}
+
+
+	public ConvexHull minkowskiDifference(ConvexHull theOther, boolean thePruneDegenerate)
+	{
+		ConvexHull aResult = new ConvexHull();
+
 		for (int aSide = 0 ; aSide < 2; aSide++)
 		{
 			int aSign = (aSide==0) ? 1 : -1 ;
@@ -146,47 +198,39 @@ public class ConvexHull
 
 			int i = 0;
 			int j = theOther.itsLength[1-aSide] - 1;
+			float aSlope1, aSlope2;
 			while (i < itsLength[aSide] - 1 || j > 0)
 			{
-				float aSlope1, aSlope2;
-				
 				if (i == itsLength[aSide]-1)
-					aSlope1 = -1; // dummy for last
+					aSlope1 = aSign * Float.NEGATIVE_INFINITY; // dummy for last
 				else
-					aSlope1 = (itsHullPoints[aSide][i+1].itsX - itsHullPoints[aSide][i].itsX) / (itsHullPoints[aSide][i+1].itsX - itsHullPoints[aSide][i].itsX + itsHullPoints[aSide][i+1].itsY - itsHullPoints[aSide][i].itsY);
+					aSlope1 = (itsHullPoints[aSide][i+1].itsY - itsHullPoints[aSide][i].itsY) / (itsHullPoints[aSide][i+1].itsX - itsHullPoints[aSide][i].itsX + itsHullPoints[aSide][i+1].itsY - itsHullPoints[aSide][i].itsY);
 				if (j == 0)
-					aSlope2 = -1; // dummy for last
+					aSlope2 = aSign * Float.NEGATIVE_INFINITY; // dummy for last
 				else
-					aSlope2 = (theOther.itsHullPoints[1-aSide][j-1].itsX - theOther.itsHullPoints[1-aSide][j].itsX) / (theOther.itsHullPoints[1-aSide][j-1].itsX - theOther.itsHullPoints[1-aSide][j].itsX + theOther.itsHullPoints[1-aSide][j-1].itsY - theOther.itsHullPoints[1-aSide][j].itsY);
+					aSlope2 = (theOther.itsHullPoints[1-aSide][j-1].itsY - theOther.itsHullPoints[1-aSide][j].itsY) / (theOther.itsHullPoints[1-aSide][j-1].itsX - theOther.itsHullPoints[1-aSide][j].itsX + theOther.itsHullPoints[1-aSide][j-1].itsY - theOther.itsHullPoints[1-aSide][j].itsY);
 
 				if (aSign * aSlope1 >= aSign * aSlope2)
 				{
-					aHull[aHullSize].itsLabel1 = itsHullPoints[aSide][i].itsLabel1;
+					aHull[aHullSize] = new HullPoint(itsHullPoints[aSide][i]);
 					aHull[aHullSize].itsLabel2 = aSide; 
-					aHull[aHullSize].itsX = itsHullPoints[aSide][i].itsX;
-					aHull[aHullSize].itsY = itsHullPoints[aSide][i].itsY;
 					aHullSize++;
 					i++;
 				}
 				if (aSign * aSlope1 <= aSign * aSlope2)
 				{
-					aHull[aHullSize].itsLabel1 = theOther.itsHullPoints[1-aSide][j].itsLabel1;
+					aHull[aHullSize] = new HullPoint(theOther.itsHullPoints[1-aSide][j]);
 					aHull[aHullSize].itsLabel2 = 1 - aSide;
-					aHull[aHullSize].itsX = theOther.itsHullPoints[1-aSide][j].itsX;
-					aHull[aHullSize].itsY = theOther.itsHullPoints[1-aSide][j].itsY;
 					aHullSize++;
 					j--;
 				}
+				
 			}
-			aHull[aHullSize].itsLabel1 = itsHullPoints[aSide][i].itsLabel1;
+			aHull[aHullSize] = new HullPoint(itsHullPoints[aSide][i]);
 			aHull[aHullSize].itsLabel2 = aSide;
-			aHull[aHullSize].itsX = itsHullPoints[aSide][i].itsX;
-			aHull[aHullSize].itsY = itsHullPoints[aSide][i].itsY;
 			aHullSize++;
-			aHull[aHullSize].itsLabel1 = theOther.itsHullPoints[1-aSide][j].itsLabel1;
+			aHull[aHullSize] = new HullPoint(theOther.itsHullPoints[1-aSide][j]);
 			aHull[aHullSize].itsLabel2 = 1 - aSide;
-			aHull[aHullSize].itsX = theOther.itsHullPoints[1-aSide][j].itsX;
-			aHull[aHullSize].itsY = theOther.itsHullPoints[1-aSide][j].itsY;
 			aHullSize++;
 
 			// build final hull
@@ -202,23 +246,24 @@ public class ConvexHull
 				{
 					int tmp=aNextVertex; aNextVertex=aVertex; aVertex=tmp;
 				}
+				aNewHull[k] = new HullPoint();
 				aNewHull[k].itsX = aHull[aVertex].itsX - aHull[aNextVertex].itsX;
-				aNewHull[k].itsY = aHull[aVertex].itsX - aHull[aNextVertex].itsY;
+				aNewHull[k].itsY = aHull[aVertex].itsY - aHull[aNextVertex].itsY;
 				// set its own label and the other's label
 				// for intevals these are the rhs and lhs end points, resp.
-				aNewHull[k].itsLabel1 = aHull[aNextVertex].itsLabel1;
-				aNewHull[k].itsLabel2 = aHull[aVertex].itsLabel1;
+				aNewHull[k].itsLabel2 = aHull[aNextVertex].itsLabel1;
+				aNewHull[k].itsLabel1 = aHull[aVertex].itsLabel1;
 			}
 
-			itsHullPoints[aSide] = aNewHull;
-			itsLength[aSide] = aHullSize;
+			aResult.itsHullPoints[aSide] = aNewHull;
+			aResult.itsLength[aSide] = aHullSize;
 
 		}
 
-		// should actually only remove the degenerate hull points
-		grahamScanSorted();
+		if (thePruneDegenerate)
+			aResult.grahamScanSorted();
 
-		return;
+		return aResult;
 	}
 
 }

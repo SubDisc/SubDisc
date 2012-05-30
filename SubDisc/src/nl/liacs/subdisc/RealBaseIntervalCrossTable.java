@@ -15,8 +15,8 @@ public class RealBaseIntervalCrossTable
 	public RealBaseIntervalCrossTable(float[] theSplitPoints, Column theColumn, Subgroup theSubgroup, BitSet theTarget)
 	{
 		itsSplitPoints = new float[theSplitPoints.length];
-		itsPositiveCounts = new int[size()];
-		itsNegativeCounts = new int[size()];
+		itsPositiveCounts = new int[getNrBaseIntervals()];
+		itsNegativeCounts = new int[getNrBaseIntervals()];
 
 		int aCount = 0;
 		for (float aSplitPoint : theSplitPoints)
@@ -40,7 +40,7 @@ public class RealBaseIntervalCrossTable
 					itsNegativeCounts[anIndex]++;
 			}
 		}
-		for (int i=0; i<size(); i++)
+		for (int i=0; i<getNrBaseIntervals(); i++)
 		{
 			itsPositiveCount += itsPositiveCounts[i];
 			itsNegativeCount += itsNegativeCounts[i];
@@ -64,7 +64,9 @@ public class RealBaseIntervalCrossTable
     public int getNegativeCount(int theIndex) { return itsNegativeCounts[theIndex]; }
     public int getPositiveCount() { return itsPositiveCount; }
     public int getNegativeCount() { return itsNegativeCount; }
-	public int size() { return itsSplitPoints.length + 1; }
+	//public int size() { return itsSplitPoints.length + 1; }
+	public int getNrSplitPoints() { return itsSplitPoints.length; }
+	public int getNrBaseIntervals() { return itsSplitPoints.length + 1; }
 
     public float[] getSplitPoints()
 	{
@@ -75,7 +77,7 @@ public class RealBaseIntervalCrossTable
 	public void print()
 	{
 
-		for (int i = 0; i < size(); i++)
+		for (int i = 0; i < getNrBaseIntervals(); i++)
 			Log.logCommandLine(getBaseInterval(i) + ": (" + itsPositiveCounts[i] + ", " + itsNegativeCounts[i] + ")");
 	}
 }

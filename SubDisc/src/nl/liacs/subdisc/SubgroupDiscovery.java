@@ -319,6 +319,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 
 				// prune splitpoints for which adjacent base intervals have equal class distribution
 				// TODO: make this faster, e.g., build merging into RealBaseIntervalCrossTable
+				// TODO2: test computation time wrt pre-pruning splitpoint vs. incurred overhead
 				ArrayList<Float> aNewSplitPoints = new ArrayList<Float>();
 				for (int i = 0; i < aSplitPoints.length; i++)
 					if (aRBICT.getPositiveCount(i) * aRBICT.getNegativeCount(i+1) != aRBICT.getPositiveCount(i+1) * aRBICT.getNegativeCount(i))
@@ -338,7 +339,8 @@ public class SubgroupDiscovery extends MiningAlgorithm
 				double aBestQuality = Double.NEGATIVE_INFINITY;
 				Interval aBestInterval = new Interval(Float.NEGATIVE_INFINITY, Float.POSITIVE_INFINITY);
 
-				for (int i=0; i<aSplitPoints.length; i++)
+				// brute force method, keep for now for testing purposes
+				/*for (int i=0; i<aSplitPoints.length; i++)
 				{
 					Interval aNewInterval = new Interval(aSplitPoints[i], Float.POSITIVE_INFINITY);
 					Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(aNewInterval);
@@ -364,6 +366,42 @@ public class SubgroupDiscovery extends MiningAlgorithm
 							aBestInterval = aNewInterval;
 						}
 					}
+				}*/
+
+				// the linear algo
+				ConvexHull [] aHulls = new ConvexHull[aRBICT.getNrBaseIntervals()];
+				int aPi = 0;
+				int aNi = 0;
+				for (int l = 0; l < aRBICT.getNrSplitPoints(); l++) {
+					aPi += aRBICT.getPositiveCount(l);
+					aNi += aRBICT.getNegativeCount(l);
+					aHulls[l] = new ConvexHull(aNi, aPi, aRBICT.getSplitPoint(l), Float.NEGATIVE_INFINITY);
+				}
+				aHulls[aRBICT.getNrBaseIntervals()-1] = new ConvexHull(aRBICT.getNegativeCount(), aRBICT.getPositiveCount(), Float.POSITIVE_INFINITY, Float.NEGATIVE_INFINITY);
+
+				for (int k = aRBICT.getNrBaseIntervals(); k > 1; k = (k+1)/2)
+				{
+					for (int l = 0; l+1 < k; l += 2)
+					{
+						ConvexHull aMinkDiff = aHulls[l].minkowskiDifference(aHulls[l+1], true);
+						for (int aSide = 0; aSide < 2; aSide++)
+						{
+							for (int i = 0; i < aMinkDiff.getSize(aSide); i++)
+							{
+								HullPoint aCandidate = aMinkDiff.getPoint(aSide, i);
+								double aQuality = itsQualityMeasure.calculate(aCandidate.itsY, aCandidate.itsX + aCandidate.itsY);
+								if (aQuality > aBestQuality) {
+									aBestQuality = aQuality;
+									aBestInterval = new Interval(aCandidate.itsLabel2, aCandidate.itsLabel1);
+								}
+							}
+						}
+					}
+
+					for (int l = 0; l+1 < k; l += 2)
+						aHulls[l/2] = aHulls[l].concatenate(aHulls[l+1]);
+					if (k % 2 == 1)
+						aHulls[k/2] = aHulls[k-1];
 				}
 
 				Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(aBestInterval);
