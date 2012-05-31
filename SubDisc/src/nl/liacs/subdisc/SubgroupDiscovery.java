@@ -318,20 +318,9 @@ public class SubgroupDiscovery extends MiningAlgorithm
 				RealBaseIntervalCrossTable aRBICT = new RealBaseIntervalCrossTable(aSplitPoints, theRefinement.getCondition().getColumn(), theSubgroup, itsBinaryTarget);
 
 				// prune splitpoints for which adjacent base intervals have equal class distribution
-				// TODO: make this faster, e.g., build merging into RealBaseIntervalCrossTable
-				// TODO2: test computation time wrt pre-pruning splitpoint vs. incurred overhead
-				ArrayList<Float> aNewSplitPoints = new ArrayList<Float>();
-				for (int i = 0; i < aSplitPoints.length; i++)
-					if (aRBICT.getPositiveCount(i) * aRBICT.getNegativeCount(i+1) != aRBICT.getPositiveCount(i+1) * aRBICT.getNegativeCount(i))
-						aNewSplitPoints.add(new Float(aSplitPoints[i]));
-				if (aNewSplitPoints.size() > 0)
-				{
-					aSplitPoints = new float[aNewSplitPoints.size()];
-					for (int i = 0; i < aNewSplitPoints.size(); i++)
-						aSplitPoints[i] = aNewSplitPoints.get(i).floatValue();
-					aRBICT = new RealBaseIntervalCrossTable(aSplitPoints, theRefinement.getCondition().getColumn(), theSubgroup, itsBinaryTarget);
-				}
-				else
+				// TODO: check whether this preprocessing reduces *total* computation time
+				aRBICT.aggregateIntervals();
+				if (aRBICT.getNrSplitPoints() == 0)
 				{
 					break; // no specialization improves quality
 				}
@@ -340,7 +329,9 @@ public class SubgroupDiscovery extends MiningAlgorithm
 				Interval aBestInterval = new Interval(Float.NEGATIVE_INFINITY, Float.POSITIVE_INFINITY);
 
 				// brute force method, keep for now for testing purposes
-				/*for (int i=0; i<aSplitPoints.length; i++)
+				/*
+				aSplitPoints = aRBICT.getSplitPoints();
+				for (int i=0; i<aSplitPoints.length; i++)
 				{
 					Interval aNewInterval = new Interval(aSplitPoints[i], Float.POSITIVE_INFINITY);
 					Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(aNewInterval);
