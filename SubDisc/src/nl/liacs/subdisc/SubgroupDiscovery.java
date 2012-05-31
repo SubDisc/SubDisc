@@ -367,6 +367,11 @@ public class SubgroupDiscovery extends MiningAlgorithm
 					aPi += aRBICT.getPositiveCount(l);
 					aNi += aRBICT.getNegativeCount(l);
 					aHulls[l] = new ConvexHull(aNi, aPi, aRBICT.getSplitPoint(l), Float.NEGATIVE_INFINITY);
+					double aQuality = itsQualityMeasure.calculate(aPi, aPi + aNi);
+					if (aQuality > aBestQuality) {
+						aBestQuality = aQuality;
+						aBestInterval = new Interval(Float.NEGATIVE_INFINITY, aRBICT.getSplitPoint(l));
+					}
 				}
 				aHulls[aRBICT.getNrBaseIntervals()-1] = new ConvexHull(aRBICT.getNegativeCount(), aRBICT.getPositiveCount(), Float.POSITIVE_INFINITY, Float.NEGATIVE_INFINITY);
 
