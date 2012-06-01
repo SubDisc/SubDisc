@@ -47,15 +47,13 @@ class HullPoint
 public class ConvexHull
 {
 	private HullPoint [][] itsHullPoints;
-	private int[] itsLength;
 	private static final float itsDefaultLabel = Float.NEGATIVE_INFINITY;
 
 
 	private ConvexHull()
 	{
 		itsHullPoints = new HullPoint[2][];
-		itsLength = new int[2];
-		
+
 		return;
 	}
 
@@ -68,7 +66,6 @@ public class ConvexHull
 		for (int aSide = 0; aSide < 2; aSide++)
 		{
 			itsHullPoints[aSide] = new HullPoint[1];
-			itsLength[aSide] = 1;
 			itsHullPoints[aSide][0] = new HullPoint(theX, theY, theLabel1, theLabel2);
 		}
 
@@ -78,7 +75,7 @@ public class ConvexHull
 
 	public int getSize(int theSide)
 	{
-		return itsLength[theSide];
+		return itsHullPoints[theSide].length;
 	}
 
 
@@ -95,21 +92,23 @@ public class ConvexHull
 	{
 		for (int aSide = 0; aSide < 2; aSide++)
 		{
-			if (itsLength[aSide] < 3)
+			int aLen = itsHullPoints[aSide].length;
+
+			if (aLen < 3)
 				continue;
 
 			int aSign = (aSide == 0) ? 1 : -1;
 
 			int aPruneCnt = 0;
-			int[] aNextList = new int[itsLength[aSide]];
-			int[] aPrevList = new int[itsLength[aSide]];
-			for (int i = 0; i < itsLength[aSide]; i++) {
+			int[] aNextList = new int[aLen];
+			int[] aPrevList = new int[aLen];
+			for (int i = 0; i < aLen; i++) {
 				aNextList[i] = i + 1;
 				aPrevList[i] = i - 1;
 			}
 
 			int aCurr = 0;
-			while (aNextList[aCurr] < itsLength[aSide] && aNextList[aNextList[aCurr]] < itsLength[aSide] )
+			while (aNextList[aCurr] < aLen && aNextList[aNextList[aCurr]] < aLen )
 			{
 				float aX1 = itsHullPoints[aSide][aCurr].itsX;
 				float aY1 = itsHullPoints[aSide][aCurr].itsY;
@@ -133,15 +132,12 @@ public class ConvexHull
 			}
 
 			// put convexhullpoints in a new list
-			itsLength[aSide] -= aPruneCnt;
-			HullPoint [] aNewHullPoints = new HullPoint[itsLength[aSide]];
+			HullPoint [] aNewHullPoints = new HullPoint[aLen - aPruneCnt];
 			aCurr = 0;
-			int i = 0;
-			while (i < itsLength[aSide])
+			for (int i = 0; i < aNewHullPoints.length; i++)
 			{
 				aNewHullPoints[i] = itsHullPoints[aSide][aCurr];
 				aCurr = aNextList[aCurr];
-				i++;
 			}
 			itsHullPoints[aSide] = aNewHullPoints;
 
@@ -160,12 +156,13 @@ public class ConvexHull
 		
 		for (int aSide = 0; aSide < 2; aSide++)
 		{
-			aResult.itsLength[aSide] = itsLength[aSide] + theOther.itsLength[aSide];
-			aResult.itsHullPoints[aSide] = new HullPoint[aResult.itsLength[aSide]];
-			for (int i = 0; i < itsLength[aSide]; i++)
+			int aLen1 = itsHullPoints[aSide].length;
+			int aLen2 = theOther.itsHullPoints[aSide].length;
+			aResult.itsHullPoints[aSide] = new HullPoint[aLen1 + aLen2];
+			for (int i = 0; i < aLen1; i++)
 				aResult.itsHullPoints[aSide][i] = itsHullPoints[aSide][i];
-			for (int i = 0; i < theOther.itsLength[aSide]; i++)
-				aResult.itsHullPoints[aSide][itsLength[aSide]+i] = theOther.itsHullPoints[aSide][i];
+			for (int i = 0; i < aLen2; i++)
+				aResult.itsHullPoints[aSide][aLen1+i] = theOther.itsHullPoints[aSide][i];
 		}
 
 		aResult.grahamScanSorted();
@@ -192,16 +189,17 @@ public class ConvexHull
 		{
 			int aSign = (aSide==0) ? 1 : -1 ;
 
-			int aNewSize = itsLength[aSide] + theOther.itsLength[1-aSide];
-			HullPoint[] aHull = new HullPoint[aNewSize];
+			int aLen1 = itsHullPoints[aSide].length;
+			int aLen2 = theOther.itsHullPoints[1-aSide].length;
+			HullPoint[] aHull = new HullPoint[aLen1 + aLen2];
 			int aHullSize = 0;
 
 			int i = 0;
-			int j = theOther.itsLength[1-aSide] - 1;
+			int j = aLen2 - 1;
 			float aSlope1, aSlope2;
-			while (i < itsLength[aSide] - 1 || j > 0)
+			while (i < aLen1 - 1 || j > 0)
 			{
-				if (i == itsLength[aSide]-1)
+				if (i == aLen1 - 1)
 					aSlope1 = aSign * Float.NEGATIVE_INFINITY; // dummy for last
 				else
 					aSlope1 = (itsHullPoints[aSide][i+1].itsY - itsHullPoints[aSide][i].itsY) / (itsHullPoints[aSide][i+1].itsX - itsHullPoints[aSide][i].itsX + itsHullPoints[aSide][i+1].itsY - itsHullPoints[aSide][i].itsY);
@@ -246,17 +244,11 @@ public class ConvexHull
 				{
 					int tmp=aNextVertex; aNextVertex=aVertex; aVertex=tmp;
 				}
-				aNewHull[k] = new HullPoint();
-				aNewHull[k].itsX = aHull[aVertex].itsX - aHull[aNextVertex].itsX;
-				aNewHull[k].itsY = aHull[aVertex].itsY - aHull[aNextVertex].itsY;
-				// set its own label and the other's label
-				// for intevals these are the rhs and lhs end points, resp.
-				aNewHull[k].itsLabel2 = aHull[aNextVertex].itsLabel1;
-				aNewHull[k].itsLabel1 = aHull[aVertex].itsLabel1;
+				// set its own label and the other's label; for intevals these are the rhs and lhs end points, resp.
+				aNewHull[k] = new HullPoint(aHull[aVertex].itsX - aHull[aNextVertex].itsX, aHull[aVertex].itsY - aHull[aNextVertex].itsY, aHull[aVertex].itsLabel1, aHull[aNextVertex].itsLabel1);
 			}
 
 			aResult.itsHullPoints[aSide] = aNewHull;
-			aResult.itsLength[aSide] = aHullSize;
 
 		}
 
