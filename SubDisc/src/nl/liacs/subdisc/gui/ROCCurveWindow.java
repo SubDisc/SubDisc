@@ -48,16 +48,34 @@ public class ROCCurveWindow extends JFrame implements ActionListener
 
 	private void createGnuPlotFile()
 	{
+		float anX, aY;
 		float aSize = 0.005f;
 		int aCount = 0;
 		String aContent = "set xlabel \"fpr\";set ylabel \"tpr\";set xrange [0:1];set yrange [0:1];lg(x) = log(x)/log(2);H(x) = -x*lg(x)-(1-x)*lg(1-x);IG(x,y) = 1 - 0.5*(x+y)*H(x/(x+y)) - 0.5*(2-x-y)*H((1-x)/(2-x-y));\n";
+
+		//subgroups
 		for (Subgroup aSubgroup : itsSubgroupSet)
 		{
 			aCount++;
-			float anX = aSubgroup.getFalsePositiveRate();
-			float aY = aSubgroup.getTruePositiveRate();
-			aContent += "set object " + aCount + " rect from " + anX + "," + aY + " to " + (anX+aSize) + "," + (aY+aSize) + " fc rgb \"black\"\n";
+			anX = aSubgroup.getFalsePositiveRate();
+			aY = aSubgroup.getTruePositiveRate();
+			aContent += "set object " + aCount + " rect from " + (anX-aSize/2) + "," + (aY-aSize/2) + " to " + (anX+aSize/2) + "," + (aY+aSize/2) + " fc rgb \"black\"\n";
 		}
+
+		//subgroups
+		anX = 0f;
+		aY = 0f;
+		for (SubgroupROCPoint aPoint : itsSubgroupSet.getROCList())
+		{
+			aCount++;
+			float aNewX = aPoint.getFPR();
+			float aNewY = aPoint.getTPR();
+			aContent += "set arrow from " + anX + "," + aY + " to " + aNewX + "," + aNewY + " nohead lt 1 lw 2 lc rgb \"black\"\n";
+			anX = aNewX;
+			aY = aNewY;
+		}
+		aContent += "set arrow from " + anX + "," + aY + " to 1,1 nohead lt 1 lw 2 lc rgb \"black\"\n";
+
 		aContent += "set isosamples 100; set contour; set cntrparam cubicspline; set cntrparam order 5; set cntrparam points 20; set cntrparam levels 20; unset clabel; set view map; unset surface; splot IG(x,y) lt 1;\n";
 		aContent += "set terminal postscript eps size 5,5; set output \'roc.eps\'; replot;\n";
 		aContent += "set output; set terminal pop; set size 1,1;\n";
