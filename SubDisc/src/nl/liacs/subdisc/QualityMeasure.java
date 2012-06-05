@@ -183,7 +183,7 @@ public class QualityMeasure
 							float theCountHeadBody, float theCoverage)
 	{
 		float aCountNotHeadBody		= theCoverage - theCountHeadBody;
-		float theTotalTargetCoverageNotBody		= theTotalTargetCoverage - theCountHeadBody;
+		float aTotalTargetCoverageNotBody		= theTotalTargetCoverage - theCountHeadBody;
 		float aCountNotHeadNotBody	= theTotalCoverage - (theTotalTargetCoverage + aCountNotHeadBody);
 		float aCountBody			= aCountNotHeadBody + theCountHeadBody;
 
@@ -210,7 +210,7 @@ public class QualityMeasure
 				returnValue = ((float) Math.sqrt(aCountBody/theTotalCoverage)) * (theCountHeadBody/aCountBody - theTotalTargetCoverage/theTotalCoverage);
 				break;
 			}
-			case JACCARD: {		returnValue = theCountHeadBody /(theCountHeadBody + aCountNotHeadBody + theTotalTargetCoverageNotBody);
+			case JACCARD: {		returnValue = theCountHeadBody /(theCountHeadBody + aCountNotHeadBody + aTotalTargetCoverageNotBody);
 								break; }
 			case COVERAGE: {	returnValue = aCountBody;
 								break; }

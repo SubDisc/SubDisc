@@ -11,11 +11,13 @@ public class ROCCurveWindow extends JFrame implements ActionListener
 {
 	private static final long serialVersionUID = 1L;
 	private SubgroupSet itsSubgroupSet;
+	private SearchParameters itsSearchParameters;
 
 	public ROCCurveWindow(SubgroupSet theSubgroupSet, SearchParameters theSearchParameters, QualityMeasure theQualityMeasure)
 	{
 		ROCCurve aROCCurve = new ROCCurve(theSubgroupSet, theSearchParameters, theQualityMeasure);
 		itsSubgroupSet = theSubgroupSet;
+		itsSearchParameters = theSearchParameters;
 
 		JPanel aClosePanel = new JPanel();
 		aClosePanel.add(GUI.buildButton("GnuPlot", 'G', "gnuplot", this));
@@ -51,7 +53,19 @@ public class ROCCurveWindow extends JFrame implements ActionListener
 		float anX, aY;
 		float aSize = 0.005f;
 		int aCount = 0;
-		String aContent = "set xlabel \"fpr\";set ylabel \"tpr\";set xrange [0:1];set yrange [0:1];lg(x) = log(x)/log(2);H(x) = -x*lg(x)-(1-x)*lg(1-x);IG(x,y) = 1 - 0.5*(x+y)*H(x/(x+y)) - 0.5*(2-x-y)*H((1-x)/(2-x-y));\n";
+		String aContent = "set xlabel \"fpr\";set ylabel \"tpr\";set xrange [0:1];set yrange [0:1];lg(x) = log(x)/log(2);H(x) = -x*lg(x)-(1-x)*lg(1-x);\n";
+		aContent += "N = " + itsSubgroupSet.getTotalCoverage() + ".0\n";
+		aContent += "p = " + itsSubgroupSet.getTotalTargetCoverage() + ".0\n";
+		aContent += "n = N-p\n";
+		aContent += "pos(y) = y*p\n"; //number of positives covered by subgroup
+		aContent += "neg(x) = x*(N-p)\n"; //number of negatives covered by subgroup
+		aContent += "aTotalTargetCoverageNotBody(y) = p-pos(y)\n";
+		aContent += "aCountNotHeadNotBody(y) = N-(p+neg(y))\n";
+		aContent += "aCountBody(x,y) = neg(x)+pos(y)\n";
+
+		aContent += "WRAcc(x,y) = (pos(y)/N)-(p/N)*(aCountBody(x,y)/N)\n";
+		aContent += "Binomial(x,y) = sqrt(aCountBody(x,y)/N) * (pos(y)/aCountBody(x,y) - p/N)\n";
+		aContent += "IG(x,y) = 1 - 0.5*(x+y)*H(x/(x+y)) - 0.5*(2-x-y)*H((1-x)/(2-x-y));\n";
 
 		//subgroups
 		for (Subgroup aSubgroup : itsSubgroupSet)
@@ -59,7 +73,7 @@ public class ROCCurveWindow extends JFrame implements ActionListener
 			aCount++;
 			anX = aSubgroup.getFalsePositiveRate();
 			aY = aSubgroup.getTruePositiveRate();
-			aContent += "set object " + aCount + " rect from " + (anX-aSize/2) + "," + (aY-aSize/2) + " to " + (anX+aSize/2) + "," + (aY+aSize/2) + " fc rgb \"black\"\n";
+			aContent += "set object rect from " + (anX-aSize/2) + "," + (aY-aSize/2) + " to " + (anX+aSize/2) + "," + (aY+aSize/2) + " fc rgb \"black\"\n";
 		}
 
 		//subgroups
@@ -76,7 +90,14 @@ public class ROCCurveWindow extends JFrame implements ActionListener
 		}
 		aContent += "set arrow from " + anX + "," + aY + " to 1,1 nohead lt 1 lw 2 lc rgb \"black\"\n";
 
-		aContent += "set isosamples 100; set contour; set cntrparam cubicspline; set cntrparam order 5; set cntrparam points 20; set cntrparam levels 20; unset clabel; set view map; unset surface; splot IG(x,y) lt 1;\n";
+		aContent += "set isosamples 100; set contour; set cntrparam cubicspline; set cntrparam order 5; set cntrparam points 20; set cntrparam levels 20; unset clabel; set view map; unset surface;\n";
+
+		switch (itsSearchParameters.getQualityMeasure())
+		{
+			case (QualityMeasure.INFORMATION_GAIN) : aContent += "splot IG(x,y) lt 3 lw 0.5;\n"; break;
+			case (QualityMeasure.WRACC) : aContent += "splot WRAcc(x,y) lt 3 lw 0.5;\n"; break;
+			case (QualityMeasure.BINOMIAL) : aContent += "splot Binomial(x,y) lt 3 lw 0.5;\n"; break;
+		}
 		aContent += "set terminal postscript eps size 5,5; set output \'roc.eps\'; replot;\n";
 		aContent += "set output; set terminal pop; set size 1,1;\n";
 		Log.logCommandLine(aContent);
