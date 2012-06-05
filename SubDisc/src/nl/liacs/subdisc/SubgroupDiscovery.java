@@ -360,6 +360,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 				}*/
 
 				// the linear algo
+				int anEvalCounter = 0;
 				ConvexHull [] aHulls = new ConvexHull[aRBICT.getNrBaseIntervals()];
 				int aPi = 0;
 				int aNi = 0;
@@ -368,6 +369,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 					aNi += aRBICT.getNegativeCount(l);
 					aHulls[l] = new ConvexHull(aNi, aPi, aRBICT.getSplitPoint(l), Float.NEGATIVE_INFINITY);
 					double aQuality = itsQualityMeasure.calculate(aPi, aPi + aNi);
+					anEvalCounter++;
 					if (aQuality > aBestQuality) {
 						aBestQuality = aQuality;
 						aBestInterval = new Interval(Float.NEGATIVE_INFINITY, aRBICT.getSplitPoint(l));
@@ -386,6 +388,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 							{
 								HullPoint aCandidate = aMinkDiff.getPoint(aSide, i);
 								double aQuality = itsQualityMeasure.calculate(aCandidate.itsY, aCandidate.itsX + aCandidate.itsY);
+								anEvalCounter++;
 								if (aQuality > aBestQuality) {
 									aBestQuality = aQuality;
 									aBestInterval = new Interval(aCandidate.itsLabel2, aCandidate.itsLabel1);
@@ -399,6 +402,8 @@ public class SubgroupDiscovery extends MiningAlgorithm
 					if (k % 2 == 1)
 						aHulls[k/2] = aHulls[k-1];
 				}
+				
+				//Log.logCommandLine("Evalutations: " + anEvalCounter);
 
 				Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(aBestInterval);
 				checkAndLog(aNewSubgroup, anOldCoverage);

@@ -7,6 +7,7 @@ import java.util.*;
 public class RealBaseIntervalCrossTable
 {
 	private float[] itsSplitPoints;
+	private int itsSplitPointCount;
 	private int[] itsPositiveCounts;
 	private int[] itsNegativeCounts;
 	private int itsPositiveCount; //sum
@@ -15,7 +16,8 @@ public class RealBaseIntervalCrossTable
 
 	public RealBaseIntervalCrossTable(float[] theSplitPoints, Column theColumn, Subgroup theSubgroup, BitSet theTarget)
 	{
-		itsSplitPoints = new float[theSplitPoints.length];
+		itsSplitPointCount = theSplitPoints.length;
+		itsSplitPoints = new float[itsSplitPointCount];
 		itsPositiveCounts = new int[getNrBaseIntervals()];
 		itsNegativeCounts = new int[getNrBaseIntervals()];
 
@@ -57,11 +59,11 @@ public class RealBaseIntervalCrossTable
 
 	public Interval getBaseInterval(int theIndex)
 	{
-		if (itsSplitPoints.length == 0)
+		if (itsSplitPointCount == 0)
 			return new Interval(Float.NEGATIVE_INFINITY, Float.POSITIVE_INFINITY);
 		if (theIndex == 0)
 			return new Interval(Float.NEGATIVE_INFINITY, itsSplitPoints[0]);
-		else if (theIndex == itsSplitPoints.length)
+		else if (theIndex == itsSplitPointCount)
 			return new Interval(itsSplitPoints[theIndex-1], Float.POSITIVE_INFINITY);
 		else
 			return new Interval(itsSplitPoints[theIndex-1], itsSplitPoints[theIndex]);
@@ -90,17 +92,17 @@ public class RealBaseIntervalCrossTable
 
 	public int getNrSplitPoints()
 	{
-		return itsSplitPoints.length;
+		return itsSplitPointCount;
 	}
 
 	public int getNrBaseIntervals() {
-		return itsSplitPoints.length + 1; 
+		return itsSplitPointCount + 1; 
 	}
 
 
 	public float[] getSplitPoints()
 	{
-		return Arrays.copyOf(itsSplitPoints, itsSplitPoints.length);
+		return Arrays.copyOfRange(itsSplitPoints, 0, itsSplitPointCount);
     }
 
 
@@ -108,49 +110,24 @@ public class RealBaseIntervalCrossTable
 	// only to be used for convex quality measures
 	public void aggregateIntervals()
 	{
-		ArrayList<Float> aNewSplitPoints = new ArrayList<Float>();
-		for (int i = 0; i < itsSplitPoints.length; i++)
-			if (getPositiveCount(i) * getNegativeCount(i+1) != getPositiveCount(i+1) * getNegativeCount(i))
-				aNewSplitPoints.add(new Float(itsSplitPoints[i]));
-		
-		if (aNewSplitPoints.size() == 0)
+		int aPruneCnt = 0;
+		for (int i = 0; i < itsSplitPointCount; i++)
 		{
-			itsSplitPoints = new float[0];
-			itsPositiveCounts = new int[1];
-			itsNegativeCounts = new int[1];
-			itsPositiveCounts[0] = itsPositiveCount;
-			itsNegativeCounts[0] = itsNegativeCount;
-			return;
-		}
-
-		int [] aNewPositiveCounts = new int[aNewSplitPoints.size()+1];
-		int [] aNewNegativeCounts = new int[aNewSplitPoints.size()+1];
-
-		int aPi = 0;
-		int aNi = 0;
-		int aS = 0;
-		for (int i = 0; i < getNrBaseIntervals(); i++)
-		{
-			aPi += getPositiveCount(i);
-			aNi += getNegativeCount(i);
-			if ((aS < aNewSplitPoints.size() && itsSplitPoints[i] == aNewSplitPoints.get(aS)) || i == getNrBaseIntervals() - 1)
+			if ( itsPositiveCounts[i] * itsNegativeCounts[i+1] == itsPositiveCounts[i+1] * itsNegativeCounts[i] )
 			{
-				aNewPositiveCounts[aS] = aPi;
-				aNewNegativeCounts[aS] = aNi;
-				aPi = 0;
-				aNi = 0;
-				aS++;
+				itsPositiveCounts[i-aPruneCnt] += itsPositiveCounts[i+1];
+				itsNegativeCounts[i-aPruneCnt] += itsNegativeCounts[i+1];
+				aPruneCnt++;
+			}
+			else if (aPruneCnt > 0)
+			{
+				itsPositiveCounts[i-aPruneCnt+1] = itsPositiveCounts[i+1];
+				itsNegativeCounts[i-aPruneCnt+1] = itsNegativeCounts[i+1];
+				itsSplitPoints[i-aPruneCnt] = itsSplitPoints[i];
 			}
 		}
 
-		itsPositiveCounts = aNewPositiveCounts;
-		itsNegativeCounts = aNewNegativeCounts;
-
-		itsSplitPoints = new float[aNewSplitPoints.size()];
-		for (int i = 0; i < aNewSplitPoints.size(); i++)
-		{
-			itsSplitPoints[i] = aNewSplitPoints.get(i);
-		}
+		itsSplitPointCount -= aPruneCnt;
 
 		return;
 	}
