@@ -53,7 +53,7 @@ public class ROCCurveWindow extends JFrame implements ActionListener
 		float anX, aY;
 		float aSize = 0.005f;
 		int aCount = 0;
-		String aContent = "set xlabel \"fpr\";set ylabel \"tpr\";set xrange [0:1];set yrange [0:1];lg(x) = log(x)/log(2);H(x) = -x*lg(x)-(1-x)*lg(1-x);\n";
+		String aContent = "set xlabel \"fpr\";set ylabel \"tpr\";set xrange [0:1];set yrange [0:1];set xtics 0.1; set ytics 0.1;\n";
 		aContent += "N = " + itsSubgroupSet.getTotalCoverage() + ".0\n";
 		aContent += "p = " + itsSubgroupSet.getTotalTargetCoverage() + ".0\n";
 		aContent += "n = N-p\n";
@@ -62,10 +62,29 @@ public class ROCCurveWindow extends JFrame implements ActionListener
 		aContent += "aTotalTargetCoverageNotBody(y) = p-pos(y)\n";
 		aContent += "aCountNotHeadNotBody(y) = N-(p+neg(y))\n";
 		aContent += "aCountBody(x,y) = neg(x)+pos(y)\n";
+		aContent += "sqr(x) = x*x\n";
+		aContent += "expect(x,y,z) = x*(y/x)*(z/x)\n";
+		aContent += "e11(x,y,z) = expect(x,y,z)\n";
+		aContent += "e01(x,y,z) = expect(x,x-y,z)\n";
+		aContent += "e10(x,y,z) = expect(x,y,x-z)\n";
+		aContent += "e00(x,y,z) = expect(x,x-y,x-z)\n";
+		aContent += "lg(x) = log(x)/log(2); H(x) = -x*lg(x)-(1-x)*lg(1-x);\n";
+
 
 		aContent += "WRAcc(x,y) = (pos(y)/N)-(p/N)*(aCountBody(x,y)/N)\n";
-		aContent += "Binomial(x,y) = sqrt(aCountBody(x,y)/N) * (pos(y)/aCountBody(x,y) - p/N)\n";
+		aContent += "absWRAcc(x,y) = abs((pos(y)/N)-(p/N)*(aCountBody(x,y)/N))\n";
+		aContent += "Chi2(x,y) = sqr(pos(y) - e11(N,aCountBody(x,y),p)) / e11(N,aCountBody(x,y),p) +";
+		aContent += 		   " sqr(p - pos(y) - e01(N,aCountBody(x,y),p)) / e01(N,aCountBody(x,y),p) +";
+		aContent += 		   " sqr(aCountBody(x,y) - pos(y) - e10(N,aCountBody(x,y),p)) / e10(N,aCountBody(x,y),p) +";
+		aContent += 		   " sqr(N - p - aCountBody(x,y) + pos(y) - e00(N,aCountBody(x,y),p)) / e00(N,aCountBody(x,y),p); \n";
 		aContent += "IG(x,y) = 1 - 0.5*(x+y)*H(x/(x+y)) - 0.5*(2-x-y)*H((1-x)/(2-x-y));\n";
+		aContent += "Binomial(x,y) = sqrt(aCountBody(x,y)/N) * (pos(y)/aCountBody(x,y) - p/N)\n";
+//		aContent += "Binomial(x,y) = sqrt(aCountBody(x,y)/N) * (pos(y)/aCountBody(x,y) - p/N)\n";
+//		aContent += "Binomial(x,y) = sqrt(aCountBody(x,y)/N) * (pos(y)/aCountBody(x,y) - p/N)\n";
+//		aContent += "Binomial(x,y) = sqrt(aCountBody(x,y)/N) * (pos(y)/aCountBody(x,y) - p/N)\n";
+//		aContent += "Binomial(x,y) = sqrt(aCountBody(x,y)/N) * (pos(y)/aCountBody(x,y) - p/N)\n";
+//		aContent += "Binomial(x,y) = sqrt(aCountBody(x,y)/N) * (pos(y)/aCountBody(x,y) - p/N)\n";
+//		aContent += "Binomial(x,y) = sqrt(aCountBody(x,y)/N) * (pos(y)/aCountBody(x,y) - p/N)\n";
 
 		//subgroups
 		for (Subgroup aSubgroup : itsSubgroupSet)
@@ -94,8 +113,10 @@ public class ROCCurveWindow extends JFrame implements ActionListener
 
 		switch (itsSearchParameters.getQualityMeasure())
 		{
-			case (QualityMeasure.INFORMATION_GAIN) : aContent += "splot IG(x,y) lt 3 lw 0.5;\n"; break;
 			case (QualityMeasure.WRACC) : aContent += "splot WRAcc(x,y) lt 3 lw 0.5;\n"; break;
+			case (QualityMeasure.ABSWRACC) : aContent += "splot absWRAcc(x,y) lt 3 lw 0.5;\n"; break;
+			case (QualityMeasure.CHI_SQUARED) : aContent += "splot Chi2(x,y) lt 3 lw 0.5;\n"; break;
+			case (QualityMeasure.INFORMATION_GAIN) : aContent += "splot IG(x,y) lt 3 lw 0.5;\n"; break;
 			case (QualityMeasure.BINOMIAL) : aContent += "splot Binomial(x,y) lt 3 lw 0.5;\n"; break;
 		}
 		aContent += "set terminal postscript eps size 5,5; set output \'roc.eps\'; replot;\n";
