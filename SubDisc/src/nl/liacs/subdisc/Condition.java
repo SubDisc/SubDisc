@@ -22,7 +22,6 @@ public class Condition implements Comparable<Condition>
 	//this allows =, <= and >=
 	public static final int FIRST_NUMERIC_OPERATOR	= EQUALS;
 	public static final int LAST_NUMERIC_OPERATOR	= BETWEEN;
-//	public static final int LAST_NUMERIC_OPERATOR	= GREATER_THAN_OR_EQUAL;
 
 	private final Column itsColumn;
 	private final int itsOperator;
@@ -295,32 +294,13 @@ public class Condition implements Comparable<Condition>
 		}
 	}
 
-	// never used atm
-	private String toCleanString()
-	{
-		String aName = itsColumn.hasShort() ? itsColumn.getShort() :
-							itsColumn.getName();
-
-		if (itsColumn.isNumericType())
-			return String.format("%s %s %s",
-						aName,
-						getOperatorString(),
-						getValue());
-		else
-			return String.format("%s %s '%s'",
-						aName,
-						getOperatorString(),
-						getValue());
-	}
-
-	// used by ConditionList.toString()
 	@Override
 	public String toString()
 	{
-		return String.format("%s %s '%s'",
-					itsColumn.getName(),
-					getOperatorString(),
-					getValue());
+		if (itsColumn.isNumericType() || itsOperator == ELEMENT_OF)
+			return String.format("%s %s %s",	itsColumn.getName(), getOperatorString(), getValue());
+		else
+			return String.format("%s %s '%s'",	itsColumn.getName(), getOperatorString(), getValue());
 	}
 
 	/*

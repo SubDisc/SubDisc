@@ -1,5 +1,7 @@
 package nl.liacs.subdisc;
 
+import java.util.*;
+
 /**
  * NumericStrategy contains all available NumericStrategies.
  */
@@ -49,6 +51,16 @@ public enum NumericStrategy implements EnumInterface
 					theType,
 					NumericStrategy.getDefault().GUI_TEXT));
 		return NumericStrategy.getDefault();
+	}
+
+	public static ArrayList<NumericStrategy> getNormalValues()
+	{
+		ArrayList<NumericStrategy> aResult = new ArrayList<NumericStrategy>(3);
+		aResult.add(NUMERIC_BINS);
+		aResult.add(NUMERIC_BEST);
+		aResult.add(NUMERIC_ALL);
+		//no intervals!
+		return aResult;
 	}
 
 	/**

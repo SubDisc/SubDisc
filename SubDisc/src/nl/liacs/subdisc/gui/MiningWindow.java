@@ -95,26 +95,19 @@ public class MiningWindow extends JFrame
 	{
 		// TODO disable if no table?
 		// should do for-each combobox/field
-//		boolean hasTable = (itsTable != null);
+
 		// Add all implemented TargetTypes
 		for (TargetType t : TargetType.values())
 			if (TargetType.isImplemented(t))
 				jComboBoxTargetType.addItem(t.GUI_TEXT);
-//		jComboBoxTargetType.setEnabled(hasTable);
 
 		// Add all SearchStrategies
 		for (SearchStrategy s : SearchStrategy.values())
 			jComboBoxSearchStrategyType.addItem(s.GUI_TEXT);
-//		jComboBoxSearchStrategyType.setEnabled(hasTable);
 
 		// Add all Numeric Operators choices
-		for (NumericOperators n : NumericOperators.values())
+		for (NumericOperators n : NumericOperators.getNormalValues())
 			jComboBoxNumericOperators.addItem(n.GUI_TEXT);
-
-		// Add all Numeric Strategies
-		for (NumericStrategy n : NumericStrategy.values())
-			jComboBoxSearchStrategyNumeric.addItem(n.GUI_TEXT);
-//		jComboBoxSearchStrategyNumeric.setEnabled(hasTable);
 	}
 
 	// only called when Table is present, so using itsTotalCount is safe
@@ -880,11 +873,11 @@ public class MiningWindow extends JFrame
 		jLabelSets = initJLabel("set-valued nominals");
 		jPanelSearchStrategyLabels.add(jLabelSets);
 
-		jLabelNumericOperators = initJLabel("numeric operators");
-		jPanelSearchStrategyLabels.add(jLabelNumericOperators);
-
 		jLabelSearchStrategyNumeric = initJLabel("numeric strategy");
 		jPanelSearchStrategyLabels.add(jLabelSearchStrategyNumeric);
+
+		jLabelNumericOperators = initJLabel("numeric operators");
+		jPanelSearchStrategyLabels.add(jLabelNumericOperators);
 
 		jLabelSearchStrategyNrBins = initJLabel("number of bins");
 		jPanelSearchStrategyLabels.add(jLabelSearchStrategyNrBins);
@@ -918,6 +911,16 @@ public class MiningWindow extends JFrame
 		jCheckBoxSets.setFont(GUI.DEFAULT_TEXT_FONT);
 		jPanelSearchStrategyFields.add(jCheckBoxSets);
 
+		jComboBoxSearchStrategyNumeric.setPreferredSize(new Dimension(86, 22));
+		jComboBoxSearchStrategyNumeric.setMinimumSize(new Dimension(86, 22));
+		jComboBoxSearchStrategyNumeric.setFont(GUI.DEFAULT_TEXT_FONT);
+		jComboBoxSearchStrategyNumeric.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				jComboBoxSearchStrategyNumericActionPerformed();
+			}
+		});
+		jPanelSearchStrategyFields.add(jComboBoxSearchStrategyNumeric);
+
 		jComboBoxNumericOperators.setPreferredSize(new Dimension(86, 22));
 		jComboBoxNumericOperators.setMinimumSize(new Dimension(86, 22));
 		jComboBoxNumericOperators.setFont(GUI.DEFAULT_TEXT_FONT);
@@ -928,15 +931,6 @@ public class MiningWindow extends JFrame
 		});
 		jPanelSearchStrategyFields.add(jComboBoxNumericOperators);
 
-		jComboBoxSearchStrategyNumeric.setPreferredSize(new Dimension(86, 22));
-		jComboBoxSearchStrategyNumeric.setMinimumSize(new Dimension(86, 22));
-		jComboBoxSearchStrategyNumeric.setFont(GUI.DEFAULT_TEXT_FONT);
-		jComboBoxSearchStrategyNumeric.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent evt) {
-				jComboBoxSearchStrategyNumericActionPerformed();
-			}
-		});
-		jPanelSearchStrategyFields.add(jComboBoxSearchStrategyNumeric);
 
 		jTextFieldSearchStrategyNrBins.setPreferredSize(new Dimension(86, 22));
 		jTextFieldSearchStrategyNrBins.setFont(GUI.DEFAULT_TEXT_FONT);
@@ -1198,7 +1192,9 @@ public class MiningWindow extends JFrame
 		{
 			itsSearchParameters.setNumericStrategy(aName);
 			boolean aBin = (itsSearchParameters.getNumericStrategy() == NumericStrategy.NUMERIC_BINS);
-			jTextFieldSearchStrategyNrBins.setEnabled(aBin);
+			jTextFieldSearchStrategyNrBins.setEnabled(aBin); //disable nr bins?
+			boolean anIntervals = (itsSearchParameters.getNumericStrategy() == NumericStrategy.NUMERIC_INTERVALS);
+			jComboBoxNumericOperators.setEnabled(!anIntervals); //disable numeric operators?
 		}
 	}
 
@@ -1230,11 +1226,19 @@ public class MiningWindow extends JFrame
 		jComboBoxMiscField.setVisible(hasMiscField);
 		jLabelMiscField.setVisible(hasMiscField);
 
+		jCheckBoxSets.setEnabled(aTargetType == TargetType.SINGLE_NOMINAL); // only valid for nominal targets
+
+		//set 3 normals values for numeric strategy
+		jComboBoxSearchStrategyNumeric.removeAllItems();
+		for (NumericStrategy n : NumericStrategy.getNormalValues())
+			jComboBoxSearchStrategyNumeric.addItem(n.GUI_TEXT);
+
 		switch (aTargetType)
 		{
 			case SINGLE_NOMINAL :
 			{
 				jLabelTargetInfo.setText(" # positive");
+				jComboBoxSearchStrategyNumeric.addItem(NumericStrategy.NUMERIC_INTERVALS.GUI_TEXT); //add intervals only for SINGLE_NOMINAL
 				break;
 			}
 			case SINGLE_ORDINAL :

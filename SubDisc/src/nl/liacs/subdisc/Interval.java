@@ -18,11 +18,11 @@ public class Interval
 
 	public String toString()
 	{
-		String aLeft = (itsLower == Float.NEGATIVE_INFINITY) ? "<-inf" : ("]" + itsLower);
-		String aRight = (itsUpper == Float.POSITIVE_INFINITY) ? "inf>" : (Float.toString(itsUpper) + "]");
+		String aLeft = (itsLower == Float.NEGATIVE_INFINITY) ? "(-inf" : ("(" + itsLower);
+		String aRight = (itsUpper == Float.POSITIVE_INFINITY) ? "inf)" : (Float.toString(itsUpper) + "]");
 		return aLeft + ", " + aRight;
 	}
-	
+
 	public float getLower() { return itsLower; }
 	public float getUpper() { return itsUpper; }
 }

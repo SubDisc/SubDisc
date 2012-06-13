@@ -1,5 +1,7 @@
 package nl.liacs.subdisc;
 
+import java.util.ArrayList;
+
 public enum NumericOperators implements EnumInterface
 {
 	NUMERIC_NORMAL("<html>&#8804;, &#8805;</html>"),
@@ -7,7 +9,7 @@ public enum NumericOperators implements EnumInterface
 	NUMERIC_GEQ("<html>&#8805;</html>"),
 	NUMERIC_ALL("<html>&#8804;, &#8805;, =</html>"),
 	NUMERIC_EQ("="),
-	NUMERIC_INTERVAL("in");
+	NUMERIC_INTERVALS("in");
 
 	/**
 	 * For each NumericOperators, this is the text that will be used in the GUI.
@@ -50,6 +52,18 @@ public enum NumericOperators implements EnumInterface
 		return NumericOperators.getDefault();
 	}
 
+	public static ArrayList<NumericOperators> getNormalValues()
+	{
+		ArrayList<NumericOperators> aResult = new ArrayList<NumericOperators>(5);
+		aResult.add(NUMERIC_NORMAL);
+		aResult.add(NUMERIC_LEQ);
+		aResult.add(NUMERIC_GEQ);
+		aResult.add(NUMERIC_ALL);
+		aResult.add(NUMERIC_EQ);
+		//no intervals!
+		return aResult;
+	}
+
 	/**
 	 * Returns the default NumericOperators.
 	 *
@@ -77,9 +91,9 @@ public enum NumericOperators implements EnumInterface
 			return true;
 		if (theNO == NUMERIC_EQ && theOperator == Condition.EQUALS)
 			return true;
-		if (theNO == NUMERIC_ALL )
+		if (theNO == NUMERIC_ALL && (theOperator == Condition.LESS_THAN_OR_EQUAL || theOperator == Condition.GREATER_THAN_OR_EQUAL || theOperator == Condition.EQUALS))
 			return true;
-		if (theNO == NUMERIC_INTERVAL && theOperator == Condition.BETWEEN)
+		if (theNO == NUMERIC_INTERVALS && theOperator == Condition.BETWEEN)
 			return true;
 
 		return false;

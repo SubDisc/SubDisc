@@ -89,9 +89,22 @@ public class SearchParameters implements XMLNodeInterface
 		itsSearchStrategy = SearchStrategy.getSearchStrategy(theSearchStrategyName);
 	}
 
-	public boolean getNominalSets() {return itsNominalSets;}
+	public boolean getNominalSets()
+	{
+		if (itsTargetConcept.getTargetType() != TargetType.SINGLE_NOMINAL) //other than SINGLE_NOMINAL?
+			return false;
+		else
+			return itsNominalSets;
+	}
 	public void setNominalSets(boolean theValue) {itsNominalSets = theValue;}
-	public NumericOperators getNumericOperators() { return itsNumericOperators; }
+
+	public NumericOperators getNumericOperators()
+	{
+		if (itsNumericStrategy == NumericStrategy.NUMERIC_INTERVALS) //intervals automatically imply "in"
+			return NumericOperators.NUMERIC_INTERVALS;
+		else
+			return itsNumericOperators;
+	}
 	public void setNumericOperators(String theNumericOperatorsName)
 	{
 		itsNumericOperators = NumericOperators.getNumericOperators(theNumericOperatorsName);
