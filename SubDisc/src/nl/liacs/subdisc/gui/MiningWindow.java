@@ -1579,6 +1579,8 @@ public class MiningWindow extends JFrame
 		final String altName = QualityMeasure.getMeasureString(altQM);
 		theSearchParameters.setQualityMeasureMinimum(
 			Float.parseFloat(QualityMeasure.getMeasureMinimum(altName, 0)));
+		
+		SubgroupSet aHeavySubgroupSet = new SubgroupSet(-1);
 
 		// last index is whole dataset
 		List<List<Float>> statistics = new ArrayList<List<Float>>(aDomain.length-1);
@@ -1607,12 +1609,24 @@ public class MiningWindow extends JFrame
 			// run SD
 			SubgroupDiscovery sd =
 				runSubgroupDiscovery(theTable, theFold,	aMembers, theSearchParameters, false, theNrThreads);
+			
+			// For seeing the intermediate ROC curves, uncomment the next line
+			//new ROCCurveWindow(sd.getResult(), theSearchParameters, sd.getQualityMeasure());
+			
+			// this seems pointless, but the ROC curve needs to be computed to prevent the next line from NullPointerError'ing
+			@SuppressWarnings("unused")
+			ROCCurve aROCCurve = new ROCCurve(sd.getResult(), theSearchParameters, sd.getQualityMeasure());
+			
+			// select convex hull subgroups from the resulting subgroup set
+			aHeavySubgroupSet.addAll(sd.getResult().getROCListSubgroupSet()); 
 
 			// compile statistics
 			statistics.add(compileStatistics(aDomain[i],
 							aCAUCSet.cardinality(),
 							sd.getResult()));
 		}
+		
+		Log.logCommandLine("aHeavySubgroupSetSize = " + aHeavySubgroupSet.size());
 		// dump results
 		caucWrite("caucHeavy", aBackup, statistics);
 

@@ -551,6 +551,26 @@ public class SubgroupSet extends TreeSet<Subgroup>
 		return aSubgroupList;
 	}
 
+	public SubgroupSet getROCListSubgroupSet()
+	{
+		update();
+		int aSize = itsROCList.size();
+		SubgroupSet aResult = new SubgroupSet(-1);
+//		Object[][] aSubgroupList = new Object[aSize][ROC_HEADER.length];
+
+		for (int i = 0, j = aSize; i < j; ++i)
+		{
+			SubgroupROCPoint p = itsROCList.get(i);
+			Subgroup s;
+			Iterator<Subgroup> it = iterator();
+
+			while ((s = it.next()).getID() < p.ID);
+				aResult.add(s);
+		}
+
+		return aResult;
+	}
+
 	@Override
 	public int size()
 	{
