@@ -183,6 +183,13 @@ public class Subgroup implements Comparable<Subgroup>
 //		return itsMembers.equals(s.itsMembers);
 	}
 
+/*	@Override
+	public int compareTo(Subgroup theSubgroup)
+	{	
+		int aTest = itsConditions.compareTo(theSubgroup.itsConditions);
+		return aTest;
+	}
+*/
 	/**
 	 * NOTE For now this equals implementation is only used for the ROCList
 	 * HashSet implementation.

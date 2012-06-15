@@ -1432,6 +1432,7 @@ public class MiningWindow extends JFrame
 	// leave at false in svn head
 	private static final boolean CAUC_LIGHT = false;
 	private static boolean CAUC_HEAVY = false;
+	private static final boolean CAUC_HEAVY_CONVEX = false; // select subgroups on convex hull if true, select top-1 if false
 	// public, but does not perform ANY sanity checks
 	public static SubgroupDiscovery runSubgroupDiscovery(Table theTable, int theFold, BitSet theBitSet, SearchParameters theSearchParameters, boolean showWindows, int theNrThreads)
 	{
@@ -1518,6 +1519,22 @@ public class MiningWindow extends JFrame
 		if (CAUC_LIGHT)
 			caucLight(aSubgroupDiscovery, theBitSet);
 
+/*		// temporary bonus results for CAUC experimentation
+		SubgroupSet aSDResult = aSubgroupDiscovery.getResult();
+		boolean aCommandlinelogState = Log.COMMANDLINELOG;
+		Log.COMMANDLINELOG = false;
+		SubgroupSet aSubgroupSetWithEntropy = aSDResult.getPatternTeam(theTable, aSDResult.size());
+
+		Log.COMMANDLINELOG = aCommandlinelogState;
+		Log.logCommandLine("======================================================");
+		Log.logCommandLine("Simple Subgroup Set Size  : " + aSubgroupSetWithEntropy.size());
+		Log.logCommandLine("Joint Entropy             : " + aSubgroupSetWithEntropy.getJointEntropy());
+		Log.logCommandLine("Entropy / Set Size        : " + aSubgroupSetWithEntropy.getJointEntropy()/aSubgroupSetWithEntropy.size());
+		Log.logCommandLine("Subgroups : ");
+		for (Subgroup s : aSubgroupSetWithEntropy)
+			Log.logCommandLine("    "+s.getConditions().toString());
+*/		// end temp
+		
 		return aSubgroupDiscovery;
 	}
 
@@ -1576,14 +1593,16 @@ public class MiningWindow extends JFrame
 		theSearchParameters.setQualityMeasure(altQM);
 		// set an alternative quality measure minimum
 		final float mm = theSearchParameters.getQualityMeasureMinimum();
+//		final float mm = -0.25f;
 		final String altName = QualityMeasure.getMeasureString(altQM);
 		theSearchParameters.setQualityMeasureMinimum(
 			Float.parseFloat(QualityMeasure.getMeasureMinimum(altName, 0)));
+//				-0.25f);
 		
-		SubgroupSet aHeavySubgroupBag = new SubgroupSet(-1);
+		SubgroupSet aHeavySubgroupSet = new SubgroupSet(-1);
 
 		// last index is whole dataset
-		List<List<Float>> statistics = new ArrayList<List<Float>>(aDomain.length-1);
+//		List<List<Float>> statistics = new ArrayList<List<Float>>(aDomain.length-1);
 		for (int i = 0, j = aDomain.length-1; i < j; ++i)
 		{
 			BitSet aCAUCSet = (BitSet) aMembers.clone();
@@ -1607,39 +1626,75 @@ public class MiningWindow extends JFrame
 			theSearchParameters.getTargetConcept().setPrimaryTarget(aColumn);
 
 			// run SD
+			boolean aCommandlinelogState = Log.COMMANDLINELOG;
+			Log.COMMANDLINELOG = false;
 			SubgroupDiscovery sd =
 				runSubgroupDiscovery(theTable, theFold,	aMembers, theSearchParameters, false, theNrThreads);
+			Log.COMMANDLINELOG = aCommandlinelogState;
 			
 			// For seeing the intermediate ROC curves, uncomment the next line
 			//new ROCCurveWindow(sd.getResult(), theSearchParameters, sd.getQualityMeasure());
 			
-			// this seems pointless, but the ROC curve needs to be computed to prevent the next line from NullPointerError'ing
-			@SuppressWarnings("unused")
-			ROCCurve aROCCurve = new ROCCurve(sd.getResult(), theSearchParameters, sd.getQualityMeasure());
-			
-			SubgroupSet ROCSubgroups = sd.getResult().getROCListSubgroupSet();
+			Log.logCommandLine("Threshold value : " + aDomain[i]);
 
-			// This most definitely _is_ pointless.
-			// Removing the following assignment results in loss of subgroups from aHeavySubgroupSet. 
-			// I see no reason for this, but for the time being let us keep this aSize determination.
-			// This is why I hate programming.
-			@SuppressWarnings("unused")
-			int aSize = ROCSubgroups.size();
+			if (CAUC_HEAVY_CONVEX)
+			{
+				// this seems pointless, but the ROC curve needs to be computed to prevent the next line from NullPointerError'ing
+				ROCCurve aROCCurve = new ROCCurve(sd.getResult(), theSearchParameters, sd.getQualityMeasure());
 			
-			//select convex hull subgroups from the resulting subgroup set
-			aHeavySubgroupBag.addAll(ROCSubgroups);
-			
-			// compile statistics
-			statistics.add(compileStatistics(aDomain[i],
-							aCAUCSet.cardinality(),
-							sd.getResult()));
+				SubgroupSet ROCSubgroups = sd.getResult().getROCListSubgroupSet();
+
+				// This most definitely _is_ pointless.
+				// Removing the following assignment results in loss of subgroups from aHeavySubgroupSet. 
+				// I see no reason for this, but for the time being let us keep this aSize determination.
+				// This is why I hate programming.
+	//			@SuppressWarnings("unused")
+				int aSize = ROCSubgroups.size();
+				
+				Log.logCommandLine("ROC subgroups : " + aSize);
+				for (Subgroup s : ROCSubgroups)
+					Log.logCommandLine("    "+s.getConditions().toString());
+				
+				//select convex hull subgroups from the resulting subgroup set
+				aHeavySubgroupSet.addAll(ROCSubgroups);
+				
+				// compile statistics
+	/*			statistics.add(compileStatistics(aDomain[i],
+								aCAUCSet.cardinality(),
+								sd.getResult()));
+	*/
+			}
+			else
+			{
+				SubgroupSet aResult = sd.getResult();
+				int aSize = aResult.size();
+				if (aSize>0)
+				{
+					Subgroup aTopOneSubgroup = aResult.first();
+					Log.logCommandLine("Subgroup : ");
+					Log.logCommandLine("    " + aTopOneSubgroup.getConditions().toString());
+					aHeavySubgroupSet.add(aTopOneSubgroup);
+				}
+			}
 		}
 		
 		// dump results
-		caucWrite("caucHeavy", aBackup, statistics);
-		Log.logCommandLine("aHeavySubgroupBagSize = " + aHeavySubgroupBag.size());
-		for (Subgroup s : aHeavySubgroupBag)
-			Log.logCommandLine(""+s.getConditions().toString());
+//		caucWrite("caucHeavy", aBackup, statistics);
+
+			boolean aCommandlinelogState = Log.COMMANDLINELOG;
+			Log.COMMANDLINELOG = false;
+			SubgroupSet aSubgroupSetWithEntropy = aHeavySubgroupSet.getPatternTeam(theTable, aHeavySubgroupSet.size());
+			Log.COMMANDLINELOG = aCommandlinelogState;
+
+		Log.logCommandLine("======================================================");
+		Log.logCommandLine("Diverse Subgroup Set Size : " + aHeavySubgroupSet.size());
+//		Log.logCommandLine("Joint Entropy             : " + aHeavySubgroupSet.getJointEntropy());
+//		Log.logCommandLine("Entropy / Set Size        : " + aHeavySubgroupSet.getJointEntropy()/aHeavySubgroupSet.size());
+		Log.logCommandLine("Joint Entropy             : " + aSubgroupSetWithEntropy.getJointEntropy());
+		Log.logCommandLine("Entropy / Set Size        : " + aSubgroupSetWithEntropy.getJointEntropy()/aHeavySubgroupSet.size());
+		Log.logCommandLine("Subgroups : ");
+		for (Subgroup s : aHeavySubgroupSet)
+			Log.logCommandLine("    "+s.getConditions().toString());
 
 		// restore original Column
 		aColumns.set(anIndex, aBackup);
