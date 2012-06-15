@@ -1580,7 +1580,7 @@ public class MiningWindow extends JFrame
 		theSearchParameters.setQualityMeasureMinimum(
 			Float.parseFloat(QualityMeasure.getMeasureMinimum(altName, 0)));
 		
-		SubgroupSet aHeavySubgroupSet = new SubgroupSet(-1);
+		SubgroupSet aHeavySubgroupBag = new SubgroupSet(-1);
 
 		// last index is whole dataset
 		List<List<Float>> statistics = new ArrayList<List<Float>>(aDomain.length-1);
@@ -1617,18 +1617,29 @@ public class MiningWindow extends JFrame
 			@SuppressWarnings("unused")
 			ROCCurve aROCCurve = new ROCCurve(sd.getResult(), theSearchParameters, sd.getQualityMeasure());
 			
-			// select convex hull subgroups from the resulting subgroup set
-			aHeavySubgroupSet.addAll(sd.getResult().getROCListSubgroupSet()); 
+			SubgroupSet ROCSubgroups = sd.getResult().getROCListSubgroupSet();
 
+			// This most definitely _is_ pointless.
+			// Removing the following assignment results in loss of subgroups from aHeavySubgroupSet. 
+			// I see no reason for this, but for the time being let us keep this aSize determination.
+			// This is why I hate programming.
+			@SuppressWarnings("unused")
+			int aSize = ROCSubgroups.size();
+			
+			//select convex hull subgroups from the resulting subgroup set
+			aHeavySubgroupBag.addAll(ROCSubgroups);
+			
 			// compile statistics
 			statistics.add(compileStatistics(aDomain[i],
 							aCAUCSet.cardinality(),
 							sd.getResult()));
 		}
 		
-		Log.logCommandLine("aHeavySubgroupSetSize = " + aHeavySubgroupSet.size());
 		// dump results
 		caucWrite("caucHeavy", aBackup, statistics);
+		Log.logCommandLine("aHeavySubgroupBagSize = " + aHeavySubgroupBag.size());
+		for (Subgroup s : aHeavySubgroupBag)
+			Log.logCommandLine(""+s.getConditions().toString());
 
 		// restore original Column
 		aColumns.set(anIndex, aBackup);
