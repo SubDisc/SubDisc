@@ -520,15 +520,15 @@ public class SubgroupDiscovery extends MiningAlgorithm
 
 				// lower part of the hull
 				// TODO: complete list of QMs
-				boolean aLowIsNegativeQM = false;
-				boolean aSymmetricQM = false;
+				boolean aLowIsDominatedQM = false;
+				boolean anAsymmetricQM = true;
 				if (itsSearchParameters.getQualityMeasure() == QualityMeasure.BINOMIAL)
-					aLowIsNegativeQM = true;
+					aLowIsDominatedQM = true;
 				if (itsSearchParameters.getQualityMeasure() == QualityMeasure.CHI_SQUARED ||
 					itsSearchParameters.getQualityMeasure() == QualityMeasure.INFORMATION_GAIN)
-					aSymmetricQM = true;
+					anAsymmetricQM = false;
 
-				if (aSymmetricQM)
+				if (false && !anAsymmetricQM) // TODO: fix this for depth > 1, check only upper OR lower hull
 				{
 					if (aBestSubset.size() > aNCT.size()/2) // prefer complement if smaller
 					{
@@ -540,7 +540,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 						}
 					}
 				}
-				else if (!aLowIsNegativeQM)
+				else if (!aLowIsDominatedQM)
 				{
 					aP = 0;
 					aN = 0;
