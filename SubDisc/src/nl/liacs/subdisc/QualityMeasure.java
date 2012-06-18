@@ -207,7 +207,7 @@ public class QualityMeasure
 			}
 			case BINOMIAL:
 			{
-				returnValue = ((float) Math.sqrt(aCountBody)) * (theCountHeadBody/aCountBody - theTotalTargetCoverage/theTotalCoverage);
+				returnValue = ((float) Math.sqrt(aCountBody/theTotalCoverage)) * (theCountHeadBody/aCountBody - theTotalTargetCoverage/theTotalCoverage);
 				break;
 			}
 			case JACCARD: {		returnValue = theCountHeadBody /(theCountHeadBody + aCountNotHeadBody + aTotalTargetCoverageNotBody);
