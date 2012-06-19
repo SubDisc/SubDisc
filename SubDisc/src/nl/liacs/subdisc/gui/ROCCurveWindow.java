@@ -20,7 +20,7 @@ public class ROCCurveWindow extends JFrame implements ActionListener
 		itsSearchParameters = theSearchParameters;
 
 		JPanel aClosePanel = new JPanel();
-		aClosePanel.add(GUI.buildButton("GnuPlot", 'G', "gnuplot", this));
+//		aClosePanel.add(GUI.buildButton("GnuPlot", 'G', "gnuplot", this));
 		aClosePanel.add(GUI.buildButton("Close", 'C', "close", this));
 
 		// needs to be run after new ROCCurve

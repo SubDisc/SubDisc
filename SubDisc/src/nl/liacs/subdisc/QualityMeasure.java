@@ -467,11 +467,11 @@ public class QualityMeasure
 		switch(getMeasureCode(theEvaluationMeasure))
 		{
 			//NOMINAL
-			case WRACC	: 		{ anEvaluationMinimum = "0.01"; break; }
-			case ABSWRACC : 		{ anEvaluationMinimum = "0.01"; break; }
+			case WRACC	: 		{ anEvaluationMinimum = "0.02"; break; }
+			case ABSWRACC : 		{ anEvaluationMinimum = "0.02"; break; }
 			case CHI_SQUARED: 		{ anEvaluationMinimum = "50"; break; }
-			case INFORMATION_GAIN: 	{ anEvaluationMinimum = "0.0"; break; }
-			case BINOMIAL: 			{ anEvaluationMinimum = "0.0"; break; }
+			case INFORMATION_GAIN: 	{ anEvaluationMinimum = "0.02"; break; }
+			case BINOMIAL: 			{ anEvaluationMinimum = "0.05"; break; }
 			case JACCARD	: 		{ anEvaluationMinimum = "0.2"; break; }
 			case COVERAGE	: 		{ anEvaluationMinimum = "10"; break; }
 			case ACCURACY	: 		{ anEvaluationMinimum = "0.0"; break; }

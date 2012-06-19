@@ -121,9 +121,9 @@ public class MiningWindow extends JFrame
 
 		// search conditions
 		setSearchDepthMaximum("1");
-		setSearchCoverageMinimum(String.valueOf(itsTotalCount / 10));
+		setSearchCoverageMinimum("0");
 		setSearchCoverageMaximum("1.0");
-		setSubgroupsMaximum("50");
+		setSubgroupsMaximum("0");
 		setSearchTimeMaximum("1.0");
 
 		// search strategy
@@ -1534,7 +1534,7 @@ public class MiningWindow extends JFrame
 		for (Subgroup s : aSubgroupSetWithEntropy)
 			Log.logCommandLine("    "+s.getConditions().toString());
 */		// end temp
-		
+
 		return aSubgroupDiscovery;
 	}
 
@@ -1598,7 +1598,7 @@ public class MiningWindow extends JFrame
 		theSearchParameters.setQualityMeasureMinimum(
 			Float.parseFloat(QualityMeasure.getMeasureMinimum(altName, 0)));
 //				-0.25f);
-		
+
 		SubgroupSet aHeavySubgroupSet = new SubgroupSet(-1);
 
 		// last index is whole dataset
@@ -1631,33 +1631,33 @@ public class MiningWindow extends JFrame
 			SubgroupDiscovery sd =
 				runSubgroupDiscovery(theTable, theFold,	aMembers, theSearchParameters, false, theNrThreads);
 			Log.COMMANDLINELOG = aCommandlinelogState;
-			
+
 			// For seeing the intermediate ROC curves, uncomment the next line
 			//new ROCCurveWindow(sd.getResult(), theSearchParameters, sd.getQualityMeasure());
-			
+
 			Log.logCommandLine("Threshold value : " + aDomain[i]);
 
 			if (CAUC_HEAVY_CONVEX)
 			{
 				// this seems pointless, but the ROC curve needs to be computed to prevent the next line from NullPointerError'ing
 				ROCCurve aROCCurve = new ROCCurve(sd.getResult(), theSearchParameters, sd.getQualityMeasure());
-			
+
 				SubgroupSet ROCSubgroups = sd.getResult().getROCListSubgroupSet();
 
 				// This most definitely _is_ pointless.
-				// Removing the following assignment results in loss of subgroups from aHeavySubgroupSet. 
+				// Removing the following assignment results in loss of subgroups from aHeavySubgroupSet.
 				// I see no reason for this, but for the time being let us keep this aSize determination.
 				// This is why I hate programming.
 	//			@SuppressWarnings("unused")
 				int aSize = ROCSubgroups.size();
-				
+
 				Log.logCommandLine("ROC subgroups : " + aSize);
 				for (Subgroup s : ROCSubgroups)
 					Log.logCommandLine("    "+s.getConditions().toString());
-				
+
 				//select convex hull subgroups from the resulting subgroup set
 				aHeavySubgroupSet.addAll(ROCSubgroups);
-				
+
 				// compile statistics
 	/*			statistics.add(compileStatistics(aDomain[i],
 								aCAUCSet.cardinality(),
@@ -1677,7 +1677,7 @@ public class MiningWindow extends JFrame
 				}
 			}
 		}
-		
+
 		// dump results
 //		caucWrite("caucHeavy", aBackup, statistics);
 
