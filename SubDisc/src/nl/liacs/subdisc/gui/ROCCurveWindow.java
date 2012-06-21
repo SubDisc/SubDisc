@@ -20,7 +20,7 @@ public class ROCCurveWindow extends JFrame implements ActionListener
 		itsSearchParameters = theSearchParameters;
 
 		JPanel aClosePanel = new JPanel();
-//		aClosePanel.add(GUI.buildButton("GnuPlot", 'G', "gnuplot", this));
+		aClosePanel.add(GUI.buildButton("GnuPlot", 'G', "gnuplot", this));
 		aClosePanel.add(GUI.buildButton("Close", 'C', "close", this));
 
 		// needs to be run after new ROCCurve
@@ -51,7 +51,7 @@ public class ROCCurveWindow extends JFrame implements ActionListener
 	private void createGnuPlotFile()
 	{
 		float anX, aY;
-		float aSize = 0.005f;
+		float aSize = 0.001f;
 		int aCount = 0;
 		String aContent = "set xlabel \"fpr\";set ylabel \"tpr\";set xrange [0:1];set yrange [0:1];set xtics 0.1; set ytics 0.1;\n";
 		aContent += "N = " + itsSubgroupSet.getTotalCoverage() + ".0\n";
@@ -92,7 +92,7 @@ public class ROCCurveWindow extends JFrame implements ActionListener
 			aCount++;
 			anX = aSubgroup.getFalsePositiveRate();
 			aY = aSubgroup.getTruePositiveRate();
-			aContent += "set object rect from " + (anX-aSize/2) + "," + (aY-aSize/2) + " to " + (anX+aSize/2) + "," + (aY+aSize/2) + " fc rgb \"black\"\n";
+			aContent += "set object circle at " + anX + "," + aY + " size " + aSize + " fc rgb \"black\"\n";
 		}
 
 		//subgroups
