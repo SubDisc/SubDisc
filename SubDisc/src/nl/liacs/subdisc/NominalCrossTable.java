@@ -73,6 +73,8 @@ public class NominalCrossTable
 		// as long a itsPositiveCounts / itsNegativeCounts do not change
 		// CrossTableComparator could be saved as member of this class,
 		// instead of being recreated for each call to getSortedDomainIndices
+		// TODO: standard java implementation uses merge sort
+		//  --> use a quicksort implementing dutch national flag for large lists
 		Collections.sort(aSortedIndexList, new CrossTableComparator(itsPositiveCounts, itsNegativeCounts));
 
 		return aSortedIndexList;

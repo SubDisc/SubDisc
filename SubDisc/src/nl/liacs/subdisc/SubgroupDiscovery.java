@@ -471,8 +471,8 @@ public class SubgroupDiscovery extends MiningAlgorithm
 
 			if (itsSearchParameters.getQualityMeasure() == QualityMeasure.WRACC)
 			{
-				int aPC = aNCT.getPositiveCount();
-				int aNC = aNCT.getNegativeCount();
+				int aPC = itsQualityMeasure.getNrPositives();
+				int aNC = itsQualityMeasure.getNrRecords();
 				float aRatio = aPC / (float)(aPC + aNC); // equivalent to checking aPC/(float)aNC
 
 				for (int i = 0; i < aNCT.size(); i++)
@@ -540,7 +540,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 						}
 					}
 				}
-				else if (!aLowIsDominatedQM)
+				else if (true || !aLowIsDominatedQM)
 				{
 					aP = 0;
 					aN = 0;
