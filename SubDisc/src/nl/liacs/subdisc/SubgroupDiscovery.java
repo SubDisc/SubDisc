@@ -471,10 +471,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 
 			if (itsSearchParameters.getQualityMeasure() == QualityMeasure.WRACC)
 			{
-				int aPC = itsQualityMeasure.getNrPositives();
-				int aNC = itsQualityMeasure.getNrRecords();
-				float aRatio = aPC / (float)(aPC + aNC); // equivalent to checking aPC/(float)aNC
-
+				float aRatio = itsQualityMeasure.getNrPositives() / (float)(itsQualityMeasure.getNrRecords()); 
 				for (int i = 0; i < aNCT.size(); i++)
 				{
 					int aPi = aNCT.getPositiveCount(i);
