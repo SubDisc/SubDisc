@@ -271,9 +271,7 @@ public class Validation
 				{
 					// swapRandomization should be performed before creating new SubgroupDiscovery
 					itsTable.swapRandomizeTarget(itsTargetConcept);
-					i = runSRSD(new SubgroupDiscovery(itsSearchParameters, itsTable, aPositiveCount),
-							aQualities,
-							i);
+					i = runSRSD(new SubgroupDiscovery(itsSearchParameters, itsTable, aPositiveCount, null), aQualities,	i);
 				}
 
 				// restore column that was swap randomized
@@ -295,9 +293,7 @@ public class Validation
 				{
 					// swapRandomization should be performed before creating new SubgroupDiscovery
 					itsTable.swapRandomizeTarget(itsTargetConcept);
-					i = runSRSD(new SubgroupDiscovery(itsSearchParameters, itsTable, aTargetAverage),
-							aQualities,
-							i);
+					i = runSRSD(new SubgroupDiscovery(itsSearchParameters, itsTable, aTargetAverage, null), aQualities,	i);
 				}
 
 				// restore column that was swap randomized
@@ -317,9 +313,7 @@ public class Validation
 				{
 					// swapRandomization should be performed before creating new SubgroupDiscovery
 					itsTable.swapRandomizeTarget(itsTargetConcept);
-					i = runSRSD(new SubgroupDiscovery(itsSearchParameters, itsTable, false),
-							aQualities,
-							i);
+					i = runSRSD(new SubgroupDiscovery(itsSearchParameters, itsTable, false, null), aQualities, i);
 				}
 
 				// restore columns that were swap randomized
@@ -341,9 +335,7 @@ public class Validation
 				{
 					// swapRandomization should be performed before creating new SubgroupDiscovery
 					itsTable.swapRandomizeTarget(itsTargetConcept);
-					i = runSRSD(new SubgroupDiscovery(itsSearchParameters, itsTable, true),
-							aQualities,
-							i);
+					i = runSRSD(new SubgroupDiscovery(itsSearchParameters, itsTable, true, null),	aQualities,	i);
 				}
 
 				// restore columns that were swap randomized
@@ -367,9 +359,7 @@ public class Validation
 				{
 					// swapRandomization should be performed before creating new SubgroupDiscovery
 					itsTable.swapRandomizeTarget(itsTargetConcept);
-					i = runSRSD(new SubgroupDiscovery(itsSearchParameters, itsTable),
-							aQualities,
-							i);
+					i = runSRSD(new SubgroupDiscovery(itsSearchParameters, itsTable, null),	aQualities,	i);
 				}
 
 				// restore columns that were swap randomized

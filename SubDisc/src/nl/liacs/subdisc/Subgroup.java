@@ -126,6 +126,11 @@ public class Subgroup implements Comparable<Subgroup>
 		Log.logCommandLine("bitset: " + itsMembers.toString());
 	}
 
+	public String toString()
+	{
+		return itsConditions.toString();
+	}
+
 	/**
 	 * Most callers should not want to modify the returned
 	 * {@link BitSet BitSet}.
@@ -185,7 +190,7 @@ public class Subgroup implements Comparable<Subgroup>
 
 /*	@Override
 	public int compareTo(Subgroup theSubgroup)
-	{	
+	{
 		int aTest = itsConditions.compareTo(theSubgroup.itsConditions);
 		return aTest;
 	}

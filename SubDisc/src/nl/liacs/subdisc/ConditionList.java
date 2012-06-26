@@ -87,6 +87,9 @@ public class ConditionList extends ArrayList<Condition> implements Comparable<Co
 			aResult.append(aCondition);
 			aResult.append(" AND ");
 		}
-		return aResult.substring(0, aResult.length() - 5);
+		if (size() == 0)
+			return "(empty)";
+		else
+			return aResult.substring(0, aResult.length() - 5);
 	}
 }

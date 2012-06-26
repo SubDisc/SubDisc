@@ -4,6 +4,8 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 
+import javax.swing.*;
+
 public class SubgroupDiscovery extends MiningAlgorithm
 {
 	private final Table itsTable;
@@ -39,13 +41,15 @@ public class SubgroupDiscovery extends MiningAlgorithm
 	private int itsRankDefCount;
 
 	private TreeSet<Candidate> itsBuffer;
+	private JFrame itsMainWindow; //for feeding back progress info
 
 	//SINGLE_NOMINAL
-	public SubgroupDiscovery(SearchParameters theSearchParameters, Table theTable, int theNrPositive)
+	public SubgroupDiscovery(SearchParameters theSearchParameters, Table theTable, int theNrPositive, JFrame theMainWindow)
 	{
 		super(theSearchParameters);
 		itsTable = theTable;
 		itsNrRows = itsTable.getNrRows();
+		itsMainWindow = theMainWindow;
 		itsMinimumCoverage = itsSearchParameters.getMinimumCoverage();
 		itsMaximumCoverage = (int) (itsNrRows * itsSearchParameters.getMaximumCoverageFraction());
 		itsQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), itsNrRows, theNrPositive);
@@ -60,11 +64,12 @@ public class SubgroupDiscovery extends MiningAlgorithm
 	}
 
 	//SINGLE_NUMERIC, float > signature differs from multi-label constructor
-	public SubgroupDiscovery(SearchParameters theSearchParameters, Table theTable, float theAverage)
+	public SubgroupDiscovery(SearchParameters theSearchParameters, Table theTable, float theAverage, JFrame theMainWindow)
 	{
 		super(theSearchParameters);
 		itsTable = theTable;
 		itsNrRows = itsTable.getNrRows();
+		itsMainWindow = theMainWindow;
 		itsMinimumCoverage = itsSearchParameters.getMinimumCoverage();
 		itsMaximumCoverage = (int) (itsNrRows * itsSearchParameters.getMaximumCoverageFraction());
 		TargetConcept aTC = itsSearchParameters.getTargetConcept();
@@ -81,11 +86,12 @@ public class SubgroupDiscovery extends MiningAlgorithm
 	}
 
 	//DOUBLE_CORRELATION and DOUBLE_REGRESSION
-	public SubgroupDiscovery(SearchParameters theSearchParameters, Table theTable, boolean isRegression)
+	public SubgroupDiscovery(SearchParameters theSearchParameters, Table theTable, boolean isRegression, JFrame theMainWindow)
 	{
 		super(theSearchParameters);
 		itsTable = theTable;
 		itsNrRows = itsTable.getNrRows();
+		itsMainWindow = theMainWindow;
 		itsMinimumCoverage = itsSearchParameters.getMinimumCoverage();
 		itsMaximumCoverage = (int) (itsNrRows * itsSearchParameters.getMaximumCoverageFraction());
 		itsQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), itsNrRows, 100); //TODO
@@ -139,11 +145,12 @@ public class SubgroupDiscovery extends MiningAlgorithm
 	}
 
 	//MULTI_LABEL
-	public SubgroupDiscovery(SearchParameters theSearchParameters, Table theTable)
+	public SubgroupDiscovery(SearchParameters theSearchParameters, Table theTable, JFrame theMainWindow)
 	{
 		super(theSearchParameters);
 		itsTable = theTable;
 		itsNrRows = itsTable.getNrRows();
+		itsMainWindow = theMainWindow;
 		itsMinimumCoverage = itsSearchParameters.getMinimumCoverage();
 		itsMaximumCoverage = (int) (itsNrRows * itsSearchParameters.getMaximumCoverageFraction());
 
@@ -1026,6 +1033,16 @@ TODO for stable jar, disabled, causes comple errors, reinstate later
 				// no other thread can add new candidates
 				else if ((aTotalSize == 0) && alone)
 					break;
+
+				int aDepth = 1;
+				String aCurrent = new String("(empty)");
+				if (aCandidate != null)
+				{
+					aDepth = aCandidate.getSubgroup().getDepth()+1;
+					aCurrent = aCandidate.getSubgroup().toString();
+				}
+				if (itsMainWindow !=null)
+					itsMainWindow.setTitle("d=" + aDepth + ", cands=" + itsCandidateCount.get() + ", refining " + aCurrent);
 			}
 
 			if (aCandidate != null)

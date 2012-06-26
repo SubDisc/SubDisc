@@ -187,7 +187,7 @@ public class XMLAutoRun
 
 		long aBegin = System.currentTimeMillis();
 		SubgroupDiscovery aSubgroupDiscovery =
-			MiningWindow.runSubgroupDiscovery(aTable, 0, null, aSearchParameters, showWindows, theNrThreads);
+			nl.liacs.subdisc.Process.runSubgroupDiscovery(aTable, 0, null, aSearchParameters, showWindows, theNrThreads, null); //null means no progress update to mainwindow
 		// always save result TODO search parameters based filename
 		save(aSubgroupDiscovery.getResult(), theFile.getAbsolutePath().replace(".xml", ("_"+ aBegin + ".txt")), aSearchParameters.getTargetType());
 	}

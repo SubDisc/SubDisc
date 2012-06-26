@@ -399,6 +399,7 @@ public class ResultWindow extends JFrame implements ActionListener
 		if (anInputString == null || anInputString.equals(""))
 			return;
 
+		setBusy(true);
 		try
 		{
 			int aValue = new Integer(anInputString).intValue();
@@ -410,6 +411,7 @@ public class ResultWindow extends JFrame implements ActionListener
 			Log.logCommandLine(e.toString());
 			JOptionPane.showMessageDialog(null, "Not a valid input value!", "Warning", JOptionPane.ERROR_MESSAGE);
 		}
+		setBusy(false);
 	}
 
 	private void jButtonBrowseSubgroupsActionPerformed()
@@ -458,6 +460,7 @@ public class ResultWindow extends JFrame implements ActionListener
 
 	private void jButtonPValuesActionPerformed()
 	{
+		setBusy(true);
 		// Obtain input
 		double[] aQualities = obtainRandomQualities();
 		if (aQualities == null)
@@ -468,21 +471,25 @@ public class ResultWindow extends JFrame implements ActionListener
 			aSubgroup.setPValue(aDistro);
 
 		itsSubgroupTable.repaint();
+		setBusy(false);
 	}
 
 	private void jButtonRegressionTestActionPerformed()
 	{
+		setBusy(true);
 		// Obtain input
 		double[] aQualities = obtainRandomQualities();
 		if (aQualities == null)
 			return;
 		Validation aValidation = new Validation(itsSearchParameters, itsTable, itsQualityMeasure);
 		double[] aRegressionTestScore = aValidation.performRegressionTest(aQualities, itsSubgroupSet);
+		setBusy(false);
 		JOptionPane.showMessageDialog(null, "The regression test score equals\nfor k =  1 : "+aRegressionTestScore[0]+"\nfor k = 10 : "+aRegressionTestScore[1]);
 	}
 
 	private void jButtonEmpiricalActionPerformed()
 	{
+		setBusy(true);
 		// Obtain input
 		double[] aQualities = obtainRandomQualities();
 		if ( aQualities == null)
@@ -496,6 +503,7 @@ public class ResultWindow extends JFrame implements ActionListener
 			aSubgroup.setEmpiricalPValue(aQualities);
 
 		itsSubgroupTable.repaint();
+		setBusy(false);
 	}
 
 	private void jButtonFoldActionPerformed()
@@ -507,6 +515,8 @@ public class ResultWindow extends JFrame implements ActionListener
 	private double[] obtainRandomQualities()
 	{
 		String[] aSetup = new RandomQualitiesWindow().getSettings();
+
+		Log.logCommandLine(aSetup[0] + "=" + aSetup[1]);
 		if (!RandomQualitiesWindow.isValidRandomQualitiesSetup(aSetup))
 			return null;
 
@@ -538,6 +548,14 @@ public class ResultWindow extends JFrame implements ActionListener
 							JOptionPane.WARNING_MESSAGE);
 			e.printStackTrace();
 		}
+	}
+
+	private void setBusy(boolean isBusy)
+	{
+		if (isBusy)
+			this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+		else
+			this.setCursor(Cursor.getDefaultCursor());
 	}
 
 	private JPanel jPanelSouth;
