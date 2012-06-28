@@ -83,14 +83,7 @@ public class SubgroupSet extends TreeSet<Subgroup>
 		itsBinaryTarget = theBinaryTarget;
 
 		if (theTotalCoverage <= 0)
-			Log.logCommandLine("SubgroupSet<init>: theTotalCoverage = '"
-								+ theTotalCoverage + "', but can not be <= 0");
-
-		if (itsBinaryTarget == null)
-		{
-			// TODO this gives an error when running SINGLE_NUMERIC
-			Log.logCommandLine("SubgroupSet<init>: no BinaryTarget set");
-		}
+			Log.logCommandLine("SubgroupSet<init>: theTotalCoverage = " + theTotalCoverage + ", but can not be <= 0");
 	}
 
 	/**

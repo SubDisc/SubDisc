@@ -33,7 +33,10 @@ public class NormalDistribution
 
 		double aSquareDiff = 0.0;
 		for (int j=0; j<theSample.length; j++)
-			aSquareDiff += Math.pow(theSample[j]-itsMu,2);
+		{
+			double aDiff = theSample[j]-itsMu;
+			aSquareDiff += aDiff*aDiff;
+		}
 		itsSigma = Math.sqrt(aSquareDiff/(theSample.length-1));
 
 		itsRandom = new Random(System.currentTimeMillis());

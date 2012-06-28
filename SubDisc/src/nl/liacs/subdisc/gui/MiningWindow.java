@@ -1456,6 +1456,14 @@ public class MiningWindow extends JFrame
 				aQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), itsTable.getNrRows(), itsPositiveCount);
 				break;
 			}
+			case SINGLE_NUMERIC :
+			{
+				String aTarget = getTargetAttributeName();
+				float aSum = itsTable.getColumn(aTarget).computeSum();
+				float anSSD = itsTable.getColumn(aTarget).computeSumSquaredDeviations(aSum);
+				aQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), itsTable.getNrRows(), aSum, anSSD);
+				break;
+			}
 			case MULTI_LABEL :
 			{
 				// base model
@@ -1474,9 +1482,8 @@ public class MiningWindow extends JFrame
 			}
 			default :
 			{
-				Log.logCommandLine("Unable to compute random qualities for " +
-							itsTargetConcept.getTargetType().GUI_TEXT);
-				return; // TODO also throw JDialog?
+				Log.logCommandLine("Unable to compute random qualities for " + itsTargetConcept.getTargetType().GUI_TEXT);
+				return;
 			}
 		}
 
@@ -1783,7 +1790,6 @@ public class MiningWindow extends JFrame
 				String aTarget = getTargetAttributeName();
 				if (aTarget != null) //initTargetInfo might be called before item is actually selected
 				{
-					//itsTargetAverage = itsTable.getAverage(itsTable.getIndex(aTarget));
 					itsTargetAverage = itsTable.getColumn(aTarget).getAverage();
 					jLabelTargetInfo.setText(" average");
 					jLFieldTargetInfo.setText(String.valueOf(itsTargetAverage));

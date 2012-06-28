@@ -390,16 +390,15 @@ public class QualityMeasure
 			}
 			case T_TEST	:
 			{
-				if(theCoverage <= 1)
+				if(theCoverage <= 2)
 					aReturn = 0;
 				else
-					aReturn = (float) ((Math.sqrt(theCoverage)*(theSum/theCoverage-itsTotalAverage))/
-								Math.sqrt(theSSD/(theCoverage-1)));
+					aReturn = (float) ((Math.sqrt(theCoverage)*(theSum/theCoverage-itsTotalAverage))/Math.sqrt(theSSD/(theCoverage-1)));
 				break;
 			}
 			case INVERSE_T_TEST	:
 			{
-				if(theCoverage <= 1)
+				if(theCoverage <= 2)
 					aReturn = 0;
 				else
 					aReturn = (float) -((Math.sqrt(theCoverage)*(theSum/theCoverage-itsTotalAverage))/Math.sqrt(theSSD/(theCoverage-1)));
@@ -407,7 +406,7 @@ public class QualityMeasure
 			}
 			case ABS_T_TEST	:
 			{
-				if(theCoverage <= 1)
+				if(theCoverage <= 2)
 					aReturn = 0;
 				else
 					aReturn = (float) Math.abs((Math.sqrt(theCoverage)*(theSum/theCoverage-itsTotalAverage))/Math.sqrt(theSSD/(theCoverage-1)));

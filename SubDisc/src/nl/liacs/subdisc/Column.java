@@ -1414,12 +1414,32 @@ public class Column implements XMLNodeInterface
 		return aResult;
 	}
 
+	public float computeSum()
+	{
+		float aSum = 0.0f;
+		for (int i=0; i<size(); i++)
+			aSum += itsFloatz[i];
+		return aSum;
+	}
+
 	private float computeSum(BitSet theBitSet)
 	{
 		float aSum = 0.0f;
 		for (int i = theBitSet.nextSetBit(0); i >= 0; i = theBitSet.nextSetBit(i + 1))
-			//aSum += itsFloats.get(i);
 			aSum += itsFloatz[i];
+		return aSum;
+	}
+
+	// assumes computeSum is already run, so sum can be reused
+	public float computeSumSquaredDeviations(float theSum)
+	{
+		float aMean = theSum/size();
+		float aSum = 0.0f;
+		for (int i=0; i<size(); i++)
+		{
+			float aDiff = (itsFloatz[i]-aMean);
+			aSum += aDiff*aDiff;
+		}
 		return aSum;
 	}
 
@@ -1430,7 +1450,6 @@ public class Column implements XMLNodeInterface
 		float aMean = theSum / theBitSet.cardinality();
 		float aSum = 0.0f;
 		for (int i = theBitSet.nextSetBit(0); i >= 0; i = theBitSet.nextSetBit(i + 1))
-			//aSum += Math.pow((itsFloats.get(i)-aMean), 2);
 			aSum += Math.pow((itsFloatz[i]-aMean), 2);
 		return aSum;
 	}

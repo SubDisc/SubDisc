@@ -72,6 +72,28 @@ public class Validation
 				}
 				break;
 			}
+			case SINGLE_NUMERIC : //todo implement!
+			{
+				Column aTarget = itsTargetConcept.getPrimaryTarget();
+				Condition aCondition = new Condition(aTarget, Condition.EQUALS);
+				aCondition.setValue(itsTargetConcept.getTargetValue());
+				//BitSet aBinaryTarget = itsTable.evaluate(aCondition);
+				BitSet aBinaryTarget = aTarget.evaluate(aCondition);
+
+				for (int i=0; i<theNrRepetitions; i++)
+				{
+					do
+						aSubgroupSize = (int) (aRandom.nextDouble() * aNrRows);
+					while (aSubgroupSize < aMinimumCoverage  || aSubgroupSize==aNrRows);
+					Subgroup aSubgroup = itsTable.getRandomSubgroup(aSubgroupSize);
+
+					BitSet aColumnTarget = (BitSet) aBinaryTarget.clone();
+					aColumnTarget.and(aSubgroup.getMembers());
+					int aCountHeadBody = aColumnTarget.cardinality();
+					aQualities[i] = itsQualityMeasure.calculate(aCountHeadBody, aSubgroup.getCoverage());
+				}
+				break;
+			}
 			case MULTI_LABEL :
 			{
 				//base model
@@ -284,16 +306,15 @@ public class Validation
 			{
 				// back up column that will be swap randomized
 				Column aPrimaryCopy = itsTargetConcept.getPrimaryTarget().copy();
-				float aTargetAverage =
-					//itsTable.getAverage(itsTargetConcept.getPrimaryTarget().getIndex());
-					itsTargetConcept.getPrimaryTarget().getAverage();
+				float aTargetAverage = itsTargetConcept.getPrimaryTarget().getAverage();
 
 				// generate swap randomized random results
 				for (int i = 0, j = theNrRepetitions; i < j; ++i)
 				{
 					// swapRandomization should be performed before creating new SubgroupDiscovery
 					itsTable.swapRandomizeTarget(itsTargetConcept);
-					i = runSRSD(new SubgroupDiscovery(itsSearchParameters, itsTable, aTargetAverage, null), aQualities,	i);
+					SubgroupDiscovery anSD = new SubgroupDiscovery(itsSearchParameters, itsTable, aTargetAverage, null);
+					i = runSRSD(anSD, aQualities, i);
 				}
 
 				// restore column that was swap randomized
@@ -369,12 +390,10 @@ public class Validation
 
 				break;
 			}
-			default : break; // TODO should never get here, throw warning
+			default : break;
 		}
 
-		// Reset COMMANDLINELOG setting, return result
 		Log.COMMANDLINELOG = aCOMMANDLINELOGmem;
-		// return results
 		return aQualities;
 	}
 
