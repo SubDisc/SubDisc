@@ -411,12 +411,6 @@ public class SubgroupDiscovery extends MiningAlgorithm
 						aPi += aRBICT.getPositiveCount(l);
 						aNi += aRBICT.getNegativeCount(l);
 						aHulls[l] = new ConvexHull(aNi, aPi, aRBICT.getSplitPoint(l), Float.NEGATIVE_INFINITY);
-						double aQuality = itsQualityMeasure.calculate(aPi, aPi + aNi);
-						anEvalCounter++;
-						if (aQuality > aBestQuality) {
-							aBestQuality = aQuality;
-							aBestInterval = new Interval(Float.NEGATIVE_INFINITY, aRBICT.getSplitPoint(l));
-						}
 					}
 					aHulls[aRBICT.getNrBaseIntervals()-1] = new ConvexHull(aRBICT.getNegativeCount(), aRBICT.getPositiveCount(), Float.POSITIVE_INFINITY, Float.NEGATIVE_INFINITY);
 
@@ -429,6 +423,8 @@ public class SubgroupDiscovery extends MiningAlgorithm
 							{
 								for (int i = 0; i < aMinkDiff.getSize(aSide); i++)
 								{
+									if (aSide == 1 && (i == 0 || i == aMinkDiff.getSize(aSide)-1) )
+										continue; // no need to check duplicate hull points
 									HullPoint aCandidate = aMinkDiff.getPoint(aSide, i);
 									double aQuality = itsQualityMeasure.calculate(aCandidate.itsY, aCandidate.itsX + aCandidate.itsY);
 									anEvalCounter++;

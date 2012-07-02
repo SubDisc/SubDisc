@@ -12,16 +12,28 @@ public class RealBaseIntervalCrossTable
 	private int[] itsNegativeCounts;
 	private int itsPositiveCount; //sum
 	private int itsNegativeCount; //sum
+	private boolean itsUseNegInfty;
 
 
 	public RealBaseIntervalCrossTable(float[] theSplitPoints, Column theColumn, Subgroup theSubgroup, BitSet theTarget)
 	{
-		itsSplitPointCount = theSplitPoints.length;
+		this(theSplitPoints, theColumn, theSubgroup, theTarget, true);
+	}
+
+	public RealBaseIntervalCrossTable(float[] theSplitPoints, Column theColumn, Subgroup theSubgroup, BitSet theTarget, boolean theUseNegInfty)
+	{
+		itsUseNegInfty = theUseNegInfty;
+		itsSplitPointCount = theSplitPoints.length + (itsUseNegInfty ? 1 : 0);
 		itsSplitPoints = new float[itsSplitPointCount];
 		itsPositiveCounts = new int[getNrBaseIntervals()];
 		itsNegativeCounts = new int[getNrBaseIntervals()];
 
 		int aCount = 0;
+		if (itsUseNegInfty)
+		{
+			itsSplitPoints[0] = Float.NEGATIVE_INFINITY;
+			aCount = 1;
+		}
 		for (float aSplitPoint : theSplitPoints)
 		{
 			itsSplitPoints[aCount] = aSplitPoint;
@@ -111,7 +123,7 @@ public class RealBaseIntervalCrossTable
 	public void aggregateIntervals()
 	{
 		int aPruneCnt = 0;
-		for (int i = 0; i < itsSplitPointCount; i++)
+		for (int i = (itsUseNegInfty ? 1: 0); i < itsSplitPointCount; i++)
 		{
 			if ( itsPositiveCounts[i] * itsNegativeCounts[i+1] == itsPositiveCounts[i+1] * itsNegativeCounts[i] )
 			{
