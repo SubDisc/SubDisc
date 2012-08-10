@@ -72,9 +72,10 @@ public class QualityMeasure
 	public static final int CORRELATION_P = 39;
 	public static final int CORRELATION_ENTROPY = 40;
 	public static final int ADAPTED_WRACC = 41;
+	public static final int COSTS_WRACC = 42;
 	//DOUBLE_REGRESSION
-	public static final int LINEAR_REGRESSION = 42;
-	public static final int COOKS_DISTANCE = 43;
+	public static final int LINEAR_REGRESSION = 43;
+	public static final int COOKS_DISTANCE = 44;
 
 	//SINGLE =========================================================================================
 
@@ -131,7 +132,7 @@ public class QualityMeasure
 			case SINGLE_NUMERIC		: return ABS_T_TEST;
 			case SINGLE_ORDINAL		: return MMAD;
 			case MULTI_LABEL		: return EDIT_DISTANCE;
-			case DOUBLE_CORRELATION	: return ADAPTED_WRACC;
+			case DOUBLE_CORRELATION		: return COSTS_WRACC;
 			case DOUBLE_REGRESSION		: return LINEAR_REGRESSION;
 			// TODO for stable jar, disabled
 			//case DOUBLE_REGRESSION 	: return COOKS_DISTANCE;
@@ -512,6 +513,7 @@ public class QualityMeasure
 			case CORRELATION_P : 	{ anEvaluationMinimum = "0.0"; break; }
 			case CORRELATION_ENTROPY : 	{ anEvaluationMinimum = "0.0"; break; }
 			case ADAPTED_WRACC : 	{ anEvaluationMinimum = "0.0"; break; }
+			case COSTS_WRACC : { anEvaluationMinimum = "0.0"; break; }
 			case LINEAR_REGRESSION :{ anEvaluationMinimum = "0.0"; break; }
 			case COOKS_DISTANCE	:	{ anEvaluationMinimum = "0.0"; break; }
 		}
@@ -570,6 +572,7 @@ public class QualityMeasure
 			case CORRELATION_P		: { anEvaluationMeasure = "p-Value Distance"; break; }
 			case CORRELATION_ENTROPY		: { anEvaluationMeasure = "Wtd Ent Distance"; break; }
 			case ADAPTED_WRACC		: { anEvaluationMeasure = "Adapted WRAcc"; break; }
+			case COSTS_WRACC		: { anEvaluationMeasure = "Costs WRAcc"; break; }
 			case LINEAR_REGRESSION		: { anEvaluationMeasure = "Significance of Slope Difference"; break; }
 			case COOKS_DISTANCE			: { anEvaluationMeasure = "Cook's Distance"; break; }
 		}
@@ -626,6 +629,7 @@ public class QualityMeasure
 		else if ("p-value distance".equals(anEvaluationMeasure)) return CORRELATION_P;
 		else if ("wtd ent distance".equals(anEvaluationMeasure)) return CORRELATION_ENTROPY;
 		else if ("adapted wracc".equals(anEvaluationMeasure)) return ADAPTED_WRACC;
+		else if ("costs wracc".equals(anEvaluationMeasure)) return COSTS_WRACC;
 		//DOUBLE_REGRESSION
 		else if ("significance of slope difference".equals(anEvaluationMeasure)) return LINEAR_REGRESSION;
 		else if ("cook's distance".equals(anEvaluationMeasure)) return COOKS_DISTANCE;
