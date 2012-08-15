@@ -40,7 +40,7 @@
 %TODO move to actual Start section + ref CPJ
 \section{Before you start}
 \label{section:before}
-Although Cortana is written in Java, and therefore platform independent, it will behave sleightly different on different operation systems and/or platforms.
+Although Cortana is written in Java, and therefore platform independent, it will behave slightly different on different operation systems and/or platforms.
 These differences arise from small variations in the Java Virtual Machines, used in different situations.
 The main issue is with 32-bit operating systems (OS).
 On such systems the maximum amount of memory the Java Virtual Machine (JVM) can use is around 1600 MegaBytes.
@@ -58,7 +58,7 @@ This is a problem particularly relevant to the bioinformatics setting (see secti
 
 \section{Preliminaries}
 \label{section:preliminaries}
-Before giving a detailed description of, the functionalities of, \emph{Cortana}, it is beneficial to first clarify some of the terms used in the rest of this manual.
+Before giving a detailed description of the functionalities of \emph{Cortana}, it is beneficial to first clarify some of the terms used in the rest of this manual.
 
 
 
@@ -67,17 +67,16 @@ Before giving a detailed description of, the functionalities of, \emph{Cortana},
 First there is the data that will be used as input.
 The data can often best be visualised as a table, or matrix, containing \emph{columns} and \emph{rows}.
 The first \emph{row} of the data, the \emph{header}, contains all the names of the columns.
-The remaining rows form the so called \emph{instances}, and describe, for each \emph{instance}, the values for each \emph{column}.
+The remaining rows form the so-called \emph{instances}, and describe, for each \emph{instance}, the values for each \emph{column}.
 Different authors use different names for the same concepts.
-To be clear, a \emph{dataset} describes all data under investigation, and is referred to by some autors as \emph{population}.
-The members that constitude a \emph{dataset} are refeirred to as \emph{instances}, or \emph{individuals}.
+To be clear, a \emph{dataset} describes all data under investigation, and is referred to by some authors as \emph{population}.
+The members that constitute a \emph{dataset} are referred to as \emph{instances} or \emph{examples}.
 Columns will be referred to as \emph{attributes}, and the \emph{column name} is the \emph{attribute name}.
 
-%TODO implement quickie separator guess code
-Currently, two types of files can be loaded into \emph{Cortana}, \emph{arff} files and plain (comma seperated) text files.
+Currently, two types of files can be loaded into \emph{Cortana}, \emph{arff} files and plain (comma separated) text files.
 Both file types provide the data in a matrix form.
 \emph{arff} (\emph{Attribute-Relation File Format}) files, however, additionally define the data type, or \emph{attribute type}, of each \emph{attribute} in a section preceding the actual data.
-\emph{arff} files are very common in data mining, more on them can be found at \url{http://www.cs.waikato.ac.nz/~ml/weka/arff.html}.
+\emph{arff} files are very common in data mining. More on them can be found at \url{http://www.cs.waikato.ac.nz/~ml/weka/arff.html}.
 
 
 
@@ -97,7 +96,7 @@ An \emph{attribute} with the \emph{nominal} \emph{attribute type} is said to be 
 \label{preliminaries:subgroup}
 A \emph{subgroup} is a selected number of \emph{instances} from the \emph{dataset}.
 As returned by \emph{Cortana}, it will both be non-empty, and will not contain all \emph{instances} in the \emph{dataset}.
-Any \emph{Subgroup Discovery} process will try to find those, characteristics of, \emph{subgroups} that, on a characteristic of interest, show a statstically unusual deviation from the whole \emph{dataset}, or the complement of the \emph{subgroup}.
+Any \emph{Subgroup Discovery} process will try to find \emph{subgroups} that, on a characteristic of interest, show a statistically unusual deviation from the whole \emph{dataset}.
 
 
 
@@ -120,7 +119,7 @@ A \emph{condition} is a description, or the intension, of a \emph{subgroup}, whi
 The simplest, or atomic, \emph{condition} consists of three parts: an \emph{attribute}, an \emph{operator} and a value.
 More complex \emph{conditions} can be formed from conjunctions of atomic \emph{conditions}.
 \emph{Conjunctions} formed this way are sometimes also referred to as \emph{condition lists}.
-An example of an atomic \emph{condition} would be: \mbox{[$age <= 18$]}, a more complex one would be \mbox{[$age <= 18 \wedge length >= 1.8$]}.
+An example of an atomic \emph{condition} would be: $age \leq 18$, a more complex one would be $age \leq 18 \wedge length \leq 1.8$.
 
 
 
@@ -131,7 +130,7 @@ An example of an atomic \emph{condition} would be: \mbox{[$age <= 18$]}, a more 
 %TODO nr measures > 43
 \subsection{Quality Measure}
 \label{preliminatier:quality-measure}
-In \emph{Subgroup Discovery}, one uses a \emph{quality measure} to asses the the quality of the \emph{subgroups} found.
+In \emph{Subgroup Discovery}, one uses a \emph{quality measure} to asses the quality of the \emph{subgroups} found.
 Here, \emph{quality} should be understood as a score obtained by appying the \emph{qualitiy measure} to, the characteristics of, the \emph{subgroup}.
 It depends on the actual \emph{quality measure}, and/or the goal the researcher has in mind, whether such a \emph{quality} should evaluate high or low.
 For example, if the very simple \emph{quality measure} `\emph{average}' is used, it depends on the domain specific goal whether one would try to obtain a very high or low score.
@@ -141,7 +140,7 @@ This manual currently does not provide a description of them, and the user is re
 
 
 
-\subsection{Target Value vs. Target Concept}
+\subsection{Target Attribute vs. Target Concept}
 \label{preliminaries:target-concept}
 Traditionally, \emph{Subgroup Discovery} focussed only on optimising for a single \emph{target}, or \emph{target value}.
 Obviously, this is a setting that can still be used in \emph{Cortana}.
@@ -162,8 +161,8 @@ The first \emph{target type} is \emph{single nominal}.
 It may very well be the best known, and most used, \emph{target type} in the \emph{Subgroup Discovery} discipline.
 In this setting, the \emph{target concept} is simply one of the values of the \emph{target attribute}, more commonly known as \emph{target value}.
 For most \emph{quality measures}, \emph{Cortana} will optimise the quality of \emph{subgroups} by considering the proportion of positive and negative examples in the \emph{dataset}.
-\emph{Instances} count as positive examples \emph{iff} their value for the \emph{target attribute} is identical to the \emph{target concept}, they are negative otherwise.
-Note that this is yields a binary distinction, such that, for any \emph{target attribute}, only that value that coincides with the \emph{target concept} is considered positive, all other values, including \emph{missing values}, are considered negative.
+\emph{Instances} count as positive examples if their value for the \emph{target attribute} is identical to the \emph{target concept}, they are negative otherwise.
+Note that this yields a binary distinction, such that, for any \emph{target attribute}, only that value that coincides with the \emph{target concept} is considered positive, all other values, including \emph{missing values}, are considered negative.
 %TODO So \emph{Cortana} uses the following equality test to determine whether an \emph{instance} is a positive example: \emph{instance.target-attribute.target-value equals target-concept}.
 %TODO equals is =, or ==, also adres NEW != operator for NOMINAL
 
@@ -171,8 +170,6 @@ Note that this is yields a binary distinction, such that, for any \emph{target a
 The second \emph{target type} is \emph{single numeric}.
 This is another simple \emph{target type}, however, it substantially differs from the \emph{single nominal} type.
 Most importantly, one does set a single \emph{target attribute}, but one does not set a \emph{target value} when using this setting.
-Instead, the \emph{target concept} is determined by the \emph{operator(s)} used.
-%TODO dymanically, also mention bins
 
 This \emph{target type} can only be used for \emph{numeric} \emph{attributes}.
 All values of such \emph{attributes} are numeric, and thus define a range.
@@ -209,17 +206,17 @@ There you will find a cortana.jar file.
 One could start \emph{Cortana} by double clicking the jar, however, it is recommended to start \emph{Cortana} from the command line.
 This way, a lot more information about the \emph{Subgroup Discovery} process is fed back to the user.
 To start \emph{Cortana} this way, open a terminal or command window, navigate to the Cortana directory containing cortana.jar, and type: \emph{java -jar cortana.jar}.
-Alternatively one can use either of the cortana.bat (for Windows) or cortana.sh (Bash shell script).
+Alternatively one can use either cortana.bat (for Windows) or cortana.sh (Bash shell script).
 Be sure to read Section~\ref{section:before} \emph{Before you start} if you do.
 
-After starting \emph{Cortana} one is asked to select the file to use for the \emph{Subgroup Discovery} run, after which \emph{Cortana}'s main screen is shown.
+After starting \emph{Cortana} one is asked to select the file that contains the dataset to be analysed, after which \emph{Cortana}'s main screen is shown.
 
 %TODO implement quickie separator guess code
 Currently, two types of files can be loaded into \emph{Cortana}, \emph{arff} files and plain (comma seperated) text files.
-The first is very common in data mining, and an \emph{arff} (\emph{Attribute-Relation File Format}) file describes the data and additionally defines the \emph{attribute type} of each \emph{attribute}.
+The first is very common in data mining and describes the data and additionally defines the \emph{attribute type} of each \emph{attribute}.
 As such, \emph{arff} files are preferred over plain text files.
-For text files, \emph{Cortana} wil try to infer the correct \emph{attribute type} of each \emph{attribute}.
-Unfortunately, this may fail, so to check whether \emph{Cortana} was able to infer the correct \emph{attribute type}, or change the \emph{attribute type} anyway, the \emph{Meta Data...} button on the main screen gives access to the \emph{Meta Data Window} (section~\ref{section:meta-data-window}).
+For text files, \emph{Cortana} wil try to infer the correct attribute type of each attribute.
+Unfortunately, this may fail, so to check whether Cortana was able to infer the correct attribute type, or change the attribute type anyway, the \emph{Meta Data...} button on the main screen gives access to the \emph{Meta Data Window} (section~\ref{section:meta-data-window}).
 
 
 
@@ -227,7 +224,7 @@ Unfortunately, this may fail, so to check whether \emph{Cortana} was able to inf
 
 \section{Cortana - Main Screen}
 \label{section:main}
-The main screen of \emph{Cortana} is devided into five major \emph{panels}, \emph{Dataset}, \emph{Target Concept}, \emph{Search Conditions}, \emph{Search Strategy}, and \emph{Button Panel}.
+The main screen of \emph{Cortana} is devided into four major panels, \emph{Dataset}, \emph{Target Concept}, \emph{Search Conditions}, and \emph{Search Strategy}.
 The following subsections will address them all.
 
 \begin{figure}
@@ -242,27 +239,28 @@ The following subsections will address them all.
 
 \subsection{Dataset}
 \label{main:dataset}
-As can be expected from the name, this panel gives some information about the \emph{dataset} that is currently loaded.
+As can be expected from the name, this panel gives some information about the dataset that is currently loaded.
 
-\emph{target table} shows the name of the data file used, which for text files is just the filename, and for \emph{arff} files is the name defined in the '@relation' field.
+{\bf target table} shows the name of the data file used, which for text files is just the filename, and for ARFF files is the name defined in the '@relation' field.
 
-\emph{\# examples} shows the number of \emph{instances} in the \emph{dataset}.
+{\bf\# examples} shows the number of example in the dataset.
 
-\emph{\# columns} shows the number of columns, or variables, in the \emph{dataset}.
-Remember that columns are also be referred to as \emph{attributes}.
+{\bf\# columns} shows the number of columns in the dataset.
+Remember that columns are also be referred to as attributes.
 
-Finally, there is a number of fields that indicate the number of \emph{attributes} from each data type, or \emph{attribute type}.
-These numbers sum to \emph{\# examples}.
-The type of an \emph{attribute} determines the sort of mining algorithm, or \emph{quality measure}, that is applicable to it.
+Finally, there is a number of fields that indicate the number of attributes from each data type.
+The type of an attribute determines the sort of mining algorithm or quality measure that is applicable to it.
 More about this can be found in section~\ref{preliminaries:attribute-type}.
 
-In addition to the fields described above, there are three buttons present on the \emph{Dataset} panel, \emph{Browse...}, \emph{Meta Data...} and \emph{Explore...}.
+In addition to the fields described above, there are three buttons present on the Dataset panel, {\bf Browse...}, {\bf Meta Data...} and {\bf Explore...}.
 
-By clicking the \emph{Browse...} button, a \emph{Browse Window} (section~\ref{section:browse-window}) is presented, showing a table with the data in the state that it is currently in.
-Additionally, in the table header, it shows the number of distinct values for each \emph{attribute}.
-Note that the data may not be in the same state as when it was loaded, as it can be modified using functionalities of the \emph{Meta Data Window}, presented after pressing the \emph{Meta Data...} button, which is also present on the \emph{Dataset} panel.
-Section~\ref{section:meta-data-window} describes the \emph{Meta Data Window}, its components, and the data manipulation functionalities, in more detail.
-To be able to explain them more thoroughly though, it is benefical to describe the various fields of the \emph{Target Concept} panel first.
+By clicking the {\bf Browse...} button, a {\bf Browse Window} (section~\ref{section:browse-window}) is presented, showing a table with the data in the state that it is currently in.
+Additionally, in the table header, it shows the number of distinct values for each attribute.
+Note that the data may not be in the same state as when it was loaded, as it can be modified using functionalities of the {\bf Meta Data Window}, presented after pressing the {\bf Meta Data...} button, which is also present on the {\bf Dataset} panel.
+Section~\ref{section:meta-data-window} describes the Meta Data Window, its components, and the data manipulation functionalities, in more detail.
+To be able to explain them more thoroughly though, it is benefical to describe the various fields of the {\bf Target Concept} panel first.
+
+Explore button.
 
 \begin{figure}
 \begin{center}
@@ -280,20 +278,20 @@ To be able to explain them more thoroughly though, it is benefical to describe t
 \subsection{Target Concept}
 \label{main:target-concept}
 %TODO clean up, contains double info
-The fields of this panel serve to manipulate the \emph{Target Concept} related search settings used during the \emph{Subgroup Discovery} process.
-Traditionally, \emph{Subgroup Discovery} focussed only on optimising for a single \emph{target}, or \emph{target value}.
-Obviously, this is a setting that can still be used in \emph{Cortana}.
-However, since \emph{Cortana} can also be used in a novel setting referred to as \emph{Exceptional Model Mining} (\emph{EMM}) \cite{emm}, the term \emph{target value} is no longer applicable, hence the term \emph{Target Concept}.
-Section~\ref{preliminaries:target-type} describes the various target types in more detail, including its relation to the type of \emph{search strategy} (section~\ref{main:search-strategy}) adopted by the \emph{Subgroup Discovery} algorithm used by \emph{Cortana}.
+The fields of this panel serve to manipulate the target concept-related search settings used during the Subgroup Discovery process.
+Traditionally, Subgroup Discovery focussed only on optimising for a single target or target value.
+Obviously, this is a setting that can still be used in Cortana.
+However, since Cortana can also be used in a novel setting referred to as \emph{Exceptional Model Mining} (\emph{EMM}) \cite{emm}, the term target value is no longer applicable, hence the term \emph{Target Concept}.
+Section~\ref{preliminaries:target-type} describes the various target types in more detail, including its relation to the type of search strategy (section~\ref{main:search-strategy}) adopted by the Subgroup Discovery algorithm used by Cortana.
 In this section only a short description of the various fields will be given.
 
-The first field is \emph{target type}, that, obviously, is used to change the \emph{target type} for which one wants to do the \emph{Subgroup Discovery}.
-Selecting another \emph{target type} from the combo box will force \emph{Cortana} to consider other \emph{attribute(s)} as \emph{target concept}.
-For example, when changing the \emph{target type} from the default \emph{single nominal} to \emph{single numeric}, the first \emph{attribute} having the \emph{numeric} \emph{attribute type} is selected, and subsequently displayed in the \emph{primary target} combo box (see below).
+The first field is {\bf target type}, that, obviously, is used to change the target type for which one wants to do the Subgroup Discovery.
+Selecting another target type from the drop down box will force Cortana to consider other attributes as target concept.
+For example, when changing the target type from the default single nominal to single numeric, the first attribute having the numeric attribute type is selected, and subsequently displayed in the {\bf primary target} drop down box (see below).
 
-Based on the \emph{target type} selected, a number of \emph{quality measures} is available.
-These are listed in the \emph{quality measure} combo box.
-After changing the \emph{target type}, the \emph{quality measures} listed in the \emph{quility measure} combo box are automatically updated, to fit the new \emph{target type}.
+Based on the target type selected, a number of \emph{quality measures} is available.
+These are listed in the {\bf quality measure} drop down box.
+After changing the \emph{target type}, the \emph{quality measures} listed in the \emph{quility measure} drop down box are automatically updated, to fit the new \emph{target type}.
 
 %TODO explain use of `compute threshold' button
 The text field next to \emph{measure minimum} will, by default, show a minimum threshold value for the selected \emph{quality measure}, that, based on historical observations, is considered to be sensible.
@@ -329,13 +327,13 @@ The items described in the remainder of this section will not be available in ev
 For each item, it will be mentioned to which \emph{attribute type} it applies.
 
 \textbf{primary target} is available in the following \emph{target type} settings: \emph{single nominal}, \emph{single numeric} and \emph{double correlation}.
-The \emph{primary target} combo box lists all \emph{attributes} available in the \emph{dataset}.
+The \emph{primary target} drop down box lists all \emph{attributes} available in the \emph{dataset}.
 
 \textbf{target value} is available only in the \emph{single nominal} setting.
-The \emph{target value} combo box lists all values of the \emph{attribute} set as \emph{primary target}, which can be of the \emph{nominal} and \emph{binary} \emph{attribute type}.
+The \emph{target value} drop down box lists all values of the \emph{attribute} set as \emph{primary target}, which can be of the \emph{nominal} and \emph{binary} \emph{attribute type}.
 
 \textbf{secondary target} is available only in the \emph{double correlation} setting.
-In this setting only \emph{attributes} of the \emph{numeric} \emph{attribute type} will be listed in both the \emph{primary target} and \emph{secondary target} combo box.
+In this setting only \emph{attributes} of the \emph{numeric} \emph{attribute type} will be listed in both the \emph{primary target} and \emph{secondary target} drop down box.
 
 %TODO \section{Targets and Settings}
 \textbf{targets and settings} is available only in the \emph{multi-label} setting.
@@ -765,7 +763,7 @@ java -jar Cortana.jar
 \section{Autorun}
 \label{section:auto-run}
 \emph{Cortana} comes with the ability to run experiments in an unsupervised setting.
-This is a mode that is specifically created to allow so called batch mining.
+This is a mode that is specifically created to allow so-called batch mining.
 This section will explain how \emph{Cortana} accomplishes this, and how to set up an \emph{autorun} or batch mining experiment.
 
 In normal usage mode, the end user can set all search settings using the graphical user interface (GUI).
@@ -809,7 +807,7 @@ A final, more technical, word about the \emph{autorun} files.
 The preferred way to create \emph{autorun} files is through the \emph{Cortana}'s main GUI.
 In most cases this is the most convenient way, eliminating the chance of errors that could occur when one were to craft an \emph{autorun} file by hand.
 The XML-parser parsing the \emph{autorun} file uses a very strict \emph{autorun} definition file, and will throw errors when any of the XML tags are not present in the \emph{autorun} file.
-This means that, even for XML-tags that define settings that are not relevant to the experiment for which they are defined, they should be present, although they will be so called empty tags in such a case.
+This means that, even for XML-tags that define settings that are not relevant to the experiment for which they are defined, they should be present, although they will be so-called empty tags in such a case.
 
 Note that some efforts were taken to allow \emph{Cortana} to run in a headless environment, as is customary for the majority of servers.
 If all goes well, this should not be a problem.
