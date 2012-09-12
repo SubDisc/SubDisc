@@ -159,7 +159,8 @@ public class XMLAutoRun
 
 			runAllFromFile(aFile, showWindows, aNrThreads);
 			if (!showWindows)
-				System.exit(0);
+				return true;
+			// else returns only when all windows are closed
 			return true;
 		}
 		else
