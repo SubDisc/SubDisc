@@ -70,6 +70,7 @@ public class RegressionMeasure
 				itsComplementData = null; //will remain empty for the base RM
 				updateRegressionFunction();
 				updateErrorTerms();
+				break;
 			}
 			case QualityMeasure.COOKS_DISTANCE:
 			{

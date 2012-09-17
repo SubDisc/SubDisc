@@ -1,8 +1,6 @@
 package nl.liacs.subdisc.knime;
 
-import org.knime.core.data.DataCell;
-import org.knime.core.data.DataRow;
-import org.knime.core.data.DoubleValue;
+import org.knime.core.data.*;
 
 public class NumericFilter extends SubgroupFilter {
 	public NumericFilter(int columnIndex, String[] condition) {

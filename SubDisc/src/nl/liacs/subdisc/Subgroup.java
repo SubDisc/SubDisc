@@ -1,6 +1,6 @@
 package nl.liacs.subdisc;
 
-import java.util.BitSet;
+import java.util.*;
 
 /**
  * A Subgroup contains a number of instances from the original data. Subgroups

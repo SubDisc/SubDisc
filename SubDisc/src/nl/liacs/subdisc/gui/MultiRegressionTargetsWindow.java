@@ -7,13 +7,11 @@ package nl.liacs.subdisc.gui;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
-import org.w3c.dom.*;
-
 
 import javax.swing.*;
 
 import nl.liacs.subdisc.*;
-import nl.liacs.subdisc.gui.MultiRegressionTargetsTableModel.*;
+import nl.liacs.subdisc.gui.MultiRegressionTargetsTableModel.MultiRegressionTargetsTableHeader;
 
 public class MultiRegressionTargetsWindow extends JFrame implements ActionListener
 {

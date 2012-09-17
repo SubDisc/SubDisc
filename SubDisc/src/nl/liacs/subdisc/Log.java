@@ -1,6 +1,6 @@
 package nl.liacs.subdisc;
 
-import java.io.FileOutputStream;
+import java.io.*;
 
 public class Log
 {

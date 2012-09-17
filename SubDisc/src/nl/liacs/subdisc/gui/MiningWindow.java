@@ -8,12 +8,12 @@ import java.util.*;
 import java.util.List;
 
 import javax.swing.*;
-import javax.swing.UIManager.*;
+import javax.swing.UIManager.LookAndFeelInfo;
 import javax.swing.border.*;
 
 import nl.liacs.subdisc.*;
 import nl.liacs.subdisc.FileHandler.Action;
-import nl.liacs.subdisc.XMLAutoRun.*;
+import nl.liacs.subdisc.XMLAutoRun.AutoRun;
 import nl.liacs.subdisc.cui.*;
 
 /*

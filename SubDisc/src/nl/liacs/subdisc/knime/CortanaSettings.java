@@ -1,41 +1,19 @@
 package nl.liacs.subdisc.knime;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.io.*;
+import java.util.*;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
+import javax.xml.parsers.*;
+import javax.xml.transform.*;
+import javax.xml.transform.dom.*;
+import javax.xml.transform.stream.*;
 
-import nl.liacs.subdisc.EnumInterface;
-import nl.liacs.subdisc.NumericOperators;
-import nl.liacs.subdisc.NumericStrategy;
-import nl.liacs.subdisc.QualityMeasure;
-import nl.liacs.subdisc.SearchStrategy;
-import nl.liacs.subdisc.TargetType;
+import nl.liacs.subdisc.*;
 
-import org.knime.core.data.BooleanValue;
-import org.knime.core.data.DataColumnSpec;
-import org.knime.core.data.DataTableSpec;
-import org.knime.core.data.DataType;
-import org.knime.core.data.DoubleValue;
-import org.knime.core.node.InvalidSettingsException;
-import org.knime.core.node.NodeSettingsRO;
-import org.knime.core.node.NodeSettingsWO;
-import org.knime.core.node.defaultnodesettings.SettingsModel;
-import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
-import org.knime.core.node.defaultnodesettings.SettingsModelDouble;
-import org.knime.core.node.defaultnodesettings.SettingsModelInteger;
-import org.knime.core.node.defaultnodesettings.SettingsModelString;
-import org.w3c.dom.DOMImplementation;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
+import org.knime.core.data.*;
+import org.knime.core.node.*;
+import org.knime.core.node.defaultnodesettings.*;
+import org.w3c.dom.*;
 import org.w3c.dom.Node;
 
 public class CortanaSettings {

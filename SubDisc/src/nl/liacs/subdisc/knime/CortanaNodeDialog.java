@@ -1,35 +1,15 @@
 package nl.liacs.subdisc.knime;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
-import javax.swing.BorderFactory;
-import javax.swing.BoxLayout;
-import javax.swing.JComponent;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
+import javax.swing.*;
 
-import org.knime.base.node.viz.histogram.util.NoDomainColumnFilter;
-import org.knime.core.data.DataCell;
-import org.knime.core.data.DataColumnDomain;
-import org.knime.core.data.DataColumnSpec;
-import org.knime.core.data.DataTableSpec;
-import org.knime.core.data.NominalValue;
-import org.knime.core.node.InvalidSettingsException;
-import org.knime.core.node.NodeDialogPane;
-import org.knime.core.node.NodeSettingsRO;
-import org.knime.core.node.NodeSettingsWO;
-import org.knime.core.node.NotConfigurableException;
-import org.knime.core.node.defaultnodesettings.DefaultNodeSettingsPane;
-import org.knime.core.node.defaultnodesettings.DialogComponentBoolean;
-import org.knime.core.node.defaultnodesettings.DialogComponentColumnNameSelection;
-import org.knime.core.node.defaultnodesettings.DialogComponentNumberEdit;
-import org.knime.core.node.defaultnodesettings.DialogComponentStringSelection;
-import org.knime.core.node.defaultnodesettings.SettingsModelString;
+import org.knime.base.node.viz.histogram.util.*;
+import org.knime.core.data.*;
+import org.knime.core.node.*;
+import org.knime.core.node.defaultnodesettings.*;
 import org.knime.core.node.util.ColumnFilterPanel.ValueClassFilter;
-import org.knime.core.node.util.CombinedColumnFilter;
+import org.knime.core.node.util.*;
 
 /**
  * <code>NodeDialog</code> for the "Cortana" Node.

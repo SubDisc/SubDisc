@@ -7,13 +7,13 @@ import java.util.*;
 
 import javax.swing.*;
 
+import nl.liacs.subdisc.*;
+
 import org.jfree.chart.*;
 import org.jfree.chart.axis.*;
 import org.jfree.chart.plot.*;
 import org.jfree.chart.renderer.xy.*;
 import org.jfree.data.xy.*;
-
-import nl.liacs.subdisc.*;
 
 // NOTE always stores original + sorted values, should not pose memory problems
 public class PlotWindow extends JFrame implements ActionListener

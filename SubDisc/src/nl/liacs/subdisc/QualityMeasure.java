@@ -452,7 +452,7 @@ public class QualityMeasure
 				float aComplementCoverage = itsNrRecords - theCoverage;
 				float aMean = (theCoverage*(theCoverage+aComplementCoverage+1))/2.0f;
 				float aStDev = (float) Math.sqrt((theCoverage*aComplementCoverage*(theCoverage+aComplementCoverage+1))/12.0f);
-				aReturn = (float) Math.abs((theSum-aMean)/aStDev); break;
+				aReturn = Math.abs((theSum-aMean)/aStDev); break;
 			}
 			case MMAD : { aReturn = (theCoverage/(2*theMedian+theMedianAD)); break; }
 		}

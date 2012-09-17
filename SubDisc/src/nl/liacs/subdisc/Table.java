@@ -587,7 +587,7 @@ public class Table
 			case DOUBLE_CORRELATION:
 				aTargets.add(theTC.getSecondaryTarget());
 				//no break
-			case SINGLE_NOMINAL:
+			case SINGLE_NOMINAL:// no break
 			case SINGLE_NUMERIC:
 				aTargets.add(theTC.getPrimaryTarget());
 				break;

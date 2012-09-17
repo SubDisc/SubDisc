@@ -1,6 +1,6 @@
 package nl.liacs.subdisc;
 
-import java.util.BitSet;
+import java.util.*;
 
 public class ItemSet extends BitSet
 {

@@ -1,6 +1,6 @@
 package nl.liacs.subdisc;
 
-import java.util.BitSet;
+import java.util.*;
 
 //implements an n-dimensional cube of counts.
 

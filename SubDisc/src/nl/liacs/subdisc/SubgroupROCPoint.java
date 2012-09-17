@@ -1,6 +1,6 @@
 package nl.liacs.subdisc;
 
-import java.awt.geom.Point2D;
+import java.awt.geom.*;
 
 /**
  * A SubgroupROCPoint of a {@link Subgroup Subgroup} is nothing more than a 

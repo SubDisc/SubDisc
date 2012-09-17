@@ -4,8 +4,8 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.print.*;
 import java.io.*;
-import java.util.*;
 import java.text.*;
+import java.util.*;
 
 import javax.swing.*;
 
@@ -94,7 +94,7 @@ public class ResultWindow extends JFrame implements ActionListener
 		itsSubgroupTable.getColumnModel().getColumn(3).setPreferredWidth((int)(1.75f * aUnitWidth));
 		itsSubgroupTable.getColumnModel().getColumn(4).setPreferredWidth((int)(1.75f * aUnitWidth));
 		itsSubgroupTable.getColumnModel().getColumn(5).setPreferredWidth((int)(1.75f * aUnitWidth));
-		itsSubgroupTable.getColumnModel().getColumn(6).setPreferredWidth((int)(2 * aUnitWidth));
+		itsSubgroupTable.getColumnModel().getColumn(6).setPreferredWidth(2 * aUnitWidth);
 		itsSubgroupTable.getColumnModel().getColumn(7).setPreferredWidth(9 * aUnitWidth);
 
 		itsScrollPane.add(itsSubgroupTable);

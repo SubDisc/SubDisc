@@ -7,8 +7,7 @@
 
 package nl.liacs.subdisc;
 
-import org.xml.sax.EntityResolver;
-import org.xml.sax.InputSource;
+import org.xml.sax.*;
 
 public class DTDResolver implements EntityResolver
 {

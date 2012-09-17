@@ -1,6 +1,6 @@
 package nl.liacs.subdisc;
 
-import java.util.ArrayList;
+import java.util.*;
 
 public class RefinementList extends ArrayList<Refinement>
 {

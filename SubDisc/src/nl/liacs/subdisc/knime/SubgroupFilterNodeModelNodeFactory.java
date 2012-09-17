@@ -1,8 +1,6 @@
 package nl.liacs.subdisc.knime;
 
-import org.knime.core.node.NodeDialogPane;
-import org.knime.core.node.NodeFactory;
-import org.knime.core.node.NodeView;
+import org.knime.core.node.*;
 
 /**
  * <code>NodeFactory</code> for the "SubgroupFilterNodeModel" Node.

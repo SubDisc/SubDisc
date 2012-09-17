@@ -4,7 +4,7 @@ package nl.liacs.subdisc.gui;
 import javax.swing.table.*;
 
 import nl.liacs.subdisc.*;
-import nl.liacs.subdisc.gui.MetaDataTableModel.*;
+import nl.liacs.subdisc.gui.MetaDataTableModel.MetaDataTableHeader;
 
 public class MultiRegressionTargetsTableModel extends AbstractTableModel
 {

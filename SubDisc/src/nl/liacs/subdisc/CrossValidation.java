@@ -1,7 +1,6 @@
 package nl.liacs.subdisc;
 
-import java.util.Random;
-import java.util.BitSet;
+import java.util.*;
 
 public class CrossValidation
 {

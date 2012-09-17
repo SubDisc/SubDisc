@@ -1,9 +1,6 @@
 package nl.liacs.subdisc;
 
-import javax.swing.JButton;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
+import javax.swing.*;
 
 public class ErrorWindow extends javax.swing.JFrame
 {

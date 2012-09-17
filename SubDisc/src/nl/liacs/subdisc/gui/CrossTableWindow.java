@@ -109,9 +109,9 @@ public class CrossTableWindow extends JFrame implements ActionListener
 		String anEvent = theEvent.getActionCommand();
 
 		if ("save".equals(anEvent))
-			; // as csv, tsv, tex
+			; // TODO as csv, tsv, tex
 		if ("print".equals(anEvent))
-			;
+			; // TODO
 		else if ("close".equals(anEvent))
 			dispose();
 	}

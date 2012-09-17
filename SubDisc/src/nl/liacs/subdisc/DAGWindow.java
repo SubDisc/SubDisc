@@ -1,6 +1,6 @@
 package nl.liacs.subdisc;
 
-import javax.swing.JFrame;
+import javax.swing.*;
 
 /* Note: Write a parent class for DataModelWindow, SelectionGraphWindow and DAGWindow */
 public class DAGWindow extends JFrame

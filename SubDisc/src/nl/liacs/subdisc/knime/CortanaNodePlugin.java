@@ -4,8 +4,9 @@
  */
 package nl.liacs.subdisc.knime;
 
-import org.eclipse.core.runtime.Plugin;
-import org.osgi.framework.BundleContext;
+import org.eclipse.core.runtime.*;
+import org.osgi.framework.*;
+
 
 /**
  * This is the eclipse bundle activator.

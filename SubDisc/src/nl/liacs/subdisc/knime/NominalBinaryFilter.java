@@ -1,7 +1,6 @@
 package nl.liacs.subdisc.knime;
 
-import org.knime.core.data.DataCell;
-import org.knime.core.data.DataRow;
+import org.knime.core.data.*;
 
 public class NominalBinaryFilter extends SubgroupFilter {
 	public NominalBinaryFilter(int columnIndex, String[] condition) {

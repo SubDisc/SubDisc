@@ -1,6 +1,5 @@
 package nl.liacs.subdisc;
 
-import java.util.*;
 
 
 /*

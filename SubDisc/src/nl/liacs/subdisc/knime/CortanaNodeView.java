@@ -1,6 +1,6 @@
 package nl.liacs.subdisc.knime;
 
-import org.knime.core.node.NodeView;
+import org.knime.core.node.*;
 
 /**
  * <code>NodeView</code> for the "Cortana" Node.
@@ -31,7 +31,7 @@ public class CortanaNodeView extends NodeView<CortanaNodeModel> {
         // TODO retrieve the new model from your nodemodel and 
         // update the view.
         CortanaNodeModel nodeModel = 
-            (CortanaNodeModel)getNodeModel();
+            getNodeModel();
         assert nodeModel != null;
         
         // be aware of a possibly not executed nodeModel! The data you retrieve

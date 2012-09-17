@@ -11,7 +11,7 @@ import java.util.*;
 import javax.swing.*;
 
 import nl.liacs.subdisc.*;
-import nl.liacs.subdisc.gui.MetaDataTableModel.*;
+import nl.liacs.subdisc.gui.MetaDataTableModel.MetaDataTableHeader;
 
 public class MetaDataWindow extends JFrame implements ActionListener
 {

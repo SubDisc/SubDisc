@@ -1,17 +1,10 @@
 package nl.liacs.subdisc;
 
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Point;
-import java.awt.Rectangle;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionListener;
-import java.io.Serializable;
+import java.awt.*;
+import java.awt.event.*;
+import java.io.*;
 
-import javax.swing.JComponent;
-import javax.swing.JLabel;
+import javax.swing.*;
 
 public class MShape extends JComponent implements MouseMotionListener, MouseListener,
     ActionListener, Serializable

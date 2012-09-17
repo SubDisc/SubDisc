@@ -1,8 +1,8 @@
 package nl.liacs.subdisc;
 
 import java.util.*;
+
 import javax.swing.*;
-import java.util.List;
 
 import nl.liacs.subdisc.gui.*;
 

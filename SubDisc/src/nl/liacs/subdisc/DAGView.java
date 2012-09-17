@@ -1,17 +1,12 @@
 package nl.liacs.subdisc;
 
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Graphics;
-import java.awt.Rectangle;
-import java.awt.event.MouseListener;
-import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Random;
+import java.awt.*;
+import java.awt.event.*;
+import java.beans.*;
+import java.io.*;
+import java.util.*;
 
-import javax.swing.JPanel;
+import javax.swing.*;
 
 public class DAGView extends JPanel implements Serializable, MouseListener
 {
@@ -33,7 +28,7 @@ public class DAGView extends JPanel implements Serializable, MouseListener
 		super();
 		itsDAG = theDAG;
 		itsDAGSize = itsDAG.getSize();
-		itsRandom = new Random((long) System.currentTimeMillis()); // truly random
+		itsRandom = new Random(System.currentTimeMillis()); // truly random
 //		itsRandom = new Random(12345); // random, but always the same
 		propertySupport = new PropertyChangeSupport(this);
 		setBackground(Color.white);
@@ -187,8 +182,8 @@ public class DAGView extends JPanel implements Serializable, MouseListener
 
 	public void connect(int theID1, int theID2)
 	{
-		VisualNode aNode1 = (VisualNode) itsComponentSet.get(theID1);
-		VisualNode aNode2 = (VisualNode) itsComponentSet.get(theID2);
+		VisualNode aNode1 = itsComponentSet.get(theID1);
+		VisualNode aNode2 = itsComponentSet.get(theID2);
 		VisualArc anArc = new VisualArc(aNode1, aNode2);
 
 		if(!itsConnectorSet.contains(anArc))

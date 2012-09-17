@@ -1,13 +1,7 @@
 package nl.liacs.subdisc;
 
-import java.awt.AlphaComposite;
-import java.awt.BasicStroke;
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.Graphics2D;
-import java.awt.Rectangle;
-import java.awt.RenderingHints;
-import java.awt.event.MouseEvent;
+import java.awt.*;
+import java.awt.event.*;
 
 public class VisualNode extends MShape
 {

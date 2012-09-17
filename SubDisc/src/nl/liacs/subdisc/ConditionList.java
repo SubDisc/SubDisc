@@ -1,6 +1,6 @@
 package nl.liacs.subdisc;
 
-import java.util.ArrayList;
+import java.util.*;
 
 public class ConditionList extends ArrayList<Condition> implements Comparable<ConditionList>
 {

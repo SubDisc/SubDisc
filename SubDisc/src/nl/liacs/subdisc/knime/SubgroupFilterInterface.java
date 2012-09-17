@@ -1,6 +1,6 @@
 package nl.liacs.subdisc.knime;
 
-import org.knime.core.data.DataRow;
+import org.knime.core.data.*;
 
 public interface SubgroupFilterInterface {
 

@@ -1,27 +1,13 @@
 package nl.liacs.subdisc.knime;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 
-import org.knime.base.node.io.csvwriter.CSVWriter;
-import org.knime.base.node.io.csvwriter.FileWriterSettings;
-import org.knime.base.node.io.filereader.FileAnalyzer;
-import org.knime.base.node.io.filereader.FileReaderNodeSettings;
-import org.knime.base.node.io.filereader.FileTable;
-import org.knime.core.data.DataColumnSpec;
-import org.knime.core.data.DataTableSpec;
-import org.knime.core.node.BufferedDataTable;
-import org.knime.core.node.CanceledExecutionException;
-import org.knime.core.node.ExecutionContext;
-import org.knime.core.node.ExecutionMonitor;
-import org.knime.core.node.InvalidSettingsException;
-import org.knime.core.node.NodeLogger;
-import org.knime.core.node.NodeModel;
-import org.knime.core.node.NodeSettingsRO;
-import org.knime.core.node.NodeSettingsWO;
-import org.knime.core.node.defaultnodesettings.SettingsModelString;
-import org.knime.core.node.util.CombinedColumnFilter;
+import org.knime.base.node.io.csvwriter.*;
+import org.knime.base.node.io.filereader.*;
+import org.knime.core.data.*;
+import org.knime.core.node.*;
+import org.knime.core.node.defaultnodesettings.*;
+import org.knime.core.node.util.*;
 import org.knime.core.util.tokenizer.SettingsStatus;
 
 /**

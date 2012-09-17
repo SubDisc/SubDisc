@@ -3,7 +3,7 @@
  */
 package nl.liacs.subdisc;
 
-import java.io.File;
+import java.io.*;
 
 import javax.swing.filechooser.FileFilter;
 

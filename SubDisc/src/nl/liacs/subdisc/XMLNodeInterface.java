@@ -7,7 +7,7 @@
 
 package nl.liacs.subdisc;
 
-import org.w3c.dom.Node;
+import org.w3c.dom.*;
 
 public interface XMLNodeInterface
 {

@@ -1,17 +1,8 @@
 package nl.liacs.subdisc.knime;
 
-import org.knime.base.node.preproc.filter.row.rowfilter.AndRowFilter;
-import org.knime.base.node.preproc.filter.row.rowfilter.EndOfTableException;
-import org.knime.base.node.preproc.filter.row.rowfilter.IncludeFromNowOn;
-import org.knime.base.node.preproc.filter.row.rowfilter.RowFilter;
-import org.knime.core.data.BooleanValue;
-import org.knime.core.data.DataRow;
-import org.knime.core.data.DataTableSpec;
-import org.knime.core.data.DataType;
-import org.knime.core.data.DoubleValue;
-import org.knime.core.node.InvalidSettingsException;
-import org.knime.core.node.NodeSettingsRO;
-import org.knime.core.node.NodeSettingsWO;
+import org.knime.base.node.preproc.filter.row.rowfilter.*;
+import org.knime.core.data.*;
+import org.knime.core.node.*;
 
 public class SubgroupRowFilter extends RowFilter {
 private final RowFilter[] filters;

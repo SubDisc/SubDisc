@@ -1,19 +1,10 @@
 package nl.liacs.subdisc.knime;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 
-import org.knime.base.node.preproc.filter.row.RowFilterTable;
-import org.knime.core.data.DataRow;
-import org.knime.core.data.DataTableSpec;
-import org.knime.core.node.BufferedDataTable;
-import org.knime.core.node.CanceledExecutionException;
-import org.knime.core.node.ExecutionContext;
-import org.knime.core.node.ExecutionMonitor;
-import org.knime.core.node.InvalidSettingsException;
-import org.knime.core.node.NodeModel;
-import org.knime.core.node.NodeSettingsRO;
-import org.knime.core.node.NodeSettingsWO;
+import org.knime.base.node.preproc.filter.row.*;
+import org.knime.core.data.*;
+import org.knime.core.node.*;
 
 /**
  * This is the model implementation of SubgroupFilterNodeModel.
