@@ -544,12 +544,12 @@ public class SubgroupSet extends TreeSet<Subgroup>
 		return aSubgroupList;
 	}
 
+	// TODO should me merged with getROCListSubgroups()
 	public SubgroupSet getROCListSubgroupSet()
 	{
 		update();
 		int aSize = itsROCList.size();
 		SubgroupSet aResult = new SubgroupSet(-1);
-//		Object[][] aSubgroupList = new Object[aSize][ROC_HEADER.length];
 
 		for (int i = 0, j = aSize; i < j; ++i)
 		{
@@ -557,8 +557,9 @@ public class SubgroupSet extends TreeSet<Subgroup>
 			Subgroup s;
 			Iterator<Subgroup> it = iterator();
 
-			while ((s = it.next()).getID() < p.ID);
-				aResult.add(s);
+			while ((s = it.next()).getID() < p.ID); // <- NOTE ;
+
+			aResult.add(s);
 		}
 
 		return aResult;

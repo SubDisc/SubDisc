@@ -226,16 +226,12 @@ public class Process
 
 				SubgroupSet ROCSubgroups = sd.getResult().getROCListSubgroupSet();
 
-				// This most definitely _is_ pointless.
-				// Removing the following assignment results in loss of subgroups from aHeavySubgroupSet.
-				// I see no reason for this, but for the time being let us keep this aSize determination.
-				// This is why I hate programming.
-	//			@SuppressWarnings("unused")
-				int aSize = ROCSubgroups.size();
+				// force update(), should have been in .getROCListSubgroupSet()
+				ROCSubgroups.size();
 
-				Log.logCommandLine("ROC subgroups : " + aSize);
+				//Log.logCommandLine("ROC subgroups : " + aSize);
 				for (Subgroup s : ROCSubgroups)
-					Log.logCommandLine("    "+s.getConditions().toString());
+					Log.logCommandLine("    " + s.getConditions().toString());
 
 				//select convex hull subgroups from the resulting subgroup set
 				aHeavySubgroupSet.addAll(ROCSubgroups);
