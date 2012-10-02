@@ -211,7 +211,7 @@ public class QualityMeasure
 				returnValue = ((float) Math.sqrt(aCountBody/theTotalCoverage)) * (theCountHeadBody/aCountBody - theTotalTargetCoverage/theTotalCoverage);
 				break;
 			}
-			case JACCARD: {		returnValue = theCountHeadBody /(theCountHeadBody + aCountNotHeadBody + aTotalTargetCoverageNotBody);
+			case JACCARD: {		returnValue = theCountHeadBody /(aCountBody + aTotalTargetCoverageNotBody);
 								break; }
 			case COVERAGE: {	returnValue = aCountBody;
 								break; }
