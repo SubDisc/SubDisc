@@ -336,6 +336,24 @@ public class QualityMeasure
 	public int getNrRecords() { return itsNrRecords; }
 	public int getNrPositives() { return itsTotalTargetCoverage; }
 
+	//get quality of upper left corner
+	public float getROCHeaven()
+	{
+		return calculate(itsTotalTargetCoverage, itsTotalTargetCoverage);
+	}
+
+	//lower right corner
+	public float getROCHell()
+	{
+		return calculate(0, itsNrRecords - itsTotalTargetCoverage);
+	}
+
+
+
+
+
+
+
 	//SINGLE_NUMERIC ===============================================
 
 	public float calculate(int theCoverage, float theSum, float theSSD,

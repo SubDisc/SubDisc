@@ -118,7 +118,7 @@ public class ROCCurve extends JPanel
 		int p = itsQualityMeasure.getNrPositives();
 		int aResolution = 400;
 		float aMax = Math.max(itsQualityMeasure.calculate(p, p), itsQualityMeasure.calculate(p, N));
-		aMax = Math.max(aMax, itsQualityMeasure.calculate(0, p-N));
+		aMax = Math.max(aMax, itsQualityMeasure.calculate(0, N-p));
 		for (int i=0; i<aResolution; i++)
 		{
 			float anX = i/(float)aResolution;
@@ -162,9 +162,7 @@ public class ROCCurve extends JPanel
 		aGraphic.drawString("FPR", 0.44f, 0.08f);
 		aGraphic.drawString("TPR", -0.1f, -0.44f);
 
-		aGraphic.drawString(Integer.toString(itsMin), itsXMin, -0.03f);
-		aGraphic.drawString(Integer.toString(itsMax), itsXEnd+0.01f, -Math.max(itsYEnd, 0.03f));
-
+		//scales
 		NumberFormat aFormatter = NumberFormat.getNumberInstance();
 		aFormatter.setMaximumFractionDigits(1);
 		for(int i=1; i<11; i++)
@@ -172,5 +170,17 @@ public class ROCCurve extends JPanel
 			aGraphic.drawString(aFormatter.format(i*0.1f), i*0.1f, 0.04f);
 			aGraphic.drawString(aFormatter.format(i*0.1f), -0.07f, i*-0.1f);
 		}
+
+		//qualities
+		aFormatter.setMaximumFractionDigits(4);
+		aFont = new Font("SansSerif", Font.PLAIN, 10);
+		aNewFont = aFont.deriveFont(10.0f/aSize);
+		aGraphic.setFont(aNewFont);
+		aGraphic.drawString(aFormatter.format(itsQualityMeasure.getROCHeaven()), 0.02f, -0.96f);
+		aGraphic.drawString(aFormatter.format(itsQualityMeasure.getROCHell()), 0.9f, -0.02f);
+
+		//min and max support
+		aGraphic.drawString(Integer.toString(itsMin), itsXMin, -0.03f);
+		aGraphic.drawString(Integer.toString(itsMax), itsXEnd+0.01f, -Math.max(itsYEnd, 0.03f));
 	}
 }
