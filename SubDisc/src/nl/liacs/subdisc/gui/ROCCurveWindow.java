@@ -62,14 +62,15 @@ public class ROCCurveWindow extends JFrame implements ActionListener
 		aContent += "aTotalTargetCoverageNotBody(y) = p-pos(y)\n";
 		aContent += "aCountNotHeadNotBody(x) = N-(p+neg(x))\n";
 		aContent += "aCountBody(x,y) = neg(x)+pos(y)\n";
+		aContent += "aCountNotHeadBody(x,y) = aCountBody(x,y) - pos(y)\n";
 		aContent += "sqr(x) = x*x\n";
+		aContent += "max(x,y) = x>y?x:y\n";
 		aContent += "expect(x,y,z) = x*(y/x)*(z/x)\n";
 		aContent += "e11(x,y,z) = expect(x,y,z)\n";
 		aContent += "e01(x,y,z) = expect(x,x-y,z)\n";
 		aContent += "e10(x,y,z) = expect(x,y,x-z)\n";
 		aContent += "e00(x,y,z) = expect(x,x-y,x-z)\n";
 		aContent += "lg(x) = log(x)/log(2); H(x) = -x*lg(x)-(1-x)*lg(1-x)\n";
-
 
 		aContent += "WRAcc(x,y) = (pos(y)/N)-(p/N)*(aCountBody(x,y)/N)\n";
 		aContent += "absWRAcc(x,y) = abs((pos(y)/N)-(p/N)*(aCountBody(x,y)/N))\n";
@@ -82,10 +83,13 @@ public class ROCCurveWindow extends JFrame implements ActionListener
 		aContent += "Jaccard(x,y) = pos(y)/(aCountBody(x,y) + aTotalTargetCoverageNotBody(y))\n";
 		aContent += "Coverage(x,y) = aCountBody(x,y)\n";
 		aContent += "Accuracy(x,y) = pos(y)/aCountBody(x,y)\n";
-//		aContent += "Binomial(x,y) = sqrt(aCountBody(x,y)/N) * (pos(y)/aCountBody(x,y) - p/N)\n";
-//		aContent += "Binomial(x,y) = sqrt(aCountBody(x,y)/N) * (pos(y)/aCountBody(x,y) - p/N)\n";
-//		aContent += "Binomial(x,y) = sqrt(aCountBody(x,y)/N) * (pos(y)/aCountBody(x,y) - p/N)\n";
-//		aContent += "Binomial(x,y) = sqrt(aCountBody(x,y)/N) * (pos(y)/aCountBody(x,y) - p/N)\n";
+		aContent += "Specificity(x,y) = aCountNotHeadNotBody(x)/(N - p)\n";
+		aContent += "Sensitivity(x,y) = pos(y)/p\n";
+		aContent += "Laplace(x,y) = (pos(y)+1)/(aCountBody(x,y)+2)\n";
+		aContent += "F_measure(x,y) = pos(y)/(p+aCountBody(x,y))\n";
+		aContent += "G_measure(x,y) = pos(y)/(aCountNotHeadBody(x,y)+p)\n";
+		aContent += "Correlation(x,y) = (pos(y)*n - p*aCountNotHeadBody(x,y)) / sqrt(p*n*aCountBody(x,y)*(N-aCountBody(x,y)))\n";
+		aContent += "Purity(x,y) = max(pos(y)/aCountBody(x,y), 1.0-pos(y)/aCountBody(x,y))\n";
 		aContent += "\n";
 
 		//subgroups
@@ -123,6 +127,13 @@ public class ROCCurveWindow extends JFrame implements ActionListener
 			case (QualityMeasure.JACCARD) : aContent += "splot Jaccard(x,y) lt 3 lw 0.5;\n"; break;
 			case (QualityMeasure.COVERAGE) : aContent += "splot Coverage(x,y) lt 3 lw 0.5;\n"; break;
 			case (QualityMeasure.ACCURACY) : aContent += "splot Accuracy(x,y) lt 3 lw 0.5;\n"; break;
+			case (QualityMeasure.SPECIFICITY) : aContent += "splot Specificity(x,y) lt 3 lw 0.5;\n"; break;
+			case (QualityMeasure.SENSITIVITY) : aContent += "splot Sensitivity(x,y) lt 3 lw 0.5;\n"; break;
+			case (QualityMeasure.LAPLACE) : aContent += "splot Laplace(x,y) lt 3 lw 0.5;\n"; break;
+			case (QualityMeasure.F_MEASURE) : aContent += "splot F_measure(x,y) lt 3 lw 0.5;\n"; break;
+			case (QualityMeasure.G_MEASURE) : aContent += "splot G_measure(x,y) lt 3 lw 0.5;\n"; break;
+			case (QualityMeasure.CORRELATION) : aContent += "splot Correlation(x,y) lt 3 lw 0.5;\n"; break;
+			case (QualityMeasure.PURITY) : aContent += "splot Purity(x,y) lt 3 lw 0.5;\n"; break;
 		}
 		aContent += "set terminal postscript eps size 5,5; set output \'roc.eps\'; replot;\n";
 		aContent += "set output; set terminal pop; set size 1,1;\n";

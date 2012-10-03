@@ -235,7 +235,7 @@ public class QualityMeasure
 			}
 			case PURITY:
 			{
-				returnValue = theCountHeadBody /aCountBody;
+				returnValue = theCountHeadBody/aCountBody;
 				if (returnValue < 0.5)
 					returnValue = 1.0F - returnValue;
 				break;
