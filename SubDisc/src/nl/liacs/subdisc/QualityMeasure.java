@@ -41,41 +41,42 @@ public class QualityMeasure
 	public static final int F_MEASURE   = 12;
 	public static final int G_MEASURE   = 13;
 	public static final int CORRELATION = 14;
+	public static final int BAYESIAN_SCORE = 15;
 	//SINGLE_NUMERIC quality measures
-	public static final int Z_SCORE = 15;
-	public static final int INVERSE_Z_SCORE = 16;
-	public static final int ABS_Z_SCORE = 17;
-	public static final int AVERAGE = 18;
-	public static final int INVERSE_AVERAGE = 19;
-	public static final int MEAN_TEST = 20;
-	public static final int INVERSE_MEAN_TEST = 21;
-	public static final int ABS_MEAN_TEST = 22;
-	public static final int T_TEST = 23;
-	public static final int INVERSE_T_TEST = 24;
-	public static final int ABS_T_TEST = 25;
-	public static final int CHI2_TEST = 26;	// TODO see itsPopulationCounts
+	public static final int Z_SCORE = 16;
+	public static final int INVERSE_Z_SCORE = 17;
+	public static final int ABS_Z_SCORE = 18;
+	public static final int AVERAGE = 19;
+	public static final int INVERSE_AVERAGE = 20;
+	public static final int MEAN_TEST = 21;
+	public static final int INVERSE_MEAN_TEST = 22;
+	public static final int ABS_MEAN_TEST = 23;
+	public static final int T_TEST = 24;
+	public static final int INVERSE_T_TEST = 25;
+	public static final int ABS_T_TEST = 26;
+	public static final int CHI2_TEST = 27;	// TODO see itsPopulationCounts
 	//SINGLE_ORDINAL quality measures
-	public static final int AUC = 27;
-	public static final int WMW_RANKS = 28;
-	public static final int INVERSE_WMW_RANKS = 29;
-	public static final int ABS_WMW_RANKS = 30;
-	public static final int MMAD = 31;
+	public static final int AUC = 28;
+	public static final int WMW_RANKS = 29;
+	public static final int INVERSE_WMW_RANKS = 30;
+	public static final int ABS_WMW_RANKS = 31;
+	public static final int MMAD = 32;
 	//MULTI_LABEL quality measures
-	public static final int WEED = 32;
-	public static final int EDIT_DISTANCE = 33;
+	public static final int WEED = 33;
+	public static final int EDIT_DISTANCE = 34;
 	//DOUBLE_CORRELATION
-	public static final int CORRELATION_R = 34;
-	public static final int CORRELATION_R_NEG = 35;
-	public static final int CORRELATION_R_NEG_SQ = 36;
-	public static final int CORRELATION_R_SQ = 37;
-	public static final int CORRELATION_DISTANCE = 38;
-	public static final int CORRELATION_P = 39;
-	public static final int CORRELATION_ENTROPY = 40;
-	public static final int ADAPTED_WRACC = 41;
-	public static final int COSTS_WRACC = 42;
+	public static final int CORRELATION_R = 35;
+	public static final int CORRELATION_R_NEG = 36;
+	public static final int CORRELATION_R_NEG_SQ = 37;
+	public static final int CORRELATION_R_SQ = 38;
+	public static final int CORRELATION_DISTANCE = 39;
+	public static final int CORRELATION_P = 40;
+	public static final int CORRELATION_ENTROPY = 41;
+	public static final int ADAPTED_WRACC = 42;
+	public static final int COSTS_WRACC = 43;
 	//DOUBLE_REGRESSION
-	public static final int LINEAR_REGRESSION = 43;
-	public static final int COOKS_DISTANCE = 44;
+	public static final int LINEAR_REGRESSION = 44;
+	public static final int COOKS_DISTANCE = 45;
 
 	//SINGLE =========================================================================================
 
@@ -245,6 +246,11 @@ public class QualityMeasure
 				returnValue = theCountHeadBody/theTotalCoverage - ((theTotalTargetCoverage/theTotalCoverage) * aCountBody/theTotalCoverage);
 				returnValue = Math.abs(returnValue);
 				break;
+			}
+			case BAYESIAN_SCORE:
+			{
+				//TODO: Iyad Batal
+				return 0.0f;
 			}
 		}
 		return returnValue;
@@ -500,6 +506,7 @@ public class QualityMeasure
 			case F_MEASURE	:		{ anEvaluationMinimum = "0.2"; break; }
 			case G_MEASURE	:		{ anEvaluationMinimum = "0.2"; break; }
 			case CORRELATION:		{ anEvaluationMinimum = "0.1"; break; }
+			case BAYESIAN_SCORE:	{ anEvaluationMinimum = "0.0"; break; }
 			//NUMERIC
 			case AVERAGE	: 		{ anEvaluationMinimum = Float.toString(theAverage); break; }
 			case INVERSE_AVERAGE: 	{ anEvaluationMinimum = Float.toString(-theAverage); break; }
@@ -559,6 +566,7 @@ public class QualityMeasure
 			case F_MEASURE	: { anEvaluationMeasure = "F-measure"; break; }
 			case G_MEASURE	: { anEvaluationMeasure = "G-measure"; break; }
 			case CORRELATION: { anEvaluationMeasure = "Correlation"; break; }
+			case BAYESIAN_SCORE: { anEvaluationMeasure = "Bayesian Score"; break; }
 			//NUMERIC
 			case AVERAGE	: { anEvaluationMeasure = "Average"; break; }
 			case INVERSE_AVERAGE: { anEvaluationMeasure = "Inverse Average"; break; }
@@ -616,6 +624,7 @@ public class QualityMeasure
 		else if ("f-measure".equals(anEvaluationMeasure)) return F_MEASURE;
 		else if ("g-measure".equals(anEvaluationMeasure)) return G_MEASURE;
 		else if ("correlation".equals(anEvaluationMeasure)) return CORRELATION;
+		else if ("bayesian score".equals(anEvaluationMeasure)) return BAYESIAN_SCORE;
 		//NUMERIC
 		else if ("average".equals(anEvaluationMeasure)) return AVERAGE;
 		else if ("inverse average".equals(anEvaluationMeasure)) return INVERSE_AVERAGE;
