@@ -21,7 +21,7 @@ public class FileHandler
 		OPEN_FILE, OPEN_DATABASE, SAVE
 	}
 
-	// remember the directory of the last used file, defaults to users' 
+	// remember the directory of the last used file, defaults to users'
 	// (platform specific) home directory if the the path cannot be resolved
 	private static String itsLastFileLocation = ".";
 
@@ -41,9 +41,15 @@ public class FileHandler
 				break;
 			}
 			case OPEN_DATABASE : openDatabase(); break;
-			case SAVE : save(); break;
+			case SAVE : save(FileType.ALL_DATA_FILES); break;
 			default : break;
 		}
+	}
+
+	//save in a specific format
+	public FileHandler(FileType theType)
+	{
+		save(theType);
 	}
 
 	// Add CUI domain to existing Table
@@ -183,10 +189,29 @@ public class FileHandler
 		return aFrame;
 	}
 
-	private File save()
+	private File save(FileType theType)
 	{
-		showFileChooser(Action.SAVE);
+		if (theType == FileType.ALL_DATA_FILES)
+			showFileChooser(Action.SAVE);
+		else
+			saveFileChooser(theType);
 		return itsFile;
+	}
+
+	private void saveFileChooser(FileType theType)
+	{
+		JFrame aFrame = new JFrame();
+		aFrame.setIconImage(MiningWindow.ICON);
+		JFileChooser aChooser = new JFileChooser(new File(itsLastFileLocation));
+		aChooser.addChoosableFileFilter(new FileTypeFilter(theType));
+		aChooser.setFileFilter(new FileTypeFilter(theType));
+
+		int theOption = aChooser.showSaveDialog(aFrame);
+		if (theOption == JFileChooser.APPROVE_OPTION)
+		{
+			itsFile = aChooser.getSelectedFile();
+			itsLastFileLocation = itsFile.getParent();
+		}
 	}
 
 	private void showFileChooser(Action theAction)
@@ -199,7 +224,7 @@ public class FileHandler
 		aChooser.addChoosableFileFilter(new FileTypeFilter(FileType.TXT));
 		aChooser.addChoosableFileFilter(new FileTypeFilter(FileType.ARFF));
 		aChooser.addChoosableFileFilter(new FileTypeFilter(FileType.XML));
-		aChooser.setFileFilter (new FileTypeFilter(FileType.ALL_DATA_FILES));
+		aChooser.setFileFilter(new FileTypeFilter(FileType.ALL_DATA_FILES));
 
 		int theOption = -1;
 
@@ -230,7 +255,7 @@ public class FileHandler
 	/**
 	 * If a <code>JFileChooser</code> dialog was shown and a <code>File</code>
 	 * was selected, use this method to retrieve it.
-	 * 
+	 *
 	 * @return a <code>File</code>, or <code>null</code> if no approved
 	 * selection was made.
 	 */
@@ -239,7 +264,7 @@ public class FileHandler
 	/**
 	 * If this FileHandler successfully loaded a {@link Table Table} from a
 	 * <code>File</code> or a database, use this method to retrieve it.
-	 * 
+	 *
 	 * @return the <code>Table</code> if present, <code>null</code> otherwise.
 	 */
 	public Table getTable() { return itsTable; };
@@ -248,7 +273,7 @@ public class FileHandler
 	 * If this FileHandler successfully loaded the
 	 * {@link SearchParameters SearchParameters} from a <code>File</code>, use
 	 * this method to retrieve them.
-	 * 
+	 *
 	 * @return the <code>SearchParameters</code> if present, <code>null</code>
 	 * otherwise.
 	 */

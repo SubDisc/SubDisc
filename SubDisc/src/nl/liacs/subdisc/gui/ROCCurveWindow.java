@@ -1,8 +1,8 @@
 package nl.liacs.subdisc.gui;
 
+import java.io.*;
 import java.awt.*;
 import java.awt.event.*;
-
 import javax.swing.*;
 
 import nl.liacs.subdisc.*;
@@ -49,6 +49,39 @@ public class ROCCurveWindow extends JFrame implements ActionListener
 	}
 
 	private void createGnuPlotFile()
+	{
+		BufferedWriter aWriter = null;
+		File aFile = new FileHandler(FileType.PLT).getFile();
+
+		if (aFile == null)
+			return;
+		else
+		{
+			try
+			{
+				aWriter = new BufferedWriter(new FileWriter(aFile));
+				aWriter.write(getGnuPlotString());
+			}
+			catch (IOException e)
+			{
+				Log.logCommandLine("Error while writing: " + aFile);
+			}
+			finally
+			{
+				try
+				{
+					if (aWriter != null)
+						aWriter.close();
+				}
+				catch (IOException e)
+				{
+					Log.logCommandLine("Error while writing: " + aFile);
+				}
+			}
+		}
+	}
+
+	private String getGnuPlotString()
 	{
 		float anX, aY;
 		float aSize = 0.001f;
@@ -137,6 +170,6 @@ public class ROCCurveWindow extends JFrame implements ActionListener
 		}
 		aContent += "set terminal postscript eps size 5,5; set output \'roc.eps\'; replot;\n";
 		aContent += "set output; set terminal pop; set size 1,1;\n";
-		Log.logCommandLine(aContent);
+		return aContent;
 	}
 }

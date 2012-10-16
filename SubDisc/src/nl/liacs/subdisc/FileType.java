@@ -33,6 +33,14 @@ public enum FileType
 			return new ArrayList<String>(Collections.singletonList(".xml"));
 		}
 	},
+	PLT("GnuPlot Files")
+	{
+		@Override
+		public List<String> getExtensions()
+		{
+			return new ArrayList<String>(Collections.singletonList(".plt"));
+		}
+	},
 	ALL_DATA_FILES("Data Files")
 	{
 		@Override
@@ -42,6 +50,7 @@ public enum FileType
 				new ArrayList<String>(TXT.getExtensions());
 			returnList.addAll(ARFF.getExtensions());
 			returnList.addAll(XML.getExtensions());
+			returnList.addAll(PLT.getExtensions());
 			return returnList;
 		}
 	};
@@ -56,12 +65,12 @@ public enum FileType
 	abstract List<String> getExtensions();
 
 	/**
-	 * Returns a <code>String</code> for a <code>File</code> that is equal to 
+	 * Returns a <code>String</code> for a <code>File</code> that is equal to
 	 * <code>File.getName()</code>, but with the extension removed (that is
 	 * everything starting from the last '.').
-	 * 
+	 *
 	 * @param theFile the <code>File<code> from which to remove the extension.
-	 * 
+	 *
 	 * @return a <code>String</code> of the <code>File.getName()</code> for the
 	 * parameter, with the extension removed, or the empty <code>Sting</code> if
 	 * the parameter is <code>null</code>.
@@ -81,9 +90,9 @@ public enum FileType
 	 * Returns the FileType corresponding to the filename parameter. The
 	 * filename will be checked for its extension, and if the extension is
 	 * registered with a FileType, that FileType will be returned.
-	 * 
+	 *
 	 * @param theFile the <code>File</code> to get the FileType for.
-	 * 
+	 *
 	 * @return the FileType for the parameter, if the parameters' extension is
 	 * known, <code>null</code> otherwise.
 	 */

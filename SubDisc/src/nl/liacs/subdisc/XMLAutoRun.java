@@ -21,7 +21,7 @@ public class XMLAutoRun
 			return;
 		else
 		{
-			File aFile = new FileHandler(Action.SAVE).getFile();
+			File aFile = new FileHandler(FileType.XML).getFile();
 
 			if (aFile == null)
 				return;
