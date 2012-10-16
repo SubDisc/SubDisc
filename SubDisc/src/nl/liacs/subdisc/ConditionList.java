@@ -6,6 +6,8 @@ public class ConditionList extends ArrayList<Condition> implements Comparable<Co
 {
 	private static final long serialVersionUID = 1L;
 
+	public ConditionList() {}
+
 	public ConditionList copy()
 	{
 		ConditionList aNewConditionList = new ConditionList();

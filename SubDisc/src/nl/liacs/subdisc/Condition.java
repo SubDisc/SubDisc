@@ -166,12 +166,12 @@ public class Condition implements Comparable<Condition>
 	/**
 	 * Set the value for this Condition, specifically for nominal value sets
 	 */
-	public void setValue(ValueSet theValue)	{ itsNominalValueSet = theValue; }
+	public void setValue(ValueSet theValue) { itsNominalValueSet = theValue; }
 
 	/**
 	 * Set the value for this Condition, specifically for numeric intervals
 	 */
-	public void setValue(Interval theValue)	{ itsInterval = theValue; }
+	public void setValue(Interval theValue) { itsInterval = theValue; }
 
 	public boolean hasNextOperator()
 	{
@@ -298,9 +298,9 @@ public class Condition implements Comparable<Condition>
 	public String toString()
 	{
 		if (itsColumn.isNumericType() || itsOperator == ELEMENT_OF)
-			return String.format("%s %s %s",	itsColumn.getName(), getOperatorString(), getValue());
+			return String.format("%s %s %s", itsColumn.getName(), getOperatorString(), getValue());
 		else
-			return String.format("%s %s '%s'",	itsColumn.getName(), getOperatorString(), getValue());
+			return String.format("%s %s '%s'", itsColumn.getName(), getOperatorString(), getValue());
 	}
 
 	/*
