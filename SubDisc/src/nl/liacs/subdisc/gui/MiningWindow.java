@@ -260,6 +260,7 @@ public class MiningWindow extends JFrame
 		jMenuItemSubgroupDiscovery = new JMenuItem();
 		jMenuItemCreateAutoRunFile = new JMenuItem();
 		jMenuItemAddToAutoRunFile = new JMenuItem();
+		jMenuItemLoadSampledSubgroups = new JMenuItem();
 		jMenuItemExit = new JMenuItem();
 
 		jMenuEnrichment = new JMenu();
@@ -461,6 +462,18 @@ public class MiningWindow extends JFrame
 			}
 		});
 		jMenuFile.add(jMenuItemAddToAutoRunFile);
+
+		jMenuItemLoadSampledSubgroups.setFont(GUI.DEFAULT_TEXT_FONT);
+		jMenuItemLoadSampledSubgroups.setText("Load Sampled Subgroups");
+		jMenuItemLoadSampledSubgroups.setMnemonic(Mnemonic.LOAD_SAMPLED_SUBGROUPS.MNEMONIC);
+		jMenuItemLoadSampledSubgroups.setAccelerator(KeyStroke.getKeyStroke(Mnemonic.LOAD_SAMPLED_SUBGROUPS.MNEMONIC, InputEvent.CTRL_MASK));
+		jMenuItemLoadSampledSubgroups.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt)
+			{
+				jMenuItemLoadSampledSubgroupsActionPerformed();
+			}
+		});
+		jMenuFile.add(jMenuItemLoadSampledSubgroups);
 
 		jMenuFile.addSeparator();
 
@@ -1001,6 +1014,7 @@ public class MiningWindow extends JFrame
 						jMenuItemSubgroupDiscovery,
 						jMenuItemCreateAutoRunFile,
 						jMenuItemAddToAutoRunFile,
+						jMenuItemLoadSampledSubgroups,
 						jMenuItemAddCuiEnrichmentSource,
 						jMenuItemAddGoEnrichmentSource,
 						jMenuItemAddCustomEnrichmentSource,
@@ -1077,6 +1091,20 @@ public class MiningWindow extends JFrame
 				new XMLAutoRun(itsSearchParameters, itsTable, theFileOption);
 			}
 		});
+	}
+
+	private void jMenuItemLoadSampledSubgroupsActionPerformed()
+	{
+		JOptionPane.showMessageDialog(null, "load file from Fraunhofer", "Load Sampled Subgroups", JOptionPane.INFORMATION_MESSAGE);
+
+		FileHandler aFileHandler =  new FileHandler(Action.OPEN_FILE);
+		File aFile = aFileHandler.getFile();
+		if (aFile == null)
+			return;
+		else
+		{
+			LoaderFraunhofer aLoader = new LoaderFraunhofer(aFile);
+		}
 	}
 
 	private void jMenuItemExitActionPerformed()
@@ -1959,6 +1987,7 @@ public class MiningWindow extends JFrame
 	private JMenuItem jMenuItemSubgroupDiscovery;
 	private JMenuItem jMenuItemCreateAutoRunFile;
 	private JMenuItem jMenuItemAddToAutoRunFile;
+	private JMenuItem jMenuItemLoadSampledSubgroups;
 	private JMenuItem jMenuItemExit;
 	private JMenu jMenuEnrichment;
 	private JMenuItem jMenuItemAddCuiEnrichmentSource;
@@ -2079,6 +2108,7 @@ public class MiningWindow extends JFrame
 		SUBGROUP_DISCOVERY('S'),	// accelerator
 		CREATE_AUTORUN_FILE('C'),	// accelerator
 		ADD_TO_AUTORUN_FILE('A'),	// accelerator
+		LOAD_SAMPLED_SUBGROUPS('U'),	// accelerator
 		EXIT('X'),			// accelerator
 		ABOUT('A'),			// no accelerator, 'A' used 2x
 		ABOUT_CORTANA('I'),		// accelerator
