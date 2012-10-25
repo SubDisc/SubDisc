@@ -25,11 +25,11 @@ public class ROCCurveWindow extends JFrame implements ActionListener
 
 		// needs to be run after new ROCCurve
 		JTable aJTable = new JTable(theSubgroupSet.getROCListSubgroups(), SubgroupSet.ROC_HEADER);
-		aJTable.setPreferredScrollableViewportSize(new Dimension(100, 80));
+		aJTable.setPreferredScrollableViewportSize(new Dimension(100, 300));
 
-		getContentPane().add(new JScrollPane(aJTable), BorderLayout.NORTH);
-		getContentPane().add(new JScrollPane(aROCCurve), BorderLayout.CENTER);
-		getContentPane().add(aClosePanel, BorderLayout.SOUTH);
+		add(new JScrollPane(aJTable), BorderLayout.NORTH);
+		add(aROCCurve, BorderLayout.CENTER);
+		add(aClosePanel, BorderLayout.SOUTH);
 
 		setTitle("ROC Curve (area under curve: " + aROCCurve.getAreaUnderCurve() + ")");
 		setIconImage(MiningWindow.ICON);

@@ -68,7 +68,7 @@ public class ErrorLog
 				String.format("%s%s: '%s'.%n%s",
 					getClassAndMethod(Thread.currentThread().getStackTrace()),
 					anError,
-					(theFile == null ? "null" : theFile.getName()),
+					(theFile == null ? "null" : theFile.getAbsolutePath()),
 					aMessage));
 	}
 

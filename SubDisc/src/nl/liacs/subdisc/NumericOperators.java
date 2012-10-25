@@ -36,8 +36,8 @@ public enum NumericOperators implements EnumInterface
 	 */
 	public static NumericOperators getNumericOperators(String theType)
 	{
-		for(NumericOperators n : NumericOperators.values())
-			if(n.GUI_TEXT.equalsIgnoreCase(theType))
+		for (NumericOperators n : NumericOperators.values())
+			if (n.GUI_TEXT.equalsIgnoreCase(theType))
 				return n;
 
 		/*
@@ -52,6 +52,7 @@ public enum NumericOperators implements EnumInterface
 		return NumericOperators.getDefault();
 	}
 
+	// EnumSet
 	public static ArrayList<NumericOperators> getNormalValues()
 	{
 		ArrayList<NumericOperators> aResult = new ArrayList<NumericOperators>(5);

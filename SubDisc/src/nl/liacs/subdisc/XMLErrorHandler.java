@@ -9,6 +9,9 @@ public class XMLErrorHandler implements ErrorHandler
 	 */
 	public static final XMLErrorHandler THE_ONLY_INSTANCE = new XMLErrorHandler();
 
+	// uninstantiable
+	private XMLErrorHandler() {};
+
 	@Override
 	public void error(SAXParseException e) throws SAXException
 	{

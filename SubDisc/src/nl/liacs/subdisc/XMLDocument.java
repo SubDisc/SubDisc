@@ -16,7 +16,8 @@ import org.w3c.dom.*;
 
 public class XMLDocument
 {
-	private XMLDocument() {}	// uninstantiable
+	// uninstantiable
+	private XMLDocument() {}
 
 	public static enum XMLType
 	{
@@ -38,12 +39,11 @@ public class XMLDocument
 			DocumentBuilder builder = factory.newDocumentBuilder();
 			builder.setErrorHandler(XMLErrorHandler.THE_ONLY_INSTANCE);
 			DOMImplementation aDOMImplementation = builder.getDOMImplementation();
-			aDocument =
-				aDOMImplementation.createDocument(theXMLType.nameSpaceURI,
-													theXMLType.qualifiedName,
-													aDOMImplementation.createDocumentType(theXMLType.qualifiedName,
-																							theXMLType.publicId,
-																							theXMLType.systemId));
+			aDocument = aDOMImplementation.createDocument(theXMLType.nameSpaceURI,
+									theXMLType.qualifiedName,
+									aDOMImplementation.createDocumentType(theXMLType.qualifiedName,
+														theXMLType.publicId,
+														theXMLType.systemId));
 		}
 		catch (Exception e)
 		{
@@ -118,5 +118,5 @@ public class XMLDocument
 			}
 		}
 	}
-
 }
+

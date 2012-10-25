@@ -321,14 +321,14 @@ public class DataLoaderTXT implements FileLoaderInterface
 		}
 
 		if (aNrOptions == 0)
-			aMessage = "unable to determine delimiter, using " + CLEAN_DELIMITERS[0];
+			aMessage = "unable to determine delimiter, using: " + CLEAN_DELIMITERS[0];
 		else if (aNrOptions == 1)
 		{
 			for (int i = 0, j = aNrDelimiters; i < j; ++i)
 				if (aCounts[i] > 1)
 				{
 					itsDelimiter = DELIMITERS[i];
-					aMessage = "successfully established delimiter, using " + CLEAN_DELIMITERS[i];
+					aMessage = "successfully established delimiter, using: " + CLEAN_DELIMITERS[i];
 				}
 		}
 		else // (aNrOptions > 1)
@@ -341,13 +341,13 @@ public class DataLoaderTXT implements FileLoaderInterface
 					if (aCounts[i] == theSecondLine.split(DELIMITERS[i], -1).length)
 					{
 						itsDelimiter = DELIMITERS[i];
-						aMessage = "unsure about delimiter, using " + CLEAN_DELIMITERS[i];
+						aMessage = "unsure about delimiter, using: " + CLEAN_DELIMITERS[i];
 						break;
 					}
 				}
 			}
 
-			aMessage = "unable to determine delimiter, using " + CLEAN_DELIMITERS[0];
+			aMessage = "unable to determine delimiter, using: " + CLEAN_DELIMITERS[0];
 		}
 		message("establishDelimiter", aMessage);
 	}
@@ -487,11 +487,11 @@ public class DataLoaderTXT implements FileLoaderInterface
 		for (int i = 0, j = theOriginalTypes.length; i < j; ++i)
 			if (itsTable.getColumn(i).getType() != theOriginalTypes[i])
 				message("evaluateXMLLoading",
-					String.format("WARNING Column '%s'%nXML declared AttributeType: '%s'%nAttributeType after parsing File %s",
+					String.format("WARNING Column '%s'%n\tXML declared AttributeType: '%s'%n\tAttributeType after parsing File '%s': '%s'",
 							itsTable.getColumn(i).getName(),
 							theOriginalTypes[i].toString(),
-							itsTable.getColumn(i).getType(),
-							theFile.getAbsolutePath()));
+							theFile.getAbsolutePath(),
+							itsTable.getColumn(i).getType()));
 	}
 
 	@Override
