@@ -276,18 +276,22 @@ public class CorrelationMeasure
 		double aWeight = -1 * aFraction * Math.log(aFraction) / Math.log(2);
 		return aWeight * aCorrelation;
 	}
-	
+
 	public double computeAdaptedWRAcc()
 	{
-		double aAdaptedWRAcc = (itsXSum/itsSampleSize - itsYSum/itsSampleSize)	* itsSampleSize/itsBase.itsSampleSize;
-		return aAdaptedWRAcc;
+		return (itsXSum/itsSampleSize - itsYSum/itsSampleSize) * itsSampleSize/itsBase.itsSampleSize;
 	}
-	
-	public double computeCostsWRAcc()//Wracc multiplied by difference in costs between target in subgroup and rest of the data (not subgroup), useful for fraud detection, Rob
-	{	
-		double aCostsWRAcc = (itsXSum - itsSampleSize*itsBase.itsXSum/itsBase.itsSampleSize) * ((itsXYSum/itsXSum) - (itsBase.itsYSum-itsYSum)/(itsBase.itsSampleSize-itsSampleSize)); 
-		return aCostsWRAcc;
+
+	/**
+	 * Computes the Wracc multiplied by difference in costs between target
+	 * in subgroup and its complement (rest of the data), useful for fraud
+	 * detection.
+	 * 
+	 * @return some number
+	 */
+	public double computeCostsWRAcc()
+	{
+		// should use more braces and line out, hard to read
+		return (itsXSum - itsSampleSize*itsBase.itsXSum/itsBase.itsSampleSize) * ((itsXYSum/itsXSum) - (itsBase.itsYSum-itsYSum)/(itsBase.itsSampleSize-itsSampleSize));
 	}
-	
-	
 }
