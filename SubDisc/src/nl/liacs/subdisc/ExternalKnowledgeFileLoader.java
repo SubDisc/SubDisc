@@ -3,7 +3,7 @@ package nl.liacs.subdisc;
 import java.io.*;
 import java.util.*;
 
-import nl.liacs.subdisc.gui.*;
+import nl.liacs.subdisc.OnlyExt;
 
 
 public class ExternalKnowledgeFileLoader {

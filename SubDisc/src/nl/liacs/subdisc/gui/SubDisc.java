@@ -33,6 +33,8 @@ public class SubDisc
 		// for drawing
 		"jfreechart-1.0.14.jar",
 		"jcommon-1.0.17.jar",
+		// for propensity score, Rob
+		"weka.jar",
 		// for Cook's distance only
 		"Jama-1.0.2.jar",
 		// for KNIME
@@ -42,9 +44,16 @@ public class SubDisc
 //		"org.eclipse.core.runtime_3.6.0.v20100505.jar",
 //		"org.knime.core.util_4.1.1.0034734.jar",
 	};
-
+	
+	
+	
 	public static void main(String[] args)
 	{
+		
+
+		
+		
+		
 		checkLibs();
 		if (!GraphicsEnvironment.isHeadless() && (SplashScreen.getSplashScreen() != null))
 		{
