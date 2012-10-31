@@ -41,42 +41,45 @@ public class QualityMeasure
 	public static final int F_MEASURE   = 12;
 	public static final int G_MEASURE   = 13;
 	public static final int CORRELATION = 14;
-	public static final int BAYESIAN_SCORE = 15;
+	public static final int PROP_SCORE_WRACC = 15;
+	public static final int PROP_SCORE_RATIO = 16;
+	public static final int BAYESIAN_SCORE = 17;
+	
 	//SINGLE_NUMERIC quality measures
-	public static final int Z_SCORE = 16;
-	public static final int INVERSE_Z_SCORE = 17;
-	public static final int ABS_Z_SCORE = 18;
-	public static final int AVERAGE = 19;
-	public static final int INVERSE_AVERAGE = 20;
-	public static final int MEAN_TEST = 21;
-	public static final int INVERSE_MEAN_TEST = 22;
-	public static final int ABS_MEAN_TEST = 23;
-	public static final int T_TEST = 24;
-	public static final int INVERSE_T_TEST = 25;
-	public static final int ABS_T_TEST = 26;
-	public static final int CHI2_TEST = 27;	// TODO see itsPopulationCounts
+	public static final int Z_SCORE = 18;
+	public static final int INVERSE_Z_SCORE = 19;
+	public static final int ABS_Z_SCORE = 20;
+	public static final int AVERAGE = 21;
+	public static final int INVERSE_AVERAGE = 22;
+	public static final int MEAN_TEST = 23;
+	public static final int INVERSE_MEAN_TEST = 24;
+	public static final int ABS_MEAN_TEST = 25;
+	public static final int T_TEST = 26;
+	public static final int INVERSE_T_TEST = 27;
+	public static final int ABS_T_TEST = 28;
+	public static final int CHI2_TEST = 29;	// TODO see itsPopulationCounts
 	//SINGLE_ORDINAL quality measures
-	public static final int AUC = 28;
-	public static final int WMW_RANKS = 29;
-	public static final int INVERSE_WMW_RANKS = 30;
-	public static final int ABS_WMW_RANKS = 31;
-	public static final int MMAD = 32;
+	public static final int AUC = 30;
+	public static final int WMW_RANKS = 31;
+	public static final int INVERSE_WMW_RANKS = 32;
+	public static final int ABS_WMW_RANKS = 33;
+	public static final int MMAD = 34;
 	//MULTI_LABEL quality measures
-	public static final int WEED = 33;
-	public static final int EDIT_DISTANCE = 34;
+	public static final int WEED = 35;
+	public static final int EDIT_DISTANCE = 36;
 	//DOUBLE_CORRELATION
-	public static final int CORRELATION_R = 35;
-	public static final int CORRELATION_R_NEG = 36;
-	public static final int CORRELATION_R_NEG_SQ = 37;
-	public static final int CORRELATION_R_SQ = 38;
-	public static final int CORRELATION_DISTANCE = 39;
-	public static final int CORRELATION_P = 40;
-	public static final int CORRELATION_ENTROPY = 41;
-	public static final int ADAPTED_WRACC = 42;
-	public static final int COSTS_WRACC = 43;
+	public static final int CORRELATION_R = 37;
+	public static final int CORRELATION_R_NEG = 38;
+	public static final int CORRELATION_R_NEG_SQ = 39;
+	public static final int CORRELATION_R_SQ = 40;
+	public static final int CORRELATION_DISTANCE = 41;
+	public static final int CORRELATION_P = 42;
+	public static final int CORRELATION_ENTROPY = 43;
+	public static final int ADAPTED_WRACC = 44;
+	public static final int COSTS_WRACC = 45;
 	//DOUBLE_REGRESSION
-	public static final int LINEAR_REGRESSION = 44;
-	public static final int COOKS_DISTANCE = 45;
+	public static final int LINEAR_REGRESSION = 46;
+	public static final int COOKS_DISTANCE = 47;
 
 	//SINGLE =========================================================================================
 
@@ -128,7 +131,7 @@ public class QualityMeasure
 
 		switch(theTargetType)
 		{
-			case SINGLE_NOMINAL		: return CORRELATION;
+			case SINGLE_NOMINAL		: return PROP_SCORE_RATIO;
 			//case SINGLE_NUMERIC		: return CHI2_TEST;	// TODO see itsPopulationCounts
 			case SINGLE_NUMERIC		: return ABS_T_TEST;
 			case SINGLE_ORDINAL		: return MMAD;
@@ -252,6 +255,38 @@ public class QualityMeasure
 				//TODO: Iyad Batal
 				return 0.0f;
 			}
+			
+			
+		}
+		return returnValue;
+	}
+	
+	public float calculatePropensityBased(int theMeasure, int theCountHeadBody, int theCoverage, int theTotalCount ,double theCountHeadPropensityScore) {
+		float aCountHeadBody = (float) theCountHeadBody;
+		float aCoverage = (float) theCoverage;
+		float aTotalCount = (float) theTotalCount;
+		float aCountHeadPropensityScore = (float) theCountHeadPropensityScore;
+		//float aCountNotHeadBody		= theCoverage - theCountHeadBody;
+		//float aTotalTargetCoverageNotBody		= theTotalTargetCoverage - theCountHeadBody;
+		//float aCountNotHeadNotBody	= theTotalCoverage - (theTotalTargetCoverage + aCountNotHeadBody);
+		//float aCountBody			= aCountNotHeadBody + theCountHeadBody;
+		float returnValue = -10;
+		switch(theMeasure)
+		{
+		case PROP_SCORE_WRACC:
+		{
+		returnValue =   ((aCountHeadBody/aCoverage - (aCountHeadPropensityScore/aCoverage) ) * aCoverage/aTotalCount);
+		System.out.println("Calculate Propensity based WRAcc");
+		System.out.println(returnValue);
+		break;
+		
+		//return returnValue;
+		}
+		case PROP_SCORE_RATIO:
+		{
+		returnValue = (aCountHeadBody/aTotalCount) / (aCountHeadPropensityScore/aTotalCount);
+		//return returnValue;
+		}
 		}
 		return returnValue;
 	}
@@ -506,6 +541,8 @@ public class QualityMeasure
 			case F_MEASURE	:		{ anEvaluationMinimum = "0.2"; break; }
 			case G_MEASURE	:		{ anEvaluationMinimum = "0.2"; break; }
 			case CORRELATION:		{ anEvaluationMinimum = "0.1"; break; }
+			case PROP_SCORE_WRACC:	{ anEvaluationMinimum = "-0.25"; break; }
+			case PROP_SCORE_RATIO:	{ anEvaluationMinimum = "1.0"; break; }
 			case BAYESIAN_SCORE:	{ anEvaluationMinimum = "0.0"; break; }
 			//NUMERIC
 			case AVERAGE	: 		{ anEvaluationMinimum = Float.toString(theAverage); break; }
@@ -566,6 +603,8 @@ public class QualityMeasure
 			case F_MEASURE	: { anEvaluationMeasure = "F-measure"; break; }
 			case G_MEASURE	: { anEvaluationMeasure = "G-measure"; break; }
 			case CORRELATION: { anEvaluationMeasure = "Correlation"; break; }
+			case PROP_SCORE_WRACC: { anEvaluationMeasure = "Propensity score wracc"; break; }
+			case PROP_SCORE_RATIO: { anEvaluationMeasure = "Propensity score ratio"; break; }
 			case BAYESIAN_SCORE: { anEvaluationMeasure = "Bayesian Score"; break; }
 			//NUMERIC
 			case AVERAGE	: { anEvaluationMeasure = "Average"; break; }
@@ -624,6 +663,8 @@ public class QualityMeasure
 		else if ("f-measure".equals(anEvaluationMeasure)) return F_MEASURE;
 		else if ("g-measure".equals(anEvaluationMeasure)) return G_MEASURE;
 		else if ("correlation".equals(anEvaluationMeasure)) return CORRELATION;
+		else if ("propensity score wracc".equals(anEvaluationMeasure)) return PROP_SCORE_WRACC;
+		else if ("propensity score ratio".equals(anEvaluationMeasure)) return PROP_SCORE_RATIO;
 		else if ("bayesian score".equals(anEvaluationMeasure)) return BAYESIAN_SCORE;
 		//NUMERIC
 		else if ("average".equals(anEvaluationMeasure)) return AVERAGE;
@@ -709,4 +750,6 @@ public class QualityMeasure
 							nrEdits++;
 		return (float) nrEdits / (float) (itsNrNodes*(itsNrNodes-1)/2); // Actually n choose 2, but this boils down to the same...
 	}
+
+	
 }

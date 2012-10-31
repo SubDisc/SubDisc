@@ -1,5 +1,6 @@
 package nl.liacs.subdisc;
 
+import java.io.*;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
@@ -18,7 +19,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 
 	private SubgroupSet itsResult;
 	private CandidateQueue itsCandidateQueue;
-	private AtomicInteger itsCandidateCount= new AtomicInteger(0);
+	private AtomicInteger itsCandidateCount = new AtomicInteger(0);
 
 	//target concept type-specific information, including base models
 	private BitSet itsBinaryTarget;		//SINGLE_NOMINAL
@@ -29,7 +30,10 @@ public class SubgroupDiscovery extends MiningAlgorithm
 	private RegressionMeasure itsBaseRM;	//DOUBLE_REGRESSION
 	private BinaryTable itsBinaryTable;	//MULTI_LABEL
 	private List<Column> itsTargets;	//MULTI_LABEL
-
+	
+	private LocalKnowledge itsLocalKnowledge; //PROPENSITY SCORE BASED
+	private GlobalKnowledge itsGlobalKnowledge;//PROPENSITY SCORE BASED
+	
 	private int itsBoundSevenCount;
 	private int itsBoundSixCount;
 	private int itsBoundFiveCount;
@@ -61,6 +65,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		itsBinaryTarget = aTC.getPrimaryTarget().evaluate(aCondition);
 
 		itsResult = new SubgroupSet(itsSearchParameters.getMaximumSubgroups(), itsNrRows, itsBinaryTarget);
+		
 	}
 
 	//SINGLE_NUMERIC, float > signature differs from multi-label constructor
@@ -183,6 +188,8 @@ public class SubgroupDiscovery extends MiningAlgorithm
 
 	public void mine(long theBeginTime)
 	{
+	
+		
 		//make subgroup to start with, containing all elements
 		BitSet aBitSet = new BitSet(itsNrRows);
 		aBitSet.set(0, itsNrRows);
@@ -641,11 +648,44 @@ public class SubgroupDiscovery extends MiningAlgorithm
 				//int aCountHeadBody = aTarget.cardinality();
 				int aCountHeadBody = 0;
 				final BitSet aMembers = theNewSubgroup.getMembers();
-				for (int i = aMembers.nextSetBit(0); i >= 0; i = aMembers.nextSetBit(i+1))
-					if (itsBinaryTarget.get(i))
-						++aCountHeadBody;
-
+				
+				if (itsSearchParameters.getQualityMeasure()==QualityMeasure.PROP_SCORE_WRACC | itsSearchParameters.getQualityMeasure()==QualityMeasure.PROP_SCORE_RATIO){ //Rob
+					double aCountHeadPropensityScore =0;
+					PropensityScore aPropensityScore = new PropensityScore(theNewSubgroup,itsBinaryTarget,itsLocalKnowledge,itsGlobalKnowledge,"LogisticRegression");
+					System.out.println("Evaluating subgroup");
+					System.out.println(itsBinaryTarget.cardinality());
+					double aSumTest=0;
+					for (int i = aMembers.nextSetBit(0); i >= 0; i = aMembers.nextSetBit(i+1)){
+						aCountHeadPropensityScore = aCountHeadPropensityScore+aPropensityScore.getPropensityScore()[i];
+						if (aPropensityScore.getPropensityScore()[i]>0.24){
+							aSumTest++;
+						}
+						// count propensity score for all points in subgroup (aMembers)
+						if (itsBinaryTarget.get(i)){
+							++aCountHeadBody;
+						}
+					}
+					System.out.print("Count head:");
+					System.out.println(aCountHeadBody);
+					System.out.print("Count expected head:");
+					System.out.println(aCountHeadPropensityScore);
+					System.out.print("Propensity score bigger than PT:");
+					System.out.println(aSumTest);
+					//double aSum =0; // small check for propensity score (should sum to #target)
+					//for (int i=0;i<aPropensityScore.getPropensityScore().length;i++){
+					//	aSum = aSum+ aPropensityScore.getPropensityScore()[i];
+					//}
+					//System.out.println("Sum propensity score");
+					//System.out.println(aSum);
+				aQuality = itsQualityMeasure.calculatePropensityBased(itsSearchParameters.getQualityMeasure(),aCountHeadBody, theNewSubgroup.getCoverage(),itsNrRows ,aCountHeadPropensityScore);
+				
+				}else{
+					for (int i = aMembers.nextSetBit(0); i >= 0; i = aMembers.nextSetBit(i+1))
+						if (itsBinaryTarget.get(i))
+							++aCountHeadBody;
 				aQuality = itsQualityMeasure.calculate(aCountHeadBody, theNewSubgroup.getCoverage());
+				}
+				
 				theNewSubgroup.setSecondaryStatistic(aCountHeadBody/(double)theNewSubgroup.getCoverage()); //relative occurence of positives in subgroup
 				theNewSubgroup.setTertiaryStatistic(aCountHeadBody); //count of positives in the subgroup
 				break;
@@ -957,6 +997,27 @@ TODO for stable jar, disabled, causes comple errors, reinstate later
 	 */
 	public void mine(long theBeginTime, int theNrThreads)
 	{
+		
+		
+		//fill the conditionList of local and global knowledge, Rob
+		if (itsSearchParameters.getQualityMeasure()==QualityMeasure.PROP_SCORE_WRACC|itsSearchParameters.getQualityMeasure()==QualityMeasure.PROP_SCORE_RATIO){
+			ExternalKnowledgeFileLoader extKnowledge;
+			try {
+				extKnowledge = new ExternalKnowledgeFileLoader(new File("").getAbsolutePath());
+				extKnowledge.createConditionListLocal(itsTable);
+				extKnowledge.createConditionListGlobal(itsTable);
+				itsLocalKnowledge = new LocalKnowledge(extKnowledge.getLocal(),itsBinaryTarget);
+				itsGlobalKnowledge = new GlobalKnowledge(extKnowledge.getGlobal(),itsBinaryTarget);
+				
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+		}
+		
+		
+		
 		if (theNrThreads < 0)
 		{
 			mine(theBeginTime);
