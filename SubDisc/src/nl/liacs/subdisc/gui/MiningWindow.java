@@ -1338,6 +1338,8 @@ public class MiningWindow extends JFrame
 				aTargetType == TargetType.MULTI_BINARY_CLASSIFICATION))
 		{
 			initTargetValueItems();
+			//TEST
+//			itsTable.getColumn(getTargetAttributeName()).getAverageRanking();
 		}
 
 		//itsTable.getAttribute(getTargetAttributeName()).makePrimaryTarget();

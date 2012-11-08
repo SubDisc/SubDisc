@@ -25,7 +25,7 @@ public class ROCCurveWindow extends JFrame implements ActionListener
 
 		// needs to be run after new ROCCurve
 		JTable aJTable = new JTable(theSubgroupSet.getROCListSubgroups(), SubgroupSet.ROC_HEADER);
-		aJTable.setPreferredScrollableViewportSize(new Dimension(100, 300));
+		aJTable.setPreferredScrollableViewportSize(new Dimension(100, 80));
 
 		add(new JScrollPane(aJTable), BorderLayout.NORTH);
 		add(aROCCurve, BorderLayout.CENTER);

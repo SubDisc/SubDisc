@@ -44,7 +44,7 @@ public class QualityMeasure
 	public static final int PROP_SCORE_WRACC = 15;
 	public static final int PROP_SCORE_RATIO = 16;
 	public static final int BAYESIAN_SCORE = 17;
-	
+
 	//SINGLE_NUMERIC quality measures
 	public static final int Z_SCORE = 18;
 	public static final int INVERSE_Z_SCORE = 19;
@@ -131,7 +131,7 @@ public class QualityMeasure
 
 		switch(theTargetType)
 		{
-			case SINGLE_NOMINAL		: return PROP_SCORE_RATIO;
+			case SINGLE_NOMINAL		: return BAYESIAN_SCORE;
 			//case SINGLE_NUMERIC		: return CHI2_TEST;	// TODO see itsPopulationCounts
 			case SINGLE_NUMERIC		: return ABS_T_TEST;
 			case SINGLE_ORDINAL		: return MMAD;
@@ -252,16 +252,16 @@ public class QualityMeasure
 			}
 			case BAYESIAN_SCORE:
 			{
-				//TODO: Iyad Batal
-				return 0.0f;
+				returnValue = (float)calculateBayesianScore(theTotalCoverage, theTotalTargetCoverage, aCountBody, theCountHeadBody);
+				break;
+
 			}
-			
-			
 		}
 		return returnValue;
 	}
-	
-	public float calculatePropensityBased(int theMeasure, int theCountHeadBody, int theCoverage, int theTotalCount ,double theCountHeadPropensityScore) {
+
+	public float calculatePropensityBased(int theMeasure, int theCountHeadBody, int theCoverage, int theTotalCount ,double theCountHeadPropensityScore)
+	{
 		float aCountHeadBody = (float) theCountHeadBody;
 		float aCoverage = (float) theCoverage;
 		float aTotalCount = (float) theTotalCount;
@@ -273,20 +273,17 @@ public class QualityMeasure
 		float returnValue = -10;
 		switch(theMeasure)
 		{
-		case PROP_SCORE_WRACC:
-		{
-		returnValue =   ((aCountHeadBody/aCoverage - (aCountHeadPropensityScore/aCoverage) ) * aCoverage/aTotalCount);
-		System.out.println("Calculate Propensity based WRAcc");
-		System.out.println(returnValue);
-		break;
-		
-		//return returnValue;
-		}
-		case PROP_SCORE_RATIO:
-		{
-		returnValue = (aCountHeadBody/aTotalCount) / (aCountHeadPropensityScore/aTotalCount);
-		//return returnValue;
-		}
+			case PROP_SCORE_WRACC:
+			{
+				returnValue = ((aCountHeadBody/aCoverage - (aCountHeadPropensityScore/aCoverage) ) * aCoverage/aTotalCount);
+				System.out.println("Calculate Propensity based WRAcc");
+				System.out.println(returnValue);
+				break;
+			}
+			case PROP_SCORE_RATIO:
+			{
+				returnValue = (aCountHeadBody/aTotalCount) / (aCountHeadPropensityScore/aTotalCount);
+			}
 		}
 		return returnValue;
 	}
@@ -372,6 +369,119 @@ public class QualityMeasure
 		return calculateEntropy(totalSupport, headSupport)
 			- aFraction*calculateConditionalEntropy(bodySupport, headBodySupport) //inside the subgroup
 			- (1-aFraction)*calculateConditionalEntropy(aNotBodySupport, aHeadNotBodySupport); //the complement
+	}
+
+    //Iyad Batal: Calculate the Bayesian score assuming uniform beta priors on all parameters
+	public static double calculateBayesianScore(float totalSupport, float headSupport, float bodySupport, float headBodySupport)
+	{
+		String type="Bayes_factor";
+		//type=Bayes_factor: the score is the Bayes factor of model M_h (a number between [-Inf, + Inf])
+		//score = P(M_h)*P(D|M_h) / (P(M_l)*P(D|M_l)+P(M_e)*P(D|M_e))
+
+		//String type="posterior";
+		//type=posterior: the score is the posterior of model M_h (a number between [0, 1])
+		//score = P(M_h)*P(D|M_h) / (P(M_l)*P(D|M_l)+P(M_e)*P(D|M_e)+P(M_h)*P(D|M_h))
+
+		//Both Bayes_factor and posterior provide the same ranking of the patterns!
+
+		//True Positive
+		int N11 = (int)headBodySupport;
+		//False Positive
+		int N12 = (int)(bodySupport-headBodySupport);
+		//False Negative
+		int N21 = (int)(headSupport-headBodySupport);
+		//True Negative
+		int N22 = (int)(totalSupport-N11-N12-N21);
+
+		int N1 = N11+N21;
+		int N2 = N12+N22;
+
+		//the parameter priors: uniform priors
+		int alpha = 1, beta = 1;
+		int alpha1 = 1, beta1 = 1;
+		int alpha2 = 1, beta2 = 1;
+
+		double logM_e = score_M_e(N1, N2, alpha, beta);
+		double[] res = score_M_h(N11, N12, N21, N22, alpha1, beta1, alpha2, beta2);
+		double logM_h = res[0];
+		double logM_l = res[1];
+
+		//assume uniform prior on all models
+		double prior_M_e = 0.33333333, prior_M_h = 0.33333333, prior_M_l = 0.33333334;
+		double log_numerator = Math.log(prior_M_h) + logM_h;
+		double log_denom1 = logAdd(Math.log(prior_M_e) + logM_e, Math.log(prior_M_l) + logM_l);
+		double log_denominator = logAdd(log_denom1, Math.log(prior_M_h) + logM_h);
+
+		//this is the posterior probability of model M_h
+		double M_h_posterior = Math.exp(log_numerator - log_denominator);
+
+		double bayesian_score = log_numerator - log_denom1;
+
+		if(type.equals("Bayes_factor"))
+			return bayesian_score;
+		else
+			return M_h_posterior;
+	}
+
+	//Iyad Batal: auxiliary function to compute the sum of logarithms (input: log(a), log(b), output log(a+b))
+	private static double logAdd(double x, double y)
+	{
+		double res;
+		if (Math.abs(x-y) >= 36.043)
+			res = Math.max(x, y);
+		else
+			res= Math.log(1 + Math.exp(y - x)) + x;
+		return res;
+	}
+
+	//Iyad Batal: auxiliary function to compute the difference of logarithms (input: log(a), log(b), output log(a-b))
+	private static double logDiff(double x, double y)
+	{
+		double res;
+		if((x-y) >= 36.043)
+			res = x;
+		else
+			res = Math.log(1-Math.exp(y - x)) + x;
+		return res;
+	}
+
+	//Iyad Batal: auxiliary function to compute the marginal likelihood of model M_e (used in computing the Bayesian score)
+	private static double score_M_e(int N1, int N2, int alpha, int beta)
+	{
+		return Function.logGammaBig(alpha+beta) - Function.logGammaBig(alpha+N1+beta+N2) + Function.logGammaBig(alpha+N1) - Function.logGammaBig(alpha) + Function.logGammaBig(beta+N2) - Function.logGammaBig(beta);
+	}
+
+	//Iyad Batal: auxiliary function to compute the marginal likelihood of model M_h (used in computing the Bayesian score)
+	private static double[] score_M_h(int N11, int N12, int N21, int N22, int alpha1, int beta1, int alpha2, int beta2)
+	{
+
+		int a = N21+alpha2;
+		int b = N22+beta2;
+		int c = N11+alpha1;
+		int d = N12+beta1;
+
+		double k = 0.5;
+		double C = Function.logGammaBig(alpha1+beta1) - Function.logGammaBig(alpha1) - Function.logGammaBig(beta1) + Function.logGammaBig(alpha2+beta2) - Function.logGammaBig(alpha2) - Function.logGammaBig(beta2);
+
+		double part2=0;
+		for (int i=1; i<=b; i++)
+		{
+			 int j=a+i-1;
+			 double temp = Function.logGammaBig(a) + Function.logGammaBig(b) - Function.logGammaBig(j+1) - Function.logGammaBig(a+b-j) + Function.logGammaBig(c+j) + Function.logGammaBig(a+b+d-1-j) - Function.logGammaBig(a+b+c+d-1);
+			 if (i==1)
+				 part2 = temp;
+			 else
+				 part2 = logAdd(part2,temp);
+		}
+
+		double part1 = Function.logGammaBig(a) + Function.logGammaBig(b) - Function.logGammaBig(a+b) + Function.logGammaBig(c) + Function.logGammaBig(d) - Function.logGammaBig(c+d);
+
+		double[] res = new double[2];
+
+		res[0] = -Math.log(k) + C + part2;
+		res[1] = logDiff(-Math.log(k)+C+part1, res[0]);
+
+		return res;
 	}
 
 	public int getNrRecords() { return itsNrRecords; }
@@ -751,5 +861,5 @@ public class QualityMeasure
 		return (float) nrEdits / (float) (itsNrNodes*(itsNrNodes-1)/2); // Actually n choose 2, but this boils down to the same...
 	}
 
-	
+
 }

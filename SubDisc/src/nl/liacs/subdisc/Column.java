@@ -1596,7 +1596,6 @@ public class Column implements XMLNodeInterface
 	 * @return the average, or <code>Float.NaN</code> if this Column
 	 * is not of type NUMERIC or ORDINAL.
 	 */
-
 	public float getAverage()
 	{
 		if (!(itsType == AttributeType.NUMERIC || itsType == AttributeType.ORDINAL))
@@ -1610,6 +1609,48 @@ public class Column implements XMLNodeInterface
 			//aResult += itsFloats.get(i);
 			aResult += itsFloatz[i];
 		return aResult / itsSize;
+	}
+
+
+	/**
+	 * Returns the average label ranking
+	 */
+	public LabelRanking getAverageRanking()
+	{
+		if (itsType != AttributeType.NOMINAL)
+		{
+			logMessage("getAverageRanking", getTypeError("NOMINAL"));
+			return null;
+		}
+
+		LabelRanking aResult = new LabelRanking(itsNominals.get(0));
+		int aSize = aResult.getSize();
+		int[] aTotalRanks = new int[aSize];
+		Arrays.fill(aTotalRanks, 0);
+
+		for (int i=0; i<itsSize; ++i)
+		{
+			String aValue = itsNominals.get(i);
+			LabelRanking aRanking = new LabelRanking(aValue);
+			for (int j=0; j<aSize; j++)
+				aTotalRanks[j] += aRanking.getRank(j);
+		}
+		int aRank = 0; //this is the average rank, but without dividing by aSize
+		for (int j=0; j<aSize; j++)
+		{
+			//determine location for label j
+			int aMin = Integer.MAX_VALUE;
+			int aMinLocation = 0;
+			for (int k=0; k<aSize; k++)
+				if (aTotalRanks[j] > aRank && aTotalRanks[j] < aMin) //find next lowest rank
+				{
+					aMin = aTotalRanks[j];
+					aMinLocation = k;
+				}
+			aResult.setRank(aMinLocation, j);
+		}
+
+		return aResult;
 	}
 
 	/**
