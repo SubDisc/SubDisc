@@ -404,7 +404,8 @@ public class QualityMeasure
 		double logM_e = score_M_e(N1, N2, alpha, beta);
 		double[] res = score_M_h(N11, N12, N21, N22, alpha1, beta1, alpha2, beta2);
 		double logM_h = res[0];
-		double logM_l = res[1];
+		res = score_M_h(N21, N22, N11, N12, alpha2, beta2, alpha1, beta1);
+		double logM_l = res[0];
 
 		//assume uniform prior on all models
 		double prior_M_e = 0.33333333, prior_M_h = 0.33333333, prior_M_l = 0.33333334;
