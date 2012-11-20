@@ -252,7 +252,7 @@ public class QualityMeasure
 			}
 			case BAYESIAN_SCORE:
 			{
-				returnValue = (float)calculateBayesianScore(theTotalCoverage, theTotalTargetCoverage, aCountBody, theCountHeadBody);
+				returnValue = (float)calculateBayesianFactor(theTotalCoverage, theTotalTargetCoverage, aCountBody, theCountHeadBody);
 				break;
 
 			}
@@ -369,6 +369,44 @@ public class QualityMeasure
 		return calculateEntropy(totalSupport, headSupport)
 			- aFraction*calculateConditionalEntropy(bodySupport, headBodySupport) //inside the subgroup
 			- (1-aFraction)*calculateConditionalEntropy(aNotBodySupport, aHeadNotBodySupport); //the complement
+	}
+
+    //Iyad Batal: Calculate the Bayesian score assuming uniform beta priors on all parameters
+	public static double calculateBayesianFactor(float totalSupport, float headSupport, float bodySupport, float headBodySupport)
+	{
+		//type=Bayes_factor: the score is the Bayes factor of model M_h (a number between [-Inf, + Inf])
+		//score = P(M_h)*P(D|M_h) / (P(M_l)*P(D|M_l)+P(M_e)*P(D|M_e))
+
+		//True Positive
+		int N11 = (int)headBodySupport;
+		//False Positive
+		int N12 = (int)(bodySupport-headBodySupport);
+		//False Negative
+		int N21 = (int)(headSupport-headBodySupport);
+		//True Negative
+		int N22 = (int)(totalSupport-N11-N12-N21);
+
+		int N1 = N11+N21;
+		int N2 = N12+N22;
+
+		//the parameter priors: uniform priors
+		int alpha = 1, beta = 1;
+		int alpha1 = 1, beta1 = 1;
+		int alpha2 = 1, beta2 = 1;
+
+		double logM_e = score_M_e(N1, N2, alpha, beta);
+		double[] res = score_M_h(N11, N12, N21, N22, alpha1, beta1, alpha2, beta2);
+		double logM_h = res[0];
+		res = score_M_h(N21, N22, N11, N12, alpha2, beta2, alpha1, beta1);
+		double logM_l = res[0];
+
+		//assume uniform prior on all models
+		double prior_M_e = 0.33333333, prior_M_h = 0.33333333, prior_M_l = 0.33333334;
+		double log_numerator = Math.log(prior_M_h) + logM_h;
+		double log_denom1 = logAdd(Math.log(prior_M_e) + logM_e, Math.log(prior_M_l) + logM_l);
+
+		double bayesian_score = log_numerator - log_denom1;
+		return bayesian_score;
 	}
 
     //Iyad Batal: Calculate the Bayesian score assuming uniform beta priors on all parameters
