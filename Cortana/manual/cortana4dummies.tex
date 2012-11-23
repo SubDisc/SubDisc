@@ -1,9 +1,41 @@
 \documentclass{article}
+\usepackage[english]{babel}
 \usepackage{fullpage}
 \usepackage{color}
 \usepackage{url}
 \usepackage[parfill]{parskip}
 \usepackage[pdftex]{graphicx}
+\usepackage{hyperref}
+\usepackage[nonumberlist]{glossaries}
+\makeglossaries
+
+\newcommand{\maakgls}[2]{\newglossaryentry{#1}{name=#1,description={#2}}}
+
+\maakgls{binary}{An attribute that can have only two distinct values. These
+values will be represented in Cortana with 0 and 1. Cortana will form
+subgroups \emph{attr}=0 and \emph{attr}=1.}
+\maakgls{nominal}{An attribute that can have any countable number of
+distinct values.  No ordering is assumed between these values.  Cortana will
+form subgroups \emph{attr}=\emph{value}, and \emph{attr}
+$\in\{$\emph{value1},\emph{value2},\ldots$\}$ when the set-valued nominals
+checkbox in the Search Strategy Panel is selected (see Section
+\ref{sec:searchstrategy}).}
+\maakgls{ordinal}{An attribute that can have any countable number of
+distinct values. A natural ordering exists between these values. Cortana
+cannot handle this attribute type. Depending on which kind of subgroups you
+would want to consider, you can make Cortana handle such an attribute as
+either \gls{nominal} or \gls{numeric}.}
+\maakgls{numeric}{An attribute that can have values from a continuous range. 
+Cortana will form subgroups \emph{attr}$\leq$\emph{value} and
+\emph{attr}$\geq$\emph{value}.  You can control how many and which values
+will be selected in the Search Strategy Panel (see Section
+\ref{sec:searchstrategy}).}
+\maakgls{type}{Determines the range of values an attribute can have. In
+Cortana, an attribute can have types \gls{binary}, \gls{nominal}, or
+\gls{numeric}.  Attributes in Cortana cannot be \gls{ordinal}; for these
+attributes you can either select the \gls{nominal} or \gls{numeric} type,
+depending on what kind of subgroups you would like to see.}
+
 \title{Cortana for Dummies}
 \author{Marvin Meeng, Wouter Duivesteijn}
 \date{November 20, 2012}
@@ -30,34 +62,44 @@ particularly interested in. Cortana finds subgroups for which the target
 concept is substantially different than the target concept over the entire
 dataset.
 \end{description}
-As an example of the things Cortana could find, suppose a dataset about
-people, and as target concept the distribution of just one binary attribute:
-whether the person develops lung cancer or not. Cortana will find subgroups
-like \emph{smoking = true} (the smokers, which have a substantially higher
-incidence of lung cancer), and \emph{weekly walking kilometers} $\geq 50$
-(athletes, which have a substantially lower incidence of lung cancer)
-\todo{might need a better example here}.
+
+As an example,
+%of the things Cortana could find, 
+suppose a dataset about people, and let the target concept be the
+distribution of just one binary attribute: whether the person develops lung
+cancer or not.  Cortana can find subgroups like \emph{smoking = true} (the
+smokers, which have a substantially higher incidence of lung cancer), and
+\emph{weekly walking kilometers} $\geq 50$ (athletes, which have a
+substantially lower incidence of lung cancer).
+\todo{might need a better example here}
 
 \section{Launching Cortana}
 
-After obtaining and unpacking a copy of Cortana from \url{http://datamining.liacs.nl/cortana.html}, navigate to the Cortana directory.
-There you will find a cortana.jar file.
-One could start Cortana by double clicking the jar, however, it is recommended to start Cortana from the command line.
-This way, a lot more information about the Subgroup Discovery process is fed back to the user.
-To start Cortana this way, open a terminal or command window, navigate to the Cortana directory containing cortana.jar, and type: \emph{java -jar cortana.jar}.
-Alternatively one can use either cortana.bat (for Windows) or cortana.sh (Bash shell script).
-Be sure to read Appendix~\ref{sec:memory} if you do, and experience memory issues.
+After obtaining and unpacking a copy of Cortana from
+\url{http://datamining.liacs.nl/cortana.html}, navigate to the Cortana
+directory where you will find a cortana.jar file.  One could start Cortana
+by double clicking the jar.  However, it is recommended to start Cortana
+from the command line, since this will feed back information information
+about the Subgroup Discovery process to the user.  To start Cortana this
+way, open a terminal or command window, navigate to the Cortana directory
+containing cortana.jar, and type: \emph{java -jar cortana.jar}. 
+Alternatively, one can use either cortana.bat (for Windows) or cortana.sh
+(Bash shell script).  Be sure to read Appendix~\ref{sec:memory} if your
+computer displays memory issues while running Cortana.
 
-After starting Cortana one is asked to select the file that contains the dataset to be analysed, after which Cortana's main screen is shown.
+After starting Cortana you are prompted for the file containing the dataset
+to be analysed, after which Cortana's main screen is shown.
 
-%TODO implement quickie separator guess code
-Currently, two types of files can be loaded into Cortana, ARFF files and plain (comma seperated) text files.
-The first is very common in data mining and describes the data and additionally defines the attribute type of each attribute.
-As such, ARFF files are preferred over plain text files.
-For text files, Cortana wil try to infer the correct attribute type of each attribute.
-Unfortunately, this may not always deliver the desired outcome. 
-We therefore recommend to check
-whether Cortana was able to infer the correct attribute type, via the \emph{Meta Data...} button on the main screen. One can find more about this in Section \ref{sec:metadata}.
+Cortana can handle two kinds of files: ARFF files and
+plain (comma seperated) text files.  
+An ARFF file combines the data with definitions of the \gls{type} of
+each attribute.  
+%As such, ARFF files are preferred over plain text files. 
+For text files, Cortana wil try to automatically infer these \gls{type}s.
+Unfortunately, this may not always deliver the desired outcome.  We will
+discuss how to correct wrong assessments in Section \ref{sec:metadata}, but
+in order to prevent the problem, we recommend the use of ARFF files when
+this option is available.
 
 \section{Main Screen}
 
@@ -72,14 +114,15 @@ whether Cortana was able to infer the correct attribute type, via the \emph{Meta
 The main screen of Cortana is devided into four major panels, \emph{Dataset}, \emph{Target Concept}, \emph{Search Conditions}, and \emph{Search Strategy}.
 
 \subsection{Dataset Panel}
+\label{sec:dataset}
 
-\begin{figure}
-\begin{center}
-\includegraphics[width=0.5\textwidth]{dataset.png}
-\caption{Dataset details in the main window.}
-\end{center}
-\label{fig:dataset}
-\end{figure}
+%\begin{figure}
+%\begin{center}
+%\includegraphics[width=0.5\textwidth]{dataset.png}
+%\caption{Dataset details in the main window.}
+%\end{center}
+%\label{fig:dataset}
+%\end{figure}
 
 The dataset panel gives some information about the dataset that is currently loaded:
 \begin{description}
@@ -88,31 +131,46 @@ The dataset panel gives some information about the dataset that is currently loa
 \item[\# columns] shows the number of columns in the dataset.
 Remember that columns are also be referred to as attributes.
 \end{description}
-Finally, there is a number of fields that indicate the number of attributes from each data type.
-The type of an attribute determines the sort of mining algorithm or quality measure that is applicable to it.
-More about this can be found in section~\ref{preliminaries:attribute-type}.
+Finally, there is a number of fields that indicate the number of attributes
+from each \gls{type}: \gls{nominal}, \gls{numeric}, and \gls{binary}. Notice
+that Cortana cannot handle \gls{ordinal} data; such attributes can be
+handled as either \gls{nominal} or \gls{numeric}, depending on what kind of
+subgroups you would want to define on the attribute.
 
-In addition to the fields described above, there are three buttons present on the {\bf Dataset} panel, {\bf Browse...}, {\bf Meta Data...} and {\bf Explore...}.
+In addition to the fields described above, there are three buttons present
+on the {\bf Dataset} panel, {\bf Browse\ldots}, {\bf Meta Data\ldots} and {\bf
+Explore\ldots}.
 
 \subsubsection{Browse Window}
 
-\begin{figure}
-\begin{center}
-\centering
-\resizebox{1\columnwidth}{!}{\includegraphics{browsewindow.png}}
-\caption{The browse window.}
-\end{center}
-\label{fig:browsewindow}
-\end{figure}
+Clicking the Browse button will open a Browse Window, displaying the
+data in its current state.  You can sort the data by clicking on the column
+head of an attribute, and save the current state of the data to a file,
+which is useful if you have made modifications via the Meta Data Window (see
+Section \ref{sec:metadata}).
 
-By clicking the {\bf Browse...} button, a Browse Window is presented, showing a table with the data in the state that it is currently in.
-Additionally, in the table header, it shows the number of distinct values for each attribute.
-Note that the data may not be in the same state as when it was loaded, as it can be modified using functionality of the Meta Data Window, presented after pressing the {\bf Meta Data...} button, which is also present on the {\bf Dataset} panel.
-Section~\ref{sec:metadata} describes the Meta Data Window, its components, and the data manipulation functionalities, in more detail.
+%\begin{figure}
+%\begin{center}
+%\centering
+%\resizebox{1\columnwidth}{!}{\includegraphics{browsewindow.png}}
+%\caption{The browse window.}
+%\end{center}
+%\label{fig:browsewindow}
+%\end{figure}
+
+%By clicking the {\bf Browse...} button, a Browse Window is presented, showing a table with the data in
+%its current state.
+%Additionally, in the table header, it shows the number of distinct values for each attribute.
+%Note that the data may not be in the same state as when it was loaded, as it can be modified using functionality of the Meta Data Window, presented after pressing the {\bf Meta Data...} button, which is also present on the {\bf Dataset} panel.
+%Section~\ref{sec:metadata} describes the Meta Data Window, its components, and the data manipulation functionalities, in more detail.
 
 \subsubsection{Explore Window}
 
-{\bf Explore...} button.
+Clicking the Explore button will open an Explore Window, which allows you to
+examine the distribution of single attributes, and cross-examine two
+attributes.  This section of Cortana is independent of the Local Pattern
+Mining for which Cortana was developed; it exists merely to allow you to
+learn more about the makeup of your data.
 
 \subsubsection{Meta Data Window}
 \label{sec:metadata}
@@ -184,10 +242,13 @@ For \emph{numeric} and \emph{binary} attribute types Cortana's file loader will 
 Again, if this is incorrect, or one wishes to assign the \emph{missing values} another \emph{attribute value}, either existing or non-existing, this can be done analogously to the \emph{nominal} case.
 
 \subsection{Target Concept Panel}
+\label{sec:targetconcept}
 
 \subsection{Search Conditions Panel}
+\label{sec:searchconditions}
 
 \subsection{Search Strategy Panel}
+\label{sec:searchstrategy}
 
 \section{Result Window}
 
@@ -201,6 +262,9 @@ Again, if this is incorrect, or one wishes to assign the \emph{missing values} a
 \clearpage
 
 \section{Glossary}
+\vspace{-10mm}
+\renewcommand*{\glossaryname}{}
+\printglossaries
 
 \section{Autorun}
 
