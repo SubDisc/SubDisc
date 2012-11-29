@@ -465,6 +465,9 @@ public class DataLoaderTXT implements FileLoaderInterface
 	// NOTE null is never passed as input parameter
 	private void removeQuotes(String theString)
 	{
+		// avoid references to arrays/ CharSequences, create new String
+		theString = new String(theString);
+
 		// fail fast
 		if (theString.isEmpty() || ((theString.charAt(0) != '\"') && (theString.charAt(0) != '\'')))
 			return;
