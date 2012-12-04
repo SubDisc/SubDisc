@@ -13,32 +13,36 @@
 
 \maakgls{binary}{An attribute that can have only two distinct values. These
 values will be represented in Cortana with 0 and 1. Cortana will form
-subgroups \emph{attr}=0 and \emph{attr}=1.}
+subgroups \emph{attr}=0 and \emph{attr}=1}
 \maakgls{nominal}{An attribute that can have any countable number of
 distinct values.  No ordering is assumed between these values.  Cortana will
 form subgroups \emph{attr}=\emph{value}, and \emph{attr}
 $\in\{$\emph{value1},\emph{value2},\ldots$\}$ when the set-valued nominals
 checkbox in the Search Strategy Panel is selected (see Section
-\ref{sec:searchstrategy}).}
+\ref{sec:searchstrategy})}
 \maakgls{ordinal}{An attribute that can have any countable number of
 distinct values. A natural ordering exists between these values. Cortana
 cannot handle this attribute type. Depending on which kind of subgroups you
 would want to consider, you can make Cortana handle such an attribute as
-either \gls{nominal} or \gls{numeric}.}
+either \gls{nominal} or \gls{numeric}}
 \maakgls{numeric}{An attribute that can have values from a continuous range. 
 Cortana will form subgroups \emph{attr}$\leq$\emph{value} and
 \emph{attr}$\geq$\emph{value}.  You can control how many and which values
 will be selected in the Search Strategy Panel (see Section
-\ref{sec:searchstrategy}).}
+\ref{sec:searchstrategy})}
 \maakgls{type}{Determines the range of values an attribute can have. In
 Cortana, an attribute can have types \gls{binary}, \gls{nominal}, or
 \gls{numeric}.  Attributes in Cortana cannot be \gls{ordinal}; for these
 attributes you can either select the \gls{nominal} or \gls{numeric} type,
-depending on what kind of subgroups you would like to see.}
+depending on what kind of subgroups you would like to see}
+\maakgls{enabled}{An attribute that will be considered for
+generating candidate subgroups}
+\maakgls{disabled}{An attribute that will not be considered for
+generating candidate subgroups}
 
 \title{Cortana for Dummies}
 \author{Marvin Meeng, Wouter Duivesteijn}
-\date{November 20, 2012}
+\date{December 4, 2012}
 
 \newcommand{\todo}[1]{\textcolor{red}{[TODO: #1]}}
 
@@ -46,6 +50,7 @@ depending on what kind of subgroups you would like to see.}
 \maketitle
 
 \section{What is Cortana, and what does it do?}
+\label{sec:intro}
 
 Cortana is a tool which, given a dataset, performs Supervised Descriptive
 Local Pattern Mining:
@@ -111,7 +116,9 @@ this option is available.
 \end{center}
 \end{figure}
 
-The main screen of Cortana is devided into four major panels, \emph{Dataset}, \emph{Target Concept}, \emph{Search Conditions}, and \emph{Search Strategy}.
+The main screen of Cortana is devided into four major panels,
+\emph{Dataset}, \emph{Target Concept}, \emph{Search Conditions}, and
+\emph{Search Strategy}.
 
 \subsection{Dataset Panel}
 \label{sec:dataset}
@@ -124,9 +131,12 @@ The main screen of Cortana is devided into four major panels, \emph{Dataset}, \e
 %\label{fig:dataset}
 %\end{figure}
 
-The dataset panel gives some information about the dataset that is currently loaded:
+The dataset panel contains information about the dataset that is currently
+loaded:
 \begin{description}
-\item[target table] shows the name of the data file used, which for text files is just the filename, and for ARFF files is the name defined in the '@relation' field;
+\item[target table] shows the name of the data file used. For text
+files this is the filename, and for ARFF files this is the name defined in the
+`@relation' field;
 \item[\# examples] shows the number of examples in the dataset;
 \item[\# columns] shows the number of columns in the dataset.
 Remember that columns are also be referred to as attributes.
@@ -138,8 +148,8 @@ handled as either \gls{nominal} or \gls{numeric}, depending on what kind of
 subgroups you would want to define on the attribute.
 
 In addition to the fields described above, there are three buttons present
-on the {\bf Dataset} panel, {\bf Browse\ldots}, {\bf Meta Data\ldots} and {\bf
-Explore\ldots}.
+on the {\bf Dataset} panel: {\bf Browse\ldots}, {\bf Meta Data\ldots} and
+{\bf Explore\ldots}.
 
 \subsubsection{Browse Window}
 
@@ -177,75 +187,195 @@ learn more about the makeup of your data.
 
 \begin{figure}
 \begin{center}
-\centering
-\resizebox{1\columnwidth}{!}{\includegraphics{metadatawindow.png}}
+\includegraphics[width=\columnwidth]{metadatawindow.png}
 \caption{Meta data window.}
 \end{center}
 \label{fig:metadatawindow}
 \end{figure}
 
-The \textbf{Meta Data...} button gives access to a new window that, next to displaying some additional information about the dataset loaded, also allows changing some of the (characteristics of) the data.
-The upper part of the \emph{Meta Data Window} shows a table with six columns.
-The lower part contains a number of panels that allow modification of the data as it is in memory, note that no modifications are made to the original data file.
-First the properties shown in the table in the upper part will be described, the purpose of the various data manipulations will be explained after that.
+Clicking the Meta Data button will open a MetaData window, which displays
+information on the attributes of the current dataset and allows changing
+some of the attribute properties. The upper part of the window
+shows a table with six columns.
+The lower part contains a
+number of panels that allow modification of the data as it is in memory.
+Note that no modifications are made to the original data file.  
+First the
+properties shown in the table in the upper part will be described, the
+purpose of the various data manipulations will be explained after that.
 
 \paragraph{Meta Data Table}
 \label{meta-data-window:meta-data-table}
 
-The first column in this table, \emph{Attribute}, lists all \emph{attribute names} of the attributes in the dataset.
-The remaining columns show some information for each of these attributes.
-\emph{Cardiality} gives the number of distinct values for an attribute.
-\emph{Type} shows its attribute type.
-\emph{Enabled} indicates whether the attribute is \emph{enabled} or \emph{disabled}.
-\emph{Values Missing} indicates whether the attribute contains missing values or not.
-And finally, \emph{Missing Value} shows the value that is currently used for missing values in the data.
-Obviously, this field is blank if there are no values missing for the attribute.
+The upper part of the MetaData window displays a table containing the current
+attribute information.  The first column in this table, \emph{Attribute},
+lists the attribute names.  \emph{Cardiality} gives the number of distinct
+values for the attribute.  \emph{Type} shows its attribute \gls{type}. 
+\emph{Enabled} indicates whether the attribute is \gls{enabled} or
+\gls{disabled}; this setting affects the search for subgroups, which will be
+discussed in Section \ref{sec:searchstrategy}.  \emph{Values Missing}
+indicates whether values for the attribute are missing in the dataset, and
+if so, \emph{Value for Missing} shows the value that is currently used for
+these missing values.  If not, this field is blank.
 
 \paragraph{Meta Data Functions}
 \label{meta-data-window:meta-data-functions}
 
-The panels in the lower part of the \emph{Meta Data Window} all allow selecting or changing the data.
-The first, \emph{Select}, allows selecting all attributes of a certain type.
-This is a conveiniance method to be used in combination with the functionalities available in other panels.
+The panels in the lower part of the \emph{Meta Data Window} all allow
+selecting or changing the data.  The first, \emph{Select}, allows selecting
+all attributes of a certain type.  This is a convenience method to be used
+in combination with the functionalities available in other panels.
 
-\textbf{Set Type} allows changing the attribute type.
-This can be useful for various reasons.
-The first is that, after loading a plain text file, it is observed that Cortana was not capable to infer the correct type for an attribute.
-Related to this is the possiblity to change the type of an attribute to allow other quality measures to be used in the Subgroup Discovery process.
-An example of this would be an attribute that describes the number of doors in a car dataset.
-If this value is used as a target value, one might treat it as a \emph{nominal} property, forcing the Subgroup Discovery process to only perform equality tests on this \emph{attribute value} for the creation of the conditions used to form subgroups.
-\emph{Instances} in the dataset are then either in the target set if they have the same value for the `doors' attribute as the selected target value, or are in the complement of the set formed by those instances.
-If the `doors' attribute is treated as \emph{numeric}, any, combination, of the `$<=$', `$>=$' and `$=$' tests can used to create conditions to perform on the \emph{attribute values}.
-This means that the size of the set of instances selected using an \emph{attribute value} might be bigger than in the \emph{nominal} case.
-A condition using $doors >= 2$ will select all cars having two or more doors.
-In the \emph{nominal} case it would not be possible to select this group using only one condition (assuming the set of cars having more than two doors is not empty).
-Obviously, it would be possible to select the same group using a set of conditions like $doors equals `2' \vee doors equals `3' \ldots$, but, among other negative characteristics, creating such conditions would be computationally more demanding, and less intuitive.
-Note that if there are missing values for an attribute, the \emph{missing value} value for this attribute might be automaticaly changed to a value that is relevant to the attribute type.
-See \emph{Set Value for Missing} below for more on the \emph{missing value} values for the different attribute types.
+\subparagraph{Set Type} allows changing the attribute \gls{type}.  Cortana
+makes an educated guess which \gls{type} each attribute should have. 
+Occasionally you will want to change this assessment, and if possible
+this panel will allow it.  Select the attributes in the table in the upper
+part of the MetaData window, choose the radio button corresponding to the
+desired type, and click the Change Type button.  If the requested action can
+be performed, Cortana will do so, and if not (for instance: if you try to
+make an attribute binary while it has more than two distinct values),
+Cortana will do nothing.
+
+%This can be useful for various reasons.  The first is that, after loading a
+%plain text file, it is observed that Cortana was not capable to infer the
+%correct type for an attribute.  Related to this is the possiblity to change
+%the type of an attribute to allow other quality measures to be used in the
+%Subgroup Discovery process.  An example of this would be an attribute that
+%describes the number of doors in a car dataset.  If this value is used as a
+%target value, one might treat it as a \emph{nominal} property, forcing the
+%Subgroup Discovery process to only perform equality tests on this
+%\emph{attribute value} for the creation of the conditions used to form
+%subgroups.  \emph{Instances} in the dataset are then either in the target
+%set if they have the same value for the `doors' attribute as the selected
+%target value, or are in the complement of the set formed by those instances. 
+%If the `doors' attribute is treated as \emph{numeric}, any, combination, of
+%the `$<=$', `$>=$' and `$=$' tests can used to create conditions to perform
+%on the \emph{attribute values}.  This means that the size of the set of
+%instances selected using an \emph{attribute value} might be bigger than in
+%the \emph{nominal} case.  A condition using $doors >= 2$ will select all
+%cars having two or more doors.  In the \emph{nominal} case it would not be
+%possible to select this group using only one condition (assuming the set of
+%cars having more than two doors is not empty).  Obviously, it would be
+%possible to select the same group using a set of conditions like $doors
+%equals `2' \vee doors equals `3' \ldots$, but, among other negative
+%characteristics, creating such conditions would be computationally more
+%demanding, and less intuitive.  Note that if there are missing values for an
+%attribute, the \emph{missing value} value for this attribute might be
+%automaticaly changed to a value that is relevant to the attribute type.  See
+%\emph{Set Value for Missing} below for more on the \emph{missing value}
+%values for the different attribute types.
 %\ref{subsubsection:set-missing-values}
 
-\textbf{Set Disabled/Enabled} allows to disable or enable an attribute.
-When an attribute is disabled, it will not be considered by the mining algorithm to form conditions with to create subgroups.
-Note that disabling an attribute does not affect the possiblity to select it as a target concept (see section~\ref{preliminaries:target-concept} for more on target concepts).
+\subparagraph{Set Disabled/Enabled} allows to disable or enable an
+attribute. The relevance of this choice will be discussed in
+Section~\ref{sec:searchstrategy}; by default all attributes are enabled.
 
-\textbf{Set Value for Missing} can be used to change the value that is curently used for values that were missing in the data.
-The value that is used for missing values depends on the type of the attribute.
-If, in an ARFF file, values are declared missing, using the `\emph{?}' directive, Cortana's file loader might replace this value with one that makes more sense in its Subgroup Discovery setting.
-For \emph{nominal} types it will leave this value as is.
-This will result in `\emph{?}' being one of the possible target values one can select for the corresponding attribute.
-However, one can assign a diffent value to the \emph{missing values}.
-One than has two options, either assign the \emph{missing values} a value that is an existing one for the attribute, or a non-exiting one.
-In the first case one effectively assigns all instances that have a missing value for the corresponding attribute to one of the other \emph{attribute values}.
-In the latter case, one just changes the value.
-When changing the \emph{missing value} value of an attribute, the \emph{Cardinality} column is updated accordingly.
-For \emph{numeric} and \emph{binary} attribute types Cortana's file loader will replace `\emph{?}' values with $0.0$ and $false$, respectively.
-Again, if this is incorrect, or one wishes to assign the \emph{missing values} another \emph{attribute value}, either existing or non-existing, this can be done analogously to the \emph{nominal} case.
+%When an attribute is disabled, it will not be considered by the mining
+%algorithm to form conditions with to create subgroups.  Note that disabling
+%an attribute does not affect the possiblity to select it as a target concept
+%(see section~\ref{sec:targetconcept} for more on target concepts).
+
+\subparagraph{Set Value for Missing} can be used to change the value that is
+currently used as a proxy for missing occurrences of this attribute in the
+data. Details can be found in the Full Cortana Manual.
+
+%\todo{several spelling errors in the following paragraph. Haven't corrected
+%them, since they're commented out anyway.}
+%\subparagraph{Set Value for Missing} can be used to change the value that is
+%currently used as a proxy for missing occurences of this attribute in the
+%data.  The default value that is used for missing values depends on the
+%attribute type.  If, in an ARFF file, values are declared missing using
+%the `\emph{?}' directive, Cortana's file loader might replace this value
+%with one that makes more sense in its Subgroup Discovery setting.  For
+%\emph{nominal} types it will leave this value as is.  This will result in
+%`\emph{?}' being one of the possible target values one can select for the
+%corresponding attribute.  However, one can assign a diffent value to the
+%\emph{missing values}.  One than has two options, either assign the
+%\emph{missing values} a value that is an existing one for the attribute, or
+%a non-exiting one.  In the first case one effectively assigns all instances
+%that have a missing value for the corresponding attribute to one of the
+%other \emph{attribute values}.  In the latter case, one just changes the
+%value.  When changing the \emph{missing value} value of an attribute, the
+%\emph{Cardinality} column is updated accordingly.  For \emph{numeric} and
+%\emph{binary} attribute types Cortana's file loader will replace `\emph{?}'
+%values with $0.0$ and $false$, respectively.  Again, if this is incorrect,
+%or one wishes to assign the \emph{missing values} another \emph{attribute
+%value}, either existing or non-existing, this can be done analogously to the
+%\emph{nominal} case.
 
 \subsection{Target Concept Panel}
 \label{sec:targetconcept}
 
+The settings in the Target Concept panel determine how the Cortana process
+is \emph{supervised}, as described in Section \ref{sec:intro}.  A Cortana
+run strives to find subgroups for which a target concept is substantially
+different than the target concept over the entire dataset.  In the Cortana
+Light Manual, we will focus on the case where this target concept is the
+distribution of a single attribute.  Cortana can also find subgroups for
+more complex target concepts; these are described in the Full Cortana
+Manual.
+
+\todo{edit from here}
+
+The first drop-down menu in the Target Concept panel is 
+{\bf target type}, that is used to change the target type
+for which one wants to do Subgroup Discovery.  Selecting another target type
+from the drop down box will force Cortana to consider other attributes as
+target concept.  For example, when changing the target type from the default
+\emph{single nominal} to \emph{single numeric}, the first attribute having
+the numeric attribute type is selected, and subsequently displayed in the
+{\bf primary target} drop down box.
+
+Based on the target type selected, a number of quality measures is available.
+These are listed in the {\bf quality measure} drop down box.
+After changing the target type, the quality measures listed in the {\bf quality measure} drop down box are automatically updated, to fit the new target type.
+
+The text field next to {\bf measure minimum} will, show a minimum threshold value for the selected quality measure.
+One might consider lowering this value if a Subgroup Discovery experiment, run with the default value, returned too few subgroups.
+On the other hand, one can increase this value to force Cortana to only report subgroups that have a sufficiently quality.
+
+The items described in the remainder of this section will not be available in every target type setting, as the various target types are related to the attribute type of the target concept.
+For each item, it will be mentioned to which attribute type it applies.
+
+\textbf{primary target} is available in the following target type settings: \emph{single nominal}, \emph{single numeric} and \emph{double correlation}.
+The {\bf primary target} drop down box lists all attributes available in the dataset.
+
+\textbf{target value} is available only in the \emph{single nominal} setting.
+The {\bf target value} drop down box lists all values of the attribute set as \emph{primary target}, which can be of the \emph{nominal} and \emph{binary} attribute type.
+
 \subsection{Search Conditions Panel}
 \label{sec:searchconditions}
+
+The fields on this panel allow setting the search conditions used in the Subgroup Discovery process.
+For all fields the default values are also given.
+
+\textbf{refinement depth} controls the number of conditions that is used to create subgroups.
+A refinement depth of $1$ would lead to conditions like $x \leq 9.11$, while a refinement depth of $2$ would allow for the creation of conditions like $x \leq 1.2 \wedge y \geq 3.4$.
+It is not recommended to set the refinement depth to very high values.
+In Subgroup Discovery, often a depth greater than $4$ or $5$ does not lead to significant improvements of the measure score any more, and just increases both the risk if overfitting, and the computational time needed to calculate the result.
+
+\textbf{minimum coverage} sets the lower bound for the size of the subgroups that should be reported by Cortana, meaning all reported subgroups have at least this size.
+The default value is set to $10\%$ of the total dataset size, which is shown as \textbf{\# examples}, see section~\ref{main:dataset} above.
+
+\textbf{coverage fraction} sets the upper bound for the size of the subgroups that should be reported by Cortana, meaning all reported subgroups have at most this size.
+The default value is set to $1.0$, which indicates the entire dataset.
+
+\textbf{maximum subgroups} is used to control the maximum number of subgroups in the result list generated by Cortana.
+First, this means that the Result Window (section~\ref{section:result-window}) will show at most this number of subgroups.
+%Search width.
+
+But also, as alluded to in the \emph{Dataset} section (\ref{main:dataset} on \emph{measure minimum}, this number also controls the number of intermediate results retained by Cortana to form the pool out of which the generation for the next \emph{refinement depth} is formed.
+As such, this \emph{Search Condition} parameter has significant influence on the computational demands, as it directly controls the number of combinatorial candidates to be tested during Cortana's Subgroup Discovery process.
+Without going into the actual algorithm, a small example probably suffices to make this clear.
+For a dataset consisting of only \emph{nominal} attributes, assume $n =$ \emph{maximum subgroups}, and $m =$ \emph{number of attribute-value pairs}, then the number of candidates $c$ to be tested by Cortana for the next \emph{refinement depth} iteration is: $c = n \cdot m$.
+%TODO calculation is incorrect, especially with new operator settings.
+%Mention search strategies.
+
+\textbf{maximum time (min)} will determine the maximum time, measured in minutes, Cortana is allowed to search for new subgroups.
+After this periode Cortana will abort the Subgroup Discovery process and report all subgroups found up until that point.
+This means that especially for the \emph{search strategy} (section~\ref{main:search-strategy}) \emph{strategy type} \emph{depth first} a large of the search space will not be explored at all, if the search proces is aborted.
+More precisely, only the first attributes will have been addressed at that time.
+
 
 \subsection{Search Strategy Panel}
 \label{sec:searchstrategy}
