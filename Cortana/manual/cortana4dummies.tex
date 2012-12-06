@@ -83,7 +83,6 @@ cancer or not.  Cortana can find subgroups like \emph{smoking = true} (the
 smokers, which have a substantially higher incidence of lung cancer), and
 \emph{weekly walking kilometers} $\geq 50$ (athletes, which have a
 substantially lower incidence of lung cancer).
-\todo{might need a better example here}
 
 \section{Launching Cortana}
 
@@ -159,6 +158,7 @@ on the {\bf Dataset} panel: {\bf Browse\ldots}, {\bf Meta Data\ldots} and
 {\bf Explore\ldots}.
 
 \subsubsection{Browse Window}
+\label{sec:browsewindow}
 
 Clicking the Browse button will open a Browse Window, displaying the
 data in its current state.  You can sort the data by clicking on the column
@@ -282,7 +282,7 @@ Section~\ref{sec:searchstrategy}; by default all attributes are enabled.
 
 \subparagraph{Set Value for Missing} can be used to change the value that is
 currently used as a proxy for missing occurrences of this attribute in the
-data. Details can be found in the Full Cortana Manual.
+data. Details can be found in the Full Cortana Manual \cite{full}.
 
 %\todo{several spelling errors in the following paragraph. Haven't corrected
 %them, since they're commented out anyway.}
@@ -318,7 +318,7 @@ different than the target concept over the entire dataset.  In the Cortana
 Light Manual, we will focus on the case where this target concept is the
 distribution of a single attribute.  Cortana can also find subgroups for
 more complex target concepts; these are described in the Full Cortana
-Manual.
+Manual \cite{full}.
 
 Since the \gls{type} of the target attribute determines the number of
 parameters to be set, you have to indicate it first.  Hence, the first
@@ -408,7 +408,7 @@ afterwards.
 
 \textbf{strategy type} allows you to set the overarching search strategy. 
 In this manual we will focus on the ``beam'' setting; for more on the other
-strategies, please see the Full Cortana Manual.  If you find the reported
+strategies, please see the Full Cortana Manual \cite{full}.  If you find the reported
 subgroups that Cortana too similar to each other, you could alternatively
 try the ``cover-based beam selection'' setting.
 
@@ -424,7 +424,7 @@ checked, \emph{additionally} subgroups of the form
 Together, \textbf{numeric operators}, \textbf{numeric strategy}, and
 \textbf{number of bins} determine the subgroups considered for each numeric
 attribute.  Usually, the default selection will do.  For more details, see
-the Full Cortana Manual.
+the Full Cortana Manual \cite{full}.
 
 \textbf{threads} sets the number of hyperthreads used on your computer for
 the Cortana process.  When you run Cortana on a multi-core system,
@@ -447,11 +447,12 @@ Each search level starts with a generating pool of subgroups, the
 dataset.  Cortana generates a set of candidate subgroups from the beam, by
 refining each subgroup in the beam.
 
-For each subgroup to be refined, Cortana considers each non-target
-attributes in the dataset.  Depending on the attribute type, a number of
-subgroups will be generated from the original subgroup, each by imposing one
-additional constraint on the current attribute. The quality of these new
-subgroups is computed, and they are gathered in one large candidate pool.
+For each subgroup to be refined, Cortana considers each non-target attribute
+in the dataset that is \gls{enabled}.  Depending on the attribute type, a
+number of subgroups will be generated from the original subgroup, each by
+imposing one additional constraint on the current attribute.  The quality of
+these new subgroups is computed, and they are gathered in one large
+candidate pool.
 
 When all subgroups are refined, the candidate pool is trimmed: the subgroups
 are ranked by their quality measure values, and only the best $w$ (the
@@ -467,6 +468,162 @@ Result Window.
 \section{Result Window}
 \label{section:result-window}
 
+When all parameters are set, clicking the \textbf{Subgroup Discovery} button
+in the Main Window will set the Beam Search process in motion as described
+in the previous section. At the end of the process, you will be presented
+with a result window. An example of such a window is displayed in Figure
+\ref{fig:resultwindow}. The window consists of a table displaying the found
+subgroups, and buttons to perform actions on the subgroups.
+
+\begin{figure}[t]
+\begin{center}
+\includegraphics[width=\textwidth]{resultwindow_r1011.png}
+\caption{A result window}
+\label{fig:resultwindow}
+\end{center}
+\end{figure}
+
+\subsection{Result Set Table}
+
+This section will address all columns of the table displaying the found
+subgroups, and explains how to interpret the information they display.
+
+\textbf{Nr.} shows the rank of the subgroup by quality.  Ties are ignored.
+
+\textbf{Depth} shows the \gls{search depth} at which the subgroup was
+found.  
+
+\textbf{Coverage} shows the number of examples in the subgroup.  
+
+\textbf{Quality} shows the score of the subgroup, according to the quality
+measure used.  Different quality measures have different ranges for the
+scores they asssign to the worst and best possible subgroups.  As a result,
+measure scores resulting from applying different quality measures cannot be
+compared directly in any sensible manner.
+
+\textbf{Probability} is only shown when the target attribute is
+\gls{nominal}. It displays the probability that an example has the desired
+target value, conditional on the fact that the example is in the subgroup. 
+If the target attribute is \gls{numeric}, this column is replaced with
+\textbf{Average}, which displays the average target value in the subgroup.
+
+\textbf{Positives} is only shown when the target attribute is \gls{nominal}.
+It displays the number of examples in the subgroup that have the desired
+target value. If the target attribute is \gls{numeric}, this column is
+replaced with \textbf{St.~Dev.}, which displays the standard deviation of
+the target values in the subgroup.
+
+\textbf{p-Value} is initially blank. This will change when clicking the
+\textbf{Gaussian p-Values} button, as described in Section
+\ref{sec:buttons}.
+
+\textbf{Conditions} shows the conditions that define the subgroup.
+
+\subsection{Result Set Buttons}
+\label{sec:buttons}
+
+The following paragraphs describe the various buttons that can appear in
+the \emph{Result Window}.  Not all buttons are always available; this may
+depend on the target type setting used for the Subgroup Discovery
+experiment.  For all buttons it will be indicated for what target type
+setting it is applicable.
+
+\begin{figure}[t]
+\begin{center}
+\includegraphics[width=0.5\textwidth]{rocwindow.png}
+\caption{An ROC window}
+\end{center}
+\label{fig:rocwindow}
+\end{figure}
+
+\textbf{ROC} is only available for the \emph{single nominal} target type. 
+All subgroups in the Result Set Table will be taken into account to show a
+\emph{ROC Curve Window}.  ROC (Receiver Operating Characteristic) curves
+have their origin in electrival engeneering, where they are used to show the
+performance of classifiers.  In the \emph{single nominal} setting, those
+examples in a subgroup that have the desired target value are called
+\emph{true positives}, while the others are called \emph{false positives}. 
+In an ROC plot the \emph{true positive rate} (TPR) of each subgroup is
+plotted against its \emph{false positive rate} (FPR).  A set of found
+subgroups can be depicted as a set of point in this two-dimensional space. 
+The convex hull of this point set, the \emph{ROC curve}, can be drawn, and
+the area under this curve can be seen as a measure of the quality of the
+subgroup set.  When the ROC curve is a straight diagonal from the lower left
+corner to the upper right, then the result is indistinguishable from
+complete randomness.  The closer the curve approaches the upper left corner,
+the better the result.  For a subgroup to reach the upper left corner, its
+TPR must be $1$, and its FPR $0$, hence this subgroup would contain
+precisely all examples in the dataset having the desired target value, and
+none of the examples not having the desired target value.
+
+Clicking the button shows a plot of the current result set in ROC space with
+the convex hull, and a table of those subgroups that lie on the convex hull.
+
+\textbf{Browse Selected} is available for all target types.  Clicking this
+button will show a Browse Window (see Section \ref{sec:browsewindow}) for
+each subgroup selected in the Result Set Table.  This window depicts all
+examples that constitute the subgroup.  For the \emph{single nominal} target
+type one additional button is available, the \textbf{True Positives} button. 
+Clicking it will highlight only those instances having the desired target
+value.
+
+\textbf{Delete Selected} is available for all target types. Clicking this
+button will delete all subgroups selected in the Result Set Table from the
+result set.
+
+\begin{figure}[t]
+\begin{center}
+\includegraphics[width=0.3\textwidth]{randomizationdialog.png}
+\caption{Choosing the type of randomization to be used for any significance testing}
+\end{center}
+\label{fig:randomizationdialog}
+\end{figure}
+
+\textbf{Gaussian p-Values} will perform a permutation test to compute
+p-values, corresponding to the null hypothesis that the found subgroups are
+false discoveries \cite{2011Duivesteijn}.  After clicking the button, the
+user is presented by the dialog depicted in Figure
+\ref{fig:randomizationdialog}.  The \textbf{Swap-randomization} radio button
+is preselected and should be selected (the other two methods are obsolete,
+and will be removed).  The number of repetitions is preset to 100 in the
+\textbf{Amount} field; you could lower the number of repetitions to speed up
+the p-value computation, at the cost of p-value accuracy.  Notice that the
+test will simulate false discoveries, using a subgroup discovery run with
+the parameter settings you selected in the Main Window.  If these settings
+are too strict, it might be possible that no false discoveries can be found,
+and the p-value computation could get stuck in an infinite loop.
+
+\textbf{Regression Test} is obsolete functionality, and will be removed.
+
+\textbf{Empirical p-Values} is obsolete functionality, and will be removed.
+
+\textbf{Save} is available for all target types.  It allows saving of the
+whole result set to a file.  The file will contain the information as it is
+depicted in the Result Set Table, and the values for the various columns
+will be comma-separated.
+
+\textbf{Close} is available for all target types. Clicking it will close the
+\emph{Result Window}, which can not be reopened.  Therefore, all necessary
+actions like, saving or printing the results, should be done before closing
+the Result Window.  All results will be lost, and the only way to get a new
+Result Window is to run the same Subgroup Discovery process again.  As this
+may be a very lengthy process, be sure to finish all operations before
+closing the Result Window.
+
+\bibliographystyle{plain}
+\begin{thebibliography}{9}
+
+\bibitem{full}
+M.\@ Meeng, A.\@ Knobbe, W.\@ Duivesteijn: Cortana Manual.
+\url{http://datamining.liacs.nl/cortana/manual.pdf}, to appear.
+
+\bibitem{2011Duivesteijn}
+W.\@ Duivesteijn, A.\@ Knobbe: Exploiting False Discoveries -- Statistical
+Validation of Patterns and Quality Measures in Subgroup Discovery. In:
+Proc.\@ ICDM 2011, pp.\@ 151--160.
+
+\end{thebibliography}
+
 \appendix
 \clearpage
 ~\vfill
@@ -481,7 +638,7 @@ Result Window.
 \renewcommand*{\glossaryname}{}
 \printglossaries
 
-\section{Autorun}
+%\section{Autorun}
 
 \section{Memory Issues}
 \label{sec:memory}

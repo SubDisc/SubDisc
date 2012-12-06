@@ -5,29 +5,32 @@
 		\setentrycounter{page}\glsnumberformat{6}}}%
 \glossaryentryfield{binary}{\glsnamefont{binary}}{An attribute that can have only two distinct values. These values will be represented in Cortana with 0 and 1. Cortana will form subgroups \emph {attr}=0 and \emph {attr}=1}{\relax }{\glossaryentrynumbers{\relax 
 		\setentrycounter{page}\glsnumberformat{3}\delimN 
-		\setentrycounter{page}\glsnumberformat{8}}}\glsgroupskip
+		\setentrycounter{page}\glsnumberformat{11}}}\glsgroupskip
 \glsgroupheading{D}\relax \glsresetentrylist %
 \glossaryentryfield{disabled}{\glsnamefont{disabled}}{An attribute that will not be considered for generating candidate subgroups}{\relax }{\glossaryentrynumbers{\relax 
 		\setentrycounter{page}\glsnumberformat{3}}}\glsgroupskip
 \glsgroupheading{E}\relax \glsresetentrylist %
 \glossaryentryfield{enabled}{\glsnamefont{enabled}}{An attribute that will be considered for generating candidate subgroups}{\relax }{\glossaryentrynumbers{\relax 
-		\setentrycounter{page}\glsnumberformat{3}}}\glsgroupskip
+		\setentrycounter{page}\glsnumberformat{3}\delimN 
+		\setentrycounter{page}\glsnumberformat{6}}}\glsgroupskip
 \glsgroupheading{N}\relax \glsresetentrylist %
 \glossaryentryfield{nominal}{\glsnamefont{nominal}}{An attribute that can have any countable number of distinct values. No ordering is assumed between these values. Cortana will form subgroups \emph {attr}=\emph {value}, and \emph {attr}$\neq $\emph {value} when the ``include $\neq $ (nominal)'' checkbox in the Search Strategy Panel is selected (see Section \ref {sec:searchstrategy})}{\relax }{\glossaryentrynumbers{\relax 
 		\setentrycounter{page}\glsnumberformat{3}\delimN 
 		\setentrycounter{page}\glsnumberformat{5}\delimN 
-		\setentrycounter{page}\glsnumberformat{8}}}%
+		\setentrycounter{page}\glsnumberformat{7}\delimN 
+		\setentrycounter{page}\glsnumberformat{11}}}%
 \glossaryentryfield{numeric}{\glsnamefont{numeric}}{An attribute that can have values from a continuous range. Cortana will form subgroups \emph {attr}$\leq $\emph {value} and \emph {attr}$\geq $\emph {value}. You can control how many and which values will be selected in the Search Strategy Panel (see Section \ref {sec:searchstrategy})}{\relax }{\glossaryentrynumbers{\relax 
 		\setentrycounter{page}\glsnumberformat{3}\delimN 
 		\setentrycounter{page}\glsnumberformat{5}\delimN 
-		\setentrycounter{page}\glsnumberformat{8}}}\glsgroupskip
+		\setentrycounter{page}\glsnumberformat{7}\delimN 
+		\setentrycounter{page}\glsnumberformat{11}}}\glsgroupskip
 \glsgroupheading{O}\relax \glsresetentrylist %
 \glossaryentryfield{ordinal}{\glsnamefont{ordinal}}{An attribute that can have any countable number of distinct values. A natural ordering exists between these values. Cortana cannot handle this attribute type. Depending on which kind of subgroups you would want to consider, you can make Cortana handle such an attribute as either \gls {nominal} or \gls {numeric}}{\relax }{\glossaryentrynumbers{\relax 
 		\setentrycounter{page}\glsnumberformat{3}\delimN 
-		\setentrycounter{page}\glsnumberformat{8}}}\glsgroupskip
+		\setentrycounter{page}\glsnumberformat{11}}}\glsgroupskip
 \glsgroupheading{S}\relax \glsresetentrylist %
 \glossaryentryfield{search depth}{\glsnamefont{search depth}}{The number of levels Cortana uses in its mining process. This parameter also restricts the amount of conditions on one attribute, that can be imposed on one subgroup}{\relax }{\glossaryentrynumbers{\relax 
-		\setentrycounter{page}\glsnumberformat{6}}}%
+		\setentrycounter{page}\glsnumberformat{6\delimN 7}}}%
 \glossaryentryfield{search width}{\glsnamefont{search width}}{The number of subgroups Cortana retains at the end of each level of its mining process, and uses to generate candidate subgroups for the next level}{\relax }{\glossaryentrynumbers{\relax 
 		\setentrycounter{page}\glsnumberformat{6}}}\glsgroupskip
 \glsgroupheading{T}\relax \glsresetentrylist %
