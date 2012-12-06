@@ -38,6 +38,14 @@ depending on what kind of subgroups you would like to see}
 generating candidate subgroups}
 \maakgls{disabled}{An attribute that will not be considered for
 generating candidate subgroups}
+\maakgls{search depth}{The number of levels Cortana uses in its mining
+process. This parameter also restricts the amount of conditions on one
+attribute, that can be imposed on one subgroup}
+\maakgls{search width}{The number of subgroups Cortana retains at the end of
+each level of its mining process, and uses to generate candidate subgroups
+for the next level}
+\maakgls{beam}{The set of subgroups used as generating pool for the next
+search level}
 
 \title{Cortana for Dummies}
 \author{Marvin Meeng, Wouter Duivesteijn}
@@ -424,8 +432,37 @@ increasing this number will reduce the time necessary to complete the
 process.  You can set the parameter to $0$ to allow Cortana to use every
 available hyperthread.
 
-\section{The Search Process}
+\section{Beam Search Process}
 \label{sec:searchprocess}
+
+Cortana's search process is an example of Beam Search, which is a level-wise
+search largely governed by two parameters: the \gls{search depth} and the
+\gls{search width}.  The search depth can be set in the \textbf{refinement
+depth} field in the Search Conditions panel; we denote its value by $d$. 
+The search width can be set in the \textbf{search width} field in the Search
+Strategy panel; we denote its value by $w$.
+
+Each search level starts with a generating pool of subgroups, the
+\gls{beam}.  The initial beam consists of only one subgroup: the entire
+dataset.  Cortana generates a set of candidate subgroups from the beam, by
+refining each subgroup in the beam.
+
+For each subgroup to be refined, Cortana considers each non-target
+attributes in the dataset.  Depending on the attribute type, a number of
+subgroups will be generated from the original subgroup, each by imposing one
+additional constraint on the current attribute. The quality of these new
+subgroups is computed, and they are gathered in one large candidate pool.
+
+When all subgroups are refined, the candidate pool is trimmed: the subgroups
+are ranked by their quality measure values, and only the best $w$ (the
+\gls{search width}) subgroups are kept. These subgroups form the \gls{beam}
+for the next level.
+
+This process is repeated until $d$ (the \gls{search depth}) beams are
+refined.  That implies that the resulting subgroups are defined as a
+conjunction of at most $d$ conditions, each on a single attribute.  The best
+subgroups considered during this entire process are then reported in a
+Result Window.
 
 \section{Result Window}
 \label{section:result-window}
