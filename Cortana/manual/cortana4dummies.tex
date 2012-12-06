@@ -16,10 +16,9 @@ values will be represented in Cortana with 0 and 1. Cortana will form
 subgroups \emph{attr}=0 and \emph{attr}=1}
 \maakgls{nominal}{An attribute that can have any countable number of
 distinct values.  No ordering is assumed between these values.  Cortana will
-form subgroups \emph{attr}=\emph{value}, and \emph{attr}
-$\in\{$\emph{value1},\emph{value2},\ldots$\}$ when the set-valued nominals
-checkbox in the Search Strategy Panel is selected (see Section
-\ref{sec:searchstrategy})}
+form subgroups \emph{attr}=\emph{value}, and \emph{attr}$\neq$\emph{value}
+when the ``include $\neq$ (nominal)'' checkbox in the Search Strategy Panel
+is selected (see Section \ref{sec:searchstrategy})}
 \maakgls{ordinal}{An attribute that can have any countable number of
 distinct values. A natural ordering exists between these values. Cortana
 cannot handle this attribute type. Depending on which kind of subgroups you
@@ -42,7 +41,7 @@ generating candidate subgroups}
 
 \title{Cortana for Dummies}
 \author{Marvin Meeng, Wouter Duivesteijn}
-\date{December 4, 2012}
+\date{December 6, 2012}
 
 \newcommand{\todo}[1]{\textcolor{red}{[TODO: #1]}}
 
@@ -110,7 +109,7 @@ this option is available.
 
 \begin{figure}
 \begin{center}
-\includegraphics[width=\textwidth]{mainwindow.png}
+\includegraphics[width=\textwidth]{miningwindow_r1011.png}
 \caption{Cortana's main window.}
 \label{fig:mainwindow}
 \end{center}
@@ -131,7 +130,7 @@ The main screen of Cortana is devided into four major panels,
 %\label{fig:dataset}
 %\end{figure}
 
-The dataset panel contains information about the dataset that is currently
+The Dataset panel contains information about the dataset that is currently
 loaded:
 \begin{description}
 \item[target table] shows the name of the data file used. For text
@@ -195,14 +194,12 @@ learn more about the makeup of your data.
 
 Clicking the Meta Data button will open a MetaData window, which displays
 information on the attributes of the current dataset and allows changing
-some of the attribute properties. The upper part of the window
-shows a table with six columns.
-The lower part contains a
-number of panels that allow modification of the data as it is in memory.
-Note that no modifications are made to the original data file.  
-First the
-properties shown in the table in the upper part will be described, the
-purpose of the various data manipulations will be explained after that.
+some of the attribute properties.  The upper part of the window shows a
+table with six columns.  The lower part contains a number of panels that
+allow modification of the data as it is in memory.  Note that no
+modifications are made to the original data file.  First the properties
+shown in the table in the upper part will be described, the purpose of the
+various data manipulations will be explained after that.
 
 \paragraph{Meta Data Table}
 \label{meta-data-window:meta-data-table}
@@ -315,72 +312,123 @@ distribution of a single attribute.  Cortana can also find subgroups for
 more complex target concepts; these are described in the Full Cortana
 Manual.
 
-\todo{edit from here}
+Since the \gls{type} of the target attribute determines the number of
+parameters to be set, you have to indicate it first.  Hence, the first
+drop-down menu in the Target Concept panel is {\bf target type}, which more
+generally determines what sort of target concept we are interested in.  The
+\emph{single nominal} and \emph{single numeric} choices correspond to having
+one single target attribute, either nominal or numeric.
 
-The first drop-down menu in the Target Concept panel is 
-{\bf target type}, that is used to change the target type
-for which one wants to do Subgroup Discovery.  Selecting another target type
-from the drop down box will force Cortana to consider other attributes as
-target concept.  For example, when changing the target type from the default
-\emph{single nominal} to \emph{single numeric}, the first attribute having
-the numeric attribute type is selected, and subsequently displayed in the
-{\bf primary target} drop down box.
+When the target attribute type is \gls{nominal}, you have to set four
+additional parameters.  In the third drop-down menu (\textbf{primary
+target}) of the Target Concept panel, you can select the target attribute,
+and in the fourth drop-down menu, you can select the desired value for that
+target (i.e.\@ the value for which you want to see an increase or
+decrease in the found subgroups).  
+The second drop-down menu (\textbf{quality measure}) lists the available
+quality measures.  The default selection, ``WRAcc'', will only search for
+subgroups with an increased presence of the target value.  If you are also
+interested in subgroups with a decreased presence of the target value, you
+can select either ``Abs WRAcc'' or ``Chi-squared''. Directly below the
+quality measure drop-down menu, you find a field where you can enter the
+minimal quality value a subgroup must have (\textbf{measure minimum}).
+Usually the default value should do, but if your subgroup discovery run
+provides no results, a lower measure minimum might help.
 
-Based on the target type selected, a number of quality measures is available.
-These are listed in the {\bf quality measure} drop down box.
-After changing the target type, the quality measures listed in the {\bf quality measure} drop down box are automatically updated, to fit the new target type.
-
-The text field next to {\bf measure minimum} will, show a minimum threshold value for the selected quality measure.
-One might consider lowering this value if a Subgroup Discovery experiment, run with the default value, returned too few subgroups.
-On the other hand, one can increase this value to force Cortana to only report subgroups that have a sufficiently quality.
-
-The items described in the remainder of this section will not be available in every target type setting, as the various target types are related to the attribute type of the target concept.
-For each item, it will be mentioned to which attribute type it applies.
-
-\textbf{primary target} is available in the following target type settings: \emph{single nominal}, \emph{single numeric} and \emph{double correlation}.
-The {\bf primary target} drop down box lists all attributes available in the dataset.
-
-\textbf{target value} is available only in the \emph{single nominal} setting.
-The {\bf target value} drop down box lists all values of the attribute set as \emph{primary target}, which can be of the \emph{nominal} and \emph{binary} attribute type.
+When the target attribute type is \gls{numeric}, you have to set three
+additional parameters.  In the third drop-down menu (\textbf{primary
+target}) of the Target Concept panel, we have to select the target
+attribute.  Unlike in the nominal case, there is not one particular value
+for the attribute to be interested in; instead we search for subgroups with
+relatively high or relatively low values for the target.  The second
+drop-down menu (\textbf{quality measure}) lists the available quality
+measures.  The default selection, ``Z-Score'', will only search for
+subgroups with a relatively high average target value.  If you are
+interested in subgroups with a relatively low average target value, you can
+select ``Inverse Z-Score'', and if you are interested in both, you can
+select or ``Abs Z-Score''.  Again, directly below the quality measure
+drop-down menu, you can set the \textbf{measure minimum}, and again, usually
+the default value should do, but if your subgroup discovery run provides no
+results, a lower measure minimum might help.
 
 \subsection{Search Conditions Panel}
 \label{sec:searchconditions}
 
-The fields on this panel allow setting the search conditions used in the Subgroup Discovery process.
-For all fields the default values are also given.
+The fields in the Search Conditions panel allow setting the search
+conditions used in the Subgroup Discovery process.  The process is discussed
+in detail in Section \ref{sec:searchprocess}.
 
-\textbf{refinement depth} controls the number of conditions that is used to create subgroups.
-A refinement depth of $1$ would lead to conditions like $x \leq 9.11$, while a refinement depth of $2$ would allow for the creation of conditions like $x \leq 1.2 \wedge y \geq 3.4$.
-It is not recommended to set the refinement depth to very high values.
-In Subgroup Discovery, often a depth greater than $4$ or $5$ does not lead to significant improvements of the measure score any more, and just increases both the risk if overfitting, and the computational time needed to calculate the result.
+\textbf{refinement depth} controls the number of conditions that is used to
+define subgroups.  A refinement depth of $1$ would lead to subgroups of the
+form $x \leq 9.11$, while a refinement depth of $2$ would allow for
+subgroups of the form $x \leq 1.2 \wedge y \geq 3.4$.  It is not recommended
+to set the refinement depth to very high values.  Usually, the added
+conditions on depth $4$ or $5$ and beyond do not substantially contribute to
+subgroups, but merely make them harder to interpret while the increased
+depth does substantially add computational time needed to calculate the
+result.
 
-\textbf{minimum coverage} sets the lower bound for the size of the subgroups that should be reported by Cortana, meaning all reported subgroups have at least this size.
-The default value is set to $10\%$ of the total dataset size, which is shown as \textbf{\# examples}, see section~\ref{main:dataset} above.
+\textbf{minimum coverage} sets the lower bound for the size of the subgroups
+that should be reported by Cortana, meaning all reported subgroups have at
+least this size.  The default value is $10\%$ of the dataset size.
 
-\textbf{coverage fraction} sets the upper bound for the size of the subgroups that should be reported by Cortana, meaning all reported subgroups have at most this size.
-The default value is set to $1.0$, which indicates the entire dataset.
+\textbf{coverage fraction} sets the upper bound for the size of the
+subgroups that should be reported by Cortana, meaning all reported subgroups
+have at most this size.  The default value is set to $1.0$, which allows
+subgroups to encompass the entire dataset.
 
-\textbf{maximum subgroups} is used to control the maximum number of subgroups in the result list generated by Cortana.
-First, this means that the Result Window (section~\ref{section:result-window}) will show at most this number of subgroups.
-%Search width.
+\textbf{maximum subgroups} is used to control the maximum number of
+subgroups in the result list generated by Cortana.  Setting this parameter
+to $0$ allows Cortana to report all found subgroups.
 
-But also, as alluded to in the \emph{Dataset} section (\ref{main:dataset} on \emph{measure minimum}, this number also controls the number of intermediate results retained by Cortana to form the pool out of which the generation for the next \emph{refinement depth} is formed.
-As such, this \emph{Search Condition} parameter has significant influence on the computational demands, as it directly controls the number of combinatorial candidates to be tested during Cortana's Subgroup Discovery process.
-Without going into the actual algorithm, a small example probably suffices to make this clear.
-For a dataset consisting of only \emph{nominal} attributes, assume $n =$ \emph{maximum subgroups}, and $m =$ \emph{number of attribute-value pairs}, then the number of candidates $c$ to be tested by Cortana for the next \emph{refinement depth} iteration is: $c = n \cdot m$.
-%TODO calculation is incorrect, especially with new operator settings.
-%Mention search strategies.
-
-\textbf{maximum time (min)} will determine the maximum time, measured in minutes, Cortana is allowed to search for new subgroups.
-After this periode Cortana will abort the Subgroup Discovery process and report all subgroups found up until that point.
-This means that especially for the \emph{search strategy} (section~\ref{main:search-strategy}) \emph{strategy type} \emph{depth first} a large of the search space will not be explored at all, if the search proces is aborted.
-More precisely, only the first attributes will have been addressed at that time.
-
+\textbf{maximum time (min)} is used to control the maximum time, measured in
+minutes, Cortana is allowed to search for new subgroups.  If the time limit
+is reached, Cortana will abort the Subgroup Discovery process and report all
+subgroups found so far.  Usually this means that a substantial part of the
+search space will not be explored at all.  You can set this parameter to $0$
+to allow Cortana as much time as necessary.
 
 \subsection{Search Strategy Panel}
 \label{sec:searchstrategy}
 
+The Search Strategy panel determines the terms under which the search
+process is carried out.  Usually the default values will do, apart maybe
+from the search width and the operator selection parameters. To fully grasp
+the impact of these parameters, you might want to read about the search
+process (Section \ref{sec:searchprocess}) first, and revisit this section
+afterwards.
+
+\textbf{strategy type} allows you to set the overarching search strategy. 
+In this manual we will focus on the ``beam'' setting; for more on the other
+strategies, please see the Full Cortana Manual.  If you find the reported
+subgroups that Cortana too similar to each other, you could alternatively
+try the ``cover-based beam selection'' setting.
+
+\textbf{search width} sets the beam width. See Section
+\ref{sec:searchprocess} for details.
+
+\textbf{include $\neq$ (nominal)} determines the subgroups considered for
+each nominal attribute.  When unchecked, on each nominal attribute only
+subgroups of the form \emph{attr}$=$\emph{value} will be considered.  When
+checked, \emph{additionally} subgroups of the form
+\emph{attr}$\neq$\emph{value} will be considered.
+
+Together, \textbf{numeric operators}, \textbf{numeric strategy}, and
+\textbf{number of bins} determine the subgroups considered for each numeric
+attribute.  Usually, the default selection will do.  For more details, see
+the Full Cortana Manual.
+
+\textbf{threads} sets the number of hyperthreads used on your computer for
+the Cortana process.  When you run Cortana on a multi-core system,
+increasing this number will reduce the time necessary to complete the
+process.  You can set the parameter to $0$ to allow Cortana to use every
+available hyperthread.
+
+\section{The Search Process}
+\label{sec:searchprocess}
+
 \section{Result Window}
+\label{section:result-window}
 
 \appendix
 \clearpage
