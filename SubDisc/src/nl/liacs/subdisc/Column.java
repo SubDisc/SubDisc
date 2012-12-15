@@ -1636,19 +1636,26 @@ public class Column implements XMLNodeInterface
 				aTotalRanks[j] += aRanking.getRank(j);
 		}
 		int aRank = 0; //this is the average rank, but without dividing by aSize
-		for (int j=0; j<aSize; j++)
+		int[] aRanks = new int[aSize];
+		for (int i=0; i<aSize; i++)
+			aRanks[i] = aTotalRanks[i];
+		Arrays.sort(aRanks);
+
+		for (int i=0; i<aSize; i++)
 		{
-			//determine location for label j
-			int aMin = Integer.MAX_VALUE;
-			int aMinLocation = 0;
-			for (int k=0; k<aSize; k++)
-				if (aTotalRanks[j] > aRank && aTotalRanks[j] < aMin) //find next lowest rank
+			int aLookup = aTotalRanks[i];
+			int aFirst = -1;
+			int aLast = -1;
+			for (int j=0; j<aSize; j++)
+				if (aLookup == aRanks[j])
 				{
-					aMin = aTotalRanks[j];
-					aMinLocation = k;
+					if (aFirst >= 0)
+						aLast = j;
 				}
-			aResult.setRank(aMinLocation, j);
+			Log.logCommandLine("start " + aFirst + " end " + aLast);
+			aResult.setRank(i, aLast);
 		}
+		aResult.print();
 
 		return aResult;
 	}
@@ -1711,7 +1718,7 @@ public class Column implements XMLNodeInterface
 
 	private String getTypeError(String theValidType)
 	{
-		return String.format("Column can no be of type: %s, must be %s", itsType, theValidType);
+		return String.format("Column can not be of type: %s, must be %s", itsType, theValidType);
 	}
 
 	private void logMessage(String theSource, String theError)

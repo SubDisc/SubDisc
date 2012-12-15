@@ -32,6 +32,12 @@ public class LabelRanking
 		return 2 * aNumer / (itsSize*(itsSize-1));
 	}
 
+	public void print()
+	{
+		for (int i=0; i<itsSize; i++)
+			Log.logCommandLine("--" + i + ", " + itsRanking[i]);
+	}
+
 	public int getRank(int anIndex)	{ return itsRanking[anIndex]; }
 	public void setRank(int anIndex, int aRank)	{ itsRanking[anIndex] = aRank; }
 	public int getSize() { return itsSize; }
