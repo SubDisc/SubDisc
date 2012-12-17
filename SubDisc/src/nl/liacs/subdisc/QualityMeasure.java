@@ -688,7 +688,14 @@ public class QualityMeasure
 			} //TODO
 			case KULLBACKLEIBLER :
 			{
-				aReturn = 0f; break;
+				float aTotalDivergence =0f;
+				for (int i=0; i<itsPDF.size(); i++)
+				{
+					float aDensity = itsPDF.getDensity(i);
+					float aDensitySubgroup = thePDF.getDensity(i);
+					aTotalDivergence = aDensitySubgroup*(float)Math.log(aDensitySubgroup/aDensity);
+				}
+				aReturn = aTotalDivergence*theCoverage/(float)itsNrRecords; break;
 			}
 			case CWRACC :
 			{
