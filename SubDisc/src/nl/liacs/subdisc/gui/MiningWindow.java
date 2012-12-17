@@ -1351,12 +1351,12 @@ public class MiningWindow extends JFrame
 		if (aTargetType == TargetType.SINGLE_NUMERIC)
 		{
 			initTargetInfo();
-			Column aColumn = itsTable.getColumn(getTargetAttributeName());
-			if (aColumn != null)
-			{
-				ProbabilityDensityFunction aPDF = new ProbabilityDensityFunction(aColumn);
-				aPDF.print();
-			}
+//			Column aColumn = itsTable.getColumn(getTargetAttributeName());
+//			if (aColumn != null)
+//			{
+//				ProbabilityDensityFunction aPDF = new ProbabilityDensityFunction(aColumn);
+//				aPDF.print();
+//			}
 		}
 	}
 
@@ -1499,7 +1499,8 @@ public class MiningWindow extends JFrame
 				String aTarget = getTargetAttributeName();
 				float aSum = itsTable.getColumn(aTarget).computeSum();
 				float anSSD = itsTable.getColumn(aTarget).computeSumSquaredDeviations(aSum);
-				aQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), itsTable.getNrRows(), aSum, anSSD);
+				ProbabilityDensityFunction aPDF = new ProbabilityDensityFunction(itsTable.getColumn(aTarget));
+				aQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), itsTable.getNrRows(), aSum, anSSD, aPDF);
 				break;
 			}
 			case MULTI_LABEL :

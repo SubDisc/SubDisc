@@ -17,6 +17,7 @@ public class QualityMeasure
 	private float itsTotalAverage = 0.0f;
 	private double itsTotalSampleStandardDeviation = 0.0;
 	private int[] itsPopulationCounts;	// TODO implement for CHI2_TEST
+	private ProbabilityDensityFunction itsPDF; // entire dataset
 
 	//Bayesian
 	private DAG itsDAG;
@@ -96,7 +97,7 @@ public class QualityMeasure
 	}
 
 	//SINGLE_NUMERIC
-	public QualityMeasure(int theMeasure, int theTotalCoverage, float theTotalSum, float theTotalSSD)
+	public QualityMeasure(int theMeasure, int theTotalCoverage, float theTotalSum, float theTotalSSD, ProbabilityDensityFunction thePDF)
 	{
 		itsMeasure = theMeasure;
 		itsNrRecords = theTotalCoverage;
@@ -105,9 +106,8 @@ public class QualityMeasure
 		if (itsNrRecords > 1)
 			itsTotalSampleStandardDeviation = Math.sqrt(theTotalSSD/(itsNrRecords-1));
 		//itsPopulationCounts = null;	// TODO see itsPopulationCounts
+		itsPDF = thePDF;
 	}
-
-//	public void setTotalTargetCoverage(int theCount) { itsTotalTargetCoverage = theCount; }
 
 	public static int getFirstEvaluationMeasure(TargetType theTargetType)
 	{
@@ -146,6 +146,11 @@ public class QualityMeasure
 			//case DOUBLE_REGRESSION 	: return COOKS_DISTANCE;
 			default					: return WRACC;
 		}
+	}
+
+	public ProbabilityDensityFunction getProbabilityDensityFunction()
+	{
+		return itsPDF;
 	}
 
 	/**
@@ -550,8 +555,7 @@ public class QualityMeasure
 
 	//SINGLE_NUMERIC ===============================================
 
-	public float calculate(int theCoverage, float theSum, float theSSD,
-			float theMedian, float theMedianAD, int[] theSubgroupCounts)
+	public float calculate(int theCoverage, float theSum, float theSSD,	float theMedian, float theMedianAD, int[] theSubgroupCounts, ProbabilityDensityFunction thePDF)
 	{
 		float aReturn = Float.NEGATIVE_INFINITY;
 		switch(itsMeasure)
@@ -667,9 +671,29 @@ public class QualityMeasure
 				aReturn = Math.abs((theSum-aMean)/aStDev); break;
 			}
 			case MMAD : { aReturn = (theCoverage/(2*theMedian+theMedianAD)); break; }
-			case HELLINGER : { aReturn = 0f; break; } //TODO
-			case KULLBACKLEIBLER : { aReturn = 0f; break; }
-			case CWRACC : { aReturn = 0f; break; }
+			case HELLINGER :
+			{
+				//some random code
+
+				float aTotalDifference = 0f;
+				for(int i=0; i<itsPDF.size(); i++)
+				{
+					float aDensity = itsPDF.getDensity(i);
+					float aDensitySubgroup = thePDF.getDensity(i);
+					aTotalDifference += (aDensity - aDensitySubgroup);
+				}
+				Log.logCommandLine("difference in PDF: " + aTotalDifference);
+				aReturn = 0f;
+				break;
+			} //TODO
+			case KULLBACKLEIBLER :
+			{
+				aReturn = 0f; break;
+			}
+			case CWRACC :
+			{
+				aReturn = 0f; break;
+			}
 		}
 		return aReturn;
 	}

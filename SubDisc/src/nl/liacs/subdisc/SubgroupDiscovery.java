@@ -30,10 +30,10 @@ public class SubgroupDiscovery extends MiningAlgorithm
 	private RegressionMeasure itsBaseRM;	//DOUBLE_REGRESSION
 	private BinaryTable itsBinaryTable;	//MULTI_LABEL
 	private List<Column> itsTargets;	//MULTI_LABEL
-	
+
 	private LocalKnowledge itsLocalKnowledge; //PROPENSITY SCORE BASED
 	private GlobalKnowledge itsGlobalKnowledge;//PROPENSITY SCORE BASED
-	
+
 	private int itsBoundSevenCount;
 	private int itsBoundSixCount;
 	private int itsBoundFiveCount;
@@ -65,7 +65,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		itsBinaryTarget = aTC.getPrimaryTarget().evaluate(aCondition);
 
 		itsResult = new SubgroupSet(itsSearchParameters.getMaximumSubgroups(), itsNrRows, itsBinaryTarget);
-		
+
 	}
 
 	//SINGLE_NUMERIC, float > signature differs from multi-label constructor
@@ -83,8 +83,9 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		BitSet aBitSet = new BitSet();
 		aBitSet.set(0, itsNrRows);
 		float[] aCounts = itsNumericTarget.getStatistics(aBitSet, false);
+		ProbabilityDensityFunction aPDF = new ProbabilityDensityFunction(itsNumericTarget);
 
-		itsQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), itsNrRows, aCounts[0], aCounts[1]);
+		itsQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), itsNrRows, aCounts[0], aCounts[1], aPDF);
 		itsQualityMeasureMinimum = itsSearchParameters.getQualityMeasureMinimum();
 
 		itsResult = new SubgroupSet(itsSearchParameters.getMaximumSubgroups(), itsNrRows, null); //TODO
@@ -188,8 +189,8 @@ public class SubgroupDiscovery extends MiningAlgorithm
 
 	public void mine(long theBeginTime)
 	{
-	
-		
+
+
 		//make subgroup to start with, containing all elements
 		BitSet aBitSet = new BitSet(itsNrRows);
 		aBitSet.set(0, itsNrRows);
@@ -481,7 +482,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 
 			if (itsSearchParameters.getQualityMeasure() == QualityMeasure.WRACC)
 			{
-				float aRatio = itsQualityMeasure.getNrPositives() / (float)(itsQualityMeasure.getNrRecords()); 
+				float aRatio = itsQualityMeasure.getNrPositives() / (float)(itsQualityMeasure.getNrRecords());
 				for (int i = 0; i < aNCT.size(); i++)
 				{
 					int aPi = aNCT.getPositiveCount(i);
@@ -648,7 +649,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 				//int aCountHeadBody = aTarget.cardinality();
 				int aCountHeadBody = 0;
 				final BitSet aMembers = theNewSubgroup.getMembers();
-				
+
 				if (itsSearchParameters.getQualityMeasure()==QualityMeasure.PROP_SCORE_WRACC | itsSearchParameters.getQualityMeasure()==QualityMeasure.PROP_SCORE_RATIO){ //Rob
 					double aCountHeadPropensityScore =0;
 					PropensityScore aPropensityScore = new PropensityScore(theNewSubgroup,itsBinaryTarget,itsLocalKnowledge,itsGlobalKnowledge,"LogisticRegression");
@@ -678,14 +679,14 @@ public class SubgroupDiscovery extends MiningAlgorithm
 					//System.out.println("Sum propensity score");
 					//System.out.println(aSum);
 				aQuality = itsQualityMeasure.calculatePropensityBased(itsSearchParameters.getQualityMeasure(),aCountHeadBody, theNewSubgroup.getCoverage(),itsNrRows ,aCountHeadPropensityScore);
-				
+
 				}else{
 					for (int i = aMembers.nextSetBit(0); i >= 0; i = aMembers.nextSetBit(i+1))
 						if (itsBinaryTarget.get(i))
 							++aCountHeadBody;
 				aQuality = itsQualityMeasure.calculate(aCountHeadBody, theNewSubgroup.getCoverage());
 				}
-				
+
 				theNewSubgroup.setSecondaryStatistic(aCountHeadBody/(double)theNewSubgroup.getCoverage()); //relative occurence of positives in subgroup
 				theNewSubgroup.setTertiaryStatistic(aCountHeadBody); //count of positives in the subgroup
 				break;
@@ -693,7 +694,8 @@ public class SubgroupDiscovery extends MiningAlgorithm
 			case SINGLE_NUMERIC :
 			{
 				float[] aCounts = itsNumericTarget.getStatistics(theNewSubgroup.getMembers(), itsSearchParameters.getQualityMeasure() == QualityMeasure.MMAD);
-				aQuality = itsQualityMeasure.calculate(theNewSubgroup.getCoverage(), aCounts[0], aCounts[1], aCounts[2], aCounts[3],null); //TODO fix this parameter. only used by X2
+				ProbabilityDensityFunction aPDF = new ProbabilityDensityFunction(itsQualityMeasure.getProbabilityDensityFunction(), itsNumericTarget, theNewSubgroup.getMembers());
+				aQuality = itsQualityMeasure.calculate(theNewSubgroup.getCoverage(), aCounts[0], aCounts[1], aCounts[2], aCounts[3], null, aPDF); //TODO fix this parameter. only used by X2
 				theNewSubgroup.setSecondaryStatistic(aCounts[0]/(double)theNewSubgroup.getCoverage()); //average
 				//stdev //TODO is this correct?
 				// MM this uses population SD, not sample SD
@@ -997,8 +999,8 @@ TODO for stable jar, disabled, causes comple errors, reinstate later
 	 */
 	public void mine(long theBeginTime, int theNrThreads)
 	{
-		
-		
+
+
 		//fill the conditionList of local and global knowledge, Rob
 		if (itsSearchParameters.getQualityMeasure()==QualityMeasure.PROP_SCORE_WRACC|itsSearchParameters.getQualityMeasure()==QualityMeasure.PROP_SCORE_RATIO){
 			ExternalKnowledgeFileLoader extKnowledge;
@@ -1008,16 +1010,16 @@ TODO for stable jar, disabled, causes comple errors, reinstate later
 				extKnowledge.createConditionListGlobal(itsTable);
 				itsLocalKnowledge = new LocalKnowledge(extKnowledge.getLocal(),itsBinaryTarget);
 				itsGlobalKnowledge = new GlobalKnowledge(extKnowledge.getGlobal(),itsBinaryTarget);
-				
+
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			
+
 		}
-		
-		
-		
+
+
+
 		if (theNrThreads < 0)
 		{
 			mine(theBeginTime);

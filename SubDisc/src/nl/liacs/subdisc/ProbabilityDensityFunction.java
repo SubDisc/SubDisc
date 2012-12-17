@@ -1,11 +1,14 @@
 package nl.liacs.subdisc;
 
+import java.util.*;
+
 public class ProbabilityDensityFunction
 {
 	private float[] itsDensity;
 	private float itsMin, itsMax, itsBinWidth;
-	private int itsNrBins = 100;
+	private int itsNrBins = 1000;
 
+	//create from entire dataset
 	public ProbabilityDensityFunction(Column theData)
 	{
 		//TODO include outlier treatment
@@ -22,14 +25,31 @@ public class ProbabilityDensityFunction
 		}
 	}
 
-	public int getDensity(float theValue)
+	//create for subgroup, relative to existing PDF
+	public ProbabilityDensityFunction(ProbabilityDensityFunction thePDF, Column theData, BitSet theMembers)
+	{
+		itsMin = thePDF.itsMin;
+		itsMax = thePDF.itsMax;
+		itsBinWidth = thePDF.itsBinWidth;
+		itsDensity = new float[itsNrBins];
+
+		int aSize = theData.size();
+		for (int i = theMembers.nextSetBit(0), j = -1; i >= 0; i = theMembers.nextSetBit(i + 1))
+		{
+			float aValue = theData.getFloat(i);
+			add(aValue);
+		}
+	}
+
+	public float getDensity(float theValue)
 	{
 		int anIndex = getIndex(theValue);
+		return itsDensity[anIndex];
+	}
 
-		if (anIndex == -1)
-			return 0;
-		else
-			return getDensity(anIndex);
+	public float getDensity(int theIndex)
+	{
+		return itsDensity[theIndex];
 	}
 
 	private int getIndex(float aValue)
@@ -52,5 +72,10 @@ public class ProbabilityDensityFunction
 		for (int i = 0; i < itsDensity.length; i++)
 			Log.logCommandLine("  " + i + "	" + itsDensity[i]);
 		Log.logCommandLine("");
+	}
+
+	public int size()
+	{
+		return itsNrBins;
 	}
 }
