@@ -1349,7 +1349,15 @@ public class MiningWindow extends JFrame
 
 		//update misc field? Other types are updated through action listeners
 		if (aTargetType == TargetType.SINGLE_NUMERIC)
+		{
 			initTargetInfo();
+			Column aColumn = itsTable.getColumn(getTargetAttributeName());
+			if (aColumn != null)
+			{
+				ProbabilityDensityFunction aPDF = new ProbabilityDensityFunction(aColumn);
+				aPDF.print();
+			}
+		}
 	}
 
 	private void jComboBoxMiscFieldActionPerformed()
