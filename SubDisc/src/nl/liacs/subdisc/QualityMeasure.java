@@ -673,7 +673,17 @@ public class QualityMeasure
 			case MMAD : { aReturn = (theCoverage/(2*theMedian+theMedianAD)); break; }
 			case HELLINGER :
 			{
-				aReturn = 0f;
+				float aTotalSquaredDifference =0f;
+				for (int i=0; i<itsPDF.size(); i++)
+				{
+					float aDensity = itsPDF.getDensity(i);
+					float aDensitySubgroup = thePDF.getDensity(i);
+					float aDifference = (float)(Math.sqrt(aDensity) - Math.sqrt(aDensitySubgroup));
+					aTotalSquaredDifference += aDifference*aDifference;
+					//Log.logCommandLine("difference in PDF: " + aTotalSquaredDifference);
+				}
+				Log.logCommandLine("difference in PDF: " + aTotalSquaredDifference);
+				aReturn = 0.5f*(aTotalSquaredDifference*theCoverage)/itsNrRecords;
 				break;
 			} //TODO
 			case KULLBACKLEIBLER :

@@ -85,7 +85,7 @@ public class PropensityScore {
 	
 	
 	if (itsMethod.equals("LogisticRegression")) {
-		System.out.println("LogisticRegression");
+		//System.out.println("LogisticRegression");
 		itsMethod = theMethod;
 		itsTarget = theTarget;
 		itsLocalKn = theLocalKn;
@@ -114,11 +114,11 @@ public class PropensityScore {
 		
 		//attribute list contains the information about attributes
 		
-		System.out.println("Fastvector with attributes created");
+		//System.out.println("Fastvector with attributes created");
 		Instances data = new Instances("explanatoryVariables",attributeList,itsTarget.size());
-		System.out.println("empty instances created");
-		String st1 = "Size attributeList = " + attributeList.size();
-		System.out.println(st1);
+		//System.out.println("empty instances created");
+		//String st1 = "Size attributeList = " + attributeList.size();
+		//System.out.println(st1);
 		
 		
 		
@@ -156,7 +156,7 @@ public class PropensityScore {
 			//System.out.println("single Instance created");
 			data.add(ins);
 		}
-		System.out.println("instances created");
+		//System.out.println("instances created");
 		
 		
 		data.setClassIndex(data.numAttributes()-1);

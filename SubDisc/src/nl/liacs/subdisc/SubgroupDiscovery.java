@@ -654,13 +654,13 @@ public class SubgroupDiscovery extends MiningAlgorithm
 					double aCountHeadPropensityScore =0;
 					PropensityScore aPropensityScore = new PropensityScore(theNewSubgroup,itsBinaryTarget,itsLocalKnowledge,itsGlobalKnowledge,"LogisticRegression");
 					System.out.println("Evaluating subgroup");
-					System.out.println(itsBinaryTarget.cardinality());
+					//System.out.println(itsBinaryTarget.cardinality());
 					double aSumTest=0;
 					for (int i = aMembers.nextSetBit(0); i >= 0; i = aMembers.nextSetBit(i+1)){
 						aCountHeadPropensityScore = aCountHeadPropensityScore+aPropensityScore.getPropensityScore()[i];
-						if (aPropensityScore.getPropensityScore()[i]>0.24){
-							aSumTest++;
-						}
+						//if (aPropensityScore.getPropensityScore()[i]>0.24){
+						//	aSumTest++;
+						//}
 						// count propensity score for all points in subgroup (aMembers)
 						if (itsBinaryTarget.get(i)){
 							++aCountHeadBody;
@@ -670,8 +670,8 @@ public class SubgroupDiscovery extends MiningAlgorithm
 					System.out.println(aCountHeadBody);
 					System.out.print("Count expected head:");
 					System.out.println(aCountHeadPropensityScore);
-					System.out.print("Propensity score bigger than PT:");
-					System.out.println(aSumTest);
+					//System.out.print("Propensity score bigger than PT:");
+					//System.out.println(aSumTest);
 					//double aSum =0; // small check for propensity score (should sum to #target)
 					//for (int i=0;i<aPropensityScore.getPropensityScore().length;i++){
 					//	aSum = aSum+ aPropensityScore.getPropensityScore()[i];
