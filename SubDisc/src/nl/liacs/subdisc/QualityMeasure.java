@@ -673,16 +673,6 @@ public class QualityMeasure
 			case MMAD : { aReturn = (theCoverage/(2*theMedian+theMedianAD)); break; }
 			case HELLINGER :
 			{
-				//some random code
-
-				float aTotalDifference = 0f;
-				for(int i=0; i<itsPDF.size(); i++)
-				{
-					float aDensity = itsPDF.getDensity(i);
-					float aDensitySubgroup = thePDF.getDensity(i);
-					aTotalDifference += (aDensity - aDensitySubgroup);
-				}
-				Log.logCommandLine("difference in PDF: " + aTotalDifference);
 				aReturn = 0f;
 				break;
 			} //TODO
@@ -692,7 +682,17 @@ public class QualityMeasure
 			}
 			case CWRACC :
 			{
-				aReturn = 0f; break;
+				//some random code
+				float aTotalDifference = 0f;
+				for(int i=0; i<itsPDF.size(); i++)
+				{
+					float aDensity = itsPDF.getDensity(i);
+					float aDensitySubgroup = thePDF.getDensity(i);
+					aTotalDifference += Math.abs(aDensity - aDensitySubgroup);
+				}
+				Log.logCommandLine("difference in PDF: " + aTotalDifference);
+				aReturn = aTotalDifference*theCoverage/(float)itsNrRecords;
+				break;
 			}
 		}
 		return aReturn;

@@ -20,7 +20,7 @@ public class ProbabilityDensityFunction
 		int aSize = theData.size();
 		for (int i=0; i<aSize; i++)
 		{
-			float aValue = theData.getFloat(i);
+			float aValue = theData.getFloat(i)/theData.size(); //the total sum should be 1.0000
 			add(aValue);
 		}
 	}
@@ -33,10 +33,11 @@ public class ProbabilityDensityFunction
 		itsBinWidth = thePDF.itsBinWidth;
 		itsDensity = new float[itsNrBins];
 
+		int aMembers = theMembers.cardinality();
 		int aSize = theData.size();
 		for (int i = theMembers.nextSetBit(0), j = -1; i >= 0; i = theMembers.nextSetBit(i + 1))
 		{
-			float aValue = theData.getFloat(i);
+			float aValue = theData.getFloat(i)/aMembers;
 			add(aValue);
 		}
 	}
