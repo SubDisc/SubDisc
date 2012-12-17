@@ -17,11 +17,14 @@ public class ProbabilityDensityFunction
 		itsBinWidth = (itsMax-itsMin)/itsNrBins;
 		itsDensity = new float[itsNrBins];
 
+		Log.logCommandLine("Min = " + itsMin);
+		Log.logCommandLine("Max = " + itsMax);
+		Log.logCommandLine("BinWidth = " + itsBinWidth);
 		int aSize = theData.size();
 		for (int i=0; i<aSize; i++)
 		{
-			float aValue = theData.getFloat(i)/theData.size(); //the total sum should be 1.0000
-			add(aValue);
+			float aValue = theData.getFloat(i);
+			add(aValue, 1f/theData.size());
 		}
 	}
 
@@ -37,8 +40,8 @@ public class ProbabilityDensityFunction
 		int aSize = theData.size();
 		for (int i = theMembers.nextSetBit(0), j = -1; i >= 0; i = theMembers.nextSetBit(i + 1))
 		{
-			float aValue = theData.getFloat(i)/aMembers;
-			add(aValue);
+			float aValue = theData.getFloat(i);
+			add(aValue, 1f/aMembers);
 		}
 	}
 
@@ -61,10 +64,10 @@ public class ProbabilityDensityFunction
 			return (int) ((aValue-itsMin)/itsBinWidth);
 	}
 
-	private void add(float aValue)
+	private void add(float theValue, float theIncrement)
 	{
-		int aBin = getIndex(aValue);
-		itsDensity[aBin]++;
+		int aBin = getIndex(theValue);
+		itsDensity[aBin] += theIncrement;
 	}
 
 	public void print()
