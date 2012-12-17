@@ -26,38 +26,42 @@ public class QualityMeasure
 	private static boolean[][] itsVStructures;
 
 	//SINGLE_NOMINAL quality measures
-	public static final int WRACC     = 0;
-	public static final int ABSWRACC  = 1;
-	public static final int CHI_SQUARED    = 2;
-	public static final int INFORMATION_GAIN    = 3;
-	public static final int BINOMIAL    = 4;
-	public static final int ACCURACY    = 5;
-	public static final int PURITY 		= 6;
-	public static final int JACCARD     = 7;
-	public static final int COVERAGE    = 8;
-	public static final int SPECIFICITY = 9;
-	public static final int SENSITIVITY = 10;
-	public static final int LAPLACE     = 11;
-	public static final int F_MEASURE   = 12;
-	public static final int G_MEASURE   = 13;
-	public static final int CORRELATION = 14;
-	public static final int PROP_SCORE_WRACC = 15;
-	public static final int PROP_SCORE_RATIO = 16;
-	public static final int BAYESIAN_SCORE = 17;
+	public static final int WRACC     		= 0;
+	public static final int ABSWRACC  		= WRACC+1;
+	public static final int CHI_SQUARED 	= ABSWRACC+1;
+	public static final int INFORMATION_GAIN = CHI_SQUARED+1;
+	public static final int BINOMIAL    	= INFORMATION_GAIN+1;
+	public static final int ACCURACY    	= BINOMIAL + 1;
+	public static final int PURITY 			= ACCURACY + 1;
+	public static final int JACCARD     	= PURITY + 1;
+	public static final int COVERAGE    	= JACCARD + 1;
+	public static final int SPECIFICITY 	= COVERAGE + 1;
+	public static final int SENSITIVITY 	= SPECIFICITY + 1;
+	public static final int LAPLACE     	= SENSITIVITY + 1;
+	public static final int F_MEASURE   	= LAPLACE + 1;
+	public static final int G_MEASURE   	= F_MEASURE + 1;
+	public static final int CORRELATION 	= G_MEASURE + 1;
+	public static final int PROP_SCORE_WRACC = CORRELATION + 1;
+	public static final int PROP_SCORE_RATIO = PROP_SCORE_WRACC + 1;
+	public static final int BAYESIAN_SCORE 	= PROP_SCORE_RATIO + 1;
 
 	//SINGLE_NUMERIC quality measures
-	public static final int Z_SCORE = 18;
-	public static final int INVERSE_Z_SCORE = 19;
-	public static final int ABS_Z_SCORE = 20;
-	public static final int AVERAGE = 21;
-	public static final int INVERSE_AVERAGE = 22;
-	public static final int MEAN_TEST = 23;
-	public static final int INVERSE_MEAN_TEST = 24;
-	public static final int ABS_MEAN_TEST = 25;
-	public static final int T_TEST = 26;
-	public static final int INVERSE_T_TEST = 27;
-	public static final int ABS_T_TEST = 28;
-	public static final int CHI2_TEST = 29;	// TODO see itsPopulationCounts
+	public static final int Z_SCORE 		= 118;
+	public static final int INVERSE_Z_SCORE = 119;
+	public static final int ABS_Z_SCORE 	= 120;
+	public static final int AVERAGE 		= 121;
+	public static final int INVERSE_AVERAGE = 122;
+	public static final int MEAN_TEST 		= 123;
+	public static final int INVERSE_MEAN_TEST = 124;
+	public static final int ABS_MEAN_TEST 	= 125;
+	public static final int T_TEST = 126;
+	public static final int INVERSE_T_TEST 	= 127;
+	public static final int ABS_T_TEST 		= 128;
+	public static final int CHI2_TEST 		= 129;	// TODO see itsPopulationCounts
+	public static final int HELLINGER 		= 130;
+	public static final int KULLBACKLEIBLER 	= 131;
+	public static final int CWRACC 			= 132;
+
 	//SINGLE_ORDINAL quality measures
 	public static final int AUC = 30;
 	public static final int WMW_RANKS = 31;
@@ -133,7 +137,7 @@ public class QualityMeasure
 		{
 			case SINGLE_NOMINAL		: return BAYESIAN_SCORE;
 			//case SINGLE_NUMERIC		: return CHI2_TEST;	// TODO see itsPopulationCounts
-			case SINGLE_NUMERIC		: return ABS_T_TEST;
+			case SINGLE_NUMERIC		: return CWRACC;
 			case SINGLE_ORDINAL		: return MMAD;
 			case MULTI_LABEL		: return EDIT_DISTANCE;
 			case DOUBLE_CORRELATION		: return COSTS_WRACC;
@@ -663,6 +667,9 @@ public class QualityMeasure
 				aReturn = Math.abs((theSum-aMean)/aStDev); break;
 			}
 			case MMAD : { aReturn = (theCoverage/(2*theMedian+theMedianAD)); break; }
+			case HELLINGER : { aReturn = 0f; break; } //TODO
+			case KULLBACKLEIBLER : { aReturn = 0f; break; }
+			case CWRACC : { aReturn = 0f; break; }
 		}
 		return aReturn;
 	}
@@ -693,6 +700,7 @@ public class QualityMeasure
 			case PROP_SCORE_WRACC:	{ anEvaluationMinimum = "-0.25"; break; }
 			case PROP_SCORE_RATIO:	{ anEvaluationMinimum = "1.0"; break; }
 			case BAYESIAN_SCORE:	{ anEvaluationMinimum = "0.0"; break; }
+
 			//NUMERIC
 			case AVERAGE	: 		{ anEvaluationMinimum = Float.toString(theAverage); break; }
 			case INVERSE_AVERAGE: 	{ anEvaluationMinimum = Float.toString(-theAverage); break; }
@@ -706,6 +714,10 @@ public class QualityMeasure
 			case INVERSE_T_TEST : 	{ anEvaluationMinimum = "1.0"; break; }
 			case ABS_T_TEST : 		{ anEvaluationMinimum = "1.0"; break; }
 			case CHI2_TEST  : 		{ anEvaluationMinimum = "2.5"; break; }
+			case HELLINGER  : 		{ anEvaluationMinimum = "0.0"; break; }
+			case KULLBACKLEIBLER :	{ anEvaluationMinimum = "0.0"; break; }
+			case CWRACC  	: 		{ anEvaluationMinimum = "0.0"; break; }
+
 			//ORDINAL
 			case AUC		: 		{ anEvaluationMinimum = "0.5"; break; }
 			case WMW_RANKS  : 		{ anEvaluationMinimum = "1.0"; break; }
@@ -768,6 +780,10 @@ public class QualityMeasure
 			case INVERSE_T_TEST: { anEvaluationMeasure = "Inverse t-Test"; break; }
 			case ABS_T_TEST: { anEvaluationMeasure = "Abs t-Test"; break; }
 			case CHI2_TEST	: { anEvaluationMeasure = "Median Chi-squared test"; break; }
+			case HELLINGER : { anEvaluationMeasure = "Hellinger"; break; }
+			case KULLBACKLEIBLER : { anEvaluationMeasure = "Kullback-Leibler"; break; }
+			case CWRACC : { anEvaluationMeasure = "CWRAcc"; break; }
+
 			//ORDINAL
 			case AUC		: { anEvaluationMeasure = "AUC of ROC"; break; }
 			case WMW_RANKS	: { anEvaluationMeasure = "WMW-Ranks test"; break; }
@@ -828,6 +844,9 @@ public class QualityMeasure
 		else if ("inverse t-test".equals(anEvaluationMeasure)) return INVERSE_T_TEST;
 		else if ("abs t-test".equals(anEvaluationMeasure)) return ABS_T_TEST;
 		else if ("median chi-squared test".equals(anEvaluationMeasure)) return CHI2_TEST;
+		else if ("hellinger".equals(anEvaluationMeasure)) return HELLINGER;
+		else if ("kullback-leibler".equals(anEvaluationMeasure)) return KULLBACKLEIBLER;
+		else if ("cwracc".equals(anEvaluationMeasure)) return CWRACC;
 		//ORDINAL
 		else if ("auc of roc".equals(anEvaluationMeasure)) return AUC;
 		else if ("wmw-ranks test".equals(anEvaluationMeasure)) return WMW_RANKS;
