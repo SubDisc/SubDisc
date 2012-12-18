@@ -821,8 +821,8 @@ public class QualityMeasure
 			case INVERSE_T_TEST: { anEvaluationMeasure = "Inverse t-Test"; break; }
 			case ABS_T_TEST: { anEvaluationMeasure = "Abs t-Test"; break; }
 			case CHI2_TEST	: { anEvaluationMeasure = "Median Chi-squared test"; break; }
-			case HELLINGER : { anEvaluationMeasure = "Hellinger"; break; }
-			case KULLBACKLEIBLER : { anEvaluationMeasure = "Kullback-Leibler"; break; }
+			case HELLINGER : { anEvaluationMeasure = "Squared Hellinger distance"; break; }
+			case KULLBACKLEIBLER : { anEvaluationMeasure = "Kullback-Leibler divergence"; break; }
 			case CWRACC : { anEvaluationMeasure = "CWRAcc"; break; }
 
 			//ORDINAL
@@ -885,8 +885,8 @@ public class QualityMeasure
 		else if ("inverse t-test".equals(anEvaluationMeasure)) return INVERSE_T_TEST;
 		else if ("abs t-test".equals(anEvaluationMeasure)) return ABS_T_TEST;
 		else if ("median chi-squared test".equals(anEvaluationMeasure)) return CHI2_TEST;
-		else if ("hellinger".equals(anEvaluationMeasure)) return HELLINGER;
-		else if ("kullback-leibler".equals(anEvaluationMeasure)) return KULLBACKLEIBLER;
+		else if ("squared hellinger distance".equals(anEvaluationMeasure)) return HELLINGER;
+		else if ("kullback-leibler divergence".equals(anEvaluationMeasure)) return KULLBACKLEIBLER;
 		else if ("cwracc".equals(anEvaluationMeasure)) return CWRACC;
 		//ORDINAL
 		else if ("auc of roc".equals(anEvaluationMeasure)) return AUC;
