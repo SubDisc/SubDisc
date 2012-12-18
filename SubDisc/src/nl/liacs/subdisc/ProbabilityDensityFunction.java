@@ -6,7 +6,7 @@ public class ProbabilityDensityFunction
 {
 	private float[] itsDensity;
 	private float itsMin, itsMax, itsBinWidth;
-	private int itsNrBins = 1000;
+	private int itsNrBins = 30;
 
 	//create from entire dataset
 	public ProbabilityDensityFunction(Column theData)
@@ -21,10 +21,11 @@ public class ProbabilityDensityFunction
 		Log.logCommandLine("Max = " + itsMax);
 		Log.logCommandLine("BinWidth = " + itsBinWidth);
 		int aSize = theData.size();
+		float anIncrement = 1f/aSize;
 		for (int i=0; i<aSize; i++)
 		{
 			float aValue = theData.getFloat(i);
-			add(aValue, 1f/theData.size());
+			add(aValue, anIncrement);
 		}
 	}
 
@@ -63,6 +64,11 @@ public class ProbabilityDensityFunction
 			return (int) ((aValue-itsMin)/itsBinWidth);
 	}
 
+	/*
+	 * accumulates rounding errors, alternative would be to just count the
+	 * absolute number of items in a bin and report the density for a
+	 * particular bin as: (bin_nr_items / total_nr_items)
+	 */
 	private void add(float theValue, float theIncrement)
 	{
 		int aBin = getIndex(theValue);
@@ -82,14 +88,14 @@ public class ProbabilityDensityFunction
 		return itsNrBins;
 	}
 
-	private final double CUTOFF = 3.0;	// for now
-	public double[] getGaussianDistribution(double theSigma)
+	private static final double CUTOFF = 3.0;	// for now
+	public static double[] getGaussianDistribution(double theSigma)
 	{
 		if (theSigma <= 0.0 || Double.isInfinite(theSigma) || Double.isNaN(theSigma))
 			throw new IllegalArgumentException("Invalid sigma: " + theSigma);
 
 		// mu = 0.0
-		int aWidth = (int)(2.0 * CUTOFF * theSigma) + 1;
+		int aWidth = (int)(2.0 * CUTOFF * theSigma);
 		double[] aKernel = new double[aWidth];
 		double aCorrection = 0.0;	// to set AUC to 1.0
 
@@ -115,6 +121,12 @@ public class ProbabilityDensityFunction
 		for (int i = 0, j = aWidth; i < j; ++i)
 			aKernel[i] /= aCorrection;
 
+		System.out.println(Arrays.toString(aKernel));
+		double sum = 0.0;
+		for (double d : aKernel)
+			sum += d;
+		System.out.println("sum=" + sum);
+
 		return aKernel;
 	}
 
@@ -123,7 +135,7 @@ public class ProbabilityDensityFunction
 	{
 		final int length = itsNrBins;
 
-		double aSigma = (theSigma-itsMin)/itsNrBins;
+		double aSigma = theSigma/itsBinWidth;
 		final double[] aKernel = getGaussianDistribution(aSigma);
 
 		// initialised to 0.0
@@ -132,26 +144,65 @@ public class ProbabilityDensityFunction
 		// values where no full window/kernel can be applied
 		final int aWidth = aKernel.length;
 		final int halfWidth = aWidth / 2;
-		// ignore for now
-		// FIXME put some corrected value here
-		for (int i = 0, j = halfWidth, k = length; i < j; ++i)
-			anOutput[i] = anOutput[--k] = Float.NaN;
+		System.out.println("HALFWIDTH=" + halfWidth);
 
 		// work in progress
-//		for (int i = 0, j = halfWidth; i < j; ++i)
-//			for (int k = aWidth-1-i, m = aWidth; k < m; ++k)
-//				anOutput[i] += (aKernel[k] * itsDensity[i]);
-//		for (int i = length-halfWidth, j = length; i < j; ++i)
-//			for (int k = 0, m = something; k < m; ++k)
-//				anOutput[i] += (aKernel[k] * itsDensity[i]);
+		for (int i = 0, j = halfWidth; i < j; ++i)
+		{
+			Log.logCommandLine("left: " + i);
+			for (int k = halfWidth+i, m = aWidth, n = 0; k < m; ++k, ++n)
+				anOutput[i] += (aKernel[k] * itsDensity[n]);
+		}
+		// TODO adjust this portion to sum(used_kernel_values)
+		for (int i = length-1, j = 0; j < halfWidth; --i, ++j)
+		{
+			Log.logCommandLine("right: " + i);
+			for (int k = halfWidth+j; k < aWidth; ++k)
+			{
+				Log.logCommandLine("  index: " + (length-1-(k-halfWidth)));
+				anOutput[i] += aKernel[k] * itsDensity[length-1-(k-halfWidth)];
+			}
+		}
+		// TODO adjust this portion to sum(used_kernel_values)
 		// end work in progress
 
 		// apply kernel on theInput
 		for (int i = halfWidth, j = length - halfWidth; i < j; ++i)
-			for (int k = 0, m = aWidth, n = i - halfWidth; k < m; ++k, ++n)
+		{
+			//System.out.println ("i=" + i + " " + itsDensity[i]);
+			for (int k = 0, m = aWidth, n = i-halfWidth; k < m; ++k, ++n)
+			{
+				//System.out.print("i=" + i + " " + itsDensity[i]);
 				anOutput[i] += (aKernel[k] * itsDensity[n]);
+			}
+		}
 
 		itsDensity = anOutput;
 		return anOutput;
+	}
+
+	public static void main(String[] args)
+	{
+		int nrRows = 100;
+		Column c = new Column("TEST", "TEST", AttributeType.NUMERIC, 0, nrRows);
+		c.add(0.0f);
+		for (int i = 0; i < 49; ++i)
+			c.add(30.0f);
+		for (int i = 0; i < 49; ++i)
+			c.add(70.0f);
+		c.add(100.0f);
+		c.print();
+		System.out.println();
+
+		ProbabilityDensityFunction pdf;
+		for (int i = 3; i <= 3; i+=2)
+		{
+
+			pdf = new ProbabilityDensityFunction(c);
+			System.out.println(Arrays.toString((pdf.itsDensity)));
+			pdf.smooth(i);
+			System.out.println(Arrays.toString((pdf.itsDensity)));
+			System.out.println();
+		}
 	}
 }
