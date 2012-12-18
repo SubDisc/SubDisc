@@ -145,7 +145,7 @@ public class ProbabilityDensityFunction
 		final int aWidth = aKernel.length;
 		final int halfWidth = aWidth / 2;
 		System.out.println("HALFWIDTH=" + halfWidth);
-
+/*
 		// work in progress
 		for (int i = 0, j = halfWidth; i < j; ++i)
 		{
@@ -157,12 +157,22 @@ public class ProbabilityDensityFunction
 		for (int i = length-1, j = 0; j < halfWidth; --i, ++j)
 		{
 			Log.logCommandLine("right: " + i);
-			for (int k = halfWidth+j; k < aWidth; ++k)
+			for (int k = halfWidth+j, n = length-1; k < aWidth; ++k, --n)
 			{
-				Log.logCommandLine("  index: " + (length-1-(k-halfWidth)));
-				anOutput[i] += aKernel[k] * itsDensity[length-1-(k-halfWidth)];
+				anOutput[i] += aKernel[k] * itsDensity[n];
 			}
 		}
+		// TODO adjust this portion to sum(used_kernel_values)
+		// end work in progress
+*/
+		// work in progress
+		for (int i = 0, j = halfWidth; i < j; ++i)
+			for (int k = halfWidth+i, n = 0; k >= 0; --k, ++n)
+				anOutput[i] += (aKernel[k] * itsDensity[n]);
+		// TODO adjust this portion to sum(used_kernel_values)
+		for (int i = length-1, j = 0; j < halfWidth; --i, ++j)
+			for (int k = halfWidth+j, n = length-1; k >= 0; --k, --n)
+				anOutput[i] += aKernel[k] * itsDensity[n];
 		// TODO adjust this portion to sum(used_kernel_values)
 		// end work in progress
 
@@ -195,7 +205,7 @@ public class ProbabilityDensityFunction
 		System.out.println();
 
 		ProbabilityDensityFunction pdf;
-		for (int i = 3; i <= 3; i+=2)
+		for (int i = 1; i <= 5; i+=2)
 		{
 
 			pdf = new ProbabilityDensityFunction(c);
