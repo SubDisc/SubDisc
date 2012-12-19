@@ -2,6 +2,7 @@ package nl.liacs.subdisc;
 
 public class Condition implements Comparable<Condition>
 {
+	// TODO MM Operator enum
 	// Operator Constants
 	public static final int ELEMENT_OF		= 1;
 	public static final int EQUALS			= 2;
