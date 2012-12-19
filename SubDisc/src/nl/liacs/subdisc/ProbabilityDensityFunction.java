@@ -2,11 +2,13 @@ package nl.liacs.subdisc;
 
 import java.util.*;
 
+import nl.liacs.subdisc.gui.*;
+
 public class ProbabilityDensityFunction
 {
 	private float[] itsDensity;
 	private float itsMin, itsMax, itsBinWidth;
-	private int itsNrBins = 30;
+	private int itsNrBins = 1000;
 
 	//create from entire dataset
 	public ProbabilityDensityFunction(Column theData)
@@ -88,7 +90,7 @@ public class ProbabilityDensityFunction
 		return itsNrBins;
 	}
 
-	private static final double CUTOFF = 3.0;	// for now
+	private static final double CUTOFF = 4.0;	// for now
 	public static double[] getGaussianDistribution(double theSigma)
 	{
 		if (theSigma <= 0.0 || Double.isInfinite(theSigma) || Double.isNaN(theSigma))
@@ -122,6 +124,27 @@ public class ProbabilityDensityFunction
 			aKernel[i] /= aCorrection;
 
 		return aKernel;
+	}
+
+	/**
+	 * Smooths the density histogram using a default &sigma; that is
+	 * determined as follows:</br>
+	 * &sigma; = (max - min) / 16, where min and max are the minimum and
+	 * maximum value in the data that was used to build this
+	 * ProbabilityDensityFunction.</br>
+	 * To use a different &sigma;, use {@link #smooth(float)}.
+	 * <p>
+	 * NOTE that any smooth method is destructive in the sense that after
+	 * smoothing the density histogram is altered, and can not be returned
+	 * to the state it was in before the operation.
+	 * 
+	 * @return The smoothed histogram for this ProbabilityDensityFunction.
+	 * 
+	 * @see #smooth(float)
+	 */
+	public float[] smooth()
+	{
+		return smooth((itsMax-itsMin) / 16);
 	}
 
 	// can not be applied if width > theInput
@@ -189,9 +212,35 @@ public class ProbabilityDensityFunction
 
 			pdf = new ProbabilityDensityFunction(c);
 			System.out.println(Arrays.toString((pdf.itsDensity)));
+			plot("pre smooth, sigma = " + i, pdf.itsDensity);
 			pdf.smooth(i);
 			System.out.println(Arrays.toString((pdf.itsDensity)));
+			plot("post smooth, sigma = " + i, pdf.itsDensity);
 			System.out.println();
 		}
+
+		// uniform probability, all bins of equal height (30 = itsNrBins)
+		int nrBins = 30;
+		c = new Column("UNIFORM", "UNIFORM", AttributeType.NUMERIC, 0, nrBins);
+		for (int i = 0, j = nrBins; i < j; ++i)
+			c.add(i);
+		c.print();
+		System.out.println();
+
+		pdf = new ProbabilityDensityFunction(c);
+		System.out.println(Arrays.toString((pdf.itsDensity)));
+		plot("UNIFORM pre smooth", pdf.itsDensity);
+		pdf.smooth(3);
+		System.out.println(Arrays.toString((pdf.itsDensity)));
+		plot("UNIFORM post smooth", pdf.itsDensity);
+		System.out.println();
+	}
+
+	private static void plot(String theName, float[] theDensity)
+	{
+		final Column c = new Column(theName, theName, AttributeType.NUMERIC, 0, theDensity.length);
+		for (float f : theDensity)
+			c.add(f);
+		new PlotWindow(c);
 	}
 }

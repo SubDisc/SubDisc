@@ -1500,6 +1500,7 @@ public class MiningWindow extends JFrame
 				float aSum = itsTable.getColumn(aTarget).computeSum();
 				float anSSD = itsTable.getColumn(aTarget).computeSumSquaredDeviations(aSum);
 				ProbabilityDensityFunction aPDF = new ProbabilityDensityFunction(itsTable.getColumn(aTarget));
+				aPDF.smooth();
 				aQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), itsTable.getNrRows(), aSum, anSSD, aPDF);
 				break;
 			}
