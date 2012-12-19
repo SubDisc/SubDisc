@@ -121,12 +121,6 @@ public class ProbabilityDensityFunction
 		for (int i = 0, j = aWidth; i < j; ++i)
 			aKernel[i] /= aCorrection;
 
-		System.out.println(Arrays.toString(aKernel));
-		double sum = 0.0;
-		for (double d : aKernel)
-			sum += d;
-		System.out.println("sum=" + sum);
-
 		return aKernel;
 	}
 
@@ -144,48 +138,33 @@ public class ProbabilityDensityFunction
 		// values where no full window/kernel can be applied
 		final int aWidth = aKernel.length;
 		final int halfWidth = aWidth / 2;
-		System.out.println("HALFWIDTH=" + halfWidth);
-/*
-		// work in progress
+
+		double aCorrection;
 		for (int i = 0, j = halfWidth; i < j; ++i)
 		{
-			Log.logCommandLine("left: " + i);
-			for (int k = halfWidth+i, m = aWidth, n = 0; k < m; ++k, ++n)
+			aCorrection = 0.0;
+			for (int k = halfWidth+i, n = 0; k >= 0; --k, ++n)
+			{
+				aCorrection += aKernel[k];
 				anOutput[i] += (aKernel[k] * itsDensity[n]);
+			}
+			anOutput[i] /= aCorrection;
 		}
-		// TODO adjust this portion to sum(used_kernel_values)
 		for (int i = length-1, j = 0; j < halfWidth; --i, ++j)
 		{
-			Log.logCommandLine("right: " + i);
-			for (int k = halfWidth+j, n = length-1; k < aWidth; ++k, --n)
+			aCorrection = 0.0;
+			for (int k = halfWidth+j, n = length-1; k >= 0; --k, --n)
 			{
+				aCorrection += aKernel[k];
 				anOutput[i] += aKernel[k] * itsDensity[n];
 			}
+			anOutput[i] /= aCorrection;
 		}
-		// TODO adjust this portion to sum(used_kernel_values)
-		// end work in progress
-*/
-		// work in progress
-		for (int i = 0, j = halfWidth; i < j; ++i)
-			for (int k = halfWidth+i, n = 0; k >= 0; --k, ++n)
-				anOutput[i] += (aKernel[k] * itsDensity[n]);
-		// TODO adjust this portion to sum(used_kernel_values)
-		for (int i = length-1, j = 0; j < halfWidth; --i, ++j)
-			for (int k = halfWidth+j, n = length-1; k >= 0; --k, --n)
-				anOutput[i] += aKernel[k] * itsDensity[n];
-		// TODO adjust this portion to sum(used_kernel_values)
-		// end work in progress
 
 		// apply kernel on theInput
 		for (int i = halfWidth, j = length - halfWidth; i < j; ++i)
-		{
-			//System.out.println ("i=" + i + " " + itsDensity[i]);
 			for (int k = 0, m = aWidth, n = i-halfWidth; k < m; ++k, ++n)
-			{
-				//System.out.print("i=" + i + " " + itsDensity[i]);
 				anOutput[i] += (aKernel[k] * itsDensity[n]);
-			}
-		}
 
 		itsDensity = anOutput;
 		return anOutput;
