@@ -11,16 +11,8 @@ public class Candidate implements Comparable<Candidate>
 		itsPriority = theSubgroup.getMeasureValue();
 	}
 
-	@Deprecated
-	// For Wouter only, for the time being
-	public Candidate(Subgroup theSubgroup, double thePriority)
-	{
-		itsSubgroup = theSubgroup;
-		itsPriority = thePriority;
-	}
-
 	// throws NullPointerException if theCandidate is null.
-	//@Override
+	@Override
 	public int compareTo(Candidate theCandidate)
 	{
 		if (this == theCandidate)

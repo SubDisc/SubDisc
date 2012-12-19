@@ -42,23 +42,6 @@ public class DAG
 		visitation = new int[itsSize];
 	}
 
-/*
-	public DAG(int theSize, String[] theNames)
-	{
-		itsQuality = 0;
-		itsSize = theSize;
-		dagNode = new ArrayList<NetworkNode>(theSize);
-		for(int i=0; i<itsSize; i++)
-		{
-			dagNode.add(new NetworkNode(null, theSize, theNames[i]));
-			itsQuality += getNode(i).getQuality();
-		}
-
-		noArcs=0;
-		visitation = new int[theSize];
-	}
- */
-
 	//nodes are printed from 1 to n instead of the regular 0 to n-1
 	public void print()
 	{

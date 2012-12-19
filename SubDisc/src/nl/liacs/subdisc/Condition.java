@@ -27,25 +27,28 @@ public class Condition implements Comparable<Condition>
 	private final int itsOperator;
 
 	private String itsNominalValue = null;		// ColumnType = NOMINAL
-	private ValueSet itsNominalValueSet = null;		// ColumnType = NOMINAL
+	private ValueSet itsNominalValueSet = null;	// ColumnType = NOMINAL
 	private float itsNumericValue = Float.NaN;	// ColumnType = NUMERIC
 	private Interval itsInterval = null;		// ColumnType = NUMERIC
 	private boolean itsBinaryValue = false;		// ColumnType = BINARY
 
 	/**
-	 * Default initialisation values for {@Column Column} of
-	 * {@link AttributeType Attribute}:<br>
-	 * NOMINAL = <code>null</code>,<br>
-	 * NUMERIC = Float.NaN,<br>
-	 * BINARY = <code>false</code>.
+	 * Default initialisation values for {@link Column}} of
+	 * {@link AttributeType}:<br>
+	 * {@link AttributeType#NOMINAL} = <code>null</code>,<br>
+	 * {@link AttributeType#NUMERIC} = Float.NaN,<br>
+	 * {@link AttributeType#BINARY} = <code>false</code>.
 	 *
-	 * @param theColumn
+	 * @param theColumn The Column on which this Condition will be defined.
+	 * 
+	 * @throws {@link NullPointerException} if the parameter is
+	 * <code>null</code>.
 	 */
 	public Condition(Column theColumn)
 	{
-		// TODO null check
 		itsColumn = theColumn;
 
+		// causes NullPointerException if (theColumn == null)
 		switch (itsColumn.getType())
 		{
 			case NOMINAL : itsOperator = FIRST_NOMINAL_OPERATOR; return;
@@ -62,18 +65,24 @@ public class Condition implements Comparable<Condition>
 	}
 
 	/**
-	 * Default initialisation values for {@Column Column} of
-	 * {@link AttributeType Attribute}:<br>
-	 * NOMINAL = <code>null</code>,<br>
-	 * NUMERIC = Float.NaN,<br>
-	 * BINARY = <code>false</code>.
+	 * Default initialisation values for {@link Column}} of
+	 * {@link AttributeType}:<br>
+	 * {@link AttributeType#NOMINAL} = <code>null</code>,<br>
+	 * {@link AttributeType#NUMERIC} = Float.NaN,<br>
+	 * {@link AttributeType#BINARY} = <code>false</code>.
 	 *
-	 * @param theColumn
+	 * @param theColumn The Column on which this Condition will be defined.
+	 * 
+	 * @throws {@link NullPointerException} if the parameter is
+	 * <code>null</code>.
 	 */
 	public Condition(Column theColumn, int theOperator)
 	{
-		// TODO null check, operator valid for ColumnType
+		if (theColumn == null)
+			throw new NullPointerException();
+
 		itsColumn = theColumn;
+		// TODO check if operator is valid for ColumnType
 		itsOperator = theOperator;
 	}
 
@@ -369,7 +378,13 @@ public class Condition implements Comparable<Condition>
 				else
 				{
 					//TODO how to compare two sets of values?
-					return Float.compare(itsNominalValueSet.size(), theCondition.itsNominalValueSet.size());
+					// if (A.values == B.values) return 0;
+					// determine number of A's values in B
+					// determine number of B'b values in A
+					// if (A.subset < B.subset) return -1;
+					// else if (A.subset > B.subset) return 1;
+					// else (same subset size) compare size
+					return Integer.compare(itsNominalValueSet.size(), theCondition.itsNominalValueSet.size());
 				}
 			}
 			case NUMERIC :
@@ -393,4 +408,3 @@ public class Condition implements Comparable<Condition>
 		}
 	}
 }
-

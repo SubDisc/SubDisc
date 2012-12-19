@@ -2,6 +2,11 @@ package nl.liacs.subdisc;
 
 import java.util.*;
 
+/*
+ * In most cases it would be useful for BinaryTable to remember the Columns it
+ * represents. However, not all BinaryTables are build from Table Columns. For
+ * example when the Subgroups are turned into binary Columns.
+ */
 public class BinaryTable
 {
 	private List<BitSet> itsColumns;
@@ -14,12 +19,6 @@ public class BinaryTable
 		for (Column aColumn : theColumns)
 			itsColumns.add(aColumn.getBinaries());
 		itsNrRecords = theTable.getNrRows();
-	}
-
-	//empty
-	public BinaryTable()
-	{
-		itsColumns = new ArrayList<BitSet>();
 	}
 
 	//turn subgroups into binary columns
@@ -35,8 +34,18 @@ public class BinaryTable
 		}
 	}
 
+	//empty
+	// used only for shallow copy in #selectColumns(ItemSet)
+	@Deprecated
+	private BinaryTable(int theNrRecords)
+	{
+		itsColumns = new ArrayList<BitSet>();
+		itsNrRecords = theNrRecords;
+	}
+
 	//this assumes that theTargets is an ArrayList<BitSet>
-	public BinaryTable(ArrayList<BitSet> theTargets, int theNrRecords)
+	// used only by #selectRows(BitSet)
+	private BinaryTable(ArrayList<BitSet> theTargets, int theNrRecords)
 	{
 		itsColumns = theTargets;
 		itsNrRecords = theNrRecords;
@@ -52,9 +61,10 @@ public class BinaryTable
 		return aBitSet;
 	}
 
+	@Deprecated
 	public BinaryTable selectColumns(ItemSet theItemSet)
 	{
-		BinaryTable aShallowCopy = new BinaryTable();
+		BinaryTable aShallowCopy = new BinaryTable(itsNrRecords);
 
 		for (int i = 0; i < theItemSet.getDimensions(); i++)
 		{
@@ -62,9 +72,19 @@ public class BinaryTable
 				aShallowCopy.addColumn(getColumn(i));
 		}
 
-		aShallowCopy.setNrRecords(itsNrRecords);
-
 		return aShallowCopy;
+	}
+
+	/** Will replace #{@link BinaryTable#selectColumns(ItemSet)}. */
+	public BinaryTable selectColumnsNew(ItemSet theItemSet)
+	{
+		ArrayList<BitSet> aNewTargets = new ArrayList<BitSet>(getNrColumns());
+
+		for (int i = 0; i < theItemSet.getDimensions(); i++)
+			if (theItemSet.get(i))
+				aNewTargets.add(itsColumns.get(i));
+
+		return new BinaryTable(aNewTargets, itsNrRecords);
 	}
 
 	public BinaryTable selectRows(BitSet theMembers)
@@ -211,12 +231,11 @@ public class BinaryTable
 		}
 	}
 
-	public void setNrRecords(int theNrRecords) { itsNrRecords = theNrRecords; }
 	public int getNrRecords() { return itsNrRecords; }
 	public int getNrColumns() { return itsColumns.size(); }
 	public void addColumn(BitSet theBitSet) { itsColumns.add(theBitSet); }
 	public BitSet getColumn(int theIndex) { return itsColumns.get(theIndex);}
-	public void removeColumn(BitSet theBitSet) {itsColumns.remove(theBitSet);}
-	public void removeColumn(int theIndex) {itsColumns.remove(theIndex);}
-	public void setColumn(BitSet theBitSet, int theIndex) {itsColumns.set(theIndex, theBitSet);}
+	//public void removeColumn(BitSet theBitSet) {itsColumns.remove(theBitSet);}
+	//public void removeColumn(int theIndex) {itsColumns.remove(theIndex);}
+	//public void setColumn(BitSet theBitSet, int theIndex) {itsColumns.set(theIndex, theBitSet);}
 }

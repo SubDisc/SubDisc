@@ -1100,6 +1100,7 @@ public class Column implements XMLNodeInterface
 						BitSet b = new BitSet();
 						b.set(0, itsSize);
 						return getUniqueNumericDomain(b).length;
+						// FIXME MM set itsCardinality?
 					}
 					case BINARY :
 					{
@@ -1129,6 +1130,7 @@ public class Column implements XMLNodeInterface
 
 						int setBits = itsBinaries.cardinality();
 						return (setBits > 0 && setBits < itsSize) ? 2 : 1;
+						// FIXME MM set itsCardinality?
 					}
 					default : logTypeError("Column.getNrDistinct()"); return 0;
 				}
