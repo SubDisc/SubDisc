@@ -84,6 +84,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		aBitSet.set(0, itsNrRows);
 		float[] aCounts = itsNumericTarget.getStatistics(aBitSet, false);
 		ProbabilityDensityFunction aPDF = new ProbabilityDensityFunction(itsNumericTarget);
+		aPDF.smooth();
 
 		itsQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), itsNrRows, aCounts[0], aCounts[1], aPDF);
 		itsQualityMeasureMinimum = itsSearchParameters.getQualityMeasureMinimum();

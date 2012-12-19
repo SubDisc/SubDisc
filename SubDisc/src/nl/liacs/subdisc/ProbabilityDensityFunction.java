@@ -137,9 +137,9 @@ public class ProbabilityDensityFunction
 	 * NOTE that any smooth method is destructive in the sense that after
 	 * smoothing the density histogram is altered, and can not be returned
 	 * to the state it was in before the operation.
-	 * 
+	 *
 	 * @return The smoothed histogram for this ProbabilityDensityFunction.
-	 * 
+	 *
 	 * @see #smooth(float)
 	 */
 	public float[] smooth()
