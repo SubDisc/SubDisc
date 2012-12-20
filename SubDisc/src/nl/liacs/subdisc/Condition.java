@@ -395,7 +395,8 @@ public class Condition implements Comparable<Condition>
 					// else if (A.subset > B.subset) return 1;
 					// else if (same subset size) compare size
 					// else (same size) order sets return compare(A[0], B[0])
-					return Integer.compare(itsNominalValueSet.size(), theCondition.itsNominalValueSet.size());
+					//NOTE Integer.compare() is only introduced in Java 7
+					return Float.compare(itsNominalValueSet.size(), theCondition.itsNominalValueSet.size());
 				}
 			}
 			case NUMERIC :
