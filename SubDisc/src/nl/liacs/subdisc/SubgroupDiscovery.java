@@ -60,7 +60,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		itsQualityMeasureMinimum = itsSearchParameters.getQualityMeasureMinimum();
 
 		TargetConcept aTC = itsSearchParameters.getTargetConcept();
-		Condition aCondition = new Condition(aTC.getPrimaryTarget(), Condition.EQUALS);
+		Condition aCondition = new Condition(aTC.getPrimaryTarget(), Operator.EQUALS);
 		aCondition.setValue(aTC.getTargetValue());
 		itsBinaryTarget = aTC.getPrimaryTarget().evaluate(aCondition);
 
@@ -221,7 +221,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 
 					Refinement aRefinement = aRefinementList.get(i);
 					// if refinement is (num_attr = value) then treat it as nominal
-					if (aRefinement.getCondition().getColumn().isNumericType() && aRefinement.getCondition().getOperator() != Condition.EQUALS)
+					if (aRefinement.getCondition().getColumn().isNumericType() && aRefinement.getCondition().getOperator() != Operator.EQUALS)
 						evaluateNumericRefinements(aSubgroup, aRefinement);
 					else
 						evaluateNominalBinaryRefinements(aSubgroup, aRefinement);
@@ -474,7 +474,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		TreeSet<String> aDomain = aCondition.getColumn().getDomain();
 		int anOldCoverage = theSubgroup.getCoverage();
 
-		if (aCondition.getOperator() == Condition.ELEMENT_OF) //set-valued. Note that this implies that the target type is SINGLE_NOMINAL
+		if (aCondition.getOperator() == Operator.ELEMENT_OF) //set-valued. Note that this implies that the target type is SINGLE_NOMINAL
 		{
 			NominalCrossTable aNCT = new NominalCrossTable(aDomain, aCondition.getColumn(), theSubgroup, itsBinaryTarget);
 
@@ -1197,7 +1197,7 @@ TODO for stable jar, disabled, causes comple errors, reinstate later
 
 					Refinement aRefinement = aRefinementList.get(i);
 					// if refinement is (num_attr = value) then treat it as nominal
-					if (aRefinement.getCondition().getColumn().isNumericType() && aRefinement.getCondition().getOperator() != Condition.EQUALS)
+					if (aRefinement.getCondition().getColumn().isNumericType() && aRefinement.getCondition().getOperator() != Operator.EQUALS)
 						evaluateNumericRefinements(aSubgroup, aRefinement);
 					else
 						evaluateNominalBinaryRefinements(aSubgroup, aRefinement);

@@ -13,6 +13,5 @@ public interface EnumInterface
 	 */
 	@Override
 	public String toString();
-
 	// TODO enforce uniform handling and reporting of unknown and null enums
 }

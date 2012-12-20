@@ -133,7 +133,7 @@ public class Column implements XMLNodeInterface
 			Node aSetting = aChildren.item(i);
 			String aNodeName = aSetting.getNodeName();
 			if ("type".equalsIgnoreCase(aNodeName))
-				itsType = AttributeType.getAttributeType(aSetting.getTextContent());
+				itsType = AttributeType.fromString(aSetting.getTextContent());
 			else if ("name".equalsIgnoreCase(aNodeName))
 				itsName = aSetting.getTextContent();
 			else if ("short".equalsIgnoreCase(aNodeName))

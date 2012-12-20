@@ -37,7 +37,7 @@ public class RefinementList extends ArrayList<Refinement>
 				//nominal
 				else if (aColumn.isNominalType() && !useSets && aCondition.isEquals())
 				{
-					if (aTC.isSingleNominal() || aCondition.getOperator() != Condition.ELEMENT_OF) // set-valued only allowed for SINGLE_NOMINAL
+					if (aTC.isSingleNominal() || aCondition.getOperator() != Operator.ELEMENT_OF) // set-valued only allowed for SINGLE_NOMINAL
 						add = true;
 				}
 				else if (aColumn.isNominalType() && useSets && aCondition.isElementOf())

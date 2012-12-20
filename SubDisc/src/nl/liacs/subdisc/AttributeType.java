@@ -48,10 +48,10 @@ public enum AttributeType implements EnumInterface
 	 * parameter, or AttributeType NOMINAL if no corresponding AttributeType
 	 * is found.
 	 */
-	public static AttributeType getAttributeType(String theType)
+	public static AttributeType fromString(String theText)
 	{
 		for (AttributeType at : AttributeType.values())
-			if (at.toString().equalsIgnoreCase(theType))
+			if (at.toString().equalsIgnoreCase(theText))
 				return at;
 
 		/*
@@ -59,9 +59,8 @@ public enum AttributeType implements EnumInterface
 		 * return default.
 		 */
 		Log.logCommandLine(
-			String.format(
-					"'%s' is not a valid AttributeType. Returning '%s'.",
-					theType,
+			String.format("'%s' is not a valid AttributeType. Returning '%s'.",
+					theText,
 					AttributeType.getDefault()));
 		return AttributeType.getDefault();
 	}

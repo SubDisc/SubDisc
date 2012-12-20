@@ -3,21 +3,15 @@ package nl.liacs.subdisc;
 import java.io.*;
 import java.util.*;
 
-import nl.liacs.subdisc.OnlyExt;
-
-
-public class ExternalKnowledgeFileLoader {
-
+public class ExternalKnowledgeFileLoader
+{
 	private List<ConditionList> externalInfoLocal;
 	private List<ConditionList> externalInfoGlobal;
 	private List<String> linesLocal;
 	private List<String> linesGlobal;
-	
-	
-	//
-	
-	public ExternalKnowledgeFileLoader(String theStringF) throws IOException{
 
+	public ExternalKnowledgeFileLoader(String theStringF) throws IOException
+	{
 		externalInfoLocal = new ArrayList<ConditionList>();
 		externalInfoGlobal = new ArrayList<ConditionList>();
 		linesGlobal = new ArrayList<String>();
@@ -28,37 +22,43 @@ public class ExternalKnowledgeFileLoader {
 		FilenameFilter extGlobalKnowledge = new OnlyExt("gkf");
 		File[] fileGlobal = f.listFiles(extGlobalKnowledge);
 		File[] fileLocal = f.listFiles(extLocalKnowledge);
-		
-		if (fileGlobal.length>0) {
+
+		if (fileGlobal.length > 0)
+		{
 			FileReader aFr = new FileReader(fileGlobal[0]);
 			BufferedReader in = new BufferedReader(aFr);
-			
+
 			String conjunction = null;
-		    while ((conjunction = in.readLine()) != null) {
-		    	System.out.println(conjunction);
-		    	linesGlobal.add(conjunction);
-		    	System.out.println(linesGlobal);
-		    }
-		 
+
+			while ((conjunction = in.readLine()) != null)
+			{
+				System.out.println(conjunction);
+				linesGlobal.add(conjunction);
+				System.out.println(linesGlobal);
+			}
+
 		}
-		if (fileLocal.length>0) {
+
+		if (fileLocal.length > 0)
+		{
 			FileReader aFr = new FileReader(fileLocal[0]);
 			BufferedReader in = new BufferedReader(aFr);
 			String conjunction = null;
-		    while ((conjunction = in.readLine()) != null) {
-		    	linesLocal.add(conjunction);
-		    }
+
+			while ((conjunction = in.readLine()) != null)
+				linesLocal.add(conjunction);
 		}
-		
-		
 	}
-	
-	public void createConditionListLocal(Table theTable){
-		for (int i=0;i<linesLocal.size();i++){
+
+	public void createConditionListLocal(Table theTable)
+	{
+		for (int i=0; i<linesLocal.size(); i++)
+		{
 			String conjunction = linesLocal.get(i);
 			String[] conjuncts = getConjuncts(conjunction);
 			ConditionList cl = new ConditionList();
-			for (int j=0;j<conjuncts.length;j++){
+			for (int j=0; j<conjuncts.length; j++)
+			{
 				//fill conditionlist with conditions here, first create object by column and operator, then set value
 				String[] sa = disect(conjuncts[j]);
 				Column col = theTable.getColumn(sa[0]); //the column
@@ -69,38 +69,45 @@ public class ExternalKnowledgeFileLoader {
 				// int GREATER_THAN_OR_EQUAL	= 4;
 				// int BETWEEN = 5;
 				// int NOT_AN_OPERATOR		= 99;
-				int op = 99;
-				if (sa[1].compareTo("=")==0){
-					op = 2;
-				}else if(sa[1].compareTo("!=")==0){
-					op = 99;
-				}else if(sa[1].compareTo("<=")==0){
-					op = 3;
-				}else if(sa[1].compareTo(">=")==0){
-					op = 4;
-				}else if(sa[1].compareTo("in")==0){
-					op =1;
-				}
+//				int op = 99;
+//				if (sa[1].compareTo("=")==0){
+//					op = 2;
+//				}else if(sa[1].compareTo("!=")==0){
+//					op = 99;
+//				}else if(sa[1].compareTo("<=")==0){
+//					op = 3;
+//				}else if(sa[1].compareTo(">=")==0){
+//					op = 4;
+//				}else if(sa[1].compareTo("in")==0){
+//					op =1;
+//				}
+				Operator o = Operator.fromString(sa[1]);
 				System.out.println("operator:");
-				System.out.println(op);
+//				System.out.println(op);
+				System.out.println(o);
 				System.out.println(sa[1]);
-				Condition c = new Condition(col,op);
+//				Condition c = new Condition(col,op);
+				Condition c = new Condition(col, o);
 				//now set the value of the condition
 				System.out.println("Value");
 				System.out.println(sa[2]);
 				c.setValue(sa[2]);
 				cl.add(c);
 			}
+
 			externalInfoLocal.add(cl);
-			}
+		}
 	}
-	
-	public void createConditionListGlobal(Table theTable){
-		for (int i=0;i<linesGlobal.size();i++){
+
+	public void createConditionListGlobal(Table theTable)
+	{
+		for (int i=0; i<linesGlobal.size(); i++)
+		{
 			String conjunction = linesGlobal.get(i);
 			String[] conjuncts = getConjuncts(conjunction);
 			ConditionList cl = new ConditionList();
-			for (int j=0;j<conjuncts.length;j++){
+			for (int j=0; j<conjuncts.length; j++)
+			{
 				//fill conditionlist with conditions here, first create object by column and operator, then set value
 				String[] sa = disect(conjuncts[j]);
 				Column col = theTable.getColumn(sa[0]); //the column
@@ -111,42 +118,46 @@ public class ExternalKnowledgeFileLoader {
 				// int GREATER_THAN_OR_EQUAL	= 4;
 				// int BETWEEN = 5;
 				// int NOT_AN_OPERATOR		= 99;
-				int op = 99;
-				if (sa[1].compareTo("=")==0){
-					op = 2;
-				}else if(sa[1].compareTo("!=")==0){
-					op = 99;
-				}else if(sa[1].compareTo("<=")==0){
-					op = 3;
-				}else if(sa[1].compareTo(">=")==0){
-					op = 4;
-				}else if(sa[1].compareTo("in")==0){
-					op =1;
-				}
-				Condition c = new Condition(col,op);
+//				int op = 99;
+//				if (sa[1].compareTo("=")==0){
+//					op = 2;
+//				}else if(sa[1].compareTo("!=")==0){
+//					op = 99;
+//				}else if(sa[1].compareTo("<=")==0){
+//					op = 3;
+//				}else if(sa[1].compareTo(">=")==0){
+//					op = 4;
+//				}else if(sa[1].compareTo("in")==0){
+//					op =1;
+//				}
+//				Condition c = new Condition(col,op);
+				Condition c = new Condition(col, Operator.fromString(sa[1]));
 				//now set the value of the condition
-				
+
 				c.setValue(sa[2]);
 				cl.add(c);
 			}
+
 			externalInfoGlobal.add(cl);
-			}
+		}
 	}
-	
-	
-	
-	private static String[] getConjuncts(String conjunction) {
+
+	private static String[] getConjuncts(String conjunction)
+	{
 		// assume ' AND ' does not appear in column names
 		return conjunction.split(" AND ", -1);
 	}
-	
-	
+
+	// TODO see Operator.set()
 	private static final String[] OPERATORS = { " = ", " != ", " <= ", " >= ", " in " };
-	
-	private static String[] disect(String condition) {
+
+	private static String[] disect(String condition)
+	{
 		// assume OPERATORS do not appear in column name
-		for (String s : OPERATORS) {
-			if (condition.contains(s)) {
+		for (String s : OPERATORS)
+		{
+			if (condition.contains(s))
+			{
 				final String[] tmp = condition.split(s);
 				// remove outer quotes from column name
 //				tmp[0] = tmp[0].substring(1, tmp[0].length()-1);
@@ -155,19 +166,17 @@ public class ExternalKnowledgeFileLoader {
 				return new String[] { tmp[0] , s.trim(), tmp[1] };
 			}
 		}
+
 		return null; // throw Exception
 	}
-	
-	
-	public List<ConditionList> getLocal(){
+
+	public List<ConditionList> getLocal()
+	{
 		return externalInfoLocal;
 	}
-	
-	public List<ConditionList> getGlobal(){
+
+	public List<ConditionList> getGlobal()
+	{
 		return externalInfoGlobal;
 	}
-	
-	
-	
-	
 }

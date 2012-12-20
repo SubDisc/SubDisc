@@ -1,31 +1,44 @@
 package nl.liacs.subdisc;
 
+import java.util.*;
+
 public class Condition implements Comparable<Condition>
 {
 	// TODO MM Operator enum
 	// Operator Constants
-	public static final int ELEMENT_OF		= 1;
-	public static final int EQUALS			= 2;
-	public static final int LESS_THAN_OR_EQUAL	= 3;
-	public static final int GREATER_THAN_OR_EQUAL	= 4;
-	public static final int BETWEEN = 5;
-	public static final int NOT_AN_OPERATOR		= 99;
+//	public static final int ELEMENT_OF		= 1;
+//	public static final int EQUALS			= 2;
+//	public static final int LESS_THAN_OR_EQUAL	= 3;
+//	public static final int GREATER_THAN_OR_EQUAL	= 4;
+//	public static final int BETWEEN = 5;
+//	public static final int NOT_AN_OPERATOR		= 99;
 
+	private static final Set<Operator> OPERATORS = Operator.set();
+	/*
+	 * FIXME these should be defined in terms of EnumSets
+	 */
 	// Binary Operator Constants
-	public static final int FIRST_BINARY_OPERATOR	= EQUALS;
-	public static final int LAST_BINARY_OPERATOR	= EQUALS;
+//	public static final int FIRST_BINARY_OPERATOR	= EQUALS;
+//	public static final int LAST_BINARY_OPERATOR	= EQUALS;
+	public static final Operator FIRST_BINARY_OPERATOR	= Operator.EQUALS;
+	public static final Operator LAST_BINARY_OPERATOR	= Operator.EQUALS;
 
 	// Nominal Operator  Constants
-	public static final int FIRST_NOMINAL_OPERATOR	= ELEMENT_OF;
-	public static final int LAST_NOMINAL_OPERATOR	= EQUALS;
+//	public static final int FIRST_NOMINAL_OPERATOR	= ELEMENT_OF;
+//	public static final int LAST_NOMINAL_OPERATOR	= EQUALS;
+	public static final Operator FIRST_NOMINAL_OPERATOR	= Operator.ELEMENT_OF;
+	public static final Operator LAST_NOMINAL_OPERATOR	= Operator.EQUALS;
 
 	// Numeric Operator  Constants
 	//this allows =, <= and >=
-	public static final int FIRST_NUMERIC_OPERATOR	= EQUALS;
-	public static final int LAST_NUMERIC_OPERATOR	= BETWEEN;
+//	public static final int FIRST_NUMERIC_OPERATOR	= EQUALS;
+//	public static final int LAST_NUMERIC_OPERATOR	= BETWEEN;
+	public static final Operator FIRST_NUMERIC_OPERATOR	= Operator.EQUALS;
+	public static final Operator LAST_NUMERIC_OPERATOR	= Operator.BETWEEN;
 
 	private final Column itsColumn;
-	private final int itsOperator;
+//	private final int itsOperator;
+	private final Operator itsOperator;
 
 	private String itsNominalValue = null;		// ColumnType = NOMINAL
 	private ValueSet itsNominalValueSet = null;	// ColumnType = NOMINAL
@@ -77,7 +90,7 @@ public class Condition implements Comparable<Condition>
 	 * @throws {@link NullPointerException} if the parameter is
 	 * <code>null</code>.
 	 */
-	public Condition(Column theColumn, int theOperator)
+	public Condition(Column theColumn, Operator theOperator)
 	{
 		if (theColumn == null)
 			throw new NullPointerException();
@@ -106,10 +119,10 @@ public class Condition implements Comparable<Condition>
 
 	public Column getColumn() { return itsColumn; }
 
-	public int getOperator() { return itsOperator; }
+	public Operator getOperator() { return itsOperator; }
 
-	public boolean isElementOf() { return itsOperator == ELEMENT_OF; }
-	public boolean isEquals() { return itsOperator == EQUALS; }
+	public boolean isElementOf() { return itsOperator == Operator.ELEMENT_OF; }
+	public boolean isEquals() { return itsOperator == Operator.EQUALS; }
 
 	private String getValue()
 	{
@@ -194,9 +207,18 @@ public class Condition implements Comparable<Condition>
 		return true;
 	}
 
-	public int getNextOperator()
+	public Operator getNextOperator()
 	{
-		return hasNextOperator() ? itsOperator+1 : NOT_AN_OPERATOR;
+		//return hasNextOperator() ? itsOperator+1 : NOT_AN_OPERATOR;
+		if (hasNextOperator())
+		{
+			// hasNextOperator() sort of guarantees i.hasNext() 
+			for (Iterator<Operator> i = OPERATORS.iterator(); i.hasNext(); )
+				if (itsOperator == i.next())
+					return i.next();
+		}
+
+		return Operator.NOT_AN_OPERATOR;
 	}
 
 	/**
@@ -271,7 +293,7 @@ public class Condition implements Comparable<Condition>
 	 */
 	public boolean evaluate(boolean theValue)
 	{
-		if (itsOperator != EQUALS)
+		if (itsOperator != Operator.EQUALS)
 			logError("binary");
 		return itsBinaryValue == theValue;
 	}
@@ -288,29 +310,16 @@ public class Condition implements Comparable<Condition>
 							getClass().getSimpleName(),
 							theMethod,
 							itsColumn.getType(),
-							getOperatorString()));
-	}
-
-	private String getOperatorString()
-	{
-		switch(itsOperator)
-		{
-			case ELEMENT_OF		: return "in";
-			case EQUALS			: return "=";
-			case LESS_THAN_OR_EQUAL		: return "<=";
-			case GREATER_THAN_OR_EQUAL	: return ">=";
-			case BETWEEN	: return "in";
-			default : return "";
-		}
+							itsOperator));
 	}
 
 	@Override
 	public String toString()
 	{
-		if (itsColumn.isNumericType() || itsOperator == ELEMENT_OF)
-			return String.format("%s %s %s", itsColumn.getName(), getOperatorString(), getValue());
+		if (itsColumn.isNumericType() || itsOperator == Operator.ELEMENT_OF)
+			return String.format("%s %s %s", itsColumn.getName(), itsOperator, getValue());
 		else
-			return String.format("%s %s '%s'", itsColumn.getName(), getOperatorString(), getValue());
+			return String.format("%s %s '%s'", itsColumn.getName(), itsOperator, getValue());
 	}
 
 	/*
@@ -351,9 +360,9 @@ public class Condition implements Comparable<Condition>
 		else if (this.itsColumn.getIndex() > theCondition.itsColumn.getIndex())
 			return 1;
 		// same column, check operator
-		else if (this.itsOperator < theCondition.itsOperator)
+		else if (this.itsOperator.ordinal() < theCondition.itsOperator.ordinal())
 			return -1;
-		else if (this.itsOperator > theCondition.itsOperator)
+		else if (this.itsOperator.ordinal() > theCondition.itsOperator.ordinal())
 			return 1;
 		// same column, same operator, check on value
 		/*
@@ -384,7 +393,8 @@ public class Condition implements Comparable<Condition>
 					// determine number of B'b values in A
 					// if (A.subset < B.subset) return -1;
 					// else if (A.subset > B.subset) return 1;
-					// else (same subset size) compare size
+					// else if (same subset size) compare size
+					// else (same size) order sets return compare(A[0], B[0])
 					return Integer.compare(itsNominalValueSet.size(), theCondition.itsNominalValueSet.size());
 				}
 			}

@@ -53,7 +53,7 @@ public class Validation
 			case SINGLE_NOMINAL :
 			{
 				Column aTarget = itsTargetConcept.getPrimaryTarget();
-				Condition aCondition = new Condition(aTarget, Condition.EQUALS);
+				Condition aCondition = new Condition(aTarget, Operator.EQUALS);
 				aCondition.setValue(itsTargetConcept.getTargetValue());
 				//BitSet aBinaryTarget = itsTable.evaluate(aCondition);
 				BitSet aBinaryTarget = aTarget.evaluate(aCondition);
@@ -75,7 +75,7 @@ public class Validation
 			case SINGLE_NUMERIC : //todo implement!
 			{
 				Column aTarget = itsTargetConcept.getPrimaryTarget();
-				Condition aCondition = new Condition(aTarget, Condition.EQUALS);
+				Condition aCondition = new Condition(aTarget, Operator.EQUALS);
 				aCondition.setValue(itsTargetConcept.getTargetValue());
 				//BitSet aBinaryTarget = itsTable.evaluate(aCondition);
 				BitSet aBinaryTarget = aTarget.evaluate(aCondition);
@@ -168,7 +168,7 @@ public class Validation
 			case SINGLE_NOMINAL :
 			{
 				Column aTarget = itsTargetConcept.getPrimaryTarget();
-				Condition aCondition = new Condition(aTarget, Condition.EQUALS);
+				Condition aCondition = new Condition(aTarget, Operator.EQUALS);
 				aCondition.setValue(itsTargetConcept.getTargetValue());
 				//BitSet aBinaryTarget = itsTable.evaluate(aCondition);
 				BitSet aBinaryTarget = aTarget.evaluate(aCondition);
@@ -525,20 +525,20 @@ public class Validation
 				aColumn = itsTable.getColumn(theRandom.nextInt(aNrColumns));
 			while (itsTargetConcept.isTargetAttribute(aColumn));
 
-			int anOperator;
+			Operator anOperator;
 			Condition aCondition;
 			switch(aColumn.getType())
 			{
 				case BINARY :
 				{
-					anOperator = Condition.EQUALS;
+					anOperator = Operator.EQUALS;
 					aCondition = new Condition(aColumn, anOperator);
 					aCondition.setValue(theRandom.nextBoolean() ? "1" : "0");
 					break;
 				}
 				case NOMINAL :
 				{
-					anOperator = Condition.EQUALS;
+					anOperator = Operator.EQUALS;
 					aCondition = new Condition(aColumn, anOperator);
 					TreeSet<String> aDomain = aColumn.getDomain();
 					int aNrDistinct = aDomain.size();
@@ -554,7 +554,7 @@ public class Validation
 				default :
 				{
 					anOperator = theRandom.nextBoolean() ?
-						Condition.LESS_THAN_OR_EQUAL : Condition.GREATER_THAN_OR_EQUAL;
+						Operator.LESS_THAN_OR_EQUAL : Operator.GREATER_THAN_OR_EQUAL;
 					aCondition = new Condition(aColumn, anOperator);
 					float aMin = aColumn.getMin();
 					float aMax = aColumn.getMax();

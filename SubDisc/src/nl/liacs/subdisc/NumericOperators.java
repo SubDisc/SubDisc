@@ -82,19 +82,19 @@ public enum NumericOperators implements EnumInterface
 		return GUI_TEXT;
 	}
 
-	public static boolean check(NumericOperators theNO, int theOperator)
+	public static boolean check(NumericOperators theNO, Operator theOperator)
 	{
-		if (theNO == NUMERIC_NORMAL && (theOperator == Condition.LESS_THAN_OR_EQUAL || theOperator == Condition.GREATER_THAN_OR_EQUAL))
+		if (theNO == NUMERIC_NORMAL && (theOperator == Operator.LESS_THAN_OR_EQUAL || theOperator == Operator.GREATER_THAN_OR_EQUAL))
 			return true;
-		if (theNO == NUMERIC_LEQ && theOperator == Condition.LESS_THAN_OR_EQUAL)
+		if (theNO == NUMERIC_LEQ && theOperator == Operator.LESS_THAN_OR_EQUAL)
 			return true;
-		if (theNO == NUMERIC_GEQ && theOperator == Condition.GREATER_THAN_OR_EQUAL)
+		if (theNO == NUMERIC_GEQ && theOperator == Operator.GREATER_THAN_OR_EQUAL)
 			return true;
-		if (theNO == NUMERIC_EQ && theOperator == Condition.EQUALS)
+		if (theNO == NUMERIC_EQ && theOperator == Operator.EQUALS)
 			return true;
-		if (theNO == NUMERIC_ALL && (theOperator == Condition.LESS_THAN_OR_EQUAL || theOperator == Condition.GREATER_THAN_OR_EQUAL || theOperator == Condition.EQUALS))
+		if (theNO == NUMERIC_ALL && (theOperator == Operator.LESS_THAN_OR_EQUAL || theOperator == Operator.GREATER_THAN_OR_EQUAL || theOperator == Operator.EQUALS))
 			return true;
-		if (theNO == NUMERIC_INTERVALS && theOperator == Condition.BETWEEN)
+		if (theNO == NUMERIC_INTERVALS && theOperator == Operator.BETWEEN)
 			return true;
 
 		return false;

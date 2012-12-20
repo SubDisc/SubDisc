@@ -235,7 +235,7 @@ public class MetaDataWindow extends JFrame implements ActionListener
 			else if ("type".equals(aCommand))
 			{
 				for (int i : itsJTable.getSelectedRows())
-					itsTable.getColumn(i).setType(AttributeType.getAttributeType(aNewType.getSelection().getActionCommand()));
+					itsTable.getColumn(i).setType(AttributeType.fromString(aNewType.getSelection().getActionCommand()));
 					// TODO show messageDialog asking to treat first value as
 					// 'true' or 'false' (see Column.toBinary())
 					// TODO failed to change type warning
