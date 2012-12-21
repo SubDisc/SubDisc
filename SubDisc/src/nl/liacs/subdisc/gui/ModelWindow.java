@@ -20,6 +20,37 @@ public class ModelWindow extends JFrame implements ActionListener
 
 	private JScrollPane itsJScrollPaneCenter = new JScrollPane();
 
+	// SINGLE_NUMERIC: show distribution over numeric target
+
+	public ModelWindow(Column theDomain, ProbabilityDensityFunction thePDF)
+	{
+		initComponents();
+		String aName = "probability density function";
+
+		XYSeries aSeries = new XYSeries("data");
+		for (int i = 0, j = thePDF.size(); i < j; ++i)
+			aSeries.add(thePDF.getMiddle(i), thePDF.getDensity(i));
+		XYSeriesCollection aDataSet = new XYSeriesCollection(aSeries);
+		JFreeChart aChart =
+			ChartFactory.createXYLineChart(aName, theDomain.getName(), "density", aDataSet, PlotOrientation.VERTICAL, false, true, false);
+		aChart.setAntiAlias(true);
+		XYPlot plot = aChart.getXYPlot();
+		plot.setBackgroundPaint(Color.white);
+		plot.setDomainGridlinePaint(Color.gray);
+		plot.setRangeGridlinePaint(Color.gray);
+		plot.getRenderer().setSeriesPaint(0, Color.black);
+		plot.getRenderer().setSeriesShape(0, new Rectangle2D.Float(0.0f, 0.0f, 2.5f, 2.5f));
+
+		itsJScrollPaneCenter.setViewportView(new ChartPanel(aChart));
+
+		setTitle("Base Model");
+		setIconImage(MiningWindow.ICON);
+		setLocation(50, 50);
+		setSize(GUI.WINDOW_DEFAULT_SIZE);
+		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		setVisible(true);
+	}
+
 	//correlation and regression ===============================
 
 	//TODO There should never be this much code in a constructor

@@ -1422,6 +1422,14 @@ public class MiningWindow extends JFrame
 
 		switch (itsTargetConcept.getTargetType())
 		{
+			case SINGLE_NUMERIC :
+			{
+				Column aTarget = itsTargetConcept.getPrimaryTarget();
+				ProbabilityDensityFunction aPDF = new ProbabilityDensityFunction(aTarget);
+				aPDF.smooth();
+				new ModelWindow(aTarget, aPDF);
+				break;
+			}
 			case DOUBLE_REGRESSION :
 			{
 				Column aPrimaryColumn = itsTargetConcept.getPrimaryTarget();
@@ -1435,10 +1443,7 @@ public class MiningWindow extends JFrame
 			}
 			case DOUBLE_CORRELATION :
 			{
-				new ModelWindow(itsTargetConcept.getPrimaryTarget(),
-						itsTargetConcept.getSecondaryTarget(),
-						null,
-						null); //no trendline, no subset
+				new ModelWindow(itsTargetConcept.getPrimaryTarget(), itsTargetConcept.getSecondaryTarget(),	null, null); //no trendline, no subset
 				break;
 			}
 			case MULTI_LABEL :

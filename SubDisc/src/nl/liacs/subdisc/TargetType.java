@@ -32,9 +32,9 @@ public enum TargetType implements EnumInterface
 	/**
 	 * Returns the TargetType corresponding to the <code>String</code>
 	 * parameter. This method is case insensitive.
-	 * 
+	 *
 	 * @param theType the <code>String</code> corresponding to a TargetType.
-	 * 
+	 *
 	 * @return the TargetType corresponding to the <code>String</code>
 	 * parameter, or the default TargetType <code>SINGLE_NOMINAL</code> if no
 	 * corresponding TargetType can not be found.
@@ -58,7 +58,7 @@ public enum TargetType implements EnumInterface
 
 	/**
 	 * Returns the default TargetType.
-	 * 
+	 *
 	 * @return the default TargetType.
 	 */
 	public static TargetType getDefault()
@@ -220,7 +220,7 @@ public enum TargetType implements EnumInterface
 		switch (theType)
 		{
 			case SINGLE_NOMINAL		: return false;
-			case SINGLE_NUMERIC		: return false;
+			case SINGLE_NUMERIC		: return true;
 			case SINGLE_ORDINAL		: return false;
 			case DOUBLE_REGRESSION		: return true;
 			case DOUBLE_CORRELATION		: return true;

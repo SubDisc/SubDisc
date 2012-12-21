@@ -299,6 +299,28 @@ public class ResultWindow extends JFrame implements ActionListener
 
 		switch (itsSearchParameters.getTargetType())
 		{
+			case SINGLE_NUMERIC :
+			{
+				Column aTarget = itsSearchParameters.getTargetConcept().getPrimaryTarget();
+				ProbabilityDensityFunction aPDF = new ProbabilityDensityFunction(aTarget);
+
+				int[] aSelection = itsSubgroupTable.getSelectedRows();
+				Iterator<Subgroup> anIterator = itsSubgroupSet.iterator();
+
+				for (int i = 0, j = aSelection.length, k = 0; i < j; ++k)
+				{
+					int aNext = aSelection[k];
+					while (i++ < aNext)
+						anIterator.next();
+					Subgroup aSubgroup = anIterator.next();
+
+					ProbabilityDensityFunction aSubgroupPDF = new ProbabilityDensityFunction(aPDF, aTarget, aSubgroup.getMembers());
+					aSubgroupPDF.smooth();
+					new ModelWindow(aTarget, aSubgroupPDF);
+				}
+
+				break;
+			}
 			case DOUBLE_CORRELATION :
 			{
 				modelWindowHelper(TargetType.DOUBLE_CORRELATION);

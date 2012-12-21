@@ -66,6 +66,11 @@ public class ProbabilityDensityFunction
 			return (int) ((aValue-itsMin)/itsBinWidth);
 	}
 
+	public float getMiddle(int theIndex)
+	{
+		return itsMin + (theIndex + 0.5f)*itsBinWidth;
+	}
+
 	/*
 	 * accumulates rounding errors, alternative would be to just count the
 	 * absolute number of items in a bin and report the density for a
@@ -144,7 +149,7 @@ public class ProbabilityDensityFunction
 	 */
 	public float[] smooth()
 	{
-		return smooth((itsMax-itsMin) / 16);
+		return smooth((itsMax-itsMin) / 64);
 	}
 
 	// can not be applied if width > theInput
