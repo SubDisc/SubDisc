@@ -303,6 +303,7 @@ public class ResultWindow extends JFrame implements ActionListener
 			{
 				Column aTarget = itsSearchParameters.getTargetConcept().getPrimaryTarget();
 				ProbabilityDensityFunction aPDF = new ProbabilityDensityFunction(aTarget);
+				aPDF.smooth();
 
 				int[] aSelection = itsSubgroupTable.getSelectedRows();
 				Iterator<Subgroup> anIterator = itsSubgroupSet.iterator();
@@ -316,7 +317,7 @@ public class ResultWindow extends JFrame implements ActionListener
 
 					ProbabilityDensityFunction aSubgroupPDF = new ProbabilityDensityFunction(aPDF, aTarget, aSubgroup.getMembers());
 					aSubgroupPDF.smooth();
-					new ModelWindow(aTarget, aSubgroupPDF);
+					new ModelWindow(aTarget, aPDF, aSubgroupPDF, aSubgroup.toString());
 				}
 
 				break;

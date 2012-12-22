@@ -13,6 +13,7 @@ import org.jfree.chart.*;
 import org.jfree.chart.plot.*;
 import org.jfree.chart.renderer.xy.*;
 import org.jfree.data.xy.*;
+import org.jfree.chart.title.*;
 
 public class ModelWindow extends JFrame implements ActionListener
 {
@@ -22,24 +23,35 @@ public class ModelWindow extends JFrame implements ActionListener
 
 	// SINGLE_NUMERIC: show distribution over numeric target
 
-	public ModelWindow(Column theDomain, ProbabilityDensityFunction thePDF)
+	public ModelWindow(Column theDomain, ProbabilityDensityFunction theDatasetPDF, ProbabilityDensityFunction theSubgroupPDF, String theName)
 	{
 		initComponents();
-		String aName = "probability density function";
 
-		XYSeries aSeries = new XYSeries("data");
-		for (int i = 0, j = thePDF.size(); i < j; ++i)
-			aSeries.add(thePDF.getMiddle(i), thePDF.getDensity(i));
-		XYSeriesCollection aDataSet = new XYSeriesCollection(aSeries);
+		XYSeries aDatasetSeries = new XYSeries("dataset");
+		XYSeries aSubgroupSeries = new XYSeries("subgroup");
+		for (int i = 0, j = theDatasetPDF.size(); i < j; ++i)
+		{
+			aDatasetSeries.add(theDatasetPDF.getMiddle(i), theDatasetPDF.getDensity(i));
+			if (theSubgroupPDF != null)
+				aSubgroupSeries.add(theSubgroupPDF.getMiddle(i), theSubgroupPDF.getDensity(i));
+		}
+		XYSeriesCollection aDataCollection = new XYSeriesCollection(aDatasetSeries);
+		if (theSubgroupPDF != null)
+			aDataCollection.addSeries(aSubgroupSeries);
+
 		JFreeChart aChart =
-			ChartFactory.createXYLineChart(aName, theDomain.getName(), "density", aDataSet, PlotOrientation.VERTICAL, false, true, false);
+			ChartFactory.createXYLineChart(theName, theDomain.getName(), "density", aDataCollection, PlotOrientation.VERTICAL, false, true, false);
 		aChart.setAntiAlias(true);
+		aChart.getTitle().setFont(new Font("title", Font.BOLD, 14));
 		XYPlot plot = aChart.getXYPlot();
 		plot.setBackgroundPaint(Color.white);
 		plot.setDomainGridlinePaint(Color.gray);
 		plot.setRangeGridlinePaint(Color.gray);
 		plot.getRenderer().setSeriesPaint(0, Color.black);
-		plot.getRenderer().setSeriesShape(0, new Rectangle2D.Float(0.0f, 0.0f, 2.5f, 2.5f));
+		plot.getRenderer().setSeriesStroke(0, new BasicStroke(2.0f));
+		plot.getRenderer().setSeriesPaint(1, Color.red); //subgroup
+		plot.getRenderer().setSeriesStroke(1, new BasicStroke(2.0f)); //subgroup
+		aChart.addLegend(new LegendTitle(plot));
 
 		itsJScrollPaneCenter.setViewportView(new ChartPanel(aChart));
 

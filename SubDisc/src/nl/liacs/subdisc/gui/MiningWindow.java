@@ -1427,7 +1427,7 @@ public class MiningWindow extends JFrame
 				Column aTarget = itsTargetConcept.getPrimaryTarget();
 				ProbabilityDensityFunction aPDF = new ProbabilityDensityFunction(aTarget);
 				aPDF.smooth();
-				new ModelWindow(aTarget, aPDF);
+				new ModelWindow(aTarget, aPDF, null, "entire dataset");
 				break;
 			}
 			case DOUBLE_REGRESSION :
