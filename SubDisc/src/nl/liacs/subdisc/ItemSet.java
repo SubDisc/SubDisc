@@ -2,10 +2,11 @@ package nl.liacs.subdisc;
 
 import java.util.*;
 
+// FIXME @author, this class redefines default BitSet methods, why?
 public class ItemSet extends BitSet
 {
 	private static final long serialVersionUID = 1L;
-	private int itsDimensions;
+	private int itsDimensions;	// MM BitSet.size() ?
 	private double itsJointEntropy = Double.NaN;
 
 	//empty itemset
@@ -27,11 +28,13 @@ public class ItemSet extends BitSet
 			set(0, theCount);
 	}
 
+	// MM did you mean BitSet.size() ?
 	public int getDimensions()
 	{
 		return itsDimensions;
 	}
 
+	// MM did you mean  BitSet.cardinality() ?
 	public int getItemCount()
 	{
 		int aCount = 0;
@@ -44,8 +47,24 @@ public class ItemSet extends BitSet
 		return aCount;
 	}
 
-	public int getItem(int theIndex)
+	/**
+	 * Returns the index of the <em>n</em>-th set bit.
+	 * 
+	 * @param theIndex
+	 * 
+	 * @return the index of the <em>n</em>-th set bit, or <code>-1</code> if
+	 * it can not be found.
+	 */
+	// never used
+	@Deprecated
+	private int getItem(int theIndex)
 	{
+// MM why are default BitSet methods not used for this?
+//		for (int i = nextSetBit(0), j = 1; i >= 0; i = nextSetBit(i+1), ++j)
+//			if (theIndex == j)
+//				return i;
+//		return -1;
+
 		int aCount = 0;
 
 		for (int i=0; i<itsDimensions; i++)
@@ -60,6 +79,8 @@ public class ItemSet extends BitSet
 		return -1;
 	}
 
+	// MM could/ should be defined in terms of BitSet.xor()
+	// ((BitSet)theSet.clone()).xor(this);
 	public ItemSet symmetricDifference(ItemSet theSet)
 	{
 		ItemSet aSet = new ItemSet(itsDimensions);
@@ -72,12 +93,15 @@ public class ItemSet extends BitSet
 
 	public ItemSet getExtension(int theIndex)
 	{
+		// NOTE only clones BitSet, not itsDimensions and itsEntropy
 		ItemSet aSet = (ItemSet) clone();
 		aSet.set(theIndex);
 		return aSet;
 	}
 
-	public ItemSet getNextItemSet()
+	// never used
+	@Deprecated
+	private ItemSet getNextItemSet()
 	{
 		int aCount = 0;
 		int aLast = 0;
@@ -116,11 +140,22 @@ public class ItemSet extends BitSet
 		return aSet;
 	}
 
-	public boolean isFresh(int l)
+	// l+1 = number consecutive bits that need to be set (when counting back
+	// from index)
+	// never used
+	@Deprecated
+	boolean isFresh(int l)
 	{
+// MM fast, concise alternative
+//		final int i = length()-1; // index of highest set bit
+//		return (i < 0) ? true : (previousClearBit(i) < (i - l));
+
 		int aCount = 0;
 		boolean aStart = false;
 
+		// i>0 or i>=0, current loop does not test for get(0)
+		// also as soon as (++aCount == l+1) the loop can break
+		// as it will never return false anymore
 		for (int i=itsDimensions-1; i>0; i--)
 		{
 			if (aStart == true)
@@ -138,7 +173,9 @@ public class ItemSet extends BitSet
 	}
 
 	//skip all itemsets with same first l items, and proceed with next
-	public ItemSet skipItemSets(int l)
+	// never used
+	@Deprecated
+	private ItemSet skipItemSets(int l)
 	{
 		int aCount = 0;
 		int aLast = 0;

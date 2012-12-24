@@ -26,7 +26,7 @@ public class SearchParameters implements XMLNodeInterface
 	private SearchStrategy	itsSearchStrategy;
 	private int		itsSearchStrategyWidth;
 	private boolean		itsNominalSets;
-	private NumericOperators itsNumericOperators;
+	private NumericOperatorSetting itsNumericOperatorSetting;
 	private NumericStrategy	itsNumericStrategy;
 	private int		itsNrBins;
 	private int		itsNrThreads;
@@ -98,16 +98,16 @@ public class SearchParameters implements XMLNodeInterface
 	}
 	public void setNominalSets(boolean theValue) {itsNominalSets = theValue;}
 
-	public NumericOperators getNumericOperators()
+	public NumericOperatorSetting getNumericOperatorSetting()
 	{
 		if (itsNumericStrategy == NumericStrategy.NUMERIC_INTERVALS) //intervals automatically imply "in"
-			return NumericOperators.NUMERIC_INTERVALS;
+			return NumericOperatorSetting.NUMERIC_INTERVALS;
 		else
-			return itsNumericOperators;
+			return itsNumericOperatorSetting;
 	}
 	public void setNumericOperators(String theNumericOperatorsName)
 	{
-		itsNumericOperators = NumericOperators.getNumericOperators(theNumericOperatorsName);
+		itsNumericOperatorSetting = NumericOperatorSetting.fromString(theNumericOperatorsName);
 	}
 
 	public NumericStrategy getNumericStrategy() { return itsNumericStrategy; }
@@ -152,7 +152,7 @@ public class SearchParameters implements XMLNodeInterface
 		XMLNode.addNodeTo(aNode, "search_strategy", getSearchStrategy().GUI_TEXT);
 		XMLNode.addNodeTo(aNode, "use_nominal_sets", getNominalSets());
 		XMLNode.addNodeTo(aNode, "search_strategy_width", getSearchStrategyWidth());
-		XMLNode.addNodeTo(aNode, "numeric_operators", getNumericOperators().GUI_TEXT);
+		XMLNode.addNodeTo(aNode, "numeric_operators", getNumericOperatorSetting().GUI_TEXT);
 		XMLNode.addNodeTo(aNode, "numeric_strategy", getNumericStrategy().GUI_TEXT);
 		XMLNode.addNodeTo(aNode, "nr_bins", getNrBins());
 		XMLNode.addNodeTo(aNode, "nr_threads", getNrThreads());
@@ -190,7 +190,7 @@ public class SearchParameters implements XMLNodeInterface
 			else if("search_strategy_width".equalsIgnoreCase(aNodeName))
 				itsSearchStrategyWidth = Integer.parseInt(aSetting.getTextContent());
 			else if("numeric_operators".equalsIgnoreCase(aNodeName))
-				itsNumericOperators = (NumericOperators.getNumericOperators(aSetting.getTextContent()));
+				itsNumericOperatorSetting = (NumericOperatorSetting.fromString(aSetting.getTextContent()));
 			else if("numeric_strategy".equalsIgnoreCase(aNodeName))
 				itsNumericStrategy = (NumericStrategy.getNumericStrategy(aSetting.getTextContent()));
 			else if("nr_bins".equalsIgnoreCase(aNodeName))

@@ -26,7 +26,7 @@ public class CortanaSettings {
 		QUALITY_MEASURES = list.toArray(new String[0]);
 	}
 	public static final String[] SEARCH_STRATEGIES = toStringArray(SearchStrategy.class);
-	public static final String[] NUMERIC_OPERATORS = toStringArray(NumericOperators.class);
+	public static final String[] NUMERIC_OPERATORS = toStringArray(NumericOperatorSetting.class);
 	public static final String[] NUMERIC_STRATEGIES = toStringArray(NumericStrategy.class);
 	// TODO add to Cortana.EnumInterface
 	private static String[] toStringArray(Class<? extends EnumInterface> enumClass) {

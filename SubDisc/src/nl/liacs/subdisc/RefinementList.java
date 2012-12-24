@@ -17,7 +17,7 @@ public class RefinementList extends ArrayList<Refinement>
 
 		final SearchParameters aSP = theSearchParameters;
 		final TargetConcept aTC = aSP.getTargetConcept();
-		final NumericOperators aNO = aSP.getNumericOperators();
+		final NumericOperatorSetting aNO = aSP.getNumericOperatorSetting();
 		final boolean useSets = theSearchParameters.getNominalSets();
 
 		Condition aCondition = itsTable.getFirstCondition();
@@ -30,9 +30,10 @@ public class RefinementList extends ArrayList<Refinement>
 			{
 				Refinement aRefinement = new Refinement(aCondition, itsSubgroup);
 
+				// FIXME should be part of Operator
 				//check validity of operator
 				//numeric
-				if (aColumn.isNumericType() && NumericOperators.check(aNO, aCondition.getOperator()))
+				if (aColumn.isNumericType() && NumericOperatorSetting.check(aNO, aCondition.getOperator()))
 					add = true;
 				//nominal
 				else if (aColumn.isNominalType() && !useSets && aCondition.isEquals())

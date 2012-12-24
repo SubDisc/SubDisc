@@ -111,7 +111,7 @@ public class MiningWindow extends JFrame
 			jComboBoxSearchStrategyType.addItem(s.GUI_TEXT);
 
 		// Add all Numeric Operators choices
-		for (NumericOperators n : NumericOperators.getNormalValues())
+		for (NumericOperatorSetting n : NumericOperatorSetting.getNormalValues())
 			jComboBoxNumericOperators.addItem(n.GUI_TEXT);
 	}
 
@@ -147,7 +147,7 @@ public class MiningWindow extends JFrame
 		setSearchStrategyType(itsSearchParameters.getSearchStrategy().GUI_TEXT);
 		setSearchStrategyWidth(String.valueOf(itsSearchParameters.getSearchStrategyWidth()));
 		setNominalSets(String.valueOf(itsSearchParameters.getNominalSets()));
-		setNumericOperators(itsSearchParameters.getNumericOperators().GUI_TEXT);
+		setNumericOperators(itsSearchParameters.getNumericOperatorSetting().GUI_TEXT);
 		setNumericStrategy(itsSearchParameters.getNumericStrategy().GUI_TEXT);
 		setSearchStrategyNrBins(String.valueOf(itsSearchParameters.getNrBins()));
 		setNrThreads(String.valueOf(itsSearchParameters.getNrThreads()));

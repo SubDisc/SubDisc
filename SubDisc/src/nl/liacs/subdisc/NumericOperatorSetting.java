@@ -2,7 +2,7 @@ package nl.liacs.subdisc;
 
 import java.util.*;
 
-public enum NumericOperators implements EnumInterface
+public enum NumericOperatorSetting implements EnumInterface
 {
 	NUMERIC_NORMAL("<html>&#8804;, &#8805;</html>"),
 	NUMERIC_LEQ("<html>&#8804;</html>"),
@@ -12,31 +12,35 @@ public enum NumericOperators implements EnumInterface
 	NUMERIC_INTERVALS("in");
 
 	/**
-	 * For each NumericOperators, this is the text that will be used in the GUI.
+	 * For each NumericOperatorSetting this is the text that will be used in
+	 * the GUI.
 	 * This is also the <code>String</code> that will be returned by the
-	 * toString() method.
+	 * {@link #toString()} method.
 	 */
 	public final String GUI_TEXT;
 
-	private NumericOperators(String theGuiText)
+	private NumericOperatorSetting(String theGuiText)
 	{
 		GUI_TEXT = theGuiText;
 	}
 
 	/**
-	 * Returns the NumericOperators corresponding to the <code>String</code>
-	 * parameter. This method is case insensitive.
+	 * Returns the NumericOperatorSetting corresponding to the
+	 * <code>String</code> argument, this method is case insensitive.
 	 *
-	 * @param theType the <code>String</code> corresponding to a
-	 * NumericOperators.
+	 * @param theType The <code>String</code> corresponding to a
+	 * NumericOperatorSetting.
 	 *
-	 * @return the NumericOperators corresponding to the <code>String</code>
-	 * parameter, or the default NumericOperators <code>NUMERIC_BINS</code> if no
-	 * corresponding NumericOperators can not be found.
+	 * @return The NumericOperatorSetting corresponding to the
+	 * <code>String</code> argument, or the default NumericOperatorSetting
+	 * <code>NUMERIC_NORMAL</code> if no corresponding
+	 * NumericOperatorSetting can not be found.
+	 * 
+	 * @see #getDefault()
 	 */
-	public static NumericOperators getNumericOperators(String theType)
+	public static NumericOperatorSetting fromString(String theType)
 	{
-		for (NumericOperators n : NumericOperators.values())
+		for (NumericOperatorSetting n : NumericOperatorSetting.values())
 			if (n.GUI_TEXT.equalsIgnoreCase(theType))
 				return n;
 
@@ -45,17 +49,16 @@ public enum NumericOperators implements EnumInterface
 		 * return default.
 		 */
 		Log.logCommandLine(
-			String.format(
-					"'%s' is not a valid NumericOperators. Returning '%s'.",
+			String.format("'%s' is not a valid NumericOperators. Returning '%s'.",
 					theType,
-					NumericOperators.getDefault().GUI_TEXT));
-		return NumericOperators.getDefault();
+					NumericOperatorSetting.getDefault().GUI_TEXT));
+		return NumericOperatorSetting.getDefault();
 	}
 
 	// EnumSet
-	public static ArrayList<NumericOperators> getNormalValues()
+	public static List<NumericOperatorSetting> getNormalValues()
 	{
-		ArrayList<NumericOperators> aResult = new ArrayList<NumericOperators>(5);
+		List<NumericOperatorSetting> aResult = new ArrayList<NumericOperatorSetting>(5);
 		aResult.add(NUMERIC_NORMAL);
 		aResult.add(NUMERIC_LEQ);
 		aResult.add(NUMERIC_GEQ);
@@ -66,13 +69,13 @@ public enum NumericOperators implements EnumInterface
 	}
 
 	/**
-	 * Returns the default NumericOperators.
+	 * Returns the default NumericOperatorSetting.
 	 *
-	 * @return the default NumericOperators.
+	 * @return the default NumericOperatorSetting.
 	 */
-	public static NumericOperators getDefault()
+	public static NumericOperatorSetting getDefault()
 	{
-		return NumericOperators.NUMERIC_NORMAL;
+		return NumericOperatorSetting.NUMERIC_NORMAL;
 	}
 
 	// uses Javadoc from EnumInterface
@@ -82,7 +85,7 @@ public enum NumericOperators implements EnumInterface
 		return GUI_TEXT;
 	}
 
-	public static boolean check(NumericOperators theNO, Operator theOperator)
+	public static boolean check(NumericOperatorSetting theNO, Operator theOperator)
 	{
 		if (theNO == NUMERIC_NORMAL && (theOperator == Operator.LESS_THAN_OR_EQUAL || theOperator == Operator.GREATER_THAN_OR_EQUAL))
 			return true;

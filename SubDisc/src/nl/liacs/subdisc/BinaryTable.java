@@ -34,17 +34,8 @@ public class BinaryTable
 		}
 	}
 
-	//empty
-	// used only for shallow copy in #selectColumns(ItemSet)
-	@Deprecated
-	private BinaryTable(int theNrRecords)
-	{
-		itsColumns = new ArrayList<BitSet>();
-		itsNrRecords = theNrRecords;
-	}
-
 	//this assumes that theTargets is an ArrayList<BitSet>
-	// used only by #selectRows(BitSet)
+	// internal use only: #selectColumns(ItemSet) and #selectRows(BitSet)
 	private BinaryTable(ArrayList<BitSet> theTargets, int theNrRecords)
 	{
 		itsColumns = theTargets;
@@ -61,24 +52,9 @@ public class BinaryTable
 		return aBitSet;
 	}
 
-	@Deprecated
 	public BinaryTable selectColumns(ItemSet theItemSet)
 	{
-		BinaryTable aShallowCopy = new BinaryTable(itsNrRecords);
-
-		for (int i = 0; i < theItemSet.getDimensions(); i++)
-		{
-			if (theItemSet.get(i))
-				aShallowCopy.addColumn(getColumn(i));
-		}
-
-		return aShallowCopy;
-	}
-
-	/** Will replace #{@link BinaryTable#selectColumns(ItemSet)}. */
-	public BinaryTable selectColumnsNew(ItemSet theItemSet)
-	{
-		ArrayList<BitSet> aNewTargets = new ArrayList<BitSet>(getNrColumns());
+		ArrayList<BitSet> aNewTargets = new ArrayList<BitSet>(theItemSet.getItemCount());
 
 		for (int i = 0; i < theItemSet.getDimensions(); i++)
 			if (theItemSet.get(i))
@@ -91,6 +67,23 @@ public class BinaryTable
 	{
 		int aNrMembers = theMembers.cardinality();
 		ArrayList<BitSet> aNewTargets = new ArrayList<BitSet>(getNrColumns());
+
+		// single loop to get all indices of all set bits
+//		final int[] setBits = new int[aNrMembers];
+//		for (int i = theMembers.nextSetBit(0), j = -1; i >=0; i = theMembers.nextSetBit(i+1))
+//			setBits[++j] = i;
+//	
+//		for (BitSet aColumn : itsColumns)
+//		{
+//			// create BitSet with same bits set as theMembers
+//			BitSet aSmallerTarget = (BitSet) theMembers.clone();
+//			// clear bits at indices that are not set for aColumn
+//			for (int i = 0, j = setBits.length; i < j; ++i)
+//				if (!aColumn.get(setBits[i]))
+//					aSmallerTarget.clear(i);
+//	
+//			aNewTargets.add(aSmallerTarget);
+//		}
 
 		//copy targets
 		for (BitSet aColumn : itsColumns)
@@ -106,8 +99,8 @@ public class BinaryTable
 				}
 			aNewTargets.add(aSmallerTarget);
 		}
-		BinaryTable aTable = new BinaryTable(aNewTargets, aNrMembers);
-		return aTable;
+
+		return new BinaryTable(aNewTargets, aNrMembers);
 	}
 
 	public CrossCube countCrossCube()
@@ -134,7 +127,6 @@ public class BinaryTable
 		// Init crosscube
 		int aSize = (int)Math.pow(2, aDimensions);
 		int[] aCounts = new int[aSize];
-		Arrays.fill(aCounts, 0);
 		int aTotalCount = 0;
 
 		// Cache powers
@@ -159,8 +151,8 @@ public class BinaryTable
 
 		double aQuality = 0.0;
 		int q_i = aSize / 2;
-		double alpha_ijk = 1 / (double) aSize;
-		double alpha_ij  = 1 / (double) q_i;
+		double alpha_ijk = 1.0 / (double) aSize;
+		double alpha_ij  = 1.0 / (double) q_i;
 		double LogGam_alpha_ijk = Function.logGamma(alpha_ijk); //uniform prior BDeu metric
 		double LogGam_alpha_ij = Function.logGamma(alpha_ij);
 
