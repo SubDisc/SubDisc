@@ -693,7 +693,7 @@ public class QualityMeasure
 				{
 					float aDensity = itsPDF.getDensity(i);
 					float aDensitySubgroup = thePDF.getDensity(i);
-					aTotalDivergence = aDensitySubgroup*(float)Math.log(aDensitySubgroup/aDensity);
+					aTotalDivergence += aDensitySubgroup*(float)Math.log(aDensitySubgroup/aDensity);
 				}
 				aReturn = aTotalDivergence*theCoverage/(float)itsNrRecords; break;
 			}
