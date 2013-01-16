@@ -1,5 +1,6 @@
 package nl.liacs.subdisc;
 
+@Deprecated
 public class Histogram extends DataCube
 {
 	private String[] itsValues = new String[0];

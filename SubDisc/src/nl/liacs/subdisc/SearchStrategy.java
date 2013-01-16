@@ -12,9 +12,10 @@ public enum SearchStrategy implements EnumInterface
 	BREADTH_FIRST("breadth first");
 
 	/**
-	 * For each SearchStrategy, this is the text that will be used in the GUI.
+	 * For each SearchStrategy, this is the text that will be used in the
+	 * GUI.
 	 * This is also the <code>String</code> that will be returned by the
-	 * toString() method.
+	 * {@link #toString()} method.
 	 */
 	public final String GUI_TEXT;
 
@@ -27,11 +28,13 @@ public enum SearchStrategy implements EnumInterface
 	 * Returns the SearchStartegy corresponding to the <code>String</code>
 	 * parameter. This method is case insensitive.
 	 *
-	 * @param theType the <code>String</code> corresponding to a SearchStrategy.
+	 * @param theType the <code>String</code>
+	 * ({@link SearchStrategy#GUI_TEXT}) corresponding to a SearchStrategy.
 	 *
 	 * @return the SearchStrategy corresponding to the <code>String</code>
-	 * parameter, or the default SearchStrategy <code>BEAM</code> if no
-	 * corresponding SearchStrategy can not be found.
+	 * parameter, or the default SearchStrategy
+	 * (as per {@link SearchStrategy#getDefault()}) if no corresponding 
+	 * SearchStrategy can be found.
 	 */
 	public static SearchStrategy getSearchStrategy(String theType)
 	{
@@ -40,19 +43,18 @@ public enum SearchStrategy implements EnumInterface
 				return s;
 
 		/*
-		 * theType cannot be resolved to an SearchStrategy. Log error and
+		 * theType cannot be resolved to a SearchStrategy. Log error and
 		 * return default.
 		 */
 		Log.logCommandLine(
-			String.format(
-					"'%s' is not a valid SearchStrategy. Returning '%s'.",
+			String.format("'%s' is not a valid SearchStrategy. Returning '%s'.",
 					theType,
 					SearchStrategy.getDefault().GUI_TEXT));
 		return SearchStrategy.getDefault();
 	}
 
 	/**
-	 * Returns the default SearchStrategy.
+	 * Returns the default SearchStrategy {@link SearchStrategy#BEAM}.
 	 *
 	 * @return the default SearchStrategy.
 	 */
@@ -70,6 +72,7 @@ public enum SearchStrategy implements EnumInterface
 
 	public boolean isBeam()
 	{
-		return ((this == SearchStrategy.BEAM) || (this == SearchStrategy.COVER_BASED_BEAM_SELECTION));
+		return ((this == SearchStrategy.BEAM) ||
+			(this == SearchStrategy.COVER_BASED_BEAM_SELECTION));
 	}
 }

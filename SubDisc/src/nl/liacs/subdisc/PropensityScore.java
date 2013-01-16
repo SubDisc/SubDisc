@@ -3,16 +3,14 @@ package nl.liacs.subdisc;
 import java.util.*;
 import weka.core.Instances;
 import weka.classifiers.functions.Logistic;
-//import weka.classifiers.Classifier;
 import weka.core.Attribute;
 import weka.core.FastVector;
 import weka.core.Instance;
-//import weka.classifiers.*;
 
 /**
  * The propensity score is the column with expected values per point.
- * It is calculated by regressing X on the target, it can either be calculated by Bayes Rule,
- * or with the use of logistic regression.
+ * It is calculated by regressing X on the target, it can either be calculated
+ * by Bayes Rule, or with the use of logistic regression.
  * To calculate it we need X and a target vector.
  */
 public class PropensityScore
@@ -93,7 +91,7 @@ public class PropensityScore
 			explanatoryVariables.addAll(itsLocalKn.getBitSets(itsSubgroup));
 			//java.lang.String name, Fastvector attInfo, int capacity
 			//create attribute list with names
-			double nameNumber = 1;
+			double nameNumber = 1.0;
 			String s1 = String.valueOf(nameNumber);
 			FastVector attributeList = new FastVector(explanatoryVariables.size() + 1); // plus one because target attribute is also in there
 			for (BitSet v : explanatoryVariables)
@@ -103,6 +101,9 @@ public class PropensityScore
 				nameNumber++;
 				s1 = String.valueOf(nameNumber);
 			}
+			// XXX safer alternative, avoid String reference trouble
+//			for (int i = 0, j = explanatoryVariables.size(); i < j; )
+//				attributeList.addElement(new Attribute(Double.toString(++i)));
 
 			FastVector valuesTarget = new FastVector(2);
 			valuesTarget.addElement("0");

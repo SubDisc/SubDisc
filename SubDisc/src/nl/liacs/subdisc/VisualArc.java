@@ -6,13 +6,12 @@ public class VisualArc extends MShape
 {
 	private static final long serialVersionUID = 1L;
 
-	VisualNode itsFromNode;
-	VisualNode itsToNode;
-	int x1;
-	int x2;
-	int y1;
-	int y2;
-	String itsDescription;
+	private final VisualNode itsFromNode;
+	private final VisualNode itsToNode;
+	private int x1;
+	private int x2;
+	private int y1;
+	private int y2;
 
 	public VisualArc(VisualNode theFromNode, VisualNode theToNode)
 	{
@@ -20,7 +19,6 @@ public class VisualArc extends MShape
 		itsFromNode = theFromNode;
 		itsToNode = theToNode;
 		calcBounds();
-		itsDescription = new String("w =");
 	}
 
 	public Rectangle calcBounds()
@@ -39,6 +37,7 @@ public class VisualArc extends MShape
 		return getBounds();
 	}
 
+	@Override
 	public void setBounds(int x, int y, int width, int height)
 	{
 		super.setBounds(x, y, width, height);
@@ -106,6 +105,7 @@ public class VisualArc extends MShape
 		}
 	}
 
+	@Override
 	public void paint(java.awt.Graphics g)
 	{
 		super.paint(g);

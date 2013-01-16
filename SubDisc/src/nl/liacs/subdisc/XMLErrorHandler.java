@@ -7,7 +7,8 @@ public class XMLErrorHandler implements ErrorHandler
 	/** 
 	 * For now only use one errorHandler, may change.
 	 */
-	public static final XMLErrorHandler THE_ONLY_INSTANCE = new XMLErrorHandler();
+	public static final XMLErrorHandler THE_ONLY_INSTANCE =
+							new XMLErrorHandler();
 
 	// uninstantiable
 	private XMLErrorHandler() {};

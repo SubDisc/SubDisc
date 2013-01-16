@@ -38,9 +38,6 @@ public class SearchParameters implements XMLNodeInterface
 
 	public SearchParameters(Node theSearchParametersNode)
 	{
-		if(theSearchParametersNode == null)
-			return;	// TODO throw warning dialog
-
 		loadData(theSearchParametersNode);
 	}
 
@@ -168,7 +165,7 @@ public class SearchParameters implements XMLNodeInterface
 		for(int i = 0, j = aChildren.getLength(); i < j; ++i)
 		{
 			Node aSetting = aChildren.item(i);
-			String aNodeName = aSetting.getNodeName();
+			String aNodeName = aSetting.getNodeName().toLowerCase();
 			if("quality_measure".equalsIgnoreCase(aNodeName))
 				itsQualityMeasure = QualityMeasure.getMeasureCode(aSetting.getTextContent());
 			else if("quality_measure_minimum".equalsIgnoreCase(aNodeName))
@@ -206,7 +203,7 @@ public class SearchParameters implements XMLNodeInterface
 			else if("post_processing_count".equalsIgnoreCase(aNodeName))
 				itsPostProcessingCount = Integer.parseInt(aSetting.getTextContent());
 			else
-				;	// TODO throw warning dialog
+				Log.logCommandLine("ignoring unknown XML node: " + aNodeName);
 		}
 	}
 }

@@ -21,10 +21,8 @@ public class XMLNode
 	 */
 	public static Node addNodeTo(Node theParentNode, String theElementName)
 	{
-		return theParentNode
-				.appendChild(theParentNode
-								.getOwnerDocument()
-								.createElement(theElementName.toLowerCase()));
+		return theParentNode.appendChild(
+				theParentNode.getOwnerDocument().createElement(theElementName.toLowerCase()));
 	}
 
 	/**
@@ -42,9 +40,7 @@ public class XMLNode
 	 */
 	public static void addNodeTo(Node theParentNode, String theElementName, Object theTextContent)
 	{
-		theParentNode.appendChild(theParentNode
-									.getOwnerDocument()
-									.createElement(theElementName.toLowerCase()))
-									.setTextContent(theTextContent.toString());
+		theParentNode.appendChild(theParentNode.getOwnerDocument().createElement(theElementName.toLowerCase()))
+				.setTextContent(theTextContent.toString());
 	}
 }

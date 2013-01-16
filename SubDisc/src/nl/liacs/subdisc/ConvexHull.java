@@ -1,8 +1,6 @@
 package nl.liacs.subdisc;
 
-
-
-/*
+/**
  Simple class for 2D points, having 2 labels.
  */
 class HullPoint
@@ -12,7 +10,7 @@ class HullPoint
 	public float itsLabel1;
 	public float itsLabel2;
 
-	public HullPoint(float theX, float theY, float theLabel1, float theLabel2) 
+	public HullPoint(float theX, float theY, float theLabel1, float theLabel2)
 	{
 		itsX = theX;
 		itsY = theY;
@@ -20,40 +18,32 @@ class HullPoint
 		itsLabel2 = theLabel2;
 	}
 
-	public HullPoint() {
-		this(0, 0, 0, 0);
-	}
-
 	public HullPoint(HullPoint theOther)
 	{
 		this(theOther.itsX, theOther.itsY, theOther.itsLabel1, theOther.itsLabel2);
 	}
-	
+
 	public void print()
 	{
 		Log.logCommandLine("HullPoint (" + itsX + "," + itsY + ") " + itsLabel1 + ", " + itsLabel2);
 	}
-
 }
 
-
-
 /*
- Class containing for maintaining and constructing convex hulls in 2D.
- A hull is split into an upper and lower part for convenience.
- Sorted by x coordinate.
+ * Class containing for maintaining and constructing convex hulls in 2D.
+ * A hull is split into an upper and lower part for convenience.
+ * Sorted by x coordinate.
  */
 public class ConvexHull
 {
 	private HullPoint [][] itsHullPoints;
 	private static final float itsDefaultLabel = Float.NEGATIVE_INFINITY;
 
-
 	private ConvexHull()
 	{
 		itsHullPoints = new HullPoint[2][];
 
-		return;
+		return; // TODO obsolete?
 	}
 
 	/* construct single point hull
@@ -68,24 +58,21 @@ public class ConvexHull
 			itsHullPoints[aSide][0] = new HullPoint(theX, theY, theLabel1, theLabel2);
 		}
 
-		return;
+		return; // TODO obsolete?
 	}
-
 
 	public int getSize(int theSide)
 	{
 		return itsHullPoints[theSide].length;
 	}
 
-
 	public HullPoint getPoint(int theSide, int theIndex)
 	{
 		return itsHullPoints[theSide][theIndex];
 	}
 
-
 	/* assumes points on upper and lower hull are already 
-	   sorted by x coord hence linear time complexity
+	 * sorted by x coord hence linear time complexity
 	 */
 	public void grahamScanSorted()
 	{
@@ -115,7 +102,7 @@ public class ConvexHull
 				float aY2 = itsHullPoints[aSide][aNextList[aCurr]].itsY;
 				float aX3 = itsHullPoints[aSide][aNextList[aNextList[aCurr]]].itsX;
 				float aY3 = itsHullPoints[aSide][aNextList[aNextList[aCurr]]].itsY;
-				
+
 				if ( aSign * (aY2-aY1) * (aX3-aX2) > aSign * (aY3-aY2) * (aX2-aX1) ) //convex, go to next point
 				{
 					aCurr = aNextList[aCurr];
@@ -139,20 +126,19 @@ public class ConvexHull
 				aCurr = aNextList[aCurr];
 			}
 			itsHullPoints[aSide] = aNewHullPoints;
-
 		}
 
-		return;
+		return; // TODO obsolete?
 	}
 
-
-	/* assumes this.x < theOther.x, i.e., no overlap between the hulls
-	   hence linear time complexity
+	/*
+	 * assumes this.x < theOther.x, i.e., no overlap between the hulls
+	 * hence linear time complexity
 	 */
 	public ConvexHull concatenate(ConvexHull theOther)
 	{
 		ConvexHull aResult = new ConvexHull();
-		
+
 		for (int aSide = 0; aSide < 2; aSide++)
 		{
 			int aLen1 = itsHullPoints[aSide].length;
@@ -169,16 +155,14 @@ public class ConvexHull
 		return aResult;
 	}
 
-
-	/*
-	 Compute the Minkowski difference of two convex polygons.
-	 Again, linear time complexity.
+	/* 
+	 * Compute the Minkowski difference of two convex polygons.
+	 * Again, linear time complexity.
 	 */
 	public ConvexHull minkowskiDifference(ConvexHull theOther)
 	{
 		return minkowskiDifference(theOther, true);
 	}
-
 
 	public ConvexHull minkowskiDifference(ConvexHull theOther, boolean thePruneDegenerate)
 	{
@@ -221,7 +205,6 @@ public class ConvexHull
 					aHullSize++;
 					j--;
 				}
-				
 			}
 			aHull[aHullSize] = new HullPoint(itsHullPoints[aSide][i]);
 			aHull[aHullSize].itsLabel2 = aSide;
@@ -248,7 +231,6 @@ public class ConvexHull
 			}
 
 			aResult.itsHullPoints[aSide] = aNewHull;
-
 		}
 
 		if (thePruneDegenerate)
@@ -256,5 +238,4 @@ public class ConvexHull
 
 		return aResult;
 	}
-
 }

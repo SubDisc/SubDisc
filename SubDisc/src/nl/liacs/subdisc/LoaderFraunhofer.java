@@ -1,8 +1,9 @@
 package nl.liacs.subdisc;
 
 import java.io.*;
-import java.util.*;
 
+// never used
+@Deprecated
 public class LoaderFraunhofer
 {
 	private int itsNrLines = 0;

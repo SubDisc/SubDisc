@@ -16,7 +16,7 @@ public class Process
 	public static SubgroupDiscovery runSubgroupDiscovery(Table theTable, int theFold, BitSet theBitSet, SearchParameters theSearchParameters, boolean showWindows, int theNrThreads, JFrame theMainWindow)
 	{
 		TargetType aTargetType = theSearchParameters.getTargetConcept().getTargetType();
-		//TODO other types not implemented yet
+
 		if (!TargetType.isImplemented(aTargetType))
 			return null;
 
@@ -69,7 +69,13 @@ public class Process
 				aSubgroupDiscovery = new SubgroupDiscovery(theSearchParameters, theTable, false, theMainWindow);
 				break;
 			}
-			default : return null; // TODO should never get here, throw warning
+			default :
+			{
+				throw new AssertionError(String.format("%s: %s '%s' not implemented",
+									Process.class.getName(),
+									TargetType.class.getName(),
+									aTargetType));
+			}
 		}
 		aSubgroupDiscovery.mine(System.currentTimeMillis(), theNrThreads);
 		// if 2nd argument to above mine() is 0, you effectively run:
@@ -117,9 +123,6 @@ public class Process
 		return aSubgroupDiscovery;
 	}
 
-
-
-
 	private static void caucLight(SubgroupDiscovery theSubgroupDiscovery, BitSet theBitSet)
 	{
 		assert theSubgroupDiscovery.getSearchParameters().getTargetConcept().getTargetType() == TargetType.SINGLE_NUMERIC;
@@ -154,7 +157,6 @@ public class Process
 		// use 'showWindows = false' below to avoid numerous windows
 		final boolean showWindowsSetting = showWindows;
 
-		// TODO may not work correctly, as copy is not a deep-copy
 		final Column aBackup = theSearchParameters.getTargetConcept().getPrimaryTarget().copy();
 		final BitSet aMembers = membersCheck(theBitSet, aBackup.size());
 		final float[] aDomain = aBackup.getUniqueNumericDomain(aMembers);
@@ -192,10 +194,10 @@ public class Process
 
 			// create temporary Column
 			Column aColumn = new Column(aName,
-						aShort,
-						AttributeType.BINARY,
-						anIndex,
-						aNrRows);
+							aShort,
+							AttributeType.BINARY,
+							anIndex,
+							aNrRows);
 
 			// set Column members
 			for (int k = 0, m = aBackup.size(); k < m; ++k)
@@ -259,10 +261,10 @@ public class Process
 		// dump results
 //		caucWrite("caucHeavy", aBackup, statistics);
 
-			boolean aCommandlinelogState = Log.COMMANDLINELOG;
-			Log.COMMANDLINELOG = false;
-			SubgroupSet aSubgroupSetWithEntropy = aHeavySubgroupSet.getPatternTeam(theTable, aHeavySubgroupSet.size());
-			Log.COMMANDLINELOG = aCommandlinelogState;
+		boolean aCommandlinelogState = Log.COMMANDLINELOG;
+		Log.COMMANDLINELOG = false;
+		SubgroupSet aSubgroupSetWithEntropy = aHeavySubgroupSet.getPatternTeam(theTable, aHeavySubgroupSet.size());
+		Log.COMMANDLINELOG = aCommandlinelogState;
 
 		Log.logCommandLine("======================================================");
 		Log.logCommandLine("Diverse Subgroup Set Size : " + aHeavySubgroupSet.size());

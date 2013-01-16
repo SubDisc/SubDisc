@@ -36,7 +36,6 @@ public class ExternalKnowledgeFileLoader
 				linesGlobal.add(conjunction);
 				System.out.println(linesGlobal);
 			}
-
 		}
 
 		if (fileLocal.length > 0)
@@ -148,9 +147,32 @@ public class ExternalKnowledgeFileLoader
 		return conjunction.split(" AND ", -1);
 	}
 
-	// TODO see Operator.set()
-	private static final String[] OPERATORS = { " = ", " != ", " <= ", " >= ", " in " };
+	// " in ", " = ", " <= ", " >= ", 
+	private static final String[] OPERATORS = getOperatorStrings();
 
+	// keep in sync with 'official' Operator-string-values 
+	private static String[] getOperatorStrings()
+	{
+		final ArrayList<String> aList = new ArrayList<String>();
+		for (Operator o : Operator.set())
+		{
+			if (o == Operator.NOT_AN_OPERATOR)
+				continue;
+
+			final String s = new StringBuilder(4)
+							.append(" ")
+							.append(o.GUI_TEXT)
+							.append(" ")
+							.toString();
+			if (!aList.contains(s))
+				aList.add(s);
+		}
+
+		return aList.toArray(new String[0]);
+	}
+
+	// TODO mapping a Condition back to its constituents should be made a
+	// Condition.method().
 	private static String[] disect(String condition)
 	{
 		// assume OPERATORS do not appear in column name

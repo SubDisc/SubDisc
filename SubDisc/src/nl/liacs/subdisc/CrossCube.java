@@ -2,8 +2,10 @@ package nl.liacs.subdisc;
 
 import java.util.*;
 
-//implements an n-dimensional cube of counts.
-
+/**
+ * Implements an <i>n</i>-dimensional cube of counts.
+ */
+// TODO document overflow in case of (theDimensions>31)
 public class CrossCube extends DataCube
 {
 	protected int itsCounts[];

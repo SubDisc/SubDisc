@@ -289,6 +289,7 @@ public class SubgroupSet extends TreeSet<Subgroup>
 				if (theSubset.get(i))
 				{
 					aRow.append("train");
+					// FIXME MM getMembers() is expensive now
 					for (Subgroup aSubgroup: this)
 						aRow.append(aSubgroup.getMembers().get(l) ? ",1" : ",0");
 					l++;
@@ -298,6 +299,11 @@ public class SubgroupSet extends TreeSet<Subgroup>
 					aRow.append("test ");
 					for (Subgroup aSubgroup: this)
 						aRow.append(",0");
+					/*
+					 * TODO create a single String outside
+					 * for-loop that looks like:
+					 * size() * ",0"
+					 */
 				}
 
 				theWriter.write(aRow.append("\n").toString());
@@ -341,7 +347,7 @@ public class SubgroupSet extends TreeSet<Subgroup>
 	 * and probably much more.
 	 *
 	 * @param theBinaryTarget the new binary target members.
-	 * */
+	 */
 	public void setBinaryTarget(BitSet theBinaryTarget)
 	{
 		itsBinaryTarget = theBinaryTarget;
@@ -355,11 +361,12 @@ public class SubgroupSet extends TreeSet<Subgroup>
 	}
 
 	/**
-	* Computes the multiplicative weight of a subgroup \n
+	* Computes the multiplicative weight of a subgroup<br>
 	* See van Leeuwen & Knobbe, ECML PKDD 2011.
 	*/
 	/**
-	* Computes the cover count of a particular example: the number of times this example is a member of a subgroup
+	* Computes the cover count of a particular example: the number of times
+	* this example is a member of a subgroup<br>
 	* See van Leeuwen & Knobbe, ECML PKDD 2011
 	*/
 	public SubgroupSet postProcess(SearchStrategy theSearchStrategy)
@@ -458,7 +465,8 @@ public class SubgroupSet extends TreeSet<Subgroup>
 	}
 
 	/**
-	* Computes the cover count of a particular example: the number of times this example is a member of a subgroup
+	* Computes the cover count of a particular example: the number of times
+	* this example is a member of a subgroup.<br>
 	* See van Leeuwen & Knobbe, ECML PKDD 2011
 	*/
 	private int computeCoverCount(SubgroupSet theSet, int theRow)
@@ -473,7 +481,7 @@ public class SubgroupSet extends TreeSet<Subgroup>
 	}
 
 	/**
-	* Computes the multiplicative weight of a subgroup \n
+	* Computes the multiplicative weight of a subgroup.<br>
 	* See van Leeuwen & Knobbe, ECML PKDD 2011.
 	*/
 	private double computeMultiplicativeWeight(SubgroupSet theSet, Subgroup theSubgroup)
@@ -491,12 +499,13 @@ public class SubgroupSet extends TreeSet<Subgroup>
 	}
 
 	/**
-	 * Returns a new {@link ROCList ROCList}. If {@link Subgroup Subgroup}s are
-	 * removed from this SubgroupSet, this new ROCList reflects these changes.
-	 * This method only returns a ROCList in a nominal target setting, meaning
-	 * the {@link nl.liacs.subdisc.AttributeType AttributeType} of the
-	 * PrimaryTarget in the {@link TargetConcept TargetConcept} is of type
-	 * AttributeType.NOMINAL.
+	 * Returns a new {@link ROCList}. If {@link Subgroup Subgroups} are
+	 * removed from this SubgroupSet, this new ROCList reflects these
+	 * changes.
+	 * This method only returns a ROCList in a nominal target setting,
+	 * meaning the {@link nl.liacs.subdisc.AttributeType} of the
+	 * {@link TargetConcept#getPrimaryTarget()} in the {@link TargetConcept}
+	 *  is of type {@link AttributeType#NOMINAL}.
 	 *
 	 * @return a ROCList, or <code>null</code> if not in a nominal target
 	 * setting.

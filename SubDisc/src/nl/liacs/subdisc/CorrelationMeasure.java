@@ -12,13 +12,15 @@ public class CorrelationMeasure
 	private boolean itsCorrelationIsOutdated = true; //flag indicating whether the latest computed correlation is outdated and whether it should be computed again
 	private boolean itsComplementIsOutdated = true; //flag indicating whether the latest computed correlation for its complement is outdated and whether it should be computed again
 	private double itsComplementCorrelation = Double.NaN;
-	private CorrelationMeasure itsBase = null;
-//	public static int itsType = QualityMeasure.CORRELATION_R;
-	private int itsType = QualityMeasure.CORRELATION_R;		// TODO check type
+	private final CorrelationMeasure itsBase;
+	private final int itsType;
 
 	//make a base model from two columns
-	public CorrelationMeasure(int theType, Column thePrimaryColumn, Column theSecondaryColumn)
+	public CorrelationMeasure(int theType, Column thePrimaryColumn, Column theSecondaryColumn) throws IllegalArgumentException
 	{
+		if (!isValidCorrelationMeasureType(theType))
+			throw createQMException(theType);
+
 		itsBase = null; //no base model to refer to yet
 		itsSampleSize = 0;
 		itsXSum = 0;
@@ -31,11 +33,14 @@ public class CorrelationMeasure
 			addObservation(thePrimaryColumn.getFloat(i), theSecondaryColumn.getFloat(i));
 	}
 
-	public CorrelationMeasure(CorrelationMeasure theBase) throws NullPointerException
+	public CorrelationMeasure(CorrelationMeasure theBase) throws NullPointerException, IllegalArgumentException
 	{
-		itsBase = theBase;
 		if (theBase == null)
 			throw (new NullPointerException("Implementation: theBase should not be null"));
+		if (!isValidCorrelationMeasureType(theBase.itsType))
+			throw createQMException(theBase.itsType);
+
+		itsBase = theBase;
 		itsSampleSize = 0;
 		itsXSum = 0;
 		itsYSum = 0;
@@ -43,6 +48,34 @@ public class CorrelationMeasure
 		itsXSquaredSum = 0;
 		itsYSquaredSum = 0;
 		itsType = theBase.itsType;
+	}
+
+	private static boolean isValidCorrelationMeasureType(int theType)
+	{
+		// explicit listing, NEVER USE A FALL-THROUGH
+		switch (theType)
+		{
+			case QualityMeasure.CORRELATION_R :		return true;
+			case QualityMeasure.CORRELATION_R_NEG :		return true;
+			case QualityMeasure.CORRELATION_R_SQ :		return true;
+			case QualityMeasure.CORRELATION_R_NEG_SQ :	return true;
+			case QualityMeasure.CORRELATION_DISTANCE :	return true;
+			case QualityMeasure.CORRELATION_P :		return true;
+			case QualityMeasure.CORRELATION_ENTROPY :	return true;
+			case QualityMeasure.ADAPTED_WRACC :		return true;
+			case QualityMeasure.COSTS_WRACC :		return true;
+			default : return false;
+		}
+	}
+
+	private static IllegalArgumentException createQMException(int theType)
+	{
+		return new IllegalArgumentException(
+				String.format("%s: invalid %s-type '%s' (%d)",
+						CorrelationMeasure.class.getSimpleName(),
+						QualityMeasure.class.getSimpleName(),
+						QualityMeasure.getMeasureString(theType),
+						theType));
 	}
 
 	// XXX never used
@@ -76,9 +109,13 @@ public class CorrelationMeasure
 	}
 */
 	/**
-	 * Adds a new observation after which the current correlation will be outdated. getCorrelation automatically takes
-	 * care that the current correlation is returned by checking whether CorrelationMeasure is outdated.
-	 *
+	 * Adds a new observation after which the current correlation will be
+	 * outdated.
+	 * 
+	 * {@link #getCorrelation()} automatically takes care that the current
+	 * correlation is returned by checking whether CorrelationMeasure is
+	 * outdated.
+	 * 
 	 * @param theXValue the x-value of an observation
 	 * @param theYValue the y-value of an observation
 	 */
@@ -95,19 +132,23 @@ public class CorrelationMeasure
 	}
 
 	/**
-	 * Returns the correlation given the observations contained by CorrelationMeasure
+	 * Returns the correlation given the observations contained by
+	 * this CorrelationMeasure.
+	 * 
 	 * @return the correlation
 	 */
 	public double getCorrelation()
 	{
-		if(itsCorrelationIsOutdated)
+		if (itsCorrelationIsOutdated)
 			return computeCorrelation();
 		else
 			return itsCorrelation;
 	}
 
 	/**
-	 * Computes and returns the correlation given the observations contained by CorrelationMeasure
+	 * Computes and returns the correlation given the observations contained
+	 * by this CorrelationMeasure.
+	 * 
 	 * @return the computed correlation
 	 */
 	private double computeCorrelation()
@@ -119,8 +160,9 @@ public class CorrelationMeasure
 	}
 
 	/**
-	 * Computes the difference between the correlations of this subset and its complement
-	 *
+	 * Computes the difference between the correlations of this subset and
+	 * its complement.
+	 * 
 	 * @return correlation distance
 	 */
 	public double computeCorrelationDistance()
@@ -140,48 +182,60 @@ public class CorrelationMeasure
 	public double getXSquaredSum() { return itsXSquaredSum;	}
 	public double getYSquaredSum() { return itsYSquaredSum;	}
 
-	//TODO Verify whether logic as defined below is correct
+	// > and < tests on 2 NaNs return false, so method returns 0 as expected
 	public int compareTo(CorrelationMeasure theOtherCorrelationMeasure)
 	{
-		if(this.getEvaluationMeasureValue() > theOtherCorrelationMeasure.getEvaluationMeasureValue())
-			return 1;
-		else if(this.getEvaluationMeasureValue() < theOtherCorrelationMeasure.getEvaluationMeasureValue())
-			return -1;
-		else
-			return 0;
+		final double thiz = this.getEvaluationMeasureValue();
+		final double that = theOtherCorrelationMeasure.getEvaluationMeasureValue();
+
+		return (thiz < that) ? -1 : (thiz > that) ? 1 : 0;
 	}
 
 	/**
-	 * There are different types of quality measures possible all closely related the correlation value.
-	 * Corresponding with the correct type as defined in the constructor, the correct QM value is returned.
+	 * There are different types of {@link QualityMeasure}s possible, all
+	 * closely related to the correlation value.
+	 * 
+	 * Corresponding with the correct type as defined in the constructor,
+	 * the correct {@link QualityMeasure} value is returned.
 	 *
 	 * @return the quality measure value
 	 */
 	public double getEvaluationMeasureValue()
 	{
-		double aCorrelation = getCorrelation();
-		switch(itsType)
+		final double aCorrelation = getCorrelation();
+		switch (itsType)
 		{
-			case QualityMeasure.CORRELATION_R: 			{ return aCorrelation; }
+			case QualityMeasure.CORRELATION_R: 		{ return aCorrelation; }
 			case QualityMeasure.CORRELATION_R_NEG: 		{ return -aCorrelation; }
 			case QualityMeasure.CORRELATION_R_SQ: 		{ return aCorrelation*aCorrelation;}
-			case QualityMeasure.CORRELATION_R_NEG_SQ: 	{ return -1*(aCorrelation*aCorrelation); }
+			case QualityMeasure.CORRELATION_R_NEG_SQ: 	{ return -(aCorrelation*aCorrelation); }
 			case QualityMeasure.CORRELATION_DISTANCE: 	{ return computeCorrelationDistance(); }
-			case QualityMeasure.CORRELATION_P: 			{ return getPValue(); }
+			case QualityMeasure.CORRELATION_P: 		{ return getPValue(); }
 			case QualityMeasure.CORRELATION_ENTROPY: 	{ return computeEntropy(); }
-			case QualityMeasure.ADAPTED_WRACC:			{ return computeAdaptedWRAcc(); } //Done: Rob Konijn
-			case QualityMeasure.COSTS_WRACC:			{ return computeCostsWRAcc(); } //Done: Rob Konijn	
+			case QualityMeasure.ADAPTED_WRACC:		{ return computeAdaptedWRAcc(); } //Done: Rob Konijn
+			case QualityMeasure.COSTS_WRACC:		{ return computeCostsWRAcc(); } //Done: Rob Konijn
+			default :
+			{
+				throw new AssertionError(String.format("%s.getEvaluationMeasure(): unimplemented %s '%s' (%d)",
+									this.getClass().getSimpleName(),
+									QualityMeasure.class.getSimpleName(),
+									QualityMeasure.getMeasureString(itsType),
+									itsType));
+			}
 		}
-		return aCorrelation;
 	}
 
 	/**
-	 * TODO: Make use of CorrelationMeasure being comparable
-	 *
 	 * @param theFirstValue the first parameter to be compared
 	 * @param theSecondValue the second parameter to be compared
-	 * @return true when the first parameter is better or equal than the second. false if the second value is better
+	 * 
+	 * @return <code>true</code> when the first parameter is better or equal
+	 * than the second, <code>false</code> if the second value is better
 	 */
+	// TODO: Make use of CorrelationMeasure being comparable
+	// MM: not sure what is meant by this TODO, but explicit handling of NaN
+	// values makes this method different from (current) compareTo()
+	@Deprecated // never used
 	public static boolean compareEMValues(double theFirstValue, double theSecondValue)
 	{
 		if(Double.isNaN(theSecondValue))
@@ -202,15 +256,14 @@ public class CorrelationMeasure
 	public double getComplementCorrelation()
 	{
 		if(itsComplementIsOutdated)
-		{
 			return computeComplementCorrelation();
-		}
 		else
 			return itsComplementCorrelation;
 	}
 
 	/**
-	 * Calculates the correlation value for the complement set
+	 * Calculates the correlation value for the complement set.
+	 * 
 	 * @return the complement correlation value
 	 */
 	private double computeComplementCorrelation()
@@ -231,9 +284,9 @@ public class CorrelationMeasure
 	}
 
 	/**
-	 * TODO Verify whether solution is the same when z1 - z2 and z2 - z1
 	 * @return the <i>p-value</i>
 	 */
+	// TODO Verify whether solution is the same when z1 - z2 and z2 - z1
 	public double getPValue()
 	{
 		int aSize = getSampleSize();
@@ -243,8 +296,8 @@ public class CorrelationMeasure
 
 		NormalDistribution aNormalDistro = new NormalDistribution();
 		double aComplementSampleSize = itsBase.getSampleSize() - getSampleSize();;
-		double aSubgroupDeviation = 1 / Math.sqrt(getSampleSize() - 3);
-		double aComplementDeviation = 1 / Math.sqrt(aComplementSampleSize - 3);
+		double aSubgroupDeviation = 1.0 / Math.sqrt(getSampleSize() - 3);
+		double aComplementDeviation = 1.0 / Math.sqrt(aComplementSampleSize - 3);
 		double aZScore = (transform2FisherScore(getCorrelation()) - transform2FisherScore(getComplementCorrelation()))
 						 / (aSubgroupDeviation+aComplementDeviation);
 
@@ -252,7 +305,7 @@ public class CorrelationMeasure
 		double anErfValue = aNormalDistro.calcErf(aZScore/Math.sqrt(2.0));
 		double aPValue = 0.5*(1.0 + anErfValue);
 
-		return (aPValue>0.5) ? aPValue : (1-aPValue);
+		return (aPValue>0.5) ? aPValue : (1.0-aPValue);
 	}
 
 	private double transform2FisherScore(double theCorrelationValue)
@@ -262,18 +315,21 @@ public class CorrelationMeasure
 	}
 
 	/**
-	 * The correlation distance between the subset and its complement is weighted with the entropy.
-	 * The entropy is defined by the function H(p) = -p*log(p)
+	 * The correlation distance between the subset and its complement is
+	 * weighted with the entropy.
+	 * 
+	 * The entropy is defined by the function H(p) = -p*log(p).
+	 * 
 	 * @return weighted correlation distance
 	 */
 	public double computeEntropy()
 	{
 		double aCorrelation = computeCorrelationDistance();
-		if (aCorrelation == 0)
-			return 0;
+		if (aCorrelation == 0.0)
+			return 0.0;
 		double aFraction;
-		aFraction = itsBase!=null ? itsSampleSize / (double) itsBase.getSampleSize() : 1;
-		double aWeight = -1 * aFraction * Math.log(aFraction) / Math.log(2);
+		aFraction = itsBase!=null ? itsSampleSize / (double) itsBase.getSampleSize() : 1.0;
+		double aWeight = -1.0 * aFraction * Math.log(aFraction) / Math.log(2);
 		return aWeight * aCorrelation;
 	}
 
@@ -283,7 +339,7 @@ public class CorrelationMeasure
 	}
 
 	/**
-	 * Computes the Wracc multiplied by difference in costs between target
+	 * Computes the WRAcc multiplied by difference in costs between target
 	 * in subgroup and its complement (rest of the data), useful for fraud
 	 * detection.
 	 * 
@@ -291,7 +347,7 @@ public class CorrelationMeasure
 	 */
 	public double computeCostsWRAcc()
 	{
-		// should use more braces and line out, hard to read
+		// TODO should use more braces and line out, hard to read
 		return (itsXSum - itsSampleSize*itsBase.itsXSum/itsBase.itsSampleSize) * ((itsXYSum/itsXSum) - (itsBase.itsYSum-itsYSum)/(itsBase.itsSampleSize-itsSampleSize));
 	}
 }

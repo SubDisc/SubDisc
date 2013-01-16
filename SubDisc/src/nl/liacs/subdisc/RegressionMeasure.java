@@ -25,7 +25,7 @@ public class RegressionMeasure
 	private List<Point2D.Float> itsData;//Stores all the datapoints for this measure
 	private List<Point2D.Float> itsComplementData = new ArrayList<Point2D.Float>();//Stores all the datapoints for the complement
 
-	public static int itsType;
+	public static int itsType; // FIXME this should not be static
 	private RegressionMeasure itsBase = null;
 
 	private Matrix itsDataMatrix;
@@ -218,7 +218,7 @@ public class RegressionMeasure
 	{
 		BitSet aMembers = theNewSubgroup.getMembers();
 		int aSampleSize = aMembers.cardinality();
-		
+
 		//filter out rank deficient model that crash matrix multiplication library
 		if (aSampleSize<2)
 		{
@@ -403,6 +403,7 @@ public class RegressionMeasure
 	 * @param theX the X-value
 	 */
 	// never used
+	@Deprecated
 	private void addObservation(float theY, float theX)
 	{
 		//adjust the sums
@@ -517,16 +518,20 @@ public class RegressionMeasure
 	}
 
 	// never used
+	@Deprecated
 	private double getYSquaredSum()
 	{
 		return itsYSquaredSum;
 	}
 
 	/**
-	 * Computes and returns the correlation given the observations contained by CorrelationMeasure
+	 * Computes and returns the correlation given the observations contained
+	 * by CorrelationMeasure.
+	 * 
 	 * @return the computed correlation
 	 */
 	// never used
+	@Deprecated
 	private double getCorrelation()
 	{
 		itsCorrelation = (itsSampleSize*itsXYSum - itsXSum*itsYSum)/Math.sqrt((itsSampleSize*itsXSquaredSum - itsXSum*itsXSum) * (itsSampleSize*itsYSquaredSum - itsYSum*itsYSum));

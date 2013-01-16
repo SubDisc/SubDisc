@@ -1,4 +1,4 @@
-/**
+/*
  * TODO the values index, name, short and type can be taken from the Table, so
  * setting only the name in the TargetConcept Node is enough to retrieve those
  * values. ---
@@ -6,6 +6,7 @@
  */
 package nl.liacs.subdisc;
 
+// TODO class may be removed, this XML parsing/ creation strategy is not used
 public enum XMLNodeTargetConcept
 {
 		NR_TARGET_ATTRIBUTES

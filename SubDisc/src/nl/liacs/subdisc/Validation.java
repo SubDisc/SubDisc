@@ -5,7 +5,7 @@ import java.util.*;
 import nl.liacs.subdisc.gui.*;
 
 /**
- * Functionality related to the statistical validation of subgroups
+ * Functionality related to the statistical validation of subgroups.
  */
 public class Validation
 {
@@ -47,8 +47,9 @@ public class Validation
 		int aNrRows  =itsTable.getNrRows();
 		int aMinimumCoverage = itsSearchParameters.getMinimumCoverage();
 		int aSubgroupSize;
+		TargetType aTargetType = itsTargetConcept.getTargetType();
 
-		switch(itsTargetConcept.getTargetType())
+		switch (aTargetType)
 		{
 			case SINGLE_NOMINAL :
 			{
@@ -72,7 +73,7 @@ public class Validation
 				}
 				break;
 			}
-			case SINGLE_NUMERIC : //todo implement!
+			case SINGLE_NUMERIC : // TODO implement!
 			{
 				Column aTarget = itsTargetConcept.getPrimaryTarget();
 				Condition aCondition = new Condition(aTarget, Operator.EQUALS);
@@ -91,6 +92,47 @@ public class Validation
 					aColumnTarget.and(aSubgroup.getMembers());
 					int aCountHeadBody = aColumnTarget.cardinality();
 					aQualities[i] = itsQualityMeasure.calculate(aCountHeadBody, aSubgroup.getCoverage());
+				}
+				break;
+			}
+			case SINGLE_ORDINAL:
+			{
+				throw newAssertionError("randomSubgroups", aTargetType);
+			}
+			case DOUBLE_REGRESSION :
+				//TODO implement
+				/*
+				 * FIXME
+				 * there is no break; here
+				 * this causes a fall-through from
+				 * DOUBLE_REGRESSION to DOUBLE_CORRELATION so
+				 * the code for DOUBLE_CORRELATION is also run
+				 * for DOUBLE_REGRESSION and their result is the
+				 * same
+				 * is this deliberate?
+				 */
+			case DOUBLE_CORRELATION :
+			{
+				Column aPrimaryColumn = itsTargetConcept.getPrimaryTarget();
+				Column aSecondaryColumn = itsTargetConcept.getSecondaryTarget();
+				CorrelationMeasure itsBaseCM =
+					new CorrelationMeasure(itsSearchParameters.getQualityMeasure(), aPrimaryColumn, aSecondaryColumn);
+
+				for (int i=0; i<theNrRepetitions; i++)
+				{
+					do
+						aSubgroupSize = (int) (aRandom.nextDouble() * aNrRows);
+					while (aSubgroupSize < aMinimumCoverage  || aSubgroupSize==aNrRows);
+					Subgroup aSubgroup = itsTable.getRandomSubgroup(aSubgroupSize);
+
+					CorrelationMeasure aCM = new CorrelationMeasure(itsBaseCM);
+
+					// FIXME getMembers() is expensive now, take out of loop
+					for (int j=0; j<aNrRows; j++)
+						if (aSubgroup.getMembers().get(j))
+							aCM.addObservation(aPrimaryColumn.getFloat(j), aSecondaryColumn.getFloat(j));
+
+					aQualities[i] = aCM.getEvaluationMeasureValue();
 				}
 				break;
 			}
@@ -118,41 +160,28 @@ public class Validation
 				}
 				break;
 			}
-			case DOUBLE_REGRESSION :
-				//TODO implement
-			case DOUBLE_CORRELATION :
+			case MULTI_BINARY_CLASSIFICATION :
 			{
-				Column aPrimaryColumn = itsTargetConcept.getPrimaryTarget();
-				Column aSecondaryColumn = itsTargetConcept.getSecondaryTarget();
-				CorrelationMeasure itsBaseCM =
-					new CorrelationMeasure(itsSearchParameters.getQualityMeasure(), aPrimaryColumn, aSecondaryColumn);
-
-				for (int i=0; i<theNrRepetitions; i++)
-				{
-					do
-						aSubgroupSize = (int) (aRandom.nextDouble() * aNrRows);
-					while (aSubgroupSize < aMinimumCoverage  || aSubgroupSize==aNrRows);
-					Subgroup aSubgroup = itsTable.getRandomSubgroup(aSubgroupSize);
-
-					CorrelationMeasure aCM = new CorrelationMeasure(itsBaseCM);
-
-					for (int j=0; j<aNrRows; j++)
-						if (aSubgroup.getMembers().get(j))
-							aCM.addObservation(aPrimaryColumn.getFloat(j), aSecondaryColumn.getFloat(j));
-
-					aQualities[i] = aCM.getEvaluationMeasureValue();
-				}
-				break;
+				throw newAssertionError("randomSubgroups", aTargetType);
+			}
+			default :
+			{
+				throw newAssertionError("randomSubgroups", aTargetType);
 			}
 		}
+
 		return aQualities; //return the qualities of the random sample
 	}
 
-
 	/**
-	* Generates a set of random descriptions of subgroups, by randomly combining random conditions on
-	* attributes in the table. The random descriptions adhere to the search parameters.
-	* For each of the subgroups related to the random conditions, the quality is computed.
+	* Generates a set of random descriptions
+	* ({@link ConditionList ConditionLists}) of {@link Subgroup Subgroups},
+	* by randomly combining random {@link Condition Conditions} on
+	* attributes in the {@link Table}.
+	* The random descriptions adhere to the {@link SearchParameters}.
+	* For each of the subgroups related to the random conditions, the
+	* quality is computed.
+	* 
 	* @return the computed qualities.
 	*/
 	private double[] randomConditions(int theNrRepetitions)
@@ -162,8 +191,9 @@ public class Validation
 		int aDepth = itsSearchParameters.getSearchDepth();
 		int aMinimumCoverage = itsSearchParameters.getMinimumCoverage();
 		int aNrRows = itsTable.getNrRows();
+		TargetType aTargetType = itsTargetConcept.getTargetType();
 
-		switch(itsTargetConcept.getTargetType())
+		switch (aTargetType)
 		{
 			case SINGLE_NOMINAL :
 			{
@@ -184,12 +214,63 @@ public class Validation
 					}
 					while (aMembers.cardinality() < aMinimumCoverage || aMembers.cardinality()==aNrRows);
 //					Log.logCommandLine(aCL.toString());
-					Subgroup aSubgroup = new Subgroup(aCL, aMembers, aCL.size());
+					Subgroup aSubgroup = new Subgroup(aCL, aMembers, null);
 
 					BitSet aColumnTarget = (BitSet) aBinaryTarget.clone();
 					aColumnTarget.and(aSubgroup.getMembers());
 					int aCountHeadBody = aColumnTarget.cardinality();
 					aQualities[i] = itsQualityMeasure.calculate(aCountHeadBody, aSubgroup.getCoverage());
+				}
+				break;
+			}
+			case SINGLE_NUMERIC:
+			{
+				throw newAssertionError("randomConditions", aTargetType);
+			}
+			case SINGLE_ORDINAL:
+			{
+				throw newAssertionError("randomConditions", aTargetType);
+			}
+			case DOUBLE_REGRESSION :
+				//TODO implement
+				/*
+				 * FIXME
+				 * there is no break; here
+				 * this causes a fall-through from
+				 * DOUBLE_REGRESSION to DOUBLE_CORRELATION so
+				 * the code for DOUBLE_CORRELATION is also run
+				 * for DOUBLE_REGRESSION and their result is the
+				 * same
+				 * is this deliberate?
+				 */
+			case DOUBLE_CORRELATION :
+			{
+				Column aPrimaryColumn = itsTargetConcept.getPrimaryTarget();
+				Column aSecondaryColumn = itsTargetConcept.getSecondaryTarget();
+				CorrelationMeasure itsBaseCM =
+					new CorrelationMeasure(itsSearchParameters.getQualityMeasure(), aPrimaryColumn, aSecondaryColumn);
+
+				for (int i=0; i<theNrRepetitions; i++)
+				{
+					ConditionList aCL;
+					BitSet aMembers;
+					do
+					{
+						aCL = getRandomConditionList(aDepth, aRandom);
+						aMembers = itsTable.evaluate(aCL);
+					}
+					while (aMembers.cardinality() < aMinimumCoverage || aMembers.cardinality()==aNrRows);
+					Log.logCommandLine(aCL.toString());
+					Subgroup aSubgroup = new Subgroup(aCL, aMembers, null);
+
+					CorrelationMeasure aCM = new CorrelationMeasure(itsBaseCM);
+
+					// FIXME getMembers() is expensive now, take out of loop
+					for (int j=0; j<aNrRows; j++)
+						if (aSubgroup.getMembers().get(j))
+							aCM.addObservation(aPrimaryColumn.getFloat(j), aSecondaryColumn.getFloat(j));
+
+					aQualities[i] = aCM.getEvaluationMeasureValue();
 				}
 				break;
 			}
@@ -211,7 +292,7 @@ public class Validation
 					}
 					while (aMembers.cardinality() < aMinimumCoverage || aMembers.cardinality()==aNrRows);
 					Log.logCommandLine(aCL.toString());
-					Subgroup aSubgroup = new Subgroup(aCL, aMembers, aCL.size());
+					Subgroup aSubgroup = new Subgroup(aCL, aMembers, null);
 
 					// build model
 					BinaryTable aBinaryTable = aBaseTable.selectRows(aMembers);
@@ -222,51 +303,39 @@ public class Validation
 					aQualities[i] = itsQualityMeasure.calculate(aSubgroup);
 					Log.logCommandLine((i + 1) + "," + aSubgroup.getCoverage() + "," + aQualities[i]);
 				}
-
 				break;
 			}
-			case DOUBLE_REGRESSION :
-				//TODO implement
-			case DOUBLE_CORRELATION :
+			case MULTI_BINARY_CLASSIFICATION :
 			{
-				Column aPrimaryColumn = itsTargetConcept.getPrimaryTarget();
-				Column aSecondaryColumn = itsTargetConcept.getSecondaryTarget();
-				CorrelationMeasure itsBaseCM =
-					new CorrelationMeasure(itsSearchParameters.getQualityMeasure(), aPrimaryColumn, aSecondaryColumn);
-
-				for (int i=0; i<theNrRepetitions; i++)
-				{
-					ConditionList aCL;
-					BitSet aMembers;
-					do
-					{
-						aCL = getRandomConditionList(aDepth, aRandom);
-						aMembers = itsTable.evaluate(aCL);
-					}
-					while (aMembers.cardinality() < aMinimumCoverage || aMembers.cardinality()==aNrRows);
-					Log.logCommandLine(aCL.toString());
-					Subgroup aSubgroup = new Subgroup(aCL, aMembers, aCL.size());
-
-					CorrelationMeasure aCM = new CorrelationMeasure(itsBaseCM);
-
-					for (int j=0; j<aNrRows; j++)
-						if (aSubgroup.getMembers().get(j))
-							aCM.addObservation(aPrimaryColumn.getFloat(j), aSecondaryColumn.getFloat(j));
-
-					aQualities[i] = aCM.getEvaluationMeasureValue();
-				}
-				break;
+				throw newAssertionError("randomConditions", aTargetType);
+			}
+			default :
+			{
+				throw newAssertionError("randomConditions", aTargetType);
 			}
 		}
-		return aQualities; //return the qualities belonging to this random sample
+
+		return aQualities; //return the qualities of the random sample
+	}
+
+	private AssertionError newAssertionError(String theMethod, TargetType theTargetType)
+	{
+		return new AssertionError(new  StringBuilder(64).append(this.getClass().getSimpleName())
+								.append(".")
+								.append(theMethod)
+								.append("(): ")
+								.append(theTargetType.getClass().getSimpleName())
+								.append(" '")
+								.append(theTargetType)
+								.append("' not implemented").toString());
 	}
 
 	/**
-	 * Swap randomizes the original {@link Table Table} and restores it to the
+	 * Swap randomizes the original {@link Table} and restores it to the
 	 * original state afterwards.
 	 *
-	 * @param theNrRepetitions the number of times to perform a permutation of
-	 * the {@link TargetConcept TargetConcept}.
+	 * @param theNrRepetitions the number of times to perform a permutation
+	 * of the {@link TargetConcept}.
 	 *
 	 * @return an array holding the qualities of the best scoring
 	 * {@link Subgroup Subgroup} of each permutation.

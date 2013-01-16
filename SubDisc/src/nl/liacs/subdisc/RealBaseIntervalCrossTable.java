@@ -14,7 +14,6 @@ public class RealBaseIntervalCrossTable
 	private int itsNegativeCount; //sum
 	private boolean itsUseNegInfty;
 
-
 	public RealBaseIntervalCrossTable(float[] theSplitPoints, Column theColumn, Subgroup theSubgroup, BitSet theTarget)
 	{
 		this(theSplitPoints, theColumn, theSubgroup, theTarget, true);
@@ -62,12 +61,10 @@ public class RealBaseIntervalCrossTable
 		}
 	}
 
-	
-    public float getSplitPoint(int theIndex)
+	public float getSplitPoint(int theIndex)
 	{
 		return itsSplitPoints[theIndex];
 	}
-
 
 	public Interval getBaseInterval(int theIndex)
 	{
@@ -81,12 +78,11 @@ public class RealBaseIntervalCrossTable
 			return new Interval(itsSplitPoints[theIndex-1], itsSplitPoints[theIndex]);
 	}
 
-
 	public int getPositiveCount(int theIndex)
 	{
 		return itsPositiveCounts[theIndex];
 	}
-	
+
 	public int getNegativeCount(int theIndex)
 	{
 		return itsNegativeCounts[theIndex];
@@ -111,12 +107,10 @@ public class RealBaseIntervalCrossTable
 		return itsSplitPointCount + 1; 
 	}
 
-
 	public float[] getSplitPoints()
 	{
 		return Arrays.copyOfRange(itsSplitPoints, 0, itsSplitPointCount);
-    }
-
+	}
 
 	// eliminate split points that separate base intervals with equal distributions
 	// only to be used for convex quality measures
@@ -144,12 +138,10 @@ public class RealBaseIntervalCrossTable
 		return;
 	}
 
-
 	public void print()
 	{
 		for (int i = 0; i < getNrBaseIntervals(); i++)
 			Log.logCommandLine(getBaseInterval(i) + ": (" + itsPositiveCounts[i] + ", " + itsNegativeCounts[i] + ")");
 		return;
 	}
-
 }

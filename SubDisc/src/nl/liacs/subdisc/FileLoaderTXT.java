@@ -7,6 +7,7 @@ package nl.liacs.subdisc;
 import java.io.*;
 import java.util.*;
 
+@Deprecated
 public class FileLoaderTXT implements FileLoaderInterface
 {
 	private Table itsTable = null;

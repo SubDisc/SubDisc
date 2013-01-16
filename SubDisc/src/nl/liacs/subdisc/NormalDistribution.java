@@ -51,24 +51,21 @@ public class NormalDistribution
 	// calculate probability density function in the point x
 	public double calcPDF(double theX)
 	{
-		return Math.pow(
-					Math.E, - Math.pow(theX-itsMu,2) / (2*itsSigma*itsSigma)
-				) / (
-					itsSigma * Math.sqrt( 2*Math.PI )
-				);
+		return Math.pow(Math.E, - Math.pow(theX-itsMu,2) / (2*itsSigma*itsSigma)) /
+			(itsSigma * Math.sqrt( 2*Math.PI ));
 	}
 
 	// calculate cumulative distribution function in the point x, based on the error function
 	public double calcCDF(double theX)
 	{
-		return 0.5 * ( 1 + calcErf(
-									(theX - itsMu) / (itsSigma * Math.sqrt(2))
-								));
+		return 0.5 * ( 1 + calcErf((theX - itsMu) / (itsSigma * Math.sqrt(2))));
 	}
 
 	/* calculate error function using Horner's method
-	   fractional error in math formula less than 1.2 * 10 ^ -7.
-       although subject to catastrophic cancellation when z in very close to 0 */
+	 * fractional error in math formula less than 1.2 * 10 ^ -7.
+	 * although subject to catastrophic cancellation when z in very close to
+	 * 0
+	 */
 	public double calcErf(double theZ)
 	{
 		double aT = 1.0 / (1.0 + 0.5 * Math.abs(theZ));
@@ -114,5 +111,4 @@ public class NormalDistribution
 		Log.logCommandLine("  alpha =  5% : " + getFivePercentSignificance());
 		Log.logCommandLine("  alpha = 10% : " + getTenPercentSignificance());
 	}
-
 }

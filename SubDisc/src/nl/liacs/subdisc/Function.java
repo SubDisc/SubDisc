@@ -15,23 +15,19 @@ public class Function
 	private static final double GAMMA_C5 = 1.20858003e-3;
 	private static final double GAMMA_C6 = -5.36382e-6;
 	private static final int TABULATION = 100000;
-	private static double[] itsPrecomputed;
+	private static final double[] itsPrecomputed = new double[TABULATION];
 	static
 	{
-		//fill lookup table for the first time
-		if (itsPrecomputed == null)
+		double aValue = 0.0;
+		for (int i=2; i<TABULATION; i++)
 		{
-			itsPrecomputed = new double[TABULATION];
-			itsPrecomputed[0] = 0;
-			itsPrecomputed[1] = 0;
-			itsPrecomputed[2] = 0;
-			double aValue = 0;
-			for (int i=2; i<TABULATION; i++)
-			{
-				itsPrecomputed[i] = aValue;
-				aValue += Math.log(i);
-			}
+			itsPrecomputed[i] = aValue;
+			aValue += Math.log(i);
 		}
+
+//		double aValue = 0.0;
+//		for (int i = 3, j = TABULATION; i < j; ++i)
+//			itsPrecomputed[i] = (aValue += Math.log(i-1));
 	}
 
 	// uninstantiable
@@ -39,10 +35,12 @@ public class Function
 	{
 	}
 
-	// TODO doc
 	/**
-	 * Both BinaryTable.computeBDeuFaster and CrossCube.getBDeu use this method.
+	 * Both {@link BinaryTable#computeBDeuFaster()} and
+	 * {@link CrossCube#getBDeu()} use this method.
+	 * 
 	 * @param x
+	 * 
 	 * @return a <code>double</code>
 	 */
 	public static double logGamma(double x)
@@ -53,16 +51,20 @@ public class Function
 
 	//Iyad Batal: auxiliary function to compute logarithm of gamma
 	//this is quite slow, if you have data larger than TABULATION
+	// MM: see comment below
 	public static double logGammaBig(int a)
 	{
 //		Log.logCommandLine("logGammaBig: " + a + ", (table) " + itsPrecomputed[a] + ", (slow) " + logGammaSlow(a) + ", (approx) " + logGamma(a));
 		if (a<TABULATION)
 			return itsPrecomputed[a];
 
-		double res = 0;
-		for (int i=2; i<a; i++)
-			res += Math.log(i);
-		return res;
+		return logGammaSlow(a);
+
+		// alternative, continue from last computed value
+//		double res = itsPrecomputed[TABULATION-1];
+//		for (int i = TABULATION, j = a; i < j; ++i)
+//			res += Math.log(i);
+//		return res;
 	}
 
 	public static double logGammaSlow(int a)

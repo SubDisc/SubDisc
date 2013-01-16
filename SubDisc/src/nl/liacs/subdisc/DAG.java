@@ -5,7 +5,7 @@ import java.util.*;
 public class DAG
 {
 	private double itsQuality;
-	private int noArcs;
+	private int noArcs; // TODO value is incremented/ decremented but never used for anything
 	private int itsSize;
 	private List<NetworkNode> dagNode; //index is nodeId, value is Node
 
@@ -170,7 +170,8 @@ public class DAG
 	}
 
 	public boolean[][] determineVStructures()
-	{	// Note: this function determines the v-structures, but we only store the edge that is missing in the v-structure. So we cannot reconstruct the v-structures from solely the resulting boolean[][], but this is good enough for our purposes.
+	{	// Note: this function determines the v-structures, but we only store the edge that is missing in the v-structure.
+		// So we cannot reconstruct the v-structures from solely the resulting boolean[][], but this is good enough for our purposes.
 		boolean[][] result = new boolean[itsSize][itsSize];
 
 		for(int x=0; x<itsSize; x++)
@@ -219,7 +220,6 @@ public class DAG
 					if (getNode(z).isConnected(x)==0 && getNode(z).isConnected(y)==2)
 						return true;
 				break;
-
 			}
 			case 2:
 			{

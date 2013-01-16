@@ -16,7 +16,8 @@ public class QualityMeasure
 	//SINGLE_NUMERIC and SINGLE_ORDINAL
 	private float itsTotalAverage = 0.0f;
 	private double itsTotalSampleStandardDeviation = 0.0;
-	private int[] itsPopulationCounts;	// TODO implement for CHI2_TEST
+	// TODO implement for CHI2_TEST, itsPopulationCounts is never used now
+	private int[] itsPopulationCounts;
 	private ProbabilityDensityFunction itsPDF; // entire dataset
 
 	//Bayesian
@@ -111,9 +112,6 @@ public class QualityMeasure
 
 	public static int getFirstEvaluationMeasure(TargetType theTargetType)
 	{
-		if(theTargetType == null)
-			return WRACC;	// MM TODO for now
-
 		switch(theTargetType)
 		{
 			case SINGLE_NOMINAL		: return WRACC;
@@ -124,15 +122,13 @@ public class QualityMeasure
 			case DOUBLE_REGRESSION		: return LINEAR_REGRESSION;
 			// TODO for stable jar, disabled
 			//case DOUBLE_REGRESSION 	: return COOKS_DISTANCE;
-			default					: return WRACC;
+			default				: return WRACC;
+			// or throw AssertionError();
 		}
 	}
 
 	public static int getLastEvaluationMesure(TargetType theTargetType)
 	{
-		if(theTargetType == null)
-			return WRACC;	// MM TODO for now
-
 		switch(theTargetType)
 		{
 			case SINGLE_NOMINAL		: return BAYESIAN_SCORE;
@@ -144,7 +140,8 @@ public class QualityMeasure
 			case DOUBLE_REGRESSION		: return LINEAR_REGRESSION;
 			// TODO for stable jar, disabled
 			//case DOUBLE_REGRESSION 	: return COOKS_DISTANCE;
-			default					: return WRACC;
+			default				: return WRACC;
+			// or throw AssertionError();
 		}
 	}
 
@@ -561,9 +558,9 @@ public class QualityMeasure
 		switch(itsMeasure)
 		{
 			//NUMERIC
-			case AVERAGE			: { aReturn = theSum/theCoverage; break; }
+			case AVERAGE		: { aReturn = theSum/theCoverage; break; }
 			case INVERSE_AVERAGE	: { aReturn = -theSum/theCoverage; break; }
-			case MEAN_TEST			:
+			case MEAN_TEST :
 			{
 				aReturn = (float) Math.sqrt(theCoverage) * (theSum/theCoverage-itsTotalAverage);
 				break;
@@ -578,7 +575,7 @@ public class QualityMeasure
 				aReturn = (float) Math.abs(Math.sqrt(theCoverage)*(theSum/theCoverage-itsTotalAverage));
 				break;
 			}
-			case Z_SCORE	:
+			case Z_SCORE :
 			{
 				if(itsNrRecords <= 1)
 					aReturn = 0.0f;
@@ -605,7 +602,7 @@ public class QualityMeasure
 									itsTotalSampleStandardDeviation);
 				break;
 			}
-			case T_TEST	:
+			case T_TEST :
 			{
 				if(theCoverage <= 2)
 					aReturn = 0;
@@ -613,7 +610,7 @@ public class QualityMeasure
 					aReturn = (float) ((Math.sqrt(theCoverage)*(theSum/theCoverage-itsTotalAverage))/Math.sqrt(theSSD/(theCoverage-1)));
 				break;
 			}
-			case INVERSE_T_TEST	:
+			case INVERSE_T_TEST :
 			{
 				if(theCoverage <= 2)
 					aReturn = 0;
@@ -621,7 +618,7 @@ public class QualityMeasure
 					aReturn = (float) -((Math.sqrt(theCoverage)*(theSum/theCoverage-itsTotalAverage))/Math.sqrt(theSSD/(theCoverage-1)));
 				break;
 			}
-			case ABS_T_TEST	:
+			case ABS_T_TEST :
 			{
 				if(theCoverage <= 2)
 					aReturn = 0;
@@ -639,10 +636,11 @@ public class QualityMeasure
 				// TODO see itsPopulationCounts
 				float a = ((theSubgroupCounts[0]-itsPopulationCounts[0])*(theSubgroupCounts[0]-itsPopulationCounts[0]))/(float)itsPopulationCounts[0];
 				float b = ((theSubgroupCounts[1]-itsPopulationCounts[1])*(theSubgroupCounts[1]-itsPopulationCounts[1]))/(float)itsPopulationCounts[1];
-				aReturn = a+b; break;
+				aReturn = a+b;
+				break;
 			}
 			//ORDINAL
-			case AUC				:
+			case AUC :
 			{
 				float aComplementCoverage = itsNrRecords - theCoverage;
 				float aSequenceSum = theCoverage*(theCoverage+1)/2.0f; //sum of all positive ranks, assuming ideal case
@@ -685,7 +683,7 @@ public class QualityMeasure
 				Log.logCommandLine("difference in PDF: " + aTotalSquaredDifference);
 				aReturn = 0.5f*(aTotalSquaredDifference*theCoverage)/itsNrRecords;
 				break;
-			} //TODO
+			}
 			case KULLBACKLEIBLER :
 			{
 				float aTotalDivergence =0f;
@@ -933,12 +931,23 @@ public class QualityMeasure
 		switch (itsMeasure)
 		{
 			case WEED :
-				return (float) Math.pow(calculateEntropy(itsNrRecords, theSubgroup.getCoverage()), itsAlpha) *
-						(float) Math.pow(calculateEditDistance(theSubgroup.getDAG()), itsBeta);
+				return (float) (Math.pow(calculateEntropy(itsNrRecords, theSubgroup.getCoverage()), itsAlpha) *
+						Math.pow(calculateEditDistance(theSubgroup.getDAG()), itsBeta));
 			case EDIT_DISTANCE :
 				return calculateEditDistance(theSubgroup.getDAG());
-			default : Log.logCommandLine("QualityMeasure not WEED or EDIT_DISTANCE.");
-						return 0.0f; // TODO throw warning
+			default :
+			{
+				String aMessage = String.format("'%s' (%d)",
+								QualityMeasure.getMeasureString(itsMeasure),
+								itsMeasure);
+				Log.logCommandLine(
+					String.format("%s.calculate(): invalid measure %s (only '%s' and '%s' allowed).",
+							QualityMeasure.class.getSimpleName(),
+							aMessage,
+							QualityMeasure.getMeasureString(WEED),
+							QualityMeasure.getMeasureString(EDIT_DISTANCE)));
+				throw new AssertionError(aMessage);
+			}
 		}
 	}
 
@@ -959,6 +968,4 @@ public class QualityMeasure
 							nrEdits++;
 		return (float) nrEdits / (float) (itsNrNodes*(itsNrNodes-1)/2); // Actually n choose 2, but this boils down to the same...
 	}
-
-
 }

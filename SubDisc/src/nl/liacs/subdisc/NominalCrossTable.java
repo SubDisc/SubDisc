@@ -7,23 +7,17 @@ public class NominalCrossTable
 	private String[] itsValues;
 	private int[] itsPositiveCounts;
 	private int[] itsNegativeCounts;
-	private int itsPositiveCount; //sum
-	private int itsNegativeCount; //sum
+	private int itsPositiveCount = 0; //sum
+	private int itsNegativeCount = 0; //sum
 
 	public NominalCrossTable(TreeSet<String> theDomain, Column theColumn, Subgroup theSubgroup, BitSet theTarget)
 	{
-		itsValues = new String[theDomain.size()];
-		itsPositiveCounts = new int[size()];
-		itsNegativeCounts = new int[size()];
+		itsValues = theDomain.toArray(new String[0]);
+		itsPositiveCounts = new int[itsValues.length];
+		itsNegativeCounts = new int[itsValues.length];
 
-		int aCount=0;
-		for (String aValue : theDomain)
-		{
-			itsValues[aCount] = aValue;
-			aCount++;
-		}
-
-		for (int i=0; i<theColumn.size(); i++) //loop over all records (AK could be faster? ok for now)
+		//loop over all records (AK could be faster? ok for now)
+		for (int i=0; i<theColumn.size(); i++)
 		{
 			if (theSubgroup.covers(i))
 			{
@@ -35,11 +29,30 @@ public class NominalCrossTable
 					itsNegativeCounts[anIndex]++;
 			}
 		}
+
 		for (int i=0; i<size(); i++)
 		{
 			itsPositiveCount += itsPositiveCounts[i];
 			itsNegativeCount += itsNegativeCounts[i];
 		}
+
+		// faster alternative, check only SG.members, combine 2 loops
+		// TODO test
+//		final BitSet aMembers = theSubgroup.getMembers();
+//		for (int i = aMembers.nextSetBit(0); i >= 0; i = aMembers.nextSetBit(i + 1))
+//		{
+//			int anIndex = Arrays.binarySearch(itsValues, theColumn.getNominal(i));
+//			if (theTarget.get(i))
+//			{
+//				++itsPositiveCounts[anIndex];
+//				++itsPositiveCount;
+//			}
+//			else
+//			{
+//				++itsNegativeCounts[anIndex];
+//				++itsNegativeCount;
+//			}
+//		}
 	}
 
 	public String getValue(int index) { return itsValues[index]; }
@@ -49,7 +62,7 @@ public class NominalCrossTable
 	public int getNegativeCount() { return itsNegativeCount; }
 	public int size() { return itsValues.length; }
 
-	/** never used */
+	// never used
 	@Deprecated
 	public HashSet<String> getDomain()
 	{
@@ -95,6 +108,7 @@ public class NominalCrossTable
 		/** no null check, may throw null pointer exception */
 		CrossTableComparator(int[] thePositiveCounts, int[] theNegativeCounts)
 		{
+			// XXX NOTE int[] arguments are not used here!!!
 			itsPosCounts = itsPositiveCounts;
 			itsNegCounts = itsPositiveCounts;
 		}

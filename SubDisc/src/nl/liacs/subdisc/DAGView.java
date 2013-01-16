@@ -141,7 +141,7 @@ public class DAGView extends JPanel implements Serializable, MouseListener
 				aVisualNode = itsComponentSet.get(aWinner);
 				NetworkNode aNode = itsDAG.getNode(aWinner);
 				aVisualNode.shift((int) (0.1f * (anX - aVisualNode.getX())),
-								 (int) (0.1f * (aY - aVisualNode.getY())));
+							(int) (0.1f * (aY - aVisualNode.getY())));
 
 				for(int j = 0; j < itsDAGSize; j++)
 				{
@@ -149,7 +149,7 @@ public class DAGView extends JPanel implements Serializable, MouseListener
 					{
 						aVisualNode = itsComponentSet.get(j);
 						aVisualNode.shift((int) (aNeighbourhood * 0.1f * (anX - aVisualNode.getX())),
-										 (int) (aNeighbourhood * 0.1f * (aY - aVisualNode.getY())));
+									(int) (aNeighbourhood * 0.1f * (aY - aVisualNode.getY())));
 					}
 				}
 			}

@@ -2,8 +2,8 @@ package nl.liacs.subdisc;
 
 import java.util.*;
 
-public class LocalKnowledge {
-
+public class LocalKnowledge
+{
 	private List<ConditionList> itsExplanatoryConditions;
 	//private String[][] itsColumnsInvolved; //describes the columns that are involved in a subgroup 
 	//private BitSet[] tableWithExplanatoryVariables; //a table containing the members of each condition. 
@@ -13,56 +13,61 @@ public class LocalKnowledge {
 	//each knowledge component is described by one (or more) conditions from the condition list
 	private Map<ConditionList, statisticsBayesRule> mapConditionListBayesRule;
 	private BitSet itsTarget;
-	
-	
-	
+
 	public LocalKnowledge(List<ConditionList> theExplanatoryConditions, BitSet theTarget)
 	{
-	itsExplanatoryConditions = theExplanatoryConditions;
-	itsTarget = theTarget;
-		
-	mapColumnToConditionList = new HashMap<Column, List<ConditionList>>();
-		for (ConditionList cl : itsExplanatoryConditions) {
-			for (Condition c : cl) {
+		itsExplanatoryConditions = theExplanatoryConditions;
+		itsTarget = theTarget;
+
+		mapColumnToConditionList = new HashMap<Column, List<ConditionList>>();
+		for (ConditionList cl : itsExplanatoryConditions)
+		{
+			for (Condition c : cl)
+			{
 				System.out.println("Local Knowledge variables");
 				System.out.println(c.getColumn().getName());
-				if (!mapColumnToConditionList.containsKey(c.getColumn())) {
+				if (!mapColumnToConditionList.containsKey(c.getColumn()))
+				{
 					List<ConditionList> aList = new ArrayList<ConditionList>();
 					aList.add(cl);
 					mapColumnToConditionList.put(c.getColumn(), aList);
 				}
-				else {
-					
+				else
+				{
 					List<ConditionList> aList = mapColumnToConditionList.get(c.getColumn());
 					aList.add(cl);
 					mapColumnToConditionList.put(c.getColumn(), aList);
 				}
 			}
-			}
-		
+		}
+
 		mapConditionListToBitSet = new HashMap<ConditionList, BitSet>();
 		mapConditionListBayesRule = new HashMap<ConditionList, statisticsBayesRule>();
-		
-		for (ConditionList cl: itsExplanatoryConditions){
+
+		for (ConditionList cl: itsExplanatoryConditions)
+		{
 			BitSet aBitSetCl = new BitSet(cl.get(0).getColumn().size()); // the bit set of the conditionlist, also set the size here, and all bits to one
 			aBitSetCl.set(0, cl.get(0).getColumn().size());// or col.size -1? 
-			for (Condition c : cl){
+			for (Condition c : cl)
+			{
 				BitSet aBitSetCondition = c.getColumn().evaluate(c);
 				System.out.println("cardinality condition");
 				System.out.println(aBitSetCondition.cardinality());
 				aBitSetCl.and(aBitSetCondition);
 			}
-		mapConditionListToBitSet.put(cl,aBitSetCl);
-		// now calculate the statistics for Bayes Rule
-		System.out.println("cardinality target");
-		System.out.println(itsTarget.cardinality());
-		System.out.println("cardinality known subgroup");
-		System.out.println(aBitSetCl.cardinality());
-		statisticsBayesRule aStatisticsBR = new statisticsBayesRule(aBitSetCl,itsTarget);
-		mapConditionListBayesRule.put(cl, aStatisticsBR);
+
+			mapConditionListToBitSet.put(cl,aBitSetCl);
+			// now calculate the statistics for Bayes Rule
+			System.out.println("cardinality target");
+			System.out.println(itsTarget.cardinality());
+			System.out.println("cardinality known subgroup");
+			System.out.println(aBitSetCl.cardinality());
+			statisticsBayesRule aStatisticsBR = new statisticsBayesRule(aBitSetCl,itsTarget);
+			mapConditionListBayesRule.put(cl, aStatisticsBR);
 		}
 	}//constructor
-		/**
+
+/*
 		mapColumnToBitSet = new HashMap<Column, List<BitSet>>();
 		for (Column col : mapColumnToConditionList.keySet()){
 			//if (mapColumnToConditionList.containsKey(c))
@@ -81,10 +86,9 @@ public class LocalKnowledge {
 			}
 			mapColumnToBitSet.put(col, aList);
 		}
-		*/
-		
-		
-	/**
+*/
+
+/*
 		itsColumnsInvolved = new String[explanatoryConditions.length][];
 		for (int i=0; i<explanatoryConditions.length; i++){
 			itsColumnsInvolved[i] = new String[itsExplanatoryConditions[i].size()];
@@ -97,10 +101,8 @@ public class LocalKnowledge {
 			}
 		}
 	*/
-		
-	
-	
-	/**
+
+/*
 	public BitSet[] getBitSetsExplanatoryConditions(String[] attributeNames){ //returns an array of explanatory variables to be used as input into a global model estimator.
 		//get dummy variables as input for logistic regression from known subgroups.
 		
@@ -111,44 +113,43 @@ public class LocalKnowledge {
 		}
 	return aBitSetsExplanatoryConditions;
 	}
-	*/
-	
-	
-	public Set<BitSet> getBitSets(Subgroup theSubgroupToEvaluate){ //Use HashSet or List??
+*/
+
+	//Use HashSet or List??
+	public Set<BitSet> getBitSets(Subgroup theSubgroupToEvaluate)
+	{
 		//returns bitsets corresponding to the attributes that are involved in the subgroup
 		Set<BitSet> aBitSetsExplanatoryConditionLists = new HashSet<BitSet>();
 		Set<ConditionList> aConditionListsInvolvedWithColumn = new HashSet<ConditionList>();
-		for (Condition c : theSubgroupToEvaluate.getConditions()){ // First obtain conditionLists that are involved with the subgroup
-			if (mapColumnToConditionList.get(c.getColumn()) != null){
-			aConditionListsInvolvedWithColumn.addAll(mapColumnToConditionList.get(c.getColumn()));
-			}
-		} //now get the bitsets from  conditionLists involved from the mapping 
-		for (ConditionList cl : aConditionListsInvolvedWithColumn){
+		// First obtain conditionLists that are involved with the subgroup
+		for (Condition c : theSubgroupToEvaluate.getConditions())
+			if (mapColumnToConditionList.get(c.getColumn()) != null)
+				aConditionListsInvolvedWithColumn.addAll(mapColumnToConditionList.get(c.getColumn()));
+
+		//now get the bitsets from  conditionLists involved from the mapping 
+		for (ConditionList cl : aConditionListsInvolvedWithColumn)
 			aBitSetsExplanatoryConditionLists.add(mapConditionListToBitSet.get(cl));
-		}
+
 		return aBitSetsExplanatoryConditionLists;
 	}
-	
-	public Set<statisticsBayesRule> getStatisticsBayesRule(Subgroup theSubgroupToEvaluate){ 
+
+	public Set<statisticsBayesRule> getStatisticsBayesRule(Subgroup theSubgroupToEvaluate)
+	{
 		//returns statistics corresponding to the attributes that are involved in the subgroup
 		Set<statisticsBayesRule> aSetStatisticsBayesRule = new HashSet<statisticsBayesRule>();
 		Set<ConditionList> aConditionListsInvolvedWithColumn = new HashSet<ConditionList>();
-		for (Condition c : theSubgroupToEvaluate.getConditions()){ // First obtain conditionLists that are involved with the subgroup
+		// First obtain conditionLists that are involved with the subgroup
+		for (Condition c : theSubgroupToEvaluate.getConditions())
+		{
 			System.out.println(c.getColumn().getName());
-			if (mapColumnToConditionList.get(c.getColumn()) != null){
+			if (mapColumnToConditionList.get(c.getColumn()) != null)
 				aConditionListsInvolvedWithColumn.addAll(mapColumnToConditionList.get(c.getColumn()));
-			}
-		} //now get the statistics from  conditionLists involved from the mapping 
-		for (ConditionList cl : aConditionListsInvolvedWithColumn){
-			aSetStatisticsBayesRule.add(mapConditionListBayesRule.get(cl));
+
 		}
+		//now get the statistics from  conditionLists involved from the mapping 
+		for (ConditionList cl : aConditionListsInvolvedWithColumn)
+			aSetStatisticsBayesRule.add(mapConditionListBayesRule.get(cl));
+
 		return aSetStatisticsBayesRule;
 	}
-
-		
-		
-	
-	
-	
-	
 }

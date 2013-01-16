@@ -2,8 +2,6 @@ package nl.liacs.subdisc;
 
 public class NetworkNode
 {
-	private static int id = 0;
-
 	private CrossCube nodeParameters; //node parameters
 	private ItemSet nodeParents; //parents
 	private ItemSet nodeChildren; //children
@@ -15,7 +13,6 @@ public class NetworkNode
 		nodeParameters = para;
 		nodeChildren = new ItemSet(theSize);
 		nodeParents = new ItemSet(theSize);
-		id++;
 		itsQuality = -100000;
 		itsName = theName;
 	}

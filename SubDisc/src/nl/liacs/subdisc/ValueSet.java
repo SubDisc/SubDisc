@@ -2,9 +2,87 @@ package nl.liacs.subdisc;
 
 import java.util.*;
 
-public class ValueSet extends ArrayList<String> implements List<String>
+/*
+ * TODO
+ * A ValueSet should be a Set, not a List, this natively prevents duplicates.
+ * A ValueSet could be a SortedSet, making ValuesSet comparisons a lot easier.
+ * However, this would destroy any deliberate value-declaration order (in the
+ * case of .arff NOMINAL attributes).
+ * Sets disallow duplicates, but do not normally maintain insertion order.
+ * List do allow duplicates, do maintain insertion order.
+ */
+public class ValueSet extends ArrayList<String> implements List<String>, Comparable<ValueSet>
 {
 	private static final long serialVersionUID = 1L;
+
+	/**
+	 * Compares this <code>ValueSet</code> against the argument.
+	 * <p>
+	 * The equality tests are performed in the following order:</br>
+	 * if the sets contain exactly the same values, they compare equal,</br>
+	 * if the sets are not of equal size, comparison is based on size,</br>
+	 * if the sets are of equal size, the non-shared values are ordered
+	 * lexicographically, and the String comparison of the lexicographically
+	 * smallest value of each set is used for the return value.
+	 */
+	/*
+	 * XXX could use less memory by not creating TreeSets and explicitly
+	 * loop over all values (may even be faster)
+	 * but this class may need revision anyway, so we leave it as it is
+	 */
+	@Override
+	public int compareTo(ValueSet theOtherSet)
+	{
+		// removes possible duplicates, see class comment
+		final TreeSet<String> A = new TreeSet<String>(this);
+		final TreeSet<String> B = new TreeSet<String>(theOtherSet);
+		final int sizeA = A.size();
+		final int sizeB = B.size();
+
+		// shared values
+		final HashSet<String> I = new HashSet<String>(A);
+		I.retainAll(B);
+
+		// all values are equal
+		if ((sizeA == sizeB) && (sizeA == I.size()))
+			return 0;
+
+		// not all values are equal, compare size of A and B
+		if (sizeA < sizeB)
+			return -1;
+		if (sizeA > sizeB)
+			return 1;
+
+
+		// sets are of same size, but not all values are shared
+		// remove all shared values from A and B
+		A.removeAll(I);
+		B.removeAll(I);
+		// safe as (sizeA == sizeB) + at least 1 value is not shared
+		// TreeSets are ordered so compares 'smallest' String of A and B
+		return A.iterator().next().compareTo(B.iterator().next());
+
+		// alternative that does not modify A and B
+		//return getSmallest(A, I).compareTo(getSmallest(B, I));
+	}
+
+	private static String getSmallest(Set<String> theSet, Set<String> theShared)
+	{
+		final Iterator<String> i = theSet.iterator();
+		String smallest;
+
+		// safe under assumption that theSet contains at least 1 value
+		// that is not in theShared
+		while (theShared.contains(smallest = i.next()));
+		while (i.hasNext())
+		{
+			final String s = i.next();
+			if (!theShared.contains(s) && s.compareTo(smallest) < 0)
+				smallest = s;
+		}
+
+		return smallest;
+	}
 
 	@Override
 	public String toString()

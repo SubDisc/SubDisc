@@ -1,5 +1,7 @@
 package nl.liacs.subdisc;
 
+// Safarii legacy
+@Deprecated
 public class SelectStatement
 {
 	private String itsSelectClause;

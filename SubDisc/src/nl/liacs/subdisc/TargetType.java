@@ -86,7 +86,7 @@ public enum TargetType implements EnumInterface
 			case MULTI_BINARY_CLASSIFICATION: return false;
 			default :
 			{
-				unknownTargetType("isImplemented", theType.GUI_TEXT);
+				unknownTargetType("isImplemented", theType);
 				return false;
 			}
 		}
@@ -106,7 +106,7 @@ public enum TargetType implements EnumInterface
 			case MULTI_BINARY_CLASSIFICATION: return false;
 			default :
 			{
-				unknownTargetType("hasSecondaryTarget", theType.GUI_TEXT);
+				unknownTargetType("hasSecondaryTarget", theType);
 				return false;
 			}
 		}
@@ -126,7 +126,7 @@ public enum TargetType implements EnumInterface
 			case MULTI_BINARY_CLASSIFICATION: return true;
 			default :
 			{
-				unknownTargetType("hasMultiTargets", theType.GUI_TEXT);
+				unknownTargetType("hasMultiTargets", theType);
 				return false;
 			}
 		}
@@ -146,7 +146,7 @@ public enum TargetType implements EnumInterface
 			case MULTI_BINARY_CLASSIFICATION: return false;
 			default :
 			{
-				unknownTargetType("hasMultiRegressionTargets", theType.GUI_TEXT);
+				unknownTargetType("hasMultiRegressionTargets", theType);
 				return false;
 			}
 		}
@@ -166,7 +166,7 @@ public enum TargetType implements EnumInterface
 			case MULTI_BINARY_CLASSIFICATION: return true;	// TODO true?
 			default :
 			{
-				unknownTargetType("hasMiscField", theType.GUI_TEXT);
+				unknownTargetType("hasMiscField", theType);
 				return false;
 			}
 		}
@@ -186,7 +186,7 @@ public enum TargetType implements EnumInterface
 			case MULTI_BINARY_CLASSIFICATION: return false;	// TODO true?
 			default :
 			{
-				unknownTargetType("hasTargetAttribute", theType.GUI_TEXT);
+				unknownTargetType("hasTargetAttribute", theType);
 				return false;
 			}
 		}
@@ -207,7 +207,7 @@ public enum TargetType implements EnumInterface
 			case MULTI_BINARY_CLASSIFICATION: return false;	// TODO true?
 			default :
 			{
-				unknownTargetType("hasTargetValue", theType.GUI_TEXT);
+				unknownTargetType("hasTargetValue", theType);
 				return false;
 			}
 		}
@@ -228,7 +228,7 @@ public enum TargetType implements EnumInterface
 			case MULTI_BINARY_CLASSIFICATION: return false;	// TODO true?
 			default :
 			{
-				unknownTargetType("hasBaseModel", theType.GUI_TEXT);
+				unknownTargetType("hasBaseModel", theType);
 				return false;
 			}
 		}
@@ -238,27 +238,28 @@ public enum TargetType implements EnumInterface
 	{
 		switch (theType)
 		{
-			case SINGLE_NOMINAL					: return false;
-			case SINGLE_NUMERIC					: return false;
-			case SINGLE_ORDINAL					: return false;
-			case DOUBLE_REGRESSION				: return true;
-			case DOUBLE_CORRELATION				: return true;
-			case MULTI_LABEL					: return true;
+			case SINGLE_NOMINAL			: return false;
+			case SINGLE_NUMERIC			: return false;
+			case SINGLE_ORDINAL			: return false;
+			case DOUBLE_REGRESSION			: return true;
+			case DOUBLE_CORRELATION			: return true;
+			case MULTI_LABEL			: return true;
 			case MULTI_BINARY_CLASSIFICATION	: return true;
 			default :
 			{
-				unknownTargetType("isEMM", theType.GUI_TEXT);
+				unknownTargetType("isEMM", theType);
 				return false;
 			}
 		}
 	}
 */
-	private static void unknownTargetType(String theSource, String theType)
+
+	// TODO this should actually throw an AssertionError
+	private static void unknownTargetType(String theSource, TargetType theType)
 	{
-		Log.logCommandLine(
-					String.format("TargetType.%s(): unknown TargetType '%s'",
-									theSource,
-									theType));
+		Log.logCommandLine(String.format("%s.%s(): unknown type '%s'",
+							theType.getClass().getSimpleName(),
+							theSource,
+							theType));
 	}
 }
-

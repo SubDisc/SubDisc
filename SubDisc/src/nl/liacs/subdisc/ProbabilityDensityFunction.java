@@ -6,46 +6,48 @@ import nl.liacs.subdisc.gui.*;
 
 public class ProbabilityDensityFunction
 {
+	private final int DEFAULT_NR_BINS = 1000;
+
+	private final Column itsData;
 	private float[] itsDensity;
+	// future update may allow custom number of bins
+	private int itsNrBins = DEFAULT_NR_BINS;
 	private float itsMin, itsMax, itsBinWidth;
-	private int itsNrBins = 1000;
 
 	//create from entire dataset
 	public ProbabilityDensityFunction(Column theData)
 	{
-		//TODO include outlier treatment
-		itsMin = theData.getMin();
-		itsMax = theData.getMax();
-		itsBinWidth = (itsMax-itsMin)/itsNrBins;
+		itsData = theData;
 		itsDensity = new float[itsNrBins];
+		//TODO include outlier treatment
+		itsMin = itsData.getMin();
+		itsMax = itsData.getMax();
+		itsBinWidth = (itsMax-itsMin)/itsNrBins;
 
 		Log.logCommandLine("Min = " + itsMin);
 		Log.logCommandLine("Max = " + itsMax);
 		Log.logCommandLine("BinWidth = " + itsBinWidth);
-		int aSize = theData.size();
-		float anIncrement = 1f/aSize;
+		int aSize = itsData.size();
+		float anIncrement = 1.0f / aSize;
 		for (int i=0; i<aSize; i++)
 		{
-			float aValue = theData.getFloat(i);
+			float aValue = itsData.getFloat(i);
 			add(aValue, anIncrement);
 		}
 	}
 
-	//create for subgroup, relative to existing PDF
-	// TODO subgroup PDF uses same Column as master PDF, enforce this
-	public ProbabilityDensityFunction(ProbabilityDensityFunction thePDF, Column theData, BitSet theMembers)
+	//create for subgroup, relative to existing PDF (use same Column data)
+	public ProbabilityDensityFunction(ProbabilityDensityFunction thePDF, BitSet theMembers)
 	{
+		itsData = thePDF.itsData;
+		itsDensity = new float[thePDF.itsNrBins];
 		itsMin = thePDF.itsMin;
 		itsMax = thePDF.itsMax;
 		itsBinWidth = thePDF.itsBinWidth;
-		itsDensity = new float[itsNrBins];
 
-		float anIncrement = 1f/theMembers.cardinality();
+		float anIncrement = 1.0f / theMembers.cardinality();
 		for (int i = theMembers.nextSetBit(0); i >= 0; i = theMembers.nextSetBit(i + 1))
-		{
-			float aValue = theData.getFloat(i);
-			add(aValue, anIncrement);
-		}
+			add(thePDF.itsData.getFloat(i), anIncrement);
 	}
 
 	public float getDensity(float theValue)
@@ -72,6 +74,7 @@ public class ProbabilityDensityFunction
 	}
 
 	/*
+	 * FIXME
 	 * accumulates rounding errors, alternative would be to just count the
 	 * absolute number of items in a bin and report the density for a
 	 * particular bin as: (bin_nr_items / total_nr_items)
@@ -134,7 +137,7 @@ public class ProbabilityDensityFunction
 	/**
 	 * Smooths the density histogram using a default &sigma; that is
 	 * determined as follows:</br>
-	 * &sigma; = (max - min) / 16, where min and max are the minimum and
+	 * &sigma; = (max - min) / 64, where min and max are the minimum and
 	 * maximum value in the data that was used to build this
 	 * ProbabilityDensityFunction.</br>
 	 * To use a different &sigma;, use {@link #smooth(float)}.

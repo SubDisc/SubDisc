@@ -18,8 +18,9 @@ public class CrossValidation
 	}
 
 	/**
-	* returns a random permutation of the integers [1,...,itsSize]. To be used for cross-validation.
-	*/
+	 * returns a random permutation of the integers [1,...,itsSize].
+	 * To be used for cross-validation.
+	 */
 	public int[] getRandomPermutation()
 	{
 		int[] result = new int[itsSize];
@@ -29,7 +30,8 @@ public class CrossValidation
 			result[i] = i+1;
 
 		// Knuth shuffle
-		// notice i>1 in for-loop; for i=1 we will always swap the first element with itself, hence we can skip this step
+		// notice i>1 in for-loop; for i=1 we will always swap the first
+		// element with itself, hence we can skip this step
 		for (int i=itsSize; i>1; i--)
 		{
 			int aSwitchIndex = itsRandom.nextInt(i);
@@ -42,8 +44,9 @@ public class CrossValidation
 	}
 
 	/**
-	* Generates k test sets for cross-validation. Used by constructor, but can also be used to recompute random testsets.
-	*/
+	 * Generates k test sets for cross-validation. Used by constructor, but
+	 * can also be used to recompute random test-sets.
+	 */
 	public void createTestSets()
 	{
 		// generate the random permutation on basis of which the k test sets will be filled
@@ -65,10 +68,11 @@ public class CrossValidation
 	}
 
 	/**
-	* Produces a BitSet based on the different folds computed.
-	* @param theInvert determines whether you want the (small) testset (false), or the inverse (large) trainingset (true).
-	* Typical value in Cortana is "false".
-	*/
+	 * Produces a BitSet based on the different folds computed.
+	 * @param theInvert determines whether you want the (small) test-set
+	 * (false), or the inverse (large) training-set (true).
+	 * Typical value in Cortana is "false".
+	 */
 	public BitSet getSet(int theTestSet, boolean theInvert)
 	{
 		BitSet aResult = new BitSet(itsSize);
@@ -78,6 +82,11 @@ public class CrossValidation
 			boolean aWithin = ((isInTestSet(i, theTestSet)) != theInvert);
 			aResult.set(i, aWithin);
 		}
+
+//		TODO test
+//		for (int i = 0, j = itsSize; i < j; ++i)
+//			if ((isInTestSet(i, theTestSet)) != theInvert)
+//				aResult.set(i);
 
 		return aResult;
 	}

@@ -3,7 +3,6 @@ package nl.liacs.subdisc;
 import java.io.*;
 import java.util.*;
 
-import nl.liacs.subdisc.FileHandler.Action;
 import nl.liacs.subdisc.XMLDocument.XMLType;
 import nl.liacs.subdisc.gui.*;
 

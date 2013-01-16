@@ -315,7 +315,7 @@ public class ResultWindow extends JFrame implements ActionListener
 						anIterator.next();
 					Subgroup aSubgroup = anIterator.next();
 
-					ProbabilityDensityFunction aSubgroupPDF = new ProbabilityDensityFunction(aPDF, aTarget, aSubgroup.getMembers());
+					ProbabilityDensityFunction aSubgroupPDF = new ProbabilityDensityFunction(aPDF, aSubgroup.getMembers());
 					aSubgroupPDF.smooth();
 					new ModelWindow(aTarget, aPDF, aSubgroupPDF, aSubgroup.toString());
 				}

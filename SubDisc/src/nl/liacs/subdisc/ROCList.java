@@ -111,4 +111,3 @@ public class ROCList extends ArrayList<SubgroupROCPoint>
 		return anArea;
 	}
 }
-

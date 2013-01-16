@@ -1,5 +1,6 @@
 package nl.liacs.subdisc;
 
+//TODO class may be removed, this XML parsing/ creation strategy is not used
 public enum XMLNodeSearchParameter
 {
 	QUALITY_MEASURE

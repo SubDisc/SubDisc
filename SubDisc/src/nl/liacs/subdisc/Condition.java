@@ -2,9 +2,17 @@ package nl.liacs.subdisc;
 
 import java.util.*;
 
+/*
+ * TODO
+ * The general nextOperator looping-strategy should be changed (in tandem with
+ * Table.getNextCondition()).
+ * FIRST/ LAST_OPERATORS should be defined in terms of (unmodifiable) EnumSets.
+ * Condition Objects should have a boolean member indicating whether a
+ * value is set for it.
+ * Most LogTypeError calls should be changed to new AssertionError().
+ */
 public class Condition implements Comparable<Condition>
 {
-	// TODO MM Operator enum
 	// Operator Constants
 //	public static final int ELEMENT_OF		= 1;
 //	public static final int EQUALS			= 2;
@@ -124,6 +132,7 @@ public class Condition implements Comparable<Condition>
 	public boolean isElementOf() { return itsOperator == Operator.ELEMENT_OF; }
 	public boolean isEquals() { return itsOperator == Operator.EQUALS; }
 
+	// see class comment on valueIsSet-boolean indicating (non)-virgin state
 	private String getValue()
 	{
 		switch (itsColumn.getType())
@@ -134,7 +143,7 @@ public class Condition implements Comparable<Condition>
 				else if (itsNominalValueSet != null) //value set?
 					return itsNominalValueSet.toString();
 				else
-					return null;
+					return null; // TODO no value is set yet
 
 			case NUMERIC :
 				if (!Float.isNaN(itsNumericValue)) //single value?
@@ -142,9 +151,18 @@ public class Condition implements Comparable<Condition>
 				else if (itsInterval != null) //interval?
 					return itsInterval.toString();
 				else
-					return null;
+					return null; // TODO no value is set yet
 
+			/*
+			 * TODO a "NaN" return may mean that no value is set yet
+			 * or that the value Float.NaN is set deliberately
+			 */
 			case ORDINAL : return Float.toString(itsNumericValue);
+
+			/*
+			 * TODO a "0" return may mean that no value is set yet
+			 * or that the value "0" is set deliberately
+			 */
 			case BINARY : return itsBinaryValue ? "1" : "0";
 			default : logTypeError("getValue"); return "";
 		}
@@ -170,7 +188,7 @@ public class Condition implements Comparable<Condition>
 		switch (itsColumn.getType())
 		{
 			case NOMINAL : itsNominalValue = theValue; return;
-			case NUMERIC :
+			case NUMERIC : // deliberate fall-through to ORDINAL
 			case ORDINAL :
 			{
 				try { itsNumericValue = Float.parseFloat(theValue); }
@@ -192,7 +210,7 @@ public class Condition implements Comparable<Condition>
 	public void setValue(ValueSet theValue) { itsNominalValueSet = theValue; }
 
 	/**
-	 * Set the value for this Condition, specifically for numeric intervals
+	 * Set the value for this Condition, specifically for numeric intervals.
 	 */
 	public void setValue(Interval theValue) { itsInterval = theValue; }
 
@@ -241,7 +259,7 @@ public class Condition implements Comparable<Condition>
 				return itsNominalValueSet.contains(theValue);
 			case EQUALS :
 				return theValue.equals(itsNominalValue);
-			case LESS_THAN_OR_EQUAL :
+			case LESS_THAN_OR_EQUAL : // deliberate fall-through
 			case GREATER_THAN_OR_EQUAL :
 			{
 				logError("nominal");
@@ -385,7 +403,7 @@ public class Condition implements Comparable<Condition>
 					int aCompare = itsNominalValue.compareTo(theCondition.itsNominalValue);
 					return (aCompare < 0 ? -1 : aCompare > 0 ? 1 : 0);
 				}
-				else
+				else // assumes ValueSet
 				{
 					//TODO how to compare two sets of values?
 					// if (A.values == B.values) return 0;
@@ -398,11 +416,13 @@ public class Condition implements Comparable<Condition>
 					// NOTE Integer.compare() is only introduced in Java 7
 					// NOTE 2 problematic if either size() is > 2^23
 					// not all 32-bit int values can not be 'pigeon-holed'
-					// into a 23-bit float significant 
-					return Float.compare(itsNominalValueSet.size(), theCondition.itsNominalValueSet.size());
+					// into a 23-bit float significant
+					// FIXME use ValueSet.compareTo(ValueSet)
+					//return Float.compare(itsNominalValueSet.size(), theCondition.itsNominalValueSet.size());
+					return itsNominalValueSet.compareTo(theCondition.itsNominalValueSet);
 				}
 			}
-			case NUMERIC :
+			case NUMERIC : // deliberate fall-through to ORDINAL
 			case ORDINAL :
 			{
 				return Float.compare(itsNumericValue, theCondition.itsNumericValue);

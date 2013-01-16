@@ -9,7 +9,7 @@ import nl.liacs.subdisc.FileHandler.Action;
 
 import org.w3c.dom.*;
 
-public class Table
+public class Table implements XMLNodeInterface
 {
 	// NOTE when adding members, update constructors AND Table.select()
 	// all but Random can be made final
@@ -50,7 +50,16 @@ public class Table
 		itsName = theTableName;
 	}
 
-	// FileLoaderTXT
+	public Table(File theSource, String theTableName, int theNrRows, int theNrColumns)
+	{
+		itsSource = theSource.getName();
+		itsName = theTableName;
+		itsNrRows = theNrRows;
+		itsNrColumns = theNrColumns;
+		itsColumns.ensureCapacity(theNrColumns);
+	}
+
+	// FileLoaderTXT / DataLoaderTXT
 	public Table(File theSource, int theNrRows, int theNrColumns)
 	{
 		itsSource = theSource.getName();
@@ -60,7 +69,6 @@ public class Table
 		itsColumns.ensureCapacity(theNrColumns);
 	}
 
-	// TODO order of nodes is known, when all is stable
 	// FileLoaderXML
 	public Table(Node theTableNode, String theXMLFileDirectory)
 	{
@@ -221,13 +229,16 @@ public class Table
 
 	/**
 	 * Retrieves an array of <code>int[]</code>s, containing the number of
-	 * {@link Column Column}s for each {@link AttributeType AttributeType}, and
-	 * the number of those Columns that are enabled. The <code>int[]</code>s are
-	 * for AttributeTypes: <code>NOMINAL</code>, <code>NUMERIC</code>,
-	 * <code>ORDINAL</code> and <code>BINARY</code>, respectively.
+	 * {@link Column}s for each {@link AttributeType}, and the number of
+	 * those Columns that are enabled.
+	 * The <code>int[]</code>s are for AttributeTypes:
+	 * {@link AttributeType#NOMINAL}, {@link AttributeType#NUMERIC},
+	 * {@link AttributeType#ORDINAL} and {@link AttributeType#BINARY},
+	 * respectively.
+	 * 
 	 * @return an array of <code>int[]</code>s, containing for each
 	 * AttributeType the number of Columns of that type, and the number of
-	 * those Columns that is enabled
+	 * those Columns that is enabled.
 	 */
 	public int[][] getTypeCounts()
 	{
@@ -344,171 +355,6 @@ public class Table
 
 	// Misc ===============================
 
-/*
-	// TODO this does exactly what NumericDomain did, merge this code with
-	// Column.getQMRequiredStatistics
-	// NOTE for maintainability + efficiency this is moved to Column
-	// DO NOT USE
-	// CHANGE CHECKED AND APPROVED - SAFE FOR DELETION
-	private float[] getNumericDomain(int theColumn, BitSet theSubset)
-	{
-		float[] aResult = new float[theSubset.cardinality()];
-
-		Column aColumn = itsColumns.get(theColumn);
-		for (int i = 0, j = 0; i < itsNrRows; i++)
-			if (theSubset.get(i))
-				aResult[j++] = aColumn.getFloat(i);
-
-		Arrays.sort(aResult);
-		return aResult;
-	}
-
-	// does not handle float.NaN well, but neither does the rest of the code
-	//returns the unique, sorted domain
-	// NOTE for maintainability + efficiency this is moved to Column
-	// DO NOT USE
-	// CHANGE CHECKED AND APPROVED - SAFE FOR DELETION
-	public float[] getUniqueNumericDomain(int theColumn, BitSet theSubset)
-	{
-		//get domain including doubles
-		float[] aDomain = getNumericDomain(theColumn, theSubset);
-		//count uniques
-		float aCurrent = aDomain[0];
-		int aCount = 1;
-		for (float aFloat : aDomain)
-			if (aFloat != aCurrent)
-			{
-				aCurrent = aFloat;
-				aCount++;
-			}
-
-		float[] aResult = new float[aCount];
-		aCurrent = aDomain[0];
-		aCount = 1;
-		aResult[0] = aDomain[0];
-		for (float aFloat : aDomain)
-			if (aFloat != aCurrent)
-			{
-				aCurrent = aFloat;
-				aResult[aCount] = aFloat;
-				aCount++;
-			}
-		int aCount = itsColumns.get(theColumn).getCardinality();
-		float[] aResult = new float[aCount];
-		float aCurrent = aResult[0] = aDomain[0];
-
-		for (int i = 1, j = aDomain.length, k = 1; i < j ; ++i)
-		{
-			float aFloat = aDomain[i];
-			if (aFloat != aCurrent)
-			{
-				aResult[k] = aCurrent = aFloat;
-
-				if (++k == aCount)
-					break;
-			}
-		}
-
-		return aResult;
-	}
- */
-
-/*
-	// TODO check for out of range
-	// NOTE for maintainability + efficiency this is moved to Column
-	// DO NOT USE
-	// CHANGE CHECKED AND APPROVED - SAFE FOR DELETION
-	public TreeSet<String> getDomain(int theColumn)
-	{
-		return itsColumns.get(theColumn).getDomain();
-	}
-*/
-
-/*
-	// NOTE for maintainability + efficiency this is moved to Column
-	// DO NOT USE
- 	// CHANGE CHECKED AND APPROVED - SAFE FOR DELETION
-	public float[] getSplitPoints(int theColumn, BitSet theSubset, int theNrSplits)
-	{
-		float[] aDomain = getNumericDomain(theColumn, theSubset);
-		float[] aSplitPoints = new float[theNrSplits];
-		for (int j=0; j<theNrSplits; j++)
-			aSplitPoints[j] = aDomain[aDomain.length*(j+1)/(theNrSplits+1)];	// N.B. Order matters to prevent integer division from yielding zero.
-		return aSplitPoints;
-	}
-*/
-
-/*
-	//only works for nominals and binary
-	// NOTE for maintainability + efficiency this is moved to Column
-	// DO NOT USE
-	// CHANGE CHECKED AND APPROVED - SAFE FOR DELETION
-	public int countValues(int theColumn, String theValue)
-	{
-		int aResult = 0;
-		Column aColumn = itsColumns.get(theColumn);
-
-		switch (aColumn.getType())
-		{
-			case NOMINAL :
-			{
-				for (int i=0, j = aColumn.size(); i < j; ++i)
-					if (aColumn.getNominal(i).equals(theValue))
-						++aResult;
-				break;
-			}
-			case BINARY :
-			{
-				for (int i=0, j = aColumn.size(); i < j; ++i)
-					if (aColumn.getBinary(i)=="1".equals(theValue))
-						++aResult;
-				break;
-			}
-			default :
-			{
-				Log.logCommandLine("Do not use a Column of type '" +
-									aColumn.getType().toString() +
-									"' with Table.countValues(). Please use NOMINAL or BINARY."
-						);
-				break;
-			}
-		}
-
-		return aResult;
-	}
-*/
-
-/*
-	//only works for nominals and binary
-	// CHANGE CHECKED AND APPROVED - SAFE FOR DELETION
-	public int countValues(int theColumn, String theValue)
-	{
-		int aResult = 0;
-		Column aColumn = itsColumns.get(theColumn);
-
-		for (int i=0, j = aColumn.size(); i < j; i++)
-		{
-			if (aColumn.isNominalType() && aColumn.getNominal(i).equals(theValue))
-				aResult++;
-			else if (aColumn.isBinaryType() && aColumn.getBinary(i)=="1".equals(theValue))
-				aResult++;
-		}
-		return aResult;
-	}
-*/
-/*
-	// NOTE for maintainability + efficiency this is moved to Column
-	// DO NOT USE
-	// CHANGE CHECKED AND APPROVED - SAFE FOR DELETION
-	public float getAverage(int theColumn)
-	{
-		float aResult = 0;
-		Column aColumn = itsColumns.get(theColumn);
-		for (int i=0, j=aColumn.size(); i<j; i++)
-			aResult += aColumn.getFloat(i);
-		return aResult/itsNrRows;
-	}
-*/
 	public Subgroup getRandomSubgroup(int theSize)
 	{
 		BitSet aSample = new BitSet(itsNrRows);
@@ -517,8 +363,8 @@ public class Table
 
 		for (int i = 0; i < itsNrRows; i++)
 		{
-			double aThresholdValue1 = (double) theSize - m;
-			double aThresholdValue2 = (double) itsNrRows - t;
+			double aThresholdValue1 = theSize - m;
+			double aThresholdValue2 = itsNrRows - t;
 
 			if ((aThresholdValue2 * itsRandomNumber.nextDouble()) < aThresholdValue1)
 			{
@@ -531,6 +377,8 @@ public class Table
 			else
 				t++;
 		}
+// FIXME remove, debug only
+System.out.format("Table.getRandomSubgroup(): size=%d cardinality=", theSize, aSample.cardinality());
 		Subgroup aSubgroup = new Subgroup(0.0, theSize, 0, null, aSample);
 		//aSubgroup.setMembers(aSample);
 		return aSubgroup;
@@ -566,35 +414,46 @@ public class Table
 	}
 
 	/**
-	 * NOTE this method is destructive to the
-	 * {@link TargetConcept TargetConcept} passed in as parameter. If the
-	 * TargetConcept needs to be restored to its original state, be sure to
-	 * back it up before calling this method.
+	 * NOTE this method is destructive to the {@link TargetConcept} passed
+	 * in as parameter. If the TargetConcept needs to be restored to its
+	 * original state, be sure to back it up before calling this method.
 	 * 
 	 * @param theTC the TargetConcept to swapRandomize.
 	 * 
-	 * @see Column.permute
-	 * @see Validation.swapRandomization
+	 * @see Column#permute(int[])
+	 * @see Validation#swapRandomization(int)
 	 */
 	public void swapRandomizeTarget(TargetConcept theTC)
 	{
 		List<Column> aTargets = new ArrayList<Column>(2);
+		TargetType aType = theTC.getTargetType();
 
 		//find all targets
-		switch (theTC.getTargetType())
+		switch (aType)
 		{
-			case DOUBLE_REGRESSION:
-			case DOUBLE_CORRELATION:
+			case DOUBLE_REGRESSION : // deliberate fall-through
+			case DOUBLE_CORRELATION :
 				aTargets.add(theTC.getSecondaryTarget());
 				//no break
-			case SINGLE_NOMINAL:// no break
-			case SINGLE_NUMERIC:
+			case SINGLE_NOMINAL : // deliberate fall-through
+			case SINGLE_NUMERIC :
 				aTargets.add(theTC.getPrimaryTarget());
 				break;
-			case MULTI_LABEL:
+			case MULTI_LABEL :
 				aTargets = theTC.getMultiTargets();
 				break;
-			default : ; // TODO should never get here, throw warning
+
+			// unimplemented TargetTypes
+			case SINGLE_ORDINAL :
+			case MULTI_BINARY_CLASSIFICATION :
+			default :
+			{
+				throw new AssertionError(
+						String.format("%s.swapRandomizeTarget(): unimplemented %s '%s'",
+								this.getClass().getSimpleName(),
+								TargetType.class.getSimpleName(),
+								aType));
+			}
 		}
 
 		int n = getNrRows();
@@ -799,6 +658,7 @@ public class Table
 		}
 	}
 
+	@Override
 	public void addNodeTo(Node theParentNode)
 	{
 		Node aNode = XMLNode.addNodeTo(theParentNode, "table");

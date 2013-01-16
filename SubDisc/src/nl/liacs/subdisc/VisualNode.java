@@ -16,7 +16,7 @@ public class VisualNode extends MShape
 	public VisualNode(int theX, int theY, String theTarget)
 	{
 		super("");
-			itsTarget = theTarget;
+		itsTarget = theTarget;
 		itsXPos = theX;
 		itsYPos = theY;
 		calcBounds();
@@ -30,6 +30,7 @@ public class VisualNode extends MShape
 		setBounds(itsXPos, itsYPos, aWidth, aHeight);
 	}
 
+	@Override
 	public void setLocation(int theX, int theY)
 	{
 		itsXPos = theX;
@@ -53,6 +54,7 @@ public class VisualNode extends MShape
 		repaint();
 	}
 
+	@Override
 	public void paint(java.awt.Graphics g)
 	{
 		super.paint(g);
@@ -79,7 +81,6 @@ public class VisualNode extends MShape
 		g2.drawLine(r.x, r.y + r.height, r.x + r.width, r.y + r.height);
 		g2.drawLine(r.x + r.width, r.y, r.x + r.width, r.y + r.height);
 
-
 		g2.setColor(Color.black);
 		g2.setFont(g.getFont().deriveFont(Font.PLAIN, itsFontSize));
 		g2.drawString(itsTarget, r.x + 5, r.y + 4 + itsFontSize);
@@ -87,12 +88,13 @@ public class VisualNode extends MShape
 //		g2.drawString("Acc.: " + itsAcc, r.x + 5, r.y + 5 + (3 * itsFontSize));
 	}
 
+	@Override
 	public void mouseClicked(MouseEvent e)
 	{
 		if (mouseOnMe(e))
 			if (e.getClickCount() > 1)
 			{
-				//do something
+				// this does nothing
 			}
 	}
 }

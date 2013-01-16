@@ -18,9 +18,9 @@ public class Interval
 
 	public String toString()
 	{
-		String aLeft = (itsLower == Float.NEGATIVE_INFINITY) ? "(-inf" : ("(" + itsLower);
+		String aLeft = (itsLower == Float.NEGATIVE_INFINITY) ? "-inf" : Float.toString(itsLower);
 		String aRight = (itsUpper == Float.POSITIVE_INFINITY) ? "inf)" : (Float.toString(itsUpper) + "]");
-		return aLeft + ", " + aRight;
+		return new StringBuilder(32).append("(").append(aLeft).append(", ").append(aRight).toString();
 	}
 
 	public float getLower() { return itsLower; }

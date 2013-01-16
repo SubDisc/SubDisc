@@ -29,26 +29,52 @@ public class Subgroup implements Comparable<Subgroup>
 	private double itsTertiaryStatistic = 0;
 	int itsDepth;
 	private final SubgroupSet itsParentSet;
-	// XXX not strictly need by setting itsPValue to NaN
+	// XXX not strictly needed when setting itsPValue to NaN
 	private boolean isPValueComputed;
 	private double itsPValue;
 	private String itsRegressionModel;
 
-	/*
-	 * In case no SubgroupSet is provided an empty one is created, this avoids
-	 * extra checks in for example getFalsePositiveRate().
-	 * This constructor is called by SubgroupDiscovery.Mine(long) and
-	 * Table.getRandomSubgroups(int);
-	 * TODO theMeasureValue = valid, theCoverage > 0, theDepth > 0
-	 */
 	/**
-	 * Creates a Subgroup.
-	 * @param theMeasureValue the value used to create this Subgroup.
-	 * @param theCoverage the number of instances contained in this Subgroup.
-	 * @param theDepth
+	 * Creates a Subgroup with initial measureValue of 0.0 and a depth of 0.
+	 * <p>
+	 * The {@link BitSet} can not be <code>null</code> and at least 1 bit
+	 * must be set, each set bit represents a member of this Subgroup.
+	 * <p>
+	 * the {@link ConditionList} and {@link SubgroupSet} argument can be
+	 * </code>null</code>, in which case new empty items are created.
+	 * 
+	 * @param theConditions the ConditionList for this Subgroup.
+	 * @param theBitSet the BitSet representing members of this Subgroup.
 	 * @param theSubgroupSet the SubgroupSet this Subgroup is contained in.
+	 * 
+	 * @throws IllegalArgumentException if (theMembers == <code>null</code>)
+	 * or (theMembers.cardinality() == 0).
 	 */
-	// TODO null checks/ merge with other constructor
+	public Subgroup(ConditionList theConditions, BitSet theMembers, SubgroupSet theSubgroupSet) throws IllegalArgumentException
+	{
+		if (theMembers == null || theMembers.cardinality() == 0)
+			throw new IllegalArgumentException("Subgroups must have members");
+
+		itsConditions = (theConditions == null ? new ConditionList() : theConditions);
+		itsDepth = itsConditions.size();
+
+		itsMembers = theMembers;
+		itsCoverage = itsMembers.cardinality();
+
+		itsParentSet = (theSubgroupSet == null ? new SubgroupSet(0) : theSubgroupSet);
+
+		itsMeasureValue = 0.0f;
+		itsDAG = null;	//not set yet
+		isPValueComputed = false;
+	}
+
+	/** Scheduled for deletion. */
+	/*
+	 * FIXME theCoverage and theBitSet.cardinality() are not logically
+	 * related, this can lead to getCoverage() reporting a number of
+	 * Subgroup members different from the members (set bits) in itsMembers.
+	 */
+	@Deprecated
 	public Subgroup(double theMeasureValue, int theCoverage, int theDepth, SubgroupSet theSubgroupSet, BitSet theBitSet)
 	{
 		itsConditions = new ConditionList();
@@ -61,29 +87,24 @@ public class Subgroup implements Comparable<Subgroup>
 		isPValueComputed = false;
 	}
 
-	/*
-	 * Most of subgroups' members for which no parameter is supplied are still
-	 * set, this avoids extra checks in for example getFalsePositiveRate().
-	 * This constructor is called by Validation#RandomConditions(int).
-	 * TODO theDepth > 0
-	 */
-	 /**
-	 * Creates a Subgroup, but for the Bayesian setting.
-	 * @param theConditions
-	 * @param theMembers
-	 * @param theDepth
-	 */
-	// TODO null checks/ merge with other constructor
-	public Subgroup(ConditionList theConditions, BitSet theMembers, int theDepth)
+	// itsMeasureValue, itsCoverage, itsDepth are primitive types, no need
+	// to deep-copy
+	// itsParentSet must not be deep-copied
+	// see remarks for ConditionList/ Condition, which are not true complete
+	// deep-copies, but in current code this is no problem
+	// itsMembers is deep-copied
+	public Subgroup copy()
 	{
-		itsConditions = (theConditions == null ? new ConditionList() : theConditions);	// TODO warning
-		itsMeasureValue = 0.0f;
-		itsMembers = (theMembers == null ? new BitSet(0) : theMembers);	// TODO warning
-		itsCoverage = theMembers.cardinality();
-		itsDepth = theDepth;
-		itsDAG = null;	//not set yet
-		itsParentSet = new SubgroupSet(0);
-		isPValueComputed = false;
+		// sets conditions, depth, members, coverage, parentSet
+		Subgroup aReturn = new Subgroup(itsConditions.copy(), (BitSet) itsMembers.clone(), itsParentSet);
+
+		aReturn.itsMeasureValue = itsMeasureValue;
+		// itsDAG = null;
+		// isPValueComputed = false;
+
+		aReturn.itsSecondaryStatistic = itsSecondaryStatistic;
+		aReturn.itsTertiaryStatistic = itsTertiaryStatistic;
+		return aReturn;
 	}
 
 	// significant speedup in mining algorithm
@@ -99,25 +120,11 @@ public class Subgroup implements Comparable<Subgroup>
 		itsConditions.addCondition(theCondition);
 
 		itsMembers.and(theCondition.getColumn().evaluate(theCondition));
+		//itsMembers.and(theCondition.getColumn().evaluate(theCondition, true));
 		// crucial to keep it in sync with itsMembers
 		itsCoverage = itsMembers.cardinality();
 
 		++itsDepth;
-	}
-
-	// itsMeasureValue, itsCoverage, itsDepth are primitive types, no need
-	// to deep-copy
-	// itsParentSet must not be deep-copied
-	// see remarks for ConditionList/ Condition, which are not true complete
-	// deep-copies, but in current code this is no problem
-	// itsMembers is deep-copied
-	public Subgroup copy()
-	{
-		Subgroup aReturn = new Subgroup(itsMeasureValue, itsCoverage, itsDepth, itsParentSet, (BitSet) itsMembers.clone());
-		aReturn.itsConditions = itsConditions.copy();
-		aReturn.itsSecondaryStatistic = itsSecondaryStatistic;
-		aReturn.itsTertiaryStatistic = itsTertiaryStatistic;
-		return aReturn;
 	}
 
 	public void print()
@@ -132,13 +139,19 @@ public class Subgroup implements Comparable<Subgroup>
 	}
 
 	/**
-	 * Most callers should not want to modify the returned
-	 * {@link BitSet BitSet}.
+	 * Returns a {@link BitSet} where each set bits represents a member of
+	 * this Subgroup.
+	 * <p>
+	 * Each returned BitSet is a new clone of the actual members, so
+	 * changing the returned BitSet has no effect on this Subgroup.
+	 * This is unlikely to be a performance penalty in most situations, but
+	 * some may want to cache the return BitSet.
+	 * Most callers need the returned BitSet for nothing more than looping
+	 * over all members, or retrieve the cardinality.
 	 *
 	 * @return a BitSet representing this Subgroups members.
 	 */
-	// TODO return clone is feasible.
-	public BitSet getMembers() { return itsMembers; }
+	public BitSet getMembers() { return (BitSet) itsMembers.clone(); }
 
 	public boolean covers(int theRow) { return itsMembers.get(theRow); }
 
@@ -236,7 +249,7 @@ public class Subgroup implements Comparable<Subgroup>
 			//	getFalsePositiveRate().equals(s.getFalsePositiveRate());
 	}
 */
-	/**
+	/*
 	 * TODO Even for the SubgroupSet.getROCList code this is NOT enough.
 	 * All subgroups are from the same SubgroupSet/ experiment with the same target.
 	 * However, two subgroups formed from different Attributes in itsConditions
@@ -262,11 +275,11 @@ public class Subgroup implements Comparable<Subgroup>
 		return itsParentSet;
 	}
 
-	// TODO not safe for divide by ZERO
 	/**
 	 * Returns the TruePositiveRate for this Subgroup.
-	 * If no itsParentSet was set for this SubGroup, or no itsBinaryTarget was
-	 * set for this SubGroups' itsParentSet this function returns 0.0f.
+	 * If no itsParentSet was set for this SubGroup, or no itsBinaryTarget
+	 * was set for this SubGroups' itsParentSet this function returns 0.0f.
+	 * 
 	 * @return the TruePositiveRate, also known as TPR.
 	 */
 	public Float getTruePositiveRate()
@@ -275,25 +288,24 @@ public class Subgroup implements Comparable<Subgroup>
 
 		if (tmp == null)
 			return 0.0f;
+
+		tmp.and(itsMembers);
+		// NOTE now tmp.cardinality() = aHeadBody
+
+		float aTotalTargetCoverage = itsParentSet.getTotalTargetCoverage();
+
+		// something is wrong TODO throw error
+		if (aTotalTargetCoverage <= 0)
+			return 0.0f;
 		else
-		{
-			tmp.and(itsMembers);
-
-			float aTotalTargetCoverage = itsParentSet.getTotalTargetCoverage();
-
-			if (aTotalTargetCoverage <= 0)
-				return 0.0f;
-			else
-				return tmp.cardinality() / aTotalTargetCoverage;
-			// tmp.cardinality() = aHeadBody
-		}
+			return tmp.cardinality() / aTotalTargetCoverage;
 	}
 
-	// TODO not safe for divide by ZERO
 	/**
 	 * Returns the FalsePositiveRate for this Subgroup.
-	 * If no itsParentSet was set for this subgroup, or no itsBinaryTarget was
-	 * set for this subgroups' itsParentSet this function returns 0.0f.
+	 * If no itsParentSet was set for this subgroup, or no itsBinaryTarget
+	 * was set for this subgroups' itsParentSet this function returns 0.0f.
+	 * 
 	 * @return the FalsePositiveRate, also known as FPR.
 	 */
 	public Float getFalsePositiveRate()
@@ -302,23 +314,21 @@ public class Subgroup implements Comparable<Subgroup>
 
 		if (tmp == null)
 			return 0.0f;
+
+		tmp.and(itsMembers);
+		// NOTE now tmp.cardinality() = aHeadBody
+
+		int aTotalCoverage = itsParentSet.getTotalCoverage();
+		float aTotalTargetCoverage = itsParentSet.getTotalTargetCoverage();
+		float aBody = (itsParentSet.getTotalCoverage() -
+					itsParentSet.getTotalTargetCoverage());
+
+		// something is wrong TODO throw error
+		if (aTotalCoverage <= 0 || aTotalTargetCoverage < 0 ||
+			aTotalCoverage < aTotalTargetCoverage || aBody <= 0)
+			return 0.0f;
 		else
-		{
-			tmp.and(itsMembers);
-
-			int aTotalCoverage = itsParentSet.getTotalCoverage();
-			float aTotalTargetCoverage = itsParentSet.getTotalTargetCoverage();
-			float aBody = (itsParentSet.getTotalCoverage() -
-							itsParentSet.getTotalTargetCoverage());
-
-			// something is wrong
-			if (aTotalCoverage <= 0 || aTotalTargetCoverage < 0 ||
-				aTotalCoverage < aTotalTargetCoverage || aBody <= 0)
-				return 0.0f;
-			else
-				// tmp.cardinality() = aHeadBody
-				return (itsCoverage - tmp.cardinality()) / aBody;
-		}
+			return (itsCoverage - tmp.cardinality()) / aBody;
 	}
 
 	public double getPValue()

@@ -38,9 +38,6 @@ public class TargetConcept implements XMLNodeInterface
 	// creation of TargetConcept relies on Table being loaded first
 	public TargetConcept(Node theTargetConceptNode, Table theTable)
 	{
-		if (theTargetConceptNode == null)
-			return;	// TODO throw warning dialog
-
 		NodeList aChildren = theTargetConceptNode.getChildNodes();
 		for (int i = 0, j = aChildren.getLength(); i < j; ++i)
 		{
@@ -136,8 +133,12 @@ public class TargetConcept implements XMLNodeInterface
 	public boolean isSingleNominal() { return (itsTargetType == TargetType.SINGLE_NOMINAL); }
 
 	/**
-	 * Updates the TargetConcept to point to a new table that is a copy of the old table it was pointing to.
-	 * This method is used in the case of Cross Validation, where new tables are being generated for each fold.
+	 * Updates the TargetConcept to point to a new {@link Table} that is a
+	 * copy of the old <code>Table</code> it was pointing to.
+	 * This method is used in the case of {@link CrossValidation}, where new
+	 * <code>Table</code>s are being generated for each fold.
+	 * 
+	 * @param theTable
 	 */
 	public void updateToNewTable(Table theTable)
 	{
@@ -162,7 +163,9 @@ public class TargetConcept implements XMLNodeInterface
 			itsMultiTargets = aList;
 		}
 
-		//etc... for tertiary targets and multi-regression, when that is stable
+		// TODO
+		//etc...
+		//for tertiary targets and multi-regression, when that is stable
 	}
 
 	public boolean isTargetAttribute(Column theColumn)
