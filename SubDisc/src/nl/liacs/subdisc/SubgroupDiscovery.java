@@ -264,7 +264,6 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		{
 			case NUMERIC_ALL :
 			{
-				//float[] aSplitPoints = itsTable.getUniqueNumericDomain(anAttributeIndex, theSubgroup.getMembers());
 				float[] aSplitPoints = theRefinement.getCondition().getColumn().getUniqueNumericDomain(theSubgroup.getMembers());
 				for (float aSplit : aSplitPoints)
 				{
@@ -297,11 +296,11 @@ public class SubgroupDiscovery extends MiningAlgorithm
 			{
 				float[] aSplitPoints = theRefinement.getCondition().getColumn().getUniqueNumericDomain(theSubgroup.getMembers());
 				float aMax = Float.NEGATIVE_INFINITY;
-				float aBest = aSplitPoints[0];
 				Subgroup aBestSubgroup = null;
+				Subgroup aNewSubgroup;
 				for (float aSplit : aSplitPoints)
 				{
-					Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(Float.toString(aSplit));
+					aNewSubgroup = theRefinement.getRefinedSubgroup(Float.toString(aSplit));
 
 					final int aNewCoverage = aNewSubgroup.getCoverage();
 					if (aNewCoverage >= itsMinimumCoverage && aNewCoverage <= itsMaximumCoverage && aNewCoverage < anOldCoverage)
@@ -312,7 +311,6 @@ public class SubgroupDiscovery extends MiningAlgorithm
 							aMax = aQuality;
 							aNewSubgroup.setMeasureValue(aQuality);
 							aBestSubgroup = aNewSubgroup;
-							aBest = aSplit;
 						}
 					}
 				}
@@ -409,7 +407,8 @@ public class SubgroupDiscovery extends MiningAlgorithm
 					}*/
 
 					// the linear algo
-					int anEvalCounter = 0;
+					@SuppressWarnings("unused")
+					int anEvalCounter = 0; // debug counter
 					ConvexHull [] aHulls = new ConvexHull[aRBICT.getNrBaseIntervals()];
 					int aPi = 0;
 					int aNi = 0;
@@ -475,8 +474,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		{
 			NominalCrossTable aNCT = new NominalCrossTable(aDomain, aCondition.getColumn(), theSubgroup, itsBinaryTarget);
 
-			double aBestQuality = Double.NEGATIVE_INFINITY;
-			ValueSet aBestSubset = new ValueSet();
+			final SortedSet<String> aDomainBestSubSet = new TreeSet<String>();
 
 			if (itsSearchParameters.getQualityMeasure() == QualityMeasure.WRACC)
 			{
@@ -487,17 +485,14 @@ public class SubgroupDiscovery extends MiningAlgorithm
 					int aNi = aNCT.getNegativeCount(i);
 					// include values with WRAcc=0 too, result has same WRAcc but higher support
 					if (aPi >= aRatio * (aPi + aNi))
-						aBestSubset.add(aNCT.getValue(i));
+						aDomainBestSubSet.add(aNCT.getValue(i));
 				}
-
-				Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(aBestSubset);
-				Log.logCommandLine("values: "  + aBestSubset);
-				checkAndLog(aNewSubgroup, anOldCoverage);
 			}
 			else // not WRACC
 			{
 				// construct and check all subsets on the convex hull
 				List<Integer> aSortedDomainIndices = aNCT.getSortedDomainIndices();
+				double aBestQuality = Double.NEGATIVE_INFINITY;
 
 				// upper part of the hull
 				int aP = 0;
@@ -518,7 +513,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 						aBestQuality = aQuality;
 						for (int j = aPrevBestI+1; j <= i; j++) {
 							String aValue = aNCT.getValue(aSortedDomainIndices.get(j).intValue());
-							aBestSubset.add(aValue);
+							aDomainBestSubSet.add(aValue);
 						}
 						aPrevBestI = i;
 					}
@@ -536,13 +531,13 @@ public class SubgroupDiscovery extends MiningAlgorithm
 
 				if (false && !anAsymmetricQM) // TODO: fix this for depth > 1, check only upper OR lower hull
 				{
-					if (aBestSubset.size() > aNCT.size()/2) // prefer complement if smaller
+					if (aDomainBestSubSet.size() > aNCT.size()/2) // prefer complement if smaller
 					{
-						aBestSubset.clear();
+						aDomainBestSubSet.clear();
 						for (int j = aPrevBestI + 1; j < aSortedDomainIndices.size(); j++)
 						{
 							String aValue = aNCT.getValue(aSortedDomainIndices.get(j).intValue());
-							aBestSubset.add(aValue);
+							aDomainBestSubSet.add(aValue);
 						}
 					}
 				}
@@ -565,32 +560,35 @@ public class SubgroupDiscovery extends MiningAlgorithm
 						if (aQuality > aBestQuality) {
 							aBestQuality = aQuality;
 							if (aPrevBestI == -1) {
-								aBestSubset.clear();
+								aDomainBestSubSet.clear();
 								aPrevBestI = aSortedDomainIndices.size();
 							}
 							for (int j = aPrevBestI-1; j >= i; j--) {
 								String aValue = aNCT.getValue(aSortedDomainIndices.get(j).intValue());
-								aBestSubset.add(aValue);
+								aDomainBestSubSet.add(aValue);
 							}
 							aPrevBestI = i;
 						}
 					}
 				}
+			}
 
-				if (aBestSubset.size() != 0)
-				{
-					Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(aBestSubset);
-					Log.logCommandLine("values: "  + aBestSubset);
-					checkAndLog(aNewSubgroup, anOldCoverage);
-				}
+			if (aDomainBestSubSet.size() != 0)
+			{
+				final ValueSet aBestSubset = new ValueSet(aDomainBestSubSet);
+				Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(aBestSubset);
+				Log.logCommandLine("values: "  + aBestSubset);
+				checkAndLog(aNewSubgroup, anOldCoverage);
 			}
 		}
 		else //regular single-value conditions
+		{
 			for (String aValue : aDomain)
 			{
 				Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(aValue);
 				checkAndLog(aNewSubgroup, anOldCoverage);
 			}
+		}
 	}
 
 	/*
@@ -1003,26 +1001,18 @@ TODO for stable jar, disabled, causes comple errors, reinstate later
 	 */
 	public void mine(long theBeginTime, int theNrThreads)
 	{
-
+		final int aQualityMeasure = itsSearchParameters.getQualityMeasure();
 
 		//fill the conditionList of local and global knowledge, Rob
-		if (itsSearchParameters.getQualityMeasure()==QualityMeasure.PROP_SCORE_WRACC|itsSearchParameters.getQualityMeasure()==QualityMeasure.PROP_SCORE_RATIO){
+		if (aQualityMeasure == QualityMeasure.PROP_SCORE_WRACC || aQualityMeasure == QualityMeasure.PROP_SCORE_RATIO)
+		{
 			ExternalKnowledgeFileLoader extKnowledge;
-			try {
-				extKnowledge = new ExternalKnowledgeFileLoader(new File("").getAbsolutePath());
-				extKnowledge.createConditionListLocal(itsTable);
-				extKnowledge.createConditionListGlobal(itsTable);
-				itsLocalKnowledge = new LocalKnowledge(extKnowledge.getLocal(),itsBinaryTarget);
-				itsGlobalKnowledge = new GlobalKnowledge(extKnowledge.getGlobal(),itsBinaryTarget);
-
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-
+			extKnowledge = new ExternalKnowledgeFileLoader(new File("").getAbsolutePath());
+			extKnowledge.createConditionListLocal(itsTable);
+			extKnowledge.createConditionListGlobal(itsTable);
+			itsLocalKnowledge = new LocalKnowledge(extKnowledge.getLocal(), itsBinaryTarget);
+			itsGlobalKnowledge = new GlobalKnowledge(extKnowledge.getGlobal(), itsBinaryTarget);
 		}
-
-
 
 		if (theNrThreads < 0)
 		{
@@ -1104,8 +1094,13 @@ TODO for stable jar, disabled, causes comple errors, reinstate later
 					aDepth = aCandidate.getSubgroup().getDepth()+1;
 					aCurrent = aCandidate.getSubgroup().toString();
 				}
-				if (itsMainWindow !=null)
-					itsMainWindow.setTitle("d=" + aDepth + ", cands=" + itsCandidateCount.get() + ", refining " + aCurrent);
+				if (itsMainWindow != null)
+					itsMainWindow.setTitle(new StringBuilder(aCurrent.length() + 32).append("d=")
+													.append(aDepth)
+													.append(", cands=")
+													.append(itsCandidateCount.get())
+													.append(", refining ")
+													.append(aCurrent).toString());
 			}
 
 			if (aCandidate != null)
@@ -1136,7 +1131,7 @@ TODO for stable jar, disabled, causes comple errors, reinstate later
 		while(!es.isTerminated()) {};
 
 		Log.logCommandLine("number of candidates: " + itsCandidateCount.get());
-		if (itsSearchParameters.getQualityMeasure() == QualityMeasure.COOKS_DISTANCE)
+		if (aQualityMeasure == QualityMeasure.COOKS_DISTANCE)
 		{
 			Log.logCommandLine("Bound seven computed " + getNrBoundSeven() + " times");
 			Log.logCommandLine("Bound six   computed " + getNrBoundSix() + " times");

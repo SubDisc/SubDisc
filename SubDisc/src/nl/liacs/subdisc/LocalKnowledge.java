@@ -34,9 +34,10 @@ public class LocalKnowledge
 				}
 				else
 				{
-					List<ConditionList> aList = mapColumnToConditionList.get(c.getColumn());
-					aList.add(cl);
-					mapColumnToConditionList.put(c.getColumn(), aList);
+//					List<ConditionList> aList = mapColumnToConditionList.get(c.getColumn());
+//					aList.add(cl);
+//					mapColumnToConditionList.put(c.getColumn(), aList);
+					mapColumnToConditionList.get(c.getColumn()).add(cl);
 				}
 			}
 		}

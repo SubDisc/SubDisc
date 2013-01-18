@@ -405,21 +405,12 @@ public class Condition implements Comparable<Condition>
 				}
 				else // assumes ValueSet
 				{
-					//TODO how to compare two sets of values?
-					// if (A.values == B.values) return 0;
-					// determine number of A's values in B
-					// determine number of B'b values in A
-					// if (A.subset < B.subset) return -1;
-					// else if (A.subset > B.subset) return 1;
-					// else if (same subset size) compare size
-					// else (same size) order sets return compare(A[0], B[0])
-					// NOTE Integer.compare() is only introduced in Java 7
-					// NOTE 2 problematic if either size() is > 2^23
-					// not all 32-bit int values can not be 'pigeon-holed'
-					// into a 23-bit float significant
-					// FIXME use ValueSet.compareTo(ValueSet)
-					//return Float.compare(itsNominalValueSet.size(), theCondition.itsNominalValueSet.size());
-					return itsNominalValueSet.compareTo(theCondition.itsNominalValueSet);
+					if (itsNominalValueSet != theCondition.itsNominalValueSet)
+						throw new AssertionError(String.format("Multiple %ss for %s '%s'",
+											itsNominalValueSet.getClass().getSimpleName(),
+											itsColumn.getClass().getSimpleName(),
+											itsColumn.getName()));
+					return 0;
 				}
 			}
 			case NUMERIC : // deliberate fall-through to ORDINAL

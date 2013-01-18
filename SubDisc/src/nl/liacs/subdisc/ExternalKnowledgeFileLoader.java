@@ -5,12 +5,12 @@ import java.util.*;
 
 public class ExternalKnowledgeFileLoader
 {
-	private List<ConditionList> externalInfoLocal;
-	private List<ConditionList> externalInfoGlobal;
-	private List<String> linesLocal;
-	private List<String> linesGlobal;
+	private final List<ConditionList> externalInfoLocal;
+	private final List<ConditionList> externalInfoGlobal;
+	private final List<String> linesLocal;
+	private final List<String> linesGlobal;
 
-	public ExternalKnowledgeFileLoader(String theStringF) throws IOException
+	public ExternalKnowledgeFileLoader(String theStringF)
 	{
 		externalInfoLocal = new ArrayList<ConditionList>();
 		externalInfoGlobal = new ArrayList<ConditionList>();
@@ -18,126 +18,103 @@ public class ExternalKnowledgeFileLoader
 		linesLocal = new ArrayList<String>();
 
 		File f = new File(theStringF);
-		FilenameFilter extLocalKnowledge = new OnlyExt("lkf");
-		FilenameFilter extGlobalKnowledge = new OnlyExt("gkf");
-		File[] fileGlobal = f.listFiles(extGlobalKnowledge);
-		File[] fileLocal = f.listFiles(extLocalKnowledge);
 
-		if (fileGlobal.length > 0)
+		// load global knowledge file
+		readFiles(f.listFiles(new OnlyExt("gkf")), linesGlobal);
+
+		// load local knowledge file
+		readFiles(f.listFiles(new OnlyExt("lkf")), linesLocal);
+
+		print();
+	}
+
+	private static void readFiles(File[] theFiles, List<String> theLines)
+	{
+		if (theFiles.length == 0)
+			return;
+
+		// only one file is loaded for each type of knowledge
+		// change to (File f : theFiles) or (i < j)
+		for (int i = 0, j = theFiles.length; i < 1; ++i)
+			addLinesFromFile(theFiles[i], theLines);
+	}
+
+	private static void addLinesFromFile(File theFile, List<String> theLines)
+	{
+		BufferedReader br = null;
+
+		try
 		{
-			FileReader aFr = new FileReader(fileGlobal[0]);
-			BufferedReader in = new BufferedReader(aFr);
+			br = new BufferedReader(new FileReader(theFile));
 
-			String conjunction = null;
-
-			while ((conjunction = in.readLine()) != null)
+			String aLine;
+			while ((aLine = br.readLine()) != null)
+				theLines.add(aLine);
+		}
+		catch (IOException e)
+		{
+			Log.logCommandLine("Error while reading File: " + theFile);
+			if (br != null)
 			{
-				System.out.println(conjunction);
-				linesGlobal.add(conjunction);
-				System.out.println(linesGlobal);
+				try
+				{
+					br.close();
+				}
+				catch (IOException e1)
+				{
+					Log.logCommandLine("Error while closing File: " + theFile);
+				}
 			}
 		}
+	}
 
-		if (fileLocal.length > 0)
-		{
-			FileReader aFr = new FileReader(fileLocal[0]);
-			BufferedReader in = new BufferedReader(aFr);
-			String conjunction = null;
+	private void print()
+	{
+		Log.logCommandLine("\nGlobal External Knowledge:");
+		for (String s : linesGlobal)
+			Log.logCommandLine(s);
 
-			while ((conjunction = in.readLine()) != null)
-				linesLocal.add(conjunction);
-		}
+		Log.logCommandLine("\nLocal External Knowledge:");
+		for (String s : linesLocal)
+			Log.logCommandLine(s);
+
+		Log.logCommandLine("");
 	}
 
 	public void createConditionListLocal(Table theTable)
 	{
-		for (int i=0; i<linesLocal.size(); i++)
-		{
-			String conjunction = linesLocal.get(i);
-			String[] conjuncts = getConjuncts(conjunction);
-			ConditionList cl = new ConditionList();
-			for (int j=0; j<conjuncts.length; j++)
-			{
-				//fill conditionlist with conditions here, first create object by column and operator, then set value
-				String[] sa = disect(conjuncts[j]);
-				Column col = theTable.getColumn(sa[0]); //the column
-				//now get the operator
-				// int ELEMENT_OF		= 1;
-				// int EQUALS			= 2;
-				// int LESS_THAN_OR_EQUAL	= 3;
-				// int GREATER_THAN_OR_EQUAL	= 4;
-				// int BETWEEN = 5;
-				// int NOT_AN_OPERATOR		= 99;
-//				int op = 99;
-//				if (sa[1].compareTo("=")==0){
-//					op = 2;
-//				}else if(sa[1].compareTo("!=")==0){
-//					op = 99;
-//				}else if(sa[1].compareTo("<=")==0){
-//					op = 3;
-//				}else if(sa[1].compareTo(">=")==0){
-//					op = 4;
-//				}else if(sa[1].compareTo("in")==0){
-//					op =1;
-//				}
-				Operator o = Operator.fromString(sa[1]);
-				System.out.println("operator:");
-//				System.out.println(op);
-				System.out.println(o);
-				System.out.println(sa[1]);
-//				Condition c = new Condition(col,op);
-				Condition c = new Condition(col, o);
-				//now set the value of the condition
-				System.out.println("Value");
-				System.out.println(sa[2]);
-				c.setValue(sa[2]);
-				cl.add(c);
-			}
-
-			externalInfoLocal.add(cl);
-		}
+		if (externalInfoLocal.size() == 0)
+			knowledgeToConditions(linesLocal, externalInfoLocal, theTable);
 	}
 
 	public void createConditionListGlobal(Table theTable)
 	{
-		for (int i=0; i<linesGlobal.size(); i++)
-		{
-			String conjunction = linesGlobal.get(i);
-			String[] conjuncts = getConjuncts(conjunction);
-			ConditionList cl = new ConditionList();
-			for (int j=0; j<conjuncts.length; j++)
-			{
-				//fill conditionlist with conditions here, first create object by column and operator, then set value
-				String[] sa = disect(conjuncts[j]);
-				Column col = theTable.getColumn(sa[0]); //the column
-				//now get the operator
-				// int ELEMENT_OF		= 1;
-				// int EQUALS			= 2;
-				// int LESS_THAN_OR_EQUAL	= 3;
-				// int GREATER_THAN_OR_EQUAL	= 4;
-				// int BETWEEN = 5;
-				// int NOT_AN_OPERATOR		= 99;
-//				int op = 99;
-//				if (sa[1].compareTo("=")==0){
-//					op = 2;
-//				}else if(sa[1].compareTo("!=")==0){
-//					op = 99;
-//				}else if(sa[1].compareTo("<=")==0){
-//					op = 3;
-//				}else if(sa[1].compareTo(">=")==0){
-//					op = 4;
-//				}else if(sa[1].compareTo("in")==0){
-//					op =1;
-//				}
-//				Condition c = new Condition(col,op);
-				Condition c = new Condition(col, Operator.fromString(sa[1]));
-				//now set the value of the condition
+		if (externalInfoGlobal.size() == 0)
+			knowledgeToConditions(linesGlobal, externalInfoGlobal, theTable);
+	}
 
-				c.setValue(sa[2]);
-				cl.add(c);
+	private static void knowledgeToConditions(List<String> theKnowledge, List<ConditionList> theConditionLists, Table theTable)
+	{
+		for (String aLine : theKnowledge)
+		{
+			ConditionList aConditionList = new ConditionList();
+
+			// add every conjunct to the ConditionList
+			for (String conjunct : getConjuncts(aLine))
+			{
+				String[] sa = disect(conjunct);
+				Column col = theTable.getColumn(sa[0]);
+				Operator op = Operator.fromString(sa[1]);
+
+				// create Condition using Column and Operator
+				Condition aCondition = new Condition(col, op);
+				// set Condition value
+				aCondition.setValue(sa[2]);
+				aConditionList.add(aCondition);
 			}
 
-			externalInfoGlobal.add(cl);
+			theConditionLists.add(aConditionList);
+			Log.logCommandLine(aConditionList.toString());
 		}
 	}
 
@@ -153,7 +130,7 @@ public class ExternalKnowledgeFileLoader
 	// keep in sync with 'official' Operator-string-values 
 	private static String[] getOperatorStrings()
 	{
-		final ArrayList<String> aList = new ArrayList<String>();
+		final List<String> aList = new ArrayList<String>();
 		for (Operator o : Operator.set())
 		{
 			if (o == Operator.NOT_AN_OPERATOR)
