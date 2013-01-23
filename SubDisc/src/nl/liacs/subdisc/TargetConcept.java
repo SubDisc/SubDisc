@@ -130,8 +130,6 @@ public class TargetConcept implements XMLNodeInterface
 		itsInterceptRelevance = theInterceptRelevance;
 	}
 
-	public boolean isSingleNominal() { return (itsTargetType == TargetType.SINGLE_NOMINAL); }
-
 	/**
 	 * Updates the TargetConcept to point to a new {@link Table} that is a
 	 * copy of the old <code>Table</code> it was pointing to.
@@ -168,6 +166,7 @@ public class TargetConcept implements XMLNodeInterface
 		//for tertiary targets and multi-regression, when that is stable
 	}
 
+	// FIXME MM why index and not reference comparison (Column == Column)
 	public boolean isTargetAttribute(Column theColumn)
 	{
 		int anIndex = theColumn.getIndex();
@@ -188,6 +187,11 @@ public class TargetConcept implements XMLNodeInterface
 			}
 			default :
 				return false;
+			/*
+			 * FIXME MM throw AssertionError()
+			 * eg. MULTI_BINARY_CLASSIFICATION would have no target
+			 * attribute(s) according to this code
+			 */
 		}
 	}
 

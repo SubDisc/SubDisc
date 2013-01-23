@@ -1,13 +1,15 @@
 package nl.liacs.subdisc;
 
+// XXX MM class may be useful for SubgroupROCPoint as well
 /**
  Simple class for 2D points, having 2 labels.
  */
 class HullPoint
 {
-	public float itsX;
-	public float itsY;
-	public float itsLabel1;
+	public final float itsX;
+	public final float itsY;
+	public final float itsLabel1;
+	// not final, (re)set by ConvexHull, 'save' as class is package-private
 	public float itsLabel2;
 
 	public HullPoint(float theX, float theY, float theLabel1, float theLabel2)
@@ -37,13 +39,10 @@ class HullPoint
 public class ConvexHull
 {
 	private HullPoint [][] itsHullPoints;
-	private static final float itsDefaultLabel = Float.NEGATIVE_INFINITY;
 
 	private ConvexHull()
 	{
 		itsHullPoints = new HullPoint[2][];
-
-		return; // TODO obsolete?
 	}
 
 	/* construct single point hull
@@ -57,8 +56,6 @@ public class ConvexHull
 			itsHullPoints[aSide] = new HullPoint[1];
 			itsHullPoints[aSide][0] = new HullPoint(theX, theY, theLabel1, theLabel2);
 		}
-
-		return; // TODO obsolete?
 	}
 
 	public int getSize(int theSide)
@@ -88,7 +85,8 @@ public class ConvexHull
 			int aPruneCnt = 0;
 			int[] aNextList = new int[aLen];
 			int[] aPrevList = new int[aLen];
-			for (int i = 0; i < aLen; i++) {
+			for (int i = 0; i < aLen; i++)
+			{
 				aNextList[i] = i + 1;
 				aPrevList[i] = i - 1;
 			}
@@ -127,8 +125,6 @@ public class ConvexHull
 			}
 			itsHullPoints[aSide] = aNewHullPoints;
 		}
-
-		return; // TODO obsolete?
 	}
 
 	/*

@@ -2,8 +2,8 @@ package nl.liacs.subdisc;
 
 public class Interval
 {
-	private float itsLower;
-	private float itsUpper;
+	private final float itsLower;
+	private final float itsUpper;
 
 	public Interval(float theLower, float theUpper)
 	{
@@ -22,7 +22,4 @@ public class Interval
 		String aRight = (itsUpper == Float.POSITIVE_INFINITY) ? "inf)" : (Float.toString(itsUpper) + "]");
 		return new StringBuilder(32).append("(").append(aLeft).append(", ").append(aRight).toString();
 	}
-
-	public float getLower() { return itsLower; }
-	public float getUpper() { return itsUpper; }
 }

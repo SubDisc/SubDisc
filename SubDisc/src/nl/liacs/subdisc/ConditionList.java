@@ -59,7 +59,7 @@ public class ConditionList extends ArrayList<Condition> implements Comparable<Co
 
 	//this method computes logical equivalence. This means that the actual number of conditions or the order may differ.
 	//Just as long as it effectively selects the same subgroup, no matter what the database is.
-	//This method currently doesn't consider equavalence of the type a<10&a<20 vs. a<10 etc.
+	//This method currently doesn't consider equivalence of the type a<10&a<20 vs. a<10 etc.
 	@Override
 	public boolean equals(Object theObject)
 	{

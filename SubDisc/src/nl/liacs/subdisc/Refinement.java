@@ -2,8 +2,8 @@ package nl.liacs.subdisc;
 
 public class Refinement
 {
-	private Subgroup itsSubgroup;
-	private Condition itsCondition;
+	private final Subgroup itsSubgroup;
+	private final Condition itsCondition;
 
 	public Refinement(Condition aCondition, Subgroup aSubgroup)
 	{
@@ -42,8 +42,6 @@ public class Refinement
 	}
 
 	public Condition getCondition() { return itsCondition; }
-
-	public void setCondition(Condition theCondition) { itsCondition = theCondition; }
 
 	public Subgroup getSubgroup() { return itsSubgroup; }
 }

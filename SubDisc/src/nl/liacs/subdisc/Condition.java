@@ -182,6 +182,10 @@ public class Condition implements Comparable<Condition>
 	 * Refinement getRefinedSubgroup
 	 * SubgroupDiscovery single nominal constructor
 	 * Validation getRandomConditionList randomConditions randomSubgroups
+	 * 
+	 * TODO
+	 * check if supplied value is correct and update valueIsSet
+	 * only allow value to be set once, so it can never be changed
 	 */
 	public void setValue(String theValue)
 	{
@@ -397,6 +401,15 @@ public class Condition implements Comparable<Condition>
 		{
 			case NOMINAL :
 			{
+				/*
+				 * reasoning based on (itsNominalValue != null)
+				 * is flawed, if setValue(null) is used to set
+				 * itsNominalValue for a 'SINGLE_NOMINAL'
+				 * Condition, this code erroneously assumes
+				 * ValueSet, which comparison will crash with a
+				 * NullPointerException.
+				 * FIXME add setValue() sanity-checks
+				 */
 				if (itsNominalValue != null) //single value
 				{
 					// String.compareTo() does not strictly return -1, 0, 1

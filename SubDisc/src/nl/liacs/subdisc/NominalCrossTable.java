@@ -10,9 +10,9 @@ public class NominalCrossTable
 	private int itsPositiveCount = 0; //sum
 	private int itsNegativeCount = 0; //sum
 
-	public NominalCrossTable(TreeSet<String> theDomain, Column theColumn, Subgroup theSubgroup, BitSet theTarget)
+	public NominalCrossTable(Column theColumn, Subgroup theSubgroup, BitSet theTarget)
 	{
-		itsValues = theDomain.toArray(new String[0]);
+		itsValues = theColumn.getDomain().toArray(new String[0]);
 		itsPositiveCounts = new int[itsValues.length];
 		itsNegativeCounts = new int[itsValues.length];
 

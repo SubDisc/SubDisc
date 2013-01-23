@@ -16,9 +16,10 @@ public class RefinementList extends ArrayList<Refinement>
 		itsTable = theTable;
 
 		final SearchParameters aSP = theSearchParameters;
-		final TargetConcept aTC = aSP.getTargetConcept();
+		final boolean useSets = aSP.getNominalSets();
 		final NumericOperatorSetting aNO = aSP.getNumericOperatorSetting();
-		final boolean useSets = theSearchParameters.getNominalSets();
+		final TargetConcept aTC = aSP.getTargetConcept();
+		final boolean isSingleNominalTT = (aTC.getTargetType() == TargetType.SINGLE_NOMINAL);
 
 		Condition aCondition = itsTable.getFirstCondition();
 		do
@@ -38,7 +39,8 @@ public class RefinementList extends ArrayList<Refinement>
 				//nominal
 				else if (aColumn.isNominalType() && !useSets && aCondition.isEquals())
 				{
-					if (aTC.isSingleNominal() || aCondition.getOperator() != Operator.ELEMENT_OF) // set-valued only allowed for SINGLE_NOMINAL
+					// set-valued only allowed for SINGLE_NOMINAL
+					if (isSingleNominalTT || aCondition.getOperator() != Operator.ELEMENT_OF)
 						add = true;
 				}
 				else if (aColumn.isNominalType() && useSets && aCondition.isElementOf())

@@ -466,17 +466,16 @@ public class SubgroupDiscovery extends MiningAlgorithm
 
 	private void evaluateNominalBinaryRefinements(Subgroup theSubgroup, Refinement theRefinement)
 	{
+		final int aQualityMeasure = itsSearchParameters.getQualityMeasure();
 		Condition aCondition = theRefinement.getCondition();
-		TreeSet<String> aDomain = aCondition.getColumn().getDomain();
 		int anOldCoverage = theSubgroup.getCoverage();
 
 		if (aCondition.getOperator() == Operator.ELEMENT_OF) //set-valued. Note that this implies that the target type is SINGLE_NOMINAL
 		{
-			NominalCrossTable aNCT = new NominalCrossTable(aDomain, aCondition.getColumn(), theSubgroup, itsBinaryTarget);
-
+			NominalCrossTable aNCT = new NominalCrossTable(aCondition.getColumn(), theSubgroup, itsBinaryTarget);
 			final SortedSet<String> aDomainBestSubSet = new TreeSet<String>();
 
-			if (itsSearchParameters.getQualityMeasure() == QualityMeasure.WRACC)
+			if (aQualityMeasure == QualityMeasure.WRACC)
 			{
 				float aRatio = itsQualityMeasure.getNrPositives() / (float)(itsQualityMeasure.getNrRecords());
 				for (int i = 0; i < aNCT.size(); i++)
@@ -491,28 +490,31 @@ public class SubgroupDiscovery extends MiningAlgorithm
 			else // not WRACC
 			{
 				// construct and check all subsets on the convex hull
-				List<Integer> aSortedDomainIndices = aNCT.getSortedDomainIndices();
+				final List<Integer> aSortedDomainIndices = aNCT.getSortedDomainIndices();
+				final int aSortedDomainIndicesSize = aSortedDomainIndices.size();
 				double aBestQuality = Double.NEGATIVE_INFINITY;
 
 				// upper part of the hull
 				int aP = 0;
 				int aN = 0;
 				int aPrevBestI = -1;
-				for (int i = 0; i < aSortedDomainIndices.size() - 1; i++)
+				for (int i = 0; i < aSortedDomainIndicesSize - 1; i++)
 				{
-					int anIndex = aSortedDomainIndices.get(i).intValue();
+					int anIndex = aSortedDomainIndices.get(i);
 					int aPi = aNCT.getPositiveCount(anIndex);
 					int aNi = aNCT.getNegativeCount(anIndex);
 					aP += aPi;
 					aN += aNi;
-					int aNextIndex = aSortedDomainIndices.get(i+1).intValue();
-					if (i < aSortedDomainIndices.size()-2 && aPi * aNCT.getNegativeCount(aNextIndex) == aNCT.getPositiveCount(aNextIndex) * aNi) // skip checking degenerate hull points
+					int aNextIndex = aSortedDomainIndices.get(i+1);
+					if (i < aSortedDomainIndicesSize-2 && aPi * aNCT.getNegativeCount(aNextIndex) == aNCT.getPositiveCount(aNextIndex) * aNi) // skip checking degenerate hull points
 						continue;
 					double aQuality = itsQualityMeasure.calculate(aP, aP + aN);
-					if (aQuality > aBestQuality) {
+					if (aQuality > aBestQuality)
+					{
 						aBestQuality = aQuality;
-						for (int j = aPrevBestI+1; j <= i; j++) {
-							String aValue = aNCT.getValue(aSortedDomainIndices.get(j).intValue());
+						for (int j = aPrevBestI+1; j <= i; j++)
+						{
+							String aValue = aNCT.getValue(aSortedDomainIndices.get(j));
 							aDomainBestSubSet.add(aValue);
 						}
 						aPrevBestI = i;
@@ -523,10 +525,10 @@ public class SubgroupDiscovery extends MiningAlgorithm
 				// TODO: complete list of QMs
 				boolean aLowIsDominatedQM = false;
 				boolean anAsymmetricQM = true;
-				if (itsSearchParameters.getQualityMeasure() == QualityMeasure.BINOMIAL)
+				if (aQualityMeasure == QualityMeasure.BINOMIAL)
 					aLowIsDominatedQM = true;
-				if (itsSearchParameters.getQualityMeasure() == QualityMeasure.CHI_SQUARED ||
-					itsSearchParameters.getQualityMeasure() == QualityMeasure.INFORMATION_GAIN)
+				if (aQualityMeasure == QualityMeasure.CHI_SQUARED ||
+						aQualityMeasure == QualityMeasure.INFORMATION_GAIN)
 					anAsymmetricQM = false;
 
 				if (false && !anAsymmetricQM) // TODO: fix this for depth > 1, check only upper OR lower hull
@@ -534,9 +536,9 @@ public class SubgroupDiscovery extends MiningAlgorithm
 					if (aDomainBestSubSet.size() > aNCT.size()/2) // prefer complement if smaller
 					{
 						aDomainBestSubSet.clear();
-						for (int j = aPrevBestI + 1; j < aSortedDomainIndices.size(); j++)
+						for (int j = aPrevBestI + 1; j < aSortedDomainIndicesSize; j++)
 						{
-							String aValue = aNCT.getValue(aSortedDomainIndices.get(j).intValue());
+							String aValue = aNCT.getValue(aSortedDomainIndices.get(j));
 							aDomainBestSubSet.add(aValue);
 						}
 					}
@@ -546,25 +548,28 @@ public class SubgroupDiscovery extends MiningAlgorithm
 					aP = 0;
 					aN = 0;
 					aPrevBestI = -1;
-					for (int i = aSortedDomainIndices.size() - 1; i > 0; i--)
+					for (int i = aSortedDomainIndicesSize - 1; i > 0; i--)
 					{
 						int anIndex = aSortedDomainIndices.get(i).intValue();
 						int aPi = aNCT.getPositiveCount(anIndex);
 						int aNi = aNCT.getNegativeCount(anIndex);
 						aP += aPi;
 						aN += aNi;
-						int aPrevIndex = aSortedDomainIndices.get(i-1).intValue();
+						int aPrevIndex = aSortedDomainIndices.get(i-1);
 						if (i > 1 && aPi * aNCT.getNegativeCount(aPrevIndex) == aNCT.getPositiveCount(aPrevIndex) * aNi)
 							continue; // skip degenerate hull points
 						double aQuality = itsQualityMeasure.calculate(aP, aP + aN);
-						if (aQuality > aBestQuality) {
+						if (aQuality > aBestQuality)
+						{
 							aBestQuality = aQuality;
-							if (aPrevBestI == -1) {
+							if (aPrevBestI == -1)
+							{
 								aDomainBestSubSet.clear();
-								aPrevBestI = aSortedDomainIndices.size();
+								aPrevBestI = aSortedDomainIndicesSize;
 							}
-							for (int j = aPrevBestI-1; j >= i; j--) {
-								String aValue = aNCT.getValue(aSortedDomainIndices.get(j).intValue());
+							for (int j = aPrevBestI-1; j >= i; j--)
+							{
+								String aValue = aNCT.getValue(aSortedDomainIndices.get(j));
 								aDomainBestSubSet.add(aValue);
 							}
 							aPrevBestI = i;
@@ -583,7 +588,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		}
 		else //regular single-value conditions
 		{
-			for (String aValue : aDomain)
+			for (String aValue : aCondition.getColumn().getDomain())
 			{
 				Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(aValue);
 				checkAndLog(aNewSubgroup, anOldCoverage);
