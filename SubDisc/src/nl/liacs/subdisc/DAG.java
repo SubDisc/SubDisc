@@ -5,7 +5,8 @@ import java.util.*;
 public class DAG
 {
 	private double itsQuality;
-	private int noArcs; // TODO value is incremented/ decremented but never used for anything
+	@SuppressWarnings("unused")
+	private int noArcs; // debug counter
 	private int itsSize;
 	private List<NetworkNode> dagNode; //index is nodeId, value is Node
 
@@ -22,7 +23,7 @@ public class DAG
 			itsQuality += getNode(i).getQuality();
 		}
 
-		noArcs=0;
+		noArcs = 0;
 		visitation = new int[theSize];
 	}
 

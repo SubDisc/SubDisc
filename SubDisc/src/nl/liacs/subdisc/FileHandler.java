@@ -14,8 +14,6 @@ import nl.liacs.subdisc.gui.*;
 
 public class FileHandler
 {
-	private static final long serialVersionUID = 1L;
-
 	public static enum Action
 	{
 		OPEN_FILE, OPEN_DATABASE, SAVE
