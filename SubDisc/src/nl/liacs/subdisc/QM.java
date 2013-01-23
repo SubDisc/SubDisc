@@ -1,14 +1,17 @@
 package nl.liacs.subdisc;
 
+import java.util.*;
+
 public enum QM implements EnumInterface
 {
 	// ENUM		GUI text		default measure minimum
+
 	// SINGLE_NOMINAL quality measures
-	WRACC		("WRAcc",		"0.01"),
-	ABSWRACC	("Abs WRAcc",		"0.01"),
+	WRACC		("WRAcc",		"0.02"),
+	ABSWRACC	("Abs WRAcc",		"0.02"),
 	CHI_SQUARED	("Chi-squared",		"50"),
-	INFORMATION_GAIN("Information gain",	"0"),
-	BINOMIAL	("Binomial test",	"0.0"),
+	INFORMATION_GAIN("Information gain",	"0.02"),
+	BINOMIAL	("Binomial test",	"0.05"),
 	ACCURACY	("Accuracy",		"0.0"),
 	PURITY		("Purity",		"0.5"),
 	JACCARD		("Jaccard",		"0.2"),
@@ -19,37 +22,50 @@ public enum QM implements EnumInterface
 	F_MEASURE	("F-measure",		"0.2"),
 	G_MEASURE	("G-measure",		"0.2"),
 	CORRELATION	("Correlation",		"0.1"),
-	//SINGLE_NUMERIC quality measures
+	PROP_SCORE_WRACC("Propensity score wracc",	"-0.25"),
+	PROP_SCORE_RATIO("Propensity score ratio",	"1.0"),
+	BAYESIAN_SCORE	("Bayesian Score", "0.0"),
+
+	// SINGLE_NUMERIC quality measures
 	Z_SCORE		("Z-Score",		"1.0"),
 	INVERSE_Z_SCORE	("Inverse Z-Score",	"1.0"),
 	ABS_Z_SCORE	("Abs Z-Score",		"1.0"),
-	AVERAGE		("Average",		"0.0"),	// TODO
-	INVERSE_AVERAGE	("Inverse Average",	"0.0"),	// TODO
+	AVERAGE		("Average",		"0.0"),	// TODO MM bogus value
+	INVERSE_AVERAGE	("Inverse Average",	"0.0"),	// TODO MM bogus value
 	MEAN_TEST	("Mean Test",		"0.01"),
 	INVERSE_MEAN_TEST("Inverse Mean Test",	"0.01"),
 	ABS_MEAN_TEST	("Abs Mean Test",	"0.01"),
 	T_TEST		("t-Test",		"1.0"),
 	INVERSE_T_TEST	("Inverse t-Test",	"1.0"),
 	ABS_T_TEST	("Abs t-Test",		"1.0"),
-	CHI2_TEST	("Median Chi-squared test", "2.5"),
-	//SINGLE_ORDINAL quality measures
+	CHI2_TEST	("Median Chi-squared test",	"2.5"), // TODO see itsPopulationCounts
+	HELLINGER	("Squared Hellinger distance",	"0.0"),
+	KULLBACKLEIBLER	("Kullback-Leibler divergence",	"0.0"),
+	CWRACC		("CWRAcc", "0.0"),
+
+	// SINGLE_ORDINAL quality measures
 	AUC		("AUC of ROC",		"0.5"),
 	WMW_RANKS	("WMW-Ranks test",	"1.0"),
-	INVERSE_WMW_RANKS("Inverse WMW-Ranks test", "1.0"),
+	INVERSE_WMW_RANKS("Inverse WMW-Ranks test",	"1.0"),
 	ABS_WMW_RANKS	("Abs WMW-Ranks test",	"1.0"),
 	MMAD		("Median MAD metric",	"0"),
-	//MULTI_LABEL quality measures
+
+	// MULTI_LABEL quality measures
 	WEED		("Wtd Ent Edit Dist",	"0"),
 	EDIT_DISTANCE	("Edit Distance",	"0"),
-	//DOUBLE_CORRELATION  quality measures
+
+	// DOUBLE_CORRELATION  quality measures
 	CORRELATION_R		("r",			"0.2"),
 	CORRELATION_R_NEG	("Negative r",		"0.2"),
-	CORRELATION_R_SQ	("Squared r",		"0.2"),
 	CORRELATION_R_NEG_SQ	("Neg Sqr r",		"0.2"),
+	CORRELATION_R_SQ	("Squared r",		"0.2"),
 	CORRELATION_DISTANCE	("Distance",		"0.0"),
 	CORRELATION_P		("p-Value Distance",	"0.0"),
 	CORRELATION_ENTROPY	("Wtd Ent Distance",	"0.0"),
-	//DOUBLE_REGRESSION quality measures
+	ADAPTED_WRACC		("Adapted WRAcc",	"0.0"),
+	COSTS_WRACC		("Costs WRAcc",		"0.0"),
+
+	// DOUBLE_REGRESSION quality measures
 	LINEAR_REGRESSION	("Significance of Slope Difference", "0.0"),
 	COOKS_DISTANCE		("Cook's Distance",	"0.0");
 
@@ -62,16 +78,35 @@ public enum QM implements EnumInterface
 		this.MEASURE_DEFAULT = theMeasureDefault;
 	}
 
-	public static final QM getFirstEvaluationMeasure(TargetType theTargetType)
+	/*
+	 * FIXME MM the QM declaration should indicate for which TargetType it
+	 * is valid, this is much more robust against future additions/
+	 * re-orderings of the various QMs.
+	 * 
+	 * TODO MM first/ last QualityMeasure is only used to populate GUI with
+	 * relevant QM Strings, this method could return the Strings directly
+	 */
+	public static final Set<QM> getQualityMeasures(TargetType theTargetType)
 	{
-		// TODO
-		return WRACC;
-	}
-
-	public static final QM getLastEvaluationMesure(TargetType theTargetType)
-	{
-		// TODO
-		return CORRELATION;
+		switch (theTargetType)
+		{
+			case SINGLE_NOMINAL :
+				return EnumSet.range(WRACC, BAYESIAN_SCORE);
+			case SINGLE_NUMERIC :
+				return EnumSet.range(Z_SCORE, CWRACC);
+			case SINGLE_ORDINAL :
+				return EnumSet.range(AUC, MMAD);
+			case DOUBLE_REGRESSION :
+				return EnumSet.range(LINEAR_REGRESSION, COOKS_DISTANCE);
+			case DOUBLE_CORRELATION :
+				return EnumSet.range(CORRELATION_R, COSTS_WRACC);
+			case MULTI_LABEL :
+				return EnumSet.range(WEED, EDIT_DISTANCE);
+			case MULTI_BINARY_CLASSIFICATION :
+				throw new AssertionError(theTargetType);
+			default :
+				throw new AssertionError(theTargetType);
+		}
 	}
 
 	@Override
