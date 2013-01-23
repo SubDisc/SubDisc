@@ -86,9 +86,8 @@ public class NominalCrossTable
 		// as long a itsPositiveCounts / itsNegativeCounts do not change
 		// CrossTableComparator could be saved as member of this class,
 		// instead of being recreated for each call to getSortedDomainIndices
-		// TODO: standard java implementation uses merge sort
-		//  --> use a quicksort implementing dutch national flag for large lists
-		Collections.sort(aSortedIndexList, new CrossTableComparator(itsPositiveCounts, itsNegativeCounts));
+
+		sortValues(aSortedIndexList, 0, aSortedIndexList.size()-1);
 
 		return aSortedIndexList;
 	}
@@ -98,7 +97,74 @@ public class NominalCrossTable
 		for (int i = 0; i < size(); i++)
 			Log.logCommandLine(itsValues[i] + ": (" + itsPositiveCounts[i] + ", " + itsNegativeCounts[i] + ")");
 	}
-
+	
+	
+	/*
+	 Sort values based on pos/neg ratios.
+	 Complexity is asymptotically optimal, however, if aOptimalSort==false it reverts
+	 to java's builtin (merge) sort, which is not optimal but probably more optimized
+	*/
+	private void sortValues(List<Integer> aSortedIndexList, int l, int r)
+	{
+		CrossTableComparator aCTC = new CrossTableComparator(itsPositiveCounts, itsNegativeCounts);
+		
+		boolean aOptimalSort = false;
+		
+		if (!aOptimalSort) {
+			Collections.sort(aSortedIndexList, aCTC);
+		}
+		else {
+			
+			int i = l - 1;
+			int j = r;
+			int p = l - 1;
+			int q = r;
+			
+			if (r <= l) return;
+			Integer arr = aSortedIndexList.get(r);
+			for ( ; ; )
+			{
+				while (aCTC.compare(aSortedIndexList.get(++i), arr) < 0 );
+				while (aCTC.compare(arr, aSortedIndexList.get(--j)) < 0 )
+					if (j == l) break;
+				if (i >= j) break;
+				exchange(aSortedIndexList, i, j);
+				if (aCTC.compare(aSortedIndexList.get(i), arr) == 0) {
+					p++;
+					exchange(aSortedIndexList, p, i);
+				}
+				if (aCTC.compare(arr, aSortedIndexList.get(j)) == 0) {
+					q--;
+					exchange(aSortedIndexList, j, q);
+				}
+			}
+			
+			exchange(aSortedIndexList, i, r);
+			
+			j = i - 1;
+			i = i + 1;
+			
+			for (int k = l; k < p; k++, j--)
+				exchange(aSortedIndexList, k, j);
+			for (int k = r-1; k > q; k--, i++)
+				exchange(aSortedIndexList, i, k);
+			
+			sortValues(aSortedIndexList, l, j);
+			sortValues(aSortedIndexList, i, r);
+		}
+		
+		return;
+	}
+	
+	private void exchange(List<Integer> aSortedIndexList, int i, int j)
+	{
+		Integer tmp = aSortedIndexList.get(i);
+		aSortedIndexList.set(i, aSortedIndexList.get(j));
+		aSortedIndexList.set(j, tmp);
+		
+		return;
+	}
+	
 	// move to separate class upon discretion
 	private class CrossTableComparator implements Comparator<Integer>
 	{
@@ -109,8 +175,8 @@ public class NominalCrossTable
 		CrossTableComparator(int[] thePositiveCounts, int[] theNegativeCounts)
 		{
 			// XXX NOTE int[] arguments are not used here!!!
-			itsPosCounts = itsPositiveCounts;
-			itsNegCounts = itsPositiveCounts;
+			itsPosCounts = thePositiveCounts;
+			itsNegCounts = theNegativeCounts;
 		}
 
 		@Override
