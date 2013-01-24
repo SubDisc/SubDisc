@@ -30,15 +30,15 @@ public enum QM implements EnumInterface
 	Z_SCORE		("Z-Score",		"1.0"),
 	INVERSE_Z_SCORE	("Inverse Z-Score",	"1.0"),
 	ABS_Z_SCORE	("Abs Z-Score",		"1.0"),
-	AVERAGE		("Average",		"0.0"),	// TODO MM bogus value
-	INVERSE_AVERAGE	("Inverse Average",	"0.0"),	// TODO MM bogus value
+	AVERAGE		("Average",		"0.0"),	// XXX bogus value
+	INVERSE_AVERAGE	("Inverse Average",	"0.0"),	// XXX bogus value
 	MEAN_TEST	("Mean Test",		"0.01"),
 	INVERSE_MEAN_TEST("Inverse Mean Test",	"0.01"),
 	ABS_MEAN_TEST	("Abs Mean Test",	"0.01"),
 	T_TEST		("t-Test",		"1.0"),
 	INVERSE_T_TEST	("Inverse t-Test",	"1.0"),
 	ABS_T_TEST	("Abs t-Test",		"1.0"),
-	CHI2_TEST	("Median Chi-squared test",	"2.5"), // TODO see itsPopulationCounts
+	CHI2_TEST	("Median Chi-squared test",	"2.5"), // TODO MM see QualityMeasure.itsPopulationCounts
 	HELLINGER	("Squared Hellinger distance",	"0.0"),
 	KULLBACKLEIBLER	("Kullback-Leibler divergence",	"0.0"),
 	CWRACC		("CWRAcc", "0.0"),
@@ -107,6 +107,23 @@ public enum QM implements EnumInterface
 			default :
 				throw new AssertionError(theTargetType);
 		}
+	}
+
+	/**
+	 * Returns the QM corresponding to the supplied {@code String} parameter
+	 *  based on the various {@link QM#GUI_TEXT}s.
+	 * 
+	 * @param theText the {@codeString} corresponding to a QM.
+	 * 
+	 * @return a QM, or {@code null} if no corresponding QM is found.
+	 */
+	public static QM fromString(String theText)
+	{
+		for (QM qm : QM.values())
+			if (qm.GUI_TEXT.equalsIgnoreCase(theText))
+				return qm;
+
+		return null;
 	}
 
 	@Override

@@ -172,16 +172,19 @@ public class Process
 		tc.setTargetType(TargetType.SINGLE_NOMINAL.GUI_TEXT);
 		tc.setTargetValue("1");
 		// set an alternative quality measure
-		final int qm = theSearchParameters.getQualityMeasure();
-		final int altQM = QualityMeasure.WRACC;
+// MM		final int qm = theSearchParameters.getQualityMeasure();
+		final QM qm = theSearchParameters.getQualityMeasure();
+// MM		final int altQM = QualityMeasure.WRACC;
+		final QM altQM = QM.WRACC;
 		theSearchParameters.setQualityMeasure(altQM);
 		// set an alternative quality measure minimum
 		final float mm = theSearchParameters.getQualityMeasureMinimum();
 //		final float mm = -0.25f;
-		final String altName = QualityMeasure.getMeasureString(altQM);
-		theSearchParameters.setQualityMeasureMinimum(
-			Float.parseFloat(QualityMeasure.getMeasureMinimum(altName, 0)));
+// MM		final String altName = QualityMeasure.getMeasureString(altQM);
+// MM		theSearchParameters.setQualityMeasureMinimum(
+// MM			Float.parseFloat(QualityMeasure.getMeasureMinimum(altName, 0)));
 //				-0.25f);
+		theSearchParameters.setQualityMeasureMinimum(Float.parseFloat(altQM.MEASURE_DEFAULT));
 
 		SubgroupSet aHeavySubgroupSet = new SubgroupSet(-1);
 

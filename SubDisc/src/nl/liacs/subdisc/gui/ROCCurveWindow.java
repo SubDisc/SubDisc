@@ -152,21 +152,36 @@ public class ROCCurveWindow extends JFrame implements ActionListener
 
 		switch (itsSearchParameters.getQualityMeasure())
 		{
-			case (QualityMeasure.WRACC) : aContent += "splot WRAcc(x,y) lt 3 lw 0.5;\n"; break;
-			case (QualityMeasure.ABSWRACC) : aContent += "splot absWRAcc(x,y) lt 3 lw 0.5;\n"; break;
-			case (QualityMeasure.CHI_SQUARED) : aContent += "splot Chi2(x,y) lt 3 lw 0.5;\n"; break;
-			case (QualityMeasure.INFORMATION_GAIN) : aContent += "splot IG(x,y) lt 3 lw 0.5;\n"; break;
-			case (QualityMeasure.BINOMIAL) : aContent += "splot Binomial(x,y) lt 3 lw 0.5;\n"; break;
-			case (QualityMeasure.JACCARD) : aContent += "splot Jaccard(x,y) lt 3 lw 0.5;\n"; break;
-			case (QualityMeasure.COVERAGE) : aContent += "splot Coverage(x,y) lt 3 lw 0.5;\n"; break;
-			case (QualityMeasure.ACCURACY) : aContent += "splot Accuracy(x,y) lt 3 lw 0.5;\n"; break;
-			case (QualityMeasure.SPECIFICITY) : aContent += "splot Specificity(x,y) lt 3 lw 0.5;\n"; break;
-			case (QualityMeasure.SENSITIVITY) : aContent += "splot Sensitivity(x,y) lt 3 lw 0.5;\n"; break;
-			case (QualityMeasure.LAPLACE) : aContent += "splot Laplace(x,y) lt 3 lw 0.5;\n"; break;
-			case (QualityMeasure.F_MEASURE) : aContent += "splot F_measure(x,y) lt 3 lw 0.5;\n"; break;
-			case (QualityMeasure.G_MEASURE) : aContent += "splot G_measure(x,y) lt 3 lw 0.5;\n"; break;
-			case (QualityMeasure.CORRELATION) : aContent += "splot Correlation(x,y) lt 3 lw 0.5;\n"; break;
-			case (QualityMeasure.PURITY) : aContent += "splot Purity(x,y) lt 3 lw 0.5;\n"; break;
+//			case (QualityMeasure.WRACC) : aContent += "splot WRAcc(x,y) lt 3 lw 0.5;\n"; break;
+//			case (QualityMeasure.ABSWRACC) : aContent += "splot absWRAcc(x,y) lt 3 lw 0.5;\n"; break;
+//			case (QualityMeasure.CHI_SQUARED) : aContent += "splot Chi2(x,y) lt 3 lw 0.5;\n"; break;
+//			case (QualityMeasure.INFORMATION_GAIN) : aContent += "splot IG(x,y) lt 3 lw 0.5;\n"; break;
+//			case (QualityMeasure.BINOMIAL) : aContent += "splot Binomial(x,y) lt 3 lw 0.5;\n"; break;
+//			case (QualityMeasure.JACCARD) : aContent += "splot Jaccard(x,y) lt 3 lw 0.5;\n"; break;
+//			case (QualityMeasure.COVERAGE) : aContent += "splot Coverage(x,y) lt 3 lw 0.5;\n"; break;
+//			case (QualityMeasure.ACCURACY) : aContent += "splot Accuracy(x,y) lt 3 lw 0.5;\n"; break;
+//			case (QualityMeasure.SPECIFICITY) : aContent += "splot Specificity(x,y) lt 3 lw 0.5;\n"; break;
+//			case (QualityMeasure.SENSITIVITY) : aContent += "splot Sensitivity(x,y) lt 3 lw 0.5;\n"; break;
+//			case (QualityMeasure.LAPLACE) : aContent += "splot Laplace(x,y) lt 3 lw 0.5;\n"; break;
+//			case (QualityMeasure.F_MEASURE) : aContent += "splot F_measure(x,y) lt 3 lw 0.5;\n"; break;
+//			case (QualityMeasure.G_MEASURE) : aContent += "splot G_measure(x,y) lt 3 lw 0.5;\n"; break;
+//			case (QualityMeasure.CORRELATION) : aContent += "splot Correlation(x,y) lt 3 lw 0.5;\n"; break;
+//			case (QualityMeasure.PURITY) : aContent += "splot Purity(x,y) lt 3 lw 0.5;\n"; break;
+			case WRACC : aContent += "splot WRAcc(x,y) lt 3 lw 0.5;\n"; break;
+			case ABSWRACC : aContent += "splot absWRAcc(x,y) lt 3 lw 0.5;\n"; break;
+			case CHI_SQUARED : aContent += "splot Chi2(x,y) lt 3 lw 0.5;\n"; break;
+			case INFORMATION_GAIN : aContent += "splot IG(x,y) lt 3 lw 0.5;\n"; break;
+			case BINOMIAL : aContent += "splot Binomial(x,y) lt 3 lw 0.5;\n"; break;
+			case ACCURACY : aContent += "splot Accuracy(x,y) lt 3 lw 0.5;\n"; break;
+			case PURITY : aContent += "splot Purity(x,y) lt 3 lw 0.5;\n"; break;
+			case JACCARD : aContent += "splot Jaccard(x,y) lt 3 lw 0.5;\n"; break;
+			case COVERAGE : aContent += "splot Coverage(x,y) lt 3 lw 0.5;\n"; break;
+			case SPECIFICITY : aContent += "splot Specificity(x,y) lt 3 lw 0.5;\n"; break;
+			case SENSITIVITY : aContent += "splot Sensitivity(x,y) lt 3 lw 0.5;\n"; break;
+			case LAPLACE : aContent += "splot Laplace(x,y) lt 3 lw 0.5;\n"; break;
+			case F_MEASURE : aContent += "splot F_measure(x,y) lt 3 lw 0.5;\n"; break;
+			case G_MEASURE : aContent += "splot G_measure(x,y) lt 3 lw 0.5;\n"; break;
+			case CORRELATION : aContent += "splot Correlation(x,y) lt 3 lw 0.5;\n"; break;
 		}
 		aContent += "set terminal postscript eps size 5,5; set output \'roc.eps\'; replot;\n";
 		aContent += "set output; set terminal pop; set size 1,1;\n";

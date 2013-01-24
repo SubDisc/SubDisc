@@ -104,7 +104,8 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		itsQualityMeasureMinimum = itsSearchParameters.getQualityMeasureMinimum();
 
 		//N.B.: Temporary lines for fetching Cook's experimental statistics
-		if (theSearchParameters.getQualityMeasure() == QualityMeasure.COOKS_DISTANCE)
+// FIXME MM	if (theSearchParameters.getQualityMeasure() == QualityMeasure.COOKS_DISTANCE)
+		if (theSearchParameters.getQualityMeasure() == QM.COOKS_DISTANCE)
 		{
 			Log.REFINEMENTLOG = true;
 			Log.openFileOutputStreams();
@@ -230,7 +231,8 @@ public class SubgroupDiscovery extends MiningAlgorithm
 				flushBuffer();
 		}
 		Log.logCommandLine("number of candidates: " + itsCandidateCount.get());
-		if (itsSearchParameters.getQualityMeasure() == QualityMeasure.COOKS_DISTANCE)
+// FIXME MM	if (itsSearchParameters.getQualityMeasure() == QualityMeasure.COOKS_DISTANCE)
+		if (itsSearchParameters.getQualityMeasure() == QM.COOKS_DISTANCE)
 		{
 			Log.logCommandLine("Bound seven computed " + getNrBoundSeven() + " times");
 			Log.logCommandLine("Bound six   computed " + getNrBoundSix() + " times");
@@ -341,7 +343,8 @@ public class SubgroupDiscovery extends MiningAlgorithm
 				double aBestQuality = Double.NEGATIVE_INFINITY;
 				Interval aBestInterval = new Interval(Float.NEGATIVE_INFINITY, Float.POSITIVE_INFINITY);
 
-				if (false && itsSearchParameters.getQualityMeasure() == QualityMeasure.WRACC)
+// FIXME MM			if (false && itsSearchParameters.getQualityMeasure() == QualityMeasure.WRACC)
+				if (false && itsSearchParameters.getQualityMeasure() == QM.WRACC)
 				{
 					long aPg = (long)itsQualityMeasure.getNrPositives();
 					long aNg = (long)itsQualityMeasure.getNrRecords() - aPg;
@@ -468,7 +471,8 @@ public class SubgroupDiscovery extends MiningAlgorithm
 
 	private void evaluateNominalBinaryRefinements(Subgroup theSubgroup, Refinement theRefinement)
 	{
-		final int aQualityMeasure = itsSearchParameters.getQualityMeasure();
+// FIXME MM	final int aQualityMeasure = itsSearchParameters.getQualityMeasure();
+		final QM aQualityMeasure = itsSearchParameters.getQualityMeasure();
 		Condition aCondition = theRefinement.getCondition();
 		int anOldCoverage = theSubgroup.getCoverage();
 
@@ -477,7 +481,8 @@ public class SubgroupDiscovery extends MiningAlgorithm
 			NominalCrossTable aNCT = new NominalCrossTable(aCondition.getColumn(), theSubgroup, itsBinaryTarget);
 			final SortedSet<String> aDomainBestSubSet = new TreeSet<String>();
 
-			if (aQualityMeasure == QualityMeasure.WRACC)
+// FIXME MM		if (aQualityMeasure == QualityMeasure.WRACC)
+			if (aQualityMeasure == QM.WRACC)
 			{
 				float aRatio = itsQualityMeasure.getNrPositives() / (float)(itsQualityMeasure.getNrRecords());
 				for (int i = 0; i < aNCT.size(); i++)
@@ -527,10 +532,12 @@ public class SubgroupDiscovery extends MiningAlgorithm
 				// TODO: complete list of QMs
 				boolean aLowIsDominatedQM = false;
 				boolean anAsymmetricQM = true;
-				if (aQualityMeasure == QualityMeasure.BINOMIAL)
+// FIXME MM			if (aQualityMeasure == QualityMeasure.BINOMIAL)
+				if (aQualityMeasure == QM.BINOMIAL)
 					aLowIsDominatedQM = true;
-				if (aQualityMeasure == QualityMeasure.CHI_SQUARED ||
-						aQualityMeasure == QualityMeasure.INFORMATION_GAIN)
+// FIXME MM			if (aQualityMeasure == QualityMeasure.CHI_SQUARED ||
+// FIXME MM				aQualityMeasure == QualityMeasure.INFORMATION_GAIN)
+				if (aQualityMeasure == QM.CHI_SQUARED || aQualityMeasure == QM.INFORMATION_GAIN)
 					anAsymmetricQM = false;
 
 				if (false && !anAsymmetricQM) // TODO: fix this for depth > 1, check only upper OR lower hull
@@ -654,8 +661,10 @@ public class SubgroupDiscovery extends MiningAlgorithm
 				final BitSet aMembers = theNewSubgroup.getMembers();
 
 				//Rob
-				int aMeasure = itsSearchParameters.getQualityMeasure();
-				if ((aMeasure == QualityMeasure.PROP_SCORE_WRACC) || (aMeasure == QualityMeasure.PROP_SCORE_RATIO))
+// FIXME MM				int aMeasure = itsSearchParameters.getQualityMeasure();
+				QM aMeasure = itsSearchParameters.getQualityMeasure();
+// FIXME MM			if ((aMeasure == QualityMeasure.PROP_SCORE_WRACC) || (aMeasure == QualityMeasure.PROP_SCORE_RATIO))
+				if ((aMeasure == QM.PROP_SCORE_WRACC) || (aMeasure == QM.PROP_SCORE_RATIO))
 				{
 					double aCountHeadPropensityScore = 0.0;
 					PropensityScore aPropensityScore = new PropensityScore(theNewSubgroup, itsBinaryTarget, itsLocalKnowledge, itsGlobalKnowledge, "LogisticRegression");
@@ -701,7 +710,8 @@ public class SubgroupDiscovery extends MiningAlgorithm
 			case SINGLE_NUMERIC :
 			{
 				final BitSet aMembers = theNewSubgroup.getMembers();
-				float[] aCounts = itsNumericTarget.getStatistics(aMembers, itsSearchParameters.getQualityMeasure() == QualityMeasure.MMAD);
+// FIXME MM				float[] aCounts = itsNumericTarget.getStatistics(aMembers, itsSearchParameters.getQualityMeasure() == QualityMeasure.MMAD);
+				float[] aCounts = itsNumericTarget.getStatistics(aMembers, itsSearchParameters.getQualityMeasure() == QM.MMAD);
 				ProbabilityDensityFunction aPDF = new ProbabilityDensityFunction(itsQualityMeasure.getProbabilityDensityFunction(), aMembers);
 				aPDF.smooth();
 				aQuality = itsQualityMeasure.calculate(theNewSubgroup.getCoverage(), aCounts[0], aCounts[1], aCounts[2], aCounts[3], null, aPDF); //TODO fix this parameter. only used by X2
@@ -717,7 +727,8 @@ public class SubgroupDiscovery extends MiningAlgorithm
 			{
 				switch (itsBaseRM.itsType)
 				{
-					case QualityMeasure.LINEAR_REGRESSION:
+// FIXME MM				case QualityMeasure.LINEAR_REGRESSION:
+					case LINEAR_REGRESSION:
 					{
 						RegressionMeasure aRM = new RegressionMeasure(itsBaseRM, theNewSubgroup.getMembers());
 						aQuality = (float) aRM.getEvaluationMeasureValue();
@@ -1008,10 +1019,12 @@ TODO for stable jar, disabled, causes comple errors, reinstate later
 	 */
 	public void mine(long theBeginTime, int theNrThreads)
 	{
-		final int aQualityMeasure = itsSearchParameters.getQualityMeasure();
+// FIXME MM	final int aQualityMeasure = itsSearchParameters.getQualityMeasure();
+		final QM aQualityMeasure = itsSearchParameters.getQualityMeasure();
 
 		//fill the conditionList of local and global knowledge, Rob
-		if (aQualityMeasure == QualityMeasure.PROP_SCORE_WRACC || aQualityMeasure == QualityMeasure.PROP_SCORE_RATIO)
+// FIXME MM	if (aQualityMeasure == QualityMeasure.PROP_SCORE_WRACC || aQualityMeasure == QualityMeasure.PROP_SCORE_RATIO)
+		if (aQualityMeasure == QM.PROP_SCORE_WRACC || aQualityMeasure == QM.PROP_SCORE_RATIO)
 		{
 			ExternalKnowledgeFileLoader extKnowledge;
 			extKnowledge = new ExternalKnowledgeFileLoader(new File("").getAbsolutePath());
@@ -1138,7 +1151,8 @@ TODO for stable jar, disabled, causes comple errors, reinstate later
 		while(!es.isTerminated()) {};
 
 		Log.logCommandLine("number of candidates: " + itsCandidateCount.get());
-		if (aQualityMeasure == QualityMeasure.COOKS_DISTANCE)
+// FIXME MM	if (aQualityMeasure == QualityMeasure.COOKS_DISTANCE)
+		if (aQualityMeasure == QM.COOKS_DISTANCE)
 		{
 			Log.logCommandLine("Bound seven computed " + getNrBoundSeven() + " times");
 			Log.logCommandLine("Bound six   computed " + getNrBoundSix() + " times");

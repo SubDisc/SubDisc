@@ -28,7 +28,7 @@ public class RegressionMeasureCook
 	// Stores all the datapoints for the complement // TODO initialise in constructor
 	//private List<Point2D.Float> itsComplementData = new ArrayList<Point2D.Float>();
 
-	public static int itsType;
+	public static QM itsType;
 	private RegressionMeasure itsBase = null;
 
 	private Matrix itsXMatrix;
@@ -66,7 +66,7 @@ public class RegressionMeasureCook
 	private static final DecimalFormat aDf = new DecimalFormat("#.#####");
 
 	//make a base model from multiple columns
-	public RegressionMeasureCook(int theType, TargetConcept theTargetConcept)
+	public RegressionMeasureCook(QM theType, TargetConcept theTargetConcept)
 	{//TODO: Either remove legacy code, or make something decent out of it. For now, it is hacked.
 		//get target data
 		Column aPrimaryTarget = theTargetConcept.getPrimaryTarget(); 
@@ -103,9 +103,9 @@ public class RegressionMeasureCook
 			itsData.add(new Point2D.Float(thePrimaryColumn.getFloat(i), theSecondaryColumn.getFloat(i)) );
 		}*/
 
-		switch(itsType)
+		switch (itsType)
 		{
-			case QualityMeasure.LINEAR_REGRESSION:
+			case LINEAR_REGRESSION:
 			{/* TODO: fix or remove
 				itsBase = null; //this *is* the base
 				itsComplementData = null; //will remain empty for the base RM
@@ -113,7 +113,7 @@ public class RegressionMeasureCook
 				updateErrorTerms();*/
 				break;
 			}
-			case QualityMeasure.COOKS_DISTANCE:
+			case COOKS_DISTANCE:
 			{
 				//updateRegressionFunction(); //updating error terms unnecessary since Cook's distance does not care
 				//"I see no reason for this to continue"

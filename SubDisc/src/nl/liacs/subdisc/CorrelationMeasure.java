@@ -13,10 +13,12 @@ public class CorrelationMeasure
 	private boolean itsComplementIsOutdated = true; //flag indicating whether the latest computed correlation for its complement is outdated and whether it should be computed again
 	private double itsComplementCorrelation = Double.NaN;
 	private final CorrelationMeasure itsBase;
-	private final int itsType;
+// MM	private final int itsType;
+	private final QM itsType;
 
 	//make a base model from two columns
-	public CorrelationMeasure(int theType, Column thePrimaryColumn, Column theSecondaryColumn) throws IllegalArgumentException
+// MM	public CorrelationMeasure(int theType, Column thePrimaryColumn, Column theSecondaryColumn) throws IllegalArgumentException
+	public CorrelationMeasure(QM theType, Column thePrimaryColumn, Column theSecondaryColumn) throws IllegalArgumentException
 	{
 		if (!isValidCorrelationMeasureType(theType))
 			throw createQMException(theType);
@@ -50,31 +52,51 @@ public class CorrelationMeasure
 		itsType = theBase.itsType;
 	}
 
-	private static boolean isValidCorrelationMeasureType(int theType)
+	// TODO MM use QM method to retrieve Correlation type QMs
+// MM	private static boolean isValidCorrelationMeasureType(int theType)
+	private static boolean isValidCorrelationMeasureType(QM theType)
 	{
 		// explicit listing, NEVER USE A FALL-THROUGH
 		switch (theType)
 		{
-			case QualityMeasure.CORRELATION_R :		return true;
-			case QualityMeasure.CORRELATION_R_NEG :		return true;
-			case QualityMeasure.CORRELATION_R_SQ :		return true;
-			case QualityMeasure.CORRELATION_R_NEG_SQ :	return true;
-			case QualityMeasure.CORRELATION_DISTANCE :	return true;
-			case QualityMeasure.CORRELATION_P :		return true;
-			case QualityMeasure.CORRELATION_ENTROPY :	return true;
-			case QualityMeasure.ADAPTED_WRACC :		return true;
-			case QualityMeasure.COSTS_WRACC :		return true;
+//			case QualityMeasure.CORRELATION_R :		return true;
+//			case QualityMeasure.CORRELATION_R_NEG :		return true;
+//			case QualityMeasure.CORRELATION_R_SQ :		return true;
+//			case QualityMeasure.CORRELATION_R_NEG_SQ :	return true;
+//			case QualityMeasure.CORRELATION_DISTANCE :	return true;
+//			case QualityMeasure.CORRELATION_P :		return true;
+//			case QualityMeasure.CORRELATION_ENTROPY :	return true;
+//			case QualityMeasure.ADAPTED_WRACC :		return true;
+//			case QualityMeasure.COSTS_WRACC :		return true;
+//			default : return false;
+			case CORRELATION_R :		return true;
+			case CORRELATION_R_NEG :		return true;
+			case CORRELATION_R_SQ :		return true;
+			case CORRELATION_R_NEG_SQ :	return true;
+			case CORRELATION_DISTANCE :	return true;
+			case CORRELATION_P :		return true;
+			case CORRELATION_ENTROPY :	return true;
+			case ADAPTED_WRACC :		return true;
+			case COSTS_WRACC :		return true;
 			default : return false;
 		}
 	}
 
-	private static IllegalArgumentException createQMException(int theType)
+//	private static IllegalArgumentException createQMException(int theType)
+//	{
+//		return new IllegalArgumentException(
+//				String.format("%s: invalid %s-type '%s' (%d)",
+//						CorrelationMeasure.class.getSimpleName(),
+//						QualityMeasure.class.getSimpleName(),
+//						QualityMeasure.getMeasureString(theType),
+//						theType));
+//	}
+	private static IllegalArgumentException createQMException(QM theType)
 	{
 		return new IllegalArgumentException(
-				String.format("%s: invalid %s-type '%s' (%d)",
+				String.format("%s: invalid %s-type '%s'",
 						CorrelationMeasure.class.getSimpleName(),
-						QualityMeasure.class.getSimpleName(),
-						QualityMeasure.getMeasureString(theType),
+						QM.class.getSimpleName(),
 						theType));
 	}
 
@@ -205,22 +227,38 @@ public class CorrelationMeasure
 		final double aCorrelation = getCorrelation();
 		switch (itsType)
 		{
-			case QualityMeasure.CORRELATION_R: 		{ return aCorrelation; }
-			case QualityMeasure.CORRELATION_R_NEG: 		{ return -aCorrelation; }
-			case QualityMeasure.CORRELATION_R_SQ: 		{ return aCorrelation*aCorrelation;}
-			case QualityMeasure.CORRELATION_R_NEG_SQ: 	{ return -(aCorrelation*aCorrelation); }
-			case QualityMeasure.CORRELATION_DISTANCE: 	{ return computeCorrelationDistance(); }
-			case QualityMeasure.CORRELATION_P: 		{ return getPValue(); }
-			case QualityMeasure.CORRELATION_ENTROPY: 	{ return computeEntropy(); }
-			case QualityMeasure.ADAPTED_WRACC:		{ return computeAdaptedWRAcc(); } //Done: Rob Konijn
-			case QualityMeasure.COSTS_WRACC:		{ return computeCostsWRAcc(); } //Done: Rob Konijn
+//			case QualityMeasure.CORRELATION_R: 		{ return aCorrelation; }
+//			case QualityMeasure.CORRELATION_R_NEG: 		{ return -aCorrelation; }
+//			case QualityMeasure.CORRELATION_R_SQ: 		{ return aCorrelation*aCorrelation;}
+//			case QualityMeasure.CORRELATION_R_NEG_SQ: 	{ return -(aCorrelation*aCorrelation); }
+//			case QualityMeasure.CORRELATION_DISTANCE: 	{ return computeCorrelationDistance(); }
+//			case QualityMeasure.CORRELATION_P: 		{ return getPValue(); }
+//			case QualityMeasure.CORRELATION_ENTROPY: 	{ return computeEntropy(); }
+//			case QualityMeasure.ADAPTED_WRACC:		{ return computeAdaptedWRAcc(); } //Done: Rob Konijn
+//			case QualityMeasure.COSTS_WRACC:		{ return computeCostsWRAcc(); } //Done: Rob Konijn
+//			default :
+//			{
+//				throw new AssertionError(String.format("%s.getEvaluationMeasure(): unimplemented %s '%s' (%d)",
+//									this.getClass().getSimpleName(),
+//									QualityMeasure.class.getSimpleName(),
+//									QualityMeasure.getMeasureString(itsType),
+//									itsType));
+//			}
+			case CORRELATION_R:		{ return aCorrelation; }
+			case CORRELATION_R_NEG:		{ return -aCorrelation; }
+			case CORRELATION_R_SQ:		{ return aCorrelation*aCorrelation;}
+			case CORRELATION_R_NEG_SQ:	{ return -(aCorrelation*aCorrelation); }
+			case CORRELATION_DISTANCE:	{ return computeCorrelationDistance(); }
+			case CORRELATION_P:		{ return getPValue(); }
+			case CORRELATION_ENTROPY:	{ return computeEntropy(); }
+			case ADAPTED_WRACC:		{ return computeAdaptedWRAcc(); } //Done: Rob Konijn
+			case COSTS_WRACC:		{ return computeCostsWRAcc(); } //Done: Rob Konijn
 			default :
 			{
-				throw new AssertionError(String.format("%s.getEvaluationMeasure(): unimplemented %s '%s' (%d)",
+				throw new AssertionError(String.format("%s.getEvaluationMeasure(): unimplemented %s '%s'",
 									this.getClass().getSimpleName(),
-									QualityMeasure.class.getSimpleName(),
-									QualityMeasure.getMeasureString(itsType),
-									itsType));
+									QM.class.getSimpleName(),
+									itsType.GUI_TEXT));
 			}
 		}
 	}

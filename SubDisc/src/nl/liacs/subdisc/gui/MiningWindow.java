@@ -1238,7 +1238,8 @@ public class MiningWindow extends JFrame
 
 		// this ALWAYS resets alpha if switching TO EDIT_DISTANCE
 		// remove upon discretion
-		if (QualityMeasure.getMeasureString(QualityMeasure.EDIT_DISTANCE).equals(getQualityMeasureName()))
+// FIXME MM	if (QualityMeasure.getMeasureString(QualityMeasure.EDIT_DISTANCE).equals(getQualityMeasureName()))
+		if (QM.EDIT_DISTANCE.GUI_TEXT.equals(getQualityMeasureName()))
 			itsSearchParameters.setAlpha(SearchParameters.ALPHA_EDIT_DISTANCE);
 	}
 
@@ -1862,7 +1863,8 @@ public class MiningWindow extends JFrame
 				Column aPrimaryColumn = itsTargetConcept.getPrimaryTarget();
 				Column aSecondaryColumn = itsTargetConcept.getSecondaryTarget();
 				CorrelationMeasure aCM =
-					new CorrelationMeasure(QualityMeasure.CORRELATION_R, aPrimaryColumn, aSecondaryColumn);
+// FIXME MM				new CorrelationMeasure(QualityMeasure.CORRELATION_R, aPrimaryColumn, aSecondaryColumn);
+					new CorrelationMeasure(QM.CORRELATION_R, aPrimaryColumn, aSecondaryColumn);
 				jLabelTargetInfo.setText(" correlation");
 				jLFieldTargetInfo.setText(Double.toString(aCM.getEvaluationMeasureValue()));
 				break;
@@ -1885,17 +1887,21 @@ public class MiningWindow extends JFrame
 	private void initQualityMeasure()
 	{
 		removeAllQualityMeasureItems();
-		TargetType aTargetType = itsTargetConcept.getTargetType();
+// FIXME MM	TargetType aTargetType = itsTargetConcept.getTargetType();
 
-		for (int i = QualityMeasure.getFirstEvaluationMeasure(aTargetType); i <= QualityMeasure.getLastEvaluationMesure(aTargetType); i++)
-			addQualityMeasureItem(QualityMeasure.getMeasureString(i));
+// FIXME MM	for (int i = QualityMeasure.getFirstEvaluationMeasure(aTargetType); i <= QualityMeasure.getLastEvaluationMesure(aTargetType); i++)
+// FIXME MM		addQualityMeasureItem(QualityMeasure.getMeasureString(i));
+		for (QM qm : QM.getQualityMeasures(itsTargetConcept.getTargetType()))
+			addQualityMeasureItem(qm.GUI_TEXT);
 		initEvaluationMinimum();
 	}
 
 	private void initEvaluationMinimum()
 	{
 		if (getQualityMeasureName() != null)
-			setQualityMeasureMinimum(QualityMeasure.getMeasureMinimum(getQualityMeasureName(), itsTargetAverage));
+// FIXME MM		setQualityMeasureMinimum(QualityMeasure.getMeasureMinimum(getQualityMeasureName(), itsTargetAverage));
+			// FIXME MM if TargetMeasure == AVERAGE/ INVERSE AVERAGE use itsTargetAverage
+			setQualityMeasureMinimum(QM.fromString(getQualityMeasureName()).MEASURE_DEFAULT);
 	}
 
 	private void enableBaseModelButtonCheck()

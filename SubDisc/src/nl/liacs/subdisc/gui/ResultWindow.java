@@ -200,7 +200,8 @@ public class ResultWindow extends JFrame implements ActionListener
 		s.append(itsTable.getName());
 
 		s.append(";  quality measure = ");
-		s.append(QualityMeasure.getMeasureString(itsSearchParameters.getQualityMeasure()));
+// FIXME MM	s.append(QualityMeasure.getMeasureString(itsSearchParameters.getQualityMeasure()));
+		s.append(itsSearchParameters.getQualityMeasure().GUI_TEXT);
 
 		TargetType aTargetType = itsSearchParameters.getTargetType();
 		if (TargetType.hasTargetValue(aTargetType))

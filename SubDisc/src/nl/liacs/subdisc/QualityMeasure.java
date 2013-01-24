@@ -1,13 +1,14 @@
 package nl.liacs.subdisc;
 
-// TODO put Contingency table here without screwing up package classes layout.
+// TODO MM put Contingency table here without screwing up package classes layout.
 /**
  * The QualityMeasure class includes all quality measures used
  * ({@link #calculate(int, int) contingency table}).
  */
 public class QualityMeasure
 {
-	private final int itsMeasure;
+//	private final int itsMeasure;
+	private QM itsQualityMeasure; // FIXME MM non-final during development only
 	private final int itsNrRecords;
 
 	//SINGLE_NOMINAL
@@ -27,80 +28,103 @@ public class QualityMeasure
 	private static float itsBeta;
 	private static boolean[][] itsVStructures;
 
-	//SINGLE_NOMINAL quality measures
-	public static final int WRACC     		= 0;
-	public static final int ABSWRACC  		= WRACC+1;
-	public static final int CHI_SQUARED 	= ABSWRACC+1;
-	public static final int INFORMATION_GAIN = CHI_SQUARED+1;
-	public static final int BINOMIAL    	= INFORMATION_GAIN+1;
-	public static final int ACCURACY    	= BINOMIAL + 1;
-	public static final int PURITY 			= ACCURACY + 1;
-	public static final int JACCARD     	= PURITY + 1;
-	public static final int COVERAGE    	= JACCARD + 1;
-	public static final int SPECIFICITY 	= COVERAGE + 1;
-	public static final int SENSITIVITY 	= SPECIFICITY + 1;
-	public static final int LAPLACE     	= SENSITIVITY + 1;
-	public static final int F_MEASURE   	= LAPLACE + 1;
-	public static final int G_MEASURE   	= F_MEASURE + 1;
-	public static final int CORRELATION 	= G_MEASURE + 1;
-	public static final int PROP_SCORE_WRACC = CORRELATION + 1;
-	public static final int PROP_SCORE_RATIO = PROP_SCORE_WRACC + 1;
-	public static final int BAYESIAN_SCORE 	= PROP_SCORE_RATIO + 1;
-
-	//SINGLE_NUMERIC quality measures
-	public static final int Z_SCORE 		= 118;
-	public static final int INVERSE_Z_SCORE = 119;
-	public static final int ABS_Z_SCORE 	= 120;
-	public static final int AVERAGE 		= 121;
-	public static final int INVERSE_AVERAGE = 122;
-	public static final int MEAN_TEST 		= 123;
-	public static final int INVERSE_MEAN_TEST = 124;
-	public static final int ABS_MEAN_TEST 	= 125;
-	public static final int T_TEST = 126;
-	public static final int INVERSE_T_TEST 	= 127;
-	public static final int ABS_T_TEST 		= 128;
-	public static final int CHI2_TEST 		= 129;	// TODO see itsPopulationCounts
-	public static final int HELLINGER 		= 130;
-	public static final int KULLBACKLEIBLER 	= 131;
-	public static final int CWRACC 			= 132;
-
-	//SINGLE_ORDINAL quality measures
-	public static final int AUC = 30;
-	public static final int WMW_RANKS = 31;
-	public static final int INVERSE_WMW_RANKS = 32;
-	public static final int ABS_WMW_RANKS = 33;
-	public static final int MMAD = 34;
-	//MULTI_LABEL quality measures
-	public static final int WEED = 35;
-	public static final int EDIT_DISTANCE = 36;
-	//DOUBLE_CORRELATION
-	public static final int CORRELATION_R = 37;
-	public static final int CORRELATION_R_NEG = 38;
-	public static final int CORRELATION_R_NEG_SQ = 39;
-	public static final int CORRELATION_R_SQ = 40;
-	public static final int CORRELATION_DISTANCE = 41;
-	public static final int CORRELATION_P = 42;
-	public static final int CORRELATION_ENTROPY = 43;
-	public static final int ADAPTED_WRACC = 44;
-	public static final int COSTS_WRACC = 45;
-	//DOUBLE_REGRESSION
-	public static final int LINEAR_REGRESSION = 46;
-	public static final int COOKS_DISTANCE = 47;
+//	//SINGLE_NOMINAL quality measures
+//	public static final int WRACC     		= 0;
+//	public static final int ABSWRACC  		= WRACC+1;
+//	public static final int CHI_SQUARED 	= ABSWRACC+1;
+//	public static final int INFORMATION_GAIN = CHI_SQUARED+1;
+//	public static final int BINOMIAL    	= INFORMATION_GAIN+1;
+//	public static final int ACCURACY    	= BINOMIAL + 1;
+//	public static final int PURITY 			= ACCURACY + 1;
+//	public static final int JACCARD     	= PURITY + 1;
+//	public static final int COVERAGE    	= JACCARD + 1;
+//	public static final int SPECIFICITY 	= COVERAGE + 1;
+//	public static final int SENSITIVITY 	= SPECIFICITY + 1;
+//	public static final int LAPLACE     	= SENSITIVITY + 1;
+//	public static final int F_MEASURE   	= LAPLACE + 1;
+//	public static final int G_MEASURE   	= F_MEASURE + 1;
+//	public static final int CORRELATION 	= G_MEASURE + 1;
+//	public static final int PROP_SCORE_WRACC = CORRELATION + 1;
+//	public static final int PROP_SCORE_RATIO = PROP_SCORE_WRACC + 1;
+//	public static final int BAYESIAN_SCORE 	= PROP_SCORE_RATIO + 1;
+//
+//	//SINGLE_NUMERIC quality measures
+//	public static final int Z_SCORE 		= 118;
+//	public static final int INVERSE_Z_SCORE = 119;
+//	public static final int ABS_Z_SCORE 	= 120;
+//	public static final int AVERAGE 		= 121;
+//	public static final int INVERSE_AVERAGE = 122;
+//	public static final int MEAN_TEST 		= 123;
+//	public static final int INVERSE_MEAN_TEST = 124;
+//	public static final int ABS_MEAN_TEST 	= 125;
+//	public static final int T_TEST = 126;
+//	public static final int INVERSE_T_TEST 	= 127;
+//	public static final int ABS_T_TEST 		= 128;
+//	public static final int CHI2_TEST 		= 129;	// TODO see itsPopulationCounts
+//	public static final int HELLINGER 		= 130;
+//	public static final int KULLBACKLEIBLER 	= 131;
+//	public static final int CWRACC 			= 132;
+//
+//	//SINGLE_ORDINAL quality measures
+//	public static final int AUC = 30;
+//	public static final int WMW_RANKS = 31;
+//	public static final int INVERSE_WMW_RANKS = 32;
+//	public static final int ABS_WMW_RANKS = 33;
+//	public static final int MMAD = 34;
+//	//MULTI_LABEL quality measures
+//	public static final int WEED = 35;
+//	public static final int EDIT_DISTANCE = 36;
+//	//DOUBLE_CORRELATION
+//	public static final int CORRELATION_R = 37;
+//	public static final int CORRELATION_R_NEG = 38;
+//	public static final int CORRELATION_R_NEG_SQ = 39;
+//	public static final int CORRELATION_R_SQ = 40;
+//	public static final int CORRELATION_DISTANCE = 41;
+//	public static final int CORRELATION_P = 42;
+//	public static final int CORRELATION_ENTROPY = 43;
+//	public static final int ADAPTED_WRACC = 44;
+//	public static final int COSTS_WRACC = 45;
+//	//DOUBLE_REGRESSION
+//	public static final int LINEAR_REGRESSION = 46;
+//	public static final int COOKS_DISTANCE = 47;
 
 	//SINGLE =========================================================================================
 
 	//SINGLE_NOMINAL
-	public QualityMeasure(int theMeasure, int theTotalCoverage, int theTotalTargetCoverage)
+//	public QualityMeasure(int theMeasure, int theTotalCoverage, int theTotalTargetCoverage)
+//	{
+//		itsMeasure = theMeasure;
+//		itsNrRecords = theTotalCoverage;
+//		itsTotalTargetCoverage = theTotalTargetCoverage;
+//	}
+
+	//SINGLE_NOMINAL
+	public QualityMeasure(QM theMeasure, int theTotalCoverage, int theTotalTargetCoverage)
 	{
-		itsMeasure = theMeasure;
+//		itsMeasure = theMeasure;
+		itsQualityMeasure = theMeasure;
 		itsNrRecords = theTotalCoverage;
 		itsTotalTargetCoverage = theTotalTargetCoverage;
 	}
 
 	//SINGLE_NUMERIC
-	public QualityMeasure(int theMeasure, int theTotalCoverage, float theTotalSum, float theTotalSSD, ProbabilityDensityFunction thePDF)
+//	public QualityMeasure(int theMeasure, int theTotalCoverage, float theTotalSum, float theTotalSSD, ProbabilityDensityFunction thePDF)
+//	{
+//		itsMeasure = theMeasure;
+//		itsNrRecords = theTotalCoverage;
+//		if (itsNrRecords > 0)
+//			itsTotalAverage = theTotalSum/itsNrRecords;
+//		if (itsNrRecords > 1)
+//			itsTotalSampleStandardDeviation = Math.sqrt(theTotalSSD/(itsNrRecords-1));
+//		//itsPopulationCounts = null;	// TODO see itsPopulationCounts
+//		itsPDF = thePDF;
+//	}
+
+	//SINGLE_NUMERIC
+	public QualityMeasure(QM theMeasure, int theTotalCoverage, float theTotalSum, float theTotalSSD, ProbabilityDensityFunction thePDF)
 	{
-		itsMeasure = theMeasure;
+//		itsMeasure = theMeasure;
+		itsQualityMeasure = theMeasure;
 		itsNrRecords = theTotalCoverage;
 		if (itsNrRecords > 0)
 			itsTotalAverage = theTotalSum/itsNrRecords;
@@ -110,40 +134,40 @@ public class QualityMeasure
 		itsPDF = thePDF;
 	}
 
-	public static int getFirstEvaluationMeasure(TargetType theTargetType)
-	{
-		switch(theTargetType)
-		{
-			case SINGLE_NOMINAL		: return WRACC;
-			case SINGLE_NUMERIC		: return Z_SCORE;
-			case SINGLE_ORDINAL		: return AUC;
-			case MULTI_LABEL		: return WEED;
-			case DOUBLE_CORRELATION		: return CORRELATION_R;
-			case DOUBLE_REGRESSION		: return LINEAR_REGRESSION;
-			// TODO for stable jar, disabled
-			//case DOUBLE_REGRESSION 	: return COOKS_DISTANCE;
-			default				: return WRACC;
-			// or throw AssertionError();
-		}
-	}
-
-	public static int getLastEvaluationMesure(TargetType theTargetType)
-	{
-		switch(theTargetType)
-		{
-			case SINGLE_NOMINAL		: return BAYESIAN_SCORE;
-			//case SINGLE_NUMERIC		: return CHI2_TEST;	// TODO see itsPopulationCounts
-			case SINGLE_NUMERIC		: return CWRACC;
-			case SINGLE_ORDINAL		: return MMAD;
-			case MULTI_LABEL		: return EDIT_DISTANCE;
-			case DOUBLE_CORRELATION		: return COSTS_WRACC;
-			case DOUBLE_REGRESSION		: return LINEAR_REGRESSION;
-			// TODO for stable jar, disabled
-			//case DOUBLE_REGRESSION 	: return COOKS_DISTANCE;
-			default				: return WRACC;
-			// or throw AssertionError();
-		}
-	}
+//	public static int getFirstEvaluationMeasure(TargetType theTargetType)
+//	{
+//		switch(theTargetType)
+//		{
+//			case SINGLE_NOMINAL		: return WRACC;
+//			case SINGLE_NUMERIC		: return Z_SCORE;
+//			case SINGLE_ORDINAL		: return AUC;
+//			case MULTI_LABEL		: return WEED;
+//			case DOUBLE_CORRELATION		: return CORRELATION_R;
+//			case DOUBLE_REGRESSION		: return LINEAR_REGRESSION;
+//			// TODO for stable jar, disabled
+//			//case DOUBLE_REGRESSION 	: return COOKS_DISTANCE;
+//			default				: return WRACC;
+//			// or throw AssertionError();
+//		}
+//	}
+//
+//	public static int getLastEvaluationMesure(TargetType theTargetType)
+//	{
+//		switch(theTargetType)
+//		{
+//			case SINGLE_NOMINAL		: return BAYESIAN_SCORE;
+//			//case SINGLE_NUMERIC		: return CHI2_TEST;	// TODO see itsPopulationCounts
+//			case SINGLE_NUMERIC		: return CWRACC;
+//			case SINGLE_ORDINAL		: return MMAD;
+//			case MULTI_LABEL		: return EDIT_DISTANCE;
+//			case DOUBLE_CORRELATION		: return COSTS_WRACC;
+//			case DOUBLE_REGRESSION		: return LINEAR_REGRESSION;
+//			// TODO for stable jar, disabled
+//			//case DOUBLE_REGRESSION 	: return COOKS_DISTANCE;
+//			default				: return WRACC;
+//			// or throw AssertionError();
+//		}
+//	}
 
 	public ProbabilityDensityFunction getProbabilityDensityFunction()
 	{
@@ -181,8 +205,9 @@ public class QualityMeasure
 	 */
 	public float calculate(float theCountHeadBody, float theCoverage)
 	{
-		float aResult = calculate(itsMeasure, itsNrRecords, itsTotalTargetCoverage, theCountHeadBody, theCoverage);
-		if (Float.isNaN(aResult))
+// FIXME MM	float aResult = calculate(itsMeasure, itsNrRecords, itsTotalTargetCoverage, theCountHeadBody, theCoverage);
+		float aResult = calculate(itsQualityMeasure, itsNrRecords, itsTotalTargetCoverage, theCountHeadBody, theCoverage);
+		if (Float.isNaN(aResult)) // FIXME MM this does not seem wise
 			return 0.0f;
 		else
 			return aResult;
@@ -190,16 +215,17 @@ public class QualityMeasure
 
 	//SINGLE_NOMINAL ============================================================
 
-	public static float calculate(int theMeasure, int theTotalCoverage, float theTotalTargetCoverage,
-							float theCountHeadBody, float theCoverage)
+// MM	public static float calculate(int theMeasure, int theTotalCoverage, float theTotalTargetCoverage,
+// MM					float theCountHeadBody, float theCoverage)
+	public  static float calculate(QM theMeasure, int theTotalCoverage, float theTotalTargetCoverage, float theCountHeadBody, float theCoverage)
 	{
-		float aCountNotHeadBody		= theCoverage - theCountHeadBody;
-		float aTotalTargetCoverageNotBody		= theTotalTargetCoverage - theCountHeadBody;
-		float aCountNotHeadNotBody	= theTotalCoverage - (theTotalTargetCoverage + aCountNotHeadBody);
+		float aCountNotHeadBody			= theCoverage - theCountHeadBody;
+		float aTotalTargetCoverageNotBody	= theTotalTargetCoverage - theCountHeadBody;
+		float aCountNotHeadNotBody		= theTotalCoverage - (theTotalTargetCoverage + aCountNotHeadBody);
 		float aCountBody			= aCountNotHeadBody + theCountHeadBody;
 
 		float returnValue = -10f; //Bad measure value for default
-		switch(theMeasure)
+		switch (theMeasure)
 		{
 			case WRACC:
 			{
@@ -266,7 +292,8 @@ public class QualityMeasure
 		return returnValue;
 	}
 
-	public float calculatePropensityBased(int theMeasure, int theCountHeadBody, int theCoverage, int theTotalCount ,double theCountHeadPropensityScore)
+// MM	public float calculatePropensityBased(int theMeasure, int theCountHeadBody, int theCoverage, int theTotalCount ,double theCountHeadPropensityScore)
+	public float calculatePropensityBased(QM theMeasure, int theCountHeadBody, int theCoverage, int theTotalCount, double theCountHeadPropensityScore)
 	{
 		float aCountHeadBody = (float) theCountHeadBody;
 		float aCoverage = (float) theCoverage;
@@ -289,6 +316,10 @@ public class QualityMeasure
 			case PROP_SCORE_RATIO:
 			{
 				returnValue = (aCountHeadBody/aTotalCount) / (aCountHeadPropensityScore/aTotalCount);
+			}
+			default :
+			{
+				throw new IllegalArgumentException(QM.class.getSimpleName() + " invalid: " + theMeasure);
 			}
 		}
 		return returnValue;
@@ -555,7 +586,8 @@ public class QualityMeasure
 	public float calculate(int theCoverage, float theSum, float theSSD,	float theMedian, float theMedianAD, int[] theSubgroupCounts, ProbabilityDensityFunction thePDF)
 	{
 		float aReturn = Float.NEGATIVE_INFINITY;
-		switch(itsMeasure)
+// FIXME MM	switch(itsMeasure)
+		switch(itsQualityMeasure)
 		{
 			//NUMERIC
 			case AVERAGE		: { aReturn = theSum/theCoverage; break; }
@@ -715,229 +747,230 @@ public class QualityMeasure
 
 	//==========================================
 
-	public static String getMeasureMinimum(String theEvaluationMeasure, float theAverage)
-	{
-		String anEvaluationMinimum = null;
-		switch (getMeasureCode(theEvaluationMeasure))
-		{
-			//NOMINAL
-			case WRACC	:	{ anEvaluationMinimum = "0.02"; break; }
-			case ABSWRACC	:	{ anEvaluationMinimum = "0.02"; break; }
-			case CHI_SQUARED:	{ anEvaluationMinimum = "50"; break; }
-			case INFORMATION_GAIN :	{ anEvaluationMinimum = "0.02"; break; }
-			case BINOMIAL	:	{ anEvaluationMinimum = "0.05"; break; }
-			case ACCURACY	:	{ anEvaluationMinimum = "0.0"; break; }
-			case PURITY	:	{ anEvaluationMinimum = "0.5"; break; }
-			case JACCARD	:	{ anEvaluationMinimum = "0.2"; break; }
-			case COVERAGE	:	{ anEvaluationMinimum = "10"; break; }
-			case SPECIFICITY:	{ anEvaluationMinimum = "0.5"; break; }
-			case SENSITIVITY:	{ anEvaluationMinimum = "0.5"; break; }
-			case LAPLACE	:	{ anEvaluationMinimum = "0.2"; break; }
-			case F_MEASURE	:	{ anEvaluationMinimum = "0.2"; break; }
-			case G_MEASURE	:	{ anEvaluationMinimum = "0.2"; break; }
-			case CORRELATION:	{ anEvaluationMinimum = "0.1"; break; }
-			case PROP_SCORE_WRACC :	{ anEvaluationMinimum = "-0.25"; break; }
-			case PROP_SCORE_RATIO :	{ anEvaluationMinimum = "1.0"; break; }
-			case BAYESIAN_SCORE :	{ anEvaluationMinimum = "0.0"; break; }
-
-			//NUMERIC
-			case Z_SCORE	:	{ anEvaluationMinimum = "1.0"; break; }
-			case INVERSE_Z_SCORE :	{ anEvaluationMinimum = "1.0"; break; }
-			case ABS_Z_SCORE:	{ anEvaluationMinimum = "1.0"; break; }
-			case AVERAGE	:	{ anEvaluationMinimum = Float.toString(theAverage); break; }
-			case INVERSE_AVERAGE :	{ anEvaluationMinimum = Float.toString(-theAverage); break; }
-			case MEAN_TEST	:	{ anEvaluationMinimum = "0.01"; break; }
-			case INVERSE_MEAN_TEST:	{ anEvaluationMinimum = "0.01"; break; }
-			case ABS_MEAN_TEST :	{ anEvaluationMinimum = "0.01"; break; }
-			case T_TEST	:	{ anEvaluationMinimum = "1.0"; break; }
-			case INVERSE_T_TEST :	{ anEvaluationMinimum = "1.0"; break; }
-			case ABS_T_TEST	:	{ anEvaluationMinimum = "1.0"; break; }
-			case CHI2_TEST	:	{ anEvaluationMinimum = "2.5"; break; }
-			case HELLINGER	:	{ anEvaluationMinimum = "0.0"; break; }
-			case KULLBACKLEIBLER :	{ anEvaluationMinimum = "0.0"; break; }
-			case CWRACC	:	{ anEvaluationMinimum = "0.0"; break; }
-
-			//ORDINAL
-			case AUC	:	{ anEvaluationMinimum = "0.5"; break; }
-			case WMW_RANKS	:	{ anEvaluationMinimum = "1.0"; break; }
-			case INVERSE_WMW_RANKS:	{ anEvaluationMinimum = "1.0"; break; }
-			case ABS_WMW_RANKS :	{ anEvaluationMinimum = "1.0"; break; }
-			case MMAD	:	{ anEvaluationMinimum = "0"; break; }
-
-			//MULTI_LABEL
-			case WEED	:	{ anEvaluationMinimum = "0"; break; }
-			case EDIT_DISTANCE:	{ anEvaluationMinimum = "0"; break; }
-
-			//DOUBLE_CORRELATION
-			case CORRELATION_R 	:	{ anEvaluationMinimum = "0.2"; break; }
-			case CORRELATION_R_NEG	:	{ anEvaluationMinimum = "0.2"; break; }
-			case CORRELATION_R_NEG_SQ :	{ anEvaluationMinimum = "0.2"; break; }
-			case CORRELATION_R_SQ	:	{ anEvaluationMinimum = "0.2"; break; }
-			case CORRELATION_DISTANCE :	{ anEvaluationMinimum = "0.0"; break; }
-			case CORRELATION_P	:	{ anEvaluationMinimum = "0.0"; break; }
-			case CORRELATION_ENTROPY:	{ anEvaluationMinimum = "0.0"; break; }
-			case ADAPTED_WRACC	:	{ anEvaluationMinimum = "0.0"; break; }
-			case COSTS_WRACC	:	{ anEvaluationMinimum = "0.0"; break; }
-
-			//DOUBLE_REGRESSION
-			case LINEAR_REGRESSION:	{ anEvaluationMinimum = "0.0"; break; }
-			case COOKS_DISTANCE :	{ anEvaluationMinimum = "0.0"; break; }
-		}
-
-		// should not happen
-		if (anEvaluationMinimum == null)
-			throw new AssertionError(theEvaluationMeasure);
-
-		return anEvaluationMinimum;
-	}
-
-	public static String getMeasureString(int theEvaluationMeasure)
-	{
-		String anEvaluationMeasure = null;
-		switch(theEvaluationMeasure)
-		{
-			//NOMINAL
-			case WRACC	:	{ anEvaluationMeasure = "WRAcc"; break; }
-			case ABSWRACC	:	{ anEvaluationMeasure = "Abs WRAcc"; break; }
-			case CHI_SQUARED:	{ anEvaluationMeasure = "Chi-squared"; break; }
-			case INFORMATION_GAIN:	{ anEvaluationMeasure = "Information gain"; break; }
-			case BINOMIAL	:	{ anEvaluationMeasure = "Binomial test"; break; }
-			case ACCURACY	:	{ anEvaluationMeasure = "Accuracy"; break; }
-			case PURITY	:	{ anEvaluationMeasure = "Purity"; break; }
-			case JACCARD	:	{ anEvaluationMeasure = "Jaccard"; break; }
-			case COVERAGE	:	{ anEvaluationMeasure = "Coverage"; break; }
-			case SPECIFICITY:	{ anEvaluationMeasure = "Specificity"; break; }
-			case SENSITIVITY:	{ anEvaluationMeasure = "Sensitivity"; break; }
-			case LAPLACE	:	{ anEvaluationMeasure = "Laplace"; break; }
-			case F_MEASURE	:	{ anEvaluationMeasure = "F-measure"; break; }
-			case G_MEASURE	:	{ anEvaluationMeasure = "G-measure"; break; }
-			case CORRELATION:	{ anEvaluationMeasure = "Correlation"; break; }
-			case PROP_SCORE_WRACC:	{ anEvaluationMeasure = "Propensity score wracc"; break; }
-			case PROP_SCORE_RATIO:	{ anEvaluationMeasure = "Propensity score ratio"; break; }
-			case BAYESIAN_SCORE:	{ anEvaluationMeasure = "Bayesian Score"; break; }
-
-			//NUMERIC
-			case Z_SCORE	:	{ anEvaluationMeasure = "Z-Score"; break; }
-			case INVERSE_Z_SCORE:	{ anEvaluationMeasure = "Inverse Z-Score"; break; }
-			case ABS_Z_SCORE:	{ anEvaluationMeasure = "Abs Z-Score"; break; }
-			case AVERAGE	:	{ anEvaluationMeasure = "Average"; break; }
-			case INVERSE_AVERAGE:	{ anEvaluationMeasure = "Inverse Average"; break; }
-			case MEAN_TEST	:	{ anEvaluationMeasure = "Mean Test"; break; }
-			case INVERSE_MEAN_TEST:	{ anEvaluationMeasure = "Inverse Mean Test"; break; }
-			case ABS_MEAN_TEST:	{ anEvaluationMeasure = "Abs Mean Test"; break; }
-			case T_TEST	:	{ anEvaluationMeasure = "t-Test"; break; }
-			case INVERSE_T_TEST:	{ anEvaluationMeasure = "Inverse t-Test"; break; }
-			case ABS_T_TEST	:	{ anEvaluationMeasure = "Abs t-Test"; break; }
-			case CHI2_TEST	:	{ anEvaluationMeasure = "Median Chi-squared test"; break; }
-			case HELLINGER	:	{ anEvaluationMeasure = "Squared Hellinger distance"; break; }
-			case KULLBACKLEIBLER :	{ anEvaluationMeasure = "Kullback-Leibler divergence"; break; }
-			case CWRACC	:	{ anEvaluationMeasure = "CWRAcc"; break; }
-
-			//ORDINAL
-			case AUC	:	{ anEvaluationMeasure = "AUC of ROC"; break; }
-			case WMW_RANKS	:	{ anEvaluationMeasure = "WMW-Ranks test"; break; }
-			case INVERSE_WMW_RANKS:	{ anEvaluationMeasure = "Inverse WMW-Ranks test"; break; }
-			case ABS_WMW_RANKS:	{ anEvaluationMeasure = "Abs WMW-Ranks test"; break; }
-			case MMAD	:	{ anEvaluationMeasure = "Median MAD metric"; break; }
-
-			//MULTI_LABEL
-			case WEED	:	{ anEvaluationMeasure = "Wtd Ent Edit Dist"; break; }
-			case EDIT_DISTANCE:	{ anEvaluationMeasure = "Edit Distance"; break; }
-
-			//DOUBLE_CORRELATION
-			case CORRELATION_R		: { anEvaluationMeasure = "r"; break; }
-			case CORRELATION_R_NEG		: { anEvaluationMeasure = "Negative r"; break; }
-			case CORRELATION_R_NEG_SQ	: { anEvaluationMeasure = "Neg Sqr r"; break; }
-			case CORRELATION_R_SQ		: { anEvaluationMeasure = "Squared r"; break; }
-			case CORRELATION_DISTANCE	: { anEvaluationMeasure = "Distance"; break; }
-			case CORRELATION_P		: { anEvaluationMeasure = "p-Value Distance"; break; }
-			case CORRELATION_ENTROPY	: { anEvaluationMeasure = "Wtd Ent Distance"; break; }
-			case ADAPTED_WRACC		: { anEvaluationMeasure = "Adapted WRAcc"; break; }
-			case COSTS_WRACC		: { anEvaluationMeasure = "Costs WRAcc"; break; }
-
-			//DOUBLE_REGRESSION
-			case LINEAR_REGRESSION	: { anEvaluationMeasure = "Significance of Slope Difference"; break; }
-			case COOKS_DISTANCE	: { anEvaluationMeasure = "Cook's Distance"; break; }
-		}
-
-		// should not happen
-		if (anEvaluationMeasure == null)
-			throw new AssertionError("Invalid measure code: " + theEvaluationMeasure);
-
-		return anEvaluationMeasure;
-	}
-
-	public static int getMeasureCode(String theEvaluationMeasure)
-	{
-		String anEvaluationMeasure = theEvaluationMeasure.toLowerCase().trim();
-		//NOMINAL
-		if ("wracc".equals(anEvaluationMeasure)) return WRACC;
-		else if ("abs wracc".equals(anEvaluationMeasure)) return ABSWRACC;
-		else if ("chi-squared".equals(anEvaluationMeasure)) return CHI_SQUARED;
-		else if ("information gain".equals(anEvaluationMeasure)) return INFORMATION_GAIN;
-		else if ("binomial test".equals(anEvaluationMeasure)) return BINOMIAL;
-		else if ("accuracy".equals(anEvaluationMeasure)) return ACCURACY;
-		else if ("purity".equals(anEvaluationMeasure)) return PURITY;
-		else if ("jaccard".equals(anEvaluationMeasure)) return JACCARD;
-		else if ("coverage".equals(anEvaluationMeasure)) return COVERAGE;
-		else if ("specificity".equals(anEvaluationMeasure)) return SPECIFICITY;
-		else if ("sensitivity".equals(anEvaluationMeasure)) return SENSITIVITY;
-		else if ("laplace".equals(anEvaluationMeasure)) return LAPLACE;
-		else if ("f-measure".equals(anEvaluationMeasure)) return F_MEASURE;
-		else if ("g-measure".equals(anEvaluationMeasure)) return G_MEASURE;
-		else if ("correlation".equals(anEvaluationMeasure)) return CORRELATION;
-		else if ("propensity score wracc".equals(anEvaluationMeasure)) return PROP_SCORE_WRACC;
-		else if ("propensity score ratio".equals(anEvaluationMeasure)) return PROP_SCORE_RATIO;
-		else if ("bayesian score".equals(anEvaluationMeasure)) return BAYESIAN_SCORE;
-		//NUMERIC
-		else if ("z-score".equals(anEvaluationMeasure)) return Z_SCORE;
-		else if ("inverse z-score".equals(anEvaluationMeasure)) return INVERSE_Z_SCORE;
-		else if ("abs z-score".equals(anEvaluationMeasure)) return ABS_Z_SCORE;
-		else if ("average".equals(anEvaluationMeasure)) return AVERAGE;
-		else if ("inverse average".equals(anEvaluationMeasure)) return INVERSE_AVERAGE;
-		else if ("mean test".equals(anEvaluationMeasure)) return MEAN_TEST;
-		else if ("inverse mean test".equals(anEvaluationMeasure)) return INVERSE_MEAN_TEST;
-		else if ("abs mean test".equals(anEvaluationMeasure)) return ABS_MEAN_TEST;
-		else if ("t-test".equals(anEvaluationMeasure)) return T_TEST;
-		else if ("inverse t-test".equals(anEvaluationMeasure)) return INVERSE_T_TEST;
-		else if ("abs t-test".equals(anEvaluationMeasure)) return ABS_T_TEST;
-		else if ("median chi-squared test".equals(anEvaluationMeasure)) return CHI2_TEST;
-		else if ("squared hellinger distance".equals(anEvaluationMeasure)) return HELLINGER;
-		else if ("kullback-leibler divergence".equals(anEvaluationMeasure)) return KULLBACKLEIBLER;
-		else if ("cwracc".equals(anEvaluationMeasure)) return CWRACC;
-		//ORDINAL
-		else if ("auc of roc".equals(anEvaluationMeasure)) return AUC;
-		else if ("wmw-ranks test".equals(anEvaluationMeasure)) return WMW_RANKS;
-		else if ("inverse wmw-ranks test".equals(anEvaluationMeasure)) return INVERSE_WMW_RANKS;
-		else if ("abs wmw-ranks test".equals(anEvaluationMeasure)) return ABS_WMW_RANKS;
-		else if ("median mad metric".equals(anEvaluationMeasure)) return MMAD;
-		//MULTI_LABEL
-		else if ("wtd ent edit dist".equals(anEvaluationMeasure)) return WEED;
-		else if ("edit distance".equals(anEvaluationMeasure)) return EDIT_DISTANCE;
-		//DOUBLE_CORRELATION
-		else if ("r".equals(anEvaluationMeasure)) return CORRELATION_R;
-		else if ("negative r".equals(anEvaluationMeasure)) return CORRELATION_R_NEG;
-		else if ("neg sqr r".equals(anEvaluationMeasure)) return CORRELATION_R_NEG_SQ;
-		else if ("squared r".equals(anEvaluationMeasure)) return CORRELATION_R_SQ;
-		else if ("distance".equals(anEvaluationMeasure)) return CORRELATION_DISTANCE;
-		else if ("p-value distance".equals(anEvaluationMeasure)) return CORRELATION_P;
-		else if ("wtd ent distance".equals(anEvaluationMeasure)) return CORRELATION_ENTROPY;
-		else if ("adapted wracc".equals(anEvaluationMeasure)) return ADAPTED_WRACC;
-		else if ("costs wracc".equals(anEvaluationMeasure)) return COSTS_WRACC;
-		//DOUBLE_REGRESSION
-		else if ("significance of slope difference".equals(anEvaluationMeasure)) return LINEAR_REGRESSION;
-		else if ("cook's distance".equals(anEvaluationMeasure)) return COOKS_DISTANCE;
-
-		// should never get here
-		throw new AssertionError(theEvaluationMeasure);
-	}
+//	public static String getMeasureMinimum(String theEvaluationMeasure, float theAverage)
+//	{
+//		String anEvaluationMinimum = null;
+//		switch (getMeasureCode(theEvaluationMeasure))
+//		{
+//			//NOMINAL
+//			case WRACC	:	{ anEvaluationMinimum = "0.02"; break; }
+//			case ABSWRACC	:	{ anEvaluationMinimum = "0.02"; break; }
+//			case CHI_SQUARED:	{ anEvaluationMinimum = "50"; break; }
+//			case INFORMATION_GAIN :	{ anEvaluationMinimum = "0.02"; break; }
+//			case BINOMIAL	:	{ anEvaluationMinimum = "0.05"; break; }
+//			case ACCURACY	:	{ anEvaluationMinimum = "0.0"; break; }
+//			case PURITY	:	{ anEvaluationMinimum = "0.5"; break; }
+//			case JACCARD	:	{ anEvaluationMinimum = "0.2"; break; }
+//			case COVERAGE	:	{ anEvaluationMinimum = "10"; break; }
+//			case SPECIFICITY:	{ anEvaluationMinimum = "0.5"; break; }
+//			case SENSITIVITY:	{ anEvaluationMinimum = "0.5"; break; }
+//			case LAPLACE	:	{ anEvaluationMinimum = "0.2"; break; }
+//			case F_MEASURE	:	{ anEvaluationMinimum = "0.2"; break; }
+//			case G_MEASURE	:	{ anEvaluationMinimum = "0.2"; break; }
+//			case CORRELATION:	{ anEvaluationMinimum = "0.1"; break; }
+//			case PROP_SCORE_WRACC :	{ anEvaluationMinimum = "-0.25"; break; }
+//			case PROP_SCORE_RATIO :	{ anEvaluationMinimum = "1.0"; break; }
+//			case BAYESIAN_SCORE :	{ anEvaluationMinimum = "0.0"; break; }
+//
+//			//NUMERIC
+//			case Z_SCORE	:	{ anEvaluationMinimum = "1.0"; break; }
+//			case INVERSE_Z_SCORE :	{ anEvaluationMinimum = "1.0"; break; }
+//			case ABS_Z_SCORE:	{ anEvaluationMinimum = "1.0"; break; }
+//			case AVERAGE	:	{ anEvaluationMinimum = Float.toString(theAverage); break; }
+//			case INVERSE_AVERAGE :	{ anEvaluationMinimum = Float.toString(-theAverage); break; }
+//			case MEAN_TEST	:	{ anEvaluationMinimum = "0.01"; break; }
+//			case INVERSE_MEAN_TEST:	{ anEvaluationMinimum = "0.01"; break; }
+//			case ABS_MEAN_TEST :	{ anEvaluationMinimum = "0.01"; break; }
+//			case T_TEST	:	{ anEvaluationMinimum = "1.0"; break; }
+//			case INVERSE_T_TEST :	{ anEvaluationMinimum = "1.0"; break; }
+//			case ABS_T_TEST	:	{ anEvaluationMinimum = "1.0"; break; }
+//			case CHI2_TEST	:	{ anEvaluationMinimum = "2.5"; break; }
+//			case HELLINGER	:	{ anEvaluationMinimum = "0.0"; break; }
+//			case KULLBACKLEIBLER :	{ anEvaluationMinimum = "0.0"; break; }
+//			case CWRACC	:	{ anEvaluationMinimum = "0.0"; break; }
+//
+//			//ORDINAL
+//			case AUC	:	{ anEvaluationMinimum = "0.5"; break; }
+//			case WMW_RANKS	:	{ anEvaluationMinimum = "1.0"; break; }
+//			case INVERSE_WMW_RANKS:	{ anEvaluationMinimum = "1.0"; break; }
+//			case ABS_WMW_RANKS :	{ anEvaluationMinimum = "1.0"; break; }
+//			case MMAD	:	{ anEvaluationMinimum = "0"; break; }
+//
+//			//MULTI_LABEL
+//			case WEED	:	{ anEvaluationMinimum = "0"; break; }
+//			case EDIT_DISTANCE:	{ anEvaluationMinimum = "0"; break; }
+//
+//			//DOUBLE_CORRELATION
+//			case CORRELATION_R 	:	{ anEvaluationMinimum = "0.2"; break; }
+//			case CORRELATION_R_NEG	:	{ anEvaluationMinimum = "0.2"; break; }
+//			case CORRELATION_R_NEG_SQ :	{ anEvaluationMinimum = "0.2"; break; }
+//			case CORRELATION_R_SQ	:	{ anEvaluationMinimum = "0.2"; break; }
+//			case CORRELATION_DISTANCE :	{ anEvaluationMinimum = "0.0"; break; }
+//			case CORRELATION_P	:	{ anEvaluationMinimum = "0.0"; break; }
+//			case CORRELATION_ENTROPY:	{ anEvaluationMinimum = "0.0"; break; }
+//			case ADAPTED_WRACC	:	{ anEvaluationMinimum = "0.0"; break; }
+//			case COSTS_WRACC	:	{ anEvaluationMinimum = "0.0"; break; }
+//
+//			//DOUBLE_REGRESSION
+//			case LINEAR_REGRESSION:	{ anEvaluationMinimum = "0.0"; break; }
+//			case COOKS_DISTANCE :	{ anEvaluationMinimum = "0.0"; break; }
+//		}
+//
+//		// should not happen
+//		if (anEvaluationMinimum == null)
+//			throw new AssertionError(theEvaluationMeasure);
+//
+//		return anEvaluationMinimum;
+//	}
+//
+//	public static String getMeasureString(int theEvaluationMeasure)
+//	{
+//		String anEvaluationMeasure = null;
+//		switch(theEvaluationMeasure)
+//		{
+//			//NOMINAL
+//			case WRACC	:	{ anEvaluationMeasure = "WRAcc"; break; }
+//			case ABSWRACC	:	{ anEvaluationMeasure = "Abs WRAcc"; break; }
+//			case CHI_SQUARED:	{ anEvaluationMeasure = "Chi-squared"; break; }
+//			case INFORMATION_GAIN:	{ anEvaluationMeasure = "Information gain"; break; }
+//			case BINOMIAL	:	{ anEvaluationMeasure = "Binomial test"; break; }
+//			case ACCURACY	:	{ anEvaluationMeasure = "Accuracy"; break; }
+//			case PURITY	:	{ anEvaluationMeasure = "Purity"; break; }
+//			case JACCARD	:	{ anEvaluationMeasure = "Jaccard"; break; }
+//			case COVERAGE	:	{ anEvaluationMeasure = "Coverage"; break; }
+//			case SPECIFICITY:	{ anEvaluationMeasure = "Specificity"; break; }
+//			case SENSITIVITY:	{ anEvaluationMeasure = "Sensitivity"; break; }
+//			case LAPLACE	:	{ anEvaluationMeasure = "Laplace"; break; }
+//			case F_MEASURE	:	{ anEvaluationMeasure = "F-measure"; break; }
+//			case G_MEASURE	:	{ anEvaluationMeasure = "G-measure"; break; }
+//			case CORRELATION:	{ anEvaluationMeasure = "Correlation"; break; }
+//			case PROP_SCORE_WRACC:	{ anEvaluationMeasure = "Propensity score wracc"; break; }
+//			case PROP_SCORE_RATIO:	{ anEvaluationMeasure = "Propensity score ratio"; break; }
+//			case BAYESIAN_SCORE:	{ anEvaluationMeasure = "Bayesian Score"; break; }
+//
+//			//NUMERIC
+//			case Z_SCORE	:	{ anEvaluationMeasure = "Z-Score"; break; }
+//			case INVERSE_Z_SCORE:	{ anEvaluationMeasure = "Inverse Z-Score"; break; }
+//			case ABS_Z_SCORE:	{ anEvaluationMeasure = "Abs Z-Score"; break; }
+//			case AVERAGE	:	{ anEvaluationMeasure = "Average"; break; }
+//			case INVERSE_AVERAGE:	{ anEvaluationMeasure = "Inverse Average"; break; }
+//			case MEAN_TEST	:	{ anEvaluationMeasure = "Mean Test"; break; }
+//			case INVERSE_MEAN_TEST:	{ anEvaluationMeasure = "Inverse Mean Test"; break; }
+//			case ABS_MEAN_TEST:	{ anEvaluationMeasure = "Abs Mean Test"; break; }
+//			case T_TEST	:	{ anEvaluationMeasure = "t-Test"; break; }
+//			case INVERSE_T_TEST:	{ anEvaluationMeasure = "Inverse t-Test"; break; }
+//			case ABS_T_TEST	:	{ anEvaluationMeasure = "Abs t-Test"; break; }
+//			case CHI2_TEST	:	{ anEvaluationMeasure = "Median Chi-squared test"; break; }
+//			case HELLINGER	:	{ anEvaluationMeasure = "Squared Hellinger distance"; break; }
+//			case KULLBACKLEIBLER :	{ anEvaluationMeasure = "Kullback-Leibler divergence"; break; }
+//			case CWRACC	:	{ anEvaluationMeasure = "CWRAcc"; break; }
+//
+//			//ORDINAL
+//			case AUC	:	{ anEvaluationMeasure = "AUC of ROC"; break; }
+//			case WMW_RANKS	:	{ anEvaluationMeasure = "WMW-Ranks test"; break; }
+//			case INVERSE_WMW_RANKS:	{ anEvaluationMeasure = "Inverse WMW-Ranks test"; break; }
+//			case ABS_WMW_RANKS:	{ anEvaluationMeasure = "Abs WMW-Ranks test"; break; }
+//			case MMAD	:	{ anEvaluationMeasure = "Median MAD metric"; break; }
+//
+//			//MULTI_LABEL
+//			case WEED	:	{ anEvaluationMeasure = "Wtd Ent Edit Dist"; break; }
+//			case EDIT_DISTANCE:	{ anEvaluationMeasure = "Edit Distance"; break; }
+//
+//			//DOUBLE_CORRELATION
+//			case CORRELATION_R		: { anEvaluationMeasure = "r"; break; }
+//			case CORRELATION_R_NEG		: { anEvaluationMeasure = "Negative r"; break; }
+//			case CORRELATION_R_NEG_SQ	: { anEvaluationMeasure = "Neg Sqr r"; break; }
+//			case CORRELATION_R_SQ		: { anEvaluationMeasure = "Squared r"; break; }
+//			case CORRELATION_DISTANCE	: { anEvaluationMeasure = "Distance"; break; }
+//			case CORRELATION_P		: { anEvaluationMeasure = "p-Value Distance"; break; }
+//			case CORRELATION_ENTROPY	: { anEvaluationMeasure = "Wtd Ent Distance"; break; }
+//			case ADAPTED_WRACC		: { anEvaluationMeasure = "Adapted WRAcc"; break; }
+//			case COSTS_WRACC		: { anEvaluationMeasure = "Costs WRAcc"; break; }
+//
+//			//DOUBLE_REGRESSION
+//			case LINEAR_REGRESSION	: { anEvaluationMeasure = "Significance of Slope Difference"; break; }
+//			case COOKS_DISTANCE	: { anEvaluationMeasure = "Cook's Distance"; break; }
+//		}
+//
+//		// should not happen
+//		if (anEvaluationMeasure == null)
+//			throw new AssertionError("Invalid measure code: " + theEvaluationMeasure);
+//
+//		return anEvaluationMeasure;
+//	}
+//
+//	public static int getMeasureCode(String theEvaluationMeasure)
+//	{
+//		String anEvaluationMeasure = theEvaluationMeasure.toLowerCase().trim();
+//		//NOMINAL
+//		if ("wracc".equals(anEvaluationMeasure)) return WRACC;
+//		else if ("abs wracc".equals(anEvaluationMeasure)) return ABSWRACC;
+//		else if ("chi-squared".equals(anEvaluationMeasure)) return CHI_SQUARED;
+//		else if ("information gain".equals(anEvaluationMeasure)) return INFORMATION_GAIN;
+//		else if ("binomial test".equals(anEvaluationMeasure)) return BINOMIAL;
+//		else if ("accuracy".equals(anEvaluationMeasure)) return ACCURACY;
+//		else if ("purity".equals(anEvaluationMeasure)) return PURITY;
+//		else if ("jaccard".equals(anEvaluationMeasure)) return JACCARD;
+//		else if ("coverage".equals(anEvaluationMeasure)) return COVERAGE;
+//		else if ("specificity".equals(anEvaluationMeasure)) return SPECIFICITY;
+//		else if ("sensitivity".equals(anEvaluationMeasure)) return SENSITIVITY;
+//		else if ("laplace".equals(anEvaluationMeasure)) return LAPLACE;
+//		else if ("f-measure".equals(anEvaluationMeasure)) return F_MEASURE;
+//		else if ("g-measure".equals(anEvaluationMeasure)) return G_MEASURE;
+//		else if ("correlation".equals(anEvaluationMeasure)) return CORRELATION;
+//		else if ("propensity score wracc".equals(anEvaluationMeasure)) return PROP_SCORE_WRACC;
+//		else if ("propensity score ratio".equals(anEvaluationMeasure)) return PROP_SCORE_RATIO;
+//		else if ("bayesian score".equals(anEvaluationMeasure)) return BAYESIAN_SCORE;
+//		//NUMERIC
+//		else if ("z-score".equals(anEvaluationMeasure)) return Z_SCORE;
+//		else if ("inverse z-score".equals(anEvaluationMeasure)) return INVERSE_Z_SCORE;
+//		else if ("abs z-score".equals(anEvaluationMeasure)) return ABS_Z_SCORE;
+//		else if ("average".equals(anEvaluationMeasure)) return AVERAGE;
+//		else if ("inverse average".equals(anEvaluationMeasure)) return INVERSE_AVERAGE;
+//		else if ("mean test".equals(anEvaluationMeasure)) return MEAN_TEST;
+//		else if ("inverse mean test".equals(anEvaluationMeasure)) return INVERSE_MEAN_TEST;
+//		else if ("abs mean test".equals(anEvaluationMeasure)) return ABS_MEAN_TEST;
+//		else if ("t-test".equals(anEvaluationMeasure)) return T_TEST;
+//		else if ("inverse t-test".equals(anEvaluationMeasure)) return INVERSE_T_TEST;
+//		else if ("abs t-test".equals(anEvaluationMeasure)) return ABS_T_TEST;
+//		else if ("median chi-squared test".equals(anEvaluationMeasure)) return CHI2_TEST;
+//		else if ("squared hellinger distance".equals(anEvaluationMeasure)) return HELLINGER;
+//		else if ("kullback-leibler divergence".equals(anEvaluationMeasure)) return KULLBACKLEIBLER;
+//		else if ("cwracc".equals(anEvaluationMeasure)) return CWRACC;
+//		//ORDINAL
+//		else if ("auc of roc".equals(anEvaluationMeasure)) return AUC;
+//		else if ("wmw-ranks test".equals(anEvaluationMeasure)) return WMW_RANKS;
+//		else if ("inverse wmw-ranks test".equals(anEvaluationMeasure)) return INVERSE_WMW_RANKS;
+//		else if ("abs wmw-ranks test".equals(anEvaluationMeasure)) return ABS_WMW_RANKS;
+//		else if ("median mad metric".equals(anEvaluationMeasure)) return MMAD;
+//		//MULTI_LABEL
+//		else if ("wtd ent edit dist".equals(anEvaluationMeasure)) return WEED;
+//		else if ("edit distance".equals(anEvaluationMeasure)) return EDIT_DISTANCE;
+//		//DOUBLE_CORRELATION
+//		else if ("r".equals(anEvaluationMeasure)) return CORRELATION_R;
+//		else if ("negative r".equals(anEvaluationMeasure)) return CORRELATION_R_NEG;
+//		else if ("neg sqr r".equals(anEvaluationMeasure)) return CORRELATION_R_NEG_SQ;
+//		else if ("squared r".equals(anEvaluationMeasure)) return CORRELATION_R_SQ;
+//		else if ("distance".equals(anEvaluationMeasure)) return CORRELATION_DISTANCE;
+//		else if ("p-value distance".equals(anEvaluationMeasure)) return CORRELATION_P;
+//		else if ("wtd ent distance".equals(anEvaluationMeasure)) return CORRELATION_ENTROPY;
+//		else if ("adapted wracc".equals(anEvaluationMeasure)) return ADAPTED_WRACC;
+//		else if ("costs wracc".equals(anEvaluationMeasure)) return COSTS_WRACC;
+//		//DOUBLE_REGRESSION
+//		else if ("significance of slope difference".equals(anEvaluationMeasure)) return LINEAR_REGRESSION;
+//		else if ("cook's distance".equals(anEvaluationMeasure)) return COOKS_DISTANCE;
+//
+//		// should never get here
+//		throw new AssertionError(theEvaluationMeasure);
+//	}
 
 
 	//Baysian ========================================================================================
 
 	public QualityMeasure(SearchParameters theSearchParameters, DAG theDAG, int theNrRecords)
 	{
-		itsMeasure = theSearchParameters.getQualityMeasure();
+		//itsMeasure = theSearchParameters.getQualityMeasure();
+		itsQualityMeasure = theSearchParameters.getQualityMeasure();
 		itsNrRecords = theNrRecords;
 		itsDAG = theDAG;
 		itsNrNodes = itsDAG.getSize();
@@ -948,7 +981,8 @@ public class QualityMeasure
 
 	public float calculate(Subgroup theSubgroup)
 	{
-		switch (itsMeasure)
+// FIXME MM	switch (itsMeasure)
+		switch (itsQualityMeasure)
 		{
 			case WEED :
 				return (float) (Math.pow(calculateEntropy(itsNrRecords, theSubgroup.getCoverage()), itsAlpha) *
@@ -957,16 +991,24 @@ public class QualityMeasure
 				return calculateEditDistance(theSubgroup.getDAG());
 			default :
 			{
-				String aMessage = String.format("'%s' (%d)",
-								QualityMeasure.getMeasureString(itsMeasure),
-								itsMeasure);
+//				String aMessage = String.format("'%s' (%d)",
+//								QualityMeasure.getMeasureString(itsMeasure),
+//								itsMeasure);
+//				Log.logCommandLine(
+//					String.format("%s.calculate(): invalid measure %s (only '%s' and '%s' allowed).",
+//							QualityMeasure.class.getSimpleName(),
+//							aMessage,
+//							QualityMeasure.getMeasureString(WEED),
+//							QualityMeasure.getMeasureString(EDIT_DISTANCE)));
+//				throw new AssertionError(aMessage);
 				Log.logCommandLine(
 					String.format("%s.calculate(): invalid measure %s (only '%s' and '%s' allowed).",
 							QualityMeasure.class.getSimpleName(),
-							aMessage,
-							QualityMeasure.getMeasureString(WEED),
-							QualityMeasure.getMeasureString(EDIT_DISTANCE)));
-				throw new AssertionError(aMessage);
+							itsQualityMeasure,
+							QM.WEED,
+							QM.EDIT_DISTANCE));
+// FIXME MM				throw new AssertionError(itsMeasure);
+				throw new AssertionError(itsQualityMeasure);
 			}
 		}
 	}

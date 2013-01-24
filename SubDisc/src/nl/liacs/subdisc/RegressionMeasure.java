@@ -25,7 +25,8 @@ public class RegressionMeasure
 	private List<Point2D.Float> itsData;//Stores all the datapoints for this measure
 	private List<Point2D.Float> itsComplementData = new ArrayList<Point2D.Float>();//Stores all the datapoints for the complement
 
-	public static int itsType; // FIXME this should not be static
+//	public static int itsType; // FIXME MM this should not be static
+	public static QM itsType; // FIXME MM this should not be static
 	private RegressionMeasure itsBase = null;
 
 	private Matrix itsDataMatrix;
@@ -46,7 +47,8 @@ public class RegressionMeasure
 	private int itsRankDefCount;
 
 	//make a base model from two columns
-	public RegressionMeasure(int theType, Column thePrimaryColumn, Column theSecondaryColumn)
+// MM	public RegressionMeasure(int theType, Column thePrimaryColumn, Column theSecondaryColumn)
+	public RegressionMeasure(QM theType, Column thePrimaryColumn, Column theSecondaryColumn)
 	{
 		itsType = theType;
 		itsSampleSize = thePrimaryColumn.size();
@@ -64,7 +66,8 @@ public class RegressionMeasure
 
 		switch(itsType)
 		{
-			case QualityMeasure.LINEAR_REGRESSION:
+// MM			case QualityMeasure.LINEAR_REGRESSION:
+			case LINEAR_REGRESSION:
 			{
 				itsBase = null; //this *is* the base
 				itsComplementData = null; //will remain empty for the base RM
@@ -72,7 +75,8 @@ public class RegressionMeasure
 				updateErrorTerms();
 				break;
 			}
-			case QualityMeasure.COOKS_DISTANCE:
+// MM			case QualityMeasure.COOKS_DISTANCE:
+			case COOKS_DISTANCE:
 			{
 				updateRegressionFunction(); //updating error terms unnecessary since Cook's distance does not care
 
@@ -131,6 +135,10 @@ public class RegressionMeasure
 				itsBoundFiveCount=0;
 				itsBoundFourCount=0;
 				itsRankDefCount=0;
+			}
+			default :
+			{
+				throw new AssertionError(itsType);
 			}
 		}
 	}

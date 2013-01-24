@@ -14,7 +14,8 @@ public class SearchParameters implements XMLNodeInterface
 
 	// when adding/removing members be sure to update addNodeTo() and loadNode()
 	private TargetConcept	itsTargetConcept;
-	private int		itsQualityMeasure;
+//	private int		itsQualityMeasure;
+	private QM		itsQualityMeasure;
 	private float		itsQualityMeasureMinimum;
 
 	private int		itsSearchDepth;
@@ -44,10 +45,12 @@ public class SearchParameters implements XMLNodeInterface
 	public SearchParameters()
 	{
 		/*
-		 * There are no MiningWindow text fields for the following. But they
-		 * need to be available for MULTI_LABELs 'Targets and Settings'. They
-		 * are no longer 'static', but can be changed upon users discretion,
-		 * therefore they can not be set in initSearchParameters.
+		 * There are no MiningWindow text fields for the following.
+		 * But they need to be available for MULTI_LABELs
+		 * 'Targets and Settings'.
+		 * They are no longer 'static', but can be changed upon users
+		 * discretion, therefore they can not be set in
+		 * initSearchParameters.
 		 */
 		itsAlpha = ALPHA_DEFAULT;
 		itsBeta = BETA_DEFAULT;
@@ -59,12 +62,16 @@ public class SearchParameters implements XMLNodeInterface
 	public TargetConcept getTargetConcept() { return itsTargetConcept; }
 	public void setTargetConcept(TargetConcept theTargetConcept) { itsTargetConcept = theTargetConcept; }
 	public TargetType getTargetType() { return itsTargetConcept.getTargetType(); }
-	public int getQualityMeasure() { return itsQualityMeasure; }
-	public String getQualityMeasureString() { return QualityMeasure.getMeasureString(itsQualityMeasure); }
+//	public int getQualityMeasure() { return itsQualityMeasure; }
+	public QM getQualityMeasure() { return itsQualityMeasure; }
+//	public String getQualityMeasureString() { return QualityMeasure.getMeasureString(itsQualityMeasure); }
+	public String getQualityMeasureString() { return itsQualityMeasure.GUI_TEXT; }
 	public float getQualityMeasureMinimum() { return itsQualityMeasureMinimum; }
 	public void setQualityMeasureMinimum(float theQualityMeasureMinimum) { itsQualityMeasureMinimum = theQualityMeasureMinimum; }
-	public void setQualityMeasure(String theQualityMeasure) { itsQualityMeasure = QualityMeasure.getMeasureCode(theQualityMeasure); }
-	public void setQualityMeasure(int theQualityMeasure) { itsQualityMeasure = theQualityMeasure; }
+//	public void setQualityMeasure(String theQualityMeasure) { itsQualityMeasure = QualityMeasure.getMeasureCode(theQualityMeasure); }
+	public void setQualityMeasure(String theQualityMeasure) { itsQualityMeasure = QM.fromString(theQualityMeasure); }
+//	public void setQualityMeasure(int theQualityMeasure) { itsQualityMeasure = theQualityMeasure; }
+	public void setQualityMeasure(QM theQualityMeasure) { itsQualityMeasure = theQualityMeasure; }
 
 	/* SEARCH CONDITIONS */
 	public int getSearchDepth() { return itsSearchDepth; }
@@ -119,7 +126,7 @@ public class SearchParameters implements XMLNodeInterface
 	public void setNrBins(int theNrBins)			{ itsNrBins = theNrBins; }
 	public int getNrThreads()				{ return itsNrThreads; }
 	public void setNrThreads(int theNrThreads)		{ itsNrThreads = theNrThreads; }
-	public float getAlpha()					{ return itsAlpha; }
+	public float getAlpha()				{ return itsAlpha; }
 	public void setAlpha(float theAlpha)			{ itsAlpha = theAlpha; }
 	public float getBeta()					{ return itsBeta; }
 	public void setBeta(float theBeta)			{ itsBeta = theBeta; }
@@ -167,7 +174,8 @@ public class SearchParameters implements XMLNodeInterface
 			Node aSetting = aChildren.item(i);
 			String aNodeName = aSetting.getNodeName().toLowerCase();
 			if("quality_measure".equalsIgnoreCase(aNodeName))
-				itsQualityMeasure = QualityMeasure.getMeasureCode(aSetting.getTextContent());
+//				itsQualityMeasure = QualityMeasure.getMeasureCode(aSetting.getTextContent());
+				itsQualityMeasure = QM.fromString(aSetting.getTextContent());
 			else if("quality_measure_minimum".equalsIgnoreCase(aNodeName))
 				itsQualityMeasureMinimum = Float.parseFloat(aSetting.getTextContent());
 			else if("search_depth".equalsIgnoreCase(aNodeName))
