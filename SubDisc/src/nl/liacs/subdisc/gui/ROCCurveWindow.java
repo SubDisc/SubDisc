@@ -1,8 +1,9 @@
 package nl.liacs.subdisc.gui;
 
-import java.io.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.io.*;
+
 import javax.swing.*;
 
 import nl.liacs.subdisc.*;
@@ -85,7 +86,6 @@ public class ROCCurveWindow extends JFrame implements ActionListener
 	{
 		float anX, aY;
 		float aSize = 0.001f;
-		int aCount = 0;
 		String aContent = "set xlabel \"fpr\";set ylabel \"tpr\";set xrange [0:1];set yrange [0:1];set xtics 0.1; set ytics 0.1;\n";
 		aContent += "N = " + itsSubgroupSet.getTotalCoverage() + ".0\n";
 		aContent += "p = " + itsSubgroupSet.getTotalTargetCoverage() + ".0\n";
@@ -128,7 +128,6 @@ public class ROCCurveWindow extends JFrame implements ActionListener
 		//subgroups
 		for (Subgroup aSubgroup : itsSubgroupSet)
 		{
-			aCount++;
 			anX = aSubgroup.getFalsePositiveRate();
 			aY = aSubgroup.getTruePositiveRate();
 			aContent += "set object circle at " + anX + "," + aY + " size " + aSize + " fc rgb \"black\"\n";
@@ -139,7 +138,6 @@ public class ROCCurveWindow extends JFrame implements ActionListener
 		aY = 0f;
 		for (SubgroupROCPoint aPoint : itsSubgroupSet.getROCList())
 		{
-			aCount++;
 			float aNewX = aPoint.getFPR();
 			float aNewY = aPoint.getTPR();
 			aContent += "set arrow from " + anX + "," + aY + " to " + aNewX + "," + aNewY + " nohead lt 1 lw 2 lc rgb \"black\"\n";
@@ -150,23 +148,9 @@ public class ROCCurveWindow extends JFrame implements ActionListener
 
 		aContent += "set isosamples 100; set contour; set cntrparam cubicspline; set cntrparam order 5; set cntrparam points 20; set cntrparam levels 20; unset clabel; set view map; unset surface;\n";
 
-		switch (itsSearchParameters.getQualityMeasure())
+		final QM aQM = itsSearchParameters.getQualityMeasure();
+		switch (aQM)
 		{
-//			case (QualityMeasure.WRACC) : aContent += "splot WRAcc(x,y) lt 3 lw 0.5;\n"; break;
-//			case (QualityMeasure.ABSWRACC) : aContent += "splot absWRAcc(x,y) lt 3 lw 0.5;\n"; break;
-//			case (QualityMeasure.CHI_SQUARED) : aContent += "splot Chi2(x,y) lt 3 lw 0.5;\n"; break;
-//			case (QualityMeasure.INFORMATION_GAIN) : aContent += "splot IG(x,y) lt 3 lw 0.5;\n"; break;
-//			case (QualityMeasure.BINOMIAL) : aContent += "splot Binomial(x,y) lt 3 lw 0.5;\n"; break;
-//			case (QualityMeasure.JACCARD) : aContent += "splot Jaccard(x,y) lt 3 lw 0.5;\n"; break;
-//			case (QualityMeasure.COVERAGE) : aContent += "splot Coverage(x,y) lt 3 lw 0.5;\n"; break;
-//			case (QualityMeasure.ACCURACY) : aContent += "splot Accuracy(x,y) lt 3 lw 0.5;\n"; break;
-//			case (QualityMeasure.SPECIFICITY) : aContent += "splot Specificity(x,y) lt 3 lw 0.5;\n"; break;
-//			case (QualityMeasure.SENSITIVITY) : aContent += "splot Sensitivity(x,y) lt 3 lw 0.5;\n"; break;
-//			case (QualityMeasure.LAPLACE) : aContent += "splot Laplace(x,y) lt 3 lw 0.5;\n"; break;
-//			case (QualityMeasure.F_MEASURE) : aContent += "splot F_measure(x,y) lt 3 lw 0.5;\n"; break;
-//			case (QualityMeasure.G_MEASURE) : aContent += "splot G_measure(x,y) lt 3 lw 0.5;\n"; break;
-//			case (QualityMeasure.CORRELATION) : aContent += "splot Correlation(x,y) lt 3 lw 0.5;\n"; break;
-//			case (QualityMeasure.PURITY) : aContent += "splot Purity(x,y) lt 3 lw 0.5;\n"; break;
 			case WRACC : aContent += "splot WRAcc(x,y) lt 3 lw 0.5;\n"; break;
 			case ABSWRACC : aContent += "splot absWRAcc(x,y) lt 3 lw 0.5;\n"; break;
 			case CHI_SQUARED : aContent += "splot Chi2(x,y) lt 3 lw 0.5;\n"; break;
@@ -182,6 +166,20 @@ public class ROCCurveWindow extends JFrame implements ActionListener
 			case F_MEASURE : aContent += "splot F_measure(x,y) lt 3 lw 0.5;\n"; break;
 			case G_MEASURE : aContent += "splot G_measure(x,y) lt 3 lw 0.5;\n"; break;
 			case CORRELATION : aContent += "splot Correlation(x,y) lt 3 lw 0.5;\n"; break;
+			default :
+			{
+				// not all NOMINAL QMs are implemented
+				/*
+				 * if the QM is valid for this TargetType
+				 * 	it is not implemented here
+				 * else
+				 * 	this method should not have been called
+				 */
+//				if (QM.getQualityMeasures(TargetType.SINGLE_NOMINAL).contains(aQM))
+//					throw new AssertionError(aQM);
+//				else
+//					throw new IllegalArgumentException("Invalid argument: " + aQM);
+			}
 		}
 		aContent += "set terminal postscript eps size 5,5; set output \'roc.eps\'; replot;\n";
 		aContent += "set output; set terminal pop; set size 1,1;\n";

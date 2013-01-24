@@ -28,7 +28,7 @@ public enum NumericOperatorSetting implements EnumInterface
 	 * Returns the NumericOperatorSetting corresponding to the
 	 * <code>String</code> argument, this method is case insensitive.
 	 *
-	 * @param theType The <code>String</code> corresponding to a
+	 * @param theText The <code>String</code> corresponding to a
 	 * NumericOperatorSetting.
 	 *
 	 * @return The NumericOperatorSetting corresponding to the
@@ -38,10 +38,10 @@ public enum NumericOperatorSetting implements EnumInterface
 	 * 
 	 * @see #getDefault()
 	 */
-	public static NumericOperatorSetting fromString(String theType)
+	public static NumericOperatorSetting fromString(String theText)
 	{
 		for (NumericOperatorSetting n : NumericOperatorSetting.values())
-			if (n.GUI_TEXT.equalsIgnoreCase(theType))
+			if (n.GUI_TEXT.equalsIgnoreCase(theText))
 				return n;
 
 		/*
@@ -50,7 +50,7 @@ public enum NumericOperatorSetting implements EnumInterface
 		 */
 		Log.logCommandLine(
 			String.format("'%s' is not a valid NumericOperators. Returning '%s'.",
-					theType,
+					theText,
 					NumericOperatorSetting.getDefault().GUI_TEXT));
 		return NumericOperatorSetting.getDefault();
 	}

@@ -8,7 +8,7 @@ public enum XMLNodeSearchParameter
 		@Override
 		public String getValueFromData(SearchParameters theSearchParameters)
 		{
-			return theSearchParameters.getQualityMeasureString();
+			return theSearchParameters.getQualityMeasure().GUI_TEXT;
 		}
 
 		@Override

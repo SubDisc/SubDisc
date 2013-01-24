@@ -28,7 +28,7 @@ public class RegressionMeasureCook
 	// Stores all the datapoints for the complement // TODO initialise in constructor
 	//private List<Point2D.Float> itsComplementData = new ArrayList<Point2D.Float>();
 
-	public static QM itsType;
+	public static QM itsQualityMeasure;
 	private RegressionMeasure itsBase = null;
 
 	private Matrix itsXMatrix;
@@ -67,7 +67,7 @@ public class RegressionMeasureCook
 
 	//make a base model from multiple columns
 	public RegressionMeasureCook(QM theType, TargetConcept theTargetConcept)
-	{//TODO: Either remove legacy code, or make something decent out of it. For now, it is hacked.
+	{//TODO MM: Either remove legacy code, or make something decent out of it. For now, it is hacked.
 		//get target data
 		Column aPrimaryTarget = theTargetConcept.getPrimaryTarget(); 
 		List<Column> aSecondaryTargets = theTargetConcept.getSecondaryTargets();
@@ -89,7 +89,7 @@ public class RegressionMeasureCook
 		for (Column c : aTertiaryTargets)
 			itsTertiaryNames.add(c.getName());
 
-		itsType = theType;
+		itsQualityMeasure = theType;
 		itsSampleSize = aPrimaryTarget.size();
 /*		itsData = new ArrayList<Point2D.Float>(itsSampleSize);
 		for(int i=0; i<itsSampleSize; i++)
@@ -103,7 +103,7 @@ public class RegressionMeasureCook
 			itsData.add(new Point2D.Float(thePrimaryColumn.getFloat(i), theSecondaryColumn.getFloat(i)) );
 		}*/
 
-		switch (itsType)
+		switch (itsQualityMeasure)
 		{
 			case LINEAR_REGRESSION:
 			{/* TODO: fix or remove

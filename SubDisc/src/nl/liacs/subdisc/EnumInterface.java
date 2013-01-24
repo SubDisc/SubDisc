@@ -6,6 +6,8 @@ package nl.liacs.subdisc;
  */
 public interface EnumInterface
 {
+	// public static EnumInterface fromString();
+
 	/**
 	 * Returns a friendly <code>String<String> to show in the GUI.
 	 * 

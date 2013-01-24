@@ -13,11 +13,9 @@ public class CorrelationMeasure
 	private boolean itsComplementIsOutdated = true; //flag indicating whether the latest computed correlation for its complement is outdated and whether it should be computed again
 	private double itsComplementCorrelation = Double.NaN;
 	private final CorrelationMeasure itsBase;
-// MM	private final int itsType;
 	private final QM itsType;
 
 	//make a base model from two columns
-// MM	public CorrelationMeasure(int theType, Column thePrimaryColumn, Column theSecondaryColumn) throws IllegalArgumentException
 	public CorrelationMeasure(QM theType, Column thePrimaryColumn, Column theSecondaryColumn) throws IllegalArgumentException
 	{
 		if (!isValidCorrelationMeasureType(theType))
@@ -52,45 +50,11 @@ public class CorrelationMeasure
 		itsType = theBase.itsType;
 	}
 
-	// TODO MM use QM method to retrieve Correlation type QMs
-// MM	private static boolean isValidCorrelationMeasureType(int theType)
 	private static boolean isValidCorrelationMeasureType(QM theType)
 	{
-		// explicit listing, NEVER USE A FALL-THROUGH
-		switch (theType)
-		{
-//			case QualityMeasure.CORRELATION_R :		return true;
-//			case QualityMeasure.CORRELATION_R_NEG :		return true;
-//			case QualityMeasure.CORRELATION_R_SQ :		return true;
-//			case QualityMeasure.CORRELATION_R_NEG_SQ :	return true;
-//			case QualityMeasure.CORRELATION_DISTANCE :	return true;
-//			case QualityMeasure.CORRELATION_P :		return true;
-//			case QualityMeasure.CORRELATION_ENTROPY :	return true;
-//			case QualityMeasure.ADAPTED_WRACC :		return true;
-//			case QualityMeasure.COSTS_WRACC :		return true;
-//			default : return false;
-			case CORRELATION_R :		return true;
-			case CORRELATION_R_NEG :		return true;
-			case CORRELATION_R_SQ :		return true;
-			case CORRELATION_R_NEG_SQ :	return true;
-			case CORRELATION_DISTANCE :	return true;
-			case CORRELATION_P :		return true;
-			case CORRELATION_ENTROPY :	return true;
-			case ADAPTED_WRACC :		return true;
-			case COSTS_WRACC :		return true;
-			default : return false;
-		}
+		return QM.getQualityMeasures(TargetType.DOUBLE_CORRELATION).contains(theType);
 	}
 
-//	private static IllegalArgumentException createQMException(int theType)
-//	{
-//		return new IllegalArgumentException(
-//				String.format("%s: invalid %s-type '%s' (%d)",
-//						CorrelationMeasure.class.getSimpleName(),
-//						QualityMeasure.class.getSimpleName(),
-//						QualityMeasure.getMeasureString(theType),
-//						theType));
-//	}
 	private static IllegalArgumentException createQMException(QM theType)
 	{
 		return new IllegalArgumentException(
@@ -100,7 +64,7 @@ public class CorrelationMeasure
 						theType));
 	}
 
-	// XXX never used
+	// XXX never used but LEAVE IT IN
 /*
 	public CorrelationMeasure(double[] theXValues, double[] theYValues, int theType, CorrelationMeasure theBase)
 	{
@@ -227,23 +191,6 @@ public class CorrelationMeasure
 		final double aCorrelation = getCorrelation();
 		switch (itsType)
 		{
-//			case QualityMeasure.CORRELATION_R: 		{ return aCorrelation; }
-//			case QualityMeasure.CORRELATION_R_NEG: 		{ return -aCorrelation; }
-//			case QualityMeasure.CORRELATION_R_SQ: 		{ return aCorrelation*aCorrelation;}
-//			case QualityMeasure.CORRELATION_R_NEG_SQ: 	{ return -(aCorrelation*aCorrelation); }
-//			case QualityMeasure.CORRELATION_DISTANCE: 	{ return computeCorrelationDistance(); }
-//			case QualityMeasure.CORRELATION_P: 		{ return getPValue(); }
-//			case QualityMeasure.CORRELATION_ENTROPY: 	{ return computeEntropy(); }
-//			case QualityMeasure.ADAPTED_WRACC:		{ return computeAdaptedWRAcc(); } //Done: Rob Konijn
-//			case QualityMeasure.COSTS_WRACC:		{ return computeCostsWRAcc(); } //Done: Rob Konijn
-//			default :
-//			{
-//				throw new AssertionError(String.format("%s.getEvaluationMeasure(): unimplemented %s '%s' (%d)",
-//									this.getClass().getSimpleName(),
-//									QualityMeasure.class.getSimpleName(),
-//									QualityMeasure.getMeasureString(itsType),
-//									itsType));
-//			}
 			case CORRELATION_R:		{ return aCorrelation; }
 			case CORRELATION_R_NEG:		{ return -aCorrelation; }
 			case CORRELATION_R_SQ:		{ return aCorrelation*aCorrelation;}
@@ -255,10 +202,8 @@ public class CorrelationMeasure
 			case COSTS_WRACC:		{ return computeCostsWRAcc(); } //Done: Rob Konijn
 			default :
 			{
-				throw new AssertionError(String.format("%s.getEvaluationMeasure(): unimplemented %s '%s'",
-									this.getClass().getSimpleName(),
-									QM.class.getSimpleName(),
-									itsType.GUI_TEXT));
+				// validity of QM is checked by constructor
+				throw new AssertionError(itsType);
 			}
 		}
 	}
@@ -322,15 +267,18 @@ public class CorrelationMeasure
 	}
 
 	/**
-	 * @return the <i>p-value</i>
+	 * Return the {@code p-value} for this CorrelationMeasure and its base.
+	 * 
+	 * @return the {@code p-value}, or {@code 0.0} if either the base or
+	 * the sample is {@code <= 2}.
 	 */
 	// TODO Verify whether solution is the same when z1 - z2 and z2 - z1
 	public double getPValue()
 	{
 		int aSize = getSampleSize();
 		int aComplementSize = itsBase.getSampleSize() - getSampleSize();
-		if (aSize <= 2 || aComplementSize <=2) // either sample is too small
-			return 0;
+		if (aSize <= 2 || aComplementSize <= 2) // either sample is too small
+			return 0.0;
 
 		NormalDistribution aNormalDistro = new NormalDistribution();
 		double aComplementSampleSize = itsBase.getSampleSize() - getSampleSize();;

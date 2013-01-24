@@ -21,8 +21,6 @@ public class CortanaSettings {
 	public static final String[] QUALITY_MEASURES;
 	static {
 		List<String> list = new ArrayList<String>();
-// FIXME MM	for (int i = QualityMeasure.getFirstEvaluationMeasure(TargetType.SINGLE_NOMINAL); i <= QualityMeasure.getLastEvaluationMesure(TargetType.SINGLE_NOMINAL); ++i)
-// FIXME MM		list.add(QualityMeasure.getMeasureString(i));
 		for (QM qm : QM.getQualityMeasures(TargetType.SINGLE_NOMINAL))
 			list.add(qm.GUI_TEXT);
 		QUALITY_MEASURES = list.toArray(new String[0]);
@@ -364,4 +362,3 @@ public class CortanaSettings {
 		}
 	}
 }
-

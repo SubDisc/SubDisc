@@ -24,7 +24,7 @@ public class Process
 		echoMiningStart();
 		long aBegin = System.currentTimeMillis();
 
-		switch(aTargetType)
+		switch (aTargetType)
 		{
 			case SINGLE_NOMINAL :
 			{
@@ -172,24 +172,16 @@ public class Process
 		tc.setTargetType(TargetType.SINGLE_NOMINAL.GUI_TEXT);
 		tc.setTargetValue("1");
 		// set an alternative quality measure
-// MM		final int qm = theSearchParameters.getQualityMeasure();
-		final QM qm = theSearchParameters.getQualityMeasure();
-// MM		final int altQM = QualityMeasure.WRACC;
+		final QM backupQM = theSearchParameters.getQualityMeasure();
 		final QM altQM = QM.WRACC;
 		theSearchParameters.setQualityMeasure(altQM);
 		// set an alternative quality measure minimum
-		final float mm = theSearchParameters.getQualityMeasureMinimum();
-//		final float mm = -0.25f;
-// MM		final String altName = QualityMeasure.getMeasureString(altQM);
-// MM		theSearchParameters.setQualityMeasureMinimum(
-// MM			Float.parseFloat(QualityMeasure.getMeasureMinimum(altName, 0)));
-//				-0.25f);
+		final float backupMM = theSearchParameters.getQualityMeasureMinimum();
 		theSearchParameters.setQualityMeasureMinimum(Float.parseFloat(altQM.MEASURE_DEFAULT));
 
 		SubgroupSet aHeavySubgroupSet = new SubgroupSet(-1);
 
 		// last index is whole dataset
-//		List<List<Float>> statistics = new ArrayList<List<Float>>(aDomain.length-1);
 		for (int i = 0, j = aDomain.length-1; i < j; ++i)
 		{
 			BitSet aCAUCSet = (BitSet) aMembers.clone();
@@ -242,10 +234,9 @@ public class Process
 				aHeavySubgroupSet.addAll(ROCSubgroups);
 
 				// compile statistics
-	/*			statistics.add(compileStatistics(aDomain[i],
-								aCAUCSet.cardinality(),
-								sd.getResult()));
-	*/
+//				statistics.add(compileStatistics(aDomain[i],
+//								aCAUCSet.cardinality(),
+//								sd.getResult()));
 			}
 			else
 			{
@@ -284,8 +275,8 @@ public class Process
 		tc.setPrimaryTarget(aBackup);
 		tc.setTargetType(TargetType.SINGLE_NUMERIC.GUI_TEXT);
 		// restore original SearchParameters
-		theSearchParameters.setQualityMeasure(qm);
-		theSearchParameters.setQualityMeasureMinimum(mm);
+		theSearchParameters.setQualityMeasure(backupQM);
+		theSearchParameters.setQualityMeasureMinimum(backupMM);
 
 		// back to start
 		CAUC_HEAVY = true;
@@ -312,6 +303,7 @@ public class Process
 			if (theColumn.getFloat(k) > theThreshold)
 				theBitSet.clear(k);
 	}
+
 	public static void echoMiningStart()
 	{
 		Log.logCommandLine("Mining process started");
@@ -333,6 +325,7 @@ public class Process
 			aString += "   " + theNumberOfSubgroups + " subgroups found.\n";
 		Log.logCommandLine(aString);
 	}
+
 	private static List<Float> compileStatistics(float theThreshold, int theNrMembers, SubgroupSet theSubgroupSet)
 	{
 		// [threshold, n, AUC, fpr_1, tpr_1, ..., fpr_h, tpr_h]

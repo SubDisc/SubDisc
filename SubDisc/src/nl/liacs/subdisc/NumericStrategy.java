@@ -28,17 +28,17 @@ public enum NumericStrategy implements EnumInterface
 	 * Returns the NumericStrategy corresponding to the <code>String</code>
 	 * parameter. This method is case insensitive.
 	 *
-	 * @param theType the <code>String</code> corresponding to a
+	 * @param theText the <code>String</code> corresponding to a
 	 * NumericStrategy.
 	 *
 	 * @return the NumericStrategy corresponding to the <code>String</code>
-	 * parameter, or the default NumericStrategy <code>NUMERIC_BINS</code> if no
-	 * corresponding NumericStrategy can not be found.
+	 * parameter, or the default NumericStrategy <code>NUMERIC_BINS</code>
+	 * if no corresponding NumericStrategy can not be found.
 	 */
-	public static NumericStrategy getNumericStrategy(String theType)
+	public static NumericStrategy fromString(String theText)
 	{
-		for(NumericStrategy n : NumericStrategy.values())
-			if(n.GUI_TEXT.equalsIgnoreCase(theType))
+		for (NumericStrategy n : NumericStrategy.values())
+			if (n.GUI_TEXT.equalsIgnoreCase(theText))
 				return n;
 
 		/*
@@ -46,9 +46,8 @@ public enum NumericStrategy implements EnumInterface
 		 * return default.
 		 */
 		Log.logCommandLine(
-			String.format(
-					"'%s' is not a valid NumericStrategy. Returning '%s'.",
-					theType,
+			String.format("'%s' is not a valid NumericStrategy. Returning '%s'.",
+					theText,
 					NumericStrategy.getDefault().GUI_TEXT));
 		return NumericStrategy.getDefault();
 	}

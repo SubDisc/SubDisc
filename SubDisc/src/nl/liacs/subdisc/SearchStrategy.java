@@ -28,7 +28,7 @@ public enum SearchStrategy implements EnumInterface
 	 * Returns the SearchStartegy corresponding to the <code>String</code>
 	 * parameter. This method is case insensitive.
 	 *
-	 * @param theType the <code>String</code>
+	 * @param theText the <code>String</code>
 	 * ({@link SearchStrategy#GUI_TEXT}) corresponding to a SearchStrategy.
 	 *
 	 * @return the SearchStrategy corresponding to the <code>String</code>
@@ -36,10 +36,10 @@ public enum SearchStrategy implements EnumInterface
 	 * (as per {@link SearchStrategy#getDefault()}) if no corresponding 
 	 * SearchStrategy can be found.
 	 */
-	public static SearchStrategy getSearchStrategy(String theType)
+	public static SearchStrategy fromString(String theText)
 	{
 		for (SearchStrategy s : SearchStrategy.values())
-			if (s.GUI_TEXT.equalsIgnoreCase(theType))
+			if (s.GUI_TEXT.equalsIgnoreCase(theText))
 				return s;
 
 		/*
@@ -48,7 +48,7 @@ public enum SearchStrategy implements EnumInterface
 		 */
 		Log.logCommandLine(
 			String.format("'%s' is not a valid SearchStrategy. Returning '%s'.",
-					theType,
+					theText,
 					SearchStrategy.getDefault().GUI_TEXT));
 		return SearchStrategy.getDefault();
 	}

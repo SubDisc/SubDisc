@@ -189,7 +189,7 @@ public class MiningWindow extends JFrame
 
 		// setTargetType causes havoc, it overwrites some other values
 		setTargetTypeName(itsTargetConcept.getTargetType().GUI_TEXT);
-		setQualityMeasure(itsSearchParameters.getQualityMeasureString());
+		setQualityMeasure(itsSearchParameters.getQualityMeasure().GUI_TEXT);
 		// reset original value
 		itsSearchParameters.setQualityMeasureMinimum(originalMinimum);
 		setQualityMeasureMinimum(String.valueOf(itsSearchParameters.getQualityMeasureMinimum()));
@@ -1138,7 +1138,6 @@ public class MiningWindow extends JFrame
 			{
 				JList aDomainList = itsTable.getDomainList();
 				new RemoveDomainWindow(aDomainList);
-//				int aComponentCount = aDomainList.getModel().getSize();
 				int aComponentCount = aDomainList.getComponentCount();
 
 				if ((aDomainList != null) && (aComponentCount > 0))
@@ -1238,7 +1237,6 @@ public class MiningWindow extends JFrame
 
 		// this ALWAYS resets alpha if switching TO EDIT_DISTANCE
 		// remove upon discretion
-// FIXME MM	if (QualityMeasure.getMeasureString(QualityMeasure.EDIT_DISTANCE).equals(getQualityMeasureName()))
 		if (QM.EDIT_DISTANCE.GUI_TEXT.equals(getQualityMeasureName()))
 			itsSearchParameters.setAlpha(SearchParameters.ALPHA_EDIT_DISTANCE);
 	}
@@ -1374,7 +1372,6 @@ public class MiningWindow extends JFrame
 			case DOUBLE_REGRESSION :
 			case DOUBLE_CORRELATION :
 			{
-				//itsTargetConcept.setSecondaryTarget(itsTable.getAttribute(getTargetAttributeName()));
 				itsTargetConcept.setSecondaryTarget(itsTable.getColumn(getTargetAttributeName()));
 				break;
 			}
@@ -1388,9 +1385,7 @@ public class MiningWindow extends JFrame
 
 	private void jButtonMultiRegressionTargetsActionPerformed()
 	{
-		//itsTable.getAttribute(getTargetAttributeName()).makePrimaryTarget();
 		itsTable.getColumn(getTargetAttributeName()).makePrimaryTarget();
-		//itsTable.getColumn(getTargetAttributeName()).makePrimaryTarget();
 		new MultiRegressionTargetsWindow(jListMultiRegressionTargets, itsSearchParameters, itsTable, this);
 	}
 
@@ -1444,7 +1439,7 @@ public class MiningWindow extends JFrame
 			}
 			case DOUBLE_CORRELATION :
 			{
-				new ModelWindow(itsTargetConcept.getPrimaryTarget(), itsTargetConcept.getSecondaryTarget(),	null, null); //no trendline, no subset
+				new ModelWindow(itsTargetConcept.getPrimaryTarget(), itsTargetConcept.getSecondaryTarget(), null, null); //no trendline, no subset
 				break;
 			}
 			case MULTI_LABEL :
@@ -1591,8 +1586,10 @@ public class MiningWindow extends JFrame
 
 	private void jButtonCrossValidateActionPerformed()
 	{
-		int aStore = JOptionPane.showConfirmDialog(null, "Would you like to store binary tables for each fold in a file?",
-			"Store results", JOptionPane.YES_NO_OPTION);
+		int aStore = JOptionPane.showConfirmDialog(null,
+								"Would you like to store binary tables for each fold in a file?",
+								"Store results",
+								JOptionPane.YES_NO_OPTION);
 		setBusy(true);
 		long itsTimeStamp = System.currentTimeMillis();
 
@@ -1662,7 +1659,7 @@ public class MiningWindow extends JFrame
 		// theSearchParameters.setTargetValue(getMiscFieldName()); //only makes
 		// sense for certain target concepts
 
-		itsSearchParameters.setQualityMeasure(getQualityMeasureName());
+		itsSearchParameters.setQualityMeasure(QM.fromString(getQualityMeasureName()));
 		itsSearchParameters.setQualityMeasureMinimum(getQualityMeasureMinimum());
 
 		itsSearchParameters.setSearchDepth(getSearchDepthMaximum());
@@ -1863,7 +1860,6 @@ public class MiningWindow extends JFrame
 				Column aPrimaryColumn = itsTargetConcept.getPrimaryTarget();
 				Column aSecondaryColumn = itsTargetConcept.getSecondaryTarget();
 				CorrelationMeasure aCM =
-// FIXME MM				new CorrelationMeasure(QualityMeasure.CORRELATION_R, aPrimaryColumn, aSecondaryColumn);
 					new CorrelationMeasure(QM.CORRELATION_R, aPrimaryColumn, aSecondaryColumn);
 				jLabelTargetInfo.setText(" correlation");
 				jLFieldTargetInfo.setText(Double.toString(aCM.getEvaluationMeasureValue()));
@@ -1887,10 +1883,6 @@ public class MiningWindow extends JFrame
 	private void initQualityMeasure()
 	{
 		removeAllQualityMeasureItems();
-// FIXME MM	TargetType aTargetType = itsTargetConcept.getTargetType();
-
-// FIXME MM	for (int i = QualityMeasure.getFirstEvaluationMeasure(aTargetType); i <= QualityMeasure.getLastEvaluationMesure(aTargetType); i++)
-// FIXME MM		addQualityMeasureItem(QualityMeasure.getMeasureString(i));
 		for (QM qm : QM.getQualityMeasures(itsTargetConcept.getTargetType()))
 			addQualityMeasureItem(qm.GUI_TEXT);
 		initEvaluationMinimum();
@@ -1898,9 +1890,15 @@ public class MiningWindow extends JFrame
 
 	private void initEvaluationMinimum()
 	{
-		if (getQualityMeasureName() != null)
-// FIXME MM		setQualityMeasureMinimum(QualityMeasure.getMeasureMinimum(getQualityMeasureName(), itsTargetAverage));
-			// FIXME MM if TargetMeasure == AVERAGE/ INVERSE AVERAGE use itsTargetAverage
+		final String aName = getQualityMeasureName();
+		if (aName == null)
+			return;
+
+		if (QM.AVERAGE.GUI_TEXT.equals(aName))
+			setQualityMeasureMinimum(Float.toString(itsTargetAverage));
+		else if (QM.INVERSE_AVERAGE.GUI_TEXT.equals(aName))
+			setQualityMeasureMinimum(Float.toString(-itsTargetAverage));
+		else
 			setQualityMeasureMinimum(QM.fromString(getQualityMeasureName()).MEASURE_DEFAULT);
 	}
 

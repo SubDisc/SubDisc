@@ -25,8 +25,7 @@ public class RegressionMeasure
 	private List<Point2D.Float> itsData;//Stores all the datapoints for this measure
 	private List<Point2D.Float> itsComplementData = new ArrayList<Point2D.Float>();//Stores all the datapoints for the complement
 
-//	public static int itsType; // FIXME MM this should not be static
-	public static QM itsType; // FIXME MM this should not be static
+	public static QM itsQualityMeasure; // FIXME MM this should not be static
 	private RegressionMeasure itsBase = null;
 
 	private Matrix itsDataMatrix;
@@ -47,10 +46,9 @@ public class RegressionMeasure
 	private int itsRankDefCount;
 
 	//make a base model from two columns
-// MM	public RegressionMeasure(int theType, Column thePrimaryColumn, Column theSecondaryColumn)
 	public RegressionMeasure(QM theType, Column thePrimaryColumn, Column theSecondaryColumn)
 	{
-		itsType = theType;
+		itsQualityMeasure = theType;
 		itsSampleSize = thePrimaryColumn.size();
 		itsData = new ArrayList<Point2D.Float>(itsSampleSize);
 		for(int i=0; i<itsSampleSize; i++)
@@ -64,9 +62,8 @@ public class RegressionMeasure
 			itsData.add(new Point2D.Float(thePrimaryColumn.getFloat(i), theSecondaryColumn.getFloat(i)) );
 		}
 
-		switch(itsType)
+		switch (itsQualityMeasure)
 		{
-// MM			case QualityMeasure.LINEAR_REGRESSION:
 			case LINEAR_REGRESSION:
 			{
 				itsBase = null; //this *is* the base
@@ -75,7 +72,6 @@ public class RegressionMeasure
 				updateErrorTerms();
 				break;
 			}
-// MM			case QualityMeasure.COOKS_DISTANCE:
 			case COOKS_DISTANCE:
 			{
 				updateRegressionFunction(); //updating error terms unnecessary since Cook's distance does not care
@@ -138,7 +134,16 @@ public class RegressionMeasure
 			}
 			default :
 			{
-				throw new AssertionError(itsType);
+				/*
+				 * if the QM is valid for this TargetType
+				 * 	it is not implemented here
+				 * else
+				 * 	this method should not have been called
+				 */
+				if (QM.getQualityMeasures(TargetType.DOUBLE_REGRESSION).contains(itsQualityMeasure))
+					throw new AssertionError(itsQualityMeasure);
+				else
+					throw new IllegalArgumentException("Invalid argument: " + itsQualityMeasure);
 			}
 		}
 	}
@@ -146,7 +151,7 @@ public class RegressionMeasure
 	//constructor for non-base RM. It derives from a base-RM
 	public RegressionMeasure(RegressionMeasure theBase, BitSet theMembers)
 	{
-		itsType = theBase.itsType;
+		itsQualityMeasure = theBase.itsQualityMeasure;
 		itsBase = theBase;
 
 		//Create an empty measure

@@ -14,7 +14,6 @@ public class SearchParameters implements XMLNodeInterface
 
 	// when adding/removing members be sure to update addNodeTo() and loadNode()
 	private TargetConcept	itsTargetConcept;
-//	private int		itsQualityMeasure;
 	private QM		itsQualityMeasure;
 	private float		itsQualityMeasureMinimum;
 
@@ -26,7 +25,7 @@ public class SearchParameters implements XMLNodeInterface
 
 	private SearchStrategy	itsSearchStrategy;
 	private int		itsSearchStrategyWidth;
-	private boolean		itsNominalSets;
+	private boolean	itsNominalSets;
 	private NumericOperatorSetting itsNumericOperatorSetting;
 	private NumericStrategy	itsNumericStrategy;
 	private int		itsNrBins;
@@ -34,7 +33,7 @@ public class SearchParameters implements XMLNodeInterface
 
 	private float		itsAlpha;
 	private float		itsBeta;
-	private boolean		itsPostProcessingDoAutoRun;
+	private boolean	itsPostProcessingDoAutoRun;
 	private int		itsPostProcessingCount;
 
 	public SearchParameters(Node theSearchParametersNode)
@@ -62,15 +61,9 @@ public class SearchParameters implements XMLNodeInterface
 	public TargetConcept getTargetConcept() { return itsTargetConcept; }
 	public void setTargetConcept(TargetConcept theTargetConcept) { itsTargetConcept = theTargetConcept; }
 	public TargetType getTargetType() { return itsTargetConcept.getTargetType(); }
-//	public int getQualityMeasure() { return itsQualityMeasure; }
 	public QM getQualityMeasure() { return itsQualityMeasure; }
-//	public String getQualityMeasureString() { return QualityMeasure.getMeasureString(itsQualityMeasure); }
-	public String getQualityMeasureString() { return itsQualityMeasure.GUI_TEXT; }
 	public float getQualityMeasureMinimum() { return itsQualityMeasureMinimum; }
 	public void setQualityMeasureMinimum(float theQualityMeasureMinimum) { itsQualityMeasureMinimum = theQualityMeasureMinimum; }
-//	public void setQualityMeasure(String theQualityMeasure) { itsQualityMeasure = QualityMeasure.getMeasureCode(theQualityMeasure); }
-	public void setQualityMeasure(String theQualityMeasure) { itsQualityMeasure = QM.fromString(theQualityMeasure); }
-//	public void setQualityMeasure(int theQualityMeasure) { itsQualityMeasure = theQualityMeasure; }
 	public void setQualityMeasure(QM theQualityMeasure) { itsQualityMeasure = theQualityMeasure; }
 
 	/* SEARCH CONDITIONS */
@@ -90,7 +83,7 @@ public class SearchParameters implements XMLNodeInterface
 
 	public void setSearchStrategy(String theSearchStrategyName)
 	{
-		itsSearchStrategy = SearchStrategy.getSearchStrategy(theSearchStrategyName);
+		itsSearchStrategy = SearchStrategy.fromString(theSearchStrategyName);
 	}
 
 	public boolean getNominalSets()
@@ -117,7 +110,7 @@ public class SearchParameters implements XMLNodeInterface
 	public NumericStrategy getNumericStrategy() { return itsNumericStrategy; }
 	public void setNumericStrategy(String theNumericStrategyName)
 	{
-		itsNumericStrategy = NumericStrategy.getNumericStrategy(theNumericStrategyName);
+		itsNumericStrategy = NumericStrategy.fromString(theNumericStrategyName);
 	}
 
 	public int getSearchStrategyWidth()			{ return itsSearchStrategyWidth; }
@@ -146,7 +139,7 @@ public class SearchParameters implements XMLNodeInterface
 	{
 		Node aNode = XMLNode.addNodeTo(theParentNode, "search_parameters");
 		// itsTargetConcept is added through its own Node
-		XMLNode.addNodeTo(aNode, "quality_measure", getQualityMeasureString());
+		XMLNode.addNodeTo(aNode, "quality_measure", itsQualityMeasure.GUI_TEXT);
 		XMLNode.addNodeTo(aNode, "quality_measure_minimum", getQualityMeasureMinimum());
 		XMLNode.addNodeTo(aNode, "search_depth", getSearchDepth());
 		XMLNode.addNodeTo(aNode, "minimum_coverage", getMinimumCoverage());
@@ -174,7 +167,6 @@ public class SearchParameters implements XMLNodeInterface
 			Node aSetting = aChildren.item(i);
 			String aNodeName = aSetting.getNodeName().toLowerCase();
 			if("quality_measure".equalsIgnoreCase(aNodeName))
-//				itsQualityMeasure = QualityMeasure.getMeasureCode(aSetting.getTextContent());
 				itsQualityMeasure = QM.fromString(aSetting.getTextContent());
 			else if("quality_measure_minimum".equalsIgnoreCase(aNodeName))
 				itsQualityMeasureMinimum = Float.parseFloat(aSetting.getTextContent());
@@ -189,7 +181,7 @@ public class SearchParameters implements XMLNodeInterface
 			else if("maximum_time".equalsIgnoreCase(aNodeName))
 				itsMaximumTime = Float.parseFloat(aSetting.getTextContent());
 			else if("search_strategy".equalsIgnoreCase(aNodeName))
-				itsSearchStrategy = (SearchStrategy.getSearchStrategy(aSetting.getTextContent()));
+				itsSearchStrategy = (SearchStrategy.fromString(aSetting.getTextContent()));
 			else if("use_nominal_sets".equalsIgnoreCase(aNodeName))
 				itsNominalSets = Boolean.parseBoolean(aSetting.getTextContent());
 			else if("search_strategy_width".equalsIgnoreCase(aNodeName))
@@ -197,7 +189,7 @@ public class SearchParameters implements XMLNodeInterface
 			else if("numeric_operators".equalsIgnoreCase(aNodeName))
 				itsNumericOperatorSetting = (NumericOperatorSetting.fromString(aSetting.getTextContent()));
 			else if("numeric_strategy".equalsIgnoreCase(aNodeName))
-				itsNumericStrategy = (NumericStrategy.getNumericStrategy(aSetting.getTextContent()));
+				itsNumericStrategy = (NumericStrategy.fromString(aSetting.getTextContent()));
 			else if("nr_bins".equalsIgnoreCase(aNodeName))
 				itsNrBins = Integer.parseInt(aSetting.getTextContent());
 			else if("nr_threads".equalsIgnoreCase(aNodeName))
