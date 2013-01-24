@@ -1049,7 +1049,7 @@ public class Column implements XMLNodeInterface
 	 * @return {@code true} if this Column has missing values {@code false}
 	 * otherwise.
 	 */
-	public boolean getHasMissingValues() { return itsMissing.isEmpty(); }
+	public boolean getHasMissingValues() { return !itsMissing.isEmpty(); }
 
 	/**
 	 * Returns a <b>copy of</b> a BitSet representing the missing values for

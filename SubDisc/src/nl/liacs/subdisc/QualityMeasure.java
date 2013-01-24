@@ -668,6 +668,15 @@ public class QualityMeasure
 				{
 					float aDensity = itsPDF.getDensity(i);
 					float aDensitySubgroup = thePDF.getDensity(i);
+					/*
+					 * FIXME MM how to deal with NaN
+					 * as soon as 1 aDensity == 0 the end
+					 * result will always be NaN
+					 * however, ignoring the intermediate
+					 * NaN results is not mathematically
+					 * sound as it may indicate maximum
+					 * divergence between 2 distributions
+					 */
 					aTotalDivergence += (aDensitySubgroup * Math.log(aDensitySubgroup/aDensity));
 				}
 				aReturn = (float) ((aTotalDivergence * theCoverage) / itsNrRecords);
