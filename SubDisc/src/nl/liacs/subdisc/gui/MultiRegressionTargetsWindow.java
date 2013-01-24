@@ -7,6 +7,7 @@ package nl.liacs.subdisc.gui;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
+import java.util.List;
 
 import javax.swing.*;
 
@@ -182,17 +183,17 @@ public class MultiRegressionTargetsWindow extends JFrame implements ActionListen
 			itsMiningWindow.update();
 		}
 	}
-	
+
 	public void closingHook()
 	{
-		ArrayList<Column> aSecondaryTargets = new ArrayList<Column>();
-		ArrayList<Column> aTertiaryTargets = new ArrayList<Column>();
+		List<Column> aSecondaryTargets = new ArrayList<Column>();
+		List<Column> aTertiaryTargets = new ArrayList<Column>();
 		TargetConcept aTargetConcept = itsSearchParameters.getTargetConcept();
 		int aPrimaryTargetCount = 0;
 		int aSecondaryTargetCount = 0;
-		for ( Column aColumn : itsTable.getColumns() )
+		for (Column aColumn : itsTable.getColumns() )
 		{
-			if (aColumn.isNumericType())
+			if (aColumn.getType() == AttributeType.NUMERIC)
 			{
 				switch (aColumn.getTargetStatus())
 				{

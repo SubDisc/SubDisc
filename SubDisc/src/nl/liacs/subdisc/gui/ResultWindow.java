@@ -21,7 +21,6 @@ public class ResultWindow extends JFrame implements ActionListener
 	private SubgroupDiscovery itsSubgroupDiscovery;
 	private SubgroupSet itsSubgroupSet;
 	private QualityMeasure itsQualityMeasure;
-	private int itsNrRecords;
 
 	private RegressionMeasure itsRegressionMeasureBase;
 	private int itsFold;
@@ -40,7 +39,6 @@ public class ResultWindow extends JFrame implements ActionListener
 		}
 
 		itsTable = theTable;
-		itsNrRecords = itsTable.getNrRows();
 		itsSubgroupDiscovery = theSubgroupDiscovery;
 		itsSubgroupSet = theSubgroupDiscovery.getResult();
 		itsSearchParameters = theSubgroupDiscovery.getSearchParameters();
@@ -65,7 +63,6 @@ public class ResultWindow extends JFrame implements ActionListener
 	public ResultWindow(ResultWindow theParentWindow, SubgroupSet thePatternTeam)
 	{
 		itsTable = theParentWindow.itsTable;
-		itsNrRecords = itsTable.getNrRows();
 		itsSubgroupDiscovery = theParentWindow.itsSubgroupDiscovery;
 		itsSubgroupSet = thePatternTeam;
 		itsSearchParameters = itsSubgroupDiscovery.getSearchParameters();

@@ -1501,12 +1501,19 @@ public class MiningWindow extends JFrame
 			}
 			case SINGLE_NUMERIC :
 			{
-				String aTarget = getTargetAttributeName();
-				float aSum = itsTable.getColumn(aTarget).computeSum();
-				float anSSD = itsTable.getColumn(aTarget).computeSumSquaredDeviations(aSum);
-				ProbabilityDensityFunction aPDF = new ProbabilityDensityFunction(itsTable.getColumn(aTarget));
+				Column aTarget = itsTable.getColumn(getTargetAttributeName());
+				int aNrRows = aTarget.size();
+
+				// get Column sum and sum of squared deviations
+				BitSet b = new BitSet(aNrRows);
+				b.set(0, aNrRows);
+				float[] aStats = aTarget.getStatistics(b, false);
+
+				// get smoothed PDF with default number of bins
+				ProbabilityDensityFunction aPDF = new ProbabilityDensityFunction(aTarget);
 				aPDF.smooth();
-				aQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), itsTable.getNrRows(), aSum, anSSD, aPDF);
+
+				aQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), aNrRows, aStats[0], aStats[1], aPDF);
 				break;
 			}
 			case MULTI_LABEL :
@@ -1722,22 +1729,24 @@ public class MiningWindow extends JFrame
 
 		// primary target and MiscField
 		boolean isEmpty = true;
-		for (int i = 0; i < itsTable.getNrColumns(); i++) {
-			Column anAttribute = itsTable.getColumn(i);
-			if ((aTargetType == TargetType.SINGLE_NOMINAL && anAttribute.isNominalType()) ||
-					(aTargetType == TargetType.SINGLE_NOMINAL && anAttribute.isBinaryType()) ||
-					(aTargetType == TargetType.SINGLE_NUMERIC && anAttribute.isNumericType()) ||
-					(aTargetType == TargetType.SINGLE_ORDINAL && anAttribute.isNumericType()) ||
-					(aTargetType == TargetType.DOUBLE_REGRESSION && anAttribute.isNumericType()) ||
-					(aTargetType == TargetType.DOUBLE_CORRELATION && anAttribute.isNumericType()) ||
-					(aTargetType == TargetType.MULTI_LABEL && anAttribute.isNumericType()) ||
-					(aTargetType == TargetType.MULTI_BINARY_CLASSIFICATION && anAttribute.isBinaryType()) ||
-					(aTargetType == TargetType.MULTI_BINARY_CLASSIFICATION && anAttribute.isNominalType()))
+		for (int i = 0; i < itsTable.getNrColumns(); i++)
+		{
+			Column aColumn = itsTable.getColumn(i);
+			AttributeType anAttributeType = aColumn.getType();
+			if ((aTargetType == TargetType.SINGLE_NOMINAL && anAttributeType == AttributeType.NOMINAL) ||
+				(aTargetType == TargetType.SINGLE_NOMINAL && anAttributeType == AttributeType.BINARY) ||
+				(aTargetType == TargetType.SINGLE_NUMERIC && anAttributeType == AttributeType.NUMERIC) ||
+				(aTargetType == TargetType.SINGLE_ORDINAL && anAttributeType == AttributeType.NUMERIC) ||
+				(aTargetType == TargetType.DOUBLE_REGRESSION && anAttributeType == AttributeType.NUMERIC) ||
+				(aTargetType == TargetType.DOUBLE_CORRELATION && anAttributeType == AttributeType.NUMERIC) ||
+				(aTargetType == TargetType.MULTI_LABEL && anAttributeType == AttributeType.NUMERIC) ||
+				(aTargetType == TargetType.MULTI_BINARY_CLASSIFICATION && anAttributeType == AttributeType.BINARY) ||
+				(aTargetType == TargetType.MULTI_BINARY_CLASSIFICATION && anAttributeType == AttributeType.NOMINAL))
 			{
-				addTargetAttributeItem(anAttribute.getName());
+				addTargetAttributeItem(aColumn.getName());
 				if ((aTargetType == TargetType.DOUBLE_REGRESSION) ||
 						(aTargetType == TargetType.DOUBLE_CORRELATION))
-					addMiscFieldItem(anAttribute.getName());
+					addMiscFieldItem(aColumn.getName());
 
 				isEmpty = false;
 			}
@@ -1765,12 +1774,14 @@ public class MiningWindow extends JFrame
 			int aCount = 0;
 			List<Column> aList = new ArrayList<Column>();
 			for (Column c: itsTable.getColumns())
-				if (c.isBinaryType() && c.getIsEnabled())
+			{
+				if (c.getType() == AttributeType.BINARY && c.getIsEnabled())
 				{
 					addMultiTargetsItem(c.getName());
 					aList.add(c);
 					aCount++;
 				}
+			}
 			itsTargetConcept.setMultiTargets(aList);
 			jListMultiTargets.setSelectionInterval(0, jListMultiTargets.getModel().getSize() - 1);
 			jLFieldTargetInfo.setText(String.valueOf(aCount));
@@ -1784,12 +1795,14 @@ public class MiningWindow extends JFrame
 		int aCount = 0;
 		List<Column> aList = new ArrayList<Column>();
 		for (Column c: itsTable.getColumns())
-			if (c.isNumericType() && c.getIsEnabled() && !itsTargetConcept.getPrimaryTarget().equals(c))
+		{
+			if (c.getType() == AttributeType.NUMERIC && c.getIsEnabled() && !itsTargetConcept.getPrimaryTarget().equals(c))
 			{
 				addMultiRegressionTargetsItem(c.getName());
 				aList.add(c);
 				aCount++;
 			}
+		}
 		itsTargetConcept.setMultiRegressionTargets(aList);
 		jListMultiRegressionTargets.setSelectionInterval(0, jListMultiRegressionTargets.getModel().getSize() - 1);
 		jLFieldTargetInfo.setText(String.valueOf(aCount));

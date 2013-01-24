@@ -220,11 +220,12 @@ public class Condition implements Comparable<Condition>
 
 	public boolean hasNextOperator()
 	{
-		if (itsOperator == LAST_BINARY_OPERATOR && itsColumn.isBinaryType())
+		final AttributeType aType = itsColumn.getType();
+		if (itsOperator == LAST_BINARY_OPERATOR && aType == AttributeType.BINARY)
 			return false;
-		if (itsOperator == LAST_NOMINAL_OPERATOR && itsColumn.isNominalType())
+		if (itsOperator == LAST_NOMINAL_OPERATOR && aType == AttributeType.NOMINAL)
 			return false;
-		if (itsOperator == LAST_NUMERIC_OPERATOR && itsColumn.isNumericType())
+		if (itsOperator == LAST_NUMERIC_OPERATOR && aType == AttributeType.NUMERIC)
 			return false;
 		return true;
 	}
@@ -338,7 +339,7 @@ public class Condition implements Comparable<Condition>
 	@Override
 	public String toString()
 	{
-		if (itsColumn.isNumericType() || itsOperator == Operator.ELEMENT_OF)
+		if (itsColumn.getType() == AttributeType.NUMERIC || itsOperator == Operator.ELEMENT_OF)
 			return String.format("%s %s %s", itsColumn.getName(), itsOperator, getValue());
 		else
 			return String.format("%s %s '%s'", itsColumn.getName(), itsOperator, getValue());

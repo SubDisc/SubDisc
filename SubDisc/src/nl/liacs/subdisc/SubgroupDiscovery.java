@@ -217,8 +217,9 @@ public class SubgroupDiscovery extends MiningAlgorithm
 						break;
 
 					Refinement aRefinement = aRefinementList.get(i);
+					Condition aCondition = aRefinement.getCondition();
 					// if refinement is (num_attr = value) then treat it as nominal
-					if (aRefinement.getCondition().getColumn().isNumericType() && aRefinement.getCondition().getOperator() != Operator.EQUALS)
+					if (aCondition.getColumn().getType() == AttributeType.NUMERIC && aCondition.getOperator() != Operator.EQUALS)
 						evaluateNumericRefinements(aSubgroup, aRefinement);
 					else
 						evaluateNominalBinaryRefinements(aSubgroup, aRefinement);
@@ -276,6 +277,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 			case NUMERIC_BINS :
 			{
 				//this is the crucial translation from nr bins to nr splitpoint
+				// code does nothing if aNrSplitPoints == 0
 				int aNrSplitPoints = itsSearchParameters.getNrBins() - 1;
 
 				float[] aSplitPoints = theRefinement.getCondition().getColumn().getSplitPoints(theSubgroup.getMembers(), aNrSplitPoints);
@@ -1198,8 +1200,9 @@ TODO for stable jar, disabled, causes comple errors, reinstate later
 						break;
 
 					Refinement aRefinement = aRefinementList.get(i);
+					Condition aCondition = aRefinement.getCondition();
 					// if refinement is (num_attr = value) then treat it as nominal
-					if (aRefinement.getCondition().getColumn().isNumericType() && aRefinement.getCondition().getOperator() != Operator.EQUALS)
+					if (aCondition.getColumn().getType() == AttributeType.NUMERIC && aCondition.getOperator() != Operator.EQUALS)
 						evaluateNumericRefinements(aSubgroup, aRefinement);
 					else
 						evaluateNominalBinaryRefinements(aSubgroup, aRefinement);

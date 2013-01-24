@@ -22,6 +22,7 @@ public class RefinementList extends ArrayList<Refinement>
 		final boolean isSingleNominalTT = (aTC.getTargetType() == TargetType.SINGLE_NOMINAL);
 
 		Condition aCondition = itsTable.getFirstCondition();
+		AttributeType aType;
 		do
 		{
 			boolean add = false;
@@ -29,24 +30,25 @@ public class RefinementList extends ArrayList<Refinement>
 
 			if (aColumn.getIsEnabled() && !aTC.isTargetAttribute(aColumn))
 			{
+				aType = aColumn.getType();
 				Refinement aRefinement = new Refinement(aCondition, itsSubgroup);
 
-				// FIXME should be part of Operator
+				// FIXME MM should be part of Operator
 				//check validity of operator
 				//numeric
-				if (aColumn.isNumericType() && NumericOperatorSetting.check(aNO, aCondition.getOperator()))
+				if (aType == AttributeType.NUMERIC && NumericOperatorSetting.check(aNO, aCondition.getOperator()))
 					add = true;
 				//nominal
-				else if (aColumn.isNominalType() && !useSets && aCondition.isEquals())
+				else if (aType == AttributeType.NOMINAL && !useSets && aCondition.isEquals())
 				{
 					// set-valued only allowed for SINGLE_NOMINAL
 					if (isSingleNominalTT || aCondition.getOperator() != Operator.ELEMENT_OF)
 						add = true;
 				}
-				else if (aColumn.isNominalType() && useSets && aCondition.isElementOf())
+				else if (aType == AttributeType.NOMINAL && useSets && aCondition.isElementOf())
 					add = true;
 				//binary
-				else if (aColumn.isBinaryType())
+				else if (aType == AttributeType.BINARY)
 					add = true;
 
 				if (add)
