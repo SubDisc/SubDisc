@@ -377,11 +377,8 @@ public class Table implements XMLNodeInterface
 			else
 				t++;
 		}
-// FIXME remove, debug only
-System.out.format("Table.getRandomSubgroup(): size=%d cardinality=", theSize, aSample.cardinality());
-		Subgroup aSubgroup = new Subgroup(0.0, theSize, 0, null, aSample);
-		//aSubgroup.setMembers(aSample);
-		return aSubgroup;
+
+		return new Subgroup(null, aSample, null);
 	}
 
 	/**

@@ -68,25 +68,6 @@ public class Subgroup implements Comparable<Subgroup>
 		isPValueComputed = false;
 	}
 
-	/** Scheduled for deletion. */
-	/*
-	 * FIXME theCoverage and theBitSet.cardinality() are not logically
-	 * related, this can lead to getCoverage() reporting a number of
-	 * Subgroup members different from the members (set bits) in itsMembers.
-	 */
-	@Deprecated
-	public Subgroup(double theMeasureValue, int theCoverage, int theDepth, SubgroupSet theSubgroupSet, BitSet theBitSet)
-	{
-		itsConditions = new ConditionList();
-		itsMeasureValue = theMeasureValue;
-		itsCoverage = theCoverage;
-		itsMembers = theBitSet;
-		itsDepth = theDepth;
-		itsDAG = null;	//not set yet
-		itsParentSet = (theSubgroupSet == null ? new SubgroupSet(0) : theSubgroupSet);
-		isPValueComputed = false;
-	}
-
 	// itsMeasureValue, itsCoverage, itsDepth are primitive types, no need
 	// to deep-copy
 	// itsParentSet must not be deep-copied
