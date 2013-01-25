@@ -38,7 +38,8 @@ public enum QM implements EnumInterface
 	T_TEST		("t-Test",		"1.0"),
 	INVERSE_T_TEST	("Inverse t-Test",	"1.0"),
 	ABS_T_TEST	("Abs t-Test",		"1.0"),
-	CHI2_TEST	("Median Chi-squared test",	"2.5"), // TODO MM see QualityMeasure.itsPopulationCounts
+// TODO ANYONE see QualityMeasure.itsPopulationCounts, disabled for now
+//	CHI2_TEST	("Median Chi-squared test",	"2.5"),
 	HELLINGER	("Squared Hellinger distance",	"0.0"),
 	KULLBACKLEIBLER	("Kullback-Leibler divergence",	"0.0"),
 	CWRACC		("CWRAcc", "0.0"),
@@ -97,7 +98,9 @@ public enum QM implements EnumInterface
 			case SINGLE_ORDINAL :
 				return EnumSet.range(AUC, MMAD);
 			case DOUBLE_REGRESSION :
-				return EnumSet.range(LINEAR_REGRESSION, COOKS_DISTANCE);
+				return EnumSet.of(LINEAR_REGRESSION);
+				// TODO MM COOKS_DISTANCE is not implemented
+				//return EnumSet.range(LINEAR_REGRESSION, COOKS_DISTANCE);
 			case DOUBLE_CORRELATION :
 				return EnumSet.range(CORRELATION_R, COSTS_WRACC);
 			case MULTI_LABEL :
