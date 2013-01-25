@@ -485,9 +485,6 @@ public class SubgroupDiscovery extends MiningAlgorithm
 					int aPi = aNCT.getPositiveCount(i);
 					int aNi = aNCT.getNegativeCount(i);
 					// include values with WRAcc=0 too, result has same WRAcc but higher support
-// FIXME MM ask MiMa
-//					if (aPi == 0 && aNi == 0)
-//						continue;
 					if (aPi >= aRatio * (aPi + aNi))
 						aDomainBestSubSet.add(aNCT.getValue(i));
 				}

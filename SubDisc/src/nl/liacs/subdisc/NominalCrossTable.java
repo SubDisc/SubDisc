@@ -4,63 +4,53 @@ import java.util.*;
 
 public class NominalCrossTable
 {
-	private String[] itsValues;
-	private int[] itsPositiveCounts;
-	private int[] itsNegativeCounts;
-	private int itsPositiveCount = 0; //sum
-	private int itsNegativeCount = 0; //sum
+	private final String[] itsValues;
+	private final int[] itsPositiveCounts;
+	private final int[] itsNegativeCounts;
+	private final int itsPositiveCount; //sum
+	private final int itsNegativeCount; //sum
 
 	public NominalCrossTable(Column theColumn, Subgroup theSubgroup, BitSet theTarget)
 	{
-		itsValues = theColumn.getDomain().toArray(new String[0]);
+		final BitSet aMembers = theSubgroup.getMembers();
+		itsValues = theColumn.getUniqueNominalBinaryDomain(aMembers);
 		itsPositiveCounts = new int[itsValues.length];
 		itsNegativeCounts = new int[itsValues.length];
 
-		//loop over all records (AK could be faster? ok for now)
-		for (int i=0; i<theColumn.size(); i++)
+		int aPositiveCount = 0;
+		int aNegativeCount = 0;
+		// check only SG.members, combine 2 loops
+		for (int i = aMembers.nextSetBit(0); i >= 0; i = aMembers.nextSetBit(i + 1))
 		{
-			if (theSubgroup.covers(i))
+			int anIndex = Arrays.binarySearch(itsValues, theColumn.getNominal(i));
+			if (theTarget.get(i))
 			{
-				String aValue = theColumn.getNominal(i);
-				int anIndex = Arrays.binarySearch(itsValues, aValue);
-				if (theTarget.get(i))
-					itsPositiveCounts[anIndex]++;
-				else
-					itsNegativeCounts[anIndex]++;
+				++itsPositiveCounts[anIndex];
+				++aPositiveCount;
+			}
+			else
+			{
+				++itsNegativeCounts[anIndex];
+				++aNegativeCount;
 			}
 		}
 
-		for (int i=0; i<size(); i++)
-		{
-			itsPositiveCount += itsPositiveCounts[i];
-			itsNegativeCount += itsNegativeCounts[i];
-		}
-
-		// faster alternative, check only SG.members, combine 2 loops
-		// TODO test
-//		final BitSet aMembers = theSubgroup.getMembers();
-//		for (int i = aMembers.nextSetBit(0); i >= 0; i = aMembers.nextSetBit(i + 1))
-//		{
-//			int anIndex = Arrays.binarySearch(itsValues, theColumn.getNominal(i));
-//			if (theTarget.get(i))
-//			{
-//				++itsPositiveCounts[anIndex];
-//				++itsPositiveCount;
-//			}
-//			else
-//			{
-//				++itsNegativeCounts[anIndex];
-//				++itsNegativeCount;
-//			}
-//		}
+		itsPositiveCount = aPositiveCount;
+		itsNegativeCount = aNegativeCount;
 	}
 
 	public String getValue(int index) { return itsValues[index]; }
 	public int getPositiveCount(int theIndex) { return itsPositiveCounts[theIndex]; }
 	public int getNegativeCount(int theIndex) { return itsNegativeCounts[theIndex]; }
-	public int getPositiveCount() { return itsPositiveCount; }
-	public int getNegativeCount() { return itsNegativeCount; }
 	public int size() { return itsValues.length; }
+
+	// never used
+	@Deprecated
+	public int getPositiveCount() { return itsPositiveCount; }
+
+	// never used
+	@Deprecated
+	public int getNegativeCount() { return itsNegativeCount; }
 
 	// never used
 	@Deprecated
@@ -97,30 +87,32 @@ public class NominalCrossTable
 		for (int i = 0; i < size(); i++)
 			Log.logCommandLine(itsValues[i] + ": (" + itsPositiveCounts[i] + ", " + itsNegativeCounts[i] + ")");
 	}
-	
-	
+
 	/*
-	 Sort values based on pos/neg ratios.
-	 Complexity is asymptotically optimal, however, if aOptimalSort==false it reverts
-	 to java's builtin (merge) sort, which is not optimal but probably more optimized
-	*/
+	 * Sort values based on pos/neg ratios.
+	 * Complexity is asymptotically optimal, however, if aOptimalSort==false
+	 * it reverts to java's builtin (merge) sort, which is not optimal but
+	 * probably more optimized.
+	 */
 	private void sortValues(List<Integer> aSortedIndexList, int l, int r)
 	{
 		CrossTableComparator aCTC = new CrossTableComparator(itsPositiveCounts, itsNegativeCounts);
-		
+
 		boolean aOptimalSort = false;
-		
-		if (!aOptimalSort) {
+
+		if (!aOptimalSort)
+		{
 			Collections.sort(aSortedIndexList, aCTC);
 		}
-		else {
-			
+		else
+		{
 			int i = l - 1;
 			int j = r;
 			int p = l - 1;
 			int q = r;
-			
-			if (r <= l) return;
+
+			if (r <= l)
+				return;
 			Integer arr = aSortedIndexList.get(r);
 			for ( ; ; )
 			{
@@ -138,30 +130,30 @@ public class NominalCrossTable
 					exchange(aSortedIndexList, j, q);
 				}
 			}
-			
+
 			exchange(aSortedIndexList, i, r);
-			
+
 			j = i - 1;
 			i = i + 1;
-			
+
 			for (int k = l; k < p; k++, j--)
 				exchange(aSortedIndexList, k, j);
 			for (int k = r-1; k > q; k--, i++)
 				exchange(aSortedIndexList, i, k);
-			
+
 			sortValues(aSortedIndexList, l, j);
 			sortValues(aSortedIndexList, i, r);
 		}
-		
+
 		return;
 	}
-	
+
 	private void exchange(List<Integer> aSortedIndexList, int i, int j)
 	{
 		Integer tmp = aSortedIndexList.get(i);
 		aSortedIndexList.set(i, aSortedIndexList.get(j));
 		aSortedIndexList.set(j, tmp);
-		
+
 		return;
 	}
 	
@@ -174,7 +166,6 @@ public class NominalCrossTable
 		/** no null check, may throw null pointer exception */
 		CrossTableComparator(int[] thePositiveCounts, int[] theNegativeCounts)
 		{
-			// XXX NOTE int[] arguments are not used here!!!
 			itsPosCounts = thePositiveCounts;
 			itsNegCounts = theNegativeCounts;
 		}

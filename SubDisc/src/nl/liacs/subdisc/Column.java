@@ -550,75 +550,6 @@ public class Column implements XMLNodeInterface
 	}
 
 	/**
-	 * Returns a {@code TreeSet} with all distinct values for this Column,
-	 * with values ordered according to their natural ordering.
-	 * 
-	 * @return the domain for this Column.
-	 * 
-	 * @see #getUniqueNumericDomain(BitSet)
-	 * @see #getCardinality()
-	 */
-	public TreeSet<String> getDomain()
-	{
-		switch (itsType)
-		{
-			case NOMINAL :
-			{
-				return new TreeSet<String>(itsDistinctValues);
-			}
-			case NUMERIC :
-			{
-				TreeSet<String> aResult = new TreeSet<String>();
-				for (float f : itsFloatz)
-					aResult.add(Float.toString(f));
-				return aResult;
-			}
-			case ORDINAL :
-			{
-				throw new AssertionError(itsType);
-			}
-			case BINARY :
-			{
-				final TreeSet<String> aResult = new TreeSet<String>();
-
-				if (itsSize == 0)
-					return aResult;
-
-				// check if all true/ all false
-				final int set = itsBinaries.nextSetBit(0);
-				if (set < 0 || set >= itsSize)
-				{
-					// no 1's, just 0's
-					aResult.add("0");
-				}
-				else
-				{
-					// there is at least one 1
-					aResult.add("1");
-
-					// 1 occurs after (a number of) 0's
-					if (set > 0)
-						aResult.add("0");
-					else
-					{
-						// is there a 0, or only 1's
-						final int clear = itsBinaries.nextClearBit(0);
-						if (clear >= 0 && clear < itsSize)
-							aResult.add("0");
-					}
-				}
-
-				return aResult;
-			}
-			default :
-			{
-				logTypeError("Column.getDomain()");
-				throw new AssertionError(itsType);
-			}
-		}
-	}
-
-	/**
 	 * Sets a new type for this Column. This is done by changing the
 	 * {@link AttributeType} of this Column.
 	 *
@@ -1181,6 +1112,7 @@ public class Column implements XMLNodeInterface
 	 * contains no data ({@link #size} {@code == 0}).
 	 * 
 	 * @see #getDomain()
+	 * @see #getUniqueNominalBinaryDomain(BitSet)
 	 * @see #getUniqueNumericDomain(BitSet)
 	 */
 	public int getCardinality()
@@ -1563,6 +1495,145 @@ public class Column implements XMLNodeInterface
 	}
 
 	/**
+	 * Returns a {@code java.util.TreeSet} with all distinct values for this
+	 * Column, with values ordered according to their natural ordering.
+	 * 
+	 * @return the domain for this Column.
+	 * 
+	 * @see #getUniqueNominalBinaryDomain(BitSet)
+	 * @see #getUniqueNumericDomain(BitSet)
+	 * @see #getCardinality()
+	 */
+	public TreeSet<String> getDomain()
+	{
+		switch (itsType)
+		{
+			case NOMINAL :
+			{
+				return new TreeSet<String>(itsDistinctValues);
+			}
+			case NUMERIC :
+			{
+				TreeSet<String> aResult = new TreeSet<String>();
+				for (float f : itsFloatz)
+					aResult.add(Float.toString(f));
+				return aResult;
+			}
+			case ORDINAL :
+			{
+				throw new AssertionError(itsType);
+			}
+			case BINARY :
+			{
+				final TreeSet<String> aResult = new TreeSet<String>();
+
+				if (itsSize == 0)
+					return aResult;
+
+				// check if all true/ all false
+				final int set = itsBinaries.nextSetBit(0);
+				if (set < 0 || set >= itsSize)
+				{
+					// no 1's, just 0's
+					aResult.add("0");
+				}
+				else
+				{
+					// there is at least one 1
+					aResult.add("1");
+
+					// 1 occurs after (a number of) 0's
+					if (set > 0)
+						aResult.add("0");
+					else
+					{
+						// is there a 0, or only 1's
+						final int clear = itsBinaries.nextClearBit(0);
+						if (clear >= 0 && clear < itsSize)
+							aResult.add("0");
+					}
+				}
+
+				return aResult;
+			}
+			default :
+			{
+				logTypeError("Column.getDomain()");
+				throw new AssertionError(itsType);
+			}
+		}
+	}
+
+	/**
+	 * Returns the unique, sorted domain for Columns of
+	 * {@link AttributeType} {@link AttributeType#NOMINAL} and
+	 * {@link AttributeType#BINARY}.
+	 * <p>
+	 * The bits set in the BitSet supplied as argument indicate which values
+	 * of the Column should be used for the creation of the domain.
+	 * When the BitSet represents the members of a {@link Subgroup}, this
+	 * method returns the domain covered by that Subgroup.
+	 * <p>
+	 * The maximum size of the returned String[] is the minimum of
+	 * {@link java.lang.BitSet#cardinality() BitSet.cardinality()} and this
+	 * Columns {@link #getCardinality() cardinality}}.</br>
+	 * The minimum size is 0, if the BitSet has cardinality {@code 0} or is
+	 * {@code null}.
+	 * <p>
+	 * When the Column is not of {@link AttributeType}
+	 * {@link AttributeType#NOMINAL} or {@link AttributeType#BINARY} a
+	 * {@code new String[0]} will be returned.
+	 *
+	 * @param theBitSet the BitSet indicating what values of this Column to
+	 * use for the creation of the domain.
+	 *
+	 * @return a String[], holding the distinct values for the domain.
+	 *
+	 * @see #getDomain()
+	 * @see #getUniqueNominalBinaryDomain(BitSet)
+	 * @see #getCardinality()
+	 * @see AttributeType
+	 * @see Subgroup
+	 * @see java.lang.BitSet
+	 */
+	public String[] getUniqueNominalBinaryDomain(BitSet theBitSet)
+	{
+		if (theBitSet.length() > itsSize)
+			throw new IllegalArgumentException("theBitSet.length() > " + itsSize);
+
+		final Set<String> aUniqueValues = new TreeSet<String>();
+
+		switch (itsType)
+		{
+			case NOMINAL :
+			{
+				// abort when all distinct values are added
+				for (int i = theBitSet.nextSetBit(0); i >= 0 && i < itsSize; i = theBitSet.nextSetBit(i + 1))
+					if (aUniqueValues.add(itsNominals.get(i)))
+						if (aUniqueValues.size() == itsCardinality)
+							break;
+				break;
+			}
+			case BINARY :
+			{
+				// abort when all distinct values are added
+				for (int i = theBitSet.nextSetBit(0); i >= 0 && i < itsSize; i = theBitSet.nextSetBit(i + 1))
+					if (aUniqueValues.add(itsBinaries.get(i) ? "1" : "0"))
+						if (aUniqueValues.size() == itsCardinality)
+							break;
+				break;
+			}
+			default :
+			{
+				logMessage("getUniqueNominalBinaryDomain",
+						getTypeError("NOMINAL or BINARY"));
+			}
+		}
+
+		return aUniqueValues.toArray(new String[0]);
+	}
+
+	/**
 	 * Returns the unique, sorted domain for Columns of
 	 * {@link AttributeType} {@link AttributeType#NUMERIC} and
 	 * {@link AttributeType#ORDINAL}.
@@ -1587,6 +1658,7 @@ public class Column implements XMLNodeInterface
 	 * @return a float[], holding the distinct values for the domain.
 	 *
 	 * @see #getDomain()
+	 * @see #getUniqueNominalBinaryDomain(BitSet)
 	 * @see #getCardinality()
 	 * @see AttributeType
 	 * @see Subgroup
