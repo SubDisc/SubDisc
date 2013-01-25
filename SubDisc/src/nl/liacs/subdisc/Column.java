@@ -899,9 +899,9 @@ public class Column implements XMLNodeInterface
 		try
 		{
 			// always change itsMissingValue to "0" or "1"
-			if (Float.parseFloat(itsMissingValue) == 0f)
+			if (Float.parseFloat(itsMissingValue) == 0.0f)
 				itsMissingValue = "0";
-			else if (Float.parseFloat(itsMissingValue) == 1f)
+			else if (Float.parseFloat(itsMissingValue) == 1.0f)
 				itsMissingValue = "1";
 			else if (itsType.DEFAULT_MISSING_VALUE.equals(itsMissingValue))
 				itsMissingValue = AttributeType.BINARY.DEFAULT_MISSING_VALUE;
@@ -946,6 +946,8 @@ public class Column implements XMLNodeInterface
 		if (!"0".equals(AttributeType.BINARY.DEFAULT_MISSING_VALUE))
 			for (int i = itsMissing.nextSetBit(0); i >= 0; i = itsMissing.nextSetBit(i + 1))
 				itsBinaries.set(i);
+
+		updateCardinality();
 
 		itsType = AttributeType.BINARY;
 		return true;
@@ -1055,7 +1057,6 @@ public class Column implements XMLNodeInterface
 			{
 				itsMissingValue =
 					(AttributeType.isValidBinaryTrueValue(theNewValue) ? "1" : "0");
-				updateCardinality();
 				boolean aNewValue = "0".equals(itsMissingValue);
 				for (int i = itsMissing.nextSetBit(0); i >= 0; i = itsMissing.nextSetBit(i + 1))
 				{
@@ -1064,6 +1065,7 @@ public class Column implements XMLNodeInterface
 					else
 						itsBinaries.set(i);
 				}
+				updateCardinality();
 				return true;
 			}
 			default :
@@ -1133,7 +1135,7 @@ public class Column implements XMLNodeInterface
 				itsCardinality = itsDistinctValues.size();
 				return itsCardinality;
 			}
-			case NUMERIC: // deliberate fall-through to ORDINAL
+			case NUMERIC : // deliberate fall-through to ORDINAL
 			case ORDINAL :
 			{
 				float aMissingValue = Float.valueOf(itsType.DEFAULT_MISSING_VALUE).floatValue();
@@ -1146,11 +1148,11 @@ public class Column implements XMLNodeInterface
 					}
 				}
 
-				// XXX inefficient
+				// XXX inefficient but good enough
 				BitSet b = new BitSet();
 				b.set(0, itsSize);
-				return getUniqueNumericDomain(b).length;
-				// FIXME MM set itsCardinality?
+				itsCardinality = getUniqueNumericDomain(b).length;
+				return itsCardinality;
 			}
 			case BINARY :
 			{
@@ -1178,9 +1180,8 @@ public class Column implements XMLNodeInterface
 					}
 				}
 
-				int setBits = itsBinaries.cardinality();
-				return (setBits > 0 && setBits < itsSize) ? 2 : 1;
-				// FIXME MM set itsCardinality?
+				itsCardinality = getBinariesCardinality();
+				return itsCardinality;
 			}
 			default :
 			{
@@ -1252,6 +1253,35 @@ public class Column implements XMLNodeInterface
 				}
 			}
 		}
+
+		itsCardinality = getBinariesCardinality();
+	}
+
+	// 0 if Column is empty, 1 if all 0s or all 1s, 2 if both 0s and 1s
+	private int getBinariesCardinality()
+	{
+		if (itsSize == 0)
+			return 0;
+
+		// check if all true/ all false
+		final int set = itsBinaries.nextSetBit(0);
+
+		// no 1's, just 0's
+		if (set < 0 || set >= itsSize)
+			return 1;
+
+		// there is at least one 1
+
+		// 1 occurs after (a number of) 0's
+		if (set > 0)
+			return 2;
+
+		// is there a 0 somewhere, or only 1's
+		final int clear = itsBinaries.nextClearBit(0);
+		if (clear >= 0 && clear < itsSize)
+			return 2;
+		else
+			return 1;
 	}
 
 	public void makeNoTarget() { if (itsType == AttributeType.NUMERIC) itsTargetStatus = NONE; }
@@ -1527,34 +1557,28 @@ public class Column implements XMLNodeInterface
 			{
 				final TreeSet<String> aResult = new TreeSet<String>();
 
-				if (itsSize == 0)
-					return aResult;
-
-				// check if all true/ all false
-				final int set = itsBinaries.nextSetBit(0);
-				if (set < 0 || set >= itsSize)
+				final int aSize = getBinariesCardinality();
+				switch (aSize)
 				{
-					// no 1's, just 0's
-					aResult.add("0");
-				}
-				else
-				{
-					// there is at least one 1
-					aResult.add("1");
-
-					// 1 occurs after (a number of) 0's
-					if (set > 0)
-						aResult.add("0");
-					else
+					case 0 : return aResult;
+					case 1 :
 					{
-						// is there a 0, or only 1's
-						final int clear = itsBinaries.nextClearBit(0);
-						if (clear >= 0 && clear < itsSize)
+						final int set = itsBinaries.nextSetBit(0);
+						// no 1's, just 0's
+						if (set < 0 || set >= itsSize)
 							aResult.add("0");
+						return aResult;
+					}
+					case 2 :
+					{
+						aResult.add("0");
+						aResult.add("1");
+					}
+					default :
+					{
+						throw new AssertionError(aSize);
 					}
 				}
-
-				return aResult;
 			}
 			default :
 			{
