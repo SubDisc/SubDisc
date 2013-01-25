@@ -485,6 +485,9 @@ public class SubgroupDiscovery extends MiningAlgorithm
 					int aPi = aNCT.getPositiveCount(i);
 					int aNi = aNCT.getNegativeCount(i);
 					// include values with WRAcc=0 too, result has same WRAcc but higher support
+// FIXME MM ask MiMa
+//					if (aPi == 0 && aNi == 0)
+//						continue;
 					if (aPi >= aRatio * (aPi + aNi))
 						aDomainBestSubSet.add(aNCT.getValue(i));
 				}
@@ -646,31 +649,32 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		{
 			case SINGLE_NOMINAL :
 			{
-				//BitSet aTarget = (BitSet)itsBinaryTarget.clone();
-				//aTarget.and(theNewSubgroup.getMembers());
-				//int aCountHeadBody = aTarget.cardinality();
-				int aCountHeadBody = 0;
+				final int aCoverage = theNewSubgroup.getCoverage();
 				final BitSet aMembers = theNewSubgroup.getMembers();
+				// NOTE aMembers is a clone so this is safe
+				aMembers.and(itsBinaryTarget);
+				final int aCountHeadBody = aMembers.cardinality();
+				final QM aMeasure = itsSearchParameters.getQualityMeasure();
 
 				//Rob
-				QM aMeasure = itsSearchParameters.getQualityMeasure();
 				if ((aMeasure == QM.PROP_SCORE_WRACC) || (aMeasure == QM.PROP_SCORE_RATIO))
 				{
-					double aCountHeadPropensityScore = 0.0;
-					PropensityScore aPropensityScore = new PropensityScore(theNewSubgroup, itsBinaryTarget, itsLocalKnowledge, itsGlobalKnowledge, "LogisticRegression");
+					PropensityScore aPropensityScore = new PropensityScore(theNewSubgroup, itsBinaryTarget, itsLocalKnowledge, itsGlobalKnowledge, PropensityScore.LOGISTIC_REGRESSION);
+//					double[] aScores = aPropensityScore.getPropensityScore();
+					double aCountHeadPropensityScore = aPropensityScore.getPropensityScoreSum();
 					System.out.println("Evaluating subgroup");
 					//System.out.println(itsBinaryTarget.cardinality());
-					double aSumTest = 0.0;
-					for (int i = aMembers.nextSetBit(0); i >= 0; i = aMembers.nextSetBit(i+1))
-					{
-						aCountHeadPropensityScore = aCountHeadPropensityScore+aPropensityScore.getPropensityScore()[i];
-						//if (aPropensityScore.getPropensityScore()[i]>0.24){
-						//	aSumTest++;
-						//}
-						// count propensity score for all points in subgroup (aMembers)
-						if (itsBinaryTarget.get(i))
-							++aCountHeadBody;
-					}
+//					double aSumTest = 0.0;
+//					for (int i = aMembers.nextSetBit(0); i >= 0; i = aMembers.nextSetBit(i+1))
+//					{
+//						aCountHeadPropensityScore += aScores[i];
+//						//if (aPropensityScore.getPropensityScore()[i]>0.24){
+//						//	aSumTest++;
+//						//}
+//						// count propensity score for all points in subgroup (aMembers)
+//						if (itsBinaryTarget.get(i))
+//							++aCountHeadBody;
+//					}
 					System.out.print("Count head:");
 					System.out.println(aCountHeadBody);
 					System.out.print("Count expected head:");
@@ -683,17 +687,17 @@ public class SubgroupDiscovery extends MiningAlgorithm
 					//}
 					//System.out.println("Sum propensity score");
 					//System.out.println(aSum);
-					aQuality = itsQualityMeasure.calculatePropensityBased(itsSearchParameters.getQualityMeasure(),aCountHeadBody, theNewSubgroup.getCoverage(),itsNrRows ,aCountHeadPropensityScore);
+					aQuality = QualityMeasure.calculatePropensityBased(aMeasure, aCountHeadBody, aCoverage, itsNrRows , aCountHeadPropensityScore);
 				}
 				else
 				{
-					for (int i = aMembers.nextSetBit(0); i >= 0; i = aMembers.nextSetBit(i+1))
-						if (itsBinaryTarget.get(i))
-							++aCountHeadBody;
-					aQuality = itsQualityMeasure.calculate(aCountHeadBody, theNewSubgroup.getCoverage());
+//					for (int i = aMembers.nextSetBit(0); i >= 0; i = aMembers.nextSetBit(i+1))
+//						if (itsBinaryTarget.get(i))
+//							++aCountHeadBody;
+					aQuality = itsQualityMeasure.calculate(aCountHeadBody, aCoverage);
 				}
 
-				theNewSubgroup.setSecondaryStatistic(aCountHeadBody/(double)theNewSubgroup.getCoverage()); //relative occurence of positives in subgroup
+				theNewSubgroup.setSecondaryStatistic(aCountHeadBody / (double) aCoverage); //relative occurence of positives in subgroup
 				theNewSubgroup.setTertiaryStatistic(aCountHeadBody); //count of positives in the subgroup
 				break;
 			}
@@ -705,11 +709,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 				aPDF.smooth();
 				aQuality = itsQualityMeasure.calculate(theNewSubgroup.getCoverage(), aCounts[0], aCounts[1], aCounts[2], aCounts[3], null, aPDF); //TODO fix this parameter. only used by X2
 				theNewSubgroup.setSecondaryStatistic(aCounts[0]/(double)theNewSubgroup.getCoverage()); //average
-				//stdev //TODO is this correct?
-				// MM this uses population SD, not sample SD
-				// NOTE QualityMeasure's Z-Score / T-Test use coverage-1
-				// using it might be more consistent
-				theNewSubgroup.setTertiaryStatistic(Math.sqrt(aCounts[1]/(double)theNewSubgroup.getCoverage()));
+				theNewSubgroup.setTertiaryStatistic(Math.sqrt(aCounts[1]/(double)theNewSubgroup.getCoverage())); // standard deviation
 				break;
 			}
 			case DOUBLE_REGRESSION :

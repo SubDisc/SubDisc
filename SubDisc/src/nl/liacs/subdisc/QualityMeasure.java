@@ -208,7 +208,6 @@ public class QualityMeasure
 		return returnValue;
 	}
 
-	// TODO MM streamline with NOMINAL calculate
 	public static float calculatePropensityBased(QM theMeasure, int theCountHeadBody, int theCoverage, int theTotalCount, double theCountHeadPropensityScore)
 	{
 		float aCountHeadBody = (float) theCountHeadBody;
@@ -527,7 +526,6 @@ public class QualityMeasure
 				if (itsNrRecords <= 1)
 					aReturn = 0.0f;
 				else
-//					aReturn = (float) ((Math.sqrt(theCoverage) * ((theSum/theCoverage) - itsTotalAverage)) / Math.sqrt(theSSD/(theCoverage-1)));
 					aReturn = (float) ((Math.sqrt(theCoverage) * ((theSum/theCoverage) - itsTotalAverage)) / itsTotalSampleStandardDeviation);
 				break;
 			}
