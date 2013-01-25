@@ -31,303 +31,195 @@ public class Validation
 		int aNrRepetitions = Integer.parseInt(theSetup[1]);
 
 		if (RandomQualitiesWindow.RANDOM_SUBSETS.equals(aMethod))
-			return randomSubgroups(aNrRepetitions);
+			return getRandomQualities(true, aNrRepetitions);
 		else if (RandomQualitiesWindow.RANDOM_DESCRIPTIONS.equals(aMethod))
-			return randomConditions(aNrRepetitions);
+			return getRandomQualities(false, aNrRepetitions);
 		else if (RandomQualitiesWindow.SWAP_RANDOMIZATION.equals(aMethod))
 			return swapRandomization(aNrRepetitions);
 
 		return null;
 	}
 
-	private double[] randomSubgroups(int theNrRepetitions)
+	private double[] getRandomQualities(boolean forSubgroups, int theNrRepetitions)
 	{
-		double[] aQualities = new double[theNrRepetitions];
-		Random aRandom = new Random(System.currentTimeMillis());
-		int aNrRows  =itsTable.getNrRows();
-		int aMinimumCoverage = itsSearchParameters.getMinimumCoverage();
+		final int aMinimumCoverage = itsSearchParameters.getMinimumCoverage();
+		final Random aRandom = new Random(System.currentTimeMillis());
+		final int aDepth = itsSearchParameters.getSearchDepth();
+
+		final TargetType aTargetType = itsTargetConcept.getTargetType();
+		switch (aTargetType)
+		{
+			case SINGLE_NOMINAL :
+			{
+				return getSingleNominalQualities(forSubgroups, theNrRepetitions, aMinimumCoverage, aRandom, aDepth);
+			}
+			case SINGLE_NUMERIC :
+			{
+				throw new AssertionError(aTargetType);
+			}
+			case SINGLE_ORDINAL:
+			{
+				throw new AssertionError(aTargetType);
+			}
+			case DOUBLE_REGRESSION :
+			{
+				throw new AssertionError(aTargetType);
+			}
+			case DOUBLE_CORRELATION :
+			{
+				return getDoubleCorrelationQualities(forSubgroups, theNrRepetitions, aMinimumCoverage, aRandom, aDepth);
+			}
+			case MULTI_LABEL :
+			{
+				return getMultiLabelQualities(forSubgroups, theNrRepetitions, aMinimumCoverage, aRandom, aDepth);
+			}
+			case MULTI_BINARY_CLASSIFICATION :
+			{
+				throw new AssertionError(aTargetType);
+			}
+			default :
+			{
+				throw new AssertionError(aTargetType);
+			}
+		}
+	}
+
+	// if forSubgroups is true, create Subgroups, else create Conditions
+	// if forSubgroups is true, theDepth is ignored
+	private double[] getSingleNominalQualities(boolean forSubgroups, int theNrRepetitions, int theMinimumCoverage, Random theRandom, int theDepth)
+	{
+		final double[] aQualities = new double[theNrRepetitions];
+
+		Column aTarget = itsTargetConcept.getPrimaryTarget();
+		Condition aCondition = new Condition(aTarget, Operator.EQUALS);
+		aCondition.setValue(itsTargetConcept.getTargetValue());
+		BitSet aBinaryTarget = aTarget.evaluate(aCondition);
+
+		for (int i = 0; i < theNrRepetitions; ++i)
+		{
+			Subgroup aSubgroup;
+
+			// essential switch between Subgroups/ Conditions
+			if (forSubgroups)
+				aSubgroup = getValidSubgroup(theMinimumCoverage, theRandom);
+			else
+				aSubgroup = getValidSubgroup(theDepth, theMinimumCoverage, theRandom);
+
+			BitSet aMembers = aSubgroup.getMembers();
+			// aMembers is a clone so this is safe
+			aMembers.and(aBinaryTarget);
+			int aCountHeadBody = aMembers.cardinality();
+
+			aQualities[i] = itsQualityMeasure.calculate(aCountHeadBody, aSubgroup.getCoverage());
+		}
+
+		return aQualities;
+	}
+
+	// if forSubgroups is true, create Subgroups, else create Conditions
+	// if forSubgroups is true, theDepth is ignored
+	private double[] getDoubleCorrelationQualities(boolean forSubgroups, int theNrRepetitions, int theMinimumCoverage, Random theRandom, int theDepth)
+	{
+		final double[] aQualities = new double[theNrRepetitions];
+
+		Column aPrimaryColumn = itsTargetConcept.getPrimaryTarget();
+		Column aSecondaryColumn = itsTargetConcept.getSecondaryTarget();
+		CorrelationMeasure itsBaseCM =
+			new CorrelationMeasure(itsSearchParameters.getQualityMeasure(), aPrimaryColumn, aSecondaryColumn);
+
+		for (int i = 0; i < theNrRepetitions; ++i)
+		{
+			Subgroup aSubgroup;
+
+			// essential switch between Subgroups/ Conditions
+			if (forSubgroups)
+				aSubgroup = getValidSubgroup(theMinimumCoverage, theRandom);
+			else
+				aSubgroup = getValidSubgroup(theDepth, theMinimumCoverage, theRandom);
+
+			BitSet aMembers = aSubgroup.getMembers();
+
+			CorrelationMeasure aCM = new CorrelationMeasure(itsBaseCM);
+
+			for (int k = aMembers.nextSetBit(0); k >= 0; k = aMembers.nextSetBit(k))
+				aCM.addObservation(aPrimaryColumn.getFloat(k), aSecondaryColumn.getFloat(k));
+
+			aQualities[i] = aCM.getEvaluationMeasureValue();
+		}
+
+		return aQualities;
+	}
+
+	// if forSubgroups is true, create Subgroups, else create Conditions
+	// if forSubgroups is true, theDepth is ignored
+	private double[] getMultiLabelQualities(boolean forSubgroups, int theNrRepetitions, int theMinimumCoverage, Random theRandom, int theDepth)
+	{
+		final double[] aQualities = new double[theNrRepetitions];
+
+		// base model
+		BinaryTable aBaseTable = new BinaryTable(itsTable, itsTargetConcept.getMultiTargets());
+		Bayesian aBayesian = new Bayesian(aBaseTable);
+		aBayesian.climb();
+
+		for (int i = 0, j = aQualities.length; i < j; ++i)
+		{
+			Subgroup aSubgroup;
+
+			// essential switch between Subgroups/ Conditions
+			if (forSubgroups)
+				aSubgroup = getValidSubgroup(theMinimumCoverage, theRandom);
+			else
+				aSubgroup = getValidSubgroup(theDepth, theMinimumCoverage, theRandom);
+
+			// build model
+			BinaryTable aBinaryTable = aBaseTable.selectRows(aSubgroup.getMembers());
+			aBayesian = new Bayesian(aBinaryTable);
+			aBayesian.climb();
+			aSubgroup.setDAG(aBayesian.getDAG()); // store DAG with subgroup for later use
+
+			aQualities[i] = itsQualityMeasure.calculate(aSubgroup);
+
+			// XXX original code only did this for Condition
+			if (!forSubgroups)
+				Log.logCommandLine((i + 1) + "," + aSubgroup.getCoverage() + "," + aQualities[i]);
+		}
+
+		return aQualities;
+	}
+
+	// for RANDOM_SUBSETS/Subgroups, always uses an updated Random value
+	private Subgroup getValidSubgroup(int theMinimumCoverage, Random theRandom)
+	{
+		final int aNrRows = itsTable.getNrRows();
 		int aSubgroupSize;
-		TargetType aTargetType = itsTargetConcept.getTargetType();
 
-		switch (aTargetType)
-		{
-			case SINGLE_NOMINAL :
-			{
-				Column aTarget = itsTargetConcept.getPrimaryTarget();
-				Condition aCondition = new Condition(aTarget, Operator.EQUALS);
-				aCondition.setValue(itsTargetConcept.getTargetValue());
-				//BitSet aBinaryTarget = itsTable.evaluate(aCondition);
-				BitSet aBinaryTarget = aTarget.evaluate(aCondition);
+		do
+			aSubgroupSize = (int) (theRandom.nextDouble() * aNrRows);
+		while (aSubgroupSize < theMinimumCoverage || aSubgroupSize == aNrRows);
 
-				for (int i=0; i<theNrRepetitions; i++)
-				{
-					do
-						aSubgroupSize = (int) (aRandom.nextDouble() * aNrRows);
-					while (aSubgroupSize < aMinimumCoverage  || aSubgroupSize==aNrRows);
-					Subgroup aSubgroup = itsTable.getRandomSubgroup(aSubgroupSize);
-
-					BitSet aColumnTarget = (BitSet) aBinaryTarget.clone();
-					aColumnTarget.and(aSubgroup.getMembers());
-					int aCountHeadBody = aColumnTarget.cardinality();
-					aQualities[i] = itsQualityMeasure.calculate(aCountHeadBody, aSubgroup.getCoverage());
-				}
-				break;
-			}
-			case SINGLE_NUMERIC : // TODO implement!
-			{
-				Column aTarget = itsTargetConcept.getPrimaryTarget();
-				Condition aCondition = new Condition(aTarget, Operator.EQUALS);
-				aCondition.setValue(itsTargetConcept.getTargetValue());
-				//BitSet aBinaryTarget = itsTable.evaluate(aCondition);
-				BitSet aBinaryTarget = aTarget.evaluate(aCondition);
-
-				for (int i=0; i<theNrRepetitions; i++)
-				{
-					do
-						aSubgroupSize = (int) (aRandom.nextDouble() * aNrRows);
-					while (aSubgroupSize < aMinimumCoverage  || aSubgroupSize==aNrRows);
-					Subgroup aSubgroup = itsTable.getRandomSubgroup(aSubgroupSize);
-
-					BitSet aColumnTarget = (BitSet) aBinaryTarget.clone();
-					aColumnTarget.and(aSubgroup.getMembers());
-					int aCountHeadBody = aColumnTarget.cardinality();
-					aQualities[i] = itsQualityMeasure.calculate(aCountHeadBody, aSubgroup.getCoverage());
-				}
-				break;
-			}
-			case SINGLE_ORDINAL:
-			{
-				throw newAssertionError("randomSubgroups", aTargetType);
-			}
-			case DOUBLE_REGRESSION :
-				//TODO implement
-				/*
-				 * FIXME
-				 * there is no break; here
-				 * this causes a fall-through from
-				 * DOUBLE_REGRESSION to DOUBLE_CORRELATION so
-				 * the code for DOUBLE_CORRELATION is also run
-				 * for DOUBLE_REGRESSION and their result is the
-				 * same
-				 * is this deliberate?
-				 */
-			case DOUBLE_CORRELATION :
-			{
-				Column aPrimaryColumn = itsTargetConcept.getPrimaryTarget();
-				Column aSecondaryColumn = itsTargetConcept.getSecondaryTarget();
-				CorrelationMeasure itsBaseCM =
-					new CorrelationMeasure(itsSearchParameters.getQualityMeasure(), aPrimaryColumn, aSecondaryColumn);
-
-				for (int i=0; i<theNrRepetitions; i++)
-				{
-					do
-						aSubgroupSize = (int) (aRandom.nextDouble() * aNrRows);
-					while (aSubgroupSize < aMinimumCoverage  || aSubgroupSize==aNrRows);
-					Subgroup aSubgroup = itsTable.getRandomSubgroup(aSubgroupSize);
-
-					CorrelationMeasure aCM = new CorrelationMeasure(itsBaseCM);
-
-					// FIXME getMembers() is expensive now, take out of loop
-					for (int j=0; j<aNrRows; j++)
-						if (aSubgroup.getMembers().get(j))
-							aCM.addObservation(aPrimaryColumn.getFloat(j), aSecondaryColumn.getFloat(j));
-
-					aQualities[i] = aCM.getEvaluationMeasureValue();
-				}
-				break;
-			}
-			case MULTI_LABEL :
-			{
-				//base model
-				BinaryTable aBaseTable = new BinaryTable(itsTable, itsTargetConcept.getMultiTargets());
-				Bayesian aBayesian = new Bayesian(aBaseTable);
-				aBayesian.climb();
-
-				for (int i=0; i<theNrRepetitions; i++)
-				{
-					do
-						aSubgroupSize = (int) (aRandom.nextDouble() * aNrRows);
-					while (aSubgroupSize < aMinimumCoverage  || aSubgroupSize==aNrRows);
-					Subgroup aSubgroup = itsTable.getRandomSubgroup(aSubgroupSize);
-
-					// build model
-					BinaryTable aBinaryTable = aBaseTable.selectRows(aSubgroup.getMembers());
-					aBayesian = new Bayesian(aBinaryTable);
-					aBayesian.climb();
-					aSubgroup.setDAG(aBayesian.getDAG()); // store DAG with subgroup for later use
-
-					aQualities[i] = itsQualityMeasure.calculate(aSubgroup);
-				}
-				break;
-			}
-			case MULTI_BINARY_CLASSIFICATION :
-			{
-				throw newAssertionError("randomSubgroups", aTargetType);
-			}
-			default :
-			{
-				throw newAssertionError("randomSubgroups", aTargetType);
-			}
-		}
-
-		return aQualities; //return the qualities of the random sample
+		return itsTable.getRandomSubgroup(aSubgroupSize);
 	}
 
-	/**
-	* Generates a set of random descriptions
-	* ({@link ConditionList ConditionLists}) of {@link Subgroup Subgroups},
-	* by randomly combining random {@link Condition Conditions} on
-	* attributes in the {@link Table}.
-	* The random descriptions adhere to the {@link SearchParameters}.
-	* For each of the subgroups related to the random conditions, the
-	* quality is computed.
-	* 
-	* @return the computed qualities.
-	*/
-	private double[] randomConditions(int theNrRepetitions)
+	// for RANDOM_DESCRIPTIONS/Conditions, always uses the same Random value
+	private Subgroup getValidSubgroup(int theDepth, int theMinimumCoverage, Random theRandom)
 	{
-		double[] aQualities = new double[theNrRepetitions];
-		Random aRandom = new Random(System.currentTimeMillis());
-		int aDepth = itsSearchParameters.getSearchDepth();
-		int aMinimumCoverage = itsSearchParameters.getMinimumCoverage();
-		int aNrRows = itsTable.getNrRows();
-		TargetType aTargetType = itsTargetConcept.getTargetType();
+		final int aNrRows = itsTable.getNrRows();
+		int aSubgroupSize;
 
-		switch (aTargetType)
+		ConditionList aCL;
+		BitSet aMembers;
+
+		do
 		{
-			case SINGLE_NOMINAL :
-			{
-				Column aTarget = itsTargetConcept.getPrimaryTarget();
-				Condition aCondition = new Condition(aTarget, Operator.EQUALS);
-				aCondition.setValue(itsTargetConcept.getTargetValue());
-				//BitSet aBinaryTarget = itsTable.evaluate(aCondition);
-				BitSet aBinaryTarget = aTarget.evaluate(aCondition);
-
-				for (int i=0; i<theNrRepetitions; i++)
-				{
-					ConditionList aCL;
-					BitSet aMembers;
-					do
-					{
-						aCL = getRandomConditionList(aDepth, aRandom);
-						aMembers = itsTable.evaluate(aCL);
-					}
-					while (aMembers.cardinality() < aMinimumCoverage || aMembers.cardinality()==aNrRows);
-//					Log.logCommandLine(aCL.toString());
-					Subgroup aSubgroup = new Subgroup(aCL, aMembers, null);
-
-					BitSet aColumnTarget = (BitSet) aBinaryTarget.clone();
-					aColumnTarget.and(aSubgroup.getMembers());
-					int aCountHeadBody = aColumnTarget.cardinality();
-					aQualities[i] = itsQualityMeasure.calculate(aCountHeadBody, aSubgroup.getCoverage());
-				}
-				break;
-			}
-			case SINGLE_NUMERIC:
-			{
-				throw newAssertionError("randomConditions", aTargetType);
-			}
-			case SINGLE_ORDINAL:
-			{
-				throw newAssertionError("randomConditions", aTargetType);
-			}
-			case DOUBLE_REGRESSION :
-				//TODO implement
-				/*
-				 * FIXME
-				 * there is no break; here
-				 * this causes a fall-through from
-				 * DOUBLE_REGRESSION to DOUBLE_CORRELATION so
-				 * the code for DOUBLE_CORRELATION is also run
-				 * for DOUBLE_REGRESSION and their result is the
-				 * same
-				 * is this deliberate?
-				 */
-			case DOUBLE_CORRELATION :
-			{
-				Column aPrimaryColumn = itsTargetConcept.getPrimaryTarget();
-				Column aSecondaryColumn = itsTargetConcept.getSecondaryTarget();
-				CorrelationMeasure itsBaseCM =
-					new CorrelationMeasure(itsSearchParameters.getQualityMeasure(), aPrimaryColumn, aSecondaryColumn);
-
-				for (int i=0; i<theNrRepetitions; i++)
-				{
-					ConditionList aCL;
-					BitSet aMembers;
-					do
-					{
-						aCL = getRandomConditionList(aDepth, aRandom);
-						aMembers = itsTable.evaluate(aCL);
-					}
-					while (aMembers.cardinality() < aMinimumCoverage || aMembers.cardinality()==aNrRows);
-					Log.logCommandLine(aCL.toString());
-					Subgroup aSubgroup = new Subgroup(aCL, aMembers, null);
-
-					CorrelationMeasure aCM = new CorrelationMeasure(itsBaseCM);
-
-					// FIXME getMembers() is expensive now, take out of loop
-					for (int j=0; j<aNrRows; j++)
-						if (aSubgroup.getMembers().get(j))
-							aCM.addObservation(aPrimaryColumn.getFloat(j), aSecondaryColumn.getFloat(j));
-
-					aQualities[i] = aCM.getEvaluationMeasureValue();
-				}
-				break;
-			}
-			case MULTI_LABEL :
-			{
-				// base model
-				BinaryTable aBaseTable = new BinaryTable(itsTable, itsTargetConcept.getMultiTargets());
-				Bayesian aBayesian = new Bayesian(aBaseTable);
-				aBayesian.climb();
-
-				for (int i = 0; i < theNrRepetitions; i++) // random conditions
-				{
-					ConditionList aCL;
-					BitSet aMembers;
-					do
-					{
-						aCL = getRandomConditionList(aDepth, aRandom);
-						aMembers = itsTable.evaluate(aCL);
-					}
-					while (aMembers.cardinality() < aMinimumCoverage || aMembers.cardinality()==aNrRows);
-					Log.logCommandLine(aCL.toString());
-					Subgroup aSubgroup = new Subgroup(aCL, aMembers, null);
-
-					// build model
-					BinaryTable aBinaryTable = aBaseTable.selectRows(aMembers);
-					aBayesian = new Bayesian(aBinaryTable);
-					aBayesian.climb();
-					aSubgroup.setDAG(aBayesian.getDAG()); // store DAG with subgroup for later use
-
-					aQualities[i] = itsQualityMeasure.calculate(aSubgroup);
-					Log.logCommandLine((i + 1) + "," + aSubgroup.getCoverage() + "," + aQualities[i]);
-				}
-				break;
-			}
-			case MULTI_BINARY_CLASSIFICATION :
-			{
-				throw newAssertionError("randomConditions", aTargetType);
-			}
-			default :
-			{
-				throw newAssertionError("randomConditions", aTargetType);
-			}
+			aCL = getRandomConditionList(theDepth, theRandom);
+			aMembers = itsTable.evaluate(aCL);
+			aSubgroupSize = aMembers.cardinality();
 		}
+		while (aSubgroupSize < theMinimumCoverage || aSubgroupSize == aNrRows);
 
-		return aQualities; //return the qualities of the random sample
-	}
+		Log.logCommandLine(aCL.toString());
 
-	private AssertionError newAssertionError(String theMethod, TargetType theTargetType)
-	{
-		return new AssertionError(new  StringBuilder(64).append(this.getClass().getSimpleName())
-								.append(".")
-								.append(theMethod)
-								.append("(): ")
-								.append(theTargetType.getClass().getSimpleName())
-								.append(" '")
-								.append(theTargetType)
-								.append("' not implemented").toString());
+		return new Subgroup(aCL, aMembers, null);
 	}
 
 	/**
@@ -347,7 +239,8 @@ public class Validation
 		double[] aQualities = new double[theNrRepetitions];
 
 		// Always back up and restore columns that will be swap randomized.
-		switch(itsTargetConcept.getTargetType())
+		final TargetType aTargetType = itsTargetConcept.getTargetType();
+		switch (aTargetType)
 		{
 			case SINGLE_NOMINAL :
 			{
@@ -362,7 +255,7 @@ public class Validation
 				{
 					// swapRandomization should be performed before creating new SubgroupDiscovery
 					itsTable.swapRandomizeTarget(itsTargetConcept);
-					i = runSRSD(new SubgroupDiscovery(itsSearchParameters, itsTable, aPositiveCount, null), aQualities,	i);
+					i = runSRSD(new SubgroupDiscovery(itsSearchParameters, itsTable, aPositiveCount, null), aQualities, i);
 				}
 
 				// restore column that was swap randomized
@@ -425,7 +318,7 @@ public class Validation
 				{
 					// swapRandomization should be performed before creating new SubgroupDiscovery
 					itsTable.swapRandomizeTarget(itsTargetConcept);
-					i = runSRSD(new SubgroupDiscovery(itsSearchParameters, itsTable, true, null),	aQualities,	i);
+					i = runSRSD(new SubgroupDiscovery(itsSearchParameters, itsTable, true, null), aQualities, i);
 				}
 
 				// restore columns that were swap randomized
@@ -449,7 +342,7 @@ public class Validation
 				{
 					// swapRandomization should be performed before creating new SubgroupDiscovery
 					itsTable.swapRandomizeTarget(itsTargetConcept);
-					i = runSRSD(new SubgroupDiscovery(itsSearchParameters, itsTable, null),	aQualities,	i);
+					i = runSRSD(new SubgroupDiscovery(itsSearchParameters, itsTable, null), aQualities, i);
 				}
 
 				// restore columns that were swap randomized
@@ -459,7 +352,14 @@ public class Validation
 
 				break;
 			}
-			default : break;
+			case MULTI_BINARY_CLASSIFICATION :
+			{
+				throw new AssertionError(aTargetType);
+			}
+			default :
+			{
+				throw new AssertionError(aTargetType);
+			}
 		}
 
 		Log.COMMANDLINELOG = aCOMMANDLINELOGmem;
