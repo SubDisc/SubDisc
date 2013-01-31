@@ -5,6 +5,8 @@ import java.text.*;
 
 import javax.swing.*;
 
+import nl.liacs.subdisc.*;
+
 public class RandomQualitiesWindow extends JDialog implements ActionListener
 {
 	private static final long serialVersionUID = 1L;
@@ -18,11 +20,11 @@ public class RandomQualitiesWindow extends JDialog implements ActionListener
 	private JTextField itsAmountField;
 	private String[] itsSettings;
 
-	public RandomQualitiesWindow()
+	public RandomQualitiesWindow(TargetType theTargetType)
 	{
 		super.setModalityType(DEFAULT_MODALITY_TYPE);
 		itsSettings = new String[2];
-		initComponents();
+		initComponents(theTargetType);
 		setTitle("Which method?");
 		setIconImage(MiningWindow.ICON);
 		setLocation(100, 100);
@@ -31,8 +33,9 @@ public class RandomQualitiesWindow extends JDialog implements ActionListener
 		setVisible(true);
 	}
 
-	private void initComponents()
+	private void initComponents(TargetType theTargetType)
 	{
+		boolean isValid = Validation.isValidRandomQualitiesTargetType(theTargetType);
 		itsMethods = new ButtonGroup();
 
 		setLayout(new BoxLayout(getContentPane(), BoxLayout.Y_AXIS));
@@ -47,11 +50,13 @@ public class RandomQualitiesWindow extends JDialog implements ActionListener
 		JRadioButton aRadioButton = new JRadioButton(RANDOM_SUBSETS);
 		aRadioButton.setActionCommand(RANDOM_SUBSETS);
 		aRadioButtonPanel.add(aRadioButton);
+		aRadioButton.setEnabled(isValid);
 		itsMethods.add(aRadioButton);
 
 		aRadioButton = new JRadioButton(RANDOM_DESCRIPTIONS);
 		aRadioButton.setActionCommand(RANDOM_DESCRIPTIONS);
 		aRadioButtonPanel.add(aRadioButton);
+		aRadioButton.setEnabled(isValid);
 		itsMethods.add(aRadioButton);
 		aMasterPanel.add(aRadioButtonPanel);
 

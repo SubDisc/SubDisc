@@ -1479,7 +1479,8 @@ public class MiningWindow extends JFrame
 
 	private void jButtonRandomQualitiesActionPerformed()
 	{
-		String[] aSetup = new RandomQualitiesWindow().getSettings();
+		final TargetType aTargetType = itsTargetConcept.getTargetType();
+		String[] aSetup = new RandomQualitiesWindow(aTargetType).getSettings();
 		if (!RandomQualitiesWindow.isValidRandomQualitiesSetup(aSetup))
 			return;
 

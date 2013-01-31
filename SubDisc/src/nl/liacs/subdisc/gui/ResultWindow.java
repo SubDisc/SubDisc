@@ -534,7 +534,7 @@ public class ResultWindow extends JFrame implements ActionListener
 
 	private double[] obtainRandomQualities()
 	{
-		String[] aSetup = new RandomQualitiesWindow().getSettings();
+		String[] aSetup = new RandomQualitiesWindow(itsSearchParameters.getTargetType()).getSettings();
 
 		Log.logCommandLine(aSetup[0] + "=" + aSetup[1]);
 		if (!RandomQualitiesWindow.isValidRandomQualitiesSetup(aSetup))
