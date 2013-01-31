@@ -1573,6 +1573,7 @@ public class Column implements XMLNodeInterface
 					{
 						aResult.add("0");
 						aResult.add("1");
+						return aResult;
 					}
 					default :
 					{

@@ -129,9 +129,9 @@ public class DataLoaderTXT implements FileLoaderInterface
 			final int aNrColumns = aColumns.size();
 			for (int i = 0, j = aNrColumns; i < j; ++i)
 			{
-				if (aColumns.get(i).isBinaryType())
+				if (AttributeType.BINARY == aColumns.get(i).getType())
 					aBinaries.set(i);
-				else if (aColumns.get(i).isNumericType())
+				else if (AttributeType.NUMERIC == aColumns.get(i).getType())
 					aFloats.set(i);
 				// no use case yet
 				//else if (aColumns.get(i).isOrdinalType())

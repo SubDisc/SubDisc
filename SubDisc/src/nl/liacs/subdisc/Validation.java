@@ -14,6 +14,15 @@ public class Validation
 	private QualityMeasure itsQualityMeasure;
 	private Table itsTable;
 
+	/**
+	 * NOTE theQualityMeasure is only used for 'Random Subsets' and
+	 * 'Random Descriptions', and then only for the {@link TargetType}
+	 * {@link TargetType#SINGLE_NOMINAL} and {@link TargetType#MULTI_LABEL}.
+	 * 
+	 * @param theSearchParameters
+	 * @param theTable
+	 * @param theQualityMeasure
+	 */
 	public Validation(SearchParameters theSearchParameters, Table theTable, QualityMeasure theQualityMeasure)
 	{
 		itsSearchParameters = theSearchParameters;
@@ -21,6 +30,7 @@ public class Validation
 		itsTable = theTable;
 		itsQualityMeasure = theQualityMeasure;
 	}
+
 
 	public double[] getQualities(String[] theSetup)
 	{
@@ -38,6 +48,14 @@ public class Validation
 			return swapRandomization(aNrRepetitions);
 
 		return null;
+	}
+
+	// add TargetTypes implemented in getRandomQualitites() to this list
+	public static boolean isValidRandomQualitiesTargetType(TargetType theTargetType)
+	{
+		return theTargetType == TargetType.SINGLE_NOMINAL ||
+			theTargetType == TargetType.DOUBLE_CORRELATION ||
+			theTargetType == TargetType.MULTI_LABEL;
 	}
 
 	private double[] getRandomQualities(boolean forSubgroups, int theNrRepetitions)
@@ -285,6 +303,28 @@ public class Validation
 
 				break;
 			}
+			case DOUBLE_REGRESSION :
+			{
+				// back up columns that will be swap randomized
+				Column aPrimaryCopy = itsTargetConcept.getPrimaryTarget().copy();
+				Column aSecondaryCopy = itsTargetConcept.getSecondaryTarget().copy();
+				
+				// generate swap randomized random results
+				for (int i = 0, j = theNrRepetitions; i < j; ++i)
+				{
+					// swapRandomization should be performed before creating new SubgroupDiscovery
+					itsTable.swapRandomizeTarget(itsTargetConcept);
+					i = runSRSD(new SubgroupDiscovery(itsSearchParameters, itsTable, true, null), aQualities, i);
+				}
+				
+				// restore columns that were swap randomized
+				itsTargetConcept.setPrimaryTarget(aPrimaryCopy);
+				itsTable.getColumns().set(aPrimaryCopy.getIndex(), aPrimaryCopy);
+				itsTargetConcept.setSecondaryTarget(aSecondaryCopy);
+				itsTable.getColumns().set(aSecondaryCopy.getIndex(), aSecondaryCopy);
+				
+				break;
+			}
 			case DOUBLE_CORRELATION :
 			{
 				// back up columns that will be swap randomized
@@ -297,28 +337,6 @@ public class Validation
 					// swapRandomization should be performed before creating new SubgroupDiscovery
 					itsTable.swapRandomizeTarget(itsTargetConcept);
 					i = runSRSD(new SubgroupDiscovery(itsSearchParameters, itsTable, false, null), aQualities, i);
-				}
-
-				// restore columns that were swap randomized
-				itsTargetConcept.setPrimaryTarget(aPrimaryCopy);
-				itsTable.getColumns().set(aPrimaryCopy.getIndex(), aPrimaryCopy);
-				itsTargetConcept.setSecondaryTarget(aSecondaryCopy);
-				itsTable.getColumns().set(aSecondaryCopy.getIndex(), aSecondaryCopy);
-
-				break;
-			}
-			case DOUBLE_REGRESSION :
-			{
-				// back up columns that will be swap randomized
-				Column aPrimaryCopy = itsTargetConcept.getPrimaryTarget().copy();
-				Column aSecondaryCopy = itsTargetConcept.getSecondaryTarget().copy();
-
-				// generate swap randomized random results
-				for (int i = 0, j = theNrRepetitions; i < j; ++i)
-				{
-					// swapRandomization should be performed before creating new SubgroupDiscovery
-					itsTable.swapRandomizeTarget(itsTargetConcept);
-					i = runSRSD(new SubgroupDiscovery(itsSearchParameters, itsTable, true, null), aQualities, i);
 				}
 
 				// restore columns that were swap randomized
