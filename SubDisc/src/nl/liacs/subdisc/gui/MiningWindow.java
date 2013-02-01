@@ -9,30 +9,26 @@ import java.util.List;
 
 import javax.swing.*;
 import javax.swing.UIManager.LookAndFeelInfo;
-import javax.swing.border.*;
 
 import nl.liacs.subdisc.*;
 import nl.liacs.subdisc.FileHandler.Action;
 import nl.liacs.subdisc.XMLAutoRun.AutoRun;
+import nl.liacs.subdisc.Process;
 import nl.liacs.subdisc.cui.*;
 
-/*
- * TODO correlation info field is not updated when changing primary target
- */
-public class MiningWindow extends JFrame
+public class MiningWindow extends JFrame implements ActionListener
 {
 	static final long serialVersionUID = 1L;
 
 	public static final Image ICON = new ImageIcon(Toolkit.getDefaultToolkit().getImage(MiningWindow.class.getResource("/icon.jpg"))).getImage();
 
 	private Table itsTable;
-	private int itsTotalCount;
 
 	// target info
 	private int itsPositiveCount; // nominal target
 	private float itsTargetAverage; // numeric target
 
-	// TODO there should be at most 1 MiningWindow();
+	// TODO MM there should be at most 1 MiningWindow();
 	private final MiningWindow masterWindow = this;
 	private SearchParameters itsSearchParameters = new SearchParameters();
 	private TargetConcept itsTargetConcept = new TargetConcept();
@@ -47,7 +43,6 @@ public class MiningWindow extends JFrame
 		if (theTable != null)
 		{
 			itsTable = theTable;
-			itsTotalCount = itsTable.getNrRows();
 			initMiningWindow();
 			initGuiComponents();
 		}
@@ -61,7 +56,6 @@ public class MiningWindow extends JFrame
 		if (theTable != null)
 		{
 			itsTable = theTable;
-			itsTotalCount = itsTable.getNrRows();
 			initMiningWindow();
 
 			if (theSearchParameters != null)
@@ -84,23 +78,390 @@ public class MiningWindow extends JFrame
 		setLocation(100, 100);
 		setSize(700, 600);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		initJMenuGui(); // XXX for GUI testing only
+		initJMenuGui(); // for GUI debugging only, DO NOT REMOVE
 		setVisible(true);
 
 		// Open log/debug files
 		Log.openFileOutputStreams();
 	}
 
-	public void initTitle()
+	private void initComponents()
 	{
-		setTitle("CORTANA: Subgroup Discovery Tool");
+		// MENU BAR ====================================================
+		jMiningWindowMenuBar = new JMenuBar();
+		jMiningWindowMenuBar.setFont(GUI.DEFAULT_TEXT_FONT);
+
+		// MENU BAR - FILE
+		jMenuFile = initMenu(STD.FILE);
+
+		jMenuItemOpenFile = initMenuItem(STD.OPEN_FILE);
+		jMenuFile.add(jMenuItemOpenFile);
+
+		jMenuItemBrowse = initMenuItem(STD.BROWSE);
+		jMenuFile.add(jMenuItemBrowse);
+
+		jMenuItemExplore = initMenuItem(STD.EXPLORE);
+		jMenuFile.add(jMenuItemExplore);
+
+		jMenuItemMetaData = initMenuItem(STD.META_DATA);
+		jMenuFile.add(jMenuItemMetaData);
+
+		jMenuFile.addSeparator();
+
+		jMenuItemSubgroupDiscovery = initMenuItem(STD.SUBGROUP_DISCOVERY);
+		jMenuFile.add(jMenuItemSubgroupDiscovery);
+
+		jMenuFile.addSeparator();
+
+		jMenuItemCreateAutorunFile = initMenuItem(STD.CREATE_AUTORUN_FILE);
+		jMenuFile.add(jMenuItemCreateAutorunFile);
+
+		jMenuItemAddToAutorunFile = initMenuItem(STD.ADD_TO_AUTORUN_FILE);
+		jMenuFile.add(jMenuItemAddToAutorunFile);
+
+		// TODO MM add when implemented
+		jMenuItemLoadSampledSubgroups = initMenuItem(STD.LOAD_SAMPLED_SUBGROUPS);
+		//jMenuFile.add(jMenuItemLoadSampledSubgroups);
+
+		jMenuFile.addSeparator();
+
+		jMenuItemExit = initMenuItem(STD.EXIT);
+		jMenuFile.add(jMenuItemExit);
+		jMiningWindowMenuBar.add(jMenuFile);
+
+		// MENU BAR - ENRICHMENT
+		jMenuEnrichment = initMenu(STD.ENRICHMENT);
+
+		jMenuItemAddCuiEnrichmentSource = initMenuItem(STD.ADD_CUI_DOMAIN);
+		jMenuEnrichment.add(jMenuItemAddCuiEnrichmentSource);
+
+		// TODO MM add when implemented
+		jMenuItemAddGoEnrichmentSource  = initMenuItem(STD.ADD_GO_DOMAIN);
+//		jMenuEnrichment.add(jMenuItemAddCuiEnrichmentSource);
+
+		// TODO MM add when implemented
+		jMenuItemAddCustomEnrichmentSource = initMenuItem(STD.ADD_CUSTOM_DOMAIN);
+//		jMenuEnrichment.add(jMenuItemAddCuiEnrichmentSource);
+
+		jMenuItemRemoveEnrichmentSource = initMenuItem(STD.REMOVE_ENRICHMENT_SOURCE);
+		jMenuItemRemoveEnrichmentSource.setEnabled(false);
+		jMenuEnrichment.add(jMenuItemRemoveEnrichmentSource);
+
+		jMiningWindowMenuBar.add(jMenuEnrichment);
+
+		// MENU BAR - ABOUT
+		jMenuAbout = initMenu(STD.ABOUT);
+		jMenuAbout.setMnemonic(STD.ABOUT.MNEMONIC);
+
+		jMenuItemAboutCortana = initMenuItem(STD.ABOUT_CORTANA);
+		jMenuAbout.add(jMenuItemAboutCortana);
+
+		jMiningWindowMenuBar.add(jMenuAbout);
+
+		// MENU BAR - GUI
+		jMenuGui = new JMenu();
+		jMenuGui.setFont(GUI.DEFAULT_TEXT_FONT);
+		jMenuGui.setText("Gui");
+		jMenuGui.setMnemonic('G');
+		if (GUI_DEBUG)
+			jMiningWindowMenuBar.add(jMenuGui);
+
+		// DATA SET, TARGET CONCEPT, SEARCH CONDITIONS, SEARCH STRATEGY
+		jPanelCenter = new JPanel();	// 4 panels
+		jPanelCenter.setLayout(new GridLayout(2, 2));
+		jPanelSouth = new JPanel();	// mining buttons
+
+		// DATA SET ====================================================
+		jPanelDataSet = new JPanel();
+		jPanelDataSetLabels = new JPanel();
+		jPanelDataSetFields = new JPanel();
+		jPanelDataSetButtons = new JPanel();
+		jButtonBrowse = new JButton();
+		jButtonExplore = new JButton();
+		jButtonMetaData = new JButton();
+
+		jPanelDataSet.setLayout(new BorderLayout(40, 0));
+		jPanelDataSet.setBorder(GUI.buildBorder("Dataset"));
+
+		// DATA SET -labels
+		jPanelDataSetLabels.setLayout(new GridLayout(7, 1));
+
+		jLabelTargetTable = initJLabel("target table");
+		jPanelDataSetLabels.add(jLabelTargetTable);
+
+		jLabelNrExamples = initJLabel("# examples");
+		jPanelDataSetLabels.add(jLabelNrExamples);
+
+		jLabelNrColumns = initJLabel("# columns");
+		jPanelDataSetLabels.add(jLabelNrColumns);
+
+		jLabelNrNominals = initJLabel("# nominals");
+		jPanelDataSetLabels.add(jLabelNrNominals);
+
+		jLabelNrNumerics = initJLabel("# numerics");
+		jPanelDataSetLabels.add(jLabelNrNumerics);
+
+		jLabelNrBinaries = initJLabel("# binaries");
+		jPanelDataSetLabels.add(jLabelNrBinaries);
+
+		jPanelDataSet.add(jPanelDataSetLabels, BorderLayout.WEST);
+
+		// DATA SET - 'fields' (number of instances per AttributeType)
+		jPanelDataSetFields.setLayout(new GridLayout(7, 1));
+
+		jLabelTargetTableName = initJLabel("");
+		jPanelDataSetFields.add(jLabelTargetTableName);
+
+		jLabelNrExamplesNr = initJLabel("");
+		jPanelDataSetFields.add(jLabelNrExamplesNr);
+
+		jLabelNrColumnsNr = initJLabel("");
+		jPanelDataSetFields.add(jLabelNrColumnsNr);
+
+		jLabelNrNominalsNr = initJLabel("");
+		jPanelDataSetFields.add(jLabelNrNominalsNr);
+
+		jLabelNrNumericsNr = initJLabel("");
+		jPanelDataSetFields.add(jLabelNrNumericsNr);
+
+		jLabelNrBinariesNr = initJLabel("");
+		jPanelDataSetFields.add(jLabelNrBinariesNr);
+
+		// DATA SET - buttons
+		jPanelDataSet.add(jPanelDataSetFields, BorderLayout.CENTER);
+
+		final JPanel aButtonPanel = new JPanel();
+		aButtonPanel.setLayout(new GridLayout(2, 2));
+
+		jButtonBrowse = initButton(STD.BROWSE);
+		aButtonPanel.add(jButtonBrowse);
+
+		jButtonExplore = initButton(STD.EXPLORE);
+		aButtonPanel.add(jButtonExplore);
+
+		jButtonMetaData = initButton(STD.META_DATA);
+		aButtonPanel.add(jButtonMetaData);
+
+		jPanelDataSetButtons.add(aButtonPanel);
+
+		jPanelDataSet.add(jPanelDataSetButtons, BorderLayout.SOUTH);
+		jPanelCenter.add(jPanelDataSet);
+
+		// TARGET CONCEPT ==============================================
+		jPanelTargetConcept = new JPanel();
+		jPanelTargetConceptLabels = new JPanel();
+		jPanelTargetConceptFields = new JPanel();
+		// permanently maintained JLists
+		jListMultiRegressionTargets = new JList(new DefaultListModel());
+		jListMultiTargets = new JList(new DefaultListModel());
+
+		jPanelTargetConcept.setLayout(new BoxLayout(jPanelTargetConcept, BoxLayout.X_AXIS));
+		jPanelTargetConcept.setBorder(GUI.buildBorder("Target Concept"));
+
+		// TARGET CONCEPT - labels
+		jPanelTargetConceptLabels.setLayout(new GridLayout(9, 1));
+
+		jLabelTargetType = initJLabel("target type");
+		jPanelTargetConceptLabels.add(jLabelTargetType);
+
+		jLabelQualityMeasure = initJLabel("quality measure");
+		jPanelTargetConceptLabels.add(jLabelQualityMeasure);
+
+		jLabelQualityMeasureMinimum = initJLabel("measure minimum");
+		jPanelTargetConceptLabels.add(jLabelQualityMeasureMinimum);
+
+		jLabelTargetAttribute = initJLabel("<html><u>p</u>rimary target");
+		jPanelTargetConceptLabels.add(jLabelTargetAttribute);
+
+		// used for target value or secondary target
+		jLabelMiscField = initJLabel("");
+		jPanelTargetConceptLabels.add(jLabelMiscField);
+
+		jLabelMultiRegressionTargets = initJLabel("secondary/tertiary targets");
+		jPanelTargetConceptLabels.add(jLabelMultiRegressionTargets);
+		// TODO MM for stable jar, disable
+		jLabelMultiRegressionTargets.setVisible(false);
+
+		jLabelMultiTargets = initJLabel("targets and settings");
+		jPanelTargetConceptLabels.add(jLabelMultiTargets);
+
+		jLabelTargetInfo = initJLabel("");;
+		jPanelTargetConceptLabels.add(jLabelTargetInfo);
+		jPanelTargetConcept.add(jPanelTargetConceptLabels);
+
+		// TARGET CONCEPT - fields
+		jPanelTargetConceptFields.setLayout(new GridLayout(9, 1));
+
+		jComboBoxTargetType = GUI.buildComboBox(new Object[0], TARGET_TYPE_BOX, this);
+		jPanelTargetConceptFields.add(jComboBoxTargetType);
+
+		jComboBoxQualityMeasure = GUI.buildComboBox(new Object[0], QUALITY_MEASURE_BOX, this);
+		jPanelTargetConceptFields.add(jComboBoxQualityMeasure);
+
+		jTextFieldQualityMeasureMinimum = GUI.buildTextField("0");
+		jPanelTargetConceptFields.add(jTextFieldQualityMeasureMinimum);
+
+		jComboBoxTargetAttribute = GUI.buildComboBox(new Object[0], TARGET_ATTRIBUTE_BOX, this);
+		jPanelTargetConceptFields.add(jComboBoxTargetAttribute);
+
+		// used for target value or secondary target
+		// note in cui setting this is often to small
+		jComboBoxMiscField = GUI.buildComboBox(new Object[0], MISC_FIELD_BOX, this);
+		jPanelTargetConceptFields.add(jComboBoxMiscField);
+
+		jButtonMultiRegressionTargets = initButton(STD.SECONDARY_TERTIARY_TARGETS);
+		jPanelTargetConceptFields.add(jButtonMultiRegressionTargets);
+		// TODO MM for stable jar, disable
+		jButtonMultiRegressionTargets.setVisible(false);
+
+		jButtonMultiTargets = initButton(STD.TARGETS_AND_SETTINGS);
+		jPanelTargetConceptFields.add(jButtonMultiTargets);
+
+		jLabelTargetInfoText = initJLabel("");
+		jPanelTargetConceptFields.add(jLabelTargetInfoText);
+
+		jButtonBaseModel = initButton(STD.BASE_MODEL);
+		jPanelTargetConceptFields.add(jButtonBaseModel);
+
+		jPanelTargetConcept.add(jPanelTargetConceptFields);
+		jPanelCenter.add(jPanelTargetConcept);
+
+		// SEARCH CONDITIONS ===========================================
+		jPanelSearchConditions = new JPanel();
+		jPanelSearchConditionsLabels = new JPanel();
+		jPanelSearchParameterFields = new JPanel();
+
+		jPanelSearchConditions.setLayout(new BoxLayout(jPanelSearchConditions, BoxLayout.X_AXIS));
+		jPanelSearchConditions.setBorder(GUI.buildBorder("Search Conditions"));
+
+		// SEARCH CONDITIONS - labels
+		jPanelSearchConditionsLabels.setLayout(new GridLayout(7, 1));
+
+		jLabelSearchDepth = initJLabel("refinement depth");
+		jPanelSearchConditionsLabels.add(jLabelSearchDepth);
+
+		jLabelSearchCoverageMinimum = initJLabel("minimum coverage");
+		jPanelSearchConditionsLabels.add(jLabelSearchCoverageMinimum);
+
+		jLabelSearchCoverageMaximum = initJLabel("maximum coverage (fraction)");
+		jPanelSearchConditionsLabels.add(jLabelSearchCoverageMaximum);
+
+		jLabelSubgroupsMaximum = initJLabel("<html> maximum subgroups (0 = &#8734;)</html>)");
+		jPanelSearchConditionsLabels.add(jLabelSubgroupsMaximum);
+
+		jLabelSearchTimeMaximum = initJLabel("<html> maximum time (min) (0 = &#8734;)</html>)");
+		jPanelSearchConditionsLabels.add(jLabelSearchTimeMaximum);
+
+		jPanelSearchConditions.add(jPanelSearchConditionsLabels);
+
+		// SEARCH CONDITIONS - fields
+		jPanelSearchParameterFields.setLayout(new GridLayout(7, 1));
+
+		jTextFieldSearchDepth = GUI.buildTextField("0");
+		jPanelSearchParameterFields.add(jTextFieldSearchDepth);
+
+		jTextFieldSearchCoverageMinimum = GUI.buildTextField("0");
+		jPanelSearchParameterFields.add(jTextFieldSearchCoverageMinimum);
+
+		jTextFieldSearchCoverageMaximum = GUI.buildTextField("0");
+		jPanelSearchParameterFields.add(jTextFieldSearchCoverageMaximum);
+
+		jTextFieldSubgroupsMaximum = GUI.buildTextField("0");
+		jPanelSearchParameterFields.add(jTextFieldSubgroupsMaximum);
+
+		jTextFieldSearchTimeMaximum = GUI.buildTextField("0");
+		jPanelSearchParameterFields.add(jTextFieldSearchTimeMaximum);
+
+		jPanelSearchConditions.add(jPanelSearchParameterFields);
+		jPanelCenter.add(jPanelSearchConditions);
+
+		// SEARCH STRATEGY =============================================
+		jPanelSearchStrategy = new JPanel();
+		jPanelSearchStrategyLabels = new JPanel();
+		jPanelSearchStrategyFields = new JPanel();
+
+		jPanelSearchStrategy.setLayout(new BoxLayout(jPanelSearchStrategy, BoxLayout.X_AXIS));
+		jPanelSearchStrategy.setBorder(GUI.buildBorder("Search Strategy"));
+
+		// SEACH STRATEGY - labels
+		jPanelSearchStrategyLabels.setLayout(new GridLayout(7, 1));
+
+		jLabelStrategyType = initJLabel("strategy type");
+		jPanelSearchStrategyLabels.add(jLabelStrategyType);
+
+		jLabelStrategyWidth = initJLabel("search width");
+		jPanelSearchStrategyLabels.add(jLabelStrategyWidth);
+
+		jLabelSetValuedNominals = initJLabel("set-valued nominals");
+		jPanelSearchStrategyLabels.add(jLabelSetValuedNominals);
+
+		jLabelNumericStrategy = initJLabel("numeric strategy");
+		jPanelSearchStrategyLabels.add(jLabelNumericStrategy);
+
+		jLabelNumericOperators = initJLabel("numeric operators");
+		jPanelSearchStrategyLabels.add(jLabelNumericOperators);
+
+		jLabelNumberOfBins = initJLabel("number of bins");
+		jPanelSearchStrategyLabels.add(jLabelNumberOfBins);
+
+		jLabelNumberOfThreads = initJLabel("threads (0 = all available)");
+		jPanelSearchStrategyLabels.add(jLabelNumberOfThreads);
+
+		jPanelSearchStrategy.add(jPanelSearchStrategyLabels);
+
+		// SEARCH STRATEGY - fields
+		jPanelSearchStrategyFields.setLayout(new GridLayout(7, 1));
+
+		jComboBoxStrategyType = GUI.buildComboBox(new Object[0], SEARCH_TYPE_BOX, this);
+		jPanelSearchStrategyFields.add(jComboBoxStrategyType);
+
+		jTextFieldStrategyWidth = GUI.buildTextField("0");
+		jPanelSearchStrategyFields.add(jTextFieldStrategyWidth);
+
+		jCheckBoxSetValuedNominals = new JCheckBox();
+		jPanelSearchStrategyFields.add(jCheckBoxSetValuedNominals);
+
+		jComboBoxNumericStrategy = GUI.buildComboBox(new Object[0], NUMERIC_STRATEGY_BOX, this);
+		jPanelSearchStrategyFields.add(jComboBoxNumericStrategy);
+
+		jComboBoxNumericOperators = GUI.buildComboBox(new Object[0], NUMERIC_OPERATORS_BOX, this);
+		jPanelSearchStrategyFields.add(jComboBoxNumericOperators);
+
+		jTextFieldNumberOfBins = GUI.buildTextField("0");
+		jPanelSearchStrategyFields.add(jTextFieldNumberOfBins);
+
+		jTextFieldNumberOfThreads = GUI.buildTextField(Integer.toString(Runtime.getRuntime().availableProcessors()));
+		jPanelSearchStrategyFields.add(jTextFieldNumberOfThreads);
+
+		jPanelSearchStrategy.add(jPanelSearchStrategyFields);
+		jPanelCenter.add(jPanelSearchStrategy);
+
+		// MINING BUTTONS
+		jPanelSouth.setFont(GUI.DEFAULT_TEXT_FONT);
+
+		jPanelMineButtons = new JPanel();
+		jPanelMineButtons.setMinimumSize(new Dimension(0, 40));
+
+		jButtonSubgroupDiscovery = initButton(STD.SUBGROUP_DISCOVERY);
+		jPanelMineButtons.add(jButtonSubgroupDiscovery);
+
+		jButtonCrossValidate = initButton(STD.CROSS_VALIDATE);
+		jPanelMineButtons.add(jButtonCrossValidate);
+
+		jButtonComputeThreshold = initButton(STD.COMPUTE_THRESHOLD);
+		jPanelMineButtons.add(jButtonComputeThreshold);
+
+		jPanelSouth.add(jPanelMineButtons);
+
+		getContentPane().add(jPanelSouth, BorderLayout.SOUTH);
+		getContentPane().add(jPanelCenter, BorderLayout.CENTER);
+
+		setFont(GUI.DEFAULT_TEXT_FONT);
+		setJMenuBar(jMiningWindowMenuBar);
 	}
 
 	private void initStaticGuiComponents()
 	{
-		// TODO disable if no table?
-		// should do for-each combobox/field
-
 		// Add all implemented TargetTypes
 		for (TargetType t : TargetType.values())
 			if (TargetType.isImplemented(t))
@@ -108,11 +469,16 @@ public class MiningWindow extends JFrame
 
 		// Add all SearchStrategies
 		for (SearchStrategy s : SearchStrategy.values())
-			jComboBoxSearchStrategyType.addItem(s.GUI_TEXT);
+			jComboBoxStrategyType.addItem(s.GUI_TEXT);
 
 		// Add all Numeric Operators choices
 		for (NumericOperatorSetting n : NumericOperatorSetting.getNormalValues())
 			jComboBoxNumericOperators.addItem(n.GUI_TEXT);
+	}
+
+	public void initTitle()
+	{
+		setTitle("CORTANA: Subgroup Discovery Tool");
 	}
 
 	// only called when Table is present, so using itsTotalCount is safe
@@ -120,9 +486,6 @@ public class MiningWindow extends JFrame
 	{
 		//dataset
 		initGuiComponentsDataSet();
-
-		// target concept
-		enableBaseModelButtonCheck();
 
 		// search conditions
 		setSearchDepthMaximum("1");
@@ -132,24 +495,24 @@ public class MiningWindow extends JFrame
 		setSearchTimeMaximum("1.0");
 
 		// search strategy
-		setSearchStrategyWidth("100");
-		setSearchStrategyNrBins("8");
+		setStrategyWidth("100");
+		setNrBins("8");
 	}
 
 	private void initGuiComponentsFromFile()
 	{
 		initGuiComponentsDataSet();
 
-		// TODO disable all ActionListeners while setting values
+		// TODO MM disable all ActionListeners while setting values
 		// some fields may be set automatically, order is very important
 
 		// search strategy
 		setSearchStrategyType(itsSearchParameters.getSearchStrategy().GUI_TEXT);
-		setSearchStrategyWidth(String.valueOf(itsSearchParameters.getSearchStrategyWidth()));
-		setNominalSets(String.valueOf(itsSearchParameters.getNominalSets()));
+		setStrategyWidth(String.valueOf(itsSearchParameters.getSearchStrategyWidth()));
+		setSetValuedNominals(String.valueOf(itsSearchParameters.getNominalSets()));
 		setNumericOperators(itsSearchParameters.getNumericOperatorSetting().GUI_TEXT);
 		setNumericStrategy(itsSearchParameters.getNumericStrategy().GUI_TEXT);
-		setSearchStrategyNrBins(String.valueOf(itsSearchParameters.getNrBins()));
+		setNrBins(String.valueOf(itsSearchParameters.getNrBins()));
 		setNrThreads(String.valueOf(itsSearchParameters.getNrThreads()));
 
 		// search conditions
@@ -201,7 +564,7 @@ public class MiningWindow extends JFrame
 		 */
 		setSearchCoverageMinimum(String.valueOf(itsSearchParameters.getMinimumCoverage()));
 
-// TODO NOTE THESE ARE THIS OVERWRITTEN
+// TODO MM NOTE THESE ARE THIS OVERWRITTEN
 		if (aPrimaryTarget != null)
 			setTargetAttribute(aPrimaryTarget);
 		if (aTargetValue != null)
@@ -209,7 +572,7 @@ public class MiningWindow extends JFrame
 		System.out.println("==== " + aPrimaryTarget);
 		System.out.println("==== " + aTargetValue);
 
-// TODO other TargetTypes do not get loaded properly
+// TODO MM other TargetTypes do not get loaded properly
 //		setSecondaryTargets(); // TODO initialised from primaryTargetList
 	}
 
@@ -217,18 +580,18 @@ public class MiningWindow extends JFrame
 	{
 		if (itsTable != null)
 		{
-			jLFieldTargetTable.setText(itsTable.getName());
-			jLFieldNrExamples.setText(String.valueOf(itsTotalCount));
+			jLabelTargetTableName.setText(itsTable.getName());
+			jLabelNrExamplesNr.setText(String.valueOf(itsTable.getNrRows()));
 
 			int[][] aCounts = itsTable.getTypeCounts();
 			int[] aTotals = new int[] { itsTable.getNrColumns(), 0 };
 			for (int[] ia : aCounts)
 				aTotals[1] += ia[1];
-			jLFieldNrColumns.setText(initGuiComponentsDataSetHelper(aTotals));
-			jLFieldNrNominals.setText(initGuiComponentsDataSetHelper(aCounts[0]));
-			jLFieldNrNumerics.setText(initGuiComponentsDataSetHelper(aCounts[1]));
+			jLabelNrColumnsNr.setText(initGuiComponentsDataSetHelper(aTotals));
+			jLabelNrNominalsNr.setText(initGuiComponentsDataSetHelper(aCounts[0]));
+			jLabelNrNumericsNr.setText(initGuiComponentsDataSetHelper(aCounts[1]));
 //			jLFieldNrOrdinals.setText(initGuiComponentsDataSetHelper(aCounts[2]));
-			jLFieldNrBinaries.setText(initGuiComponentsDataSetHelper(aCounts[3]));
+			jLabelNrBinariesNr.setText(initGuiComponentsDataSetHelper(aCounts[3]));
 		}
 	}
 
@@ -243,768 +606,6 @@ public class MiningWindow extends JFrame
 		return String.format("%d%s%s", theCounts[0], aSpacer.substring(i), aNrEnabled);
 	}
 
-	/**
-	 * This method is called from within the constructor to Initialise the form.
-	 * WARNING: Do NOT modify this code. The content of this method is always
-	 * regenerated by the FormEditor.
-	 */
-	private void initComponents()
-	{
-		// menu items
-		jMiningWindowMenuBar = new JMenuBar();
-		jMenuFile = new JMenu();
-		jMenuItemOpenFile = new JMenuItem();
-		jMenuItemBrowse = new JMenuItem();
-		jMenuItemExplore = new JMenuItem();
-		jMenuItemMetaData = new JMenuItem();
-		jMenuItemSubgroupDiscovery = new JMenuItem();
-		jMenuItemCreateAutoRunFile = new JMenuItem();
-		jMenuItemAddToAutoRunFile = new JMenuItem();
-		jMenuItemLoadSampledSubgroups = new JMenuItem();
-		jMenuItemExit = new JMenuItem();
-
-		jMenuEnrichment = new JMenu();
-		jMenuItemAddCuiEnrichmentSource = new JMenuItem();
-		jMenuItemAddGoEnrichmentSource = new JMenuItem();
-		jMenuItemAddCustomEnrichmentSource = new JMenuItem();
-		jMenuItemRemoveEnrichmentSource = new JMenuItem();
-
-		jMenuAbout = new JMenu();
-		jMenuItemAboutCortana = new JMenuItem();
-		jMenuGui = new JMenu();
-
-		jPanelCenter = new JPanel();	// 4 panels
-		jPanelSouth = new JPanel();		// mining buttons
-
-		// dataset
-		jPanelRuleTarget = new JPanel();
-		// dataset - labels
-		jPanelRuleTargetLabels = new JPanel();
-		jLabelTargetTable = new JLabel();
-		jLabelNrExamples = new JLabel();
-		jLabelNrColumns = new JLabel();
-		jLabelNrNominals = new JLabel();
-		jLabelNrNumerics = new JLabel();
-		jLabelNrBinaries = new JLabel();
-		// dataset - fields
-		jPanelRuleTargetFields = new JPanel();
-		jLFieldTargetTable = new JLabel();
-		jLFieldNrExamples = new JLabel();
-		jLFieldNrColumns = new JLabel();
-		jLFieldNrNominals = new JLabel();
-		jLFieldNrNumerics = new JLabel();
-		jLFieldNrBinaries = new JLabel();
-		// dataset - number enabled fields
-		jPanelRuleTargetFieldsEnabled = new JPanel();
-		jLFieldNrColumnsEnabled = new JLabel();
-		jLFieldNrNominalsEnabled = new JLabel();
-		jLFieldNrNumericsEnabled = new JLabel();
-		jLFieldNrBinariesEnabled = new JLabel();
-		// dataset - buttons
-		jPanelRuleTargetButtons = new JPanel();
-		jButtonBrowse = new JButton();
-		jButtonExplore = new JButton();
-		jButtonMetaData = new JButton();
-		jButtonCrossValidate = new JButton();
-
-		// target concept
-		jPanelRuleEvaluation = new JPanel();
-		// target concept - labels
-		jPanelEvaluationLabels = new JPanel();
-		jLabelTargetType = new JLabel();
-		jLabelQualityMeasure = new JLabel();
-		jLabelEvaluationThreshold = new JLabel();
-		jLabelTargetAttribute = new JLabel();
-		jLabelMiscField = new JLabel(); // used for target value or secondary target
-		jLabelMultiRegressionTargets = new JLabel();
-		jLabelMultiTargets = new JLabel();
-		jLabelTargetInfo = new JLabel();
-		// target concept - fields
-		jPanelEvaluationFields = new JPanel();
-		jComboBoxTargetType = new JComboBox();
-		jComboBoxQualityMeasure = new JComboBox();
-		jTextFieldQualityMeasureMinimum = new JTextField();
-		jComboBoxTargetAttribute = new JComboBox();
-		jComboBoxMiscField = new JComboBox(); // used for target value or secondary target
-		jButtonMultiRegressionTargets = new JButton();
-		jButtonMultiTargets = new JButton();	// shows jListMultiTargets
-		jListMultiRegressionTargets = new JList(new DefaultListModel());
-		jListMultiTargets = new JList(new DefaultListModel());	// permanently maintained
-		jLFieldTargetInfo = new JLabel();
-		jButtonBaseModel = new JButton();
-
-		//search conditions
-		jPanelSearchParameters = new JPanel();
-		//search conditions - label
-		jPanelSearchParameterLabels = new JPanel();
-		jLabelSearchDepth = new JLabel();
-		jLabelSearchCoverageMinimum = new JLabel();
-		jLabelSearchCoverageMaximum = new JLabel();
-		jLabelSubgroupsMaximum = new JLabel();
-		jLabelSearchTimeMaximum = new JLabel();
-		//search conditions - fields
-		jPanelSearchParameterFields = new JPanel();
-		jTextFieldSearchDepth = new JTextField();
-		jTextFieldSearchCoverageMinimum = new JTextField();
-		jTextFieldSearchCoverageMaximum = new JTextField();
-		jTextFieldSubgroupsMaximum = new JTextField();
-		jTextFieldSearchTimeMaximum = new JTextField();
-
-		// search strategy
-		jPanelSearchStrategy = new JPanel();
-		// search strategy - labels
-		jPanelSearchStrategyLabels = new JPanel();
-		jLabelStrategyType = new JLabel();
-		jLabelStrategyWidth = new JLabel();
-		jLabelSets = new JLabel();
-		jLabelNumericOperators = new JLabel();
-		jLabelSearchStrategyNumeric = new JLabel();
-		jLabelSearchStrategyNrBins = new JLabel();
-		// search strategy - fields
-		jPanelSearchStrategyFields = new JPanel();
-		jComboBoxSearchStrategyType = new JComboBox();
-		jTextFieldSearchStrategyWidth = new JTextField();
-		jCheckBoxSets = new javax.swing.JCheckBox();
-		jComboBoxNumericOperators = new JComboBox();
-		jComboBoxSearchStrategyNumeric = new JComboBox();
-		jTextFieldSearchStrategyNrBins = new JTextField();
-		jTextFieldNrThreads = new JTextField();
-
-		// mining buttons
-		jPanelMineButtons = new JPanel();
-		jButtonSubgroupDiscovery = new JButton();
-		jButtonThreshold = new JButton();
-
-		// setting up - menu items
-		jMiningWindowMenuBar.setFont(GUI.DEFAULT_TEXT_FONT);
-
-		jMenuFile.setFont(GUI.DEFAULT_TEXT_FONT);
-		jMenuFile.setText("File");
-		jMenuFile.setMnemonic('F');
-
-		jMenuItemOpenFile.setFont(GUI.DEFAULT_TEXT_FONT);
-		jMenuItemOpenFile.setText("Open File");
-		jMenuItemOpenFile.setMnemonic(Mnemonic.OPEN_FILE.MNEMONIC);
-		jMenuItemOpenFile.setAccelerator(KeyStroke.getKeyStroke(Mnemonic.OPEN_FILE.MNEMONIC, InputEvent.CTRL_MASK));
-		jMenuItemOpenFile.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent evt) {
-				jMenuItemOpenFileActionPerformed();
-			}
-		});
-		jMenuFile.add(jMenuItemOpenFile);
-
-		jMenuItemBrowse.setFont(GUI.DEFAULT_TEXT_FONT);
-		jMenuItemBrowse.setText("Browse...");
-		jMenuItemBrowse.setMnemonic(Mnemonic.BROWSE.MNEMONIC);
-		jMenuItemBrowse.setAccelerator(KeyStroke.getKeyStroke(Mnemonic.BROWSE.MNEMONIC, InputEvent.CTRL_MASK));
-		jMenuItemBrowse.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent evt) {
-				browseActionPerformed();
-			}
-		});
-		jMenuFile.add(jMenuItemBrowse);
-
-		jMenuItemExplore.setFont(GUI.DEFAULT_TEXT_FONT);
-		jMenuItemExplore.setText("Explore...");
-		jMenuItemExplore.setMnemonic(Mnemonic.EXPLORE.MNEMONIC);
-		jMenuItemExplore.setAccelerator(KeyStroke.getKeyStroke(Mnemonic.EXPLORE.MNEMONIC, InputEvent.CTRL_MASK));
-		jMenuItemExplore.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent evt) {
-				exploreActionPerformed();
-			}
-		});
-		jMenuFile.add(jMenuItemExplore);
-
-		jMenuItemMetaData.setFont(GUI.DEFAULT_TEXT_FONT);
-		jMenuItemMetaData.setText("Meta Data...");
-		jMenuItemMetaData.setMnemonic(Mnemonic.META_DATA.MNEMONIC);
-		jMenuItemMetaData.setAccelerator(KeyStroke.getKeyStroke(Mnemonic.META_DATA.MNEMONIC, InputEvent.CTRL_MASK));
-		jMenuItemMetaData.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent evt) {
-				metaDataActionPerformed();
-			}
-		});
-		jMenuFile.add(jMenuItemMetaData);
-
-		jMenuFile.addSeparator();
-
-		jMenuItemSubgroupDiscovery.setFont(GUI.DEFAULT_TEXT_FONT);
-		jMenuItemSubgroupDiscovery.setText("Subgroup Discovery");
-		jMenuItemSubgroupDiscovery.setMnemonic(Mnemonic.SUBGROUP_DISCOVERY.MNEMONIC);
-		jMenuItemSubgroupDiscovery.setAccelerator(KeyStroke.getKeyStroke(Mnemonic.SUBGROUP_DISCOVERY.MNEMONIC, InputEvent.CTRL_MASK));
-		jMenuItemSubgroupDiscovery.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent evt) {
-				jButtonSubgroupDiscoveryActionPerformed();
-			}
-		});
-		jMenuFile.add(jMenuItemSubgroupDiscovery);
-
-		jMenuFile.addSeparator();
-
-		jMenuItemCreateAutoRunFile.setFont(GUI.DEFAULT_TEXT_FONT);
-		jMenuItemCreateAutoRunFile.setText("Create Autorun File");
-		jMenuItemCreateAutoRunFile.setMnemonic(Mnemonic.CREATE_AUTORUN_FILE.MNEMONIC);
-		jMenuItemCreateAutoRunFile.setAccelerator(KeyStroke.getKeyStroke(Mnemonic.CREATE_AUTORUN_FILE.MNEMONIC, InputEvent.CTRL_MASK));
-		jMenuItemCreateAutoRunFile.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent evt) {
-				jMenuItemAutoRunFileActionPerformed(AutoRun.CREATE);
-			}
-		});
-		jMenuFile.add(jMenuItemCreateAutoRunFile);
-
-		jMenuItemAddToAutoRunFile.setFont(GUI.DEFAULT_TEXT_FONT);
-		jMenuItemAddToAutoRunFile.setText("Add to Autorun File");
-		jMenuItemAddToAutoRunFile.setMnemonic(Mnemonic.ADD_TO_AUTORUN_FILE.MNEMONIC);
-		jMenuItemAddToAutoRunFile.setAccelerator(KeyStroke.getKeyStroke(Mnemonic.ADD_TO_AUTORUN_FILE.MNEMONIC, InputEvent.CTRL_MASK));
-		jMenuItemAddToAutoRunFile.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent evt) {
-				jMenuItemAutoRunFileActionPerformed(AutoRun.ADD);
-			}
-		});
-		jMenuFile.add(jMenuItemAddToAutoRunFile);
-
-		jMenuItemLoadSampledSubgroups.setFont(GUI.DEFAULT_TEXT_FONT);
-		jMenuItemLoadSampledSubgroups.setText("Load Sampled Subgroups");
-		jMenuItemLoadSampledSubgroups.setMnemonic(Mnemonic.LOAD_SAMPLED_SUBGROUPS.MNEMONIC);
-		jMenuItemLoadSampledSubgroups.setAccelerator(KeyStroke.getKeyStroke(Mnemonic.LOAD_SAMPLED_SUBGROUPS.MNEMONIC, InputEvent.CTRL_MASK));
-		jMenuItemLoadSampledSubgroups.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent evt)
-			{
-				jMenuItemLoadSampledSubgroupsActionPerformed();
-			}
-		});
-		jMenuFile.add(jMenuItemLoadSampledSubgroups);
-
-		jMenuFile.addSeparator();
-
-		jMenuItemExit.setFont(GUI.DEFAULT_TEXT_FONT);
-		jMenuItemExit.setText("Exit");
-		jMenuItemExit.setMnemonic(Mnemonic.EXIT.MNEMONIC);
-		jMenuItemExit.setAccelerator(KeyStroke.getKeyStroke(Mnemonic.EXIT.MNEMONIC, InputEvent.CTRL_MASK));
-		jMenuItemExit.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent evt) {
-				jMenuItemExitActionPerformed();
-			}
-		});
-		jMenuFile.add(jMenuItemExit);
-		jMiningWindowMenuBar.add(jMenuFile);
-
-		jMenuEnrichment.setFont(GUI.DEFAULT_TEXT_FONT);
-		jMenuEnrichment.setText("Enrichment");
-		jMenuEnrichment.setMnemonic('E');
-
-		jMenuItemAddCuiEnrichmentSource.setFont(GUI.DEFAULT_TEXT_FONT);
-		jMenuItemAddCuiEnrichmentSource.setText("Add CUI Domain");
-		jMenuItemAddCuiEnrichmentSource.setMnemonic('C');
-//		jMenuItemAddCuiEnrichmentSource.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.CTRL_MASK));
-		jMenuItemAddCuiEnrichmentSource.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent evt) {
-				jMenuItemAddEnrichmentSourceActionPerformed(EnrichmentType.CUI);
-			}
-		});
-		jMenuEnrichment.add(jMenuItemAddCuiEnrichmentSource);
-/*
-		// TODO add when implemented
-		jMenuItemAddGoEnrichmentSource.setFont(GUI.DEFAULT_TEXT_FONT);
-		jMenuItemAddGoEnrichmentSource.setText("Add GO Domain");
-		jMenuItemAddGoEnrichmentSource.setMnemonic('G');
-//		jMenuItemAddGoEnrichmentSource.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_G, InputEvent.CTRL_MASK));
-		jMenuItemAddGoEnrichmentSource.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent evt) {
-				jMenuItemAddEnrichmentSourceActionPerformed(EnrichmentType.GO);
-			}
-		});
-		jMenuEnrichment.add(jMenuItemAddGoEnrichmentSource);
-
-		// TODO add when implemented
-		jMenuItemAddCustomEnrichmentSource.setFont(GUI.DEFAULT_TEXT_FONT);
-		jMenuItemAddCustomEnrichmentSource.setText("Add Custom Source");
-		jMenuItemAddCustomEnrichmentSource.setMnemonic('U');
-//		jMenuItemAddCustomEnrichmentSource.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_U, InputEvent.CTRL_MASK));
-		jMenuItemAddCustomEnrichmentSource.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent evt) {
-				jMenuItemAddEnrichmentSourceActionPerformed(EnrichmentType.CUSTOM);
-			}
-		});
-		jMenuEnrichment.add(jMenuItemAddCustomEnrichmentSource);
-*/
-		jMenuItemRemoveEnrichmentSource.setFont(GUI.DEFAULT_TEXT_FONT);
-		jMenuItemRemoveEnrichmentSource.setText("Remove Enrichment Source");
-		jMenuItemRemoveEnrichmentSource.setMnemonic('R');
-//		jMenuItemRemoveEnrichmentSource.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, InputEvent.CTRL_MASK));
-		jMenuItemRemoveEnrichmentSource.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent evt) {
-				jMenuItemRemoveEnrichmentSourceActionPerformed();
-			}
-		});
-		jMenuItemRemoveEnrichmentSource.setEnabled(false);
-		jMenuEnrichment.add(jMenuItemRemoveEnrichmentSource);
-
-		jMiningWindowMenuBar.add(jMenuEnrichment);
-
-		jMenuAbout.setFont(GUI.DEFAULT_TEXT_FONT);
-		jMenuAbout.setText("About");
-		jMenuAbout.setMnemonic('A');
-
-		jMenuItemAboutCortana.setFont(GUI.DEFAULT_TEXT_FONT);
-		jMenuItemAboutCortana.setText("Cortana");
-		jMenuItemAboutCortana.setMnemonic(Mnemonic.ABOUT_CORTANA.MNEMONIC);
-		jMenuItemAboutCortana.setAccelerator(KeyStroke.getKeyStroke(Mnemonic.ABOUT_CORTANA.MNEMONIC, InputEvent.CTRL_MASK));
-		jMenuItemAboutCortana.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent evt) {
-				jMenuItemAboutCortanaActionPerformed();
-			}
-		});
-		jMenuAbout.add(jMenuItemAboutCortana);
-
-		jMiningWindowMenuBar.add(jMenuAbout);
-/*
-		// XXX uncomment for GUI testing only
-		jMenuGui.setFont(GUI.DEFAULT_TEXT_FONT);
-		jMenuGui.setText("Gui");
-		jMenuGui.setMnemonic('G');
-		jMiningWindowMenuBar.add(jMenuGui);
-*/
-		jPanelCenter.setLayout(new GridLayout(2, 2));
-
-		// setting up - dataset ================================================
-		jPanelRuleTarget.setLayout(new BorderLayout(40, 0));
-		jPanelRuleTarget.setBorder(new TitledBorder(new EtchedBorder(),
-				"Dataset", 4, 2, new Font("Dialog", 1, 11)));
-		jPanelRuleTarget.setFont(new Font("Dialog", 1, 12));
-
-		jPanelRuleTargetLabels.setLayout(new GridLayout(7, 1));
-
-		jLabelTargetTable = initJLabel("target table");
-		jPanelRuleTargetLabels.add(jLabelTargetTable);
-
-		jLabelNrExamples = initJLabel("# examples");
-		jPanelRuleTargetLabels.add(jLabelNrExamples);
-
-		jLabelNrColumns = initJLabel("# columns");
-		jPanelRuleTargetLabels.add(jLabelNrColumns);
-
-		jLabelNrNominals = initJLabel("# nominals");
-		jPanelRuleTargetLabels.add(jLabelNrNominals);
-
-		jLabelNrNumerics = initJLabel("# numerics");
-		jPanelRuleTargetLabels.add(jLabelNrNumerics);
-
-		jLabelNrBinaries = initJLabel("# binaries");
-		jPanelRuleTargetLabels.add(jLabelNrBinaries);
-
-		jPanelRuleTarget.add(jPanelRuleTargetLabels, BorderLayout.WEST);
-
-		// number of instances per AttributeType
-		jPanelRuleTargetFields.setLayout(new GridLayout(7, 1));
-
-		jLFieldTargetTable.setForeground(Color.black);
-		jLFieldTargetTable.setFont(GUI.DEFAULT_TEXT_FONT);
-		jPanelRuleTargetFields.add(jLFieldTargetTable);
-
-		jLFieldNrExamples.setForeground(Color.black);
-		jLFieldNrExamples.setFont(GUI.DEFAULT_TEXT_FONT);
-		jPanelRuleTargetFields.add(jLFieldNrExamples);
-
-		jLFieldNrColumns.setForeground(Color.black);
-		jLFieldNrColumns.setFont(GUI.DEFAULT_TEXT_FONT);
-		jPanelRuleTargetFields.add(jLFieldNrColumns);
-
-		jLFieldNrNominals.setForeground(Color.black);
-		jLFieldNrNominals.setFont(GUI.DEFAULT_TEXT_FONT);
-		jPanelRuleTargetFields.add(jLFieldNrNominals);
-
-		jLFieldNrNumerics.setForeground(Color.black);
-		jLFieldNrNumerics.setFont(GUI.DEFAULT_TEXT_FONT);
-		jPanelRuleTargetFields.add(jLFieldNrNumerics);
-
-		jLFieldNrBinaries.setForeground(Color.black);
-		jLFieldNrBinaries.setFont(GUI.DEFAULT_TEXT_FONT);
-		jPanelRuleTargetFields.add(jLFieldNrBinaries);
-
-		jPanelRuleTarget.add(jPanelRuleTargetFields, BorderLayout.CENTER);
-
-		// number of enabled instances per AttributeType
-		jPanelRuleTargetFieldsEnabled.setLayout(new GridLayout(7, 1));
-
-		jPanelRuleTargetFieldsEnabled.add(new JLabel(""));
-		jPanelRuleTargetFieldsEnabled.add(new JLabel(""));
-
-		jLFieldNrColumnsEnabled.setForeground(Color.black);
-		jLFieldNrColumnsEnabled.setFont(GUI.DEFAULT_TEXT_FONT);
-		jLFieldNrColumnsEnabled.setHorizontalAlignment(SwingConstants.LEFT);
-		jPanelRuleTargetFieldsEnabled.add(jLFieldNrColumnsEnabled);
-
-		jLFieldNrNominalsEnabled.setForeground(Color.black);
-		jLFieldNrNominalsEnabled.setFont(GUI.DEFAULT_TEXT_FONT);
-		jLFieldNrNominalsEnabled.setHorizontalAlignment(SwingConstants.LEFT);
-		jPanelRuleTargetFieldsEnabled.add(jLFieldNrNominalsEnabled);
-
-		jLFieldNrNumericsEnabled.setForeground(Color.black);
-		jLFieldNrNumericsEnabled.setFont(GUI.DEFAULT_TEXT_FONT);
-		jLFieldNrNumericsEnabled.setHorizontalAlignment(SwingConstants.LEFT);
-		jPanelRuleTargetFieldsEnabled.add(jLFieldNrNumericsEnabled);
-
-		jLFieldNrBinariesEnabled.setForeground(Color.black);
-		jLFieldNrBinariesEnabled.setFont(GUI.DEFAULT_TEXT_FONT);
-		jLFieldNrBinariesEnabled.setHorizontalAlignment(SwingConstants.LEFT);
-		jPanelRuleTargetFieldsEnabled.add(jLFieldNrBinariesEnabled);
-
-		jPanelRuleTarget.add(jPanelRuleTargetFieldsEnabled, BorderLayout.EAST);
-
-		//jPanelRuleTargetButtons.setLayout(new BoxLayout(jPanelRuleTargetButtons , BoxLayout.X_AXIS));
-		final JPanel aButtonPanel = new JPanel();
-		aButtonPanel.setLayout(new GridLayout(2, 2));
-
-		jButtonBrowse = initButton("Browse...", Mnemonic.BROWSE);
-		jButtonBrowse.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent evt) {
-				browseActionPerformed();
-			}
-		});
-		//jPanelRuleTargetButtons.add(jButtonBrowse);
-		aButtonPanel.add(jButtonBrowse);
-
-		jButtonExplore = initButton("Explore...", Mnemonic.EXPLORE);
-		jButtonExplore.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent evt) {
-				exploreActionPerformed();
-			}
-		});
-		//jPanelRuleTargetButtons.add(jButtonExplore);
-		aButtonPanel.add(jButtonExplore);
-
-		jButtonMetaData = initButton("Meta Data...", Mnemonic.META_DATA);
-		jButtonMetaData.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent evt) {
-				metaDataActionPerformed();
-			}
-		});
-		//jPanelRuleTargetButtons.add(jButtonMetaData);
-		aButtonPanel.add(jButtonMetaData);
-
-		jPanelRuleTargetButtons.add(aButtonPanel);
-
-		jPanelRuleTarget.add(jPanelRuleTargetButtons, BorderLayout.SOUTH);
-		jPanelCenter.add(jPanelRuleTarget);	// MM
-
-		// setting up - target concept - labels ================================
-		jPanelRuleEvaluation.setLayout(new BoxLayout(jPanelRuleEvaluation, 0));
-		jPanelRuleEvaluation.setBorder(new TitledBorder(new EtchedBorder(),
-				"Target Concept", 4, 2, new Font("Dialog", 1, 11)));
-		jPanelRuleEvaluation.setFont(new Font("Dialog", 1, 12));
-
-		jPanelEvaluationLabels.setLayout(new GridLayout(9, 1));
-
-		jComboBoxTargetType.setPreferredSize(new Dimension(86, 22));
-		jComboBoxTargetType.setMinimumSize(new Dimension(86, 22));
-		jComboBoxTargetType.setFont(GUI.DEFAULT_TEXT_FONT);
-		jComboBoxTargetType.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent evt) {
-				jComboBoxTargetTypeActionPerformed();
-			}
-		});
-		jPanelEvaluationFields.add(jComboBoxTargetType);
-
-		jLabelTargetType = initJLabel("target type");
-		jPanelEvaluationLabels.add(jLabelTargetType);
-
-		jLabelQualityMeasure = initJLabel("quality measure");
-		jPanelEvaluationLabels.add(jLabelQualityMeasure);
-
-		jLabelEvaluationThreshold = initJLabel("measure minimum");
-		jPanelEvaluationLabels.add(jLabelEvaluationThreshold);
-
-		jLabelTargetAttribute = initJLabel("primary target");
-		jPanelEvaluationLabels.add(jLabelTargetAttribute);
-
-		jLabelMiscField = initJLabel("");
-		jPanelEvaluationLabels.add(jLabelMiscField);
-
-		jLabelMultiRegressionTargets = initJLabel("secondary/tertiary targets");
-		jPanelEvaluationLabels.add(jLabelMultiRegressionTargets);
-
-		// TODO for stable jar, disable
-		jLabelMultiRegressionTargets.setVisible(false);
-
-		jLabelMultiTargets = initJLabel("targets and settings");
-		jPanelEvaluationLabels.add(jLabelMultiTargets);
-
-		jLabelTargetInfo = initJLabel("");;
-		jPanelEvaluationLabels.add(jLabelTargetInfo);
-		jPanelRuleEvaluation.add(jPanelEvaluationLabels);
-
-		// setting up - target concept - fields ================================
-		jPanelEvaluationFields.setLayout(new GridLayout(9, 1));
-
-		jComboBoxQualityMeasure.setPreferredSize(new Dimension(86, 22));
-		jComboBoxQualityMeasure.setMinimumSize(new Dimension(86, 22));
-		jComboBoxQualityMeasure.setFont(GUI.DEFAULT_TEXT_FONT);
-		jComboBoxQualityMeasure.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent evt) {
-				jComboBoxQualityMeasureActionPerformed();
-			}
-		});
-		jPanelEvaluationFields.add(jComboBoxQualityMeasure);
-
-		jTextFieldQualityMeasureMinimum.setPreferredSize(new Dimension(86, 22));
-		jTextFieldQualityMeasureMinimum.setFont(GUI.DEFAULT_TEXT_FONT);
-		jTextFieldQualityMeasureMinimum.setText("0");
-		jTextFieldQualityMeasureMinimum.setHorizontalAlignment(SwingConstants.RIGHT);
-		jTextFieldQualityMeasureMinimum.setMinimumSize(new Dimension(86, 22));
-		jPanelEvaluationFields.add(jTextFieldQualityMeasureMinimum);
-
-		jComboBoxTargetAttribute.setPreferredSize(new Dimension(86, 22));
-		jComboBoxTargetAttribute.setMinimumSize(new Dimension(86, 22));
-		jComboBoxTargetAttribute.setFont(GUI.DEFAULT_TEXT_FONT);
-		jComboBoxTargetAttribute.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent evt) {
-				jComboBoxTargetAttributeActionPerformed();
-			}
-		});
-		jPanelEvaluationFields.add(jComboBoxTargetAttribute);
-
-		// note in cui setting this is often to small
-		jComboBoxMiscField.setPreferredSize(new Dimension(86, 22));
-		jComboBoxMiscField.setMinimumSize(new Dimension(86, 22));
-		jComboBoxMiscField.setFont(GUI.DEFAULT_TEXT_FONT);
-		jComboBoxMiscField.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent evt) {
-				jComboBoxMiscFieldActionPerformed();
-			}
-		});
-		jPanelEvaluationFields.add(jComboBoxMiscField);
-
-		jButtonMultiRegressionTargets = initButton("Secondary/Tertiary Targets", Mnemonic.SECONDARY_TERTIARY_TARGETS);
-		jButtonMultiRegressionTargets.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent evt) {
-				jButtonMultiRegressionTargetsActionPerformed();
-			}
-		});
-		jPanelEvaluationFields.add(jButtonMultiRegressionTargets);
-
-		// TODO for stable jar, disable
-		jButtonMultiRegressionTargets.setVisible(false);
-
-		jButtonMultiTargets = initButton("Targets and Settings", Mnemonic.TARGETS_AND_SETTINGS);
-		jButtonMultiTargets.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent evt) {
-				jButtonMultiTargetsActionPerformed();
-			}
-		});
-		jPanelEvaluationFields.add(jButtonMultiTargets);
-
-		jLFieldTargetInfo.setForeground(Color.black);
-		jLFieldTargetInfo.setFont(GUI.DEFAULT_TEXT_FONT);
-		jPanelEvaluationFields.add(jLFieldTargetInfo);
-
-		jButtonBaseModel = initButton("Base Model", Mnemonic.BASE_MODEL);
-		jButtonBaseModel.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent evt) {
-				jButtonBaseModelActionPerformed();
-			}
-		});
-		jPanelEvaluationFields.add(jButtonBaseModel);
-
-		jPanelRuleEvaluation.add(jPanelEvaluationFields);
-		jPanelCenter.add(jPanelRuleEvaluation);		// MM
-
-		// setting up - search conditions ======================================
-		jPanelSearchParameters.setLayout(new BoxLayout(jPanelSearchParameters, 0));
-		jPanelSearchParameters.setBorder(new TitledBorder(new EtchedBorder(),
-				"Search Conditions", 4, 2, new Font("Dialog", 1, 11)));
-		jPanelSearchParameters.setFont(new Font("Dialog", 1, 12));
-
-		jPanelSearchParameterLabels.setLayout(new GridLayout(7, 1));
-
-		jLabelSearchDepth = initJLabel("refinement depth");
-		jPanelSearchParameterLabels.add(jLabelSearchDepth);
-
-		jLabelSearchCoverageMinimum = initJLabel("minimum coverage");
-		jPanelSearchParameterLabels.add(jLabelSearchCoverageMinimum);
-
-		jLabelSearchCoverageMaximum = initJLabel("maximum coverage (fraction)");
-		jPanelSearchParameterLabels.add(jLabelSearchCoverageMaximum);
-
-		jLabelSubgroupsMaximum = initJLabel("<html> maximum subgroups (0 = &#8734;)</html>)");
-		jPanelSearchParameterLabels.add(jLabelSubgroupsMaximum);
-
-		jLabelSearchTimeMaximum = initJLabel("<html> maximum time (min) (0 = &#8734;)</html>)");
-		jPanelSearchParameterLabels.add(jLabelSearchTimeMaximum);
-
-		jPanelSearchParameters.add(jPanelSearchParameterLabels);
-
-		jPanelSearchParameterFields.setLayout(new GridLayout(7, 1));
-
-		jTextFieldSearchDepth.setPreferredSize(new Dimension(86, 22));
-		jTextFieldSearchDepth.setFont(GUI.DEFAULT_TEXT_FONT);
-		jTextFieldSearchDepth.setText("0");
-		jTextFieldSearchDepth.setHorizontalAlignment(SwingConstants.RIGHT);
-		jTextFieldSearchDepth.setMinimumSize(new Dimension(86, 22));
-		jPanelSearchParameterFields.add(jTextFieldSearchDepth);
-
-		jTextFieldSearchCoverageMinimum.setPreferredSize(new Dimension(86, 22));
-		jTextFieldSearchCoverageMinimum.setFont(GUI.DEFAULT_TEXT_FONT);
-		jTextFieldSearchCoverageMinimum.setText("0");
-		jTextFieldSearchCoverageMinimum.setHorizontalAlignment(SwingConstants.RIGHT);
-		jTextFieldSearchCoverageMinimum.setMinimumSize(new Dimension(86, 22));
-		jPanelSearchParameterFields.add(jTextFieldSearchCoverageMinimum);
-
-		jTextFieldSearchCoverageMaximum.setPreferredSize(new Dimension(86, 22));
-		jTextFieldSearchCoverageMaximum.setFont(GUI.DEFAULT_TEXT_FONT);
-		jTextFieldSearchCoverageMaximum.setText("0");
-		jTextFieldSearchCoverageMaximum.setHorizontalAlignment(SwingConstants.RIGHT);
-		jTextFieldSearchCoverageMaximum.setMinimumSize(new Dimension(86, 22));
-		jPanelSearchParameterFields.add(jTextFieldSearchCoverageMaximum);
-
-		jTextFieldSubgroupsMaximum.setPreferredSize(new Dimension(86, 22));
-		jTextFieldSubgroupsMaximum.setFont(GUI.DEFAULT_TEXT_FONT);
-		jTextFieldSubgroupsMaximum.setText("0");
-		jTextFieldSubgroupsMaximum.setHorizontalAlignment(SwingConstants.RIGHT);
-		jTextFieldSubgroupsMaximum.setMinimumSize(new Dimension(86, 22));
-		jPanelSearchParameterFields.add(jTextFieldSubgroupsMaximum);
-
-		jTextFieldSearchTimeMaximum.setPreferredSize(new Dimension(86, 22));
-		jTextFieldSearchTimeMaximum.setFont(GUI.DEFAULT_TEXT_FONT);
-		jTextFieldSearchTimeMaximum.setText("0");
-		jTextFieldSearchTimeMaximum.setHorizontalAlignment(SwingConstants.RIGHT);
-		jTextFieldSearchTimeMaximum.setMinimumSize(new Dimension(86, 22));
-		jPanelSearchParameterFields.add(jTextFieldSearchTimeMaximum);
-
-		jPanelSearchParameters.add(jPanelSearchParameterFields);
-		jPanelCenter.add(jPanelSearchParameters);	// MM
-
-		// setting up - search strategy ========================================
-		jPanelSearchStrategy.setLayout(new BoxLayout(jPanelSearchStrategy, 0));
-		jPanelSearchStrategy.setBorder(new TitledBorder(
-			new EtchedBorder(), "Search Strategy", 4, 2, new Font("Dialog", 1, 11)));
-		jPanelSearchStrategy.setFont(new Font("Dialog", 1, 12));
-
-		jPanelSearchStrategyLabels.setLayout(new GridLayout(7, 1));
-
-		jLabelStrategyType = initJLabel("strategy type");
-		jPanelSearchStrategyLabels.add(jLabelStrategyType);
-
-		jLabelStrategyWidth = initJLabel("search width");
-		jPanelSearchStrategyLabels.add(jLabelStrategyWidth);
-
-		jLabelSets = initJLabel("set-valued nominals");
-		jPanelSearchStrategyLabels.add(jLabelSets);
-
-		jLabelSearchStrategyNumeric = initJLabel("numeric strategy");
-		jPanelSearchStrategyLabels.add(jLabelSearchStrategyNumeric);
-
-		jLabelNumericOperators = initJLabel("numeric operators");
-		jPanelSearchStrategyLabels.add(jLabelNumericOperators);
-
-		jLabelSearchStrategyNrBins = initJLabel("number of bins");
-		jPanelSearchStrategyLabels.add(jLabelSearchStrategyNrBins);
-
-		jLabelNrThreads = initJLabel("threads (0 = all available)");
-		jPanelSearchStrategyLabels.add(jLabelNrThreads);
-
-		jPanelSearchStrategy.add(jPanelSearchStrategyLabels);
-
-		jPanelSearchStrategyFields.setLayout(new GridLayout(7, 1));
-
-		jComboBoxSearchStrategyType.setPreferredSize(new Dimension(86, 22));
-		jComboBoxSearchStrategyType.setMinimumSize(new Dimension(86, 22));
-		jComboBoxSearchStrategyType.setFont(GUI.DEFAULT_TEXT_FONT);
-		jComboBoxSearchStrategyType.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent evt) {
-				jComboBoxSearchStrategyTypeActionPerformed();
-			}
-		});
-		jPanelSearchStrategyFields.add(jComboBoxSearchStrategyType);
-
-		jTextFieldSearchStrategyWidth.setPreferredSize(new Dimension(86, 22));
-		jTextFieldSearchStrategyWidth.setFont(GUI.DEFAULT_TEXT_FONT);
-		jTextFieldSearchStrategyWidth.setText("0");
-		jTextFieldSearchStrategyWidth.setHorizontalAlignment(SwingConstants.RIGHT);
-		jTextFieldSearchStrategyWidth.setMinimumSize(new Dimension(86, 22));
-		jPanelSearchStrategyFields.add(jTextFieldSearchStrategyWidth);
-
-		jCheckBoxSets.setHorizontalTextPosition(javax.swing.SwingConstants.RIGHT);
-		jCheckBoxSets.setForeground(new java.awt.Color (102, 102, 153));
-		jCheckBoxSets.setFont(GUI.DEFAULT_TEXT_FONT);
-		jPanelSearchStrategyFields.add(jCheckBoxSets);
-
-		jComboBoxSearchStrategyNumeric.setPreferredSize(new Dimension(86, 22));
-		jComboBoxSearchStrategyNumeric.setMinimumSize(new Dimension(86, 22));
-		jComboBoxSearchStrategyNumeric.setFont(GUI.DEFAULT_TEXT_FONT);
-		jComboBoxSearchStrategyNumeric.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent evt) {
-				jComboBoxSearchStrategyNumericActionPerformed();
-			}
-		});
-		jPanelSearchStrategyFields.add(jComboBoxSearchStrategyNumeric);
-
-		jComboBoxNumericOperators.setPreferredSize(new Dimension(86, 22));
-		jComboBoxNumericOperators.setMinimumSize(new Dimension(86, 22));
-		jComboBoxNumericOperators.setFont(GUI.DEFAULT_TEXT_FONT);
-		jComboBoxNumericOperators.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent evt) {
-				jComboBoxNumericOperatorsActionPerformed();
-			}
-		});
-		jPanelSearchStrategyFields.add(jComboBoxNumericOperators);
-
-
-		jTextFieldSearchStrategyNrBins.setPreferredSize(new Dimension(86, 22));
-		jTextFieldSearchStrategyNrBins.setFont(GUI.DEFAULT_TEXT_FONT);
-		jTextFieldSearchStrategyNrBins.setText("0");
-		jTextFieldSearchStrategyNrBins.setHorizontalAlignment(SwingConstants.RIGHT);
-		jTextFieldSearchStrategyNrBins.setMinimumSize(new Dimension(86, 22));
-		jPanelSearchStrategyFields.add(jTextFieldSearchStrategyNrBins);
-
-		jTextFieldNrThreads.setPreferredSize(new Dimension(86, 22));
-		jTextFieldNrThreads.setFont(GUI.DEFAULT_TEXT_FONT);
-		jTextFieldNrThreads.setText(String.valueOf(Runtime.getRuntime().availableProcessors()));
-		jTextFieldNrThreads.setHorizontalAlignment(SwingConstants.RIGHT);
-		jTextFieldNrThreads.setMinimumSize(new Dimension(86, 22));
-		jPanelSearchStrategyFields.add(jTextFieldNrThreads);
-
-		jPanelSearchStrategy.add(jPanelSearchStrategyFields);
-		jPanelCenter.add(jPanelSearchStrategy);	// MM
-
-		// setting up - mining buttons =========================================
-		jPanelSouth.setFont(GUI.DEFAULT_TEXT_FONT);
-
-		jPanelMineButtons.setMinimumSize(new Dimension(0, 40));
-
-		jButtonSubgroupDiscovery = initButton("Subgroup Discovery", Mnemonic.SUBGROUP_DISCOVERY);
-		jButtonSubgroupDiscovery.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent evt) {
-				jButtonSubgroupDiscoveryActionPerformed();
-			}
-		});
-		jPanelMineButtons.add(jButtonSubgroupDiscovery);
-
-		jButtonCrossValidate = initButton("Cross-Validate", Mnemonic.CROSS_VALIDATE);
-		jButtonCrossValidate.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent evt) {
-				jButtonCrossValidateActionPerformed();
-			}
-		});
-		jPanelMineButtons.add(jButtonCrossValidate);
-
-		jButtonThreshold = initButton("Compute Threshold", Mnemonic.COMPUTE_THRESHOLD);
-		jButtonThreshold.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent evt) {
-				jButtonRandomQualitiesActionPerformed();
-			}
-		});
-		jPanelMineButtons.add(jButtonThreshold);
-
-		jPanelSouth.add(jPanelMineButtons);
-
-		getContentPane().add(jPanelSouth, BorderLayout.SOUTH);
-		getContentPane().add(jPanelCenter, BorderLayout.CENTER);
-
-		setFont(GUI.DEFAULT_TEXT_FONT);
-		setJMenuBar(jMiningWindowMenuBar);
-	}
-
 	private void enableTableDependentComponents(boolean theSetting)
 	{
 		AbstractButton[] anAbstractButtonArray =
@@ -1012,8 +613,8 @@ public class MiningWindow extends JFrame
 						jMenuItemExplore,
 						jMenuItemMetaData,
 						jMenuItemSubgroupDiscovery,
-						jMenuItemCreateAutoRunFile,
-						jMenuItemAddToAutoRunFile,
+						jMenuItemCreateAutorunFile,
+						jMenuItemAddToAutorunFile,
 						jMenuItemLoadSampledSubgroups,
 						jMenuItemAddCuiEnrichmentSource,
 						jMenuItemAddGoEnrichmentSource,
@@ -1023,16 +624,331 @@ public class MiningWindow extends JFrame
 						jButtonMetaData,
 						jButtonCrossValidate,
 						jButtonSubgroupDiscovery,
-						jButtonThreshold,
+						jButtonComputeThreshold,
 						jButtonMultiTargets,
 						jButtonMultiRegressionTargets};
 		enableBaseModelButtonCheck();
 
 		for (AbstractButton a : anAbstractButtonArray)
 			a.setEnabled(theSetting);
+
+		// do the same for combo boxes
+		JComboBox[] aComboBoxArray = {	jComboBoxTargetType,
+						jComboBoxStrategyType,
+						jComboBoxNumericOperators };
+		for (JComboBox c : aComboBoxArray)
+			c.setEnabled(theSetting);
+	}
+
+	/*
+	 * Removes all items from:
+	 * jComboBoxTargetAttributes
+	 * jComboBoxMiscField (TargetValues / 2nd Target)
+	 * jListMultiTargets
+	 * jListMultiRegressionTargets
+	 * 
+	 * see jComboBoxTargetTypeActionPerformed
+	 */
+	private void initTargetAttributes()
+	{
+		// avoid firing ActionEvents before were done.
+		jComboBoxTargetAttribute.removeActionListener(this);
+		jComboBoxMiscField.removeActionListener(this);
+
+		final TargetType aTargetType = itsTargetConcept.getTargetType();
+
+		removeAllTargetAttributeItems();
+		removeAllMiscFieldItems();
+		removeAllMultiTargetsItems();
+		removeAllMultiRegressionTargetsItems();
+
+		boolean fillMiscField = (aTargetType == TargetType.DOUBLE_REGRESSION) || (aTargetType == TargetType.DOUBLE_CORRELATION);
+		// primary target and (optional) MiscField
+		for (Column c : itsTable.getColumns())
+		{
+			AttributeType anAttributeType = c.getType();
+			if ((aTargetType == TargetType.SINGLE_NOMINAL && anAttributeType == AttributeType.NOMINAL) ||
+				(aTargetType == TargetType.SINGLE_NOMINAL && anAttributeType == AttributeType.BINARY) ||
+				(aTargetType == TargetType.SINGLE_NUMERIC && anAttributeType == AttributeType.NUMERIC) ||
+				(aTargetType == TargetType.SINGLE_ORDINAL && anAttributeType == AttributeType.NUMERIC) ||
+				(aTargetType == TargetType.DOUBLE_REGRESSION && anAttributeType == AttributeType.NUMERIC) ||
+				(aTargetType == TargetType.DOUBLE_CORRELATION && anAttributeType == AttributeType.NUMERIC) ||
+				(aTargetType == TargetType.MULTI_LABEL && anAttributeType == AttributeType.NUMERIC) ||
+				(aTargetType == TargetType.MULTI_BINARY_CLASSIFICATION && anAttributeType == AttributeType.BINARY) ||
+				(aTargetType == TargetType.MULTI_BINARY_CLASSIFICATION && anAttributeType == AttributeType.NOMINAL))
+			{
+				addTargetAttributeItem(c.getName());
+
+				/*
+				 * might be considered TargetValue / MiscField
+				 * functionality, but the entries should not be
+				 * updated after creation
+				 * see initTargetValues()
+				 */
+				if (fillMiscField)
+					addMiscFieldItem(c.getName());
+			}
+		}
+
+		/*
+		 * NOTE
+		 * setMultiTargets() is in initTargetAttributeItems()
+		 * MultiTargets do not change on
+		 * jComboBoxTargetAttributeActionPerformed
+		 * 
+		 * this is contrary to DOUBLE_REGRESSION + COOKS_DISTANCE
+		 * computeMultiRegressionTargets(), they change whenever the
+		 * PrimaryTarget is changed, so they need to be updated on every
+		 * jComboBoxTargetAttributeActionPerformed
+		 */
+		if (aTargetType == TargetType.MULTI_LABEL)
+			setMultiTargets();
+
+		// Re-enable ActionEvents from these two ComboBoxes.
+		jComboBoxTargetAttribute.addActionListener(this);
+		jComboBoxMiscField.addActionListener(this);
+	}
+
+	/*
+	 * only called on TargetAttribute change through:
+	 * jComboBoxTargetAttributeActionPerformed
+	 * 
+	 * technically the List need not be completely cleared
+	 * because just the primary target is changed, a simple substitution
+	 * would suffice
+	 * it seems unlikely that current code would be a performance drawback
+	 *  
+	 * see jComboBoxTargetTypeActionPerformed
+	 */
+	private void setMultiRegressionTargets()
+	{
+		// assumes COOKS_DISTANCE is only valid for DOUBLE_REGRESSION
+		if (!QM.COOKS_DISTANCE.GUI_TEXT.equals(getQualityMeasureName()))
+			return;
+
+		removeAllMultiRegressionTargetsItems();
+
+		Column aPrimaryTarget = itsTargetConcept.getPrimaryTarget();
+		List<Column> aList = new ArrayList<Column>();
+		for (Column c: itsTable.getColumns())
+		{
+			if (c.getType() == AttributeType.NUMERIC && c.getIsEnabled() && (c != aPrimaryTarget))
+			{
+				addMultiRegressionTargetsItem(c.getName());
+				aList.add(c);
+			}
+		}
+
+		itsTargetConcept.setMultiRegressionTargets(aList);
+		jListMultiRegressionTargets.setSelectionInterval(0, aList.size() - 1);
+	}
+
+	/*
+	 * expensive recreation of up-to-date list, this always reflects the
+	 * latest AttributeType / isEnabled changes for a Columns
+	 * for more efficient code Table / MetaDataWindow need updates to ensure
+	 * changes are immediately pushed to underlying Table (which holds the
+	 * secondaryTargets Column(s))
+	 * 
+	 * see jComboBoxTargetTypeActionPerformed
+	 */
+	private void setMultiTargets()
+	{
+		removeAllMultiTargetsItems();
+
+		List<Column> aList = new ArrayList<Column>();
+		for (Column c: itsTable.getColumns())
+		{
+			if (c.getType() == AttributeType.BINARY && c.getIsEnabled())
+			{
+				addMultiTargetsItem(c.getName());
+				aList.add(c);
+			}
+		}
+
+		itsTargetConcept.setMultiTargets(aList);
+		jListMultiTargets.setSelectionInterval(0, aList.size() - 1);
+	}
+
+	/*
+	 * MiscBox is for TargetAttributeValue or 2nd Target
+	 * should only be called for SINGLE_NOMINAL/ MULTI_BINARY_CLASSIFICATION
+	 * for DOUBLE_REGRESSION/ DOUBLE_CORRELATION the values in the
+	 * jComboBoxMiscField do not need to be updated after a change of
+	 * PrimaryTarget (jComboBoxTargetAttributeActionPerformed)
+	 * 
+ 	 * see jComboBoxTargetTypeActionPerformed
+	 */
+	private void initTargetValues()
+	{
+		// disable MiscField ActionListener while modifying
+		jComboBoxMiscField.removeActionListener(this);
+
+		removeAllMiscFieldItems();
+
+		if (jComboBoxTargetAttribute.getItemCount() > 0)
+		{
+			TreeSet<String> aValues = itsTable.getColumn(getTargetAttributeName()).getDomain();
+			for (String aValue : aValues)
+				addMiscFieldItem(aValue);
+		}
+
+		// re-enable MiscField ActionListener
+		jComboBoxMiscField.addActionListener(this);
+	}
+
+	// see jComboBoxTargetTypeActionPerformed
+	private void initTargetInfo()
+	{
+		TargetType aTargetType = itsTargetConcept.getTargetType();
+		switch (aTargetType)
+		{
+			case SINGLE_NOMINAL :
+			{
+				itsPositiveCount =
+					itsTable.getColumn(getTargetAttributeName()).countValues(getMiscFieldName());
+				float aPercentage = (itsPositiveCount * 100) / (float) itsTable.getNrRows();
+				NumberFormat aFormatter = NumberFormat.getNumberInstance();
+				aFormatter.setMaximumFractionDigits(1);
+				jLabelTargetInfo.setText(" # positive");
+				jLabelTargetInfoText.setText(itsPositiveCount + " (" + aFormatter.format(aPercentage) + " %)");
+				break;
+			}
+			case SINGLE_NUMERIC :
+			{
+				String aTarget = getTargetAttributeName();
+				if (aTarget != null) //initTargetInfo might be called before item is actually selected
+				{
+					itsTargetAverage = itsTable.getColumn(aTarget).getAverage();
+					jLabelTargetInfo.setText(" average");
+					jLabelTargetInfoText.setText(String.valueOf(itsTargetAverage));
+				}
+				break;
+			}
+			case SINGLE_ORDINAL :
+			{
+				throw new AssertionError(aTargetType);
+			}
+			case DOUBLE_REGRESSION :
+			{
+				Column aPrimaryColumn = itsTargetConcept.getPrimaryTarget();
+				Column aSecondaryColumn = itsTargetConcept.getSecondaryTarget();
+
+				if (QM.COOKS_DISTANCE.GUI_TEXT.equals(getQualityMeasureName()))
+				{
+					jLabelTargetInfo.setText(" # multi-targets");
+					jLabelTargetInfoText.setText(Integer.toString(jListMultiRegressionTargets.getModel().getSize()));
+					break;
+				}
+
+				// not COOKS_DISTANCE, assume LINEAR_REGRESSION
+
+				// may not be exactly 1.0 (rounding errors)
+				if (aPrimaryColumn == aSecondaryColumn)
+				{
+					jLabelTargetInfo.setText(" regression");
+					jLabelTargetInfoText.setText("s = 0.0 + 1.0 * p");
+					break;
+				}
+
+				RegressionMeasure aRM =
+					new RegressionMeasure(QM.LINEAR_REGRESSION, aPrimaryColumn, aSecondaryColumn);
+				NumberFormat aFormatter = NumberFormat.getNumberInstance();
+				aFormatter.setMaximumFractionDigits(2);
+				jLabelTargetInfo.setText(" regression");
+				jLabelTargetInfoText.setText(String.format("s = %s + %s * p",
+										aFormatter.format(aRM.getIntercept()),
+										aFormatter.format(aRM.getSlope())));
+				break;
+			}
+			case DOUBLE_CORRELATION :
+			{
+				Column aPrimaryColumn = itsTargetConcept.getPrimaryTarget();
+				Column aSecondaryColumn = itsTargetConcept.getSecondaryTarget();
+
+				CorrelationMeasure aCM =
+					new CorrelationMeasure(QM.CORRELATION_R, aPrimaryColumn, aSecondaryColumn);
+				jLabelTargetInfo.setText(" correlation");
+				jLabelTargetInfoText.setText(Double.toString(aCM.getEvaluationMeasureValue()));
+				break;
+			}
+			case MULTI_LABEL :
+			{
+				jLabelTargetInfo.setText(" # binary targets");
+				jLabelTargetInfoText.setText(String.valueOf(itsTargetConcept.getMultiTargets().size()));
+				break;
+			}
+			case MULTI_BINARY_CLASSIFICATION :
+			{
+				jLabelTargetInfo.setText(" target info");
+				jLabelTargetInfoText.setText("none");
+				break;
+			}
+		}
+	}
+
+	// see jComboBoxTargetTypeActionPerformed
+	private void initQualityMeasure()
+	{
+		jComboBoxQualityMeasure.removeActionListener(this);
+
+		removeAllQualityMeasureItems();
+		for (QM qm : QM.getQualityMeasures(itsTargetConcept.getTargetType()))
+			addQualityMeasureItem(qm.GUI_TEXT);
+		initEvaluationMinimum();
+
+		jComboBoxQualityMeasure.addActionListener(this);
+	}
+
+	// see jComboBoxTargetTypeActionPerformed
+	private void initEvaluationMinimum()
+	{
+		final String aName = getQualityMeasureName();
+		if (aName == null)
+			return;
+
+		if (QM.AVERAGE.GUI_TEXT.equals(aName))
+			setQualityMeasureMinimum(Float.toString(itsTargetAverage));
+		else if (QM.INVERSE_AVERAGE.GUI_TEXT.equals(aName))
+			setQualityMeasureMinimum(Float.toString(-itsTargetAverage));
+		else
+			setQualityMeasureMinimum(QM.fromString(getQualityMeasureName()).MEASURE_DEFAULT);
+	}
+
+	/*
+	 * at this point we do not know the previous TargetType
+	 * remove all and reset the values, not a performance drawback
+	 * 
+	 * see jComboBoxTargetTypeActionPerformed
+	 */
+	private void initNumericStrategy()
+	{
+		jComboBoxNumericStrategy.removeActionListener(this);
+
+		//set 3 normals values for numeric strategy
+		jComboBoxNumericStrategy.removeAllItems();
+		for (NumericStrategy n : NumericStrategy.getNormalValues())
+			jComboBoxNumericStrategy.addItem(n.GUI_TEXT);
+
+		// add intervals only for SINGLE_NOMINAL
+		if (itsTargetConcept.getTargetType() == TargetType.SINGLE_NOMINAL)
+			jComboBoxNumericStrategy.addItem(NumericStrategy.NUMERIC_INTERVALS.GUI_TEXT);
+
+		jComboBoxNumericStrategy.addActionListener(this);
+	}
+
+	// see jComboBoxTargetTypeActionPerformed
+	private void enableBaseModelButtonCheck()
+	{
+		TargetType aType = itsTargetConcept.getTargetType();
+		boolean isEnabled = TargetType.hasBaseModel(aType);
+		if (aType == TargetType.MULTI_LABEL && jListMultiTargets.getSelectedIndices().length == 0)
+			isEnabled = false;
+		jButtonBaseModel.setEnabled(isEnabled);
 	}
 
 	// used if Table already exists, but is changed
+	// TODO MM take parameter of what to update
 	public void update()
 	{
 		// hack on hack, prevent resetting of primary target/measure minimum
@@ -1055,10 +971,11 @@ public class MiningWindow extends JFrame
 
 		if (aTable != null)
 		{
-			removeAllMultiTargetsItems(); // hack for now
+			// clear these JLists
+			removeAllMultiTargetsItems();
+			removeAllMultiRegressionTargetsItems();
 
 			itsTable = aTable;
-			itsTotalCount = itsTable.getNrRows();
 			enableTableDependentComponents(true);
 
 			// loaded from regular file
@@ -1123,9 +1040,9 @@ public class MiningWindow extends JFrame
 			{
 				new FileHandler(itsTable, theType);
 				update();
+				final JList aList = itsTable.getDomainList();
 				jMenuItemRemoveEnrichmentSource
-					.setEnabled(itsTable.getDomainList() != null &&
-								itsTable.getDomainList().getComponentCount() > 0);
+					.setEnabled(aList != null && aList.getComponentCount() > 0);
 			}
 		});
 	}
@@ -1154,10 +1071,10 @@ public class MiningWindow extends JFrame
 		});
 	}
 
+	// use "Cortana: Subgroup Discovery Tool r????" to indicate revision
 	private void jMenuItemAboutCortanaActionPerformed()
 	{
-		// TODO
-		JOptionPane.showMessageDialog(null,
+		JOptionPane.showMessageDialog(this,
 						"Cortana: Subgroup Discovery Tool",
 						"About Cortana",
 						JOptionPane.INFORMATION_MESSAGE);
@@ -1200,47 +1117,42 @@ public class MiningWindow extends JFrame
 		});
 	}
 
-	private void jComboBoxSearchStrategyTypeActionPerformed()
-	{
-		String aName = getSearchStrategyName();
-		if (aName != null)
-		{
-			itsSearchParameters.setSearchStrategy(aName);
-			jTextFieldSearchStrategyWidth.setEnabled(!SearchStrategy.BEST_FIRST.GUI_TEXT.equalsIgnoreCase(aName));
-		}
-	}
-
-	private void jComboBoxNumericOperatorsActionPerformed()
-	{
-		String aName = getNumericOperators();
-		if (aName != null)
-			itsSearchParameters.setNumericOperators(aName);
-	}
-
-	private void jComboBoxSearchStrategyNumericActionPerformed()
-	{
-		String aName = getNumericStrategy();
-		if (aName != null)
-		{
-			itsSearchParameters.setNumericStrategy(aName);
-			boolean aBin = (itsSearchParameters.getNumericStrategy() == NumericStrategy.NUMERIC_BINS);
-			jTextFieldSearchStrategyNrBins.setEnabled(aBin); //disable nr bins?
-			boolean anIntervals = (itsSearchParameters.getNumericStrategy() == NumericStrategy.NUMERIC_INTERVALS);
-			jComboBoxNumericOperators.setEnabled(!anIntervals); //disable numeric operators?
-		}
-	}
-
-	private void jComboBoxQualityMeasureActionPerformed()
-	{
-		initEvaluationMinimum();
-		itsSearchParameters.setQualityMeasureMinimum(getQualityMeasureMinimum());
-
-		// this ALWAYS resets alpha if switching TO EDIT_DISTANCE
-		// remove upon discretion
-		if (QM.EDIT_DISTANCE.GUI_TEXT.equals(getQualityMeasureName()))
-			itsSearchParameters.setAlpha(SearchParameters.ALPHA_EDIT_DISTANCE);
-	}
-
+	/*
+	 * This is the Top-level ComboBox that can be changed.
+	 * From here changes find their ways down to other ComboBoxes, Labels
+	 * and Fields in the following order:
+	 * 
+	 * jComboBoxTargetTypeActionPerformed() calls in order:
+	 * 
+	 * initQualityMeasure() -> initEvaluationMinimum()
+	 * initTargetAttributes() -> put Column Names in TargetAttributeComboBox
+	 * misc_field.setVisible()			-> based on TargetType
+	 * set-valued_nominals.setEnabled()		-> based on TargetType
+	 * multi-targets_label.setEnabledd()		-> based on TargetType
+	 * baseModelCheck()				-> based on TargetType
+	 * TargetAttributeLabel/ComboBox.setVisible()	-> based on TargetType
+	 * initNumericStrategy()			-> based on TargetType
+	 * jComboBoxTargetAttributeActionPerformed()
+	 * 
+	 * 
+	 * jComboBoxTargetAttributeActionPerformed() calls in order:
+	 * 
+	 * itsTargetConcept.setPrimaryTarget()
+	 * initTargetValues (for TargetTypes that have TargetValues)
+	 * setMultiTargets() if needed
+	 * jComboBoxMiscFieldActionPerformed()
+	 * 
+	 * 
+	 * jComboBoxMiscFieldActionPerformed() calls in order:
+	 * 
+	 * setTargetValue() / setSecondaryTarget()	-> based on TargetType
+	 * initTargetInfo()
+	 * 
+	 * initTargetInfo() sets the appropriate texts for jLabelTargetInfo and
+	 * jLabelTargetInfoText				-> based on TargetType
+	 * 
+	 * After this all information should be up to date.
+	 */
 	private void jComboBoxTargetTypeActionPerformed()
 	{
 		if (itsTable == null)
@@ -1250,54 +1162,24 @@ public class MiningWindow extends JFrame
 		itsSearchParameters.setTargetConcept(itsTargetConcept);
 
 		initQualityMeasure();
-		initTargetAttributeItems();
+		initTargetAttributes();
 
 		TargetType aTargetType = itsTargetConcept.getTargetType();
 		// has MiscField?
 		boolean hasMiscField = TargetType.hasMiscField(aTargetType);
 		jComboBoxMiscField.setVisible(hasMiscField);
 		jLabelMiscField.setVisible(hasMiscField);
+		if (aTargetType == TargetType.SINGLE_NOMINAL)
+			jLabelMiscField.setText("target value");
+		else if (aTargetType == TargetType.DOUBLE_REGRESSION || aTargetType == TargetType.DOUBLE_CORRELATION)
+			jLabelMiscField.setText("<html><u>s</u>econdary target");
+		else
+			jLabelMiscField.setText("");
 
-		jCheckBoxSets.setEnabled(aTargetType == TargetType.SINGLE_NOMINAL); // only valid for nominal targets
+		// only valid for nominal targets
+		jCheckBoxSetValuedNominals.setEnabled(aTargetType == TargetType.SINGLE_NOMINAL);
 
-		//set 3 normals values for numeric strategy
-		jComboBoxSearchStrategyNumeric.removeAllItems();
-		for (NumericStrategy n : NumericStrategy.getNormalValues())
-			jComboBoxSearchStrategyNumeric.addItem(n.GUI_TEXT);
-
-		switch (aTargetType)
-		{
-			case SINGLE_NOMINAL :
-			{
-				jLabelTargetInfo.setText(" # positive");
-				jComboBoxSearchStrategyNumeric.addItem(NumericStrategy.NUMERIC_INTERVALS.GUI_TEXT); //add intervals only for SINGLE_NOMINAL
-				break;
-			}
-			case SINGLE_ORDINAL :
-			case SINGLE_NUMERIC :
-			{
-				jLabelTargetInfo.setText(" average");
-				break;
-			}
-			case DOUBLE_REGRESSION :
-			case DOUBLE_CORRELATION :
-			{
-				jLabelTargetInfo.setText(" correlation");
-				break;
-			}
-			case MULTI_LABEL :
-			{
-				jLabelTargetInfo.setText(" # binary targets");
-				break;
-			}
-			case MULTI_BINARY_CLASSIFICATION :
-			{
-				jLabelTargetInfo.setText(" target info");
-				break;
-			}
-		}
-
-// TODO for stable jar, disable, was added in revision 848
+// TODO MM for stable jar, disable, was added in revision 848
 /*
 		boolean hasMultiRegressionTargets = TargetType.hasMultiRegressionTargets(aTargetType);
 		jLabelMultiRegressionTargets.setVisible(hasMultiRegressionTargets);
@@ -1311,8 +1193,8 @@ public class MiningWindow extends JFrame
 		boolean hasMultiTargets = TargetType.hasMultiTargets(aTargetType);
 		jLabelMultiTargets.setVisible(hasMultiTargets);
 		jButtonMultiTargets.setVisible(hasMultiTargets);
-		// disable if no binary attributes TODO should be itsTable.field
-		// jListMultiTargets is populated through initTargetAttributeItems above
+		// disable if no binary attributes 
+		// initTargetAttributeItems above populates jListMultiTargets 
 		jButtonMultiTargets.setEnabled(jListMultiTargets.getSelectedIndices().length != 0);
 
 		// has base model?
@@ -1322,65 +1204,122 @@ public class MiningWindow extends JFrame
 		boolean hasTargetAttribute = TargetType.hasTargetAttribute(aTargetType);
 		jLabelTargetAttribute.setVisible(hasTargetAttribute);
 		jComboBoxTargetAttribute.setVisible(hasTargetAttribute);
+
+		initNumericStrategy();
+
+		jComboBoxTargetAttributeActionPerformed();
 	}
 
+	// see jComboBoxTargetTypeActionPerformed
+	private void jComboBoxQualityMeasureActionPerformed()
+	{
+		initEvaluationMinimum();
+		itsSearchParameters.setQualityMeasureMinimum(getQualityMeasureMinimum());
+
+		// this ALWAYS resets alpha if switching TO EDIT_DISTANCE
+		// remove upon discretion
+		if (QM.EDIT_DISTANCE.GUI_TEXT.equals(getQualityMeasureName()))
+			itsSearchParameters.setAlpha(SearchParameters.ALPHA_EDIT_DISTANCE);
+	}
+
+	// see jComboBoxTargetTypeActionPerformed
 	private void jComboBoxTargetAttributeActionPerformed()
 	{
-		//itsTargetConcept.setPrimaryTarget(itsTable.getAttribute(getTargetAttributeName()));
 		itsTargetConcept.setPrimaryTarget(itsTable.getColumn(getTargetAttributeName()));
-		itsSearchParameters.setTargetConcept(itsTargetConcept);
+		itsSearchParameters.setTargetConcept(itsTargetConcept); // FIXME MM not needed to reset it?
 
+		/*
+		 * for most TargetTypes, populates / clears jComboBoxMiscField
+		 * 
+		 * for DOUBLE_REGRESSION / DOUBLE_CORRELATION the MiscField
+		 * items do not need to be updated on a
+		 * jComboBoxTargetAttributeActionPerformed
+		 * see initTargetAttributeItems() and initTargetValueItems()
+		 */
 		TargetType aTargetType = itsTargetConcept.getTargetType();
+		if (aTargetType != TargetType.DOUBLE_REGRESSION &&
+				aTargetType != TargetType.DOUBLE_CORRELATION)
+			initTargetValues();
 
-		if (getTargetAttributeName() != null &&
-			(aTargetType == TargetType.SINGLE_NOMINAL ||
-				aTargetType == TargetType.MULTI_BINARY_CLASSIFICATION))
-		{
-			initTargetValueItems();
-			//TEST
-//			itsTable.getColumn(getTargetAttributeName()).getAverageRanking();
-		}
+		/*
+		 * NOTE
+		 * setMultiTargets() is in initTargetAttributeItems()
+		 * MultiTargets do not change on
+		 * jComboBoxTargetAttributeActionPerformed
+		 * 
+		 * this is contrary to DOUBLE_REGRESSION + COOKS_DISTANCE
+		 * computeMultiRegressionTargets(), they change whenever the
+		 * PrimaryTarget is changed, so they need to be updated on every
+		 * jComboBoxTargetAttributeActionPerformed
+		 */
+		setMultiRegressionTargets();
 
-		//itsTable.getAttribute(getTargetAttributeName()).makePrimaryTarget();
-
-		if (getTargetAttributeName() != null && aTargetType == TargetType.DOUBLE_REGRESSION)
-			computeMultiRegressionTargets();
-
-		//update misc field? Other types are updated through action listeners
-		if (aTargetType == TargetType.SINGLE_NUMERIC)
-		{
-			initTargetInfo();
-//			Column aColumn = itsTable.getColumn(getTargetAttributeName());
-//			if (aColumn != null)
-//			{
-//				ProbabilityDensityFunction aPDF = new ProbabilityDensityFunction(aColumn);
-//				aPDF.print();
-//			}
-		}
+		jComboBoxMiscFieldActionPerformed();
 	}
 
+	// see jComboBoxTargetTypeActionPerformed
 	private void jComboBoxMiscFieldActionPerformed()
 	{
-		switch(itsTargetConcept.getTargetType())
+		switch (itsTargetConcept.getTargetType())
 		{
 			case SINGLE_NOMINAL :
-			case MULTI_BINARY_CLASSIFICATION :
 			{
-					itsTargetConcept.setTargetValue(getMiscFieldName());
-					break;
+				itsTargetConcept.setTargetValue(getMiscFieldName());
+				break;
 			}
 			case DOUBLE_REGRESSION :
+			{
+				itsTargetConcept.setSecondaryTarget(itsTable.getColumn(getMiscFieldName()));
+				break;
+			}
 			case DOUBLE_CORRELATION :
 			{
-				itsTargetConcept.setSecondaryTarget(itsTable.getColumn(getTargetAttributeName()));
+				itsTargetConcept.setSecondaryTarget(itsTable.getColumn(getMiscFieldName()));
+				break;
+			}
+			case MULTI_BINARY_CLASSIFICATION :
+			{
+				itsTargetConcept.setTargetValue(getMiscFieldName());
 				break;
 			}
 			default : break;
 		}
 		itsSearchParameters.setTargetConcept(itsTargetConcept);
 
-		if (getMiscFieldName() != null)
-			initTargetInfo();
+		initTargetInfo();
+	}
+
+	// see jComboBoxTargetTypeActionPerformed
+	private void jComboBoxSearchStrategyTypeActionPerformed()
+	{
+		String aName = getSearchStrategyName();
+		if (aName != null)
+		{
+			itsSearchParameters.setSearchStrategy(aName);
+			jTextFieldStrategyWidth.setEnabled(!SearchStrategy.BEST_FIRST.GUI_TEXT.equalsIgnoreCase(aName));
+		}
+	}
+
+	// see jComboBoxTargetTypeActionPerformed
+	private void jComboBoxSearchStrategyNumericActionPerformed()
+	{
+		String aName = getNumericStrategy();
+		if (aName != null)
+		{
+			itsSearchParameters.setNumericStrategy(aName);
+			boolean aBin = (itsSearchParameters.getNumericStrategy() == NumericStrategy.NUMERIC_BINS);
+			jTextFieldNumberOfBins.setEnabled(aBin); //disable nr bins?
+			boolean anIntervals = (itsSearchParameters.getNumericStrategy() == NumericStrategy.NUMERIC_INTERVALS);
+			jComboBoxNumericOperators.setEnabled(!anIntervals); //disable numeric operators?
+		}
+	}
+
+	// see jComboBoxTargetTypeActionPerformed
+	private void jComboBoxNumericOperatorsActionPerformed()
+	{
+		String aName = getNumericOperators();
+		if (aName != null)
+			itsSearchParameters.setNumericOperators(aName);
 	}
 
 	private void jButtonMultiRegressionTargetsActionPerformed()
@@ -1398,7 +1337,7 @@ public class MiningWindow extends JFrame
 		int aNrBinary = aSelection.length;
 		List<Column> aList = new ArrayList<Column>(aNrBinary);
 
-		// aSelection is in order and names are always present in itsColumns
+		// aSelection is in order and names always occur in itsColumns
 		for (int i = 0, j = 0; i < aNrBinary; ++j)
 		{
 			if (aSelection[i].equals(itsTable.getColumn(j).getName()))
@@ -1408,7 +1347,7 @@ public class MiningWindow extends JFrame
 			}
 		}
 		itsTargetConcept.setMultiTargets(aList);
-		//update GUI, relies on disabling "Select Targets" if nrBinaries == 0
+		// relies on disabling "Select Targets" if nrBinaries == 0
 		initTargetInfo();
 	}
 
@@ -1416,8 +1355,13 @@ public class MiningWindow extends JFrame
 	{
 		setupSearchParameters();
 
-		switch (itsTargetConcept.getTargetType())
+		TargetType aTargetType = itsTargetConcept.getTargetType();
+		switch (aTargetType)
 		{
+			case SINGLE_NOMINAL :
+			{
+				throw new AssertionError(aTargetType);
+			}
 			case SINGLE_NUMERIC :
 			{
 				Column aTarget = itsTargetConcept.getPrimaryTarget();
@@ -1425,6 +1369,10 @@ public class MiningWindow extends JFrame
 				aPDF.smooth();
 				new ModelWindow(aTarget, aPDF, null, "entire dataset");
 				break;
+			}
+			case SINGLE_ORDINAL :
+			{
+				throw new AssertionError(aTargetType);
 			}
 			case DOUBLE_REGRESSION :
 			{
@@ -1458,12 +1406,19 @@ public class MiningWindow extends JFrame
 				new ModelWindow(aBaseDAG, 1200, 900);
 				break;
 			}
-			default: return; // TODO other types not implemented yet
+			case MULTI_BINARY_CLASSIFICATION :
+			{
+				throw new AssertionError(aTargetType);
+			}
+			default :
+			{
+				throw new AssertionError(aTargetType);
+			}
 		}
 	}
 
 	/* MINING BUTTONS */
-	private void jButtonSubgroupDiscoveryActionPerformed()
+	private void subgroupDiscoveryActionPerformed()
 	{
 		setBusy(true);
 		runSubgroupDiscovery(itsTable, 0, null);
@@ -1474,10 +1429,10 @@ public class MiningWindow extends JFrame
 	private void runSubgroupDiscovery(Table theTable, int theFold, BitSet theBitSet)
 	{
 		setupSearchParameters();
-		nl.liacs.subdisc.Process.runSubgroupDiscovery(theTable, theFold, theBitSet, itsSearchParameters, true, getNrThreads(), this);
+		Process.runSubgroupDiscovery(theTable, theFold, theBitSet, itsSearchParameters, true, getNrThreads(), this);
 	}
 
-	private void jButtonRandomQualitiesActionPerformed()
+	private void jButtonComputeThresholdActionPerformed()
 	{
 		final TargetType aTargetType = itsTargetConcept.getTargetType();
 		String[] aSetup = new RandomQualitiesWindow(aTargetType).getSettings();
@@ -1489,7 +1444,7 @@ public class MiningWindow extends JFrame
 
 		setBusy(true);
 		QualityMeasure aQualityMeasure;
-		switch (itsTargetConcept.getTargetType())
+		switch (aTargetType)
 		{
 			case SINGLE_NOMINAL :
 			{
@@ -1513,20 +1468,23 @@ public class MiningWindow extends JFrame
 				aQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), aNrRows, aStats[0], aStats[1], aPDF);
 				break;
 			}
+			case DOUBLE_REGRESSION :
+			{
+				aQualityMeasure = null;
+				break;
+			}
+			case DOUBLE_CORRELATION :
+			{
+				aQualityMeasure = null;
+				break;
+			}
 			case MULTI_LABEL :
 			{
 				// base model
 				BinaryTable aBaseTable = new BinaryTable(itsTable, itsTargetConcept.getMultiTargets());
 				Bayesian aBayesian = new Bayesian(aBaseTable);
 				aBayesian.climb();
-				aQualityMeasure = new QualityMeasure(itsSearchParameters, aBayesian.getDAG(), itsTotalCount);
-				break;
-			}
-			case DOUBLE_REGRESSION :
-			case DOUBLE_CORRELATION :
-			{
-				//base model
-				aQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), itsTable.getNrRows(), 100); //TODO fix 100, is useless?
+				aQualityMeasure = new QualityMeasure(itsSearchParameters, aBayesian.getDAG(), itsTable.getNrRows());
 				break;
 			}
 			default :
@@ -1575,6 +1533,7 @@ public class MiningWindow extends JFrame
 			{
 				break; //discard statistics
 			}
+			default : return; // user closed dialog, do not print
 		}
 
 		// may take long, do this after window is shown
@@ -1591,6 +1550,9 @@ public class MiningWindow extends JFrame
 								"Would you like to store binary tables for each fold in a file?",
 								"Store results",
 								JOptionPane.YES_NO_OPTION);
+		if (aStore == JOptionPane.CLOSED_OPTION)
+			return;;
+
 		setBusy(true);
 		long itsTimeStamp = System.currentTimeMillis();
 
@@ -1646,14 +1608,7 @@ public class MiningWindow extends JFrame
 		setBusy(false);
 	}
 
-	/* Setups */
 	private void setupSearchParameters()
-	{
-		initSearchParameters();
-		initTargetConcept();
-	}
-
-	private void initSearchParameters()
 	{
 		// theSearchParameters.setTarget(itsTable.getAttribute(getTargetAttributeName()));
 		// theSearchParameters.setTargetAttributeShort(getTargetAttributeName());
@@ -1670,10 +1625,10 @@ public class MiningWindow extends JFrame
 		itsSearchParameters.setMaximumTime(getSearchTimeMaximum());
 
 		itsSearchParameters.setSearchStrategy(getSearchStrategyName());
-		itsSearchParameters.setSearchStrategyWidth(getSearchStrategyWidth());
-		itsSearchParameters.setNominalSets(getNominalSets());
+		itsSearchParameters.setSearchStrategyWidth(getStrategyWidth());
+		itsSearchParameters.setNominalSets(getSetValuedNominals());
 		itsSearchParameters.setNumericStrategy(getNumericStrategy());
-		itsSearchParameters.setNrBins(getSearchStrategyNrBins());
+		itsSearchParameters.setNrBins(getNrBins());
 		// TODO
 		//itsSearchParameters.setNrThreads(getSearchStrategyNrBins());
 /*
@@ -1690,310 +1645,96 @@ public class MiningWindow extends JFrame
 		itsSearchParameters.setBeta(SearchParameters.BETA_DEFAULT);
 */
 	}
-
-	// Obsolete, this info is already up to date through *ActionPerformed methods
-	private void initTargetConcept()
-	{
-		//itsTargetConcept.setPrimaryTarget(itsTable.getAttribute(getTargetAttributeName()));
-		itsTargetConcept.setPrimaryTarget(itsTable.getColumn(getTargetAttributeName()));
-
-		// target value
-		switch (itsTargetConcept.getTargetType())
-		{
-			case SINGLE_NOMINAL :
-			case MULTI_BINARY_CLASSIFICATION :
-				itsTargetConcept.setTargetValue(getMiscFieldName());
-				break;
-			case DOUBLE_CORRELATION :
-			case DOUBLE_REGRESSION :
-				//itsTargetConcept.setSecondaryTarget(itsTable.getAttribute(getMiscFieldName()));
-				itsTargetConcept.setSecondaryTarget(itsTable.getColumn(getMiscFieldName()));
-				break;
-			default : break;
-		}
-		// TODO add more details of target concept from GUI
-	}
-
-	/* INITIALIZATION METHODS OF Window COMPONENTS */
-
-	private void initTargetAttributeItems()
-	{
-		final TargetType aTargetType = itsTargetConcept.getTargetType();
-
-		// clear all
-		removeAllTargetAttributeItems();
-		if ((aTargetType == TargetType.DOUBLE_REGRESSION) ||
-				(aTargetType == TargetType.DOUBLE_CORRELATION))
-			removeAllMiscFieldItems();
-
-		// primary target and MiscField
-		boolean isEmpty = true;
-		for (int i = 0; i < itsTable.getNrColumns(); i++)
-		{
-			Column aColumn = itsTable.getColumn(i);
-			AttributeType anAttributeType = aColumn.getType();
-			if ((aTargetType == TargetType.SINGLE_NOMINAL && anAttributeType == AttributeType.NOMINAL) ||
-				(aTargetType == TargetType.SINGLE_NOMINAL && anAttributeType == AttributeType.BINARY) ||
-				(aTargetType == TargetType.SINGLE_NUMERIC && anAttributeType == AttributeType.NUMERIC) ||
-				(aTargetType == TargetType.SINGLE_ORDINAL && anAttributeType == AttributeType.NUMERIC) ||
-				(aTargetType == TargetType.DOUBLE_REGRESSION && anAttributeType == AttributeType.NUMERIC) ||
-				(aTargetType == TargetType.DOUBLE_CORRELATION && anAttributeType == AttributeType.NUMERIC) ||
-				(aTargetType == TargetType.MULTI_LABEL && anAttributeType == AttributeType.NUMERIC) ||
-				(aTargetType == TargetType.MULTI_BINARY_CLASSIFICATION && anAttributeType == AttributeType.BINARY) ||
-				(aTargetType == TargetType.MULTI_BINARY_CLASSIFICATION && anAttributeType == AttributeType.NOMINAL))
-			{
-				addTargetAttributeItem(aColumn.getName());
-				if ((aTargetType == TargetType.DOUBLE_REGRESSION) ||
-						(aTargetType == TargetType.DOUBLE_CORRELATION))
-					addMiscFieldItem(aColumn.getName());
-
-				isEmpty = false;
-			}
-		}
-		if (aTargetType == TargetType.SINGLE_NOMINAL && isEmpty) // no target attribute selected
-			removeAllMiscFieldItems();
-
-		if (aTargetType == TargetType.DOUBLE_REGRESSION)
-		{
-			computeMultiRegressionTargets();
-		}
-
-		// multi targets =======================================
-		if (aTargetType == TargetType.MULTI_LABEL)
-		{
-			/*
-			 *  TODO expensive recreation of up-to-date list for now
-			 * reflects changes for columns if type/isEnabled is changed
-			 * Needs changes to Table and MetaDataWindow for efficient code
-			 * where changes are immediately pushed to underlying Table
-			 * (which holds a secondaryTargets member).
-			 */
-			((DefaultListModel) jListMultiTargets.getModel()).clear();
-
-			int aCount = 0;
-			List<Column> aList = new ArrayList<Column>();
-			for (Column c: itsTable.getColumns())
-			{
-				if (c.getType() == AttributeType.BINARY && c.getIsEnabled())
-				{
-					addMultiTargetsItem(c.getName());
-					aList.add(c);
-					aCount++;
-				}
-			}
-			itsTargetConcept.setMultiTargets(aList);
-			jListMultiTargets.setSelectionInterval(0, jListMultiTargets.getModel().getSize() - 1);
-			jLFieldTargetInfo.setText(String.valueOf(aCount));
-		}
-	}
-
-	private void computeMultiRegressionTargets()
-	{
-		((DefaultListModel) jListMultiRegressionTargets.getModel()).clear();
-
-		int aCount = 0;
-		List<Column> aList = new ArrayList<Column>();
-		for (Column c: itsTable.getColumns())
-		{
-			if (c.getType() == AttributeType.NUMERIC && c.getIsEnabled() && !itsTargetConcept.getPrimaryTarget().equals(c))
-			{
-				addMultiRegressionTargetsItem(c.getName());
-				aList.add(c);
-				aCount++;
-			}
-		}
-		itsTargetConcept.setMultiRegressionTargets(aList);
-		jListMultiRegressionTargets.setSelectionInterval(0, jListMultiRegressionTargets.getModel().getSize() - 1);
-		jLFieldTargetInfo.setText(String.valueOf(aCount));
-	}
-
-	private void initTargetValueItems()
-	{
-		removeAllMiscFieldItems();
-		// no attributes for selected target concept type?
-		if (jComboBoxTargetAttribute.getItemCount() == 0)
-			return;
-
-		// single target attribute
-		// if(!TargetConcept.isEMM(getTargetTypeName()))
-		// {
-		//TreeSet<String> aValues =
-		//	itsTable.getDomain(
-		//		itsTable.getIndex(getTargetAttributeName()));
-		TreeSet<String> aValues = itsTable.getColumn(getTargetAttributeName()).getDomain();
-		for (String aValue : aValues)
-			addMiscFieldItem(aValue);
-		// }
-	}
-
-	private void initTargetInfo()
-	{
-		switch (itsTargetConcept.getTargetType())
-		{
-			case SINGLE_NOMINAL :
-			{
-				itsPositiveCount =
-					//itsTable.countValues(itsTable.getIndex(getTargetAttributeName()), getMiscFieldName());
-					itsTable.getColumn(getTargetAttributeName()).countValues(getMiscFieldName());
-				float aPercentage = ((float) itsPositiveCount * 100.0f) / (float) itsTotalCount;
-				NumberFormat aFormatter = NumberFormat.getNumberInstance();
-				aFormatter.setMaximumFractionDigits(1);
-				jLabelTargetInfo.setText(" # positive");
-				jLFieldTargetInfo.setText(itsPositiveCount + " (" + aFormatter.format(aPercentage) + " %)");
-				break;
-			}
-			case SINGLE_NUMERIC :
-			{
-				String aTarget = getTargetAttributeName();
-				if (aTarget != null) //initTargetInfo might be called before item is actually selected
-				{
-					itsTargetAverage = itsTable.getColumn(aTarget).getAverage();
-					jLabelTargetInfo.setText(" average");
-					jLFieldTargetInfo.setText(String.valueOf(itsTargetAverage));
-				}
-				break;
-			}
-			case SINGLE_ORDINAL :
-			case DOUBLE_REGRESSION :
-			case DOUBLE_CORRELATION :
-			{
-				initTargetConcept();
-				Column aPrimaryColumn = itsTargetConcept.getPrimaryTarget();
-				Column aSecondaryColumn = itsTargetConcept.getSecondaryTarget();
-				CorrelationMeasure aCM =
-					new CorrelationMeasure(QM.CORRELATION_R, aPrimaryColumn, aSecondaryColumn);
-				jLabelTargetInfo.setText(" correlation");
-				jLFieldTargetInfo.setText(Double.toString(aCM.getEvaluationMeasureValue()));
-				break;
-			}
-			case MULTI_LABEL :
-			{
-				jLabelTargetInfo.setText(" # binary targets");
-				jLFieldTargetInfo.setText(String.valueOf(itsTargetConcept.getMultiTargets().size()));
-				break;
-			}
-			case MULTI_BINARY_CLASSIFICATION :
-			{
-				jLabelTargetInfo.setText(" target info");
-				jLFieldTargetInfo.setText("none");
-				break;
-			}
-		}
-	}
-
-	private void initQualityMeasure()
-	{
-		removeAllQualityMeasureItems();
-		for (QM qm : QM.getQualityMeasures(itsTargetConcept.getTargetType()))
-			addQualityMeasureItem(qm.GUI_TEXT);
-		initEvaluationMinimum();
-	}
-
-	private void initEvaluationMinimum()
-	{
-		final String aName = getQualityMeasureName();
-		if (aName == null)
-			return;
-
-		if (QM.AVERAGE.GUI_TEXT.equals(aName))
-			setQualityMeasureMinimum(Float.toString(itsTargetAverage));
-		else if (QM.INVERSE_AVERAGE.GUI_TEXT.equals(aName))
-			setQualityMeasureMinimum(Float.toString(-itsTargetAverage));
-		else
-			setQualityMeasureMinimum(QM.fromString(getQualityMeasureName()).MEASURE_DEFAULT);
-	}
-
-	private void enableBaseModelButtonCheck()
-	{
-		TargetType aType = itsTargetConcept.getTargetType();
-		boolean isEnabled = TargetType.hasBaseModel(aType);
-		if (aType == TargetType.MULTI_LABEL && jListMultiTargets.getSelectedIndices().length == 0)
-			isEnabled = false;
-		jButtonBaseModel.setEnabled(isEnabled);
-	}
-
 	/* FIELD METHODS OF CORTANA COMPONENTS */
 	// all setters take a String argument for now
 
-	// target type - target type
+	// target concept - target type
 	private String getTargetTypeName() { return (String) jComboBoxTargetType.getSelectedItem(); }
 	private void setTargetTypeName(String aName) { jComboBoxTargetType.setSelectedItem(aName); }
 
-	// target type - quality measure
+	// target concepts - quality measure
 	private String getQualityMeasureName() { return (String) jComboBoxQualityMeasure.getSelectedItem(); }
 	private void setQualityMeasure(String aName) { jComboBoxQualityMeasure.setSelectedItem(aName); }
 	private void addQualityMeasureItem(String anItem) { jComboBoxQualityMeasure.addItem(anItem); }
 	private void removeAllQualityMeasureItems() { jComboBoxQualityMeasure.removeAllItems(); }
 
-	// target type - quality measure minimum (member of itsSearchParameters)
+	// target concept - quality measure minimum (member of itsSearchParameters)
 	private float getQualityMeasureMinimum() { return getValue(0.0f, jTextFieldQualityMeasureMinimum.getText()); }
 	private void setQualityMeasureMinimum(String aValue) { jTextFieldQualityMeasureMinimum.setText(aValue); }
 
-	// target type - target attribute
+	// target concept - target attribute
 	private String getTargetAttributeName() { return (String) jComboBoxTargetAttribute.getSelectedItem(); }
 	private void setTargetAttribute(String aName) { jComboBoxTargetAttribute.setSelectedItem(aName); }
 	private void addTargetAttributeItem(String anItem) { jComboBoxTargetAttribute.addItem(anItem); }
 	private void removeAllTargetAttributeItems() { jComboBoxTargetAttribute.removeAllItems(); }
 
-	// target type - misc field (target value/secondary target)
+	// target concept - misc field (target value / secondary target)
 	private void addMiscFieldItem(String anItem) { jComboBoxMiscField.addItem(anItem); }
 	private void removeAllMiscFieldItems() { jComboBoxMiscField.removeAllItems(); }
 	private String getMiscFieldName() { return (String) jComboBoxMiscField.getSelectedItem(); }
 	private void setMiscFieldName(String aValue) { jComboBoxMiscField.setSelectedItem(aValue); }
 
-	// target type - jList secondary targets
+	// target concept - jList secondary targets
 	private void addMultiTargetsItem(String theItem) { ((DefaultListModel) jListMultiTargets.getModel()).addElement(theItem); }
 	private void removeAllMultiTargetsItems() { ((DefaultListModel) jListMultiTargets.getModel()).clear(); }
 
-	// target type - jList secondary targets
+	// target concept - jList secondary targets
 	private void addMultiRegressionTargetsItem(String theItem) { ((DefaultListModel) jListMultiRegressionTargets.getModel()).addElement(theItem); }
 	private void removeAllMultiRegressionTargetsItems() { ((DefaultListModel) jListMultiRegressionTargets.getModel()).clear(); }
 
-
-	private void setSearchDepthMaximum(String aValue) { jTextFieldSearchDepth.setText(aValue); }
+	// search conditions - search depth / refinement depth
 	private int getSearchDepthMaximum() { return getValue(1, jTextFieldSearchDepth.getText()); }
-	private void setSearchCoverageMinimum(String aValue) { jTextFieldSearchCoverageMinimum.setText(aValue); }
-	private void setSearchCoverageMaximum(String aValue) { jTextFieldSearchCoverageMaximum.setText(aValue); }
-	private void setSubgroupsMaximum(String aValue) { jTextFieldSubgroupsMaximum.setText(aValue); }
-	private void setSearchTimeMaximum(String aValue) { jTextFieldSearchTimeMaximum.setText(aValue); }
+	private void setSearchDepthMaximum(String aValue) { jTextFieldSearchDepth.setText(aValue); }
+
+	// search conditions - minimum coverage
 	private int getSearchCoverageMinimum() { return getValue(0, jTextFieldSearchCoverageMinimum.getText()); }
+	private void setSearchCoverageMinimum(String aValue) { jTextFieldSearchCoverageMinimum.setText(aValue); }
+
+	// search conditions - maximum coverage (fraction)
 	private float getSearchCoverageMaximum() { return getValue(1.0f, jTextFieldSearchCoverageMaximum.getText()); }
+	private void setSearchCoverageMaximum(String aValue) { jTextFieldSearchCoverageMaximum.setText(aValue); }
+
+	// search conditions - maximum subgroups
 	private int getSubgroupsMaximum() { return getValue(50, jTextFieldSubgroupsMaximum.getText());}
+	private void setSubgroupsMaximum(String aValue) { jTextFieldSubgroupsMaximum.setText(aValue); }
+
+	// search conditions - maximum time
 	private float getSearchTimeMaximum() { return getValue(1.0f, jTextFieldSearchTimeMaximum.getText()); }
+	private void setSearchTimeMaximum(String aValue) { jTextFieldSearchTimeMaximum.setText(aValue); }
 
 	// search strategy - search strategy
-	private String getSearchStrategyName() { return (String) jComboBoxSearchStrategyType.getSelectedItem(); }
-	private void setSearchStrategyType(String aValue) { jComboBoxSearchStrategyType.setSelectedItem(aValue); }
+	private String getSearchStrategyName() { return (String) jComboBoxStrategyType.getSelectedItem(); }
+	private void setSearchStrategyType(String aValue) { jComboBoxStrategyType.setSelectedItem(aValue); }
 
 	// search strategy - search width
-	private int getSearchStrategyWidth() { return getValue(100, jTextFieldSearchStrategyWidth.getText()); }
-	private void setSearchStrategyWidth(String aValue) { jTextFieldSearchStrategyWidth.setText(aValue); }
+	private int getStrategyWidth() { return getValue(100, jTextFieldStrategyWidth.getText()); }
+	private void setStrategyWidth(String aValue) { jTextFieldStrategyWidth.setText(aValue); }
 
 	// search strategy - nominal not equals
-	private boolean getNominalSets() { return jCheckBoxSets.isSelected(); }
-	private void setNominalSets(String aValue) { jCheckBoxSets.setSelected(Boolean.parseBoolean(aValue)); }
+	private boolean getSetValuedNominals() { return jCheckBoxSetValuedNominals.isSelected(); }
+	private void setSetValuedNominals(String aValue) { jCheckBoxSetValuedNominals.setSelected(Boolean.parseBoolean(aValue)); }
+
+	// search strategy - numeric strategy
+	private String getNumericStrategy() { return (String) jComboBoxNumericStrategy.getSelectedItem(); }
+	private void setNumericStrategy(String aStrategy) { jComboBoxNumericStrategy.setSelectedItem(aStrategy); }
 
 	// search strategy - numeric operators
 	private String getNumericOperators() { return (String) jComboBoxNumericOperators.getSelectedItem(); }
 	private void setNumericOperators(String aValue) { jComboBoxNumericOperators.setSelectedItem(aValue); }
 
-	// search strategy - numeric strategy
-	private String getNumericStrategy() { return (String) jComboBoxSearchStrategyNumeric.getSelectedItem(); }
-	private void setNumericStrategy(String aStrategy) { jComboBoxSearchStrategyNumeric.setSelectedItem(aStrategy); }
-
 	// search strategy - number of bins
-	private int getSearchStrategyNrBins() { return getValue(8, jTextFieldSearchStrategyNrBins.getText()); }
-	private void setSearchStrategyNrBins(String aValue) { jTextFieldSearchStrategyNrBins.setText(aValue); }
+	private int getNrBins() { return getValue(8, jTextFieldNumberOfBins.getText()); }
+	private void setNrBins(String aValue) { jTextFieldNumberOfBins.setText(aValue); }
 
 	// search strategy - number of threads
-	private int getNrThreads() { return getValue(Runtime.getRuntime().availableProcessors(), jTextFieldNrThreads.getText()); }
-	private void setNrThreads(String aValue) { jTextFieldNrThreads.setText(aValue); }
+	private int getNrThreads() { return getValue(Runtime.getRuntime().availableProcessors(), jTextFieldNumberOfThreads.getText()); }
+	private void setNrThreads(String aValue) { jTextFieldNumberOfThreads.setText(aValue); }
 
 	private int getValue(int theDefaultValue, String theText)
 	{
 		int aValue = theDefaultValue;
 		try { aValue = Integer.parseInt(theText); }
-		catch (Exception ex) {}	// TODO warning dialog
+		catch (Exception ex) {}	// TODO MM warning dialog
 		return aValue;
 	}
 
@@ -2001,7 +1742,7 @@ public class MiningWindow extends JFrame
 	{
 		float aValue = theDefaultValue;
 		try { aValue = Float.parseFloat(theText); }
-		catch (Exception ex) {}	// TODO warning dialog
+		catch (Exception ex) {}	// TODO MM warning dialog
 		return aValue;
 	}
 
@@ -2013,153 +1754,143 @@ public class MiningWindow extends JFrame
 			this.setCursor(Cursor.getDefaultCursor());
 	}
 
+	// MENU
 	private JMenuBar jMiningWindowMenuBar;
+	// MENU - File
 	private JMenu jMenuFile;
 	private JMenuItem jMenuItemOpenFile;
 	private JMenuItem jMenuItemBrowse;
 	private JMenuItem jMenuItemExplore;
 	private JMenuItem jMenuItemMetaData;
 	private JMenuItem jMenuItemSubgroupDiscovery;
-	private JMenuItem jMenuItemCreateAutoRunFile;
-	private JMenuItem jMenuItemAddToAutoRunFile;
+	private JMenuItem jMenuItemCreateAutorunFile;
+	private JMenuItem jMenuItemAddToAutorunFile;
 	private JMenuItem jMenuItemLoadSampledSubgroups;
-	private JMenuItem jMenuItemExit;
+	// MENU - Enrichment
 	private JMenu jMenuEnrichment;
 	private JMenuItem jMenuItemAddCuiEnrichmentSource;
 	private JMenuItem jMenuItemAddGoEnrichmentSource;
 	private JMenuItem jMenuItemAddCustomEnrichmentSource;
 	private JMenuItem jMenuItemRemoveEnrichmentSource;
+	// Menu About
 	private JMenu jMenuAbout;
 	private JMenuItem jMenuItemAboutCortana;
-	private JMenu jMenuGui;	// XXX for testing only
-	private JPanel jPanelSouth;
-	private JPanel jPanelMineButtons;
-	private JButton jButtonBrowse;
-	private JButton jButtonExplore;
-	private JButton jButtonMetaData;
-	private JButton jButtonCrossValidate;
-	private JButton jButtonSubgroupDiscovery;
-	private JButton jButtonThreshold;
+	private JMenu jMenuGui;	// for GUI debugging only, DO NOT REMOVE
+	private JMenuItem jMenuItemExit;
+
+	// 4 PANELS: DATASET, TARGET CONCEPT, SEARCH CONDITIONS, SEARCH STRATEGY
 	private JPanel jPanelCenter;
 
-	private JPanel jPanelRuleTarget;
-	private JPanel jPanelRuleTargetLabels;
-	private JPanel jPanelRuleTargetButtons;
+	// DATA SET
+	private JPanel jPanelDataSet;
+	private JPanel jPanelDataSetLabels;
 	private JLabel jLabelTargetTable;
-	private JLabel jLabelTargetAttribute;
-	private JLabel jLabelMiscField;
-	private JLabel jLabelMultiRegressionTargets;
-	private JLabel jLabelMultiTargets;
 	private JLabel jLabelNrExamples;
 	private JLabel jLabelNrColumns;
 	private JLabel jLabelNrNominals;
 	private JLabel jLabelNrNumerics;
 	private JLabel jLabelNrBinaries;
+	private JPanel jPanelDataSetFields;
+	private JLabel jLabelTargetTableName;
+	private JLabel jLabelNrExamplesNr;
+	private JLabel jLabelNrColumnsNr;
+	private JLabel jLabelNrNominalsNr;
+	private JLabel jLabelNrNumericsNr;
+	private JLabel jLabelNrBinariesNr;
+	private JPanel jPanelDataSetButtons;
+	private JButton jButtonBrowse;
+	private JButton jButtonExplore;
+	private JButton jButtonMetaData;
+
+	// TARGET CONCEPT
+	private JPanel jPanelTargetConcept;
+	// TARGET CONCEPT - labels
+	private JPanel jPanelTargetConceptLabels;
+	private JLabel jLabelTargetType;
+	private JLabel jLabelQualityMeasure;
+	private JLabel jLabelQualityMeasureMinimum;
+	private JLabel jLabelTargetAttribute;
+	private JLabel jLabelMiscField;	// also for secondary target
+	private JLabel jLabelMultiRegressionTargets;
+	private JLabel jLabelMultiTargets;
 	private JLabel jLabelTargetInfo;
-	private JPanel jPanelRuleTargetFields;
-	private JPanel jPanelRuleTargetFieldsEnabled;
-	private JLabel jLFieldTargetTable;
+	// TARGET CONCEPT - fields
+	private JPanel jPanelTargetConceptFields;
+	private JComboBox jComboBoxTargetType;
+	private JComboBox jComboBoxQualityMeasure;
+	private JTextField jTextFieldQualityMeasureMinimum;
 	private JComboBox jComboBoxTargetAttribute;
 	private JComboBox jComboBoxMiscField;
 	private JButton jButtonMultiRegressionTargets;
+	private JList jListMultiRegressionTargets; // maintain list of targets
 	private JButton jButtonMultiTargets;
-	private JList jListMultiRegressionTargets;
-	private JList jListMultiTargets;
-	private JLabel jLFieldNrExamples;
-	private JLabel jLFieldNrColumns;
-	private JLabel jLFieldNrColumnsEnabled;
-	private JLabel jLFieldNrNominals;
-	private JLabel jLFieldNrNominalsEnabled;
-	private JLabel jLFieldNrNumerics;
-	private JLabel jLFieldNrNumericsEnabled;
-	private JLabel jLFieldNrBinaries;
-	private JLabel jLFieldNrBinariesEnabled;
-	private JLabel jLFieldTargetInfo;
+	private JList jListMultiTargets; // maintain list of targets
+	private JLabel jLabelTargetInfoText;
 	private JButton jButtonBaseModel;
-	private JPanel jPanelRuleEvaluation;
-	private JPanel jPanelEvaluationLabels;
-	private JLabel jLabelTargetType;
-	private JLabel jLabelQualityMeasure;
-	private JLabel jLabelEvaluationThreshold;
-	private JPanel jPanelEvaluationFields;
-	private JComboBox jComboBoxQualityMeasure;
-	private JComboBox jComboBoxTargetType;
-	private JTextField jTextFieldQualityMeasureMinimum;
-	private JPanel jPanelSearchParameters;
-	private JPanel jPanelSearchParameterLabels;
+
+	// SEARCH CONDITIONS
+	private JPanel jPanelSearchConditions;
+	// SEARCH CONDITIONS - labels
+	private JPanel jPanelSearchConditionsLabels;
 	private JLabel jLabelSearchDepth;
 	private JLabel jLabelSearchCoverageMinimum;
 	private JLabel jLabelSearchCoverageMaximum;
 	private JLabel jLabelSubgroupsMaximum;
 	private JLabel jLabelSearchTimeMaximum;
+	// SEARCH CONDITIONS - fields
 	private JPanel jPanelSearchParameterFields;
 	private JTextField jTextFieldSearchDepth;
 	private JTextField jTextFieldSearchCoverageMinimum;
 	private JTextField jTextFieldSearchCoverageMaximum;
 	private JTextField jTextFieldSubgroupsMaximum;
 	private JTextField jTextFieldSearchTimeMaximum;
+
+	// SEARCH STRATEGY
 	private JPanel jPanelSearchStrategy;
+	// SEARCH STRATEGY - labels
 	private JPanel jPanelSearchStrategyLabels;
 	private JLabel jLabelStrategyType;
 	private JLabel jLabelStrategyWidth;
-	private JLabel jLabelSets;
+	private JLabel jLabelSetValuedNominals;
+	private JLabel jLabelNumericStrategy;
 	private JLabel jLabelNumericOperators;
-	private JLabel jLabelSearchStrategyNumeric;
-	private JLabel jLabelSearchStrategyNrBins;
-	private JLabel jLabelNrThreads;
+	private JLabel jLabelNumberOfBins;
+	private JLabel jLabelNumberOfThreads;
+	// SEARCH STRATEGY - fields
 	private JPanel jPanelSearchStrategyFields;
-	private JComboBox jComboBoxSearchStrategyType;
-	private JTextField jTextFieldSearchStrategyWidth;
-	private JCheckBox jCheckBoxSets;
+	private JComboBox jComboBoxStrategyType;
+	private JTextField jTextFieldStrategyWidth;
+	private JCheckBox jCheckBoxSetValuedNominals;
+	private JComboBox jComboBoxNumericStrategy;
 	private JComboBox jComboBoxNumericOperators;
-	private JComboBox jComboBoxSearchStrategyNumeric;
-	private JTextField jTextFieldSearchStrategyNrBins;
-	private JTextField jTextFieldNrThreads;
+	private JTextField jTextFieldNumberOfBins;
+	private JTextField jTextFieldNumberOfThreads;
+
+	// SOUTH PANEL - MINING BUTTONS
+	private JPanel jPanelSouth;
+	private JPanel jPanelMineButtons;
+	private JButton jButtonSubgroupDiscovery;
+	private JButton jButtonCrossValidate;
+	private JButton jButtonComputeThreshold;
 
 	// GUI defaults and convenience methods
-	private static JButton initButton(String theName, Mnemonic theMnemonic)
+	private JMenu initMenu(STD theDefaults)
 	{
-		JButton aButton = new JButton();
-		aButton.setPreferredSize(GUI.BUTTON_DEFAULT_SIZE);
-		aButton.setBorder(new BevelBorder(0));
-		aButton.setMinimumSize(GUI.BUTTON_MINIMUM_SIZE);
-		aButton.setMaximumSize(GUI.BUTTON_MAXIMUM_SIZE);
-		aButton.setFont(GUI.DEFAULT_BUTTON_FONT);
-		aButton.setText(theName);
-		aButton.setMnemonic(theMnemonic.MNEMONIC);
-		return aButton;
+		JMenu aMenu = new JMenu(theDefaults.GUI_TEXT);
+		aMenu.setFont(GUI.DEFAULT_TEXT_FONT);
+		aMenu.setMnemonic(theDefaults.MNEMONIC);
+		return aMenu;
 	}
 
-	// TODO include accelerator
-	private enum Mnemonic
+	private JMenuItem initMenuItem(STD theDefaults)
 	{
-		// never use accelerator for TargetType/ setting dependent items
-		FILE('F'),			// no accelerator
-		OPEN_FILE('O'),			// accelerator
-		OPEN_GENE_RANK('G'),		// not used for now
-		BROWSE('B'),			// accelerator
-		EXPLORE('E'),			// accelerator
-		META_DATA('D'),			// accelerator // TODO does not work?
-		SUBGROUP_DISCOVERY('S'),	// accelerator
-		CREATE_AUTORUN_FILE('C'),	// accelerator
-		ADD_TO_AUTORUN_FILE('A'),	// accelerator
-		LOAD_SAMPLED_SUBGROUPS('U'),	// accelerator
-		EXIT('X'),			// accelerator
-		ABOUT('A'),			// no accelerator, 'A' used 2x
-		ABOUT_CORTANA('I'),		// accelerator
-		TARGETS_AND_SETTINGS('T'),	// no accelerator
-		SECONDARY_TERTIARY_TARGETS('Y'),// not used for now
-		BASE_MODEL('M'),		// no accelerator
-		CROSS_VALIDATE('V'),		// no accelerator
-		COMPUTE_THRESHOLD('P'),		// no accelerator
-		RANDOM_SUBGROUPS('R'),		// not used for now
-		RANDOM_CONDITIONS('C'),		// not used for now, 'C' used 2x
-		SWAP_RANDOMISE('W');		// not used for now
-
-		final int MNEMONIC;
-		private Mnemonic(int theMnemonic) { MNEMONIC = theMnemonic; }
+		return GUI.buildMenuItem(theDefaults.GUI_TEXT,
+						theDefaults.MNEMONIC,
+						theDefaults.keyStroke(),
+						this);
 	}
 
+	// TODO MM GUI.buildLabel(), link Label and Field
 	private static JLabel initJLabel(String theName)
 	{
 		JLabel aJLable = new JLabel(theName);
@@ -2167,7 +1898,16 @@ public class MiningWindow extends JFrame
 		return aJLable;
 	}
 
-	// XXX for GUI debugging only, DO NOT REMOVE
+	private JButton initButton(STD theDefaults)
+	{
+		return GUI.buildButton(theDefaults.GUI_TEXT,
+					theDefaults.MNEMONIC,
+					theDefaults.GUI_TEXT,
+					this);
+	}
+
+	// for GUI debugging only, DO NOT REMOVE
+	private static final boolean GUI_DEBUG = false;
 	private void initJMenuGui()
 	{
 		JRadioButtonMenuItem aLookAndFeel;
@@ -2202,5 +1942,130 @@ public class MiningWindow extends JFrame
 		catch (IllegalAccessException e) { e.printStackTrace(); }
 		catch (UnsupportedLookAndFeelException e) { e.printStackTrace(); }
 	}
-	// XXX end GUI test
+	// end GUI test
+
+	private static final String TARGET_TYPE_BOX = "target type box";
+	private static final String QUALITY_MEASURE_BOX = "quality measure box";
+	private static final String MISC_FIELD_BOX = "misc field box";
+	private static final String TARGET_ATTRIBUTE_BOX = "target attribute box";
+	private static final String SEARCH_TYPE_BOX = "search type box";
+	private static final String NUMERIC_STRATEGY_BOX = "numeric strategy box";
+	private static final String NUMERIC_OPERATORS_BOX = "numeric operators box";
+
+	private enum STD // for standard
+	{
+		// ENUM			GUI_TEXT		MNEMONIC	ACCELERATOR
+		// MENU
+		FILE(			"File",			KeyEvent.VK_F,	false),
+		OPEN_FILE(		"Open File",		KeyEvent.VK_O,	true),
+		BROWSE(			"Browse...",		KeyEvent.VK_B,	true),
+		EXPLORE(		"Explore...",		KeyEvent.VK_E,	true),
+		META_DATA(		"Meta Data...",		KeyEvent.VK_D,	true),
+		SUBGROUP_DISCOVERY(	"Subgroup Discovery",	KeyEvent.VK_S,	true),
+		CREATE_AUTORUN_FILE(	"Create Autorun File",	KeyEvent.VK_C,	true),
+		ADD_TO_AUTORUN_FILE(	"Add to Autorun File",	KeyEvent.VK_A,	true),
+		LOAD_SAMPLED_SUBGROUPS(	"Load Sampled Subgroups", KeyEvent.VK_L, true),
+		EXIT(			"Exit",			KeyEvent.VK_X,	true),
+		ENRICHMENT(		"Enrichment",		KeyEvent.VK_N,	false),
+		ADD_CUI_DOMAIN(		"Add CUI Domain",	KeyEvent.VK_C,	false),
+		ADD_GO_DOMAIN(		"Add GO Domain",	KeyEvent.VK_G,	false),
+		ADD_CUSTOM_DOMAIN(	"Add Custom Domain",	KeyEvent.VK_U,	false),
+		REMOVE_ENRICHMENT_SOURCE("Remove Enrichment Source", KeyEvent.VK_R, false),
+		ABOUT(			"About",		KeyEvent.VK_A,	false),
+		ABOUT_CORTANA(		"Cortana",		KeyEvent.VK_I,	true),
+		// TARGET CONCEPT
+		SECONDARY_TERTIARY_TARGETS("Secondary/Tertiary Targets", KeyEvent.VK_Y, false),
+		TARGETS_AND_SETTINGS(	"Targets and Settings",	KeyEvent.VK_T,	false),
+		BASE_MODEL(		"Base Model",		KeyEvent.VK_M,	false),
+		// MINING
+		CROSS_VALIDATE(		"Cross-Validate",	KeyEvent.VK_V,	false),
+		COMPUTE_THRESHOLD(	"Compute Threshold",	KeyEvent.VK_P,	false);
+
+		final String GUI_TEXT;
+		final int MNEMONIC;
+		final boolean HAS_ACCELERATOR;
+		private STD(String theText, int theMnemonic, boolean hasAccelerator)
+		{
+			GUI_TEXT = theText;
+			MNEMONIC = theMnemonic;
+			HAS_ACCELERATOR = hasAccelerator;
+		}
+
+		KeyStroke keyStroke()
+		{
+			if (HAS_ACCELERATOR)
+				return KeyStroke.getKeyStroke(MNEMONIC, InputEvent.CTRL_MASK);
+			else
+				return null;
+		}
+	}
+
+	@Override
+	public void actionPerformed(ActionEvent theEvent)
+	{
+		String aCommand = theEvent.getActionCommand();
+
+		// FIXME MM DEBUG ONLY
+		Log.logCommandLine(aCommand);
+
+		// to be replaced by Java 7 String switch someday
+		if (STD.OPEN_FILE.GUI_TEXT.equals(aCommand))
+			jMenuItemOpenFileActionPerformed();
+		else if (STD.BROWSE.GUI_TEXT.equals(aCommand))
+			browseActionPerformed();
+		else if (STD.EXPLORE.GUI_TEXT.equals(aCommand))
+			exploreActionPerformed();
+		else if (STD.META_DATA.GUI_TEXT.equals(aCommand))
+			metaDataActionPerformed();
+		else if (STD.SUBGROUP_DISCOVERY.GUI_TEXT.equals(aCommand))
+			subgroupDiscoveryActionPerformed();
+		else if (STD.CREATE_AUTORUN_FILE.GUI_TEXT.equals(aCommand))
+			jMenuItemAutoRunFileActionPerformed(AutoRun.CREATE);
+		else if (STD.ADD_TO_AUTORUN_FILE.GUI_TEXT.equals(aCommand))
+			jMenuItemAutoRunFileActionPerformed(AutoRun.ADD);
+		else if (STD.LOAD_SAMPLED_SUBGROUPS.GUI_TEXT.equals(aCommand))
+			jMenuItemLoadSampledSubgroupsActionPerformed();
+		else if (STD.EXIT.GUI_TEXT.equals(aCommand))
+			jMenuItemExitActionPerformed();
+
+		else if (STD.ADD_CUI_DOMAIN.GUI_TEXT.equals(aCommand))
+			jMenuItemAddEnrichmentSourceActionPerformed(EnrichmentType.CUI);
+		else if (STD.ADD_GO_DOMAIN.GUI_TEXT.equals(aCommand))
+			jMenuItemAddEnrichmentSourceActionPerformed(EnrichmentType.GO);
+		else if (STD.ADD_CUSTOM_DOMAIN.GUI_TEXT.equals(aCommand))
+			jMenuItemAddEnrichmentSourceActionPerformed(EnrichmentType.CUSTOM);
+		else if (STD.REMOVE_ENRICHMENT_SOURCE.GUI_TEXT.equals(aCommand))
+			jMenuItemRemoveEnrichmentSourceActionPerformed();
+
+		else if (STD.ABOUT_CORTANA.GUI_TEXT.equals(aCommand))
+			jMenuItemAboutCortanaActionPerformed();
+
+		else if (TARGET_TYPE_BOX.equals(aCommand))
+			jComboBoxTargetTypeActionPerformed();
+		else if (QUALITY_MEASURE_BOX.equals(aCommand))
+			jComboBoxQualityMeasureActionPerformed();
+		else if (TARGET_ATTRIBUTE_BOX.equals(aCommand))
+			jComboBoxTargetAttributeActionPerformed();
+		else if (MISC_FIELD_BOX.equals(aCommand))
+			jComboBoxMiscFieldActionPerformed();
+
+		else if (STD.SECONDARY_TERTIARY_TARGETS.GUI_TEXT.equals(aCommand))
+			jButtonMultiRegressionTargetsActionPerformed();
+		else if (STD.TARGETS_AND_SETTINGS.GUI_TEXT.equals(aCommand))
+			jButtonMultiTargetsActionPerformed();
+		else if (STD.BASE_MODEL.GUI_TEXT.equals(aCommand))
+			jButtonBaseModelActionPerformed();
+
+		else if (SEARCH_TYPE_BOX.equals(aCommand))
+			jComboBoxSearchStrategyTypeActionPerformed();
+		else if (NUMERIC_STRATEGY_BOX.equals(aCommand))
+			jComboBoxSearchStrategyNumericActionPerformed();
+		else if (NUMERIC_OPERATORS_BOX.equals(aCommand))
+			jComboBoxNumericOperatorsActionPerformed();
+
+		else if (STD.CROSS_VALIDATE.GUI_TEXT.equals(aCommand))
+			jButtonCrossValidateActionPerformed();
+		else if (STD.COMPUTE_THRESHOLD.GUI_TEXT.equals(aCommand))
+			jButtonComputeThresholdActionPerformed();
+	}
 }

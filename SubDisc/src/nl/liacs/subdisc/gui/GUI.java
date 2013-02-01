@@ -14,6 +14,8 @@ import java.awt.event.*;
 import javax.swing.*;
 import javax.swing.border.*;
 
+import nl.liacs.subdisc.gui.MiningWindow.*;
+
 public class GUI
 {
 	public static final Color RED = new Color(255, 150, 166);
@@ -39,32 +41,25 @@ public class GUI
 
 	private GUI() {}; // uninstantiable class
 
-	public static JButton buildButton(String theName, int theMnemonic, String theActionCommand, ActionListener theClass)
+	public static JButton buildButton(String theName, String theActionCommand, ActionListener theClass)
 	{
 		JButton aButton = new JButton();
 		aButton.setPreferredSize(BUTTON_DEFAULT_SIZE);
-		aButton.setBorder(new BevelBorder(0));
 		aButton.setMinimumSize(BUTTON_MINIMUM_SIZE);
 		aButton.setMaximumSize(BUTTON_MAXIMUM_SIZE);
 		aButton.setFont(DEFAULT_BUTTON_FONT);
+		aButton.setBorder(new BevelBorder(0));
 		aButton.setText(theName);
-		aButton.setMnemonic(theMnemonic);
 		aButton.setActionCommand(theActionCommand);
 		aButton.addActionListener(theClass);
 		return aButton;
 	}
 
-	public static JButton buildButton(String theName, String theActionCommand, ActionListener theClass)
+	public static JButton buildButton(String theName, int theMnemonic, String theActionCommand, ActionListener theClass)
 	{
-		JButton aButton = new JButton();
-		aButton.setPreferredSize(BUTTON_DEFAULT_SIZE);
-		aButton.setBorder(new BevelBorder(0));
-		aButton.setMinimumSize(BUTTON_MINIMUM_SIZE);
-		aButton.setMaximumSize(BUTTON_MAXIMUM_SIZE);
-		aButton.setFont(DEFAULT_BUTTON_FONT);
-		aButton.setText(theName);
-		aButton.setActionCommand(theActionCommand);
-		aButton.addActionListener(theClass);
+		// use constructor without mnemonic
+		JButton aButton = GUI.buildButton(theName, theActionCommand, theClass);
+		aButton.setMnemonic(theMnemonic);
 		return aButton;
 	}
 
@@ -83,6 +78,21 @@ public class GUI
 //		aCheckBox.setMnemonic(theMnemonic);
 		aCheckBox.addItemListener(theClass);
 		return aCheckBox;
+	}
+
+	public static JComboBox buildComboBox(Object[] theItems, String theActionCommand, ActionListener theClass)
+	{
+		JComboBox aComboBox = new JComboBox();
+		aComboBox.setPreferredSize(TEXT_FIELD_DEFAULT_SIZE);
+		aComboBox.setMinimumSize(TEXT_FIELD_DEFAULT_SIZE);
+		aComboBox.setFont(DEFAULT_TEXT_FONT);
+
+		for (Object o : theItems)
+			aComboBox.addItem(o);
+
+		aComboBox.setActionCommand(theActionCommand);
+		aComboBox.addActionListener(theClass);
+		return aComboBox;
 	}
 
 	public static JComboBox buildComboBox(Object[] theItems, ActionListener theClass)
@@ -107,40 +117,44 @@ public class GUI
 		return aJLable;
 	}
 
+	public static JMenuItem buildMenuItem(String theText, int theMnemonic, KeyStroke theAccelerator, ActionListener theClass)
+	{
+		JMenuItem aMenuItem = new JMenuItem(theText, theMnemonic);
+		aMenuItem.setFont(GUI.DEFAULT_TEXT_FONT);
+		aMenuItem.setAccelerator(theAccelerator);
+		aMenuItem.addActionListener(theClass);
+		return aMenuItem;
+	}
+
 	public static JTextField buildTextField(String theText)
 	{
 		JTextField aTextField = new JTextField();
 		aTextField.setPreferredSize(TEXT_FIELD_DEFAULT_SIZE);
-		aTextField.setFont(GUI.DEFAULT_TEXT_FONT);
-		aTextField.setText(theText);
-		aTextField.setHorizontalAlignment(SwingConstants.RIGHT);
 		aTextField.setMinimumSize(TEXT_FIELD_DEFAULT_SIZE);
+		aTextField.setFont(GUI.DEFAULT_TEXT_FONT);
+		aTextField.setHorizontalAlignment(SwingConstants.RIGHT);
+		aTextField.setText(theText);
 		return aTextField;
 	}
 
 	// no need for null check
 	public static Border buildBorder(String theTitle)
 	{
-		return new TitledBorder(
-				new EtchedBorder(), theTitle, 4, 2, DEFAULT_BUTTON_FONT);
+		return new TitledBorder(new EtchedBorder(), theTitle, 4, 2, DEFAULT_BUTTON_FONT);
 	}
 
 	// on window opening focus on the specified JComponent
 	// TODO to be used by all window classes
 	public static void focusComponent(final JComponent theComponentToFocus, JFrame theFrame)
 	{
-		if (theComponentToFocus == null || theFrame == null)
-			return;
-		else
-		{
-			theFrame.addWindowListener(new WindowAdapter()
-							{
-								@Override
-								public void windowOpened(WindowEvent e)
-								{
-									theComponentToFocus.requestFocusInWindow();
-								}
-							});
-		}
+		theFrame.addWindowListener(
+			new WindowAdapter()
+			{
+				@Override
+				public void windowOpened(WindowEvent e)
+				{
+					theComponentToFocus.requestFocusInWindow();
+				}
+			});
 	}
 }
