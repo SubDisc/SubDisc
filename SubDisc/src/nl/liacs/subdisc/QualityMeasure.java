@@ -228,6 +228,7 @@ public class QualityMeasure
 			case PROP_SCORE_RATIO:
 			{
 				returnValue = (aCountHeadBody/aTotalCount) / (aCountHeadPropensityScore/aTotalCount);
+				break;
 			}
 			default :
 			{

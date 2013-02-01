@@ -131,6 +131,7 @@ public class RegressionMeasure
 				itsBoundFiveCount=0;
 				itsBoundFourCount=0;
 				itsRankDefCount=0;
+				break;
 			}
 			default :
 			{
