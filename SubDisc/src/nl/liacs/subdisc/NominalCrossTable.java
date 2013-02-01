@@ -77,8 +77,20 @@ public class NominalCrossTable
 		// CrossTableComparator could be saved as member of this class,
 		// instead of being recreated for each call to getSortedDomainIndices
 
-		sortValues(aSortedIndexList, 0, aSortedIndexList.size()-1);
-
+		CrossTableComparator aCTC = new CrossTableComparator(itsPositiveCounts, itsNegativeCounts);
+		
+		boolean anOptimalSort = false;
+		
+		if (anOptimalSort)
+		{
+			sortValues(aSortedIndexList, 0, aSortedIndexList.size()-1, aCTC);
+		}
+		else
+		{
+			Collections.sort(aSortedIndexList, aCTC);
+			
+		}
+		
 		return aSortedIndexList;
 	}
 
@@ -94,66 +106,47 @@ public class NominalCrossTable
 	 * it reverts to java's builtin (merge) sort, which is not optimal but
 	 * probably more optimized.
 	 */
-	private void sortValues(List<Integer> aSortedIndexList, int l, int r)
+	private void sortValues(List<Integer> aSortedIndexList, int l, int r, CrossTableComparator aCTC)
 	{
-		CrossTableComparator aCTC = new CrossTableComparator(itsPositiveCounts, itsNegativeCounts);
+		if (r <= l)
+			return;
 
-		boolean aOptimalSort = false;
+		int i = l - 1;
+		int j = r;
+		int p = l - 1;
+		int q = r;
 
-		if (!aOptimalSort)
+		Integer arr = aSortedIndexList.get(r);
+		for ( ; ; )
 		{
-			Collections.sort(aSortedIndexList, aCTC);
-		}
-		else
-		{
-			int i = l - 1;
-			int j = r;
-			int p = l - 1;
-			int q = r;
-
-			if (r <= l)
-				return;
-			Integer arr = aSortedIndexList.get(r);
-			for ( ; ; )
-			{
-				while (aCTC.compare(aSortedIndexList.get(++i), arr) < 0 );
-				while (aCTC.compare(arr, aSortedIndexList.get(--j)) < 0 )
-					if (j == l) break;
-				if (i >= j) break;
-				exchange(aSortedIndexList, i, j);
-				if (aCTC.compare(aSortedIndexList.get(i), arr) == 0) {
-					p++;
-					exchange(aSortedIndexList, p, i);
-				}
-				if (aCTC.compare(arr, aSortedIndexList.get(j)) == 0) {
-					q--;
-					exchange(aSortedIndexList, j, q);
-				}
+			while (aCTC.compare(aSortedIndexList.get(++i), arr) < 0 );
+			while (aCTC.compare(arr, aSortedIndexList.get(--j)) < 0 )
+				if (j == l) break;
+			if (i >= j) break;
+			aSortedIndexList.set(j, aSortedIndexList.set(i, aSortedIndexList.get(j)));
+			if (aCTC.compare(aSortedIndexList.get(i), arr) == 0) {
+				p++;
+				aSortedIndexList.set(i, aSortedIndexList.set(p, aSortedIndexList.get(i)));
 			}
-
-			exchange(aSortedIndexList, i, r);
-
-			j = i - 1;
-			i = i + 1;
-
-			for (int k = l; k < p; k++, j--)
-				exchange(aSortedIndexList, k, j);
-			for (int k = r-1; k > q; k--, i++)
-				exchange(aSortedIndexList, i, k);
-
-			sortValues(aSortedIndexList, l, j);
-			sortValues(aSortedIndexList, i, r);
+			if (aCTC.compare(arr, aSortedIndexList.get(j)) == 0) {
+				q--;
+				aSortedIndexList.set(q, aSortedIndexList.set(j, aSortedIndexList.get(q)));
+			}
 		}
 
-		return;
-	}
+		aSortedIndexList.set(r, aSortedIndexList.set(i, aSortedIndexList.get(r)));
 
-	private void exchange(List<Integer> aSortedIndexList, int i, int j)
-	{
-		Integer tmp = aSortedIndexList.get(i);
-		aSortedIndexList.set(i, aSortedIndexList.get(j));
-		aSortedIndexList.set(j, tmp);
+		j = i - 1;
+		i = i + 1;
 
+		for (int k = l; k < p; k++, j--)
+			aSortedIndexList.set(j, aSortedIndexList.set(k, aSortedIndexList.get(j)));
+		for (int k = r-1; k > q; k--, i++)
+			aSortedIndexList.set(k, aSortedIndexList.set(i, aSortedIndexList.get(k)));
+
+		sortValues(aSortedIndexList, l, j, aCTC);
+		sortValues(aSortedIndexList, i, r, aCTC);
+		
 		return;
 	}
 	
