@@ -509,26 +509,27 @@ public class MiningWindow extends JFrame implements ActionListener
 
 	private void initGuiComponentsFromFile()
 	{
-		initGuiComponentsDataSet();
+		jComboBoxTargetType.removeActionListener(this);
+		jComboBoxQualityMeasure.removeActionListener(this);
+		jComboBoxTargetAttribute.removeActionListener(this);
+		jComboBoxMiscField.removeActionListener(this);
+		jComboBoxStrategyType.removeActionListener(this);
+		jComboBoxNumericStrategy.removeActionListener(this);
+		jComboBoxNumericOperators.removeActionListener(this);
 
-		// TODO MM disable all ActionListeners while setting values
-		// some fields may be set automatically, order is very important
+		// data set
+		initGuiComponentsDataSet();
 
 		// search strategy
 		setSearchStrategyType(itsSearchParameters.getSearchStrategy().GUI_TEXT);
 		setStrategyWidth(String.valueOf(itsSearchParameters.getSearchStrategyWidth()));
 		setSetValuedNominals(String.valueOf(itsSearchParameters.getNominalSets()));
-		setNumericOperators(itsSearchParameters.getNumericOperatorSetting().GUI_TEXT);
 		setNumericStrategy(itsSearchParameters.getNumericStrategy().GUI_TEXT);
+		setNumericOperators(itsSearchParameters.getNumericOperatorSetting().GUI_TEXT);
 		setNrBins(String.valueOf(itsSearchParameters.getNrBins()));
 		setNrThreads(String.valueOf(itsSearchParameters.getNrThreads()));
 
 		// search conditions
-		/*
-		 * setSearchStrategyType() above calls setSearchCoverageMinimum(),
-		 * setting a wrong value in the GUI
-		 * setSearchCoverageMinimum must be called AFTER setSearchStrategyType
-		 */
 		setSearchDepthMaximum(String.valueOf(itsSearchParameters.getSearchDepth()));
 		setSearchCoverageMinimum(String.valueOf(itsSearchParameters.getMinimumCoverage()));
 		setSearchCoverageMaximum(String.valueOf(itsSearchParameters.getMaximumCoverageFraction()));
@@ -538,50 +539,73 @@ public class MiningWindow extends JFrame implements ActionListener
 		// target concept
 		TargetType aTargetType = itsTargetConcept.getTargetType();
 
-		// NOTE remember some original values, they will be overwritten
-		// remember for later reference, value will be overwritten by ...
+		/*
+		 * fields that may be overwritten
+		 * we want to use jComboBoxTargetTypeActionPerformed as it sets
+		 * up all Labels, Fields and ComboBox items correctly
+		 * it can also correct some XML-errors
+		 * afterwards we (re)set the settings to their original value
+		 */
 		String aPrimaryTarget = null;
-		String aTargetValue = null;
+		String aMiscField = null;
+		String aQualityMeasure = null;
+		float aQualityMeasureMinimum = Float.NaN;
+
 		if (TargetType.hasTargetAttribute(aTargetType))
 		{
 			aPrimaryTarget = itsTargetConcept.getPrimaryTarget().getName();
-			// Remember for later reference, value will be overwritten by ...
+
 			if (TargetType.hasTargetValue(aTargetType))
 			{
 				if (aTargetType == TargetType.SINGLE_NOMINAL)
-					aTargetValue = itsTargetConcept.getTargetValue();
-				else // DOUBLE_REGRESSION or DOUBLE_CORRELATION
-					aTargetValue = itsTargetConcept.getSecondaryTarget().getName();
+					aMiscField = itsTargetConcept.getTargetValue();
+				else if (aTargetType == TargetType.DOUBLE_REGRESSION ||
+						aTargetType == TargetType.DOUBLE_CORRELATION)
+					aMiscField = itsTargetConcept.getSecondaryTarget().getName();
 			}
 		}
-		// remember for later reference, value will be overwritten by both
-		// setTargetTypeName() and setQualityMeasure()
-		float originalMinimum = itsSearchParameters.getQualityMeasureMinimum();
+		aQualityMeasure = itsSearchParameters.getQualityMeasure().GUI_TEXT;
+		aQualityMeasureMinimum = itsSearchParameters.getQualityMeasureMinimum();
 
 		// setTargetType causes havoc, it overwrites some other values
 		setTargetTypeName(itsTargetConcept.getTargetType().GUI_TEXT);
-		setQualityMeasure(itsSearchParameters.getQualityMeasure().GUI_TEXT);
-		// reset original value
-		itsSearchParameters.setQualityMeasureMinimum(originalMinimum);
-		setQualityMeasureMinimum(String.valueOf(itsSearchParameters.getQualityMeasureMinimum()));
-
-		/*
-		 * Text in jTextFieldSearchCoverageMinimum is overwritten by
-		 * initTargetInfo() which is called through:
-		 * jComboBoxTargetTypeActionPerformed - initTargetAttributeItems.
-		 */
-		setSearchCoverageMinimum(String.valueOf(itsSearchParameters.getMinimumCoverage()));
-
-// TODO MM NOTE THESE ARE THIS OVERWRITTEN
-		if (aPrimaryTarget != null)
+		jComboBoxTargetTypeActionPerformed();
+		// reset loaded values
+		if (TargetType.hasTargetAttribute(aTargetType))
+		{
 			setTargetAttribute(aPrimaryTarget);
-		if (aTargetValue != null)
-			setMiscFieldName(aTargetValue);
-		System.out.println("==== " + aPrimaryTarget);
-		System.out.println("==== " + aTargetValue);
+			itsTargetConcept.setPrimaryTarget(itsTable.getColumn(aPrimaryTarget));
 
-// TODO MM other TargetTypes do not get loaded properly
-//		setSecondaryTargets(); // TODO initialised from primaryTargetList
+			if (TargetType.hasTargetValue(aTargetType))
+			{
+				if (aTargetType == TargetType.SINGLE_NOMINAL)
+				{
+					setMiscFieldName(aMiscField);
+					itsTargetConcept.setTargetValue(aMiscField);
+				}
+				else if (aTargetType == TargetType.DOUBLE_REGRESSION ||
+						aTargetType == TargetType.DOUBLE_CORRELATION)
+				{
+					setMiscFieldName(aMiscField);
+					itsTargetConcept.setSecondaryTarget(itsTable.getColumn(aMiscField));
+				}
+			}
+		}
+		setQualityMeasure(aQualityMeasure);
+		itsSearchParameters.setQualityMeasure(QM.fromString(aQualityMeasure));
+		setQualityMeasureMinimum(Float.toString(aQualityMeasureMinimum));
+		itsSearchParameters.setQualityMeasureMinimum(aQualityMeasureMinimum);
+
+		// TODO MM some TargetTypes may not be loaded properly, example:
+		// setSecondaryTargets(); -> initialise from primaryTargetList
+
+		jComboBoxTargetType.addActionListener(this);
+		jComboBoxQualityMeasure.addActionListener(this);
+		jComboBoxTargetAttribute.addActionListener(this);
+		jComboBoxMiscField.addActionListener(this);
+		jComboBoxStrategyType.addActionListener(this);
+		jComboBoxNumericStrategy.addActionListener(this);
+		jComboBoxNumericOperators.addActionListener(this);
 	}
 
 	private void initGuiComponentsDataSet()
@@ -592,7 +616,7 @@ public class MiningWindow extends JFrame implements ActionListener
 			jLabelNrExamplesNr.setText(String.valueOf(itsTable.getNrRows()));
 
 			int[][] aCounts = itsTable.getTypeCounts();
-			int[] aTotals = new int[] { itsTable.getNrColumns(), 0 };
+			int[] aTotals = { itsTable.getNrColumns(), 0 };
 			for (int[] ia : aCounts)
 				aTotals[1] += ia[1];
 			jLabelNrColumnsNr.setText(initGuiComponentsDataSetHelper(aTotals));
@@ -616,8 +640,7 @@ public class MiningWindow extends JFrame implements ActionListener
 
 	private void enableTableDependentComponents(boolean theSetting)
 	{
-		AbstractButton[] anAbstractButtonArray =
-			new AbstractButton[] {	jMenuItemBrowse,
+		AbstractButton[] aButtons = {	jMenuItemBrowse,
 						jMenuItemExplore,
 						jMenuItemMetaData,
 						jMenuItemSubgroupDiscovery,
@@ -637,12 +660,13 @@ public class MiningWindow extends JFrame implements ActionListener
 						jButtonMultiRegressionTargets};
 		enableBaseModelButtonCheck();
 
-		for (AbstractButton a : anAbstractButtonArray)
+		for (AbstractButton a : aButtons)
 			a.setEnabled(theSetting);
 
 		// do the same for combo boxes
 		JComboBox[] aComboBoxArray = {	jComboBoxTargetType,
 						jComboBoxStrategyType,
+						jComboBoxNumericStrategy,
 						jComboBoxNumericOperators };
 		for (JComboBox c : aComboBoxArray)
 			c.setEnabled(theSetting);
@@ -1639,8 +1663,7 @@ public class MiningWindow extends JFrame implements ActionListener
 		itsSearchParameters.setNominalSets(getSetValuedNominals());
 		itsSearchParameters.setNumericStrategy(getNumericStrategy());
 		itsSearchParameters.setNrBins(getNrBins());
-		// TODO
-		//itsSearchParameters.setNrThreads(getSearchStrategyNrBins());
+		itsSearchParameters.setNrThreads(getNrThreads());
 /*
  * These values are no longer 'static', but can be changed in MultiTargetsWindow
 		itsSearchParameters.setPostProcessingCount(SearchParameters.POST_PROCESSING_COUNT_DEFAULT);
