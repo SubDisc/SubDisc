@@ -89,7 +89,12 @@ public enum QM implements EnumInterface
 				aSet.add(qm);
 
 		// remove non implemented methods
-		if (TargetType.SINGLE_NUMERIC == theTargetType)
+		if (TargetType.SINGLE_NOMINAL == theTargetType)
+		{
+			aSet.remove(PROP_SCORE_WRACC);
+			aSet.remove(PROP_SCORE_RATIO);
+		}
+		else if (TargetType.SINGLE_NUMERIC == theTargetType)
 			aSet.remove(CHI2_TEST);
 		else if (TargetType.DOUBLE_REGRESSION == theTargetType)
 			aSet.remove(COOKS_DISTANCE);

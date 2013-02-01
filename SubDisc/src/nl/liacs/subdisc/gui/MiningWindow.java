@@ -462,6 +462,14 @@ public class MiningWindow extends JFrame implements ActionListener
 
 	private void initStaticGuiComponents()
 	{
+		/*
+		 * normal values only, INTERVALS will be added when needed
+		 * this must done before TargetType initialisation
+		 * as it determines whether INTERVALS will be added
+		 */
+		for (NumericStrategy n : NumericStrategy.getNormalValues())
+			jComboBoxNumericStrategy.addItem(n.GUI_TEXT);
+
 		// Add all implemented TargetTypes
 		for (TargetType t : TargetType.values())
 			if (TargetType.isImplemented(t))
@@ -915,24 +923,22 @@ public class MiningWindow extends JFrame implements ActionListener
 			setQualityMeasureMinimum(QM.fromString(getQualityMeasureName()).MEASURE_DEFAULT);
 	}
 
-	/*
-	 * at this point we do not know the previous TargetType
-	 * remove all and reset the values, not a performance drawback
-	 * 
-	 * see jComboBoxTargetTypeActionPerformed
-	 */
+	// see jComboBoxTargetTypeActionPerformed
 	private void initNumericStrategy()
 	{
 		jComboBoxNumericStrategy.removeActionListener(this);
 
-		//set 3 normals values for numeric strategy
-		jComboBoxNumericStrategy.removeAllItems();
-		for (NumericStrategy n : NumericStrategy.getNormalValues())
-			jComboBoxNumericStrategy.addItem(n.GUI_TEXT);
-
-		// add intervals only for SINGLE_NOMINAL
+		// if SINGLE_NOMINAL add INTERVALS, else remove it
 		if (itsTargetConcept.getTargetType() == TargetType.SINGLE_NOMINAL)
 			jComboBoxNumericStrategy.addItem(NumericStrategy.NUMERIC_INTERVALS.GUI_TEXT);
+		else
+		{
+			// assumes first normal value is not INTERVALS
+			if (NumericStrategy.NUMERIC_INTERVALS.GUI_TEXT == jComboBoxNumericStrategy.getSelectedItem())
+				jComboBoxNumericStrategy.setSelectedIndex(0);
+
+			jComboBoxNumericStrategy.removeItem(NumericStrategy.NUMERIC_INTERVALS.GUI_TEXT);
+		}
 
 		jComboBoxNumericStrategy.addActionListener(this);
 	}
@@ -1128,7 +1134,7 @@ public class MiningWindow extends JFrame implements ActionListener
 	 * initTargetAttributes() -> put Column Names in TargetAttributeComboBox
 	 * misc_field.setVisible()			-> based on TargetType
 	 * set-valued_nominals.setEnabled()		-> based on TargetType
-	 * multi-targets_label.setEnabledd()		-> based on TargetType
+	 * multi-targets_label.setEnabled()		-> based on TargetType
 	 * baseModelCheck()				-> based on TargetType
 	 * TargetAttributeLabel/ComboBox.setVisible()	-> based on TargetType
 	 * initNumericStrategy()			-> based on TargetType
@@ -1179,7 +1185,11 @@ public class MiningWindow extends JFrame implements ActionListener
 		// only valid for nominal targets
 		jCheckBoxSetValuedNominals.setEnabled(aTargetType == TargetType.SINGLE_NOMINAL);
 
-// TODO MM for stable jar, disable, was added in revision 848
+/*
+ * TODO MM for stable jar, disable, was added in revision 848
+ * when COOKS_DISTANCE is re-enabled, there will be 2 DOUBLE_REGRESSION QMs, so
+ * this part should move to jComboBoxQualityMeasreActionPerformed()
+ */
 /*
 		boolean hasMultiRegressionTargets = TargetType.hasMultiRegressionTargets(aTargetType);
 		jLabelMultiRegressionTargets.setVisible(hasMultiRegressionTargets);
@@ -2004,9 +2014,6 @@ public class MiningWindow extends JFrame implements ActionListener
 	public void actionPerformed(ActionEvent theEvent)
 	{
 		String aCommand = theEvent.getActionCommand();
-
-		// FIXME MM DEBUG ONLY
-		Log.logCommandLine(aCommand);
 
 		// to be replaced by Java 7 String switch someday
 		if (STD.OPEN_FILE.GUI_TEXT.equals(aCommand))
