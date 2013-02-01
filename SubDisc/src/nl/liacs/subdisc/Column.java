@@ -20,7 +20,7 @@ public class Column implements XMLNodeInterface
 {
 	public static final int DEFAULT_INIT_SIZE = 2048;
 
-	// NOTE when adding members, update constructors AND Column.select()
+	// NOTE when adding members, update constructors, copy() and select()
 	private AttributeType itsType;
 	private String itsName;
 	private String itsShort;
@@ -226,14 +226,16 @@ public class Column implements XMLNodeInterface
 		aCopy.itsFloatz = itsFloatz;
 		aCopy.itsNominals = itsNominals;
 		aCopy.itsBinaries = itsBinaries;
+		aCopy.itsDistinctValues = itsDistinctValues;
 		aCopy.itsMissingValue = itsMissingValue;
 		aCopy.itsMissing = itsMissing;
 		aCopy.itsMissingValueIsUnique = itsMissingValueIsUnique;
-		aCopy.itsSize = itsSize;	// NOTE not set through constructor
+		aCopy.itsSize = itsSize; // NOTE not set through constructor
 		aCopy.itsCardinality = itsCardinality;
 		aCopy.itsMin = itsMin;
 		aCopy.itsMax = itsMax;
 		aCopy.isEnabled = isEnabled;
+		aCopy.itsTargetStatus = itsTargetStatus;
 
 		return aCopy;
 	}

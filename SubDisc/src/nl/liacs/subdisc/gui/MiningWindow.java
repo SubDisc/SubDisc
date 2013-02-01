@@ -149,6 +149,14 @@ public class MiningWindow extends JFrame implements ActionListener
 
 		jMiningWindowMenuBar.add(jMenuEnrichment);
 
+		// MENU BAR - GUI
+		jMenuGui = new JMenu();
+		jMenuGui.setFont(GUI.DEFAULT_TEXT_FONT);
+		jMenuGui.setText("Gui");
+		jMenuGui.setMnemonic('G');
+		if (GUI_DEBUG)
+			jMiningWindowMenuBar.add(jMenuGui);
+
 		// MENU BAR - ABOUT
 		jMenuAbout = initMenu(STD.ABOUT);
 		jMenuAbout.setMnemonic(STD.ABOUT.MNEMONIC);
@@ -157,14 +165,6 @@ public class MiningWindow extends JFrame implements ActionListener
 		jMenuAbout.add(jMenuItemAboutCortana);
 
 		jMiningWindowMenuBar.add(jMenuAbout);
-
-		// MENU BAR - GUI
-		jMenuGui = new JMenu();
-		jMenuGui.setFont(GUI.DEFAULT_TEXT_FONT);
-		jMenuGui.setText("Gui");
-		jMenuGui.setMnemonic('G');
-		if (GUI_DEBUG)
-			jMiningWindowMenuBar.add(jMenuGui);
 
 		// DATA SET, TARGET CONCEPT, SEARCH CONDITIONS, SEARCH STRATEGY
 		jPanelCenter = new JPanel();	// 4 panels

@@ -248,7 +248,7 @@ public class Validation
 	 * of the {@link TargetConcept}.
 	 *
 	 * @return an array holding the qualities of the best scoring
-	 * {@link Subgroup Subgroup} of each permutation.
+	 * {@link Subgroup} of each permutation.
 	 */
 	private double[] swapRandomization(int theNrRepetitions)
 	{
@@ -265,7 +265,6 @@ public class Validation
 				// back up column that will be swap randomized
 				Column aPrimaryCopy = itsTargetConcept.getPrimaryTarget().copy();
 				int aPositiveCount =
-					//itsTable.countValues(itsTargetConcept.getPrimaryTarget().getIndex(), itsTargetConcept.getTargetValue());
 					itsTargetConcept.getPrimaryTarget().countValues(itsTargetConcept.getTargetValue());
 
 				// generate swap randomized random results
@@ -322,7 +321,7 @@ public class Validation
 				itsTable.getColumns().set(aPrimaryCopy.getIndex(), aPrimaryCopy);
 				itsTargetConcept.setSecondaryTarget(aSecondaryCopy);
 				itsTable.getColumns().set(aSecondaryCopy.getIndex(), aSecondaryCopy);
-				
+
 				break;
 			}
 			case DOUBLE_CORRELATION :
@@ -385,10 +384,11 @@ public class Validation
 	}
 
 	/*
-	 * NOTE for the first result (i = 0) to be not equal to the original mining
-	 * result the calling function should run:
+	 * NOTE for the first result (i = 0) to be not equal to the original
+	 * mining result the calling function should run:
 	 * itsTable.swapRandomizeTarget(itsTargetConcept);
-	 * before creating the new theSubgroupDiscovery, and calling this function.
+	 * before creating the new theSubgroupDiscovery, and calling this
+	 * method.
 	 */
 	private int runSRSD(SubgroupDiscovery theSubgroupDiscovery, double[] theQualities, int theRepetition)
 	{
@@ -397,11 +397,11 @@ public class Validation
 		Log.COMMANDLINELOG = true;
 		SubgroupSet aSubgroupSet = theSubgroupDiscovery.getResult();
 		if (aSubgroupSet.size() == 0)
-			--theRepetition; // if no subgroups are found, try again.
+			--theRepetition; // if no subgroups are found, try again
 		else
 		{
 			theQualities[theRepetition] = aSubgroupSet.getBestScore();
-			Log.logCommandLine((theRepetition + 1) + "," + theQualities[theRepetition]);
+			Log.logCommandLine((theRepetition + 1) + ", " + theQualities[theRepetition]);
 		}
 
 		return theRepetition;
