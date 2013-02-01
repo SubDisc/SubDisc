@@ -595,19 +595,19 @@ public class QualityMeasure
 				break;
 			}
 // TODO ANYONE implement setting of itsPopulationCounts
-//			case CHI2_TEST :
-//			{
-//				if (itsPopulationCounts == null)
-//				{
-//					Log.logCommandLine("--- ERROR! QualityMeasure.calculate(): unimplemented QM. ---");
-//					throw new AssertionError(itsQualityMeasure);
-//				}
-//				// TODO see itsPopulationCounts
-//				float a = ((theSubgroupCounts[0]-itsPopulationCounts[0])*(theSubgroupCounts[0]-itsPopulationCounts[0]))/(float)itsPopulationCounts[0];
-//				float b = ((theSubgroupCounts[1]-itsPopulationCounts[1])*(theSubgroupCounts[1]-itsPopulationCounts[1]))/(float)itsPopulationCounts[1];
-//				aReturn = a+b;
-//				break;
-//			}
+			case CHI2_TEST :
+			{
+				if (itsPopulationCounts == null)
+				{
+					Log.logCommandLine("--- ERROR! QualityMeasure.calculate(): unimplemented QM. ---");
+					throw new AssertionError(itsQualityMeasure);
+				}
+				// TODO see itsPopulationCounts
+				float a = ((theSubgroupCounts[0]-itsPopulationCounts[0])*(theSubgroupCounts[0]-itsPopulationCounts[0]))/(float)itsPopulationCounts[0];
+				float b = ((theSubgroupCounts[1]-itsPopulationCounts[1])*(theSubgroupCounts[1]-itsPopulationCounts[1]))/(float)itsPopulationCounts[1];
+				aReturn = a+b;
+				break;
+			}
 			//ORDINAL
 			case AUC :
 			{

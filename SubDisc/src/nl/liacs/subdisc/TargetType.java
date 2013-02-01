@@ -163,7 +163,7 @@ public enum TargetType implements EnumInterface
 			case DOUBLE_REGRESSION		: return true;
 			case DOUBLE_CORRELATION		: return true;
 			case MULTI_LABEL		: return false;
-			case MULTI_BINARY_CLASSIFICATION: return true;	// TODO true?
+			case MULTI_BINARY_CLASSIFICATION: return true;
 			default :
 			{
 				unknownTargetType("hasMiscField", theType);

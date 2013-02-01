@@ -22,15 +22,15 @@ public class ValueSet
 	 * Creates a ValueSet, it can not be modified in any way after creation.
 	 * 
 	 * @param theDomain the values to use for this ValueSet.
-//	 * 
-//	 * @throws IllegalArgumentException if theDomain does not contain at
-//	 * least one value. 
+	 * 
+	 * @throws IllegalArgumentException if theDomain does not contain at
+	 * least one value. 
 	 */
 	public ValueSet(SortedSet<String> theDomain) throws IllegalArgumentException
 	{
 		// throws a NullPointerException in case of null
-//		if (theDomain.size() == 0)
-//			throw new IllegalArgumentException("Domains must be > 0");
+		if (theDomain.size() == 0)
+			throw new IllegalArgumentException("Domains must be > 0");
 
 		itsValues = new TreeSet<String>(theDomain);
 	}

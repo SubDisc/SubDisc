@@ -4,112 +4,97 @@ import java.util.*;
 
 public enum QM implements EnumInterface
 {
-	// ENUM		GUI text		default measure minimum
+	// TargetType is a single value, but could be an EnumSet if needed
+	// ENUM		GUI text	default measure minimum	TargetType
 
 	// SINGLE_NOMINAL quality measures
-	WRACC		("WRAcc",		"0.02"),
-	ABSWRACC	("Abs WRAcc",		"0.02"),
-	CHI_SQUARED	("Chi-squared",		"50"),
-	INFORMATION_GAIN("Information gain",	"0.02"),
-	BINOMIAL	("Binomial test",	"0.05"),
-	ACCURACY	("Accuracy",		"0.0"),
-	PURITY		("Purity",		"0.5"),
-	JACCARD		("Jaccard",		"0.2"),
-	COVERAGE	("Coverage",		"10"),
-	SPECIFICITY	("Specificity",		"0.5"),
-	SENSITIVITY	("Sensitivity",		"0.5"),
-	LAPLACE		("Laplace",		"0.2"),
-	F_MEASURE	("F-measure",		"0.2"),
-	G_MEASURE	("G-measure",		"0.2"),
-	CORRELATION	("Correlation",		"0.1"),
-	PROP_SCORE_WRACC("Propensity score wracc",	"-0.25"),
-	PROP_SCORE_RATIO("Propensity score ratio",	"1.0"),
-	BAYESIAN_SCORE	("Bayesian Score", "0.0"),
+	WRACC		("WRAcc",		"0.02",	TargetType.SINGLE_NOMINAL),
+	ABSWRACC	("Abs WRAcc",		"0.02",	TargetType.SINGLE_NOMINAL),
+	CHI_SQUARED	("Chi-squared",		"50",	TargetType.SINGLE_NOMINAL),
+	INFORMATION_GAIN("Information gain",	"0.02",	TargetType.SINGLE_NOMINAL),
+	BINOMIAL	("Binomial test",	"0.05",	TargetType.SINGLE_NOMINAL),
+	ACCURACY	("Accuracy",		"0.0",	TargetType.SINGLE_NOMINAL),
+	PURITY		("Purity",		"0.5",	TargetType.SINGLE_NOMINAL),
+	JACCARD		("Jaccard",		"0.2",	TargetType.SINGLE_NOMINAL),
+	COVERAGE	("Coverage",		"10",	TargetType.SINGLE_NOMINAL),
+	SPECIFICITY	("Specificity",		"0.5",	TargetType.SINGLE_NOMINAL),
+	SENSITIVITY	("Sensitivity",		"0.5",	TargetType.SINGLE_NOMINAL),
+	LAPLACE		("Laplace",		"0.2",	TargetType.SINGLE_NOMINAL),
+	F_MEASURE	("F-measure",		"0.2",	TargetType.SINGLE_NOMINAL),
+	G_MEASURE	("G-measure",		"0.2",	TargetType.SINGLE_NOMINAL),
+	CORRELATION	("Correlation",		"0.1",	TargetType.SINGLE_NOMINAL),
+	PROP_SCORE_WRACC("Propensity score wracc",	"-0.25",	TargetType.SINGLE_NOMINAL),
+	PROP_SCORE_RATIO("Propensity score ratio",	"1.0",		TargetType.SINGLE_NOMINAL),
+	BAYESIAN_SCORE	("Bayesian Score", "0.0",	TargetType.SINGLE_NOMINAL),
 
 	// SINGLE_NUMERIC quality measures
-	Z_SCORE		("Z-Score",		"1.0"),
-	INVERSE_Z_SCORE	("Inverse Z-Score",	"1.0"),
-	ABS_Z_SCORE	("Abs Z-Score",		"1.0"),
-	AVERAGE		("Average",		"0.0"),	// XXX bogus value
-	INVERSE_AVERAGE	("Inverse Average",	"0.0"),	// XXX bogus value
-	MEAN_TEST	("Mean Test",		"0.01"),
-	INVERSE_MEAN_TEST("Inverse Mean Test",	"0.01"),
-	ABS_MEAN_TEST	("Abs Mean Test",	"0.01"),
-	T_TEST		("t-Test",		"1.0"),
-	INVERSE_T_TEST	("Inverse t-Test",	"1.0"),
-	ABS_T_TEST	("Abs t-Test",		"1.0"),
-// TODO ANYONE see QualityMeasure.itsPopulationCounts, disabled for now
-//	CHI2_TEST	("Median Chi-squared test",	"2.5"),
-	HELLINGER	("Squared Hellinger distance",	"0.0"),
-	KULLBACKLEIBLER	("Kullback-Leibler divergence",	"0.0"),
-	CWRACC		("CWRAcc", "0.0"),
+	Z_SCORE		("Z-Score",		"1.0",	TargetType.SINGLE_NUMERIC),
+	INVERSE_Z_SCORE	("Inverse Z-Score",	"1.0",	TargetType.SINGLE_NUMERIC),
+	ABS_Z_SCORE	("Abs Z-Score",		"1.0",	TargetType.SINGLE_NUMERIC),
+	AVERAGE		("Average",		"0.0",	TargetType.SINGLE_NUMERIC),	// bogus minimum value, should come from data
+	INVERSE_AVERAGE	("Inverse Average",	"0.0",	TargetType.SINGLE_NUMERIC),	// bogus minimum value, should come from data
+	MEAN_TEST	("Mean Test",		"0.01",	TargetType.SINGLE_NUMERIC),
+	INVERSE_MEAN_TEST("Inverse Mean Test",	"0.01",	TargetType.SINGLE_NUMERIC),
+	ABS_MEAN_TEST	("Abs Mean Test",	"0.01",	TargetType.SINGLE_NUMERIC),
+	T_TEST		("t-Test",		"1.0",	TargetType.SINGLE_NUMERIC),
+	INVERSE_T_TEST	("Inverse t-Test",	"1.0",	TargetType.SINGLE_NUMERIC),
+	ABS_T_TEST	("Abs t-Test",		"1.0",	TargetType.SINGLE_NUMERIC),
+	CHI2_TEST	("Median Chi-squared test",	"2.5",	TargetType.SINGLE_NUMERIC),
+	HELLINGER	("Squared Hellinger distance",	"0.0",	TargetType.SINGLE_NUMERIC),
+	KULLBACKLEIBLER	("Kullback-Leibler divergence",	"0.0",	TargetType.SINGLE_NUMERIC),
+	CWRACC		("CWRAcc",		"0.0",	TargetType.SINGLE_NUMERIC),
 
 	// SINGLE_ORDINAL quality measures
-	AUC		("AUC of ROC",		"0.5"),
-	WMW_RANKS	("WMW-Ranks test",	"1.0"),
-	INVERSE_WMW_RANKS("Inverse WMW-Ranks test",	"1.0"),
-	ABS_WMW_RANKS	("Abs WMW-Ranks test",	"1.0"),
-	MMAD		("Median MAD metric",	"0"),
+	AUC		("AUC of ROC",		"0.5",	TargetType.SINGLE_ORDINAL),
+	WMW_RANKS	("WMW-Ranks test",	"1.0",	TargetType.SINGLE_ORDINAL),
+	INVERSE_WMW_RANKS("Inverse WMW-Ranks test",	"1.0",	TargetType.SINGLE_ORDINAL),
+	ABS_WMW_RANKS	("Abs WMW-Ranks test",	"1.0",	TargetType.SINGLE_ORDINAL),
+	MMAD		("Median MAD metric",	"0",	TargetType.SINGLE_ORDINAL),
 
 	// MULTI_LABEL quality measures
-	WEED		("Wtd Ent Edit Dist",	"0"),
-	EDIT_DISTANCE	("Edit Distance",	"0"),
+	WEED		("Wtd Ent Edit Dist",	"0",	TargetType.MULTI_LABEL),
+	EDIT_DISTANCE	("Edit Distance",	"0",	TargetType.MULTI_LABEL),
 
 	// DOUBLE_CORRELATION  quality measures
-	CORRELATION_R		("r",			"0.2"),
-	CORRELATION_R_NEG	("Negative r",		"0.2"),
-	CORRELATION_R_NEG_SQ	("Neg Sqr r",		"0.2"),
-	CORRELATION_R_SQ	("Squared r",		"0.2"),
-	CORRELATION_DISTANCE	("Distance",		"0.0"),
-	CORRELATION_P		("p-Value Distance",	"0.0"),
-	CORRELATION_ENTROPY	("Wtd Ent Distance",	"0.0"),
-	ADAPTED_WRACC		("Adapted WRAcc",	"0.0"),
-	COSTS_WRACC		("Costs WRAcc",		"0.0"),
+	CORRELATION_R		("r",			"0.2",	TargetType.DOUBLE_CORRELATION),
+	CORRELATION_R_NEG	("Negative r",		"0.2",	TargetType.DOUBLE_CORRELATION),
+	CORRELATION_R_NEG_SQ	("Neg Sqr r",		"0.2",	TargetType.DOUBLE_CORRELATION),
+	CORRELATION_R_SQ	("Squared r",		"0.2",	TargetType.DOUBLE_CORRELATION),
+	CORRELATION_DISTANCE	("Distance",		"0.0",	TargetType.DOUBLE_CORRELATION),
+	CORRELATION_P		("p-Value Distance",	"0.0",	TargetType.DOUBLE_CORRELATION),
+	CORRELATION_ENTROPY	("Wtd Ent Distance",	"0.0",	TargetType.DOUBLE_CORRELATION),
+	ADAPTED_WRACC		("Adapted WRAcc",	"0.0",	TargetType.DOUBLE_CORRELATION),
+	COSTS_WRACC		("Costs WRAcc",		"0.0",	TargetType.DOUBLE_CORRELATION),
 
 	// DOUBLE_REGRESSION quality measures
-	LINEAR_REGRESSION	("Significance of Slope Difference", "0.0"),
-	COOKS_DISTANCE		("Cook's Distance",	"0.0");
+	LINEAR_REGRESSION	("Significance of Slope Difference", "0.0", TargetType.DOUBLE_REGRESSION),
+	COOKS_DISTANCE		("Cook's Distance",	"0.0",	TargetType.DOUBLE_REGRESSION);
 
 	public final String GUI_TEXT;
 	public final String MEASURE_DEFAULT;
+	public final TargetType TARGET_TYPE;
 
-	private QM(String theGuiText, String theMeasureDefault)
+	private QM(String theGuiText, String theMeasureDefault, TargetType theTargetType)
 	{
 		this.GUI_TEXT = theGuiText;
 		this.MEASURE_DEFAULT = theMeasureDefault;
+		this.TARGET_TYPE = theTargetType;
 	}
 
-	/*
-	 * FIXME MM the QM declaration should indicate for which TargetType it
-	 * is valid, this is much more robust against future additions/
-	 * re-orderings of the various QMs.
-	 * 
-	 * TODO MM first/ last QualityMeasure is only used to populate GUI with
-	 * relevant QM Strings, this method could return the Strings directly
-	 */
 	public static final Set<QM> getQualityMeasures(TargetType theTargetType)
 	{
-		switch (theTargetType)
-		{
-			case SINGLE_NOMINAL :
-				return EnumSet.range(WRACC, BAYESIAN_SCORE);
-			case SINGLE_NUMERIC :
-				return EnumSet.range(Z_SCORE, CWRACC);
-			case SINGLE_ORDINAL :
-				return EnumSet.range(AUC, MMAD);
-			case DOUBLE_REGRESSION :
-				return EnumSet.of(LINEAR_REGRESSION);
-				// TODO MM COOKS_DISTANCE is not implemented
-				//return EnumSet.range(LINEAR_REGRESSION, COOKS_DISTANCE);
-			case DOUBLE_CORRELATION :
-				return EnumSet.range(CORRELATION_R, COSTS_WRACC);
-			case MULTI_LABEL :
-				return EnumSet.range(WEED, EDIT_DISTANCE);
-			case MULTI_BINARY_CLASSIFICATION :
-				throw new AssertionError(theTargetType);
-			default :
-				throw new AssertionError(theTargetType);
-		}
+		EnumSet<QM> aSet = EnumSet.noneOf(QM.class);
+		for (QM qm : QM.values())
+			if (qm.TARGET_TYPE == theTargetType)
+				aSet.add(qm);
+
+		// remove non implemented methods
+		if (TargetType.SINGLE_NUMERIC == theTargetType)
+			aSet.remove(CHI2_TEST);
+		else if (TargetType.DOUBLE_REGRESSION == theTargetType)
+			aSet.remove(COOKS_DISTANCE);
+
+		return aSet;
 	}
 
 	/**
