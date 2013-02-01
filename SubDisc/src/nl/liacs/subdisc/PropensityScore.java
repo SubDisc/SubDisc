@@ -209,7 +209,7 @@ public class PropensityScore
 	private void calculateBayesRule()
 	{
 		/* calculate Bayes Rule here */
-		Set<statisticsBayesRule> aAllStatisticsBayesRule = new HashSet<statisticsBayesRule>();
+		Set<StatisticsBayesRule> aAllStatisticsBayesRule = new HashSet<StatisticsBayesRule>();
 		aAllStatisticsBayesRule.addAll(itsGlobalKn.getStatisticsBayesRule());
 		aAllStatisticsBayesRule.addAll(itsLocalKn.getStatisticsBayesRule(itsSubgroup));
 		System.out.println("Size overlapping subgroups:");
@@ -245,7 +245,7 @@ public class PropensityScore
 //			aTerm2[i] = aPNotT;
 //		}
 
-		for (statisticsBayesRule s : aAllStatisticsBayesRule)
+		for (StatisticsBayesRule s : aAllStatisticsBayesRule)
 		{
 			// get double[]s once per outer-loop and reuse them
 			double[] pGivenT = s.getProbabilitiesDataPXGivenT();

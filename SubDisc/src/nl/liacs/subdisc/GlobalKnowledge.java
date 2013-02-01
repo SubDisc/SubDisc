@@ -24,7 +24,7 @@ public class GlobalKnowledge {
 	//private Map<Column, List<BitSet>> mapColumnToBitSet;
 	private Map<ConditionList, BitSet> mapConditionListToBitSet;
 	//each knowledge component is described by one (or more) conditions from the condition list
-	private Map<ConditionList, statisticsBayesRule> mapConditionListBayesRule;
+	private Map<ConditionList, StatisticsBayesRule> mapConditionListBayesRule;
 
 	public GlobalKnowledge(List<ConditionList> explanatoryConditions, BitSet target)
 	{
@@ -48,7 +48,7 @@ public class GlobalKnowledge {
 		//	}
 
 		mapConditionListToBitSet = new HashMap<ConditionList, BitSet>();
-		mapConditionListBayesRule = new HashMap<ConditionList, statisticsBayesRule>();
+		mapConditionListBayesRule = new HashMap<ConditionList, StatisticsBayesRule>();
 
 		for (ConditionList cl: itsExplanatoryConditions)
 		{
@@ -63,7 +63,7 @@ public class GlobalKnowledge {
 
 			mapConditionListToBitSet.put(cl,aBitSetCl);
 			// now calculate the statistics for Bayes Rule
-			statisticsBayesRule aStatisticsBR = new statisticsBayesRule(aBitSetCl,target);
+			StatisticsBayesRule aStatisticsBR = new StatisticsBayesRule(aBitSetCl,target);
 			mapConditionListBayesRule.put(cl, aStatisticsBR);
 		}
 		
@@ -129,10 +129,10 @@ public class GlobalKnowledge {
 		return aBitSetsExplanatoryConditionLists;
 	}
 
-	public Set<statisticsBayesRule> getStatisticsBayesRule()
+	public Set<StatisticsBayesRule> getStatisticsBayesRule()
 	{
 		//returns statistics corresponding to the attributes that are involved in the subgroup
-		Set<statisticsBayesRule> aSetStatisticsBayesRule = new HashSet<statisticsBayesRule>();
+		Set<StatisticsBayesRule> aSetStatisticsBayesRule = new HashSet<StatisticsBayesRule>();
 		for (ConditionList cl : itsExplanatoryConditions)
 			if (mapConditionListBayesRule.get(cl) != null)
 				aSetStatisticsBayesRule.add(mapConditionListBayesRule.get(cl));

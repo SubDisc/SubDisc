@@ -11,7 +11,7 @@ public class LocalKnowledge
 	//private Map<Column, List<BitSet>> mapColumnToBitSet;
 	private Map<ConditionList, BitSet> mapConditionListToBitSet;
 	//each knowledge component is described by one (or more) conditions from the condition list
-	private Map<ConditionList, statisticsBayesRule> mapConditionListBayesRule;
+	private Map<ConditionList, StatisticsBayesRule> mapConditionListBayesRule;
 	private BitSet itsTarget;
 
 	public LocalKnowledge(List<ConditionList> theExplanatoryConditions, BitSet theTarget)
@@ -43,7 +43,7 @@ public class LocalKnowledge
 		}
 
 		mapConditionListToBitSet = new HashMap<ConditionList, BitSet>();
-		mapConditionListBayesRule = new HashMap<ConditionList, statisticsBayesRule>();
+		mapConditionListBayesRule = new HashMap<ConditionList, StatisticsBayesRule>();
 
 		for (ConditionList cl: itsExplanatoryConditions)
 		{
@@ -63,7 +63,7 @@ public class LocalKnowledge
 			System.out.println(itsTarget.cardinality());
 			System.out.println("cardinality known subgroup");
 			System.out.println(aBitSetCl.cardinality());
-			statisticsBayesRule aStatisticsBR = new statisticsBayesRule(aBitSetCl,itsTarget);
+			StatisticsBayesRule aStatisticsBR = new StatisticsBayesRule(aBitSetCl,itsTarget);
 			mapConditionListBayesRule.put(cl, aStatisticsBR);
 		}
 	}//constructor
@@ -134,10 +134,10 @@ public class LocalKnowledge
 		return aBitSetsExplanatoryConditionLists;
 	}
 
-	public Set<statisticsBayesRule> getStatisticsBayesRule(Subgroup theSubgroupToEvaluate)
+	public Set<StatisticsBayesRule> getStatisticsBayesRule(Subgroup theSubgroupToEvaluate)
 	{
 		//returns statistics corresponding to the attributes that are involved in the subgroup
-		Set<statisticsBayesRule> aSetStatisticsBayesRule = new HashSet<statisticsBayesRule>();
+		Set<StatisticsBayesRule> aSetStatisticsBayesRule = new HashSet<StatisticsBayesRule>();
 		Set<ConditionList> aConditionListsInvolvedWithColumn = new HashSet<ConditionList>();
 		// First obtain conditionLists that are involved with the subgroup
 		for (Condition c : theSubgroupToEvaluate.getConditions())

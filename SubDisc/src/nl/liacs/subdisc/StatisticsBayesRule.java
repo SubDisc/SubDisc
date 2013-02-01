@@ -6,7 +6,7 @@ import java.util.*;
  For a {@link Subgroup} description ({@link Subgroup#getConditions()} with its
  corresponding <code>BitSet</code>), the statistics to calculate Bayes Rule.
  */
-public class statisticsBayesRule
+public class StatisticsBayesRule
 {
 	private BitSet itsX;
 	private BitSet itsTarget;
@@ -21,7 +21,7 @@ public class statisticsBayesRule
 	private double[] probabilitiesDataPXGivenT;
 	private double[] probabilitiesDataPXGivenNotT;
 
-	public statisticsBayesRule(BitSet theX, BitSet theTarget)
+	public StatisticsBayesRule(BitSet theX, BitSet theTarget)
 	{
 		itsX = theX;
 		itsTarget = theTarget;
