@@ -3,7 +3,7 @@ package nl.liacs.subdisc;
 // TODO MM put Contingency table here without screwing up package classes layout.
 /**
  * The QualityMeasure class includes all quality measures used
- * ({@link #calculate(int, int) contingency table}).
+ * ({@link #calculate(float, float) contingency table}).
  */
 public class QualityMeasure
 {

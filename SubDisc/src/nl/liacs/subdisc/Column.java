@@ -1393,44 +1393,49 @@ public class Column implements XMLNodeInterface
 
 	/**
 	 * Returns the statistics needed in the computation of quality measures
-	 * for Columns of {@link AttributeType AttributeType} NUMERIC and
-	 * ORDINAL.
-	 *
+	 * for Columns of {@link AttributeType} {@link AttributeType#NUMERIC}
+	 * and {@link AttributeType#ORDINAL}.
+	 * <p>
 	 * The bits set in the BitSet supplied as argument indicate which values
 	 * of the Column should be used for the calculation.
-	 * When the BitSet represents the members of a {@link Subgroup Subgroup}
-	 * , this method calculates the relevant arguments to determine the
-	 * quality of that Subgroup.
-	 *
-	 * The <code>getMedianAndMedianAD</code> parameter controls what
-	 * statistics are to be computed. <code>getMedianAndMedianAD</code>
-	 * needs only be <code>true</code> in case of QualityMeasure.calculate()
-	 * for Median MAD metric (MMAD).
-	 *
-	 * The resulting float[] is always of length 4, and, in order, holds the
-	 * following values: sum, sum of squared deviation, median and median
-	 * absolute deviation. Of these, the last two are only computed for
-	 * the quality measure MMAD, and set to Float.NaN otherwise.
-	 *
-	 * When the {@link java.lang.BitSet#cardinality() BitSet.cardinality()}
-	 * is 0, no meaningful statistics can be computed, and a float[4]
-	 * containing 4 Float.NaNs will be returned.
-	 *
-	 * When the Column is not of type NUMERIC or ORDINAL a float[4]
-	 * containing 4 Float.NaNs will be returned.
+	 * When the BitSet represents the members of a {@link Subgroup}, this
+	 * method calculates the relevant arguments to determine the quality of
+	 * that Subgroup.
+	 * <p>
+	 * The {@code getMedianAndMedianAD} parameter controls what statistics
+	 * are to be computed. {@code getMedianAndMedianAD} needs only be
+	 * {@code true} in case of
+	 * {@link QualityMeasure#calculate(int, float, float, float, float,
+	 * int[], ProbabilityDensityFunction)}
+	 * for the Median MAD metric ({@link QM#MMAD}).
+	 * <p>
+	 * The resulting {@code float[]} is always of length {@code 4}, and, in
+	 * order, holds the following values: sum, sum of squared deviation,
+	 * median and median absolute deviation. Of these, the last two are only
+	 * computed for the quality measure MMAD, and set to {@code Float.NaN}
+	 * otherwise.
+	 * <p>
+	 * When the {@link java.util.BitSet#cardinality()} is {@code 0}, no
+	 * meaningful statistics can be computed, and a {@code float[4]}
+	 * containing {@code 4} {@code Float.NaN}s will be returned.
+	 * <p>
+	 * When the Column is not of type NUMERIC or ORDINAL a {@code float[4]}
+	 * containing {@code 4} {@code Float.NaN}s will be returned.
 	 *
 	 * @param theBitSet the BitSet indicating what values of this Column to
 	 * use in the calculations.
 	 *
-	 * @param theQualityMeasure the <code>int</code> corresponding to the
-	 * quality measure for which the arguments are needed.
+	 * @param getMedianAndMedianAD the {@code boolean} indicating whether
+	 * the median and median absolute deviation should be calculated.
 	 *
-	 * @return a float[4], holding the arguments relevant for the quality
-	 * measure supplied as argument.
+	 * @return a {@code float[4]}, holding the arguments relevant for the
+	 * setting supplied as argument.
 	 *
+	 * @see AttributeType
 	 * @see QualityMeasure
+	 * @see QM
 	 * @see Subgroup
-	 * @see java.lang.BitSet
+	 * @see java.util.BitSet
 	 */
 	public float[] getStatistics(BitSet theBitSet, boolean getMedianAndMedianAD)
 	{
@@ -1602,7 +1607,7 @@ public class Column implements XMLNodeInterface
 	 * method returns the domain covered by that Subgroup.
 	 * <p>
 	 * The maximum size of the returned String[] is the minimum of
-	 * {@link java.lang.BitSet#cardinality() BitSet.cardinality()} and this
+	 * {@link java.util.BitSet#cardinality() BitSet.cardinality()} and this
 	 * Columns {@link #getCardinality() cardinality}}.</br>
 	 * The minimum size is 0, if the BitSet has cardinality {@code 0} or is
 	 * {@code null}.
@@ -1621,7 +1626,7 @@ public class Column implements XMLNodeInterface
 	 * @see #getCardinality()
 	 * @see AttributeType
 	 * @see Subgroup
-	 * @see java.lang.BitSet
+	 * @see java.util.BitSet
 	 */
 	public String[] getUniqueNominalBinaryDomain(BitSet theBitSet)
 	{
@@ -1671,7 +1676,7 @@ public class Column implements XMLNodeInterface
 	 * method returns the domain covered by that Subgroup.
 	 *
 	 * The resulting float[] has a maximum size of the
-	 * {@link java.lang.BitSet#cardinality() BitSet.cardinality()}. The
+	 * {@link java.util.BitSet#cardinality() BitSet.cardinality()}. The
 	 * minimum size is 0, if the BitSet has cardinality 0 or is
 	 * <code>null</code>.
 	 *
@@ -1689,7 +1694,7 @@ public class Column implements XMLNodeInterface
 	 * @see #getCardinality()
 	 * @see AttributeType
 	 * @see Subgroup
-	 * @see java.lang.BitSet
+	 * @see java.util.BitSet
 	 */
 	public float[] getUniqueNumericDomain(BitSet theBitSet)
 	{
@@ -1723,7 +1728,7 @@ public class Column implements XMLNodeInterface
 	 * 
 	 * The resulting float[] has the size of the supplied theNrSplits
 	 * parameter. If
-	 * {@link java.lang.BitSet#cardinality() theBitSet.cardinality()} is
+	 * {@link java.util.BitSet#cardinality() theBitSet.cardinality()} is
 	 * {@code 0}, the {@code float[theNrSplits]} will contain only
 	 * {@code 0.0f}'s.
 	 * If the BitSet is {@code null} a {@code new float[0]} is returned.
@@ -1744,7 +1749,7 @@ public class Column implements XMLNodeInterface
 	 * @see AttributeType
 	 * @see Subgroup
 	 * @see NumericStrategy
-	 * @see java.lang.BitSet
+	 * @see java.util.BitSet
 	 */
 	public float[] getSplitPoints(BitSet theBitSet, int theNrSplits) throws IllegalArgumentException
 	{
@@ -1786,7 +1791,7 @@ public class Column implements XMLNodeInterface
 	 * is not of type {@link AttributeType#NUMERIC} or
 	 * {@link AttributeType#ORDINAL}.
 	 * 
-	 * @see {@link #getStatistics(BitSet, boolean)}
+	 * @see #getStatistics(BitSet, boolean)
 	 */
 	public float getAverage()
 	{
@@ -1869,7 +1874,7 @@ public class Column implements XMLNodeInterface
 	 * 
 	 * @see #getDomain()
 	 * @see #getCardinality()
-	 * @see AttibuteType
+	 * @see AttributeType
 	 */
 	public int countValues(String theValue)
 	{

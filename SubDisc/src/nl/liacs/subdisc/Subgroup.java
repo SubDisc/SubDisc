@@ -44,7 +44,7 @@ public class Subgroup implements Comparable<Subgroup>
 	 * </code>null</code>, in which case new empty items are created.
 	 * 
 	 * @param theConditions the ConditionList for this Subgroup.
-	 * @param theBitSet the BitSet representing members of this Subgroup.
+	 * @param theMembers the BitSet representing members of this Subgroup.
 	 * @param theSubgroupSet the SubgroupSet this Subgroup is contained in.
 	 * 
 	 * @throws IllegalArgumentException if (theMembers == <code>null</code>)

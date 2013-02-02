@@ -1248,13 +1248,11 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	public int getNrRankDef() { return itsRankDefCount; }
 
 	/**
-	 * Return the base {@link RegressionMeasure RegressionMeasure} for this
-	 * SubgroupDiscovery.
+	 * Return the base {@link RegressionMeasure} for this SubgroupDiscovery.
 	 *
 	 * @return the base RegressionMeasure, if this SubgroupDiscovery is of
-	 * {@link TargetType TargetType}
-	 * {@value TargetType#DOUBLE_REGRESSION DOUBLE_REGRESSION},
-	 * <code>null</code> otherwise.
+	 * {@link TargetType} {@link TargetType#DOUBLE_REGRESSION}, {@code null}
+	 * otherwise.
 	 */
 	public RegressionMeasure getRegressionMeasureBase()
 	{

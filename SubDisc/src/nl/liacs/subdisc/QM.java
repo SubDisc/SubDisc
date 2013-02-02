@@ -106,7 +106,7 @@ public enum QM implements EnumInterface
 	 * Returns the QM corresponding to the supplied {@code String} parameter
 	 *  based on the various {@link QM#GUI_TEXT}s.
 	 * 
-	 * @param theText the {@codeString} corresponding to a QM.
+	 * @param theText the {@code String} corresponding to a QM.
 	 * 
 	 * @return a QM, or {@code null} if no corresponding QM is found.
 	 */
