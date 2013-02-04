@@ -302,7 +302,7 @@ public class Subgroup implements Comparable<Subgroup>
 		int aTotalCoverage = itsParentSet.getTotalCoverage();
 		float aTotalTargetCoverage = itsParentSet.getTotalTargetCoverage();
 		float aBody = (itsParentSet.getTotalCoverage() -
-					itsParentSet.getTotalTargetCoverage());
+				itsParentSet.getTotalTargetCoverage());
 
 		// something is wrong TODO throw error
 		if (aTotalCoverage <= 0 || aTotalTargetCoverage < 0 ||

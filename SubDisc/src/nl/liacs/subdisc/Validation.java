@@ -307,7 +307,7 @@ public class Validation
 				// back up columns that will be swap randomized
 				Column aPrimaryCopy = itsTargetConcept.getPrimaryTarget().copy();
 				Column aSecondaryCopy = itsTargetConcept.getSecondaryTarget().copy();
-				
+
 				// generate swap randomized random results
 				for (int i = 0, j = theNrRepetitions; i < j; ++i)
 				{
@@ -315,7 +315,7 @@ public class Validation
 					itsTable.swapRandomizeTarget(itsTargetConcept);
 					i = runSRSD(new SubgroupDiscovery(itsSearchParameters, itsTable, true, null), aQualities, i);
 				}
-				
+
 				// restore columns that were swap randomized
 				itsTargetConcept.setPrimaryTarget(aPrimaryCopy);
 				itsTable.getColumns().set(aPrimaryCopy.getIndex(), aPrimaryCopy);

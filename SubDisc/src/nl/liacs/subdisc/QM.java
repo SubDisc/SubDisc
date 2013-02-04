@@ -39,7 +39,6 @@ public enum QM implements EnumInterface
 	T_TEST		("t-Test",		"1.0",	TargetType.SINGLE_NUMERIC),
 	INVERSE_T_TEST	("Inverse t-Test",	"1.0",	TargetType.SINGLE_NUMERIC),
 	ABS_T_TEST	("Abs t-Test",		"1.0",	TargetType.SINGLE_NUMERIC),
-	CHI2_TEST	("Median Chi-squared test",	"2.5",	TargetType.SINGLE_NUMERIC),
 	HELLINGER	("Squared Hellinger distance",	"0.0",	TargetType.SINGLE_NUMERIC),
 	KULLBACKLEIBLER	("Kullback-Leibler divergence",	"0.0",	TargetType.SINGLE_NUMERIC),
 	CWRACC		("CWRAcc",		"0.0",	TargetType.SINGLE_NUMERIC),
@@ -94,8 +93,6 @@ public enum QM implements EnumInterface
 			aSet.remove(PROP_SCORE_WRACC);
 			aSet.remove(PROP_SCORE_RATIO);
 		}
-		else if (TargetType.SINGLE_NUMERIC == theTargetType)
-			aSet.remove(CHI2_TEST);
 		else if (TargetType.DOUBLE_REGRESSION == theTargetType)
 			aSet.remove(COOKS_DISTANCE);
 

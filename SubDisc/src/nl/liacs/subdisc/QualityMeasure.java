@@ -16,8 +16,6 @@ public class QualityMeasure
 	//SINGLE_NUMERIC and SINGLE_ORDINAL
 	private float itsTotalAverage = 0.0f;
 	private double itsTotalSampleStandardDeviation = 0.0;
-	// TODO implement for CHI2_TEST, itsPopulationCounts is never used now
-	private int[] itsPopulationCounts;
 	private ProbabilityDensityFunction itsPDF; // pdf for entire dataset
 
 	//Bayesian
@@ -44,7 +42,6 @@ public class QualityMeasure
 			itsTotalAverage = theTotalSum/itsNrRecords;
 		if (itsNrRecords > 1)
 			itsTotalSampleStandardDeviation = Math.sqrt(theTotalSSD/(itsNrRecords-1));
-		//itsPopulationCounts = null;	// TODO see itsPopulationCounts
 		itsPDF = theDataPDF;
 	}
 
@@ -275,7 +272,7 @@ public class QualityMeasure
 	 */
 	private static float lg(float p)
 	{
-		return ((float) Math.log(p))/(float)Math.log(2);
+		return (float) (Math.log(p) / Math.log(2));
 	}
 
 	public static float calculateEntropy(float bodySupport, float headBodySupport)
@@ -516,7 +513,7 @@ public class QualityMeasure
 	 * 
 	 * @return the quality
 	 */
-	public float calculate(int theCoverage, float theSum, float theSSD, float theMedian, float theMedianAD, int[] theSubgroupCounts, ProbabilityDensityFunction thePDF)
+	public float calculate(int theCoverage, float theSum, float theSSD, float theMedian, float theMedianAD, ProbabilityDensityFunction thePDF)
 	{
 		float aReturn = Float.NEGATIVE_INFINITY;
 		switch (itsQualityMeasure)
@@ -532,7 +529,7 @@ public class QualityMeasure
 			}
 			case INVERSE_Z_SCORE :
 			{
-				if(itsNrRecords <= 1)
+				if (itsNrRecords <= 1)
 					aReturn = 0.0f;
 				else
 					aReturn = (float) -((Math.sqrt(theCoverage) * ((theSum/theCoverage) - itsTotalAverage)) / itsTotalSampleStandardDeviation);
@@ -540,7 +537,7 @@ public class QualityMeasure
 			}
 			case ABS_Z_SCORE :
 			{
-				if(itsNrRecords <= 1)
+				if (itsNrRecords <= 1)
 					aReturn = 0.0f;
 				else
 					aReturn = (float) (Math.abs((Math.sqrt(theCoverage) * (theSum/theCoverage - itsTotalAverage)) / itsTotalSampleStandardDeviation));
@@ -593,20 +590,6 @@ public class QualityMeasure
 					aReturn = 0;
 				else
 					aReturn = (float) (Math.abs((Math.sqrt(theCoverage) * (theSum/theCoverage - itsTotalAverage)) / Math.sqrt(theSSD/(theCoverage-1))));
-				break;
-			}
-// TODO ANYONE implement setting of itsPopulationCounts
-			case CHI2_TEST :
-			{
-				if (itsPopulationCounts == null)
-				{
-					Log.logCommandLine("--- ERROR! QualityMeasure.calculate(): unimplemented QM. ---");
-					throw new AssertionError(itsQualityMeasure);
-				}
-				// TODO see itsPopulationCounts
-				float a = ((theSubgroupCounts[0]-itsPopulationCounts[0])*(theSubgroupCounts[0]-itsPopulationCounts[0]))/(float)itsPopulationCounts[0];
-				float b = ((theSubgroupCounts[1]-itsPopulationCounts[1])*(theSubgroupCounts[1]-itsPopulationCounts[1]))/(float)itsPopulationCounts[1];
-				aReturn = a+b;
 				break;
 			}
 			//ORDINAL
@@ -669,14 +652,17 @@ public class QualityMeasure
 					float aDensity = itsPDF.getDensity(i);
 					float aDensitySubgroup = thePDF.getDensity(i);
 					/*
-					 * FIXME MM how to deal with NaN
-					 * as soon as 1 aDensity == 0 the end
-					 * result will always be NaN
-					 * however, ignoring the intermediate
-					 * NaN results is not mathematically
-					 * sound as it may indicate maximum
-					 * divergence between 2 distributions
+					 * avoid errors in Math.log() because of
+					 * (0 / x) or (x / 0)
+					 * returns 0 by definition according to
+					 * http://en.wikipedia.org/wiki/Kullback%E2%80%93Leibler_divergence
+					 * NOTE this also catches DIVIVE_BY_0
+					 * for (aDensity == 0) because
+					 * (aSubgroupDensity == 0) for at least
+					 * all situations where (aDenisity == 0)
 					 */
+					if (aDensitySubgroup == 0.0)
+						continue;
 					aTotalDivergence += (aDensitySubgroup * Math.log(aDensitySubgroup/aDensity));
 				}
 				aReturn = (float) ((aTotalDivergence * theCoverage) / itsNrRecords);

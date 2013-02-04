@@ -353,42 +353,16 @@ public class PropensityScore
 		//System.out.println(st);
 		//System.out.println("Set Class Index");
 
-		Logistic logisticClassifier = new Logistic();
-		logisticClassifier.setRidge(0);
+		// replace logistic code with this
 		try
 		{
-			logisticClassifier.buildClassifier(data);
+			logisticClassification(data, itsPropensityScore);
 		}
 		catch (Exception e)
 		{
-			Log.logCommandLine("no classifier built!");
+			Log.logCommandLine("logistic classification failed");
 			e.printStackTrace();
 		}
-		Log.logCommandLine("Logistic Regression model created");
-
-		//now classify instances
-		for (int i=0; i<aTargetSize; i++)
-		{
-			try
-			{
-				itsPropensityScore[i] = logisticClassifier.distributionForInstance(data.instance(i))[1];
-			}
-			catch (Exception e)
-			{
-				System.out.println("Class distribution could not be computed");
-				e.printStackTrace();
-			}
-		}
-		// replace logistic code with this
-//		try
-//		{
-//			logisticClassification(data, itsPropensityScore);
-//		}
-//		catch (Exception e)
-//		{
-//			Log.logCommandLine("logistic classification failed");
-//			e.printStackTrace();
-//		}
 
 		Log.logCommandLine("propensity score filled");
 	}
