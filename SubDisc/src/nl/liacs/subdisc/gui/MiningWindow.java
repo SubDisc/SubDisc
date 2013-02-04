@@ -1401,7 +1401,7 @@ public class MiningWindow extends JFrame implements ActionListener
 				Column aTarget = itsTargetConcept.getPrimaryTarget();
 				ProbabilityDensityFunction aPDF = new ProbabilityDensityFunction(aTarget);
 				aPDF.smooth();
-				new ModelWindow(aTarget, aPDF, null, "entire dataset");
+				new ModelWindow(aTarget, aPDF, null, itsTable.getName());
 				break;
 			}
 			case SINGLE_ORDINAL :

@@ -21,26 +21,27 @@ public class ModelWindow extends JFrame implements ActionListener
 
 	private JScrollPane itsJScrollPaneCenter = new JScrollPane();
 
-	// SINGLE_NUMERIC: show distribution over numeric target
+	// SINGLE_NUMERIC: show distribution over numeric target and Subgroup ==
 
 	public ModelWindow(Column theDomain, ProbabilityDensityFunction theDatasetPDF, ProbabilityDensityFunction theSubgroupPDF, String theName)
 	{
 		initComponents();
+		final boolean addSubgroup = (theSubgroupPDF != null);
 
 		XYSeries aDatasetSeries = new XYSeries("dataset");
-		XYSeries aSubgroupSeries = new XYSeries("subgroup");
+		XYSeries aSubgroupSeries = addSubgroup ? new XYSeries("subgroup") : null;
 		for (int i = 0, j = theDatasetPDF.size(); i < j; ++i)
 		{
 			aDatasetSeries.add(theDatasetPDF.getMiddle(i), theDatasetPDF.getDensity(i));
-			if (theSubgroupPDF != null)
+			if (addSubgroup)
 				aSubgroupSeries.add(theSubgroupPDF.getMiddle(i), theSubgroupPDF.getDensity(i));
 		}
 		XYSeriesCollection aDataCollection = new XYSeriesCollection(aDatasetSeries);
-		if (theSubgroupPDF != null)
+		if (addSubgroup)
 			aDataCollection.addSeries(aSubgroupSeries);
 
 		JFreeChart aChart =
-			ChartFactory.createXYLineChart(theName, theDomain.getName(), "density", aDataCollection, PlotOrientation.VERTICAL, false, true, false);
+			ChartFactory.createXYLineChart("", theDomain.getName(), "density", aDataCollection, PlotOrientation.VERTICAL, false, true, false);
 		aChart.setAntiAlias(true);
 		aChart.getTitle().setFont(new Font("title", Font.BOLD, 14));
 		XYPlot plot = aChart.getXYPlot();
@@ -51,11 +52,15 @@ public class ModelWindow extends JFrame implements ActionListener
 		plot.getRenderer().setSeriesStroke(0, new BasicStroke(2.0f));
 		plot.getRenderer().setSeriesPaint(1, Color.red); //subgroup
 		plot.getRenderer().setSeriesStroke(1, new BasicStroke(2.0f)); //subgroup
-		aChart.addLegend(new LegendTitle(plot));
+		if (addSubgroup)
+			aChart.addLegend(new LegendTitle(plot));
 
 		itsJScrollPaneCenter.setViewportView(new ChartPanel(aChart));
 
-		setTitle("Base Model");
+		if (!addSubgroup)
+			setTitle("Base Model: Numeric Distribution for " + theName);
+		else
+			setTitle(theName + ": Numeric Distribution");
 		setIconImage(MiningWindow.ICON);
 		setLocation(50, 50);
 		setSize(GUI.WINDOW_DEFAULT_SIZE);
@@ -63,7 +68,7 @@ public class ModelWindow extends JFrame implements ActionListener
 		setVisible(true);
 	}
 
-	//correlation and regression ===============================
+	// DOUBLE_CORRELATION and DOUBLE_REGRESSION ============================
 
 	//TODO There should never be this much code in a constructor
 	public ModelWindow(Column theXColumn, Column theYColumn, RegressionMeasure theRM, Subgroup theSubgroup)
@@ -116,7 +121,22 @@ public class ModelWindow extends JFrame implements ActionListener
 
 		itsJScrollPaneCenter.setViewportView(new ChartPanel(aChart));
 
-		setTitle("Base Model");
+		String aTitle;
+		if (theSubgroup == null)
+			aTitle = new StringBuilder()
+					.append("Base Model: ")
+					.append(theRM != null ? "Regression" : "Correlation")
+					.append(" for entire dataset").toString();
+		else
+		{
+			aTitle = new StringBuilder()
+					.append("Subgroup ")
+					.append(theSubgroup.getID())
+					.append(theRM != null ? ": Regression" : ": Correlation")
+					.toString();
+		}
+
+		setTitle(aTitle);
 		setIconImage(MiningWindow.ICON);
 		setLocation(50, 50);
 		setSize(GUI.WINDOW_DEFAULT_SIZE);
@@ -124,7 +144,7 @@ public class ModelWindow extends JFrame implements ActionListener
 		setVisible(true);
 	}
 
-	//DAG ==================================================
+	// MULTI_LABEL: show Subgroup induced DAG ==============================
 
 	public ModelWindow(DAG theDAG, int theDAGWidth, int theDAGHeight)
 	{
@@ -134,7 +154,7 @@ public class ModelWindow extends JFrame implements ActionListener
 		aDAGView.drawDAG();
 		itsJScrollPaneCenter.setViewportView(aDAGView);
 
-		setTitle("Base Model: Bayesian Network");
+		setTitle("Base Model: Bayesian Network for entire dataset");
 		setIconImage(MiningWindow.ICON);
 		setLocation(0, 0);
 		setSize(theDAGWidth, theDAGHeight);

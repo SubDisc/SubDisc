@@ -314,7 +314,7 @@ public class ResultWindow extends JFrame implements ActionListener
 
 					ProbabilityDensityFunction aSubgroupPDF = new ProbabilityDensityFunction(aPDF, aSubgroup.getMembers());
 					aSubgroupPDF.smooth();
-					new ModelWindow(aTarget, aPDF, aSubgroupPDF, aSubgroup.toString());
+					new ModelWindow(aTarget, aPDF, aSubgroupPDF, "Subgroup " + Integer.toString(k+1));
 				}
 
 				break;
@@ -339,8 +339,9 @@ public class ResultWindow extends JFrame implements ActionListener
 					{
 						if (aCount == aSelectionIndex[i])
 							new ModelWindow(s.getDAG(), 1000, 800)
-								.setTitle("Bayesian net induced from subgroup " +
-											(aSelectionIndex[i]+1));
+								.setTitle("Subgroup " +
+									Integer.toString(aSelectionIndex[i]+1) +
+									": induced Bayesian Network");
 
 						aCount++;
 					}
@@ -404,7 +405,7 @@ public class ResultWindow extends JFrame implements ActionListener
 			new ModelWindow(aTargetConcept.getPrimaryTarget(),
 					aTargetConcept.getSecondaryTarget(),
 					aRM,
-					aSubgroup).setTitle("Subgroup " + aSubgroup.getID());
+					aSubgroup);
 		}
 	}
 
