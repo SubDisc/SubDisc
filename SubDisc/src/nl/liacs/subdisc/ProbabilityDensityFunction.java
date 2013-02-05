@@ -24,9 +24,9 @@ public class ProbabilityDensityFunction
 		itsMax = itsData.getMax();
 		itsBinWidth = (itsMax-itsMin)/itsNrBins;
 
-		Log.logCommandLine("Min = " + itsMin);
-		Log.logCommandLine("Max = " + itsMax);
-		Log.logCommandLine("BinWidth = " + itsBinWidth);
+		//Log.logCommandLine("Min = " + itsMin);
+		//Log.logCommandLine("Max = " + itsMax);
+		//Log.logCommandLine("BinWidth = " + itsBinWidth);
 		int aSize = itsData.size();
 		float anIncrement = 1.0f / aSize;
 		for (int i=0; i<aSize; i++)

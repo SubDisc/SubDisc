@@ -16,6 +16,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 
 	private final QualityMeasure itsQualityMeasure;
 	private final float itsQualityMeasureMinimum;	// itsSearchParameters.getQualityMeasureMinimum();
+	private boolean ignoreQualityMinimum = false; //used for swap-randomization purposes, and to get random qualities
 
 	private SubgroupSet itsResult;
 	private CandidateQueue itsCandidateQueue;
@@ -186,6 +187,11 @@ public class SubgroupDiscovery extends MiningAlgorithm
 	//protected void useSwapRandomisationSetting() {
 	//	itsResult.useSwapRandomisationSetting();
 	//}
+
+	public void ignoreQualityMinimum()
+	{
+		ignoreQualityMinimum = true;
+	}
 
 	public void mine(long theBeginTime)
 	{
@@ -613,9 +619,11 @@ public class SubgroupDiscovery extends MiningAlgorithm
 			float aQuality = evaluateCandidate(theSubgroup);
 			theSubgroup.setMeasureValue(aQuality);
 
-			// could make aQualityMeasureMinimum a parameter of SubgroupSet
-			if (aQuality > itsQualityMeasureMinimum && aNewCoverage <= itsMaximumCoverage)
-				itsResult.add(theSubgroup);
+			//if the quality is enough, or should be ignored, ...
+			if (ignoreQualityMinimum || aQuality > itsQualityMeasureMinimum)
+				//...and, the coverage is not too high
+				if (aNewCoverage <= itsMaximumCoverage)
+					itsResult.add(theSubgroup);
 
 			itsCandidateQueue.add(new Candidate(theSubgroup));
 
