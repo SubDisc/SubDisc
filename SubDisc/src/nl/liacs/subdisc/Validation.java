@@ -234,6 +234,54 @@ public class Validation
 			aSubgroupSize = aMembers.cardinality();
 		}
 		while (aSubgroupSize < theMinimumCoverage || aSubgroupSize == aNrRows);
+		/*
+		 * NOTE on while checks
+		 * 
+		 * (aSubgroupSize < theMinimumCoverage) ************************
+		 * in the unlikely event that theMinimumCoverage is too high,
+		 * this while will loop indefinitely
+		 * 
+		 * BINARY never a problem, getRandomConditionList() uses both
+		 * 0 and 1 to test on. Either the counts for 0s or, its
+		 * complement for 1s, pass the threshold.
+		 * 
+		 * NOMINAL if for none of the NOMINAL Columns the domain has a
+		 * value that occurs >= theMinimumCoverage the threshold will
+		 * never be passed.
+		 * 
+		 * NUMERIC this case is more difficult to predict because
+		 * getRandomConditionList() uses a Columns MIN and MAX instead
+		 * of its numeric distribution
+		 * but what it comes down to is that it can not be guaranteed
+		 * that the created values ranging from
+		 * MIN+(RANGE*.25) to MIN+(RANGE*.75) (where RANGE = (MAX-MIN))
+		 * will select a number of members >= theMinimumCoverage.
+		 * as an example imagine that for all NUMERIC Columns there are:
+		 * no values between MIN+(RANGE*.25) to MIN+(RANGE*.75), and
+		 * half the values are <= MIN+(RANGE*.25) and half the values
+		 * are >= MIN+(RANGE*.75), then the threshold will never be
+		 * passed if theMinimumCoverage > .5*aNrRows
+		 * as another example, imagine all NUMERIC Columns have a
+		 * uniform or normally distributed domain, then one can expect
+		 * never to pass the threshold if
+		 * (theMinimumCoverage > .75*aNrRows).
+		 * 
+		 * (aSubgroupSize == aNrRows) **********************************
+		 * 
+		 * BINARY the check is needed for the unlikely event that a
+		 * BINARY Column has just 1 value
+		 * fortunately, a suitable candidate can always be found based
+		 * on the same reasoning for the BINARY case above
+		 * 
+		 * NOMINAL the check is needed for the unlikely event that a
+		 * NOMINAL Column has just 1 value
+		 * in the unlikely event that all NOMINAL Columns have 1-value
+		 * domains the while will loop indefinitely
+		 * 
+		 * NUMERIC the check is not needed because the current
+		 * implementation of getRandomConditionList() guarantees that no
+		 * numeric Condition can ever select the entire dataset
+		 */
 
 		Log.logCommandLine(aCL.toString());
 
@@ -514,7 +562,7 @@ public class Validation
 
 			Operator anOperator;
 			Condition aCondition;
-			switch(aColumn.getType())
+			switch (aColumn.getType())
 			{
 				case BINARY :
 				{
@@ -529,7 +577,7 @@ public class Validation
 					aCondition = new Condition(aColumn, anOperator);
 					TreeSet<String> aDomain = aColumn.getDomain();
 					int aNrDistinct = aDomain.size();
-					int aRandomIndex = (int) (theRandom.nextDouble()* (double) aNrDistinct);
+					int aRandomIndex = (int) (theRandom.nextDouble() * aNrDistinct);
 					Iterator<String> anIterator = aDomain.iterator();
 					String aValue = anIterator.next();
 					for (int i=0; i<aRandomIndex; i++)
@@ -545,6 +593,30 @@ public class Validation
 					aCondition = new Condition(aColumn, anOperator);
 					float aMin = aColumn.getMin();
 					float aMax = aColumn.getMax();
+					/*
+					 * FIXME ANYBODY
+					 * This does not, in any way, take into
+					 * account the data distribution.
+					 * It seems to assume that MIN and MAX
+					 * lie at equal distance from AVERAGE.
+					 * The generated values range from
+					 * MIN+(RANGE*.25) to MIN+(RANGE*.75)
+					 * biased towards MIN+(RANGE*.5), or
+					 * simply (MIN+MAX)/2 (RANGE = MAX-MIN).
+					 * 
+					 * If most members lie below or above
+					 * (MIN+MAX)/2, or worse MIN+(RANGE*.25)
+					 * or MIN+(RANGE*.75), the generated
+					 * Conditions will be biased towards
+					 * either very small or very large
+					 * Subgroups.
+					 * 
+					 * An alternative would be to use an
+					 * 'equal-width' boundary variant like
+					 * the one used for NUMERIC_BINS binning
+					 * in #evaluateNumericRefinements() of
+					 * SubgroupDiscovery.
+					 */
 					aCondition.setValue(
 						Float.toString(aMin + (aMax - aMin) / 4 + (aMax - aMin) * theRandom.nextFloat() / 2));
 					break;
