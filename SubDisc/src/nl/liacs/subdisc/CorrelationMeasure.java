@@ -2,18 +2,18 @@ package nl.liacs.subdisc;
 
 public class CorrelationMeasure
 {
-	private int itsSampleSize; //gives the size of this sample
-	private double itsXSum;
-	private double itsYSum;
-	private double itsXYSum;
-	private double itsXSquaredSum;
-	private double itsYSquaredSum;
-	private double itsCorrelation;
+	private final CorrelationMeasure itsBase;
+	private final QM itsType;
+	private int itsSampleSize = 0; //gives the size of this sample
+	private double itsXSum = 0.0;
+	private double itsYSum = 0.0;
+	private double itsXYSum = 0.0;
+	private double itsXSquaredSum = 0.0;
+	private double itsYSquaredSum = 0.0;
+	private double itsCorrelation = 0.0;
 	private boolean itsCorrelationIsOutdated = true; //flag indicating whether the latest computed correlation is outdated and whether it should be computed again
 	private boolean itsComplementIsOutdated = true; //flag indicating whether the latest computed correlation for its complement is outdated and whether it should be computed again
 	private double itsComplementCorrelation = Double.NaN;
-	private final CorrelationMeasure itsBase;
-	private final QM itsType;
 
 	//make a base model from two columns
 	public CorrelationMeasure(QM theType, Column thePrimaryColumn, Column theSecondaryColumn) throws IllegalArgumentException
@@ -22,13 +22,8 @@ public class CorrelationMeasure
 			throw createQMException(theType);
 
 		itsBase = null; //no base model to refer to yet
-		itsSampleSize = 0;
-		itsXSum = 0;
-		itsYSum = 0;
-		itsXYSum = 0;
-		itsXSquaredSum = 0;
-		itsYSquaredSum = 0;
 		itsType = theType;
+
 		for (int i = 0, j = thePrimaryColumn.size(); i < j; i++)
 			addObservation(thePrimaryColumn.getFloat(i), theSecondaryColumn.getFloat(i));
 	}
@@ -41,12 +36,6 @@ public class CorrelationMeasure
 			throw createQMException(theBase.itsType);
 
 		itsBase = theBase;
-		itsSampleSize = 0;
-		itsXSum = 0;
-		itsYSum = 0;
-		itsXYSum = 0;
-		itsXSquaredSum = 0;
-		itsYSquaredSum = 0;
 		itsType = theBase.itsType;
 	}
 
