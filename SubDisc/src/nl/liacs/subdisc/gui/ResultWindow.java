@@ -400,7 +400,10 @@ public class ResultWindow extends JFrame implements ActionListener
 			Subgroup aSubgroup = anIterator.next();
 
 			if (isRegressionSetting)
+			{
 				aRM = new RegressionMeasure(itsRegressionMeasureBase, aSubgroup.getMembers());
+				aRM.getEvaluationMeasureValue();
+			}
 
 			new ModelWindow(aTargetConcept.getPrimaryTarget(),
 					aTargetConcept.getSecondaryTarget(),

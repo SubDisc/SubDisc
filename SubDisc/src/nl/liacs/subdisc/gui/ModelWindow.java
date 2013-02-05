@@ -12,8 +12,8 @@ import nl.liacs.subdisc.*;
 import org.jfree.chart.*;
 import org.jfree.chart.plot.*;
 import org.jfree.chart.renderer.xy.*;
-import org.jfree.data.xy.*;
 import org.jfree.chart.title.*;
+import org.jfree.data.xy.*;
 
 public class ModelWindow extends JFrame implements ActionListener
 {
@@ -26,6 +26,7 @@ public class ModelWindow extends JFrame implements ActionListener
 	public ModelWindow(Column theDomain, ProbabilityDensityFunction theDatasetPDF, ProbabilityDensityFunction theSubgroupPDF, String theName)
 	{
 		initComponents();
+
 		final boolean addSubgroup = (theSubgroupPDF != null);
 
 		XYSeries aDatasetSeries = new XYSeries("dataset");
@@ -43,7 +44,6 @@ public class ModelWindow extends JFrame implements ActionListener
 		JFreeChart aChart =
 			ChartFactory.createXYLineChart("", theDomain.getName(), "density", aDataCollection, PlotOrientation.VERTICAL, false, true, false);
 		aChart.setAntiAlias(true);
-		aChart.getTitle().setFont(new Font("title", Font.BOLD, 14));
 		XYPlot plot = aChart.getXYPlot();
 		plot.setBackgroundPaint(Color.white);
 		plot.setDomainGridlinePaint(Color.gray);
@@ -74,30 +74,51 @@ public class ModelWindow extends JFrame implements ActionListener
 	public ModelWindow(Column theXColumn, Column theYColumn, RegressionMeasure theRM, Subgroup theSubgroup)
 	{
 		initComponents();
-		String aName = (theRM == null ? "2D distribution" :
-						String.format("y = %f + %f * x",
-								(float) theRM.getIntercept(),
-								(float) theRM.getSlope()));
+
+		final boolean isRegression = (theRM != null);
+		final boolean forSubgroup = (theSubgroup != null);
+
+		String aName;
+		if (isRegression)
+		{
+				aName = String.format("%s = %f + %f * %s",
+							theYColumn.getName(),
+							(float) theRM.getIntercept(),
+							(float) theRM.getSlope(),
+							theXColumn.getName());
+		}
+		else
+		{
+			if (forSubgroup)
+				aName = String.format("2D distribution (r = %f)",
+						(float) theSubgroup.getSecondaryStatistic());
+			else
+				aName = "2D distribution";
+		}
 
 		//data
-		BitSet aMembers = (theSubgroup == null) ? null : theSubgroup.getMembers();
 		XYSeries aSeries = new XYSeries("data");
 
-		//if complete database
-		if (aMembers == null)
-			for (int i = 0, j = theXColumn.size(); i < j; ++i)
-				aSeries.add(theXColumn.getFloat(i), theYColumn.getFloat(i));
 		//if i is a member of the specified subgroup
-		else
+		if (forSubgroup)
+		{
+			BitSet aMembers = theSubgroup.getMembers();
 			for (int i = 0, j = theXColumn.size(); i < j; ++i)
 				if (aMembers.get(i))
 					aSeries.add(theXColumn.getFloat(i), theYColumn.getFloat(i));
+		}
+		//if complete database
+		else
+			for (int i = 0, j = theXColumn.size(); i < j; ++i)
+				aSeries.add(theXColumn.getFloat(i), theYColumn.getFloat(i));
 		XYSeriesCollection aDataSet = new XYSeriesCollection(aSeries);
 
 		// create the chart
 		JFreeChart aChart =
 			ChartFactory.createScatterPlot(aName, theXColumn.getName(), theYColumn.getName(), aDataSet, PlotOrientation.VERTICAL, false, true, false);
 		aChart.setAntiAlias(true);
+		aChart.getTitle().setFont(new Font("title", Font.BOLD, 14));
+
 		XYPlot plot = aChart.getXYPlot();
 		plot.setBackgroundPaint(Color.white);
 		plot.setDomainGridlinePaint(Color.gray);
@@ -106,7 +127,7 @@ public class ModelWindow extends JFrame implements ActionListener
 		plot.getRenderer().setSeriesShape(0, new Rectangle2D.Float(0.0f, 0.0f, 2.5f, 2.5f));
 
 		//line
-		if (theRM != null)
+		if (isRegression)
 		{
 			StandardXYItemRenderer aLineRenderer = new StandardXYItemRenderer(StandardXYItemRenderer.LINES);
 			aDataSet = new XYSeriesCollection(); // ?
@@ -122,19 +143,18 @@ public class ModelWindow extends JFrame implements ActionListener
 		itsJScrollPaneCenter.setViewportView(new ChartPanel(aChart));
 
 		String aTitle;
-		if (theSubgroup == null)
-			aTitle = new StringBuilder()
-					.append("Base Model: ")
-					.append(theRM != null ? "Regression" : "Correlation")
-					.append(" for entire dataset").toString();
-		else
-		{
+		if (forSubgroup)
 			aTitle = new StringBuilder()
 					.append("Subgroup ")
 					.append(theSubgroup.getID())
-					.append(theRM != null ? ": Regression" : ": Correlation")
+					.append(isRegression ? ": Regression" : ": Correlation")
 					.toString();
-		}
+		else
+			aTitle = new StringBuilder()
+					.append("Base Model: ")
+					.append(isRegression ? "Regression" : "Correlation")
+					.append(" for entire dataset")
+					.toString();
 
 		setTitle(aTitle);
 		setIconImage(MiningWindow.ICON);
