@@ -54,6 +54,8 @@ public class Validation
 	public static boolean isValidRandomQualitiesTargetType(TargetType theTargetType)
 	{
 		return theTargetType == TargetType.SINGLE_NOMINAL ||
+			theTargetType == TargetType.SINGLE_NUMERIC ||
+			theTargetType == TargetType.DOUBLE_REGRESSION ||
 			theTargetType == TargetType.DOUBLE_CORRELATION ||
 			theTargetType == TargetType.MULTI_LABEL;
 	}
@@ -73,7 +75,7 @@ public class Validation
 			}
 			case SINGLE_NUMERIC :
 			{
-				throw new AssertionError(aTargetType);
+				return getSingleNumericQualities(forSubgroups, theNrRepetitions, aMinimumCoverage, aRandom, aDepth);
 			}
 			case SINGLE_ORDINAL:
 			{
@@ -81,7 +83,7 @@ public class Validation
 			}
 			case DOUBLE_REGRESSION :
 			{
-				throw new AssertionError(aTargetType);
+				return getDoubleRegressionQualities(forSubgroups, theNrRepetitions, aMinimumCoverage, aRandom, aDepth);
 			}
 			case DOUBLE_CORRELATION :
 			{
@@ -129,6 +131,67 @@ public class Validation
 			int aCountHeadBody = aMembers.cardinality();
 
 			aQualities[i] = itsQualityMeasure.calculate(aCountHeadBody, aSubgroup.getCoverage());
+		}
+
+		return aQualities;
+	}
+
+	// if forSubgroups is true, create Subgroups, else create Conditions
+	// if forSubgroups is true, theDepth is ignored
+	private double[] getSingleNumericQualities(boolean forSubgroups, int theNrRepetitions, int theMinimumCoverage, Random theRandom, int theDepth)
+	{
+		final double[] aQualities = new double[theNrRepetitions];
+
+		final Column aTarget = itsTargetConcept.getPrimaryTarget();
+
+		for (int i = 0; i < theNrRepetitions; ++i)
+		{
+			Subgroup aSubgroup;
+
+			// essential switch between Subgroups/ Conditions
+			if (forSubgroups)
+				aSubgroup = getValidSubgroup(theMinimumCoverage, theRandom);
+			else
+				aSubgroup = getValidSubgroup(theDepth, theMinimumCoverage, theRandom);
+
+			BitSet aMembers = aSubgroup.getMembers();
+
+			float[] aCounts = aTarget.getStatistics(aMembers, itsSearchParameters.getQualityMeasure() == QM.MMAD);
+			ProbabilityDensityFunction aPDF = new ProbabilityDensityFunction(itsQualityMeasure.getProbabilityDensityFunction(), aMembers);
+			aPDF.smooth();
+
+			aQualities[i] = itsQualityMeasure.calculate(aMembers.cardinality(), aCounts[0], aCounts[1], aCounts[2], aCounts[3], aPDF);
+		}
+
+		return aQualities;
+	}
+
+	// if forSubgroups is true, create Subgroups, else create Conditions
+	// if forSubgroups is true, theDepth is ignored
+	private double[] getDoubleRegressionQualities(boolean forSubgroups, int theNrRepetitions, int theMinimumCoverage, Random theRandom, int theDepth)
+	{
+		final double[] aQualities = new double[theNrRepetitions];
+
+		Column aPrimaryColumn = itsTargetConcept.getPrimaryTarget();
+		Column aSecondaryColumn = itsTargetConcept.getSecondaryTarget();
+		RegressionMeasure itsBaseRM =
+			new RegressionMeasure(itsSearchParameters.getQualityMeasure(), aPrimaryColumn, aSecondaryColumn);
+
+		for (int i = 0; i < theNrRepetitions; ++i)
+		{
+			Subgroup aSubgroup;
+
+			// essential switch between Subgroups/ Conditions
+			if (forSubgroups)
+				aSubgroup = getValidSubgroup(theMinimumCoverage, theRandom);
+			else
+				aSubgroup = getValidSubgroup(theDepth, theMinimumCoverage, theRandom);
+
+			BitSet aMembers = aSubgroup.getMembers();
+
+			RegressionMeasure aRM = new RegressionMeasure(itsBaseRM, aMembers);
+
+			aQualities[i] = aRM.getEvaluationMeasureValue();
 		}
 
 		return aQualities;
@@ -586,7 +649,6 @@ public class Validation
 					break;
 				}
 				case NUMERIC :
-				default :
 				{
 					anOperator = theRandom.nextBoolean() ?
 						Operator.LESS_THAN_OR_EQUAL : Operator.GREATER_THAN_OR_EQUAL;
@@ -621,6 +683,7 @@ public class Validation
 						Float.toString(aMin + (aMax - aMin) / 4 + (aMax - aMin) * theRandom.nextFloat() / 2));
 					break;
 				}
+				default : throw new AssertionError(aColumn.getType());
 			}
 			aCL.addCondition(aCondition);
 		}
