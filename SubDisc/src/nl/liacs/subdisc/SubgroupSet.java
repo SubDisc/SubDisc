@@ -8,10 +8,10 @@ import java.util.concurrent.*;
  * A SubgroupSet is a <code>TreeSet</code> of {@link Subgroup Subgroup}s. If its
  * size is set to <= 0, the SubgroupSet has no maximum size, else the number of
  * Subgroups it can contain is limited by its size. In a nominal target setting
- * ({@link nl.liacs.subdisc.TargetType TargetType}) a
+ * ({@link TargetType}) a
  * {@link ROCList ROCList} can be obtained from this SubgroupSet to create a
- * {@link nl.liacs.subdisc.gui.ROCCurve ROCCurve} in a
- * {@link nl.liacs.subdisc.gui.ROCCurveWindow ROCCurveWindow}.
+ * {@link nl.liacs.subdisc.gui.ROCCurve} in a
+ * {@link nl.liacs.subdisc.gui.ROCCurveWindow}.
  *
  * Note that only the add method is thread safe with respect to concurrent
  * access, and possible additions. None of the other methods of this class
@@ -272,46 +272,41 @@ public class SubgroupSet extends TreeSet<Subgroup>
 		Log.logCommandLine("saving extent...");
 		try
 		{
-/*			final Column aPrimaryTarget = theTargetConcept.getPrimaryTarget();
-			final Column aSecondaryTarget = theTargetConcept.getSecondaryTarget();
-			final List<Column> aMultiTargets = theTargetConcept.getMultiTargets();
-*/
-			// j = 5 + aNrRows*(,1) + 2*float
-			// WD: Okay, wanneer dit zo wordt gedefinieerd, zou iemand er dan even bij kunnen zetten wat deze j is en waarom hij zo gedefinieerd is?
-			//     Het maakt zonder context weinig sense om verder te loopen dan j=theTable.getNrRows(), dus als daar toch een goede reden voor is, hoor ik het graag.
-//			for (int i = 0, j = theTable.getNrRows()*2 + 100; i < j; ++i)
-			for (int i = 0, j = theTable.getNrRows(), k=j*2+100, l = 0; i < j; ++i)
-			{
-				StringBuilder aRow = new StringBuilder(k);
+			// get SubgroupMembers only once
+			List<BitSet> aMembers = new ArrayList<BitSet>(this.size());
+			for (Subgroup s : this)
+				aMembers.add(s.getMembers());
 
-				//add subgroup extents to current row
-				// since the crossvalidation Columns are shorter than the original columns, we need to pad
+			// row length = 5 + size()*(,1) + \n
+			int aNrChars = this.size()*2 + 6;
+
+			StringBuilder aRow = new StringBuilder(aNrChars);
+			aRow.append("test ");
+			for (int i = 0, j = this.size(); i < j; ++i)
+				aRow.append(",0");
+			String aTestRow = aRow.append("\n").toString();
+
+			for (int i = 0, j = theTable.getNrRows(), k = 0; i < j; ++i)
+			{
+				// add subgroup extents to current row
+				// since Cross-Validation Columns are shorter
+				// than the original Columns, we need to pad
 				if (theSubset.get(i))
 				{
+					aRow = new StringBuilder(aNrChars);
 					aRow.append("train");
-					// FIXME MM getMembers() is expensive now
-					for (Subgroup aSubgroup: this)
-						aRow.append(aSubgroup.getMembers().get(l) ? ",1" : ",0");
-					l++;
+					for (BitSet b : aMembers)
+						aRow.append(b.get(k) ? ",1" : ",0");
+					theWriter.write(aRow.append("\n").toString());
+					++k;
 				}
 				else
-				{
-					aRow.append("test ");
-					for (Subgroup aSubgroup: this)
-						aRow.append(",0");
-					/*
-					 * TODO create a single String outside
-					 * for-loop that looks like:
-					 * size() * ",0"
-					 */
-				}
-
-				theWriter.write(aRow.append("\n").toString());
+					theWriter.write(aTestRow);
 			}
 		}
 		catch (IOException e)
 		{
-			Log.logCommandLine("SubgroupSet.saveExtent(): error on file: " +e.getMessage());
+			Log.logCommandLine("SubgroupSet.saveExtent(): error on file: " + e.getMessage());
 		}
 	}
 
