@@ -33,7 +33,6 @@ public class RefinementList extends ArrayList<Refinement>
 				aType = aColumn.getType();
 				Refinement aRefinement = new Refinement(aCondition, itsSubgroup);
 
-				// FIXME MM should be part of Operator
 				//check validity of operator
 				//numeric
 				if (aType == AttributeType.NUMERIC && NumericOperatorSetting.check(aNO, aCondition.getOperator()))

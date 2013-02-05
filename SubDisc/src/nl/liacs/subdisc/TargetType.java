@@ -39,7 +39,7 @@ public enum TargetType implements EnumInterface
 	 * parameter, or the default TargetType <code>SINGLE_NOMINAL</code> if no
 	 * corresponding TargetType can not be found.
 	 */
-	public static TargetType getTargetType(String theType)
+	public static TargetType fromString(String theType)
 	{
 		for (TargetType t : TargetType.values())
 			if (t.GUI_TEXT.equalsIgnoreCase(theType))

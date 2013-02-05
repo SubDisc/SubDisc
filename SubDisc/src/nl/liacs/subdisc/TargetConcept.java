@@ -46,7 +46,7 @@ public class TargetConcept implements XMLNodeInterface
 			if ("nr_target_attributes".equalsIgnoreCase(aNodeName))
 				itsNrTargetAttributes = Integer.parseInt(aSetting.getTextContent());
 			if ("target_type".equalsIgnoreCase(aNodeName))
-				itsTargetType = (TargetType.getTargetType(aSetting.getTextContent()));
+				itsTargetType = (TargetType.fromString(aSetting.getTextContent()));
 			else if ("primary_target".equalsIgnoreCase(aNodeName))
 				itsPrimaryTarget = theTable.getColumn(aSetting.getTextContent());
 			else if ("target_value".equalsIgnoreCase(aNodeName))
@@ -62,7 +62,7 @@ public class TargetConcept implements XMLNodeInterface
 						itsMultiTargets.add(theTable.getColumn(s));
 				}
 			}
-// TODO NOTE these are not present in the XML
+// TODO MM NOTE these are not present in the XML
 			else if ("multi_regression_targets".equalsIgnoreCase(aNodeName))
 			{
 				if (!aSetting.getTextContent().isEmpty())
@@ -84,7 +84,7 @@ public class TargetConcept implements XMLNodeInterface
 	public TargetType getTargetType() { return itsTargetType; }
 	public void setTargetType(String theTargetTypeName)
 	{
-			itsTargetType = TargetType.getTargetType(theTargetTypeName);
+		itsTargetType = TargetType.fromString(theTargetTypeName);
 	}
 
 	public Column getPrimaryTarget() { return itsPrimaryTarget; }
@@ -166,32 +166,27 @@ public class TargetConcept implements XMLNodeInterface
 		//for tertiary targets and multi-regression, when that is stable
 	}
 
-	// FIXME MM why index and not reference comparison (Column == Column)
 	public boolean isTargetAttribute(Column theColumn)
 	{
-		int anIndex = theColumn.getIndex();
 		switch (itsTargetType)
 		{
 			case SINGLE_NOMINAL :
+				return itsPrimaryTarget == theColumn;
 			case SINGLE_NUMERIC :
-				return (anIndex == itsPrimaryTarget.getIndex());
+				return itsPrimaryTarget == theColumn;
 			case DOUBLE_REGRESSION :
+				return ((itsPrimaryTarget == theColumn) || (itsSecondaryTarget == theColumn));
 			case DOUBLE_CORRELATION :
-				return (anIndex == itsPrimaryTarget.getIndex() || anIndex == itsSecondaryTarget.getIndex());
+				return ((itsPrimaryTarget == theColumn) || (itsSecondaryTarget == theColumn));
 			case MULTI_LABEL :
 			{
 				for (Column aColumn : itsMultiTargets)
-					if (anIndex == aColumn.getIndex())
+					if (aColumn == theColumn)
 						return true;
 				return false;
 			}
 			default :
-				return false;
-			/*
-			 * FIXME MM throw AssertionError()
-			 * eg. MULTI_BINARY_CLASSIFICATION would have no target
-			 * attribute(s) according to this code
-			 */
+				throw new AssertionError(itsTargetType);
 		}
 	}
 
@@ -229,7 +224,7 @@ public class TargetConcept implements XMLNodeInterface
 			XMLNode.addNodeTo(aNode, "multi_targets", sb.substring(0, sb.length() - 1));
 		}
 
-/* TODO for stable jar, disable, setting were originally added in revision 848
+/* TODO MM for stable jar, disable, setting were originally added in revision 848
 		if (itsMultiRegressionTargets == null || itsMultiRegressionTargets.size() == 0)
 			XMLNode.addNodeTo(aNode, "multi_regression_targets");
 		else
