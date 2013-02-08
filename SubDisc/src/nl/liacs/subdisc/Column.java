@@ -1437,9 +1437,9 @@ public class Column implements XMLNodeInterface
 	 * @see Subgroup
 	 * @see java.util.BitSet
 	 */
+	//public float[] getStatistics(BitSet theBitSet, Set<Stat> theRequiredStats)
 	public float[] getStatistics(BitSet theBitSet, boolean getMedianAndMedianAD)
 	{
-
 		if (!isValidCall("getStatistics", theBitSet))
 			return new float[]{ Float.NaN, Float.NaN, Float.NaN, Float.NaN };
 		// not all methods below are safe for divide by 0

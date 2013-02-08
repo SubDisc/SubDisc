@@ -28,6 +28,7 @@ public enum QM implements EnumInterface
 	BAYESIAN_SCORE	("Bayesian Score", "0.0",	TargetType.SINGLE_NOMINAL),
 
 	// SINGLE_NUMERIC quality measures
+	// NOTE when adding a new SINGLE_NUMERIC QM -> add it to requiredStats()
 	Z_SCORE		("Z-Score",		"1.0",	TargetType.SINGLE_NUMERIC),
 	INVERSE_Z_SCORE	("Inverse Z-Score",	"1.0",	TargetType.SINGLE_NUMERIC),
 	ABS_Z_SCORE	("Abs Z-Score",		"1.0",	TargetType.SINGLE_NUMERIC),
@@ -40,10 +41,11 @@ public enum QM implements EnumInterface
 	INVERSE_T_TEST	("Inverse t-Test",	"1.0",	TargetType.SINGLE_NUMERIC),
 	ABS_T_TEST	("Abs t-Test",		"1.0",	TargetType.SINGLE_NUMERIC),
 	HELLINGER	("Squared Hellinger distance",	"0.0",	TargetType.SINGLE_NUMERIC),
-	KULLBACKLEIBLER	("Kullback-Leibler divergence",	"0.0",	TargetType.SINGLE_NUMERIC),
+	KULLBACK_LEIBLER("Kullback-Leibler divergence",	"0.0",	TargetType.SINGLE_NUMERIC),
 	CWRACC		("CWRAcc",		"0.0",	TargetType.SINGLE_NUMERIC),
 
 	// SINGLE_ORDINAL quality measures
+	// NOTE when adding a new SINGLE_ORDINAL QM -> add it to requiredStats()
 	AUC		("AUC of ROC",		"0.5",	TargetType.SINGLE_ORDINAL),
 	WMW_RANKS	("WMW-Ranks test",	"1.0",	TargetType.SINGLE_ORDINAL),
 	INVERSE_WMW_RANKS("Inverse WMW-Ranks test",	"1.0",	TargetType.SINGLE_ORDINAL),
@@ -69,6 +71,9 @@ public enum QM implements EnumInterface
 	LINEAR_REGRESSION	("Significance of Slope Difference", "0.0", TargetType.DOUBLE_REGRESSION),
 	COOKS_DISTANCE		("Cook's Distance",	"0.0",	TargetType.DOUBLE_REGRESSION);
 
+	// to enforce implementation of SINGLE_NUMERIC and SINGLE_ORDINAL QMs
+	static { requiredStatsTest(); };
+
 	public final String GUI_TEXT;
 	public final String MEASURE_DEFAULT;
 	public final TargetType TARGET_TYPE;
@@ -82,7 +87,7 @@ public enum QM implements EnumInterface
 
 	public static final Set<QM> getQualityMeasures(TargetType theTargetType)
 	{
-		EnumSet<QM> aSet = EnumSet.noneOf(QM.class);
+		Set<QM> aSet = EnumSet.noneOf(QM.class);
 		for (QM qm : QM.values())
 			if (qm.TARGET_TYPE == theTargetType)
 				aSet.add(qm);
@@ -114,6 +119,85 @@ public enum QM implements EnumInterface
 				return qm;
 
 		return null;
+	}
+
+	// NOTE EnumSets are modifiable like any other set, prevent this
+	// EnumSet < 65 items are internally represented as a single long
+	private static final Set<Stat> SUM = Collections.unmodifiableSet(EnumSet.of(Stat.SUM));
+	private static final Set<Stat> SUM_SSD = Collections.unmodifiableSet(EnumSet.of(Stat.SUM, Stat.SSD));
+	private static final Set<Stat> MEDIAN_MAD = Collections.unmodifiableSet(EnumSet.of(Stat.MEDIAN, Stat.MAD));
+	private static final Set<Stat> PDF = Collections.unmodifiableSet(EnumSet.of(Stat.PDF));
+
+	/*
+	 * In general, the splitting of an Enum declaration and its logic is a
+	 * bad practice. However, the file structure would suffer greatly by
+	 * adding a getRequiredStats() method to each Enum declaration.
+	 * Also, only SINGLE_NUMERIC QMs require such a method.
+	 * But, when a new SINGLE_NUMERIC QM declaration is added, it should
+	 * also be added here.
+	 */
+	/**
+	 * 
+	 * 
+	 * @param theQM the single numeric QM for which to query the Stat types.
+	 * 
+	 * @return a Set 
+	 * 
+	 * @see Stat
+	 * @see Column#getStatistics(BitSet, Set)
+	 */
+	public static Set<Stat> requiredStats(QM theQM)
+	{
+		switch(theQM)
+		{
+			// SINGLE_NUMERIC
+			case Z_SCORE :		return SUM;
+			case INVERSE_Z_SCORE :	return SUM;
+			case ABS_Z_SCORE :	return SUM;
+			case AVERAGE :		return SUM;
+			case INVERSE_AVERAGE :	return SUM;
+			case MEAN_TEST :	return SUM;
+			case INVERSE_MEAN_TEST :return SUM;
+			case ABS_MEAN_TEST :	return SUM;
+			case T_TEST :		return SUM_SSD;
+			case INVERSE_T_TEST :	return SUM_SSD;
+			case ABS_T_TEST :	return SUM_SSD;
+			case HELLINGER :	return PDF;
+			case KULLBACK_LEIBLER :	return PDF;
+			case CWRACC :		return PDF;
+			// SINGLE_ORDINAL
+			case AUC :		return SUM;
+			case WMW_RANKS :	return SUM;
+			case INVERSE_WMW_RANKS :return SUM;
+			case ABS_WMW_RANKS :	return SUM;
+			case MMAD :		return MEDIAN_MAD;
+			default :
+			{
+				// throws NullPointerException if theQM == null
+				if (theQM.TARGET_TYPE == TargetType.SINGLE_NUMERIC ||
+					theQM.TARGET_TYPE == TargetType.SINGLE_ORDINAL)
+					throw new AssertionError(
+						"QM.requiredStats() not implemented for: " + theQM);
+				else
+					throw new IllegalArgumentException(
+						String.format("%s not for %s or %s",
+								theQM,
+								TargetType.SINGLE_NUMERIC,
+								TargetType.SINGLE_ORDINAL));
+			}
+		}
+	}
+
+	/*
+	 * throws an AssertionError(QM) if a SINGLE_NUMERIC or SINGLE_ORDINAL
+	 * QM is completely implemented
+	 */
+	private static void requiredStatsTest()
+	{
+		for (QM qm : QM.values())
+			if (qm.TARGET_TYPE == TargetType.SINGLE_NUMERIC ||
+				qm.TARGET_TYPE == TargetType.SINGLE_ORDINAL)
+				requiredStats(qm);
 	}
 
 	@Override

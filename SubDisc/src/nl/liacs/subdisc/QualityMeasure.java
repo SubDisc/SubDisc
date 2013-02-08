@@ -512,6 +512,10 @@ public class QualityMeasure
 	 * @param thePDF the ProbabilityDensityFunction for the sample
 	 * 
 	 * @return the quality
+	 * 
+	 * @see Stat
+	 * @see Column#getStatistics(java.util.BitSet, java.util.Set)
+	 * @see ProbabilityDensityFunction
 	 */
 	public float calculate(int theCoverage, float theSum, float theSSD, float theMedian, float theMedianAD, ProbabilityDensityFunction thePDF)
 	{
@@ -644,7 +648,7 @@ public class QualityMeasure
 				aReturn = (float) ((0.5 * (aTotalSquaredDifference * theCoverage)) / itsNrRecords);
 				break;
 			}
-			case KULLBACKLEIBLER :
+			case KULLBACK_LEIBLER :
 			{
 				double aTotalDivergence = 0.0;
 				for (int i = 0, j = itsPDF.size(); i < j; ++i)

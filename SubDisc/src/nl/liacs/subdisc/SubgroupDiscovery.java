@@ -709,9 +709,19 @@ public class SubgroupDiscovery extends MiningAlgorithm
 			case SINGLE_NUMERIC :
 			{
 				final BitSet aMembers = theNewSubgroup.getMembers();
+
+				// what needs to be calculated for this QM
+				// NOTE requiredStats could be a final SubgroupDiscovery.class member
+				Set<Stat> aRequiredStats = QM.requiredStats(itsSearchParameters.getQualityMeasure());
+				//float[] aCounts = itsNumericTarget.getStatistics(aMembers, aRequiredStats);
 				float[] aCounts = itsNumericTarget.getStatistics(aMembers, itsSearchParameters.getQualityMeasure() == QM.MMAD);
-				ProbabilityDensityFunction aPDF = new ProbabilityDensityFunction(itsQualityMeasure.getProbabilityDensityFunction(), aMembers);
-				aPDF.smooth();
+				ProbabilityDensityFunction aPDF = null;
+				if (aRequiredStats.contains(Stat.PDF))
+				{
+					aPDF = new ProbabilityDensityFunction(itsQualityMeasure.getProbabilityDensityFunction(), aMembers);
+					aPDF.smooth();
+				}
+
 				aQuality = itsQualityMeasure.calculate(theNewSubgroup.getCoverage(), aCounts[0], aCounts[1], aCounts[2], aCounts[3], aPDF);
 				theNewSubgroup.setSecondaryStatistic(aCounts[0]/(double)theNewSubgroup.getCoverage()); //average
 				theNewSubgroup.setTertiaryStatistic(Math.sqrt(aCounts[1]/(double)theNewSubgroup.getCoverage())); // standard deviation
@@ -854,7 +864,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 			}
 			case MULTI_LABEL :
 			{
-				aQuality = weightedEntropyEditDistance(theNewSubgroup); //also stores DAG in Subgroup
+				aQuality = multiLabelCalculate(theNewSubgroup); //also stores DAG in Subgroup
 				theNewSubgroup.setSecondaryStatistic(itsQualityMeasure.calculateEditDistance(theNewSubgroup.getDAG())); //edit distance
 				theNewSubgroup.setTertiaryStatistic(QualityMeasure.calculateEntropy(itsNrRows, theNewSubgroup.getCoverage())); //entropy
 				break;
@@ -939,7 +949,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		}
 	}
 */
-	private float weightedEntropyEditDistance(Subgroup theSubgroup)
+	private float multiLabelCalculate(Subgroup theSubgroup)
 	{
 		BinaryTable aBinaryTable = itsBinaryTable.selectRows(theSubgroup.getMembers());
 		Bayesian aBayesian = new Bayesian(aBinaryTable, itsTargets);

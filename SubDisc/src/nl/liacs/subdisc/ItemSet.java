@@ -60,8 +60,10 @@ public class ItemSet extends BitSet
 	private int getItem(int theIndex)
 	{
 // MM why are default BitSet methods not used for this?
-//		for (int i = nextSetBit(0), j = 1; i >= 0; i = nextSetBit(i+1), ++j)
-//			if (theIndex == j)
+//		if (theIndex <= 0 || theIndex > length())
+//			return -1;
+//		for (int i = nextSetBit(0), j = 0; i >= 0; i = nextSetBit(i+1))
+//			if (theIndex == ++j)
 //				return i;
 //		return -1;
 
