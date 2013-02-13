@@ -61,10 +61,10 @@ public class Column implements XMLNodeInterface
 	/**
 	 * Create a Column with the specified name, short name,
 	 * {@link AttributeType}, index and (initial) number of rows.
-	 * 
+	 *
 	 * Always call {@link #close()} after the last element is
 	 * added to this Column.
-	 * 
+	 *
 	 * @see #add(String)
 	 * @see #add(float)
 	 * @see #add(boolean)
@@ -325,10 +325,10 @@ public class Column implements XMLNodeInterface
 
 	/**
 	 * Appends the specified element to the end of this Column.
-	 * 
+	 *
 	 * Always call {@link #close()} after the last element is added to this
 	 * Column.
-	 * 
+	 *
 	 * @param theNominal the value to append to this Column.
 	 */
 	public void add(String theNominal)
@@ -349,10 +349,10 @@ public class Column implements XMLNodeInterface
 
 	/**
 	 * Appends the specified element to the end of this Column.
-	 * 
+	 *
 	 * Always call {@link #close()} after the last element is added to this
 	 * Column.
-	 * 
+	 *
 	 * @param theFloat the value to append to this Column.
 	 */
 	public void add(float theFloat)
@@ -366,10 +366,10 @@ public class Column implements XMLNodeInterface
 
 	/**
 	 * Appends the specified element to the end of this Column.
-	 *  
+	 *
 	 * Always call {@link #close()} after the last element is added to this
 	 * Column.
-	 * 
+	 *
 	 * @param theBinary the value to append to this Column.
 	 */
 	public void add(boolean theBinary)
@@ -440,9 +440,9 @@ public class Column implements XMLNodeInterface
 	/**
 	 * Return a clone of the binary values of this Column if this Column is
 	 * of type {@link AttributeType#BINARY}.
-	 * 
+	 *
 	 * @return a BitSet, with the same bits set as this Column.
-	 * 
+	 *
 	 * @throws NullPointerException if this Column is not of type
 	 * {@link AttributeType#BINARY}.
 	 */
@@ -662,6 +662,36 @@ public class Column implements XMLNodeInterface
 	}
 
 	/*
+	 * Specifically needed during loading, to change a column that at first appeared to be binary to nominal.
+	 * It requires at least one of the two values that were erroneously interpreted as a binary value
+	 * This function also sets the missingvalue to nominal.
+	 */
+	public boolean toNominalType(String aTrue, String aFalse)
+	{
+		// relies on itsCardinality to be set at this time
+		itsDistinctValues = new ArrayList<String>(itsCardinality);
+		itsNominals = new ArrayList<String>(itsSize);
+		itsMissingValue = AttributeType.NOMINAL.DEFAULT_MISSING_VALUE;
+
+		if (aFalse != null)
+			itsDistinctValues.add(aFalse);
+		if (aTrue != null)
+			itsDistinctValues.add(aTrue);
+
+		for (int i = 0, j = itsSize; i < j; ++i)
+			if (aTrue == null && aFalse == null) //just missing values so far
+				itsNominals.add(itsMissingValue);
+			else
+				itsNominals.add(itsFloatz[i] > 0.5f ? aTrue : aFalse);
+
+		// Cleanup (for GarbageCollector).
+		itsBinaries = null;
+		itsType = AttributeType.NOMINAL;
+		return true;
+	}
+
+
+	/*
 	 * Switching between Column AttributeTypes of NUMERIC and ORDINAL is
 	 * always possible, without any other further changes.
 	 * Changing from a BINARY AttributeType is also possible.
@@ -734,7 +764,7 @@ public class Column implements XMLNodeInterface
 			{
 				itsFloatz = new float[itsSize];
 
-				// all 0.0f, change to 1.0f only for set bits 
+				// all 0.0f, change to 1.0f only for set bits
 				for (int i = itsBinaries.nextSetBit(0); i >= 0; i = itsBinaries.nextSetBit(i + 1))
 					itsFloatz[i] = 1.0f;
 
@@ -894,7 +924,7 @@ public class Column implements XMLNodeInterface
 			case BINARY : break; // nothing to do
 			default :
 			{
-				logTypeError("Column.toBinaryType()"); 
+				logTypeError("Column.toBinaryType()");
 				throw new AssertionError(itsType);
 			}
 		}
@@ -994,7 +1024,7 @@ public class Column implements XMLNodeInterface
 	 * NOTE: use {@link #setMissing} to set missing values for this Column.
 	 * Modifications to the BitSet retrieved through this method have no
 	 * effect on the original missing values BitSet of this Column.
-	 * 
+	 *
 	 * @return a clone of this Columns' itsMissing BitSet.
 	 */
 	public BitSet getMissing() { return (BitSet) itsMissing.clone(); }
@@ -1010,7 +1040,7 @@ public class Column implements XMLNodeInterface
 	 * <p>
 	 * If this Column {@link #getHasMissingValues() does not have} any
 	 * missing values the empty String "" is returned.
-	 * 
+	 *
 	 * @return the value currently set for all missing values.
 	 */
 	public String getMissingValue()
@@ -1022,9 +1052,9 @@ public class Column implements XMLNodeInterface
 	 * Sets the new missing value for this Column. The missing value is used
 	 * as replacement value for all values that where '?' in the original
 	 * data.
-	 * 
+	 *
 	 * @param theNewValue the value to use as new missing value.
-	 * 
+	 *
 	 * @return {@code true} if setting the new missing value is successful,
 	 * {@code false} otherwise.
 	 */
@@ -1111,10 +1141,10 @@ public class Column implements XMLNodeInterface
 	 * Counts the number of distinct values, or cardinality, of this Column.
 	 * It is recommended to run this function after all data is loaded into
 	 * a Column, as correct counts depend on the unmodified original data.
-	 * 
+	 *
 	 * @return the number of distinct values, {@code 0} when this Column
 	 * contains no data ({@link #size} {@code == 0}).
-	 * 
+	 *
 	 * @see #getDomain()
 	 * @see #getUniqueNominalBinaryDomain(BitSet)
 	 * @see #getUniqueNumericDomain(BitSet)
@@ -1337,13 +1367,13 @@ public class Column implements XMLNodeInterface
 	 * Evaluates the supplied {@link Condition} for this Column.
 	 *
 	 * @param theCondition the Condition to test for this Column.
-	 * 
+	 *
 	 * @return a {@code BitSet} with bits set to {@code true} for members
 	 * of this Column for which the supplied Condition holds.
-	 * 
+	 *
 	 * @throws IllegalArgumentException if the supplied Condition does not
 	 * apply to this Column.
-	 * 
+	 *
 	 * @see Condition
 	 */
 	public BitSet evaluate(Condition theCondition) throws IllegalArgumentException
@@ -1534,9 +1564,9 @@ public class Column implements XMLNodeInterface
 	/**
 	 * Returns a {@code java.util.TreeSet} with all distinct values for this
 	 * Column, with values ordered according to their natural ordering.
-	 * 
+	 *
 	 * @return the domain for this Column.
-	 * 
+	 *
 	 * @see #getUniqueNominalBinaryDomain(BitSet)
 	 * @see #getUniqueNumericDomain(BitSet)
 	 * @see #getCardinality()
@@ -1725,7 +1755,7 @@ public class Column implements XMLNodeInterface
 	 * of the Column should be used for the creation of the split-points.
 	 * When the BitSet represents the members of a {@link Subgroup}, this
 	 * method returns the split-points relevant to that Subgroup.
-	 * 
+	 *
 	 * The resulting float[] has the size of the supplied theNrSplits
 	 * parameter. If
 	 * {@link java.util.BitSet#cardinality() theBitSet.cardinality()} is
@@ -1790,7 +1820,7 @@ public class Column implements XMLNodeInterface
 	 * @return the average, or {@link Float#NaN} if this Column
 	 * is not of type {@link AttributeType#NUMERIC} or
 	 * {@link AttributeType#ORDINAL}.
-	 * 
+	 *
 	 * @see #getStatistics(BitSet, boolean)
 	 */
 	public float getAverage()
@@ -1871,7 +1901,7 @@ public class Column implements XMLNodeInterface
 	 * @return an {@code int} indicating the number of occurrences of
 	 * the value supplied as parameter, or {@code 0} if this Column is not
 	 * of type NOMINAL or BINARY.
-	 * 
+	 *
 	 * @see #getDomain()
 	 * @see #getCardinality()
 	 * @see AttributeType

@@ -123,10 +123,13 @@ public class DataLoaderTXT implements FileLoaderInterface
 				}
 			}
 
-			BitSet aBinaries = new BitSet(itsNrLines);
-			BitSet aFloats = new BitSet(itsNrLines);
 			List<Column> aColumns = itsTable.getColumns();
 			final int aNrColumns = aColumns.size();
+			BitSet aBinaries = new BitSet(aNrColumns);
+			BitSet aFloats = new BitSet(aNrColumns);
+			String[] aTrueBinaryValues = new String[aNrColumns];
+			String[] aFalseBinaryValues = new String[aNrColumns];
+
 			for (int i = 0, j = aNrColumns; i < j; ++i)
 			{
 				if (AttributeType.BINARY == aColumns.get(i).getType())
@@ -161,7 +164,7 @@ public class DataLoaderTXT implements FileLoaderInterface
 					String s = aScanner.next();
 					removeQuotes(s);
 
-					// is it binary
+					// is it currently set to binary? (this may change as more lines are read)
 					if (aBinaries.get(aColumn))
 					{
 						// TODO set itsMissing
@@ -172,7 +175,12 @@ public class DataLoaderTXT implements FileLoaderInterface
 						}
 						else if (AttributeType.isValidBinaryValue(s))
 						{
-							aColumns.get(aColumn).add(AttributeType.isValidBinaryTrueValue(s));
+							boolean aValue = AttributeType.isValidBinaryTrueValue(s);
+							aColumns.get(aColumn).add(aValue);
+							if (aValue) //this was true
+								aTrueBinaryValues[aColumn] = s;
+							else
+								aFalseBinaryValues[aColumn] = s;
 							continue;
 						}
 
@@ -201,8 +209,11 @@ public class DataLoaderTXT implements FileLoaderInterface
 						}
 						catch (NumberFormatException e)
 						{
+							Log.logCommandLine(aColumns.get(aColumn).getName() + " was binary, is nominal");
+							Log.logCommandLine("true: " + aTrueBinaryValues[aColumn]);
+							Log.logCommandLine("false: " + aFalseBinaryValues[aColumn]);
 							aFloats.set(aColumn, false);
-							aColumns.get(aColumn).setType(AttributeType.NOMINAL);
+							aColumns.get(aColumn).toNominalType(aTrueBinaryValues[aColumn], aFalseBinaryValues[aColumn]);
 							// FALL THROUGH
 						}
 					}
