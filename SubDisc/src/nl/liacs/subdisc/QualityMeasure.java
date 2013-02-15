@@ -81,7 +81,7 @@ public class QualityMeasure
 	 * <p>
 	 * Please note the following:
 	 * <ul>
-	 * <li>n(H) = Coverage (subgroup coverage),
+	 * <li>n(H) = Coverage (subgroup coverage),</li>
 	 * <li>n(B) = TotalTargetCoverage (of the data),</li>
 	 * <li>N = TotalCoverage (number of rows in the data).</li>
 	 * </ul>
