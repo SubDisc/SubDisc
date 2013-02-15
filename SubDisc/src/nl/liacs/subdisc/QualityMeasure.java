@@ -78,6 +78,13 @@ public class QualityMeasure
 	 * 		<td>N</td>
 	 * 	</tr>
 	 * </table>
+	 * <p>
+	 * Please note the following:
+	 * <ul>
+	 * <li>n(H) = Coverage (subgroup coverage),
+	 * <li>n(B) = TotalTargetCoverage (of the data),</li>
+	 * <li>N = TotalCoverage (number of rows in the data).</li>
+	 * </ul>
 	 */
 	public float calculate(float theCountHeadBody, float theCoverage)
 	{
@@ -186,6 +193,13 @@ public class QualityMeasure
 			case BAYESIAN_SCORE:
 			{
 				returnValue = (float) calculateBayesianFactor(theTotalCoverage, theTotalTargetCoverage, aCountBody, theCountHeadBody);
+				break;
+			}
+			case LIFT:
+			{
+				returnValue = (theCountHeadBody * theTotalCoverage) / (theCoverage * theTotalTargetCoverage);
+				// alternative has 3 divisions, but TTC/N is constant and could be cached
+				// returnValue = (theCountHeadBody / theCoverage) / (theTotalTargetCoverage / theTotalCoverage);
 				break;
 			}
 			default :

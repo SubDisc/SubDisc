@@ -25,7 +25,8 @@ public enum QM implements EnumInterface
 	CORRELATION	("Correlation",		"0.1",	TargetType.SINGLE_NOMINAL),
 	PROP_SCORE_WRACC("Propensity score wracc",	"-0.25",	TargetType.SINGLE_NOMINAL),
 	PROP_SCORE_RATIO("Propensity score ratio",	"1.0",		TargetType.SINGLE_NOMINAL),
-	BAYESIAN_SCORE	("Bayesian Score", "0.0",	TargetType.SINGLE_NOMINAL),
+	BAYESIAN_SCORE	("Bayesian Score",	"0.0",	TargetType.SINGLE_NOMINAL),
+	LIFT		("Lift",		"1.0",	TargetType.SINGLE_NOMINAL),
 
 	// SINGLE_NUMERIC quality measures
 	// NOTE when adding a new SINGLE_NUMERIC QM -> add it to requiredStats()
