@@ -522,7 +522,6 @@ public class QualityMeasure
 	 * @param theSSD the sum of squared deviations for the sample
 	 * @param theMedian the median for the sample
 	 * @param theMedianAD the median average deviation for the sample
-	 * @param theSubgroupCounts CHI_SQUARED counts for the sample
 	 * @param thePDF the ProbabilityDensityFunction for the sample
 	 * 
 	 * @return the quality
@@ -647,7 +646,23 @@ public class QualityMeasure
 				aReturn = (theCoverage/(2.0f*theMedian+theMedianAD));
 				break;
 			}
-			case HELLINGER :
+			// normal H^2 for continuous PDFs
+			case SQUARED_HELLINGER :
+			{
+				double aTotalSquaredDifference = 0.0;
+				for (int i = 0, j = itsPDF.size(); i < j; ++i)
+				{
+					float aDensity = itsPDF.getDensity(i);
+					float aDensitySubgroup = thePDF.getDensity(i);
+					double aDifference = Math.sqrt(aDensity) - Math.sqrt(aDensitySubgroup);
+					aTotalSquaredDifference += (aDifference * aDifference);
+					//Log.logCommandLine("difference in PDF: " + aTotalSquaredDifference);
+				}
+				Log.logCommandLine("difference in PDF: " + aTotalSquaredDifference);
+				aReturn = (float) (0.5 * aTotalSquaredDifference);
+				break;
+			}
+			case SQUARED_HELLINGER_WEIGHTED :
 			{
 				double aTotalSquaredDifference = 0.0;
 				for (int i = 0, j = itsPDF.size(); i < j; ++i)
@@ -662,7 +677,52 @@ public class QualityMeasure
 				aReturn = (float) ((0.5 * (aTotalSquaredDifference * theCoverage)) / itsNrRecords);
 				break;
 			}
+			case SQUARED_HELLINGER_WEIGHTED_ADJUSTED :
+			{
+				// SQUARED_HELLINGER
+				double aTotalSquaredDifference = 0.0;
+				for (int i = 0, j = itsPDF.size(); i < j; ++i)
+				{
+					float aDensity = itsPDF.getDensity(i);
+					float aDensitySubgroup = thePDF.getDensity(i);
+					double aDifference = Math.sqrt(aDensity) - Math.sqrt(aDensitySubgroup);
+					aTotalSquaredDifference += (aDifference * aDifference);
+					//Log.logCommandLine("difference in PDF: " + aTotalSquaredDifference);
+				}
+				Log.logCommandLine("difference in PDF: " + aTotalSquaredDifference);
+				aReturn = (float) ((0.5 * (aTotalSquaredDifference * theCoverage)) / itsNrRecords);
+
+				// now weight SQUARED_HELLINGER
+				// magic number = maximum possible score
+//				aReturn = (float) (aTotalSquaredDifference * (theCoverage / (2.0 * itsNrRecords)));
+				aReturn = (float) (aReturn / 0.1481481481481481);
+				break;
+			}
 			case KULLBACK_LEIBLER :
+			{
+				double aTotalDivergence = 0.0;
+				for (int i = 0, j = itsPDF.size(); i < j; ++i)
+				{
+					float aDensity = itsPDF.getDensity(i);
+					float aDensitySubgroup = thePDF.getDensity(i);
+					/*
+					 * avoid errors in Math.log() because of
+					 * (0 / x) or (x / 0)
+					 * returns 0 by definition according to
+					 * http://en.wikipedia.org/wiki/Kullback%E2%80%93Leibler_divergence
+					 * NOTE this also catches DIVIVE_BY_0
+					 * for (aDensity == 0) because
+					 * (aSubgroupDensity == 0) for at least
+					 * all situations where (aDenisity == 0)
+					 */
+					if (aDensitySubgroup == 0.0)
+						continue;
+					aTotalDivergence += (aDensitySubgroup * Math.log(aDensitySubgroup/aDensity));
+				}
+				aReturn = (float) aTotalDivergence;
+				break;
+			}
+			case KULLBACK_LEIBLER_WEIGHTED :
 			{
 				double aTotalDivergence = 0.0;
 				for (int i = 0, j = itsPDF.size(); i < j; ++i)
@@ -689,6 +749,7 @@ public class QualityMeasure
 			case CWRACC :
 			{
 				//some random code
+				// http://en.wikipedia.org/wiki/Total_variation_distance ?
 				double aTotalDifference = 0.0;
 				for (int i = 0, j = itsPDF.size(); i < j; ++i)
 				{

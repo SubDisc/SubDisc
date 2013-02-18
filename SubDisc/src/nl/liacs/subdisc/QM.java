@@ -41,8 +41,11 @@ public enum QM implements EnumInterface
 	T_TEST		("t-Test",		"1.0",	TargetType.SINGLE_NUMERIC),
 	INVERSE_T_TEST	("Inverse t-Test",	"1.0",	TargetType.SINGLE_NUMERIC),
 	ABS_T_TEST	("Abs t-Test",		"1.0",	TargetType.SINGLE_NUMERIC),
-	HELLINGER	("Squared Hellinger distance",	"0.0",	TargetType.SINGLE_NUMERIC),
-	KULLBACK_LEIBLER("Kullback-Leibler divergence",	"0.0",	TargetType.SINGLE_NUMERIC),
+	SQUARED_HELLINGER			("Squared Hellinger distance",		"0.0",	TargetType.SINGLE_NUMERIC),
+	SQUARED_HELLINGER_WEIGHTED		("Weighted Squared Hellinger distance",	"0.0",	TargetType.SINGLE_NUMERIC),
+	SQUARED_HELLINGER_WEIGHTED_ADJUSTED	("Adjusted Squared Hellinger distance",	"0.0",	TargetType.SINGLE_NUMERIC),
+	KULLBACK_LEIBLER			("Kullback-Leibler divergence",		"0.0",	TargetType.SINGLE_NUMERIC),
+	KULLBACK_LEIBLER_WEIGHTED		("Weighted Kullback-Leibler divergence","0.0",	TargetType.SINGLE_NUMERIC),
 	CWRACC		("CWRAcc",		"0.0",	TargetType.SINGLE_NUMERIC),
 
 	// SINGLE_ORDINAL quality measures
@@ -163,8 +166,11 @@ public enum QM implements EnumInterface
 			case T_TEST :		return SUM_SSD;
 			case INVERSE_T_TEST :	return SUM_SSD;
 			case ABS_T_TEST :	return SUM_SSD;
-			case HELLINGER :	return PDF;
-			case KULLBACK_LEIBLER :	return PDF;
+			case SQUARED_HELLINGER :		return PDF;
+			case SQUARED_HELLINGER_WEIGHTED :	return PDF;
+			case SQUARED_HELLINGER_WEIGHTED_ADJUSTED :	return PDF;
+			case KULLBACK_LEIBLER :			return PDF;
+			case KULLBACK_LEIBLER_WEIGHTED :	return PDF;
 			case CWRACC :		return PDF;
 			// SINGLE_ORDINAL
 			case AUC :		return SUM;
