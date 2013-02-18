@@ -25,13 +25,12 @@ public class RefinementList extends ArrayList<Refinement>
 		AttributeType aType;
 		do
 		{
-			boolean add = false;
 			Column aColumn = aCondition.getColumn();
 
 			if (aColumn.getIsEnabled() && !aTC.isTargetAttribute(aColumn))
 			{
+				boolean add = false;
 				aType = aColumn.getType();
-				Refinement aRefinement = new Refinement(aCondition, itsSubgroup);
 
 				//check validity of operator
 				//numeric
@@ -52,7 +51,7 @@ public class RefinementList extends ArrayList<Refinement>
 
 				if (add)
 				{
-					add(aRefinement);
+					add(new Refinement(aCondition, itsSubgroup));
 					Log.logCommandLine("   condition: " + aCondition.toString());
 				}
 			}

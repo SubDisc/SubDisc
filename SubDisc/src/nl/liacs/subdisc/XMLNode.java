@@ -41,6 +41,6 @@ public class XMLNode
 	public static void addNodeTo(Node theParentNode, String theElementName, Object theTextContent)
 	{
 		theParentNode.appendChild(theParentNode.getOwnerDocument().createElement(theElementName.toLowerCase()))
-				.setTextContent(theTextContent.toString());
+				.setTextContent(theTextContent == null ? "" : theTextContent.toString());
 	}
 }

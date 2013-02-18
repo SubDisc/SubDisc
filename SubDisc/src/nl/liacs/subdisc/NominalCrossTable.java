@@ -76,11 +76,16 @@ public class NominalCrossTable
 		// as long a itsPositiveCounts / itsNegativeCounts do not change
 		// CrossTableComparator could be saved as member of this class,
 		// instead of being recreated for each call to getSortedDomainIndices
+		// MM getSortedDomainIndices() is only called once for each
+		// evaluated candidate, saving is not needed
+		// also, although Subgroups build from different Conditions may
+		// have the exact same members keeping every NCT for each BitSet
+		// configuration is a bit over the top
 
 		CrossTableComparator aCTC = new CrossTableComparator(itsPositiveCounts, itsNegativeCounts);
-		
+
 		boolean anOptimalSort = false;
-		
+
 		if (anOptimalSort)
 		{
 			sortValues(aSortedIndexList, 0, aSortedIndexList.size()-1, aCTC);
@@ -88,9 +93,8 @@ public class NominalCrossTable
 		else
 		{
 			Collections.sort(aSortedIndexList, aCTC);
-			
 		}
-		
+
 		return aSortedIndexList;
 	}
 
@@ -146,10 +150,10 @@ public class NominalCrossTable
 
 		sortValues(aSortedIndexList, l, j, aCTC);
 		sortValues(aSortedIndexList, i, r, aCTC);
-		
+
 		return;
 	}
-	
+
 	// move to separate class upon discretion
 	private class CrossTableComparator implements Comparator<Integer>
 	{

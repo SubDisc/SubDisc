@@ -289,13 +289,13 @@ public class Validation
 		ConditionList aCL;
 		BitSet aMembers;
 
-        do
-        {
-                aCL = getRandomConditionList(theDepth, theRandom);
-                aMembers = itsTable.evaluate(aCL);
-                aSubgroupSize = aMembers.cardinality();
-        }
-        while (aSubgroupSize < theMinimumCoverage || aSubgroupSize == aNrRows);
+		do
+		{
+			aCL = getRandomConditionList(theDepth, theRandom);
+			aMembers = itsTable.evaluate(aCL);
+			aSubgroupSize = aMembers.cardinality();
+		}
+		while (aSubgroupSize < theMinimumCoverage || aSubgroupSize == aNrRows);
 
 		Log.logCommandLine(aCL.toString());
 
