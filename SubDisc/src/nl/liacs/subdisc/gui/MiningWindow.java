@@ -624,6 +624,17 @@ public class MiningWindow extends JFrame implements ActionListener
 			jLabelNrNumericsNr.setText(initGuiComponentsDataSetHelper(aCounts[1]));
 //			jLFieldNrOrdinals.setText(initGuiComponentsDataSetHelper(aCounts[2]));
 			jLabelNrBinariesNr.setText(initGuiComponentsDataSetHelper(aCounts[3]));
+
+			if (aCounts[0][0] != 0)
+				setTargetTypeName(TargetType.SINGLE_NOMINAL.GUI_TEXT);
+			else if (aCounts[1][0] != 0)
+				setTargetTypeName(TargetType.SINGLE_NUMERIC.GUI_TEXT);
+			else if (aCounts[2][0] != 0)
+				setTargetTypeName(TargetType.SINGLE_ORDINAL.GUI_TEXT);
+			else if (aCounts[3][0] != 0)
+				setTargetTypeName(TargetType.MULTI_LABEL.GUI_TEXT);
+			else
+				throw new AssertionError();
 		}
 	}
 
@@ -797,7 +808,6 @@ public class MiningWindow extends JFrame implements ActionListener
 				aList.add(c);
 			}
 		}
-
 		itsTargetConcept.setMultiTargets(aList);
 		jListMultiTargets.setSelectionInterval(0, aList.size() - 1);
 	}
@@ -837,8 +847,11 @@ public class MiningWindow extends JFrame implements ActionListener
 		{
 			case SINGLE_NOMINAL :
 			{
+				String aTarget = getTargetAttributeName();
+				if (aTarget == null) //initTargetInfo might be called before item is actually selected
+					return;
 				itsPositiveCount =
-					itsTable.getColumn(getTargetAttributeName()).countValues(getMiscFieldName());
+					itsTable.getColumn(aTarget).countValues(getMiscFieldName());
 				float aPercentage = (itsPositiveCount * 100) / (float) itsTable.getNrRows();
 				NumberFormat aFormatter = NumberFormat.getNumberInstance();
 				aFormatter.setMaximumFractionDigits(1);
@@ -1020,11 +1033,11 @@ public class MiningWindow extends JFrame implements ActionListener
 					itsTargetConcept = new TargetConcept();
 				else
 					itsTargetConcept = itsSearchParameters.getTargetConcept();
+				// NOTE also initiates all fields and labels
 				initGuiComponentsFromFile();
 			}
 
 			jMenuItemRemoveEnrichmentSource.setEnabled(false);
-			jComboBoxTargetTypeActionPerformed();	// update hack
 		}
 	}
 
@@ -1644,11 +1657,37 @@ public class MiningWindow extends JFrame implements ActionListener
 
 	private void setupSearchParameters()
 	{
-		// theSearchParameters.setTarget(itsTable.getAttribute(getTargetAttributeName()));
-		// theSearchParameters.setTargetAttributeShort(getTargetAttributeName());
-		// theSearchParameters.setTargetValue(getMiscFieldName()); //only makes
-		// sense for certain target concepts
+		/*
+		 * TARGET CONCEPT
+		 * some cleaning is done to create proper AutoRun-XMLs 
+		 */
+		TargetType aType = itsTargetConcept.getTargetType();
 
+		if (TargetType.hasTargetAttribute(aType))
+			itsTargetConcept.setPrimaryTarget(itsTable.getColumn(getTargetAttributeName()));
+		else
+			itsTargetConcept.setPrimaryTarget(null);
+
+		if (aType == TargetType.SINGLE_NOMINAL)
+			itsTargetConcept.setTargetValue(getMiscFieldName());
+		else
+			itsTargetConcept.setTargetValue(null);
+
+		if (TargetType.hasSecondaryTarget(aType))
+			itsTargetConcept.setSecondaryTarget(itsTable.getColumn(getMiscFieldName()));
+		else
+			itsTargetConcept.setSecondaryTarget(null);
+
+		// are already set when needed, remove possible old values
+		if (!TargetType.hasMultiTargets(aType))
+			itsTargetConcept.setMultiTargets(new ArrayList<Column>(0));
+		// assumes COOKS_DISTANCE is only valid for DOUBLE_REGRESSION
+		if (QM.COOKS_DISTANCE.GUI_TEXT.equals(getQualityMeasureName()))
+			itsTargetConcept.setMultiRegressionTargets(new ArrayList<Column>(0));
+
+		/*
+		 * SEARCH PARAMETERS
+		 */
 		itsSearchParameters.setQualityMeasure(QM.fromString(getQualityMeasureName()));
 		itsSearchParameters.setQualityMeasureMinimum(getQualityMeasureMinimum());
 
@@ -1659,9 +1698,12 @@ public class MiningWindow extends JFrame implements ActionListener
 		itsSearchParameters.setMaximumTime(getSearchTimeMaximum());
 
 		itsSearchParameters.setSearchStrategy(getSearchStrategyName());
+		// set to last known value even for SearchStrategy.BEST_FIRST
 		itsSearchParameters.setSearchStrategyWidth(getStrategyWidth());
 		itsSearchParameters.setNominalSets(getSetValuedNominals());
 		itsSearchParameters.setNumericStrategy(getNumericStrategy());
+		itsSearchParameters.setNumericOperators(getNumericOperators());
+		// set to last known value even for NumericStrategy.NUMERIC_BINS
 		itsSearchParameters.setNrBins(getNrBins());
 		itsSearchParameters.setNrThreads(getNrThreads());
 /*
