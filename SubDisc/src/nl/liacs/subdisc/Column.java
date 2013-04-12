@@ -1841,7 +1841,7 @@ public class Column implements XMLNodeInterface
 	/**
 	 * Returns the average label ranking
 	 */
-	public LabelRanking getAverageRanking()
+	public LabelRanking getAverageRanking(Subgroup theSubgroup)
 	{
 		if (itsType != AttributeType.NOMINAL)
 		{
@@ -1850,38 +1850,46 @@ public class Column implements XMLNodeInterface
 		}
 
 		LabelRanking aResult = new LabelRanking(itsNominals.get(0));
-		int aSize = aResult.getSize();
+		int aSize = aResult.getSize(); //number of labels
 		int[] aTotalRanks = new int[aSize];
 		Arrays.fill(aTotalRanks, 0);
 
+		BitSet aMembers = (theSubgroup == null) ? null : theSubgroup.getMembers();
+		//summation of rankings (not necessary to divide by aSize, when you just look at the order)
 		for (int i=0; i<itsSize; ++i)
-		{
-			String aValue = itsNominals.get(i);
-			LabelRanking aRanking = new LabelRanking(aValue);
-			for (int j=0; j<aSize; j++)
-				aTotalRanks[j] += aRanking.getRank(j);
-		}
-		int aRank = 0; //this is the average rank, but without dividing by aSize
+			if (aMembers == null || aMembers.get(i)) //part of the subgroup?
+			{
+				String aValue = itsNominals.get(i);
+				LabelRanking aRanking = new LabelRanking(aValue);
+				for (int j=0; j<aSize; j++)
+					aTotalRanks[j] += aRanking.getRank(j);
+			}
+
+		//make copy that can be sorted
 		int[] aRanks = new int[aSize];
 		for (int i=0; i<aSize; i++)
 			aRanks[i] = aTotalRanks[i];
+//		for (int i=0; i<aSize; i++)
+//			Log.logCommandLine("=" + aRanks[i]/(float)aSize);
 		Arrays.sort(aRanks);
 
+		//translate average ranks to a ranking
 		for (int i=0; i<aSize; i++)
 		{
 			int aLookup = aTotalRanks[i];
 			int aFirst = -1;
 			int aLast = -1;
+			//look up rank for this average
 			for (int j=0; j<aSize; j++)
 				if (aLookup == aRanks[j])
 				{
 					if (aFirst >= 0)
 						aLast = j;
+					aFirst = j;
 				}
-			Log.logCommandLine("start " + aFirst + " end " + aLast);
-			aResult.setRank(i, aLast);
+			//TODO: properly deal with ties in the ranking
+			aResult.setRank(i, aFirst);
 		}
-		aResult.print();
 
 		return aResult;
 	}

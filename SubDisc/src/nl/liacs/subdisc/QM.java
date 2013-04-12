@@ -27,6 +27,7 @@ public enum QM implements EnumInterface
 	PROP_SCORE_RATIO("Propensity score ratio",	"1.0",		TargetType.SINGLE_NOMINAL),
 	BAYESIAN_SCORE	("Bayesian Score",	"0.0",	TargetType.SINGLE_NOMINAL),
 	LIFT		("Lift",		"1.0",	TargetType.SINGLE_NOMINAL),
+	CLAUDIO		("Claudio",		"0.0",	TargetType.SINGLE_NOMINAL),
 
 	// SINGLE_NUMERIC quality measures
 	// NOTE when adding a new SINGLE_NUMERIC QM -> add it to requiredStats()
@@ -111,9 +112,9 @@ public enum QM implements EnumInterface
 	/**
 	 * Returns the QM corresponding to the supplied {@code String} parameter
 	 *  based on the various {@link QM#GUI_TEXT}s.
-	 * 
+	 *
 	 * @param theText the {@code String} corresponding to a QM.
-	 * 
+	 *
 	 * @return a QM, or {@code null} if no corresponding QM is found.
 	 */
 	public static QM fromString(String theText)
@@ -141,12 +142,12 @@ public enum QM implements EnumInterface
 	 * also be added here.
 	 */
 	/**
-	 * 
-	 * 
+	 *
+	 *
 	 * @param theQM the single numeric QM for which to query the Stat types.
-	 * 
-	 * @return a Set 
-	 * 
+	 *
+	 * @return a Set
+	 *
 	 * @see Stat
 	 * @see Column#getStatistics(BitSet, Set)
 	 */

@@ -32,6 +32,7 @@ public class Process
 				TargetConcept aTargetConcept = theSearchParameters.getTargetConcept();
 				String aTargetValue = aTargetConcept.getTargetValue();
 				int itsPositiveCount = aTargetConcept.getPrimaryTarget().countValues(aTargetValue);
+
 				aSubgroupDiscovery = new SubgroupDiscovery(theSearchParameters, theTable, itsPositiveCount, theMainWindow);
 				break;
 			}

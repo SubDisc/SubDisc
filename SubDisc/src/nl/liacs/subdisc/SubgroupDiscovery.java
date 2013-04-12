@@ -24,6 +24,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 
 	//target concept type-specific information, including base models
 	private BitSet itsBinaryTarget;		//SINGLE_NOMINAL
+	private Column itsTargetRankings;		//SINGLE_NOMINAL (label ranking)
 	private Column itsNumericTarget;	//SINGLE_NUMERIC
 	private Column itsPrimaryColumn;	//DOUBLE_CORRELATION / DOUBLE_REGRESSION
 	private Column itsSecondaryColumn;	//DOUBLE_CORRELATION / DOUBLE_REGRESSION
@@ -55,12 +56,20 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		itsTable = theTable;
 		itsNrRows = itsTable.getNrRows();
 		itsMainWindow = theMainWindow;
+		TargetConcept aTC = itsSearchParameters.getTargetConcept();
+
 		itsMinimumCoverage = itsSearchParameters.getMinimumCoverage();
 		itsMaximumCoverage = (int) (itsNrRows * itsSearchParameters.getMaximumCoverageFraction());
-		itsQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), itsNrRows, theNrPositive);
+		if (itsSearchParameters.getQualityMeasure() == QM.CLAUDIO) //label ranking?
+		{
+			itsTargetRankings = aTC.getPrimaryTarget();
+			LabelRanking aLR = itsTargetRankings.getAverageRanking(null); //average ranking over entire dataset
+			itsQualityMeasure = new QualityMeasure(itsNrRows, aLR);
+		}
+		else
+			itsQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), itsNrRows, theNrPositive);
 		itsQualityMeasureMinimum = itsSearchParameters.getQualityMeasureMinimum();
 
-		TargetConcept aTC = itsSearchParameters.getTargetConcept();
 		Condition aCondition = new Condition(aTC.getPrimaryTarget(), Operator.EQUALS);
 		aCondition.setValue(aTC.getTargetValue());
 		itsBinaryTarget = aTC.getPrimaryTarget().evaluate(aCondition);
@@ -694,13 +703,15 @@ public class SubgroupDiscovery extends MiningAlgorithm
 					//System.out.println(aSum);
 					aQuality = QualityMeasure.calculatePropensityBased(aMeasure, aCountHeadBody, aCoverage, itsNrRows , aCountHeadPropensityScore);
 				}
-				else
+				else if (aMeasure == QM.CLAUDIO)
 				{
-//					for (int i = aMembers.nextSetBit(0); i >= 0; i = aMembers.nextSetBit(i+1))
-//						if (itsBinaryTarget.get(i))
-//							++aCountHeadBody;
-					aQuality = itsQualityMeasure.calculate(aCountHeadBody, aCoverage);
+					LabelRanking aLR = itsTargetRankings.getAverageRanking(theNewSubgroup);
+					Log.logCommandLine("average ranking subgroup: " + aLR.getRanking());
+
+					aQuality = itsQualityMeasure.computeLabelRankingDistance(aCoverage, aLR);
 				}
+				else //normal SINGLE_NOMINAL
+					aQuality = itsQualityMeasure.calculate(aCountHeadBody, aCoverage);
 
 				theNewSubgroup.setSecondaryStatistic(aCountHeadBody / (double) aCoverage); //relative occurence of positives in subgroup
 				theNewSubgroup.setTertiaryStatistic(aCountHeadBody); //count of positives in the subgroup

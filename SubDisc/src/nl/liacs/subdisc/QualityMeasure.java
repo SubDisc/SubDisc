@@ -13,6 +13,9 @@ public class QualityMeasure
 	//SINGLE_NOMINAL
 	private int itsTotalTargetCoverage;
 
+	//Label ranking (SINGLE_NOMINAL)
+	private LabelRanking itsAverageRanking = null;
+
 	//SINGLE_NUMERIC and SINGLE_ORDINAL
 	private float itsTotalAverage = 0.0f;
 	private double itsTotalSampleStandardDeviation = 0.0;
@@ -31,6 +34,15 @@ public class QualityMeasure
 		itsQualityMeasure = theMeasure;
 		itsNrRecords = theTotalCoverage;
 		itsTotalTargetCoverage = theTotalTargetCoverage;
+	}
+
+	//label ranking
+	public QualityMeasure(int theTotalCoverage, LabelRanking theAverageRanking)
+	{
+		itsQualityMeasure = QM.CLAUDIO;
+		itsNrRecords = theTotalCoverage;
+		itsAverageRanking = theAverageRanking;
+		Log.logCommandLine("average ranking of entire dataset: " + itsAverageRanking.getRanking());
 	}
 
 	//SINGLE_NUMERIC
@@ -101,7 +113,7 @@ public class QualityMeasure
 	 * FIXME MM each case should check the result value instead of
 	 * returning junk and let calculate(float, float) handle that
 	 */
-	public  static float calculate(QM theMeasure, int theTotalCoverage, float theTotalTargetCoverage, float theCountHeadBody, float theCoverage)
+	public static float calculate(QM theMeasure, int theTotalCoverage, float theTotalTargetCoverage, float theCountHeadBody, float theCoverage)
 	{
 		float aCountNotHeadBody			= theCoverage - theCountHeadBody;
 		float aTotalTargetCoverageNotBody	= theTotalTargetCoverage - theCountHeadBody;
@@ -501,7 +513,11 @@ public class QualityMeasure
 		return calculate(0, itsNrRecords - itsTotalTargetCoverage);
 	}
 
-
+	public final float computeLabelRankingDistance(int theSupport, LabelRanking theSubgroupRanking)
+	{
+		Log.logCommandLine("computeLabelRankingDistance (" + Math.sqrt(theSupport) + ", " + itsAverageRanking.kendallTau(theSubgroupRanking) + ")");
+		return (float) Math.sqrt(theSupport) * (1-itsAverageRanking.kendallTau(theSubgroupRanking));
+	}
 
 
 
@@ -516,16 +532,16 @@ public class QualityMeasure
 	 */
 	/**
 	 * Calculates the quality for a sample, or {@link Subgroup}.
-	 * 
+	 *
 	 * @param theCoverage the number of members in the sample
 	 * @param theSum the sum for the sample
 	 * @param theSSD the sum of squared deviations for the sample
 	 * @param theMedian the median for the sample
 	 * @param theMedianAD the median average deviation for the sample
 	 * @param thePDF the ProbabilityDensityFunction for the sample
-	 * 
+	 *
 	 * @return the quality
-	 * 
+	 *
 	 * @see Stat
 	 * @see Column#getStatistics(java.util.BitSet, java.util.Set)
 	 * @see ProbabilityDensityFunction
