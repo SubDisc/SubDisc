@@ -14,7 +14,7 @@ public class QualityMeasure
 	private int itsTotalTargetCoverage;
 
 	//Label ranking (SINGLE_NOMINAL)
-	private LabelRanking itsAverageRanking = null;
+	private LabelRankingMatrix itsAverageRankingMatrix = null;
 
 	//SINGLE_NUMERIC and SINGLE_ORDINAL
 	private float itsTotalAverage = 0.0f;
@@ -37,12 +37,13 @@ public class QualityMeasure
 	}
 
 	//label ranking
-	public QualityMeasure(int theTotalCoverage, LabelRanking theAverageRanking)
+	public QualityMeasure(int theTotalCoverage, LabelRankingMatrix theAverageRankingMatrix)
 	{
 		itsQualityMeasure = QM.CLAUDIO;
 		itsNrRecords = theTotalCoverage;
-		itsAverageRanking = theAverageRanking;
-		Log.logCommandLine("average ranking of entire dataset: " + itsAverageRanking.getRanking());
+		itsAverageRankingMatrix = theAverageRankingMatrix;
+		Log.logCommandLine("average ranking of entire dataset:");
+		itsAverageRankingMatrix.print();
 	}
 
 	//SINGLE_NUMERIC
@@ -513,10 +514,18 @@ public class QualityMeasure
 		return calculate(0, itsNrRecords - itsTotalTargetCoverage);
 	}
 
-	public final float computeLabelRankingDistance(int theSupport, LabelRanking theSubgroupRanking)
+	public final float computeLabelRankingDistance(int theSupport, LabelRankingMatrix theSubgroupRankingMatrix)
 	{
-		Log.logCommandLine("computeLabelRankingDistance (" + Math.sqrt(theSupport) + ", " + itsAverageRanking.kendallTau(theSubgroupRanking) + ")");
-		return (float) Math.sqrt(theSupport) * (1-itsAverageRanking.kendallTau(theSubgroupRanking));
+		Log.logCommandLine("computeLabelRankingDistance ===========================================");
+		Log.logCommandLine("support: " + Math.sqrt(theSupport));
+		Log.logCommandLine("subgroup matrix:");
+		theSubgroupRankingMatrix.print();
+//		float aDistance = itsAverageRankingMatrix.distance(theSubgroupRankingMatrix);
+		float aDistance = 0.0f; //TODO
+		Log.logCommandLine("distance: " + aDistance);
+
+		float aSize = (float) Math.sqrt(theSupport);
+		return  aSize * aDistance;
 	}
 
 

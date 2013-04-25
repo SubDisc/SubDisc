@@ -58,7 +58,10 @@ public class LabelRankingMatrix
 		{
 			String aRow = new String(LabelRanking.getLabel(i) + " [");
 			for (int j=0; j<itsSize; j++)
-				aRow += (", " + itsMatrix[i][j]);
+				if (j==0)
+					aRow += (itsMatrix[i][j]);
+				else
+					aRow += (", " + itsMatrix[i][j]);
 			Log.logCommandLine(aRow + "]");
 		}
 		Log.logCommandLine("  ================================");

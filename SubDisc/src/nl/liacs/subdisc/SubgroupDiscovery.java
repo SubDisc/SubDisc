@@ -63,8 +63,8 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		if (itsSearchParameters.getQualityMeasure() == QM.CLAUDIO) //label ranking?
 		{
 			itsTargetRankings = aTC.getPrimaryTarget();
-			LabelRanking aLR = itsTargetRankings.getAverageRanking(null); //average ranking over entire dataset
-			itsQualityMeasure = new QualityMeasure(itsNrRows, aLR);
+			LabelRankingMatrix aLRM = itsTargetRankings.getAverageRankingMatrix(null); //average ranking over entire dataset
+			itsQualityMeasure = new QualityMeasure(itsNrRows, aLRM);
 		}
 		else
 			itsQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), itsNrRows, theNrPositive);
@@ -705,10 +705,8 @@ public class SubgroupDiscovery extends MiningAlgorithm
 				}
 				else if (aMeasure == QM.CLAUDIO)
 				{
-					LabelRanking aLR = itsTargetRankings.getAverageRanking(theNewSubgroup);
-					Log.logCommandLine("average ranking subgroup: " + aLR.getRanking());
-
-					aQuality = itsQualityMeasure.computeLabelRankingDistance(aCoverage, aLR);
+					LabelRankingMatrix aLRM = itsTargetRankings.getAverageRankingMatrix(theNewSubgroup);
+					aQuality = itsQualityMeasure.computeLabelRankingDistance(aCoverage, aLRM);
 				}
 				else //normal SINGLE_NOMINAL
 					aQuality = itsQualityMeasure.calculate(aCountHeadBody, aCoverage);

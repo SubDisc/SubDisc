@@ -1895,6 +1895,36 @@ public class Column implements XMLNodeInterface
 	}
 
 	/**
+	 * Returns the average label ranking, as a LabelRankingMatrix
+	 */
+	public LabelRankingMatrix getAverageRankingMatrix(Subgroup theSubgroup)
+	{
+		if (itsType != AttributeType.NOMINAL)
+		{
+			logMessage("getAverageRankingMatrix", getTypeError("NOMINAL"));
+			return null;
+		}
+
+		LabelRankingMatrix aResult = new LabelRankingMatrix(itsNominals.get(0).length()); //take the size of the first example as the total number of labels
+		int aCount = 0;
+
+		BitSet aMembers = (theSubgroup == null) ? null : theSubgroup.getMembers();
+		//summation of rankings
+		for (int i=0; i<itsSize; ++i)
+			if (aMembers == null || aMembers.get(i)) //part of the subgroup?
+			{
+				String aValue = itsNominals.get(i);
+				LabelRanking aRanking = new LabelRanking(aValue);
+				LabelRankingMatrix aRankingMatrix = new LabelRankingMatrix(aRanking); //translate to LRM
+				aResult.add(aRankingMatrix);
+				aCount++;
+			}
+		aResult.divide(aCount); //divide by zero is not possible, as subgroups always have members
+
+		return aResult;
+	}
+
+	/**
 	 * Returns the number of times the value supplied as parameter occurs in
 	 * the Column. This method only works on Columns of type
 	 * {@link AttributeType} {@link AttributeType#NOMINAL} and
