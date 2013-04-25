@@ -8,22 +8,25 @@ public class LabelRankingMatrix
 	//the matrix is full, not a half triangle (easier for now)
 	//...
 
-	private final int itsSize; //number of labels
+	private int itsSize; //number of labels
 	private float[][] itsMatrix; //the actual values.
+	int[] pairwVector;
 
 	public LabelRankingMatrix(int theSize)
 	{
 		itsSize = theSize;
 		itsMatrix = new float[theSize][theSize];
-		Arrays.fill(itsMatrix, 0f);
+		for (int i=0; i<theSize; i++)
+			Arrays.fill(itsMatrix[i], 0f);
 	}
 
-	public LabelRankingMatrix(LabelRanking theRanking)
+ 	public LabelRankingMatrix(LabelRanking theRanking)
 	{
 		itsSize = theRanking.getSize();
+		itsMatrix = new float[itsSize][itsSize];
 
 		for (int i=0; i<itsSize; i++)
-			for (int j=0; j<=itsSize; j++)
+			for (int j=0; j<itsSize; j++)
 				if (i == j)
 					itsMatrix[i][j] = 0;
 				else if (theRanking.getRank(i) > theRanking.getRank(j))
@@ -35,14 +38,14 @@ public class LabelRankingMatrix
 	public void add(LabelRankingMatrix theMatrix)
 	{
 		for (int i=0; i<itsSize; i++)
-			for (int j=0; j<=itsSize; j++)
+			for (int j=0; j<itsSize; j++)
 				itsMatrix[i][j] += theMatrix.itsMatrix[i][j];
 	}
 
 	public void divide(float theValue)
 	{
 		for (int i=0; i<itsSize; i++)
-			for (int j=0; j<=itsSize; j++)
+			for (int j=0; j<itsSize; j++)
 				itsMatrix[i][j] /= theValue;
 	}
 
@@ -50,12 +53,31 @@ public class LabelRankingMatrix
 
 	public void print()
 	{
+		Log.logCommandLine("  ================================");
 		for (int i=0; i<itsSize; i++)
 		{
-			String aRow = new String("[");
-			for (int j=0; j<=itsSize; j++)
+			String aRow = new String(LabelRanking.getLabel(i) + " [");
+			for (int j=0; j<itsSize; j++)
 				aRow += (", " + itsMatrix[i][j]);
-			Log.logCommandLine(aRow);
+			Log.logCommandLine(aRow + "]");
 		}
+		Log.logCommandLine("  ================================");
 	}
+
+	public static void main(String[] args)
+	{
+        System.out.println("na boa");
+
+		int aQuantity = 3;
+        LabelRanking a1 = new LabelRanking("abcd");
+		LabelRanking a2 = new LabelRanking("dbac");
+		LabelRanking a3 = new LabelRanking("bdac");
+		LabelRankingMatrix anAverageMatrix = new LabelRankingMatrix(4); //empty matrix first
+		anAverageMatrix.add(new LabelRankingMatrix(a1));
+		anAverageMatrix.add(new LabelRankingMatrix(a2));
+		anAverageMatrix.add(new LabelRankingMatrix(a3));
+		anAverageMatrix.divide(aQuantity);
+
+		anAverageMatrix.print();
+    }
 }

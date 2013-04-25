@@ -4,7 +4,7 @@ public class LabelRanking
 {
 	private final int[] itsRanking;
 	private final int itsSize;
-	private final String ALPHABET = "abcdefghijklmnopqrstuvwxyz";
+	private static final String ALPHABET = "abcdefghijklmnopqrstuvwxyz";
 
 	//labels are numbered from 0 to k-1
 	//rankings are provided as input with a string of letters. 'a' corresponds to rank 0
@@ -46,7 +46,7 @@ public class LabelRanking
 		return aString + "]";
 	}
 
-	final public String getLabel(int theLabel)
+	static public String getLabel(int theLabel)
 	{
 		return ALPHABET.substring(theLabel, theLabel+1);
 	}
