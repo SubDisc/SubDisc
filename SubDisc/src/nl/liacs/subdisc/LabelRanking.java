@@ -15,7 +15,7 @@ public class LabelRanking
 		itsSize = theString.length();
 		itsRanking = new int[itsSize];
 		for (int i=0; i<itsSize; i++)
-			itsRanking[i] = Character.getNumericValue(theString.charAt(i)) - 10; //0 means 'a'
+			itsRanking[Character.getNumericValue(theString.charAt(i)) - 10] = i; //0 means 'a'
 	}
 
 	final public float kendallTau(LabelRanking anLR)
