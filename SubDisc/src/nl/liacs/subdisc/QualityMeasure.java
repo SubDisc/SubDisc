@@ -520,8 +520,8 @@ public class QualityMeasure
 		Log.logCommandLine("support: " + Math.sqrt(theSupport));
 		Log.logCommandLine("subgroup matrix:");
 		theSubgroupRankingMatrix.print();
-//		float aDistance = itsAverageRankingMatrix.distance(theSubgroupRankingMatrix);
-		float aDistance = 0.0f; //TODO
+		float aDistance = itsAverageRankingMatrix.altDistance(theSubgroupRankingMatrix);
+//		float aDistance = 0.0f; //TODO
 		Log.logCommandLine("distance: " + aDistance);
 
 		float aSize = (float) Math.sqrt(theSupport);
