@@ -174,6 +174,9 @@ public class ResultWindow extends JFrame implements ActionListener
 
 		jButtonFold = GUI.buildButton("Fold members", 'F', "fold", this);
 		aSubgroupSetPanel.add(jButtonFold);
+		
+		jButtonSubRank = GUI.buildButton("Sub-rankings", 'Z', "show_subrank", this);
+		aSubgroupSetPanel.add(jButtonSubRank);
 
 		//close *********************************
 
@@ -242,6 +245,8 @@ public class ResultWindow extends JFrame implements ActionListener
 			jButtonRegressionTestActionPerformed();
 		else if ("empirical_p".equals(aCommand))
 			jButtonEmpiricalActionPerformed();
+		else if ("show_subrank".equals(aCommand))
+			jButtonSubRankingPrint();
 		else if ("fold".equals(aCommand))
 			jButtonFoldActionPerformed();
 		else if ("save".equals(aCommand))
@@ -529,6 +534,13 @@ public class ResultWindow extends JFrame implements ActionListener
 		itsSubgroupTable.repaint();
 		setBusy(false);
 	}
+	
+	private void jButtonSubRankingPrint()
+	{
+		setBusy(true);
+		Log.logCommandLine("It works! ");
+		setBusy(false);
+	}
 
 	private void jButtonFoldActionPerformed()
 	{
@@ -590,6 +602,7 @@ public class ResultWindow extends JFrame implements ActionListener
 	private JButton jButtonPValues;
 	private JButton jButtonRegressionTest;
 	private JButton jButtonEmpirical;
+	private JButton jButtonSubRank;
 	private JButton jButtonPatternTeam;
 	private JButton jButtonROC;
 	private JButton jButtonSave;
