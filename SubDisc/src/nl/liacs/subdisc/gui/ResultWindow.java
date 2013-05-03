@@ -174,7 +174,7 @@ public class ResultWindow extends JFrame implements ActionListener
 
 		jButtonFold = GUI.buildButton("Fold members", 'F', "fold", this);
 		aSubgroupSetPanel.add(jButtonFold);
-		
+
 		jButtonSubRank = GUI.buildButton("Sub-rankings", 'Z', "show_subrank", this);
 		aSubgroupSetPanel.add(jButtonSubRank);
 
@@ -534,11 +534,26 @@ public class ResultWindow extends JFrame implements ActionListener
 		itsSubgroupTable.repaint();
 		setBusy(false);
 	}
-	
+
 	private void jButtonSubRankingPrint()
 	{
 		setBusy(true);
-		Log.logCommandLine("It works! ");
+
+		if (itsSubgroupSet.isEmpty())
+			return;
+
+		int[] aSelection = itsSubgroupTable.getSelectedRows();
+		Iterator<Subgroup> anIterator = itsSubgroupSet.iterator();
+
+		for (int i = 0, j = aSelection.length, k = 0; i < j; ++k)
+		{
+			int aNext = aSelection[k];
+			while (i++ < aNext)
+				anIterator.next();
+			Subgroup aSubgroup = anIterator.next();
+			Log.logCommandLine("subgroup " + i + ": " + aSubgroup.toString());
+		}
+
 		setBusy(false);
 	}
 
