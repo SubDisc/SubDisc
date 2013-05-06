@@ -542,9 +542,11 @@ public class ResultWindow extends JFrame implements ActionListener
 		if (itsSubgroupSet.isEmpty())
 			return;
 
+		Log.logCommandLine("entire dataset:");
+		itsQualityMeasure.getBaseLabelRanking().print(); //base ranking over entire dataset
+
 		int[] aSelection = itsSubgroupTable.getSelectedRows();
 		Iterator<Subgroup> anIterator = itsSubgroupSet.iterator();
-
 		for (int i = 0, j = aSelection.length, k = 0; i < j; ++k)
 		{
 			int aNext = aSelection[k];
@@ -552,6 +554,8 @@ public class ResultWindow extends JFrame implements ActionListener
 				anIterator.next();
 			Subgroup aSubgroup = anIterator.next();
 			Log.logCommandLine("subgroup " + i + ": " + aSubgroup.toString());
+			aSubgroup.getLabelRanking().print();
+			aSubgroup.getLabelRankingMatrix().print();
 		}
 
 		setBusy(false);

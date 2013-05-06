@@ -24,6 +24,8 @@ public class Subgroup implements Comparable<Subgroup>
 	private int itsID = 0;
 	private int itsCoverage; // crucial to keep it in sync with itsMembers
 	private DAG itsDAG;
+	private LabelRanking itsLabelRanking;
+	private LabelRankingMatrix itsLabelRankingMatrix;
 	private double itsMeasureValue;
 	private double itsSecondaryStatistic = 0;
 	private double itsTertiaryStatistic = 0;
@@ -42,11 +44,11 @@ public class Subgroup implements Comparable<Subgroup>
 	 * <p>
 	 * the {@link ConditionList} and {@link SubgroupSet} argument can be
 	 * </code>null</code>, in which case new empty items are created.
-	 * 
+	 *
 	 * @param theConditions the ConditionList for this Subgroup.
 	 * @param theMembers the BitSet representing members of this Subgroup.
 	 * @param theSubgroupSet the SubgroupSet this Subgroup is contained in.
-	 * 
+	 *
 	 * @throws IllegalArgumentException if (theMembers == <code>null</code>)
 	 * or (theMembers.cardinality() == 0).
 	 */
@@ -65,6 +67,8 @@ public class Subgroup implements Comparable<Subgroup>
 
 		itsMeasureValue = 0.0f;
 		itsDAG = null;	//not set yet
+		itsLabelRanking = null;
+		itsLabelRankingMatrix = null;
 		isPValueComputed = false;
 	}
 
@@ -148,6 +152,11 @@ public class Subgroup implements Comparable<Subgroup>
 
 	public void setDAG(DAG theDAG) { itsDAG = theDAG; }
 	public DAG getDAG() { return itsDAG; }
+
+	public void setLabelRanking(LabelRanking theLabelRanking) { itsLabelRanking = theLabelRanking; }
+	public LabelRanking getLabelRanking() { return itsLabelRanking; }
+	public void setLabelRankingMatrix(LabelRankingMatrix theLabelRankingMatrix) { itsLabelRankingMatrix = theLabelRankingMatrix; }
+	public LabelRankingMatrix getLabelRankingMatrix() { return itsLabelRankingMatrix; }
 
 	public int getCoverage() { return itsCoverage; }
 
@@ -260,7 +269,7 @@ public class Subgroup implements Comparable<Subgroup>
 	 * Returns the TruePositiveRate for this Subgroup.
 	 * If no itsParentSet was set for this SubGroup, or no itsBinaryTarget
 	 * was set for this SubGroups' itsParentSet this function returns 0.0f.
-	 * 
+	 *
 	 * @return the TruePositiveRate, also known as TPR.
 	 */
 	public Float getTruePositiveRate()
@@ -286,7 +295,7 @@ public class Subgroup implements Comparable<Subgroup>
 	 * Returns the FalsePositiveRate for this Subgroup.
 	 * If no itsParentSet was set for this subgroup, or no itsBinaryTarget
 	 * was set for this subgroups' itsParentSet this function returns 0.0f.
-	 * 
+	 *
 	 * @return the FalsePositiveRate, also known as FPR.
 	 */
 	public Float getFalsePositiveRate()

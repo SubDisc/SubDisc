@@ -27,7 +27,8 @@ public enum QM implements EnumInterface
 	PROP_SCORE_RATIO("Propensity score ratio",	"1.0",		TargetType.SINGLE_NOMINAL),
 	BAYESIAN_SCORE	("Bayesian Score",	"0.0",	TargetType.SINGLE_NOMINAL),
 	LIFT		("Lift",		"1.0",	TargetType.SINGLE_NOMINAL),
-	CLAUDIO		("Claudio",		"0.0",	TargetType.SINGLE_NOMINAL),
+	CLAUDIO1	("Claudio 1",		"0.0",	TargetType.SINGLE_NOMINAL),
+	CLAUDIO2	("Claudio 2",		"0.0",	TargetType.SINGLE_NOMINAL),
 
 	// SINGLE_NUMERIC quality measures
 	// NOTE when adding a new SINGLE_NUMERIC QM -> add it to requiredStats()

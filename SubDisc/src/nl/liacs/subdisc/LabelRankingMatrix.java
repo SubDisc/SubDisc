@@ -48,29 +48,27 @@ public class LabelRankingMatrix
 			for (int j=0; j<itsSize; j++)
 				itsMatrix[i][j] /= theValue;
 	}
-	
+
 	public float distance(LabelRankingMatrix theMatrix)
 	{
 		float aDistance = 0;
 		for (int i=0; i<itsSize; i++)
-			for (int j=(i+1); j<=itsSize; j++)
+			for (int j=i+1; j<itsSize; j++)
 				aDistance += Math.abs(itsMatrix[i][j] - theMatrix.itsMatrix[i][j]);
 		return aDistance;
 	}
-	
+
 	public float altDistance(LabelRankingMatrix theMatrix)
 	{
-		float aParameter = 1;
-		float aDistanceTest = 0;
+		float aParameter = 0.5f;
 		float aDistance = 0;
+
 		for (int i=0; i<itsSize; i++)
-			for (int j=(i+1); j<=itsSize; j++) {
-				aDistanceTest = Math.abs(itsMatrix[i][j] - theMatrix.itsMatrix[i][j]);
-				if ( aDistanceTest >= aParameter) {
+			for (int j=i+1; j<itsSize; j++)
+			{
+				float aDistanceTest = Math.abs(itsMatrix[i][j] - theMatrix.itsMatrix[i][j]);
+				if (aDistanceTest >= aParameter)
 					aDistance += 1;
-				} else {
-					aDistance += 0;
-				}
 			}
 		return aDistance;
 	}

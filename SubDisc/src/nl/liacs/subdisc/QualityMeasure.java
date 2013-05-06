@@ -14,6 +14,7 @@ public class QualityMeasure
 	private int itsTotalTargetCoverage;
 
 	//Label ranking (SINGLE_NOMINAL)
+	private LabelRanking itsAverageRanking = null;
 	private LabelRankingMatrix itsAverageRankingMatrix = null;
 
 	//SINGLE_NUMERIC and SINGLE_ORDINAL
@@ -37,10 +38,11 @@ public class QualityMeasure
 	}
 
 	//label ranking
-	public QualityMeasure(int theTotalCoverage, LabelRankingMatrix theAverageRankingMatrix)
+	public QualityMeasure(QM theMeasure, int theTotalCoverage, LabelRanking theAverageRanking, LabelRankingMatrix theAverageRankingMatrix)
 	{
-		itsQualityMeasure = QM.CLAUDIO;
+		itsQualityMeasure = theMeasure;
 		itsNrRecords = theTotalCoverage;
+		itsAverageRanking = theAverageRanking;
 		itsAverageRankingMatrix = theAverageRankingMatrix;
 		Log.logCommandLine("average ranking of entire dataset:");
 		itsAverageRankingMatrix.print();
@@ -514,14 +516,24 @@ public class QualityMeasure
 		return calculate(0, itsNrRecords - itsTotalTargetCoverage);
 	}
 
-	public final float computeLabelRankingDistance(int theSupport, LabelRankingMatrix theSubgroupRankingMatrix)
+	//returns the average label ranking of the entire dataset, which this QM uses to compare rankings of subgroups to
+	public final LabelRanking getBaseLabelRanking()
+	{
+		return itsAverageRanking;
+	}
+
+	public final float computeLabelRankingDistance(QM theMeasure, int theSupport, LabelRankingMatrix theSubgroupRankingMatrix)
 	{
 		Log.logCommandLine("computeLabelRankingDistance ===========================================");
 		Log.logCommandLine("support: " + Math.sqrt(theSupport));
 		Log.logCommandLine("subgroup matrix:");
 		theSubgroupRankingMatrix.print();
-		float aDistance = itsAverageRankingMatrix.altDistance(theSubgroupRankingMatrix);
-//		float aDistance = 0.0f; //TODO
+
+		float aDistance = 0.0f;
+		if (theMeasure == QM.CLAUDIO1)
+			aDistance = itsAverageRankingMatrix.distance(theSubgroupRankingMatrix);
+		else //CLAUDIO2
+			aDistance = itsAverageRankingMatrix.altDistance(theSubgroupRankingMatrix);
 		Log.logCommandLine("distance: " + aDistance);
 
 		float aSize = (float) Math.sqrt(theSupport);
