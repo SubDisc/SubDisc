@@ -527,13 +527,13 @@ public class QualityMeasure
 		Log.logCommandLine("computeLabelRankingDistance ===========================================");
 		Log.logCommandLine("support: " + Math.sqrt(theSupport));
 		Log.logCommandLine("subgroup matrix:");
-		theSubgroupRankingMatrix.print();
+		//theSubgroupRankingMatrix.print();
 
 		float aDistance = 0.0f;
 		if (theMeasure == QM.CLAUDIO1)
 			aDistance = itsAverageRankingMatrix.distance(theSubgroupRankingMatrix);
 		else //CLAUDIO2
-			aDistance = itsAverageRankingMatrix.altDistance(theSubgroupRankingMatrix);
+			aDistance = itsAverageRankingMatrix.maxDistance(theSubgroupRankingMatrix);
 		Log.logCommandLine("distance: " + aDistance);
 
 		float aSize = (float) Math.sqrt(theSupport);

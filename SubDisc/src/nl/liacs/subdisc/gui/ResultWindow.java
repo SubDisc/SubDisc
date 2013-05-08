@@ -545,18 +545,16 @@ public class ResultWindow extends JFrame implements ActionListener
 		Log.logCommandLine("entire dataset:");
 		itsQualityMeasure.getBaseLabelRanking().print(); //base ranking over entire dataset
 
-		int[] aSelection = itsSubgroupTable.getSelectedRows();
+		int aSelection = itsSubgroupTable.getSelectedRow();
 		Iterator<Subgroup> anIterator = itsSubgroupSet.iterator();
-		for (int i = 0, j = aSelection.length, k = 0; i < j; ++k)
-		{
-			int aNext = aSelection[k];
-			while (i++ < aNext)
-				anIterator.next();
-			Subgroup aSubgroup = anIterator.next();
-			Log.logCommandLine("subgroup " + i + ": " + aSubgroup.toString());
-			aSubgroup.getLabelRanking().print();
-			aSubgroup.getLabelRankingMatrix().print();
-		}
+		int i = 0;
+		while (i++ < aSelection)
+			anIterator.next();
+		Subgroup aSubgroup = anIterator.next();
+		Log.logCommandLine("subgroup " + aSelection + ": " + aSubgroup.toString());
+		aSubgroup.getLabelRanking().print();
+		aSubgroup.getLabelRankingMatrix().print();
+		aSubgroup.getLabelRankingMatrix().printMax();
 
 		setBusy(false);
 	}

@@ -60,7 +60,7 @@ public class LabelRankingMatrix
 
 	public float altDistance(LabelRankingMatrix theMatrix)
 	{
-		float aParameter = 0.5f;
+		float aParameter = 1.0f;
 		float aDistance = 0;
 
 		for (int i=0; i<itsSize; i++)
@@ -69,6 +69,20 @@ public class LabelRankingMatrix
 				float aDistanceTest = Math.abs(itsMatrix[i][j] - theMatrix.itsMatrix[i][j]);
 				if (aDistanceTest >= aParameter)
 					aDistance += 1;
+			}
+		return aDistance;
+	}
+	
+	public float maxDistance(LabelRankingMatrix theMatrix)
+	{
+		float aDistance = 0;
+
+		for (int i=0; i<itsSize; i++)
+			for (int j=i+1; j<itsSize; j++)
+			{
+				float aDistanceTest = Math.abs(itsMatrix[i][j] - theMatrix.itsMatrix[i][j]);
+				if (aDistanceTest >= aDistance)
+					aDistance = aDistanceTest;
 			}
 		return aDistance;
 	}
@@ -88,6 +102,29 @@ public class LabelRankingMatrix
 					aRow += (", " + itsMatrix[i][j]);
 			Log.logCommandLine(aRow + "]");
 		}
+		Log.logCommandLine("  ================================");
+	}
+	
+	/*
+	 * Print the higher values in the LabelRankingMatrix
+	 */
+	String anOutputPrint;
+	public void printMax()
+	{
+		
+		float aFloat = 0;
+		
+		Log.logCommandLine("  ================================");
+		for (int i=0; i<itsSize; i++)
+		{
+			for (int j=i+1; j<itsSize; j++) {
+				if (aFloat < Math.abs(itsMatrix[i][j])) {
+					anOutputPrint = new String(LabelRanking.getLabel(i) + ">" + LabelRanking.getLabel(j) + ": " + itsMatrix[i][j]);
+					aFloat = Math.abs(itsMatrix[i][j]);
+				}
+			}
+		}
+		Log.logCommandLine(anOutputPrint);
 		Log.logCommandLine("  ================================");
 	}
 
