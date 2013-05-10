@@ -533,7 +533,9 @@ public class QualityMeasure
 		if (theMeasure == QM.CLAUDIO1)
 			aDistance = itsAverageRankingMatrix.distance(theSubgroupRankingMatrix);
 		else //CLAUDIO2
-			aDistance = itsAverageRankingMatrix.maxDistance(theSubgroupRankingMatrix);
+			aDistance = itsAverageRankingMatrix.altDistance(theSubgroupRankingMatrix);
+		
+		//aDistance = aDistance*itsAverageRankingMatrix.homogeneity(theSubgroupRankingMatrix);
 		Log.logCommandLine("distance: " + aDistance);
 
 		float aSize = (float) Math.sqrt(theSupport);

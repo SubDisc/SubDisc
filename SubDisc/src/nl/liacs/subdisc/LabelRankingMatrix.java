@@ -86,7 +86,21 @@ public class LabelRankingMatrix
 			}
 		return aDistance;
 	}
+	
+	public float homogeneity(LabelRankingMatrix theMatrix)
+	{
+		float aDistance = 0;
 
+		for (int i=0; i<itsSize; i++)
+			for (int j=i+1; j<itsSize; j++)
+			{
+				aDistance += Math.abs(theMatrix.itsMatrix[i][j]);
+			}
+		aDistance = aDistance/((itsSize*(itsSize+1))/2);
+		Log.logCommandLine("<>" + aDistance + "<>");
+		return aDistance;
+	}
+	
 	public float get(int i, int j) { return itsMatrix[i][j]; }
 
 	public void print()
@@ -119,7 +133,7 @@ public class LabelRankingMatrix
 		{
 			for (int j=i+1; j<itsSize; j++) {
 				if (aFloat < Math.abs(itsMatrix[i][j])) {
-					anOutputPrint = new String(LabelRanking.getLabel(i) + ">" + LabelRanking.getLabel(j) + ": " + itsMatrix[i][j]);
+					anOutputPrint = new String(LabelRanking.getLabel(i) + ">" + LabelRanking.getLabel(j) + ": " + itsMatrix[i][j] + "  (" + i + ">" + j + ")");
 					aFloat = Math.abs(itsMatrix[i][j]);
 				}
 			}
