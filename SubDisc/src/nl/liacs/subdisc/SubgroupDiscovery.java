@@ -866,9 +866,13 @@ public class SubgroupDiscovery extends MiningAlgorithm
 			case DOUBLE_CORRELATION :
 			{
 				CorrelationMeasure aCM = new CorrelationMeasure(itsBaseCM);
-				for (int i = 0; i < itsNrRows; i++)
-					if (theNewSubgroup.getMembers().get(i))
-						aCM.addObservation(itsPrimaryColumn.getFloat(i), itsSecondaryColumn.getFloat(i));
+				final BitSet aMembers = theNewSubgroup.getMembers();
+
+				for (int i = aMembers.nextSetBit(0); i >= 0; i = aMembers.nextSetBit(i+1))
+					aCM.addObservation(itsPrimaryColumn.getFloat(i), itsSecondaryColumn.getFloat(i));
+				//for (int i = 0; i < itsNrRows; i++)
+				//	if (aMembers.get(i))
+				//		aCM.addObservation(itsPrimaryColumn.getFloat(i), itsSecondaryColumn.getFloat(i));
 				theNewSubgroup.setSecondaryStatistic(aCM.getCorrelation()); //correlation
 				theNewSubgroup.setTertiaryStatistic(aCM.computeCorrelationDistance()); //intercept
 				aQuality = (float) aCM.getEvaluationMeasureValue();
