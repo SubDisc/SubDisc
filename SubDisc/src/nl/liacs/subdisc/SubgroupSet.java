@@ -40,7 +40,7 @@ public class SubgroupSet extends TreeSet<Subgroup>
 	// this is the long way around, new Subgroups are added to QUEUE
 	// when QUEUE.size() >= itsMaximumSize all Subgroups in QUEUE
 	// are added to this SubgroupSet, much better for concurrency
-	private final int MAX_QUEUE_SIZE = 1000; // arbitrarily chosen
+	private final int MAX_QUEUE_SIZE = 1; // arbitrarily chosen
 	private final BlockingQueue<Subgroup> QUEUE =
 			new ArrayBlockingQueue<Subgroup>(MAX_QUEUE_SIZE);
 
