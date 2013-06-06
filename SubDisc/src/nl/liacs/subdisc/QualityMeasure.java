@@ -800,6 +800,20 @@ public class QualityMeasure
 				aReturn = (float) ((aTotalDifference * theCoverage) / itsNrRecords);
 				break;
 			}
+			case CWRACC_UNWEIGHTED :
+			{
+				double aTotalDifference = 0.0;
+				for (int i = 0, j = itsPDF.size(); i < j; ++i)
+				{
+					float aDensity = itsPDF.getDensity(i);
+					float aDensitySubgroup = thePDF.getDensity(i);
+					aTotalDifference += Math.abs(aDensity - aDensitySubgroup);
+				}
+				Log.logCommandLine("difference in PDF: " + aTotalDifference);
+				aReturn = (float) aTotalDifference;
+				break;
+			}
+			
 			default :
 			{
 				/*

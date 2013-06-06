@@ -189,6 +189,11 @@ public class CorrelationMeasure
 			case CORRELATION_ENTROPY:	{ return computeEntropy(); }
 			case ADAPTED_WRACC:		{ return computeAdaptedWRAcc(); } //Done: Rob Konijn
 			case COSTS_WRACC:		{ return computeCostsWRAcc(); } //Done: Rob Konijn
+			case CWTPD:				{ return computeCWTPD();}
+			case TMCC:				{ return computeTMCC();}
+			case MCC:				{ return computeMCC();}
+			case PDC:				{ return computePDC();}
+			case MVPDC:				{ return computeMVPDC();}
 			default :
 			{
 				// validity of QM is checked by constructor
@@ -325,4 +330,85 @@ public class CorrelationMeasure
 		// TODO should use more braces and line out, hard to read
 		return (itsXSum - itsSampleSize*itsBase.itsXSum/itsBase.itsSampleSize) * ((itsXYSum/itsXSum) - (itsBase.itsYSum-itsYSum)/(itsBase.itsSampleSize-itsSampleSize));
 	}
+	
+	/**
+	 * For the Cost-based Quality measures, we assume X to be the cost target and Y to be the binary target
+	 * In the input boxes from cortana X is the SECOND BOX and Y the FIRST box
+	 * the Base object contains the information about the global data set.
+	 * Y contains information about the binary crosstable
+	 * X contains information about the total cost cross table
+	 * analogue to the paper we reconstruct the count and costs crosstables
+	 * itsBase.itsSampleSize = total number of examples in dataset
+	 * itsBase.itsYsum = total number of positives
+	 * itsBase.itsSampleSize - itsBase.itsYsum = total number of negatives
+	 * itsBase.itsXSum = total costs in DB
+	 * itsBase.itsXYSum = total costs of positive examples
+	 * itsBase.itsXSum - itsBase.itsXYSum = total costs of negative examples
+	 * 
+	 * for a subgroup
+	 * itsSampleSize = size of the subgroup
+	 * itsYSum = count in the TP cell
+	 * itsSampleSize - itsYSum = count in the FP cell
+	 * itsBase.itsYsum -  itsYSum = count in the FN cell
+	 * (itsBase.itsSampleSize - itsBase.itsYsum) - (itsSampleSize - itsYSum) = count in the TN cell
+	 * 
+	 * itsXSum = total costs in subgroup
+	 * itsXYSum = total costs in TP cell
+	 * itsXSum - itsXYSum = total costs in FP cell
+	 * itsBase.itsXYSum - itsXYSum = total costs in FN cell.
+	 * (itsBase.itsXSum - itsBase.itsXYSum) - (itsXSum - itsXYSum) = total costs in TN cell
+	 * 
+	 * Hint: draw two crosstables to understand these numbers :)
+	 * 
+	 * average values can be obtained by dividing cells
+	 * 
+	*/
+	public double computeCWTPD()
+	{
+		// 
+		
+		//TP = itsYSum;
+		//N = itsBase.itsSampleSize
+		//(TP + FP) = itsSampleSize
+		//(TP + FN) = itsBase.itsYsum
+		// cST = itsXYSum / itsYSum;
+		System.out.print("deviation from expectation");
+		System.out.println((itsYSum - (1/ (double) itsBase.itsSampleSize) * (double) itsSampleSize *itsBase.itsYSum));	
+		
+		return ((itsYSum - (1/ (double) itsBase.itsSampleSize) * (double) itsSampleSize *itsBase.itsYSum)) * itsXYSum/itsYSum ;
+	}
+	
+	public double computeTMCC()
+	{
+		return itsYSum * (itsXYSum/itsYSum -  (itsXSum - itsXYSum)/(itsSampleSize - itsYSum));
+	}
+	
+	public double computeMCC()
+	{
+		return (itsXYSum/itsYSum -  (itsXSum - itsXYSum)/(itsSampleSize - itsYSum));
+	}
+	
+	public double computePDC()
+	{
+		return itsXYSum/itsBase.itsXSum - itsBase.itsXYSum/itsBase.itsXSum * itsXSum/itsBase.itsXSum  ;
+	}
+	
+	public double computeMVPDC()
+	{
+		System.out.print("true positives:");
+		System.out.println(itsYSum);
+		System.out.print("size subgroup:");
+		System.out.println(itsSampleSize);
+		System.out.print("total positives in data:");
+		System.out.println(itsBase.itsYSum);
+		System.out.print("mean costs in subgroup and target:");
+		System.out.println(itsXYSum / itsYSum);
+		System.out.print("expectation");
+		System.out.println(((1/ (double) itsBase.itsSampleSize) * (double) itsSampleSize *itsBase.itsYSum));	
+			
+		return itsXYSum - (itsBase.itsXYSum * itsXSum)/itsBase.itsXSum  ;
+	}
+	
+	
+	
 }
