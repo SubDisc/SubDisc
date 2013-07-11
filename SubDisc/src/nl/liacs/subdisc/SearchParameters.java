@@ -1,6 +1,7 @@
 package nl.liacs.subdisc;
 
 import org.w3c.dom.*;
+import java.util.*;
 
 /**
  * SearchParameters contains all search parameters for an experiment.
@@ -12,7 +13,7 @@ public class SearchParameters implements XMLNodeInterface
 	public static final float BETA_DEFAULT = 1.0f;
 	public static final int POST_PROCESSING_COUNT_DEFAULT = 20;
 
-	// when adding/removing members be sure to update addNodeTo() and loadNode()
+	// when adding/removing members be sure to update addNodeTo() and loadData()
 	private TargetConcept	itsTargetConcept;
 	private QM		itsQualityMeasure;
 	private float		itsQualityMeasureMinimum;
@@ -35,6 +36,9 @@ public class SearchParameters implements XMLNodeInterface
 	private float		itsBeta;
 	private boolean	itsPostProcessingDoAutoRun;
 	private int		itsPostProcessingCount;
+	
+	private boolean itsBeamSeedLoaded;
+	private List<ConditionList> itsBeamSeed; //TODO Deze vrolijke vrind is niet verwerkt in loadData(), want ik zou niet weten hoe. WD out.
 
 	public SearchParameters(Node theSearchParametersNode)
 	{
@@ -127,6 +131,10 @@ public class SearchParameters implements XMLNodeInterface
 	public void setPostProcessingDoAutoRun(boolean theAutoRunSetting) { itsPostProcessingDoAutoRun = theAutoRunSetting; }
 	public int getPostProcessingCount()			{ return itsPostProcessingCount; }
 	public void setPostProcessingCount(int theNr)		{ itsPostProcessingCount = theNr; }
+	public boolean getBeamSeedLoaded() { return itsBeamSeedLoaded; }
+	public void setBeamSeedLoaded(boolean theBeamSeedLoaded) { itsBeamSeedLoaded = theBeamSeedLoaded; }
+	public List<ConditionList> getBeamSeed() { return itsBeamSeed; }
+	public void setBeamSeed(List<ConditionList> theBeamSeed) { itsBeamSeed= theBeamSeed; }
 
 	/**
 	 * Creates an {@link XMLNode XMLNode} representation of this
@@ -157,6 +165,8 @@ public class SearchParameters implements XMLNodeInterface
 		XMLNode.addNodeTo(aNode, "beta", getBeta());
 		XMLNode.addNodeTo(aNode, "post_processing_do_autorun", getPostProcessingDoAutoRun());
 		XMLNode.addNodeTo(aNode, "post_processing_count", getPostProcessingCount());
+		XMLNode.addNodeTo(aNode, "beam_seed_loaded", getBeamSeedLoaded());
+		XMLNode.addNodeTo(aNode, "beam_seed", getBeamSeed());
 	}
 
 	private void loadData(Node theSearchParametersNode)
@@ -202,6 +212,8 @@ public class SearchParameters implements XMLNodeInterface
 				itsPostProcessingDoAutoRun = Boolean.parseBoolean(aSetting.getTextContent());
 			else if("post_processing_count".equalsIgnoreCase(aNodeName))
 				itsPostProcessingCount = Integer.parseInt(aSetting.getTextContent());
+			else if("beam_seed_loaded".equalsIgnoreCase(aNodeName))
+				itsBeamSeedLoaded = Boolean.parseBoolean(aSetting.getTextContent());
 			else
 				Log.logCommandLine("ignoring unknown XML node: " + aNodeName);
 		}

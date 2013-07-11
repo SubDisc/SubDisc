@@ -119,9 +119,8 @@ public class MiningWindow extends JFrame implements ActionListener
 		jMenuItemAddToAutorunFile = initMenuItem(STD.ADD_TO_AUTORUN_FILE);
 		jMenuFile.add(jMenuItemAddToAutorunFile);
 
-		// TODO MM add when implemented
 		jMenuItemLoadSampledSubgroups = initMenuItem(STD.LOAD_SAMPLED_SUBGROUPS);
-		//jMenuFile.add(jMenuItemLoadSampledSubgroups);
+		jMenuFile.add(jMenuItemLoadSampledSubgroups);
 
 		jMenuFile.addSeparator();
 
@@ -1063,7 +1062,7 @@ public class MiningWindow extends JFrame implements ActionListener
 			return;
 		else
 		{
-			LoaderFraunhofer aLoader = new LoaderFraunhofer(aFile);
+			LoaderFraunhofer aLoader = new LoaderFraunhofer(aFile,itsTable,itsSearchParameters);
 		}
 	}
 
