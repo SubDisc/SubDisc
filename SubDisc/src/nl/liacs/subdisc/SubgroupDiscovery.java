@@ -1065,19 +1065,22 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		aBitSet.set(0, itsNrRows);
 		Subgroup aStart = new Subgroup(null, aBitSet, itsResult);
 
-		itsCandidateQueue = new CandidateQueue(itsSearchParameters, new Candidate(aStart));
-		
-		if (itsSearchParameters.getBeamSeedLoaded())
+		if (itsSearchParameters.getBeamSeed() == null)
+			itsCandidateQueue = new CandidateQueue(itsSearchParameters, new Candidate(aStart));
+		else
 		{
 			List<ConditionList> aBeamSeed = itsSearchParameters.getBeamSeed();
 			ConditionList aFirstConditionList = aBeamSeed.get(0);
-			BitSet aFirstMembers = itsTable.evaluate(aFirstConditionList); //TODO there may be no members, in which case the following statement crashes
-			Subgroup aFirstSubgroup = new Subgroup(aFirstConditionList,aFirstMembers,itsResult);
+			//TODO there may be no members, in which case the following statement crashes
+			BitSet aFirstMembers = itsTable.evaluate(aFirstConditionList);
+			Subgroup aFirstSubgroup = new Subgroup(aFirstConditionList, aFirstMembers, itsResult);
 			CandidateQueue aSeededCandidateQueue = new CandidateQueue(itsSearchParameters, new Candidate(aFirstSubgroup));
-			aBeamSeed.remove(0);
+			aBeamSeed.remove(0); // does a full array-copy of aBeamSeed
 			int aNrEmptySeeds = 0;
 			for (ConditionList aConditionList : aBeamSeed)
+			//for (int i = 1, j = aBeamSeed.size(); i < j; ++i)
 			{
+				//ConditionList aConditionList = aBeamSeed.get(i);
 				Log.logCommandLine(aConditionList.toString());
 				BitSet aMembers = itsTable.evaluate(aConditionList);
 				if (aMembers.cardinality()>0)
@@ -1091,8 +1094,8 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			itsCandidateQueue = aSeededCandidateQueue;
 			if (aNrEmptySeeds>0)
 				Log.logCommandLine("Number of empty seeds discarded: "+aNrEmptySeeds);
+			Log.logCommandLine("Beam Seed size: " + itsCandidateQueue.size());
 		}
-		Log.logCommandLine("Beam Seed size: " + itsCandidateQueue.size());
 
 		final int aSearchDepth = itsSearchParameters.getSearchDepth();
 

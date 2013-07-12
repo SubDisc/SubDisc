@@ -6,7 +6,6 @@ import java.io.*;
 
 public class LoaderFraunhofer
 {
-	private int itsNrLines = 0;
 	private List<ConditionList> itsBeamSeed;
 	private Table itsTable;
 	private SearchParameters itsSearchParameters;
@@ -35,7 +34,7 @@ public class LoaderFraunhofer
 				//Subgroup aSubgroup = convertToSubgroup(aConditionList);
 
 				if (aLineNr % 100 == 0)
-					Log.logCommandLine("" + aLineNr + " lines read");
+					Log.logCommandLine(aLineNr + " lines read");
 			}
 			itsSearchParameters.setBeamSeedLoaded(true);
 			itsSearchParameters.setBeamSeed(itsBeamSeed);
@@ -57,7 +56,7 @@ public class LoaderFraunhofer
 			}
 		}
 	}
-	
+
 	private ConditionList convertToConditionList(String theString)
 	{
 		ConditionList aConditionList = new ConditionList();
@@ -80,5 +79,4 @@ public class LoaderFraunhofer
 		}
 		return(aConditionList);
 	}
-	
 }
