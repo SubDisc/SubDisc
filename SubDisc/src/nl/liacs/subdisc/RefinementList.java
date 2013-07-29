@@ -10,7 +10,11 @@ public class RefinementList extends ArrayList<Refinement>
 
 	public RefinementList(Subgroup theSubgroup, Table theTable, SearchParameters theSearchParameters)
 	{
-		Log.logCommandLine("refinementlist");
+		// TODO MM sane initial size based on theTable.nrColumns
+		final StringBuilder sb = new StringBuilder();
+		sb.append("refinementlist\n");
+
+//		Log.logCommandLine("refinementlist");
 
 		itsSubgroup = theSubgroup;
 		itsTable = theTable;
@@ -52,10 +56,15 @@ public class RefinementList extends ArrayList<Refinement>
 				if (add)
 				{
 					add(new Refinement(aCondition, itsSubgroup));
-					Log.logCommandLine("   condition: " + aCondition.toString());
+					sb.append("   condition: ");
+					sb.append(aCondition.toString());
+					sb.append("\n");
+					//Log.logCommandLine("   condition: " + aCondition.toString());
 				}
 			}
 		}
 		while ((aCondition = itsTable.getNextCondition(aCondition)) != null);
+
+		Log.logCommandLine(sb.toString());
 	}
 }
