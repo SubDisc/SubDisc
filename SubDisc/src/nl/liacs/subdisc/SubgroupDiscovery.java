@@ -1138,6 +1138,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	 */
 	public void mine(long theBeginTime, int theNrThreads)
 	{
+		final boolean mainWindowNotNull = (itsMainWindow != null);
 		final QM aQualityMeasure = itsSearchParameters.getQualityMeasure();
 
 		//fill the conditionList of local and global knowledge, Rob
@@ -1253,27 +1254,14 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 				// no other thread can add new candidates
 				else if ((aTotalSize == 0) && alone)
 					break;
-
-				// FIXME MM rewrite, move out of synchronized
-				// execute only if (itsMainWindow != null)
-				int aDepth = 1;
-				String aCurrent = new String("(empty)");
-				if (aCandidate != null)
-				{
-					aDepth = aCandidate.getSubgroup().getDepth()+1;
-					aCurrent = aCandidate.getSubgroup().toString();
-				}
-				if (itsMainWindow != null)
-					itsMainWindow.setTitle(new StringBuilder(aCurrent.length() + 32).append("d=")
-													.append(aDepth)
-													.append(", cands=")
-													.append(itsCandidateCount.get())
-													.append(", refining ")
-													.append(aCurrent).toString());
 			}
 
 			if (aCandidate != null)
+			{
+				if (mainWindowNotNull)
+					setTitle(aCandidate);
 				es.execute(new Test(aCandidate, aSearchDepth, theEndTime, s));
+			}
 			// queue was empty, but other threads were running, they
 			// may be in the process of adding new Candidates
 			// wait until at least one finishes, or this one becomes
@@ -1325,6 +1313,19 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		// in MULTI_LABEL, order may have changed
 		// in COVER_BASED_BEAM_SELECTION, subgroups may have been removed
 		itsResult.setIDs(); //assign 1 to n to subgroups, for future reference in subsets
+	}
+
+	// NOTE itsCandidateCount and currently refined subgroup are unrelated
+	private final void setTitle(Candidate aCandidate) {
+		final Subgroup aSubgroup = aCandidate.getSubgroup();
+		final String aCurrent = aSubgroup.toString();
+
+		final StringBuilder sb = new StringBuilder(aCurrent.length() + 32);
+		sb.append("d=").append(Integer.toString(aSubgroup.getDepth()+1))
+		.append(", cands=").append(itsCandidateCount.get())
+		.append(", refining ").append(aCurrent);
+
+		itsMainWindow.setTitle(sb.toString());
 	}
 
 	/*
