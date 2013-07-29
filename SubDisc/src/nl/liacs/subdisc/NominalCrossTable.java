@@ -10,17 +10,17 @@ public class NominalCrossTable
 	private final int itsPositiveCount; //sum
 	private final int itsNegativeCount; //sum
 
-	public NominalCrossTable(Column theColumn, Subgroup theSubgroup, BitSet theTarget)
+	// DO NOT modify theSubgroupMembers-BitSset
+	public NominalCrossTable(Column theColumn, BitSet theSubgroupMembers, BitSet theTarget)
 	{
-		final BitSet aMembers = theSubgroup.getMembers();
-		itsValues = theColumn.getUniqueNominalBinaryDomain(aMembers);
+		itsValues = theColumn.getUniqueNominalBinaryDomain(theSubgroupMembers);
 		itsPositiveCounts = new int[itsValues.length];
 		itsNegativeCounts = new int[itsValues.length];
 
 		int aPositiveCount = 0;
 		int aNegativeCount = 0;
 		// check only SG.members, combine 2 loops
-		for (int i = aMembers.nextSetBit(0); i >= 0; i = aMembers.nextSetBit(i + 1))
+		for (int i = theSubgroupMembers.nextSetBit(0); i >= 0; i = theSubgroupMembers.nextSetBit(i + 1))
 		{
 			int anIndex = Arrays.binarySearch(itsValues, theColumn.getNominal(i));
 			if (theTarget.get(i))

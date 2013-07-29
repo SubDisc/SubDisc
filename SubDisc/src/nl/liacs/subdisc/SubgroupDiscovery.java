@@ -226,6 +226,8 @@ public class SubgroupDiscovery extends MiningAlgorithm
 			if (aSubgroup.getDepth() < aSearchDepth)
 			{
 				RefinementList aRefinementList = new RefinementList(aSubgroup, itsTable, itsSearchParameters);
+				// .getMembers() creates expensive clone, reuse
+				final BitSet aMembers = aSubgroup.getMembers();
 
 				for (int i = 0, j = aRefinementList.size(); i < j; i++)
 				{
@@ -236,9 +238,9 @@ public class SubgroupDiscovery extends MiningAlgorithm
 					Condition aCondition = aRefinement.getCondition();
 					// if refinement is (num_attr = value) then treat it as nominal
 					if (aCondition.getColumn().getType() == AttributeType.NUMERIC && aCondition.getOperator() != Operator.EQUALS)
-						evaluateNumericRefinements(aSubgroup, aRefinement);
+						evaluateNumericRefinements(aMembers, aRefinement);
 					else
-						evaluateNominalBinaryRefinements(aSubgroup, aRefinement);
+						evaluateNominalBinaryRefinements(aMembers, aRefinement);
 				}
 			}
 
@@ -273,15 +275,24 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		itsResult.setIDs(); //assign 1 to n to subgroups, for future reference in subsets
 	}
 
-	private void evaluateNumericRefinements(Subgroup theSubgroup, Refinement theRefinement)
+	/*
+	 * NOTE itsSubgroup / theMembers for each Refinement from the same
+	 * RefinementList are always the same
+	 * supply a cached version of theMembers, as Subgroup.getMembers()
+	 * creates a clone on each call
+	 */
+	private void evaluateNumericRefinements(BitSet theMembers, Refinement theRefinement)
 	{
-		final int anOldCoverage = theSubgroup.getCoverage();
+		// faster than theMembers.cardinality()
+		// useless call, coverage never changes, could be parameter
+		final int anOldCoverage = theRefinement.getSubgroup().getCoverage();
+		assert (theMembers.cardinality() == anOldCoverage);
 
 		switch (itsSearchParameters.getNumericStrategy())
 		{
 			case NUMERIC_ALL :
 			{
-				float[] aSplitPoints = theRefinement.getCondition().getColumn().getUniqueNumericDomain(theSubgroup.getMembers());
+				float[] aSplitPoints = theRefinement.getCondition().getColumn().getUniqueNumericDomain(theMembers);
 				for (float aSplit : aSplitPoints)
 				{
 					Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(Float.toString(aSplit));
@@ -296,7 +307,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 				// code does nothing if aNrSplitPoints == 0
 				int aNrSplitPoints = itsSearchParameters.getNrBins() - 1;
 
-				float[] aSplitPoints = theRefinement.getCondition().getColumn().getSplitPoints(theSubgroup.getMembers(), aNrSplitPoints);
+				float[] aSplitPoints = theRefinement.getCondition().getColumn().getSplitPoints(theMembers, aNrSplitPoints);
 				boolean first = true;
 				for (int j=0; j<aNrSplitPoints; j++)
 				{
@@ -308,11 +319,24 @@ public class SubgroupDiscovery extends MiningAlgorithm
 					}
 					first = false;
 				}
+
+//				// NOTE every comparison returns false on NaN
+//				float last = Float.NaN;
+//				for (float aSplit : aSplitPoints)
+//				{
+//					if (aSplit != last)
+//					{
+//						last = aSplit;
+//						Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(Float.toString(last));
+//						//addToBuffer(aNewSubgroup);
+//						checkAndLog(aNewSubgroup, anOldCoverage);
+//					}
+//				}
 				break;
 			}
 			case NUMERIC_BEST :
 			{
-				float[] aSplitPoints = theRefinement.getCondition().getColumn().getUniqueNumericDomain(theSubgroup.getMembers());
+				float[] aSplitPoints = theRefinement.getCondition().getColumn().getUniqueNumericDomain(theMembers);
 				float aMax = Float.NEGATIVE_INFINITY;
 				Subgroup aBestSubgroup = null;
 				Subgroup aNewSubgroup;
@@ -343,8 +367,9 @@ public class SubgroupDiscovery extends MiningAlgorithm
 			}
 			case NUMERIC_INTERVALS :
 			{
-				float[] aSplitPoints = theRefinement.getCondition().getColumn().getUniqueNumericDomain(theSubgroup.getMembers());
-				RealBaseIntervalCrossTable aRBICT = new RealBaseIntervalCrossTable(aSplitPoints, theRefinement.getCondition().getColumn(), theSubgroup, itsBinaryTarget);
+				float[] aSplitPoints = theRefinement.getCondition().getColumn().getUniqueNumericDomain(theMembers);
+				// FIXME MM Subgroup -> theMembers
+				RealBaseIntervalCrossTable aRBICT = new RealBaseIntervalCrossTable(aSplitPoints, theRefinement.getCondition().getColumn(), theRefinement.getSubgroup(), itsBinaryTarget);
 
 				// prune splitpoints for which adjacent base intervals have equal class distribution
 				// TODO: check whether this preprocessing reduces *total* computation time
@@ -482,17 +507,28 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		}
 	}
 
-	private void evaluateNominalBinaryRefinements(Subgroup theSubgroup, Refinement theRefinement)
+	/*
+	 * NOTE itsSubgroup / theMembers for each Refinement from the same
+	 * RefinementList are always the same
+	 * supply a cached version of theMembers, as Subgroup.getMembers()
+	 * creates a clone on each call
+	 */
+	private void evaluateNominalBinaryRefinements(BitSet theMembers, Refinement theRefinement)
 	{
-		final QM aQualityMeasure = itsSearchParameters.getQualityMeasure();
-		Condition aCondition = theRefinement.getCondition();
-		int anOldCoverage = theSubgroup.getCoverage();
+		// faster than theMembers.cardinality()
+		// useless call, coverage never changes, could be parameter
+		final int anOldCoverage = theRefinement.getSubgroup().getCoverage();
+		assert (theMembers.cardinality() == anOldCoverage);
 
-		if (aCondition.getOperator() == Operator.ELEMENT_OF) //set-valued. Note that this implies that the target type is SINGLE_NOMINAL
+		final Condition aCondition = theRefinement.getCondition();
+
+		//set-valued. Note that this implies that the target type is SINGLE_NOMINAL
+		if (aCondition.getOperator() == Operator.ELEMENT_OF)
 		{
-			NominalCrossTable aNCT = new NominalCrossTable(aCondition.getColumn(), theSubgroup, itsBinaryTarget);
+			NominalCrossTable aNCT = new NominalCrossTable(aCondition.getColumn(), theMembers, itsBinaryTarget);
 			final SortedSet<String> aDomainBestSubSet = new TreeSet<String>();
 
+			final QM aQualityMeasure = itsSearchParameters.getQualityMeasure();
 			if (aQualityMeasure == QM.WRACC)
 			{
 				float aRatio = itsQualityMeasure.getNrPositives() / (float)(itsQualityMeasure.getNrRecords());
@@ -599,8 +635,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 			{
 				final ValueSet aBestSubset = new ValueSet(aDomainBestSubSet);
 				Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(aBestSubset);
-				Log.logCommandLine("values: "  + aBestSubset);
-				checkAndLog(aNewSubgroup, anOldCoverage);
+				valueSetCheckAndLog(aBestSubset, aNewSubgroup, anOldCoverage);
 			}
 		}
 		else //regular single-value conditions
@@ -613,15 +648,76 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		}
 	}
 
+	private static final int DO_NOT_LOG = -1;
+
+	/*
+	 * keep output together using synchronized method
+	 * NOTE other threads calling this method are stalled for a while when
+	 * checkAndLog().check() needs to resize itsCandidateQueue/ itsResult
+	 * 
+	 * NOTE that in case of ties on the itsCandidateQueue/ itsResult
+	 * max_size boundary this may effect the final search result
+	 * this is related to to the fixed max size and has the potential to
+	 * break invocation invariant results in multi-threaded settings
+	 */
+	private final synchronized void valueSetCheckAndLog(ValueSet theBestSubset, Subgroup theNewSubgroup, int theOldCoverage)
+	{
+		final int count = checkAndLog(theNewSubgroup, theOldCoverage);
+
+		final String values = theBestSubset.toString();
+		final StringBuilder sb = new StringBuilder(values.length());
+		if (count == DO_NOT_LOG)
+			sb.append("ignored subgroup with values: ");
+		else
+			sb.append("  values: ");
+		sb.append(values);
+
+		Log.logCommandLine(sb.toString());
+	}
+
 	/*
 	 * SubgroupsSet's add() method is thread save.
-	 *
 	 * CandidateQueue's add() method is thread save.
-	 *
 	 * itsCandidateCount is Atomic (synchronized by nature).
+	 * 
+	 * but they must be executed as a single unit, so synchronized check()
 	 */
-	private void checkAndLog(Subgroup theSubgroup, int theOldCoverage)
+	private int checkAndLog(Subgroup theSubgroup, int theOldCoverage)
 	{
+		// synchronized method
+		final int count = check(theSubgroup, theOldCoverage);
+		// unsynchronized, ok as long a count represents n-th check call
+		if (count != DO_NOT_LOG)
+			logCandidateAddition(theSubgroup, count);
+
+		return count;
+	}
+
+	/*
+	 * whole method must be executed as a logical unit
+	 * the contents of itsResult and itsCandidateQueue would become
+	 * undefined in a multi-threaded scenario:
+	 * 
+	 * Thread 1 itsResult.add()
+	 * Thread 2 itsResult.add()
+	 * Thread 2 itsCandidateQueue.add()
+	 * Thread 1 itsCandidateQueue.add()
+	 * 
+	 * both itsResults and itsCandidateQueue are trimmed if the have a max
+	 * capacity and a candidate may end up in the one, but not in the other
+	 * 
+	 * additionally the value of itsCandidateCount.getAndIncrement() should
+	 * indicate the n-th call to this method, so the n-th checked Candidate
+	 * and the subgroup.nr should be this value also
+	 * this can only be guaranteed by doing it in the same synchronized
+	 * block
+	 * but to keep the scope of the synchronized method small (synchronized
+	 * blocks execute many times slower) the logging is not done in the
+	 * synchronized method, but guarantees to use to the correct value
+	 */
+	private synchronized int check(Subgroup theSubgroup, int theOldCoverage)
+	{
+		final int count = itsCandidateCount.getAndIncrement();
 		final int aNewCoverage = theSubgroup.getCoverage();
 
 		if (aNewCoverage < theOldCoverage && aNewCoverage >= itsMinimumCoverage)
@@ -637,23 +733,26 @@ public class SubgroupDiscovery extends MiningAlgorithm
 
 			itsCandidateQueue.add(new Candidate(theSubgroup));
 
-			logCandidateAddition(theSubgroup);
+			return count;
 		}
-		itsCandidateCount.getAndIncrement();
+
+		return DO_NOT_LOG;
 	}
 
-	private void logCandidateAddition(Subgroup theSubgroup)
+	// because of multi-theading consecutive log calls should be grouped
+	// else logs from other threads could end up in between
+	private void logCandidateAddition(Subgroup theSubgroup, int count)
 	{
 		StringBuffer sb = new StringBuffer(200);
 		sb.append("candidate ");
 		sb.append(theSubgroup.getConditions());
 		sb.append(" size: ");
 		sb.append(theSubgroup.getCoverage());
-		Log.logCommandLine(sb.toString());
 
-		Log.logCommandLine(String.format("  subgroup nr. %d; quality %s",
-							itsCandidateCount.get(),
-							Double.toString(theSubgroup.getMeasureValue())));
+		sb.append(String.format("%n  subgroup nr. %d; quality %s",
+					count,
+					Double.toString(theSubgroup.getMeasureValue())));
+		Log.logCommandLine(sb.toString());
 	}
 
 	private float evaluateCandidate(Subgroup theNewSubgroup)
@@ -1155,6 +1254,8 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 				else if ((aTotalSize == 0) && alone)
 					break;
 
+				// FIXME MM rewrite, move out of synchronized
+				// execute only if (itsMainWindow != null)
 				int aDepth = 1;
 				String aCurrent = new String("(empty)");
 				if (aCandidate != null)
@@ -1254,6 +1355,8 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			if (aSubgroup.getDepth() < itsSearchDepth)
 			{
 				RefinementList aRefinementList = new RefinementList(aSubgroup, itsTable, itsSearchParameters);
+				// .getMembers() creates expensive clone, reuse
+				final BitSet aMembers = aSubgroup.getMembers();
 
 				for (int i = 0, j = aRefinementList.size(); i < j; i++)
 				{
@@ -1264,9 +1367,9 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 					Condition aCondition = aRefinement.getCondition();
 					// if refinement is (num_attr = value) then treat it as nominal
 					if (aCondition.getColumn().getType() == AttributeType.NUMERIC && aCondition.getOperator() != Operator.EQUALS)
-						evaluateNumericRefinements(aSubgroup, aRefinement);
+						evaluateNumericRefinements(aMembers, aRefinement);
 					else
-						evaluateNominalBinaryRefinements(aSubgroup, aRefinement);
+						evaluateNominalBinaryRefinements(aMembers, aRefinement);
 				}
 			}
 			itsSemaphore.release();
