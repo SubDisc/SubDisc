@@ -282,6 +282,8 @@ public class Subgroup implements Comparable<Subgroup>
 		tmp.and(itsMembers);
 		// NOTE now tmp.cardinality() = aHeadBody
 
+		// FIXME MM latent bug:
+		// rounding error when aTotalTargetCoverage > 2^24, use double
 		float aTotalTargetCoverage = itsParentSet.getTotalTargetCoverage();
 
 		// something is wrong TODO throw error
@@ -308,10 +310,11 @@ public class Subgroup implements Comparable<Subgroup>
 		tmp.and(itsMembers);
 		// NOTE now tmp.cardinality() = aHeadBody
 
+		// FIXME MM latent bug:
+		// rounding error when aTotalTargetCoverage > 2^24, use double
 		int aTotalCoverage = itsParentSet.getTotalCoverage();
 		float aTotalTargetCoverage = itsParentSet.getTotalTargetCoverage();
-		float aBody = (itsParentSet.getTotalCoverage() -
-				itsParentSet.getTotalTargetCoverage());
+		float aBody = (aTotalCoverage - aTotalTargetCoverage);
 
 		// something is wrong TODO throw error
 		if (aTotalCoverage <= 0 || aTotalTargetCoverage < 0 ||

@@ -1169,6 +1169,9 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			itsCandidateQueue = new CandidateQueue(itsSearchParameters, new Candidate(aStart));
 		else
 		{
+			// using a different CandidateQueue constructor would
+			// make this code much cleaner, and avoid any crash
+
 			List<ConditionList> aBeamSeed = itsSearchParameters.getBeamSeed();
 			ConditionList aFirstConditionList = aBeamSeed.get(0);
 			//TODO there may be no members, in which case the following statement crashes
