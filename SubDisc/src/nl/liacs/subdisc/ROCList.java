@@ -19,7 +19,8 @@ public class ROCList extends ArrayList<SubgroupROCPoint>
 		float aTPR = theSubgroupROCPoint.getTPR();
 		float aFPR = theSubgroupROCPoint.getFPR();
 
-		if (aTPR <= aFPR) //always under curve
+		// always under curve
+		if (aTPR < aFPR)
 			return false;
 
 		super.add(theSubgroupROCPoint);
