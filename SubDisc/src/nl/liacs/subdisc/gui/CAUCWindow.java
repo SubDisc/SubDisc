@@ -25,9 +25,9 @@ public class CAUCWindow extends JFrame implements ActionListener
 	}
 
 	final private Column itsColumn;
-	final private List<List<Float>> itsStatistics;
+	final private List<List<Double>> itsStatistics;
 
-	public CAUCWindow(Column theTarget, List<List<Float>> theStatistics)
+	public CAUCWindow(Column theTarget, List<List<Double>> theStatistics)
 	{
 		itsColumn = theTarget;
 		itsStatistics = theStatistics;
@@ -99,7 +99,7 @@ public class CAUCWindow extends JFrame implements ActionListener
 	{
 		XYSeriesCollection c = new XYSeriesCollection();
 
-		for (List<Float> l : itsStatistics)
+		for (List<Double> l : itsStatistics)
 		{
 			XYSeries s = new XYSeries(makeTitle(l), false, false);
 
@@ -113,7 +113,7 @@ public class CAUCWindow extends JFrame implements ActionListener
 		return c;
 	}
 
-	private String makeTitle(List<Float> theStatistics)
+	private String makeTitle(List<Double> theStatistics)
 	{
 		return String.format("t=%s n=%s auc=%s", 
 					FORMATTER.format(theStatistics.get(0)),

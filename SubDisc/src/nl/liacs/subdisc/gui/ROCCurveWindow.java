@@ -84,7 +84,7 @@ public class ROCCurveWindow extends JFrame implements ActionListener
 
 	private String getGnuPlotString()
 	{
-		float anX, aY;
+		double anX, aY;
 		float aSize = 0.001f;
 		String aContent = "set xlabel \"fpr\";set ylabel \"tpr\";set xrange [0:1];set yrange [0:1];set xtics 0.1; set ytics 0.1;\n";
 		aContent += "N = " + itsSubgroupSet.getTotalCoverage() + ".0\n";
@@ -134,12 +134,12 @@ public class ROCCurveWindow extends JFrame implements ActionListener
 		}
 
 		//subgroups
-		anX = 0f;
-		aY = 0f;
+		anX = 0.0;
+		aY = 0.0;
 		for (SubgroupROCPoint aPoint : itsSubgroupSet.getROCList())
 		{
-			float aNewX = aPoint.getFPR();
-			float aNewY = aPoint.getTPR();
+			double aNewX = aPoint.getFPR();
+			double aNewY = aPoint.getTPR();
 			aContent += "set arrow from " + anX + "," + aY + " to " + aNewX + "," + aNewY + " nohead lt 1 lw 2 lc rgb \"black\"\n";
 			anX = aNewX;
 			aY = aNewY;

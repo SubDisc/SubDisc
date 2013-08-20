@@ -134,7 +134,7 @@ public class Process
 		final float[] aDomain = aTarget.getUniqueNumericDomain(aMembers);
 
 		// last index is whole dataset
-		List<List<Float>> statistics = new ArrayList<List<Float>>(aDomain.length-1);
+		List<List<Double>> statistics = new ArrayList<List<Double>>(aDomain.length-1);
 		for (int i = 0, j = aDomain.length-1; i < j; ++i)
 		{
 			BitSet aCAUCSet = (BitSet) aMembers.clone();
@@ -327,33 +327,33 @@ public class Process
 		Log.logCommandLine(aString);
 	}
 
-	private static List<Float> compileStatistics(float theThreshold, int theNrMembers, SubgroupSet theSubgroupSet)
+	private static List<Double> compileStatistics(float theThreshold, int theNrMembers, SubgroupSet theSubgroupSet)
 	{
 		// [threshold, n, AUC, fpr_1, tpr_1, ..., fpr_h, tpr_h]
-		List<Float> stats = new ArrayList<Float>();
-		stats.add(theThreshold);
-		stats.add((float) theNrMembers);
+		List<Double> stats = new ArrayList<Double>();
+		stats.add(Double.valueOf(theThreshold));
+		stats.add(Double.valueOf(theNrMembers));
 		stats.add(theSubgroupSet.getROCList().getAreaUnderCurve());
-		stats.add(0.0f);
-		stats.add(0.0f);
+		stats.add(0.0);
+		stats.add(0.0);
 		for (Object[] oa : theSubgroupSet.getROCListSubgroups())
 		{
-			stats.add((Float) oa[1]);
-			stats.add((Float) oa[2]);
+			stats.add((Double) oa[1]);
+			stats.add((Double) oa[2]);
 		}
-		stats.add(1.0f);
-		stats.add(1.0f);
+		stats.add(1.0);
+		stats.add(1.0);
 		return stats;
 	}
 
 	// to std.out or file
-	private static void caucWrite(String theCaller, Column theTarget, List<List<Float>> theStatistics)
+	private static void caucWrite(String theCaller, Column theTarget, List<List<Double>> theStatistics)
 	{
 		// write or print to std.out
 		System.out.println("#" + theCaller);
 		System.out.println("#" + theTarget.getName());
 		System.out.println("#threshold,n,AUC,frp_1,tpr_1,...,fpr_h,tpr_h");
-		for (List<Float> l : theStatistics)
+		for (List<Double> l : theStatistics)
 		{
 			String aTemp = l.toString().replaceAll(", ", ",");
 			System.out.println(aTemp);

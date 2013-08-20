@@ -1,19 +1,21 @@
 package nl.liacs.subdisc;
 
-import java.awt.geom.*;
-
 /**
  * A SubgroupROCPoint of a {@link Subgroup} is nothing more than a 
- * <code>Point2D.&nbsp;Float</code> with that Subgroups'
- * {@link Subgroup#getID() getID()} as identifier,
- * {@link Subgroup#getFalsePositiveRate() getFalsePositiveRate()} for
- * <code>Point2D&nbsp;.x</code> and {@link Subgroup#getTruePositiveRate()} for
- * <code>Point2D&nbsp;.y</code>.
+ * {@link PointDouble} with that Subgroups' {@link Subgroup#getID() getID()} as
+ * identifier, {@link Subgroup#getFalsePositiveRate() getFalsePositiveRate()}
+ * for {@link PointDouble.x x} and {@link Subgroup#getTruePositiveRate()} for
+ * {@link PointDouble.y y}.
  */
-public class SubgroupROCPoint extends Point2D.Float
+/*
+ * FIXME MM
+ * ID may not be stable throughout the lifetime of a Subgroup
+ * this would lead to a mismatch between Subgroup.getID() and ID
+ */
+public class SubgroupROCPoint extends PointDouble
 {
-	private static final long serialVersionUID = 1L;
 	public final int ID;
+	private final Subgroup itsSubgroup;
 
 	/**
 	 * Creates a SubgroupROCPoint for the {@link Subgroup} passed in as
@@ -24,9 +26,9 @@ public class SubgroupROCPoint extends Point2D.Float
 	 */
 	public SubgroupROCPoint(Subgroup theSubgroup)
 	{
-		ID = theSubgroup.getID();
-		super.x = theSubgroup.getFalsePositiveRate();
-		super.y = theSubgroup.getTruePositiveRate();
+		super(theSubgroup.getFalsePositiveRate(), theSubgroup.getTruePositiveRate());
+		itsSubgroup = theSubgroup;
+		ID = itsSubgroup.getID();
 	}
 
 	/**
@@ -35,7 +37,7 @@ public class SubgroupROCPoint extends Point2D.Float
 	 * 
 	 * @return x, better known as FalsePositiveRate.
 	 */
-	public float getFPR() { return super.x; }
+	public double getFPR() { return super.x; }
 
 	/**
 	 * Convenience method, more intuitive way to get the TruePositiveRate
@@ -43,28 +45,14 @@ public class SubgroupROCPoint extends Point2D.Float
 	 * 
 	 * @return y, better known as TruePositiveRate.
 	 */
-	public float getTPR() { return super.y; }
-
-	/**
-	 * SubgroupROCPoint overrides the setLocation method of Point2D, because
-	 * we do no allow the X/Y coordinates to be changed.
-	 */
-	@Override
-	public void setLocation(double x, double y) {}
-
-	/**
-	 * SubgroupROCPoint overrides the setLocation method of Point2D, because
-	 * we do no allow the X/Y coordinates to be changed.
-	 */
-	@Override
-	public void setLocation(float x, float y) {}
+	public double getTPR() { return super.y; }
 
 	/**
 	 * Overrides <code>Object</code>s' <code>toString()</code> method to to
 	 * get detailed information about this SubgroupROCPoint.
 	 * 
-	 * @return a <code>String</code> representation of this SubgroupROCPoint
-	 * .
+	 * @return a <code>String</code> representation of this
+	 * SubgroupROCPoint.
 	 */
 	@Override
 	public String toString()

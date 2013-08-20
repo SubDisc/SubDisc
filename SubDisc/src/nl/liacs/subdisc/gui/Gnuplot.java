@@ -18,7 +18,7 @@ public class Gnuplot
 
 
 	// TODO null checks + theStatistics.size() > 0
-	public static void writeSplotSccript(Column theColumn, List<List<Float>> theStatistics)
+	public static void writeSplotSccript(Column theColumn, List<List<Double>> theStatistics)
 	{
 		final String aBaseName = String.format("%s_%d",
 						theColumn.getName(),
@@ -28,7 +28,7 @@ public class Gnuplot
 		writeSplotScript(theColumn.getName(), aBaseName, theStatistics);
 	}
 
-	private static void writeData(String theBaseName, List<List<Float>> theStatistics)
+	private static void writeData(String theBaseName, List<List<Double>> theStatistics)
 	{
 		BufferedWriter br = null;
 
@@ -71,7 +71,7 @@ public class Gnuplot
 		return sb.append("\n").toString();
 	}
 
-	private static String getHeader(List<List<Float>> theStatistics)
+	private static String getHeader(List<List<Double>> theStatistics)
 	{
 		StringBuilder sb = new StringBuilder(theStatistics.size()*64);
 		sb.append("#"); // commented header line
@@ -86,7 +86,7 @@ public class Gnuplot
 		return sb.append("\n").toString();
 	}
 
-	private static String makeTitle(List<Float> theStats)
+	private static String makeTitle(List<Double> theStats)
 	{
 		return String.format("t=%f_n=%f_auc=%f",
 					theStats.get(0),
@@ -107,16 +107,16 @@ public class Gnuplot
 		return sb.append("\n").toString();
 	}
 
-	private static int getMax(List<List<Float>> theStatistics)
+	private static int getMax(List<List<Double>> theStatistics)
 	{
 		int aMax = 0;
-		for (List<Float> l : theStatistics)
+		for (List<Double> l : theStatistics)
 			if (l.size() > aMax)
 				aMax = l.size();
 		return aMax;
 	}
 
-	private static String getDataLine(int theIndex, int theMaxSize, List<List<Float>> theStatistics)
+	private static String getDataLine(int theIndex, int theMaxSize, List<List<Double>> theStatistics)
 	{
 		StringBuilder sb = new StringBuilder(theStatistics.size()*20);
 		sb.append(getDatum(theIndex, theStatistics.get(0)));
@@ -129,23 +129,23 @@ public class Gnuplot
 	}
 
 	// NOTE script could use the less portable: 'set datafile missing = "?"'
-	private static String getDatum(int theIndex, List<Float> theStats)
+	private static String getDatum(int theIndex, List<Double> theStats)
 	{
 		if (theStats.size() <= theIndex)
-			return getDatum(theStats.get(0), 1.0f, 1.0f);
+			return getDatum(theStats.get(0), 1.0, 1.0);
 		else
 			return getDatum(theStats.get(0),
 					theStats.get(theIndex),
 					theStats.get(++theIndex));
 	}
 
-	private static String getDatum(float theThreshold, float theFPR, float theTPR)
+	private static String getDatum(double theThreshold, double theFPR, double theTPR)
 	{
 		return String.format("%f%s%f%s%f",
 			theThreshold, DELIMITER, theFPR, DELIMITER, theTPR);
 	}
 
-	private static void writeSplotScript(String theTitle, String theBaseName, List<List<Float>> theStatistics)
+	private static void writeSplotScript(String theTitle, String theBaseName, List<List<Double>> theStatistics)
 	{
 		BufferedWriter br = null;
 
@@ -170,7 +170,7 @@ public class Gnuplot
 		}
 	}
 
-	private static String parameterise(String theTitle, String theBaseName, List<List<Float>> theStatistics)
+	private static String parameterise(String theTitle, String theBaseName, List<List<Double>> theStatistics)
 	{
 		int aSize = theStatistics.size();
 		return String.format(PLOT_CODE,

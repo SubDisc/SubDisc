@@ -16,7 +16,7 @@ public class ROCCurve extends JPanel
 
 	private GeneralPath itsCurve;
 	private GeneralPath itsLines;
-	private List<Arc2D.Float> itsPoints;
+	private List<Arc2D> itsPoints;
 	private String itsAreaUnderCurve;
 	private float itsXMin, itsXMax, itsYMin, itsYMax;
 	private float itsXStart, itsYStart, itsXEnd, itsYEnd;
@@ -47,9 +47,9 @@ public class ROCCurve extends JPanel
 			itsCurve.lineTo(p.getFPR(), -p.getTPR());
 		itsCurve.lineTo(1, -1);
 
-		itsPoints = new ArrayList<Arc2D.Float>(aPoints.size());
+		itsPoints = new ArrayList<Arc2D>(aPoints.size());
 		for(SubgroupROCPoint p : aPoints)
-			itsPoints.add(new Arc2D.Float(p.getFPR(), -p.getTPR(), 0.0f, 0.0f, -180.0f, 180.0f, Arc2D.OPEN));
+			itsPoints.add(new Arc2D.Double(p.getFPR(), -p.getTPR(), 0.0, 0.0, -180.0, 180.0, Arc2D.OPEN));
 
 		int aTotalCoverage = theSubgroupSet.getTotalCoverage();
 		float aTotalTargetCoverage = theSubgroupSet.getTotalTargetCoverage();
@@ -101,6 +101,7 @@ public class ROCCurve extends JPanel
 
 	public String getAreaUnderCurve() { return itsAreaUnderCurve; }
 
+	@Override
 	public void paintComponent(Graphics theGraphic)
 	{
 		int aWidth = getWidth();

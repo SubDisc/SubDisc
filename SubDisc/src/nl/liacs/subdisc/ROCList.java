@@ -16,8 +16,8 @@ public class ROCList extends ArrayList<SubgroupROCPoint>
 	public boolean add(SubgroupROCPoint theSubgroupROCPoint)
 	{
 		int anIndex = size();
-		float aTPR = theSubgroupROCPoint.getTPR();
-		float aFPR = theSubgroupROCPoint.getFPR();
+		double aTPR = theSubgroupROCPoint.getTPR();
+		double aFPR = theSubgroupROCPoint.getFPR();
 
 		// always under curve
 		if (aTPR < aFPR)
@@ -63,52 +63,53 @@ public class ROCList extends ArrayList<SubgroupROCPoint>
 		return true;
 	}
 
-	private float getTruePositiveRateAt(int theIndex)
+	private double getTruePositiveRateAt(int theIndex)
 	{
 		if (theIndex == -1)
-			return 0.0f;
+			return 0.0;
 		else if (theIndex == size())
-			return 1.0f;
+			return 1.0;
 		else
 			return get(theIndex).getTPR();
 	}
 
-	private float getFalsePositiveRateAt(int theIndex)
+	private double getFalsePositiveRateAt(int theIndex)
 	{
 		if (theIndex == -1)
-			return 0.0f;
+			return 0.0;
 		else if (theIndex == size())
-			return 1.0f;
+			return 1.0;
 		else
 			return get(theIndex).getFPR();
 	}
 
-	private float getSlopeAt(int theIndex)
+	private double getSlopeAt(int theIndex)
 	{
 		if (size() == 0)
-			return 0.0f;
-		else if(theIndex == -1)
+			return 0.0;
+		else if (theIndex == -1)
 			return getTruePositiveRateAt(0) / getFalsePositiveRateAt(0);
-		else if(theIndex == size())
-			return 0.0f;
-		else if(theIndex == size() - 1)
-			return (1.0f - getTruePositiveRateAt(theIndex)) / (1.0f - getFalsePositiveRateAt(theIndex));
-		else if(getFalsePositiveRateAt(theIndex + 1) == getFalsePositiveRateAt(theIndex))
-			return 0.0f;
+		else if (theIndex == size())
+			return 0.0;
+		else if (theIndex == size() - 1)
+			return (1.0 - getTruePositiveRateAt(theIndex)) / (1.0 - getFalsePositiveRateAt(theIndex));
+		else if (getFalsePositiveRateAt(theIndex + 1) == getFalsePositiveRateAt(theIndex))
+			return 0.0;
 		else
 			return (getTruePositiveRateAt(theIndex + 1) - getTruePositiveRateAt(theIndex)) /
 					(getFalsePositiveRateAt(theIndex + 1) - getFalsePositiveRateAt(theIndex));
 	}
 
-	public float getAreaUnderCurve()
+	public double getAreaUnderCurve()
 	{
-		float anArea = 0;
+		double anArea = 0.0;
 
 		for (int i = -1; i < size(); i++)
 		{
-			float aWidth = getFalsePositiveRateAt(i + 1) - getFalsePositiveRateAt(i);
-			anArea += aWidth * ((getTruePositiveRateAt(i) + getTruePositiveRateAt(i+1)) / 2.0f);
+			double aWidth = getFalsePositiveRateAt(i + 1) - getFalsePositiveRateAt(i);
+			anArea += aWidth * ((getTruePositiveRateAt(i) + getTruePositiveRateAt(i+1)) / 2.0);
 		}
+
 		return anArea;
 	}
 }

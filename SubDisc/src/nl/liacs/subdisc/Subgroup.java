@@ -268,29 +268,26 @@ public class Subgroup implements Comparable<Subgroup>
 	/**
 	 * Returns the TruePositiveRate for this Subgroup.
 	 * If no itsParentSet was set for this SubGroup, or no itsBinaryTarget
-	 * was set for this SubGroups' itsParentSet this function returns 0.0f.
+	 * was set for this SubGroups' itsParentSet this function returns 0.0.
 	 *
 	 * @return the TruePositiveRate, also known as TPR.
 	 */
-	public Float getTruePositiveRate()
+	public double getTruePositiveRate()
 	{
 		BitSet tmp = itsParentSet.getBinaryTargetClone();
 
 		if (tmp == null)
-			return 0.0f;
+			return 0.0;
 
 		tmp.and(itsMembers);
 		// NOTE now tmp.cardinality() = aHeadBody
 
-		// FIXME MM latent bug:
-		// rounding error when aTotalTargetCoverage > 2^24, use double
-		float aTotalTargetCoverage = itsParentSet.getTotalTargetCoverage();
+		int aTotalTargetCoverage = itsParentSet.getTotalTargetCoverage();
 
-		// something is wrong TODO throw error
 		if (aTotalTargetCoverage <= 0)
-			return 0.0f;
-		else
-			return tmp.cardinality() / aTotalTargetCoverage;
+			throw new AssertionError();
+
+		return ((double)tmp.cardinality()) / aTotalTargetCoverage;
 	}
 
 	/**
@@ -300,28 +297,25 @@ public class Subgroup implements Comparable<Subgroup>
 	 *
 	 * @return the FalsePositiveRate, also known as FPR.
 	 */
-	public Float getFalsePositiveRate()
+	public double getFalsePositiveRate()
 	{
 		BitSet tmp = itsParentSet.getBinaryTargetClone();
 
 		if (tmp == null)
-			return 0.0f;
+			return 0.0;
 
 		tmp.and(itsMembers);
 		// NOTE now tmp.cardinality() = aHeadBody
 
-		// FIXME MM latent bug:
-		// rounding error when aTotalTargetCoverage > 2^24, use double
 		int aTotalCoverage = itsParentSet.getTotalCoverage();
-		float aTotalTargetCoverage = itsParentSet.getTotalTargetCoverage();
-		float aBody = (aTotalCoverage - aTotalTargetCoverage);
+		int aTotalTargetCoverage = itsParentSet.getTotalTargetCoverage();
+		int aBody = (aTotalCoverage - aTotalTargetCoverage);
 
-		// something is wrong TODO throw error
 		if (aTotalCoverage <= 0 || aTotalTargetCoverage < 0 ||
 			aTotalCoverage < aTotalTargetCoverage || aBody <= 0)
-			return 0.0f;
-		else
-			return (itsCoverage - tmp.cardinality()) / aBody;
+			throw new AssertionError();
+
+		return ((double)(itsCoverage - tmp.cardinality())) / aBody;
 	}
 
 	public double getPValue()
