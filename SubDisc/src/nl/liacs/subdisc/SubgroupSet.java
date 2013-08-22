@@ -513,8 +513,21 @@ public class SubgroupSet extends TreeSet<Subgroup>
 		{
 			update();
 			itsROCList = new ROCList(this);
+// FIXME MM DEBUG ONLY
+print("ROCList", itsROCList);
+print("ConvexHullROC", new ConvexHullROC(this));
+
 			return itsROCList;
 		}
+	}
+
+	private static final void print(String clazz, ArrayList<SubgroupROCPoint> list)
+	{
+		StringBuilder sb = new StringBuilder(256);
+		sb.append(clazz).append("\n");
+		for (SubgroupROCPoint s : list)
+			sb.append(s.toString()).append("\n");
+		Log.logCommandLine(sb.toString());
 	}
 
 	/*
