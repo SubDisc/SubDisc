@@ -427,7 +427,11 @@ public class Condition implements Comparable<Condition>
 					return 0;
 				}
 			}
-			case NUMERIC : // deliberate fall-through to ORDINAL
+			// do not use fall-through to ORDINAL
+			case NUMERIC :
+			{
+				return Float.compare(itsNumericValue, theCondition.itsNumericValue);
+			}
 			case ORDINAL :
 			{
 				return Float.compare(itsNumericValue, theCondition.itsNumericValue);
@@ -442,8 +446,9 @@ public class Condition implements Comparable<Condition>
 			// should never happen
 			default :
 			{
-				logTypeError("compareTo");
-				return 0;
+				throw new AssertionError(String.format("ERROR: compareTo()\n%s\n%s",
+									this.toString(),
+									theCondition.toString()));
 			}
 		}
 	}
