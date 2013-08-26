@@ -8,6 +8,11 @@ import java.util.*;
  * 
  * TODO Queue classes in Concurrency framework allow for better concurrency. Eg.
  * Higher concurrency through non-locking algorithms and compareAndSwap methods.
+ * 
+ * NOTE ROC_BEAM implementation uses Lists for sorted, indexed, storage of
+ * Candidates. It allows for faster modification of the hull. Consequently,
+ * itsNextQueue is not a TreeSet, however, when moving to a next level the,
+ * itsNextQueue is 'transformed' into TreeSet itsQueue.
  */
 /**
  * A CandidateQueue holds a collection of {@link Candidate Candidate}s for
@@ -23,13 +28,11 @@ public class CandidateQueue
 	private SearchStrategy itsSearchStrategy;
 	private TreeSet<Candidate> itsQueue;
 	private TreeSet<Candidate> itsNextQueue;
-	private List<Candidate> itsNextQueueROC; // special
+	private ConvexHullROC itsNextQueueConvexHullROC;
+	private ROCList itsNextQueueROCList;			// debug only
+//	private ROCConvexHull itsNextQueueROCConvexHull;	// debug only
 	private TreeSet<Candidate> itsTempQueue;
 	private final int itsMaximumQueueSize;
-
-	// special Candidates for itsNextQueueROC, may be removed
-//	private static final Candidate ZERO_ZERO = new Candidate(null);
-//	private static final Candidate ONE_ONE = new Candidate(null);
 
 	public CandidateQueue(SearchParameters theSearchParameters, Candidate theRootCandidate)
 	{
@@ -41,11 +44,13 @@ public class CandidateQueue
 			case BEAM :
 				itsNextQueue = new TreeSet<Candidate>();
 				break;
-//			case ROC_BEAM :
-//				itsNextQueueROC = new ArrayList<Candidate>();
-//				itsNextQueueROC.add(ZERO_ZERO);
-//				itsNextQueueROC.add(ONE_ONE);
-//				break;
+			case ROC_BEAM :
+			{
+				itsNextQueueConvexHullROC = new ConvexHullROC();
+				itsNextQueueROCList = new ROCList();
+//				itsNextQueueROCConvexHull = new ROCConvexHull();
+				break;
+			}
 			case COVER_BASED_BEAM_SELECTION :
 				// initialise now, avoids NullPointerException later
 				itsNextQueue = new TreeSet<Candidate>();
@@ -104,9 +109,23 @@ public class CandidateQueue
 		{
 			case BEAM :
 				return addToQueue(itsNextQueue, theCandidate);
-//			case ROC_BEAM :
-//				// special add for ROC_BEAM as it is updated on-the-fly
-//				return addToQueueROC(theCandidate);
+			case ROC_BEAM :
+			{
+System.out.println("ADDING: " + theCandidate.getSubgroup().toString());
+				final SubgroupROCPoint p =
+					new SubgroupROCPoint(theCandidate.getSubgroup());
+				boolean isAdded =
+				itsNextQueueConvexHullROC.add(p);
+				itsNextQueueROCList.add(p);
+//				itsNextQueueROCConvexHull.add(p);
+
+				// debug check
+System.out.println("COMPARE");
+//				itsNextQueueConvexHullROC.debug();
+				ConvexHullROC.debugCompare(itsNextQueueROCList, itsNextQueueConvexHullROC, null);//itsNextQueueROCConvexHull);
+
+				return isAdded;
+			}
 			case COVER_BASED_BEAM_SELECTION :
 			{
 				//simply add candidate, regardless of the current size of itsTempQueue
@@ -136,142 +155,6 @@ public class CandidateQueue
 				theQueue.pollLast();
 		}
 		return isAdded;
-	}
-
-	// special add for ROC_BEAM as it is updated on-the-fly
-	//
-	// TODO MM
-	// similar code is used in ROCList and MiMa ConvexHull constructs
-	// a general ConvexHull class would remove needless code duplication
-	private boolean addToQueueROC(Candidate theCandidate)
-	{
-		final double aPriority = theCandidate.getPriority();
-		final Subgroup aSubgroup = theCandidate.getSubgroup();
-		// TPR and FPR can not be NaN
-		final double aTPR = aSubgroup.getTruePositiveRate();
-		final double aFPR = aSubgroup.getFalsePositiveRate();
-
-		// always under curve
-		if (aTPR < aFPR)
-			return false;
-
-		synchronized (itsNextQueueROC)
-		{
-			int size = itsNextQueueROC.size();
-			if (size == 2)
-			{
-				itsNextQueueROC.add(1, theCandidate);
-				return true;
-			}
-
-			// between (0,0) and (1,1)
-			for (int i = 1; i < size-1; ++i)
-			{
-				Candidate c = itsNextQueueROC.get(i);
-				Subgroup s = c.getSubgroup();
-				// FIXME MM get*Rate() is expensive, needs fix
-				double sFPR = s.getFalsePositiveRate();
-				// variables not needed in all cases
-				double sTPR = s.getTruePositiveRate();
-				double sPriority = c.getPriority();
-
-				if (aFPR > sFPR)
-					continue;
-				else if (aFPR == sFPR)
-				{
-					if (aTPR < sTPR)
-						return false;
-					// there may be many points (x,y)==(q,r)
-					else if (aTPR == sTPR)
-					{
-						// may end up at (aFPR < sFPR)
-						if (aPriority <= sPriority)
-							continue;
-						// add, no need to update hull
-						else if (aPriority > sPriority)
-						{
-							itsNextQueueROC.add(i, c);
-							return true;
-						}
-						else // nan
-							throw new AssertionError(aPriority + " incomparible to " + sPriority);
-					}
-					else // (aTPR > sTPR)
-					{
-						itsNextQueueROC.set(i, theCandidate);
-						updateHull(i);
-						return true;
-					}
-				}
-				else
-				{
-					assert(aFPR < sFPR);
-					// add, update hull
-					itsNextQueueROC.add(i, c);
-					updateHull(i);
-					return true;
-				}
-			}
-
-			// no insertion point found, insert right before (1,1)
-			assert (check(itsNextQueueROC, theCandidate));
-			itsNextQueueROC.add(size-1, theCandidate);
-			updateHull(size-2);
-			return true;
-		}
-	}
-
-	private final void updateHull(int index)
-	{
-		// updateLeft()
-		// remove all points l between [(0,0), i] with l.slope < i.slope
-		// remove l-(i-1) when l.slope < i.slope (since hull is convex)
-
-		// updateRight()
-		// remove all points r right of i while i.tpr > r.tpr
-		// for any two points r, rr between [i, (1,1)]
-		//     remove r while (slope(p,r) < slope(p,rr))
-		//     (stop when == or >= since hull is convex)
-	}
-
-	private static boolean check(List<Candidate> theNextQueueROC, Candidate theCandidate)
-	{
-		double cPriority = theCandidate.getPriority();
-		Subgroup cs = theCandidate.getSubgroup();
-		double csFPR = cs.getFalsePositiveRate();
-
-		Candidate o = theNextQueueROC.get(theNextQueueROC.size()-2);
-		double oPriority = o.getPriority();
-		Subgroup os = o.getSubgroup();
-		double osFPR = os.getFalsePositiveRate();
-
-		if (osFPR > csFPR)
-			return false;
-		else if (osFPR == csFPR)
-		{
-			double csTPR = cs.getTruePositiveRate();
-			double osTPR = os.getTruePositiveRate();
-
-			if (osTPR == csTPR)
-			{
-				if (oPriority < cPriority)
-					return false;
-				else if (oPriority == cPriority)
-					return true;
-				else if (oPriority > cPriority)
-					return false;
-				else // nan
-					throw new AssertionError(cPriority + " incomparible to " + oPriority);
-			}
-
-			assert(osTPR > csTPR || osTPR < csTPR);
-			return false;
-		}
-		else
-		{
-			assert(osFPR < csFPR);
-			return true;
-		}
 	}
 
 	/**
@@ -304,57 +187,86 @@ public class CandidateQueue
 	{
 		Log.logCommandLine("\nLevel finished --------------------------------------------\n");
 
-		// FIXME MM use switch instead of if/ else
-		if (itsSearchStrategy == SearchStrategy.BEAM) //make next level current
+		// if (depth == max_depth) no beam selection needs to be done
+
+		switch (itsSearchStrategy)
 		{
-			itsQueue = itsNextQueue;
-			synchronized (itsNextQueue) { itsNextQueue = new TreeSet<Candidate>(); }
-		}
-		else // COVER_BASED_BEAM_SELECTION
-		{
-		// lock in fixed order to avoid deadlock, excuse indenting
-		synchronized (itsNextQueue) {
-		synchronized (itsTempQueue) {
-			Log.logCommandLine("candidates: " + itsTempQueue.size());
-			int aLoopSize = Math.min(itsMaximumQueueSize, itsTempQueue.size());
-			BitSet aUsed = new BitSet(itsTempQueue.size());
-			for (int i=0; i<aLoopSize; i++) //copy candidates into itsNextQueue
+			case BEAM :
 			{
-				Log.logCommandLine("loop " + i);
-				Candidate aBestCandidate = null;
-				double aMaxQuality = Float.NEGATIVE_INFINITY;
-				int aCount = 0;
-				int aChosen = 0;
-				for (Candidate aCandidate : itsTempQueue)
+				// make next level current
+				// synchronized (itsQueue) done by removeFirst()
+				itsQueue = itsNextQueue;
+				synchronized (itsNextQueue)
 				{
-					if (!aUsed.get(aCount)) //is this one still available
-					{
-						double aQuality = computeMultiplicativeWeight(aCandidate) * aCandidate.getPriority();
-						if (aQuality > aMaxQuality)
-						{
-							aMaxQuality = aQuality;
-							aBestCandidate = aCandidate;
-							aChosen = aCount;
-						}
-					}
-					aCount++;
+					itsNextQueue = new TreeSet<Candidate>();
 				}
-				Log.logCommandLine("best (" + aChosen + "): " + aBestCandidate.getPriority() + ", " + computeMultiplicativeWeight(aBestCandidate) + ", " + aMaxQuality);
-				aUsed.set(aChosen, true);
-				aBestCandidate.setPriority(aMaxQuality);
-				addToQueue(itsNextQueue, aBestCandidate);
+				break;
 			}
-			itsQueue = itsNextQueue;
+			case ROC_BEAM :
+			{
+				// synchronized (itsQueue) done by removeFirst()
+				synchronized (itsNextQueueConvexHullROC)
+				{
+// FIXME MM REMOVE
+System.out.println("ROC_BEAM for next level: ");
+itsNextQueueConvexHullROC.debug();
+					itsQueue = itsNextQueueConvexHullROC.toTreeSet();
+					itsNextQueueConvexHullROC = new ConvexHullROC();
+					itsNextQueueROCList = new ROCList();
+				}
+				break;
+			}
+			case COVER_BASED_BEAM_SELECTION :
+			{
+				// lock in fixed order to avoid deadlock, excuse indenting
+				// synchronized (itsQueue) done by removeFirst()
+				synchronized (itsNextQueue) {
+				synchronized (itsTempQueue) {
+					Log.logCommandLine("candidates: " + itsTempQueue.size());
+					int aLoopSize = Math.min(itsMaximumQueueSize, itsTempQueue.size());
+					BitSet aUsed = new BitSet(itsTempQueue.size());
+					for (int i=0; i<aLoopSize; i++) //copy candidates into itsNextQueue
+					{
+						Log.logCommandLine("loop " + i);
+						Candidate aBestCandidate = null;
+						double aMaxQuality = Float.NEGATIVE_INFINITY;
+						int aCount = 0;
+						int aChosen = 0;
+						for (Candidate aCandidate : itsTempQueue)
+						{
+							if (!aUsed.get(aCount)) //is this one still available
+							{
+								double aQuality = computeMultiplicativeWeight(aCandidate) * aCandidate.getPriority();
+								if (aQuality > aMaxQuality)
+								{
+									aMaxQuality = aQuality;
+									aBestCandidate = aCandidate;
+									aChosen = aCount;
+								}
+							}
+							aCount++;
+						}
+						Log.logCommandLine("best (" + aChosen + "): " + aBestCandidate.getPriority() + ", " + computeMultiplicativeWeight(aBestCandidate) + ", " + aMaxQuality);
+						aUsed.set(aChosen, true);
+						aBestCandidate.setPriority(aMaxQuality);
+						addToQueue(itsNextQueue, aBestCandidate);
+					}
+					itsQueue = itsNextQueue;
 
-			Log.logCommandLine("========================================================");
-			Log.logCommandLine("used: " + aUsed.toString());
-			for (Candidate aCandidate : itsQueue)
-				Log.logCommandLine("priority: " + aCandidate.getPriority());
+					Log.logCommandLine("========================================================");
+					Log.logCommandLine("used: " + aUsed.toString());
+					for (Candidate aCandidate : itsQueue)
+						Log.logCommandLine("priority: " + aCandidate.getPriority());
 
-			itsNextQueue = new TreeSet<Candidate>();
-			itsTempQueue = new TreeSet<Candidate>();
-		}
-		}
+					itsNextQueue = new TreeSet<Candidate>();
+					itsTempQueue = new TreeSet<Candidate>();
+				}
+				}
+				break;
+			}
+			// should never happen
+			default :
+				throw new AssertionError(itsSearchStrategy.toString());
 		}
 	}
 
@@ -373,13 +285,39 @@ public class CandidateQueue
 	{
 		synchronized (itsQueue)
 		{
-			// FIXME MM use switch instead of if/ else
-			if (itsSearchStrategy == SearchStrategy.BEAM)
-				synchronized (itsNextQueue) { return itsQueue.size() + itsNextQueue.size(); }
-			else if (itsSearchStrategy == SearchStrategy.COVER_BASED_BEAM_SELECTION)
-				synchronized (itsTempQueue) { return itsQueue.size() + itsTempQueue.size(); }
-			else
-				return itsQueue.size();
+			final int qs = itsQueue.size();
+
+			switch(itsSearchStrategy)
+			{
+				case BEAM :
+				{
+					synchronized (itsNextQueue)
+					{
+						return qs + itsNextQueue.size();
+					}
+				}
+				case ROC_BEAM :
+				{
+					synchronized (itsNextQueueConvexHullROC)
+					{
+						return qs + itsNextQueueConvexHullROC.size();
+					}
+				}
+				case COVER_BASED_BEAM_SELECTION :
+				{
+					synchronized (itsTempQueue)
+					{
+						return qs + itsTempQueue.size();
+					}
+				}
+				// do not use fall-through
+				case BEST_FIRST : return qs;
+				case DEPTH_FIRST : return qs;
+				case BREADTH_FIRST : return qs;
+				// should never happen
+				default :
+					throw new AssertionError(itsSearchStrategy.toString());
+			}
 		}
 	}
 

@@ -6,7 +6,7 @@ package nl.liacs.subdisc;
 public enum SearchStrategy implements EnumInterface
 {
 	BEAM("beam"),
-//	ROC_BEAM("ROC beam"),
+	ROC_BEAM("ROC beam"),
 	COVER_BASED_BEAM_SELECTION("cover-based beam selection"),
 	BEST_FIRST("best first"),
 	DEPTH_FIRST("depth first"),
@@ -74,7 +74,7 @@ public enum SearchStrategy implements EnumInterface
 	public boolean isBeam()
 	{
 		return ((this == SearchStrategy.BEAM) ||
-//			(this == SearchStrategy.ROC_BEAM) ||
+			(this == SearchStrategy.ROC_BEAM) ||
 			(this == SearchStrategy.COVER_BASED_BEAM_SELECTION));
 	}
 }

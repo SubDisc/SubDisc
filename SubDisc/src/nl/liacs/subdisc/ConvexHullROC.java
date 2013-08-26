@@ -3,263 +3,378 @@ package nl.liacs.subdisc;
 import java.util.*;
 
 /*
- * ConvexHull class for ROC convex hull, bounded by [0, 1] in x and y direction.
- * More general ConvexHull class for 'free' coordinates will follow.
- * 
- * Assumes not so many points are on the hull: linear ArrayList is good enough.
- * Lookup could be log(n) when using Tree, but construct is more expensive.
+ * Class does not extend ArrayList<?>, hides storage class for points.
+ * Avoids the need to overwrite all of the (Array)List methods to ensure proper
+ * internal state.
+ * Also allows using different storage class without need for API changes.
  */
-public class ConvexHullROC extends ArrayList<SubgroupROCPoint>
+// TODO MM how to deal with multiple Points with FPR=0, but different TPR
+// TODO MM how to deal with multiple Points with TPR=1, but different FPR
+public class ConvexHullROC
 {
-	private static final long serialVersionUID = 1L;
-
 	private static final PointDouble ZERO_ZERO = new PointDouble(0.0, 0.0);
 	private static final PointDouble ONE_ONE = new PointDouble(1.0, 1.0);
 
 	private static final int NO_INSERT = -1;
 	private static final int INSERT_NO_UPDATE = -2;
 
-	ConvexHullROC() {}
+	private static final int INIT_SIZE = 32; // TODO MM find sane size
+	// FIXME private after debug
+	final List<SubgroupROCPoint> itsHull;
 
-	ConvexHullROC(SubgroupSet theSubgroupSet)
+	// for ROC_BEAM search
+	ConvexHullROC()
 	{
-		for (Subgroup s : theSubgroupSet)
-			add(new SubgroupROCPoint(s));
+		itsHull = new ArrayList<SubgroupROCPoint>(INIT_SIZE);
 	}
 
-	@Override
-	public boolean add(SubgroupROCPoint thePoint)
+	// for SubgroupSet.getROCList()
+	ConvexHullROC(SubgroupSet theSubgroupSet)
 	{
-		// ROC specific check
-		if (!isValid(thePoint))
-			throw new IllegalArgumentException(thePoint.toString());
+		itsHull = new ArrayList<SubgroupROCPoint>(INIT_SIZE);
 
-		synchronized(this)
-		{
-// XXX debug, get a feeling of how may points are on the hull
-System.out.println("ROC Hull size: " + this.size());
-			int i = insertionIndex(thePoint);
-			if (i == NO_INSERT)
-				return false;
-			else if (i == INSERT_NO_UPDATE)
-				return true;
-			// check if point is on or above existing hull
-			else if (!validInsertion(i))
+		for (Subgroup s : theSubgroupSet)
+			if (add(new SubgroupROCPoint(s)))
 			{
-				this.remove(i);
+				System.out.println("ADD: " + s.getID());
+				debug();
+				System.out.println();
+			}
+	}
+
+	// return indicates change
+	// as long a this is the only public method, synchronized call is enough
+	public synchronized boolean add(SubgroupROCPoint thePoint)
+	{
+//System.out.println("ADDING: " + thePoint);
+
+		// always under hull
+		if (thePoint.y < thePoint.x)
+			return false;
+
+		int i = itsHull.size();
+		if (i == 0)
+			return itsHull.add(thePoint);
+
+		// find insertion index for thePoint
+		// looping back simplifies == handling
+		while (--i >= 0)
+		{
+			PointDouble q = itsHull.get(i);
+
+			if (thePoint.x < q.x)
+				continue;
+			else if (thePoint.x == q.x)
+			{
+				// equal FPR, compare TPR
+				if (thePoint.y < q.y)
+					return false;
+				else if (thePoint.y == q.y)
+				{
+					itsHull.add(i+1, thePoint);
+					// no need to update hull
+					return true;
+				}
+				else // (thePoint.y > q.y)
+				{
+					itsHull.set(i, thePoint);
+					// update needed as multiple points
+					// left of i may be identical to i
+					break;
+				}
+			}
+			else // (thePoint.x > q.x)
+			{
+				// check if valid insertion
+				if (below(q, thePoint, i))
+					return false;
+
+				itsHull.add(++i, thePoint);
+				// break after first time
+				break;
+			}
+		}
+
+		// thePoint.x is smallest x, put it in front
+		if (i == -1)
+		{
+			// check if valid insertion
+			if (below(ZERO_ZERO, thePoint, 0))
 				return false;
+
+			itsHull.add(++i, thePoint);
+		}
+
+		// i = index of thePoint
+		assert(itsHull.get(i) == thePoint);
+
+		// FIXME MM use of both indices AND Points is cluttered
+//System.out.println("UPDATE: " + thePoint + " i = " + i);
+		// update of hull is needed
+		PointDouble l = ZERO_ZERO;
+		PointDouble m;
+		PointDouble r;
+
+		// at least two points are in the list at this point in code
+		// code tests every point on hull
+		// this is not strictly needed as only points left and right of
+		// insertion point i need to be checked (until some condition)
+		// but checking the whole hull yields simple, clean code
+		for (int im = 0, ir = 1; im < itsHull.size(); )
+		{
+//System.out.format("im = %d\tir = %d%n", im, ir);
+			m = itsHull.get(im);
+			r = (ir == itsHull.size()) ? ONE_ONE : itsHull.get(ir);
+
+			if (l.y == m.y)
+			{
+				if (r == ONE_ONE)
+					break;
+
+				l = m;
+				++im;
+				++ir;
+				continue;
+			}
+
+			if (m.y == r.y)
+			{
+				// do not remove any points on the top line
+				if (m.y == 1.0)
+					break;
+				// identical points, find first different one
+				++ir;
+				continue;
+			}
+//System.out.println(l);
+//System.out.println(m);
+//System.out.println(r);
+//System.out.println("---");
+			double lm = slope(l, m);
+			double lr = slope(l, r);
+
+			if (lm < lr)
+			{
+				// calls removeRange()
+				itsHull.subList(im, ir).clear();
+				// reset ir to index right after im
+				ir = im+1;
 			}
 			else
 			{
-				update(i);
-				return true;
-			}
-		}
-	}
+				if (r == ONE_ONE)
+					break;
 
-	private static final boolean isValid(PointDouble thePoint)
-	{
-		return isValid(thePoint.x) && isValid(thePoint.y);
-	}
-
-	// hard-coded bounds [0, 1]
-	private static final boolean isValid(double theNumber)
-	{
-		// -0.0 is not valid, check behaves correctly on NaN
-		return (theNumber >= 0.0) && (theNumber <= 1.0);
-	}
-
-	// assumes synchronized(this)
-	private int insertionIndex(SubgroupROCPoint thePoint)
-	{
-		if (this.isEmpty())
-		{
-			super.add(thePoint);
-			return INSERT_NO_UPDATE;
-		}
-
-		for (int i = this.size()-1; i >= 0; --i)
-		{
-			SubgroupROCPoint s = this.get(i);
-
-			if (thePoint.x < s.x)
-				continue;
-			else if (thePoint.x == s.x)
-			{
-				if (thePoint.y < s.y)
-					return NO_INSERT;
-				else if (thePoint.y == s.y)
-				{
-					this.add(i+1, thePoint);
-					return INSERT_NO_UPDATE;
-				}
-				else // (thePoint.y > s.y), no NaNs by construction
-				{
-					// remove s
-					this.set(i, thePoint);
-					return i;
-				}
-			}
-			else // (thePoint.x > s.x), no NaNs by construction
-			{
-				// return after first time (thePoint.x > s.x)
-				this.add(i+1, thePoint);
-				return i+1;
+				l = m;
+				//m = r;
+				++im;
+				// reset ir to index right after im
+				ir = im+1;
 			}
 		}
 
-		// thePoint.x smaller than all other points, put it in front
-		this.add(0, thePoint);
-		return 0;
+		return true;
 	}
 
-	/*
-	 * assumes synchronized(this)
-	 * l is left neighbour of index i, r is right neighbour
-	 * if slope(l, i) >= slope(l, r), insertion of index was valid 
-	 */
-	private boolean validInsertion(int index)
+	private boolean below(PointDouble left, PointDouble thePoint, int index)
 	{
-		PointDouble l = (index == 0) ? ZERO_ZERO : this.get(index-1);
-		PointDouble r = (index == this.size()-1) ? ONE_ONE : this.get(index+1);
-		double lr = slope(l, r);
-		double li = slope(l, this.get(index));
+		PointDouble right = (index == itsHull.size()-1) ? ONE_ONE : itsHull.get(index+1);
 
-		return li >= lr;
+		// loop guarantees left.x < thePoint.x < right.x
+		if (thePoint.y >= right.y)
+			return false;
+
+		return slope(left, thePoint) < slope(left, right);
 	}
 
-	/*
-	 * assumes synchronized(this)
-	 * index is position of last inserted value
-	 * update left and right part of hull separately
-	 * all is done in a synchronized(this) context, so all other threads are
-	 * waiting for this one to finish
-	 */
-	// TODO MM updateRight first, updateLeft after
-	private void update(int index)
-	{
-		// not first point
-		if (index > 0)
-			updateLeft(index);
-
-		// not last point
-		if (index < this.size()-1)
-			updateRight(index);
-	}
-
-	/*
-	 * assumes synchronized(this)
-	 * all points l left of index that have a l.slope < i.slope can be
-	 * removed
-	 * since hull is convex, every l up to index can be removed as soon as a
-	 * l.slope < index.slope
-	 */
-	private void updateLeft(int index)
-	{
-		SubgroupROCPoint p = this.get(index);
-		double ps = slope(ZERO_ZERO, p);
-
-		for (int i = 0; i < index; ++i)
-		{
-			SubgroupROCPoint q = this.get(i);
-			double qs = slope(ZERO_ZERO, q);
-
-			if (qs < ps)
-			{
-				this.removeRange(i, index);
-				return;
-			}
-		}
-	}
-
-	/*
-	 * assumes synchronized(this)
-	 * uses 'local slope'
-	 */
-	private void updateRight(int index)
-	{
-		// simple check first
-		updateRightTPR(index);
-
-		// not last point
-		if (index < this.size()-1)
-			updateRightSlope(index);
-	}
-
-	// assumes synchronized(this)
-	private void updateRightTPR(int index)
-	{
-		SubgroupROCPoint p = this.get(index);
-		double pTPR = p.y;
-
-		for (int i = this.size()-1; i > index; --i)
-		{
-			SubgroupROCPoint q = this.get(i);
-			double qTPR = q.y;
-
-			if (qTPR < pTPR)
-			{
-				this.removeRange(index+1, i+1);
-				return;
-			}
-			// no == check
-		}
-	}
-
-	/*
-	 * assumes synchronized(this)
-	 * NOTE index is NOT the last point
-	 */
-	private void updateRightSlope(int index)
-	{
-		PointDouble p = this.get(index);
-		int ir = this.size()-1;
-		PointDouble rr = ONE_ONE;
-
-		do {
-			PointDouble r = this.get(ir);
-			double sr = slope(p, r);
-			double srr = slope(p, rr);
-
-			if (sr < srr)
-			{
-				this.removeRange(index+1, ir+1);
-				return;
-			}
-
-			rr = r;
-		}
-		while (--ir > index);
-	}
-
-	// assumes a.x <= b.x, a.y <= b.y
 	private static final double slope(PointDouble a, PointDouble b)
 	{
 		return (b.y - a.y) / (b.x - a.x);
 	}
 
-	/**
-	 * Compares FPR, when equal, compares TPR, when equal, compares Subgroup
-	 * ID.
-	 * 
-	 * @see java.lang.Comparable#compareTo(java.lang.Object)
-	 */
-/*
-	@Override
-	public int compareTo(SubgroupROCPoint other)
+	int size()
 	{
-		if (this == other)
-			return 0;
-
-		// safe for NaN
-		int cmp = Double.compare(this.x, other.x);
-		if (cmp != 0)
-			return cmp;
-
-		cmp = Double.compare(this.y, other.y);
-		return cmp != 0 ? cmp : this.ID - other.ID;
-
-		subgroup IDs are only set after mining run finishes
+		synchronized(this) { return itsHull.size(); }
 	}
-*/
+
+	TreeSet<Candidate> toTreeSet()
+	{
+		final TreeSet<Candidate> candidates = new TreeSet<Candidate>();
+		synchronized(this)
+		{
+			for (SubgroupROCPoint p : itsHull)
+				candidates.add(new Candidate(p.getSubgroup()));
+
+			assert(itsHull.size() == candidates.size());
+		}
+
+		return candidates;
+	}
+
+	/**
+	 * Sorts the points on this hull by comparing FPR, when equal, TPR, when
+	 * equal, Subgroup ID.
+	 * 
+	 * Do not call this method before setting the Subgroup IDs using
+	 * {@link SubgroupSet#setIDs()}, as all IDs will be equal before that.
+	 * Because of this, this method is package-private.
+	 * 
+	 * This method exists solely to ensure invocation invariant results in a
+	 * multi-threaded context.
+	 */
+	ConvexHullROC sort()
+	{
+		synchronized (this)
+		{
+			Collections.sort(itsHull, new SubgroupROCPointComparator());
+			return this;
+		}
+	}
+
+	private static final class SubgroupROCPointComparator implements Comparator<SubgroupROCPoint>
+	{
+		@Override
+		public int compare(SubgroupROCPoint a, SubgroupROCPoint b)
+		{
+			if (a == b)
+				return 0;
+
+			// safe for NaN, but no NaNs by construction
+			int cmp = Double.compare(a.x, b.x);
+			if (cmp != 0)
+				return cmp;
+
+			cmp = Double.compare(a.y, b.y);
+			return cmp != 0 ? cmp : a.ID - b.ID;
+		}
+	}
+
+	/* DEBUG METHODS - WILL BE REMOVED ************************************/
+
+	void debug()
+	{
+		synchronized(this)
+		{
+			final int size = itsHull.size();
+			System.out.println("size = " + size);
+
+			if (size == 0)
+			{
+				debug(ZERO_ZERO, ONE_ONE);
+				return;
+			}
+
+			debug(ZERO_ZERO, itsHull.get(0));
+
+			for (int i = 1; i < size; ++i)
+				debug(itsHull.get(i-1), itsHull.get(i));
+			
+			debug(itsHull.get(itsHull.size()-1), ONE_ONE);
+		}
+	}
+
+	private static void debug(PointDouble p, PointDouble q)
+	{
+		System.out.println(q);
+		System.out.println("\t" + slope(p, q));
+	}
+
+	// assume thePivot is correct
+	static final boolean debugCompare(ROCList thePivot, ConvexHullROC theConvexHullROC, ROCConvexHull theROCConvexHull)
+	{
+		synchronized (thePivot) {
+		synchronized (theConvexHullROC)
+		{
+			// compare ROCList to ConvexHullROC
+			List<SubgroupROCPoint> c = filter(theConvexHullROC.itsHull);
+			boolean rc = debugCompare(thePivot, c, theConvexHullROC.getClass().getSimpleName());
+
+			// compare ROCList to ROCConvexHull
+			boolean rr = true;
+	//		List<SubgroupROCPoint> r = filter(theROCConvexHull.itsHull);
+	//		boolean rr = debugCompare(thePivot, r, theROCConvexHull.getClass().getSimpleName());
+
+			return rc && rr;
+		}
+		}
+	}
+
+	private static final List<SubgroupROCPoint> filter(List<SubgroupROCPoint> theHull)
+	{
+		// filter all distinct SubgroupROCPoints on the hull
+		List<SubgroupROCPoint> h = theHull;
+		List<SubgroupROCPoint> c = new ArrayList<SubgroupROCPoint>(h.size());
+
+		if (h.isEmpty())
+			return c;
+		// safe as h not empty
+		c.add(h.get(0));
+
+		for (int i = 1, j = 0, k = h.size(); i < k; ++i)
+		{
+			SubgroupROCPoint pi = h.get(i);
+			SubgroupROCPoint pj = c.get(j);
+
+			// for multiple points with FPR=0, use highest TPR
+			if (pi.x == 0.0 && pj.x == 0.0)
+			{
+				c.set(j, pi);
+				continue;
+			}
+
+			// add only the first point with a TPR of one
+			if (pi.y == 1.0)
+			{
+				c.add(pi);
+				break;
+			}
+
+			// ignore identical points
+			if (pi.x == pj.x && pi.y == pj.y)
+				continue;
+
+			c.add(pi);
+			++j;
+		}
+
+		return c;
+	}
+
+	static final boolean debugCompare(ROCList theROCList, List<SubgroupROCPoint> theHull, String theClass)
+	{
+		// compare sizes
+		if (theROCList.size() != theHull.size())
+		{
+			System.out.println("ERROR: ROCList.size() != " + theClass + ".size()");
+			debugPrint("ROCList", theROCList);
+			debugPrint(theClass, theHull);
+			return false;
+		}
+
+		// compare individual points
+		for (int i = 0, j = theHull.size(); i < j; ++i)
+		{
+			SubgroupROCPoint r = theROCList.get(i);
+			SubgroupROCPoint s = theHull.get(i);
+
+			if (r.x != s.x || r.y != s.y)
+			{
+				System.out.println("ERROR: ROCList.points != " + theClass + ".points");
+				debugPrint("ROCList", theROCList);
+				debugPrint(theClass, theHull);
+				return false;
+			}
+		}
+
+		// made it here, all seems fine
+		System.out.println("SUCCESS: ROCList.points == " + theClass + ".points");
+		return true;
+	}
+
+	private static final void debugPrint(String clazz, List<SubgroupROCPoint> list)
+	{
+		System.out.println(clazz);
+		for (SubgroupROCPoint s : list)
+			System.out.println(s);
+	}
 }

@@ -47,6 +47,11 @@ public class SubgroupROCPoint extends PointDouble
 	 */
 	public double getTPR() { return super.y; }
 
+	final Subgroup getSubgroup()
+	{
+		return itsSubgroup;
+	}
+
 	/**
 	 * Overrides <code>Object</code>s' <code>toString()</code> method to to
 	 * get detailed information about this SubgroupROCPoint.
