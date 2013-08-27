@@ -79,7 +79,7 @@ public class Process
 			}
 		}
 		aSubgroupDiscovery.mine(System.currentTimeMillis(), theNrThreads);
-		// if 2nd argument to above mine() is 0, you effectively run:
+		// if 2nd argument to above mine() is < 0, you effectively run:
 		//aSubgroupDiscovery.mine(System.currentTimeMillis());
 
 		long anEnd = System.currentTimeMillis();

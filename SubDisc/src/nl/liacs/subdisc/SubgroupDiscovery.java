@@ -214,11 +214,12 @@ public class SubgroupDiscovery extends MiningAlgorithm
 
 		int aSearchDepth = itsSearchParameters.getSearchDepth();
 
-		long theEndTime = theBeginTime + (((long) itsSearchParameters.getMaximumTime()) * 60 * 1000);
+		long theEndTime = theBeginTime + (long) (((double) itsSearchParameters.getMaximumTime()) * 60 * 1000);
+
 		if (theEndTime <= theBeginTime)
 			theEndTime = Long.MAX_VALUE;
 
-		while ((itsCandidateQueue.size() > 0 ) && (System.currentTimeMillis() <= theEndTime))
+		while ((itsCandidateQueue.size() > 0) && (System.currentTimeMillis() <= theEndTime))
 		{
 			Candidate aCandidate = itsCandidateQueue.removeFirst(); // take off first Candidate from Queue
 			Subgroup aSubgroup = aCandidate.getSubgroup();
@@ -1134,7 +1135,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	 *
 	 * same as public void mine(long theBeginTime)
 	 * but allows nrThreads to be set
-	 * use theNrThreads = 0 to run old mine(theBeginTime)
+	 * use theNrThreads < 0 to run old mine(theBeginTime)
 	 */
 	public void mine(long theBeginTime, int theNrThreads)
 	{
@@ -1202,7 +1203,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 
 		final int aSearchDepth = itsSearchParameters.getSearchDepth();
 
-		long theEndTime = theBeginTime + (((long) itsSearchParameters.getMaximumTime()) * 60 * 1000);
+		long theEndTime = theBeginTime + (long) (((double) itsSearchParameters.getMaximumTime()) * 60 * 1000);
 		if (theEndTime <= theBeginTime)
 			theEndTime = Long.MAX_VALUE;
 
