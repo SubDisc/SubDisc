@@ -6,6 +6,8 @@ import java.util.*;
  * NOTE As it stands, this class has deadlock potential.
  * Always obtain lock in fixed order: itsQueue -> itsNextQueue -> itsTempQueue.
  * 
+ * TODO There is no need to store itsNextQueue items when max_depth is reached.
+ * 
  * TODO Queue classes in Concurrency framework allow for better concurrency. Eg.
  * Higher concurrency through non-locking algorithms and compareAndSwap methods.
  * 
@@ -28,9 +30,9 @@ public class CandidateQueue
 	private SearchStrategy itsSearchStrategy;
 	private TreeSet<Candidate> itsQueue;
 	private TreeSet<Candidate> itsNextQueue;
-	private ConvexHullROC itsNextQueueConvexHullROC;
-	private ROCList itsNextQueueROCList;			// debug only
-//	private ROCConvexHull itsNextQueueROCConvexHull;	// debug only
+	private ConvexHullROCNaive itsNextQueueConvexHullROC;
+	private ROCList itsNextQueueROCList;		// debug only
+	private ConvexHullROC itsNextQueueROCBeam;	// debug only
 	private TreeSet<Candidate> itsTempQueue;
 	private final int itsMaximumQueueSize;
 
@@ -46,9 +48,9 @@ public class CandidateQueue
 				break;
 			case ROC_BEAM :
 			{
-				itsNextQueueConvexHullROC = new ConvexHullROC();
+				itsNextQueueConvexHullROC = new ConvexHullROCNaive();
 				itsNextQueueROCList = new ROCList();
-//				itsNextQueueROCConvexHull = new ROCConvexHull();
+				itsNextQueueROCBeam = new ConvexHullROC(true);
 				break;
 			}
 			case COVER_BASED_BEAM_SELECTION :
@@ -117,12 +119,12 @@ System.out.println("ADDING: " + theCandidate.getSubgroup().toString());
 				boolean isAdded =
 				itsNextQueueConvexHullROC.add(p);
 				itsNextQueueROCList.add(p);
-//				itsNextQueueROCConvexHull.add(p);
+				itsNextQueueROCBeam.add(new CandidateROCPoint(theCandidate));
 
 				// debug check
+itsNextQueueConvexHullROC.debug();
 System.out.println("COMPARE");
-//				itsNextQueueConvexHullROC.debug();
-				ConvexHullROC.debugCompare(itsNextQueueROCList, itsNextQueueConvexHullROC, null);//itsNextQueueROCConvexHull);
+				ConvexHullROCNaive.debugCompare(itsNextQueueROCList, itsNextQueueConvexHullROC, itsNextQueueROCBeam);
 
 				return isAdded;
 			}
@@ -208,11 +210,12 @@ System.out.println("COMPARE");
 				synchronized (itsNextQueueConvexHullROC)
 				{
 // FIXME MM REMOVE
-System.out.println("ROC_BEAM for next level: ");
+System.out.println("ROC_BEAM for next level:");
 itsNextQueueConvexHullROC.debug();
 					itsQueue = itsNextQueueConvexHullROC.toTreeSet();
-					itsNextQueueConvexHullROC = new ConvexHullROC();
+					itsNextQueueConvexHullROC = new ConvexHullROCNaive();
 					itsNextQueueROCList = new ROCList();
+					itsNextQueueROCBeam = new ConvexHullROC(true);
 				}
 				break;
 			}

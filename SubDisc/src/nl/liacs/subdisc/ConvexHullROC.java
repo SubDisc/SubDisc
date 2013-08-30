@@ -7,60 +7,144 @@ import java.util.*;
  * Avoids the need to overwrite all of the (Array)List methods to ensure proper
  * internal state.
  * Also allows using different storage class without need for API changes.
+ * 
+ * Strictly convex would require all internal angles to be < 180.
+ * Meaning that only the end points of a line would be kept, points on the line
+ * would be ignored.
+ * ROCList seems to do this, which is fine for its original drawing purposes.
+ * 
+ * The sole boolean parameter controls whether duplicates are allowed.
+ * Duplicates are subgroups for which the (FPR, TPR) are exactly the same.
+ * Duplicates do not alter the form of the hull.
+ * ROCList does not allow duplicates, and keeps just the last of equal points
+ * added, this is fine for its original drawing purposes.
+ * 
+ * Note, the special points (0, 0) and (1, 1), representing the empty subgroup
+ * and all data respectively, are implicitly assumed to be on the hull.
+ * The calculation for AUC depends on this.
+ * However, they will not be part of any return that holds the points for this
+ * hull.
  */
-// TODO MM how to deal with multiple Points with FPR=0, but different TPR
-// TODO MM how to deal with multiple Points with TPR=1, but different FPR
 public class ConvexHullROC
 {
-	private static final PointDouble ZERO_ZERO = new PointDouble(0.0, 0.0);
-	private static final PointDouble ONE_ONE = new PointDouble(1.0, 1.0);
-
+	// initial beam size
+	private static final int INIT_SIZE = 32;
+// FIXME MM find run max size
+private static int DEBUG_MAX_SIZE = 0;
+	//special Points
+	private static final PointDouble ORIGIN = new PointDouble(0.0, 0.0);
+	private static final PointDouble TOP = new PointDouble(1.0, 1.0);
+	// special return codes
 	private static final int NO_INSERT = -1;
 	private static final int INSERT_NO_UPDATE = -2;
 
-	private static final int INIT_SIZE = 32; // TODO MM find sane size
-	// FIXME private after debug
-	final List<SubgroupROCPoint> itsHull;
+	// FIXME MM private member after debug
+	final List<CandidateROCPoint> itsHull;
+	private final boolean allowDuplicates;
 
-	// for ROC_BEAM search
-	ConvexHullROC()
+	public ConvexHullROC(boolean allowDuplicates)
 	{
-		itsHull = new ArrayList<SubgroupROCPoint>(INIT_SIZE);
-	}
+		itsHull = new ArrayList<CandidateROCPoint>(INIT_SIZE);
+		this.allowDuplicates = allowDuplicates;
+	};
 
-	// for SubgroupSet.getROCList()
-	ConvexHullROC(SubgroupSet theSubgroupSet)
+	// debug only
+	ConvexHullROC(SubgroupSet set)
 	{
-		itsHull = new ArrayList<SubgroupROCPoint>(INIT_SIZE);
-
-		for (Subgroup s : theSubgroupSet)
-			if (add(new SubgroupROCPoint(s)))
+		allowDuplicates = true;
+		itsHull = new ArrayList<CandidateROCPoint>(set.size());
+		for (Subgroup s : set)
+			if (add(new CandidateROCPoint(new Candidate(s))))
 			{
 				System.out.println("ADD: " + s.getID());
 				debug();
 				System.out.println();
 			}
+	};
+
+	void debug()
+	{
+		synchronized(this)
+		{
+			final int size = itsHull.size();
+			System.out.println("size = " + size + " max_size = " + DEBUG_MAX_SIZE);
+
+			System.out.println(ORIGIN);
+			for (SubgroupROCPoint p : itsHull)
+			{
+				System.out.println(p);
+				System.out.print("\t");
+				System.out.println(((CandidateROCPoint)p).itsSlope);
+			}
+			System.out.println(TOP);
+			System.out.print("\t");
+			System.out.println(slope(size == 0 ? ORIGIN : itsHull.get(size-1), TOP));
+		}
 	}
 
-	// return indicates change
-	// as long a this is the only public method, synchronized call is enough
-	public synchronized boolean add(SubgroupROCPoint thePoint)
+	// throws NullPointerException when thePoint = null
+	// when only non-private method, synchronized call is sufficient
+	public synchronized boolean add(CandidateROCPoint thePoint)
 	{
-//System.out.println("ADDING: " + thePoint);
+// FIXME MM DEBUG ONLY, may be off by 1
+if (itsHull.size() > DEBUG_MAX_SIZE)
+	DEBUG_MAX_SIZE = itsHull.size();
 
 		// always under hull
 		if (thePoint.y < thePoint.x)
 			return false;
 
-		int i = itsHull.size();
-		if (i == 0)
-			return itsHull.add(thePoint);
-
-		// find insertion index for thePoint
-		// looping back simplifies == handling
-		while (--i >= 0)
+		int size = itsHull.size();
+		if (size == 0)
 		{
-			PointDouble q = itsHull.get(i);
+			thePoint.itsSlope = slope(ORIGIN, thePoint);
+			return itsHull.add(thePoint);
+		}
+
+		// find virtual insertion index for thePoint
+		int i = insertionIndex(thePoint);
+
+		// NO_INSERT or INSERT_NO_UPDATE
+		if (i < 0)
+			return (i == INSERT_NO_UPDATE);
+
+		// update needed, determine what range should be removed
+		int fromIndex = (i == 0) ? i : updateLeft(i, thePoint);
+		int toIndex = (i == size) ? size : updateRight(i, thePoint);
+
+		assert(fromIndex >= 0);
+		assert(toIndex <= size);
+		assert(fromIndex <= toIndex);
+		// use switch to avoid needless array-copy in some cases
+		switch(toIndex-fromIndex)
+		{
+			case 0 :
+			{
+				itsHull.add(i, thePoint);
+				return true;
+			}
+			case 1 :
+			{
+				// avoid array-copy, use set() instead of add()
+				itsHull.set(fromIndex, thePoint);
+				return true;
+			}
+			default :
+			{
+				// remove one less, use set() instead of add()
+				itsHull.subList(fromIndex, toIndex-1).clear();
+				itsHull.set(fromIndex, thePoint);
+				return true;
+			}
+		}
+	}
+
+	private int insertionIndex(CandidateROCPoint thePoint)
+	{
+		int i = itsHull.size();
+		do
+		{
+			CandidateROCPoint q = itsHull.get(--i);
 
 			if (thePoint.x < q.x)
 				continue;
@@ -68,313 +152,174 @@ public class ConvexHullROC
 			{
 				// equal FPR, compare TPR
 				if (thePoint.y < q.y)
-					return false;
+					return NO_INSERT;
 				else if (thePoint.y == q.y)
 				{
-					itsHull.add(i+1, thePoint);
+					// copy slope
+					thePoint.itsSlope = q.itsSlope;
+
+					// use last addition, like ROCList
+					if (!allowDuplicates)
+						itsHull.set(i, thePoint);
+					else
+						itsHull.add(i+1, thePoint);
+
 					// no need to update hull
-					return true;
+					return INSERT_NO_UPDATE;
 				}
-				else // (thePoint.y > q.y)
+				else // (thePoint.y > p.y)
 				{
-					itsHull.set(i, thePoint);
 					// update needed as multiple points
 					// left of i may be identical to i
-					break;
+					return i;
 				}
 			}
 			else // (thePoint.x > q.x)
 			{
 				// check if valid insertion
-				if (below(q, thePoint, i))
-					return false;
+				if (pos(q, thePoint, right(i+1)) < 0)
+					return NO_INSERT;
 
-				itsHull.add(++i, thePoint);
-				// break after first time
-				break;
+				// TODO MM strictly convex check would go here
+				return ++i;
 			}
 		}
+		while (i > 0);
 
-		// thePoint.x is smallest x, put it in front
-		if (i == -1)
-		{
-			// check if valid insertion
-			if (below(ZERO_ZERO, thePoint, 0))
-				return false;
+		// thePoint.x is smaller than any other x, put it in front
+		if (pos(ORIGIN, thePoint, itsHull.get(0)) < 0)
+			return NO_INSERT;
 
-			itsHull.add(++i, thePoint);
-		}
+		// TODO MM strictly convex check would go here
+		if (thePoint.x == 0.0)
+			thePoint.itsSlope = Double.POSITIVE_INFINITY;
+		else
+			thePoint.itsSlope = slope(ORIGIN, thePoint);
 
-		// i = index of thePoint
-		assert(itsHull.get(i) == thePoint);
-
-		// FIXME MM use of both indices AND Points is cluttered
-//System.out.println("UPDATE: " + thePoint + " i = " + i);
-		// update of hull is needed
-		PointDouble l = ZERO_ZERO;
-		PointDouble m;
-		PointDouble r;
-
-		// at least two points are in the list at this point in code
-		// code tests every point on hull
-		// this is not strictly needed as only points left and right of
-		// insertion point i need to be checked (until some condition)
-		// but checking the whole hull yields simple, clean code
-		for (int im = 0, ir = 1; im < itsHull.size(); )
-		{
-//System.out.format("im = %d\tir = %d%n", im, ir);
-			m = itsHull.get(im);
-			r = (ir == itsHull.size()) ? ONE_ONE : itsHull.get(ir);
-
-			if (l.y == m.y)
-			{
-				if (r == ONE_ONE)
-					break;
-
-				l = m;
-				++im;
-				++ir;
-				continue;
-			}
-
-			if (m.y == r.y)
-			{
-				// do not remove any points on the top line
-				if (m.y == 1.0)
-					break;
-				// identical points, find first different one
-				++ir;
-				continue;
-			}
-//System.out.println(l);
-//System.out.println(m);
-//System.out.println(r);
-//System.out.println("---");
-			double lm = slope(l, m);
-			double lr = slope(l, r);
-
-			if (lm < lr)
-			{
-				// calls removeRange()
-				itsHull.subList(im, ir).clear();
-				// reset ir to index right after im
-				ir = im+1;
-			}
-			else
-			{
-				if (r == ONE_ONE)
-					break;
-
-				l = m;
-				//m = r;
-				++im;
-				// reset ir to index right after im
-				ir = im+1;
-			}
-		}
-
-		return true;
+		return 0;
 	}
 
-	private boolean below(PointDouble left, PointDouble thePoint, int index)
+	private final PointDouble right(int index)
 	{
-		PointDouble right = (index == itsHull.size()-1) ? ONE_ONE : itsHull.get(index+1);
-
-		// loop guarantees left.x < thePoint.x < right.x
-		if (thePoint.y >= right.y)
-			return false;
-
-		return slope(left, thePoint) < slope(left, right);
+		return (index == itsHull.size()) ? TOP : itsHull.get(index);
 	}
 
-	private static final double slope(PointDouble a, PointDouble b)
-	{
-		return (b.y - a.y) / (b.x - a.x);
-	}
-
-	int size()
-	{
-		synchronized(this) { return itsHull.size(); }
-	}
-
-	TreeSet<Candidate> toTreeSet()
-	{
-		final TreeSet<Candidate> candidates = new TreeSet<Candidate>();
-		synchronized(this)
-		{
-			for (SubgroupROCPoint p : itsHull)
-				candidates.add(new Candidate(p.getSubgroup()));
-
-			assert(itsHull.size() == candidates.size());
-		}
-
-		return candidates;
-	}
-
-	/**
-	 * Sorts the points on this hull by comparing FPR, when equal, TPR, when
-	 * equal, Subgroup ID.
-	 * 
-	 * Do not call this method before setting the Subgroup IDs using
-	 * {@link SubgroupSet#setIDs()}, as all IDs will be equal before that.
-	 * Because of this, this method is package-private.
-	 * 
-	 * This method exists solely to ensure invocation invariant results in a
-	 * multi-threaded context.
+	/*
+	 *  1 when middle is above line through left-right
+	 *  0 when middle is on line through left-right
+	 * -1 when middle is below line through left-right
 	 */
-	ConvexHullROC sort()
+	private static final int pos(PointDouble left, PointDouble middle, PointDouble right)
 	{
-		synchronized (this)
-		{
-			Collections.sort(itsHull, new SubgroupROCPointComparator());
-			return this;
-		}
+		// do not use Math.signum(d), no (-)Infinite / NaN occur
+		double value = (middle.x - right.x) * (left.y - right.y) -
+				(left.x - right.x) * (middle.y - right.y);
+
+		// for primitive types 0.0 and -0.0 are numerically equal
+		// contrary to Float/ Double.compare() where 0.0 > -0.0
+		return (value < 0.0) ? -1 : (value == 0.0) ? 0 : 1;
 	}
 
-	private static final class SubgroupROCPointComparator implements Comparator<SubgroupROCPoint>
+	// NOTE pos() checked that thePoint was not below line (index-1, index)
+	// mark all points p left of thePoint that have p.slope < thePoint.slope
+	private final int updateLeft(int index, CandidateROCPoint thePoint)
 	{
-		@Override
-		public int compare(SubgroupROCPoint a, SubgroupROCPoint b)
+		// TODO MM strictly convex check for fpr=0.0 would go here
+		// keep all points on FPR-axis for now
+		if (thePoint.x == 0.0)
 		{
-			if (a == b)
-				return 0;
-
-			// safe for NaN, but no NaNs by construction
-			int cmp = Double.compare(a.x, b.x);
-			if (cmp != 0)
-				return cmp;
-
-			cmp = Double.compare(a.y, b.y);
-			return cmp != 0 ? cmp : a.ID - b.ID;
+			thePoint.itsSlope = Double.POSITIVE_INFINITY;
+			return index;
 		}
-	}
 
-	/* DEBUG METHODS - WILL BE REMOVED ************************************/
-
-	void debug()
-	{
-		synchronized(this)
+		do
 		{
-			final int size = itsHull.size();
-			System.out.println("size = " + size);
+			CandidateROCPoint p = itsHull.get(index-1);
 
-			if (size == 0)
+			if (p.x == thePoint.x)
 			{
-				debug(ZERO_ZERO, ONE_ONE);
-				return;
+				assert(p.y < thePoint.y);
+				continue; // find first p with p.x < thePoint.x
+			}
+			else // p.x < thePoint.x
+			{
+				assert(p.x < thePoint.x);
+				thePoint.itsSlope = slope(p, thePoint);
+
+				if (p.itsSlope < thePoint.itsSlope)
+					continue;
+				// TODO MM strictly convex check would go here
+				//else if (p.itsSlope == thePoint.itsSlope)
+				//	;
+				else
+					return index;
 			}
 
-			debug(ZERO_ZERO, itsHull.get(0));
-
-			for (int i = 1; i < size; ++i)
-				debug(itsHull.get(i-1), itsHull.get(i));
-			
-			debug(itsHull.get(itsHull.size()-1), ONE_ONE);
 		}
+		while (--index > 0);
+
+		// all slopes left of thePoint are tested, angles are not convex
+		thePoint.itsSlope = slope(ORIGIN, thePoint);
+		return 0;
 	}
 
-	private static void debug(PointDouble p, PointDouble q)
+	// NOTE pos() checked that thePoint was not below line (index-1, index)
+	private final int updateRight(int index, CandidateROCPoint thePoint)
 	{
-		System.out.println(q);
-		System.out.println("\t" + slope(p, q));
+		index = updateRightTPR(index, thePoint);
+
+		// not last point
+		if (index < itsHull.size())
+			index = updateRightSlope(index, thePoint);
+
+		return index;
 	}
 
-	// assume thePivot is correct
-	static final boolean debugCompare(ROCList thePivot, ConvexHullROC theConvexHullROC, ROCConvexHull theROCConvexHull)
+	private final int updateRightTPR(int index, PointDouble thePoint)
 	{
-		synchronized (thePivot) {
-		synchronized (theConvexHullROC)
+		int size = itsHull.size();
+		double x = thePoint.x;
+
+		do
 		{
-			// compare ROCList to ConvexHullROC
-			List<SubgroupROCPoint> c = filter(theConvexHullROC.itsHull);
-			boolean rc = debugCompare(thePivot, c, theConvexHullROC.getClass().getSimpleName());
-
-			// compare ROCList to ROCConvexHull
-			boolean rr = true;
-	//		List<SubgroupROCPoint> r = filter(theROCConvexHull.itsHull);
-	//		boolean rr = debugCompare(thePivot, r, theROCConvexHull.getClass().getSimpleName());
-
-			return rc && rr;
+			if (itsHull.get(index).x > x)
+				return index;
 		}
-		}
+		while (++index < size);
+
+		// thePoint.TPR > than any other TPR on its right
+		return size;
 	}
 
-	private static final List<SubgroupROCPoint> filter(List<SubgroupROCPoint> theHull)
+	private final int updateRightSlope(int index, CandidateROCPoint thePoint)
 	{
-		// filter all distinct SubgroupROCPoints on the hull
-		List<SubgroupROCPoint> h = theHull;
-		List<SubgroupROCPoint> c = new ArrayList<SubgroupROCPoint>(h.size());
+		int size = itsHull.size();
 
-		if (h.isEmpty())
-			return c;
-		// safe as h not empty
-		c.add(h.get(0));
-
-		for (int i = 1, j = 0, k = h.size(); i < k; ++i)
+		do
 		{
-			SubgroupROCPoint pi = h.get(i);
-			SubgroupROCPoint pj = c.get(j);
-
-			// for multiple points with FPR=0, use highest TPR
-			if (pi.x == 0.0 && pj.x == 0.0)
-			{
-				c.set(j, pi);
-				continue;
-			}
-
-			// add only the first point with a TPR of one
-			if (pi.y == 1.0)
-			{
-				c.add(pi);
-				break;
-			}
-
-			// ignore identical points
-			if (pi.x == pj.x && pi.y == pj.y)
+			CandidateROCPoint middle = itsHull.get(index); // safe, < size
+			PointDouble right = right(index+1);
+			// account for duplicates
+			if (middle.x == right.x)
 				continue;
 
-			c.add(pi);
-			++j;
-		}
-
-		return c;
-	}
-
-	static final boolean debugCompare(ROCList theROCList, List<SubgroupROCPoint> theHull, String theClass)
-	{
-		// compare sizes
-		if (theROCList.size() != theHull.size())
-		{
-			System.out.println("ERROR: ROCList.size() != " + theClass + ".size()");
-			debugPrint("ROCList", theROCList);
-			debugPrint(theClass, theHull);
-			return false;
-		}
-
-		// compare individual points
-		for (int i = 0, j = theHull.size(); i < j; ++i)
-		{
-			SubgroupROCPoint r = theROCList.get(i);
-			SubgroupROCPoint s = theHull.get(i);
-
-			if (r.x != s.x || r.y != s.y)
+			if (pos(thePoint, middle, right) >= 0)
 			{
-				System.out.println("ERROR: ROCList.points != " + theClass + ".points");
-				debugPrint("ROCList", theROCList);
-				debugPrint(theClass, theHull);
-				return false;
+				middle.itsSlope = slope(middle, thePoint);
+				return index;
 			}
+			// TODO MM strictly convex check would go here
+			// else if (pos == 0)
+		
 		}
+		while (++index < size);
 
-		// made it here, all seems fine
-		System.out.println("SUCCESS: ROCList.points == " + theClass + ".points");
-		return true;
+		// line through thePoint and TOP lies above all other points
+		return size;
 	}
 
-	private static final void debugPrint(String clazz, List<SubgroupROCPoint> list)
+	private static final double slope(PointDouble left, PointDouble right)
 	{
-		System.out.println(clazz);
-		for (SubgroupROCPoint s : list)
-			System.out.println(s);
+		return (right.y - left.y) / (right.x - left.x);
 	}
 }

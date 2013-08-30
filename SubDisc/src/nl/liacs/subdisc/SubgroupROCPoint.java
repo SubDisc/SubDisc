@@ -12,7 +12,7 @@ package nl.liacs.subdisc;
  * ID may not be stable throughout the lifetime of a Subgroup
  * this would lead to a mismatch between Subgroup.getID() and ID
  */
-public class SubgroupROCPoint extends PointDouble
+public class SubgroupROCPoint extends ROCPoint
 {
 	public final int ID;
 	private final Subgroup itsSubgroup;
@@ -31,22 +31,6 @@ public class SubgroupROCPoint extends PointDouble
 		ID = itsSubgroup.getID();
 	}
 
-	/**
-	 * Convenience method, more intuitive way to get the FalsePositiveRate
-	 * then subgroupROCPoint&nbsp;.x or subgroupROCPoint&nbsp;.getX().
-	 * 
-	 * @return x, better known as FalsePositiveRate.
-	 */
-	public double getFPR() { return super.x; }
-
-	/**
-	 * Convenience method, more intuitive way to get the TruePositiveRate
-	 * then subgroupROCPoint&nbsp;.y or subgroupROCPoint&nbsp;.getY().
-	 * 
-	 * @return y, better known as TruePositiveRate.
-	 */
-	public double getTPR() { return super.y; }
-
 	final Subgroup getSubgroup()
 	{
 		return itsSubgroup;
@@ -62,6 +46,6 @@ public class SubgroupROCPoint extends PointDouble
 	@Override
 	public String toString()
 	{
-		return "Subgroup " + ID + " (FPR " + getFPR() + ", TPR "+ getTPR() + ")";
+		return "Subgroup " + ID + " (FPR " + x + ", TPR "+ y + ")";
 	}
 }

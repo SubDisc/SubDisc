@@ -2,7 +2,7 @@ package nl.liacs.subdisc;
 
 public class Candidate implements Comparable<Candidate>
 {
-	private Subgroup itsSubgroup;
+	private final Subgroup itsSubgroup;
 	private double itsPriority;
 
 	public Candidate(Subgroup theSubgroup)
@@ -26,10 +26,21 @@ public class Candidate implements Comparable<Candidate>
 		if (aTest != 0)
 			return aTest;
 
+		// this should never happen
+		// equal priority, subgroup, condition list, condition(s) would
+		// mean it is the exact same Candidate
+		System.out.println(new AssertionError("ERROR: Candidate.compareTo()"));
 		return 1; // ?
 	}
 
 	public double getPriority() { return itsPriority; }
 	public void setPriority(double thePriority) { itsPriority = thePriority; }
 	public Subgroup getSubgroup() { return itsSubgroup; }
+
+	@Override
+	public String toString()
+	{
+		return "Candidate: priority=" + itsPriority +
+				" ConditionsList=" + itsSubgroup.toString();
+	}
 }
