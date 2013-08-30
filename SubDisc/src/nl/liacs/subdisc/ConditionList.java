@@ -83,15 +83,18 @@ public class ConditionList extends ArrayList<Condition> implements Comparable<Co
 	@Override
 	public String toString()
 	{
-		StringBuilder aResult = new StringBuilder(size() * 25);
-		for(Condition aCondition : this)
-		{
-			aResult.append(aCondition);
-			aResult.append(" AND ");
-		}
-		if (size() == 0)
+		int size = size();
+		if (size == 0)
 			return "(empty)";
-		else
-			return aResult.substring(0, aResult.length() - 5);
+
+		StringBuilder aResult = new StringBuilder(size * 25);
+		aResult.append(this.get(0)); // safe as size != 0
+		for (int i = 1; i < size; ++i)
+		{
+			aResult.append(" AND ");
+			aResult.append(this.get(i));
+		}
+
+		return aResult.toString();
 	}
 }

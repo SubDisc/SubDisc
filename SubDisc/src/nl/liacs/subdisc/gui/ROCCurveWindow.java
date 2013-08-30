@@ -82,6 +82,7 @@ public class ROCCurveWindow extends JFrame implements ActionListener
 		}
 	}
 
+	// FIXME MM this hangs for large SubgroupSets, use StringBuilder not +
 	private String getGnuPlotString()
 	{
 		double anX, aY;
