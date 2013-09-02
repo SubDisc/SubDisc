@@ -4,12 +4,57 @@ import java.util.*;
 
 public enum NumericOperatorSetting implements EnumInterface
 {
-	NUMERIC_NORMAL("<html>&#8804;, &#8805;</html>"),
-	NUMERIC_LEQ("<html>&#8804;</html>"),
-	NUMERIC_GEQ("<html>&#8805;</html>"),
-	NUMERIC_ALL("<html>&#8804;, &#8805;, =</html>"),
-	NUMERIC_EQ("="),
-	NUMERIC_INTERVALS("in");
+	NUMERIC_NORMAL("<html>&#8804;, &#8805;</html>")
+	{
+		@Override
+		EnumSet<Operator> getOperators()
+		{
+			return EnumSet.of(Operator.LESS_THAN_OR_EQUAL,
+						Operator.GREATER_THAN_OR_EQUAL);
+		}
+	},
+	NUMERIC_LEQ("<html>&#8804;</html>")
+	{
+		@Override
+		EnumSet<Operator> getOperators()
+		{
+			return EnumSet.of(Operator.LESS_THAN_OR_EQUAL);
+		}
+	},
+	NUMERIC_GEQ("<html>&#8805;</html>")
+		{
+		@Override
+		EnumSet<Operator> getOperators()
+		{
+			return EnumSet.of(Operator.GREATER_THAN_OR_EQUAL);
+		}
+	},
+	NUMERIC_ALL("<html>&#8804;, &#8805;, =</html>")
+	{
+		@Override
+		EnumSet<Operator> getOperators()
+		{
+			return EnumSet.of(Operator.LESS_THAN_OR_EQUAL,
+						Operator.GREATER_THAN_OR_EQUAL,
+						Operator.EQUALS);
+		}
+	},
+	NUMERIC_EQ("=")
+	{
+		@Override
+		EnumSet<Operator> getOperators()
+		{
+			return EnumSet.of(Operator.EQUALS);
+		}
+	},
+	NUMERIC_INTERVALS("in")
+	{
+		@Override
+		EnumSet<Operator> getOperators()
+		{
+			return EnumSet.of(Operator.BETWEEN);
+		}
+	};
 
 	/**
 	 * For each NumericOperatorSetting this is the text that will be used in
@@ -22,6 +67,16 @@ public enum NumericOperatorSetting implements EnumInterface
 	private NumericOperatorSetting(String theGuiText)
 	{
 		GUI_TEXT = theGuiText;
+	}
+
+	// enforce implementation for new NumericOperatorSettings
+	abstract EnumSet<Operator> getOperators();
+
+	// uses Javadoc from EnumInterface
+	@Override
+	public String toString()
+	{
+		return GUI_TEXT;
 	}
 
 	/**
@@ -76,13 +131,6 @@ public enum NumericOperatorSetting implements EnumInterface
 	public static NumericOperatorSetting getDefault()
 	{
 		return NumericOperatorSetting.NUMERIC_NORMAL;
-	}
-
-	// uses Javadoc from EnumInterface
-	@Override
-	public String toString()
-	{
-		return GUI_TEXT;
 	}
 
 	public static boolean check(NumericOperatorSetting theNO, Operator theOperator)

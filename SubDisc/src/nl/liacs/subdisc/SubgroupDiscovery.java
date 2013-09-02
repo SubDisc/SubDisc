@@ -24,7 +24,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 
 	//target concept type-specific information, including base models
 	private BitSet itsBinaryTarget;		//SINGLE_NOMINAL
-	private Column itsTargetRankings;		//SINGLE_NOMINAL (label ranking)
+	private Column itsTargetRankings;	//SINGLE_NOMINAL (label ranking)
 	private Column itsNumericTarget;	//SINGLE_NUMERIC
 	private Column itsPrimaryColumn;	//DOUBLE_CORRELATION / DOUBLE_REGRESSION
 	private Column itsSecondaryColumn;	//DOUBLE_CORRELATION / DOUBLE_REGRESSION
@@ -205,6 +205,9 @@ public class SubgroupDiscovery extends MiningAlgorithm
 
 	public void mine(long theBeginTime)
 	{
+		// not in Constructor, Table / SearchParameters may change
+		final ConditionBaseSet aConditions = new ConditionBaseSet(itsTable, itsSearchParameters);
+
 		//make subgroup to start with, containing all elements
 		BitSet aBitSet = new BitSet(itsNrRows);
 		aBitSet.set(0, itsNrRows);
@@ -226,7 +229,8 @@ public class SubgroupDiscovery extends MiningAlgorithm
 
 			if (aSubgroup.getDepth() < aSearchDepth)
 			{
-				RefinementList aRefinementList = new RefinementList(aSubgroup, itsTable, itsSearchParameters);
+//				RefinementList aRefinementList = new RefinementList(aSubgroup, itsTable, itsSearchParameters);
+				RefinementList aRefinementList = new RefinementList(aSubgroup, aConditions);
 				// .getMembers() creates expensive clone, reuse
 				final BitSet aMembers = aSubgroup.getMembers();
 
@@ -1084,14 +1088,13 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		Log.logCommandLine("Creating quality measures.");
 		int aPostProcessingCount = itsSearchParameters.getPostProcessingCount();
 		double aPostProcessingCountSquare = Math.pow(aPostProcessingCount, 2);
-		int itsNrRecords = itsTable.getNrRows();
 
 		QualityMeasure[] aQMs = new QualityMeasure[aPostProcessingCount];
 		for (int i = 0; i < aPostProcessingCount; i++)
 		{
 			Bayesian aGlobalBayesian = new Bayesian(itsBinaryTable);
 			aGlobalBayesian.climb();
-			aQMs[i] = new QualityMeasure(itsSearchParameters, aGlobalBayesian.getDAG(), itsNrRecords);
+			aQMs[i] = new QualityMeasure(itsSearchParameters, aGlobalBayesian.getDAG(), itsNrRows);
 		}
 
 		// Iterate over subgroups
@@ -1403,8 +1406,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		{
 			Candidate aCandidate = anIterator.next();
 			Subgroup aSubgroup = aCandidate.getSubgroup();
-			int anOldCoverage = itsTable.getNrRows(); // MM ?
-			checkAndLog(aSubgroup, anOldCoverage);
+			checkAndLog(aSubgroup, itsNrRows);
 		}
 		itsBuffer = new TreeSet<Candidate>();
 	}

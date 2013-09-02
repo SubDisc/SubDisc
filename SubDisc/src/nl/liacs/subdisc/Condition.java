@@ -24,6 +24,8 @@ public class Condition implements Comparable<Condition>
 	private static final Set<Operator> OPERATORS = Operator.set();
 	/*
 	 * FIXME these should be defined in terms of EnumSets
+	 * NOTE ConditionBaseSet.getBaseConditions() assumes there is just 1
+	 * BINARY operator, if this ever changes, update that code.
 	 */
 	// Binary Operator Constants
 //	public static final int FIRST_BINARY_OPERATOR	= EQUALS;

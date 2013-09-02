@@ -8,13 +8,13 @@ public class RefinementList extends ArrayList<Refinement>
 	private Table itsTable;
 	private Subgroup itsSubgroup;
 
+	@Deprecated
 	public RefinementList(Subgroup theSubgroup, Table theTable, SearchParameters theSearchParameters)
 	{
-		// TODO MM sane initial size based on theTable.nrColumns
-		final StringBuilder sb = new StringBuilder();
+		// crude estimate based on 2 operators per column, all numeric
+		final int init = theTable.getNrColumns() * 2 * 32;
+		final StringBuilder sb = new StringBuilder(init);
 		sb.append("refinementlist\n");
-
-//		Log.logCommandLine("refinementlist");
 
 		itsSubgroup = theSubgroup;
 		itsTable = theTable;
@@ -46,8 +46,14 @@ public class RefinementList extends ArrayList<Refinement>
 					// set-valued only allowed for SINGLE_NOMINAL
 					if (isSingleNominalTT || aCondition.getOperator() != Operator.ELEMENT_OF)
 						add = true;
+					// TODO MM aCondition.isEquals() -> implies 'aCondition.getOperator() != Operator.ELEMENT_OF'
+					// so || is always true
+					// if check is redundant
 				}
 				else if (aType == AttributeType.NOMINAL && useSets && aCondition.isElementOf())
+					// TODO MM SINGLE_NOMINAL check should be here?
+					// probably other code ensured proper
+					// execution coincidentally
 					add = true;
 				//binary
 				else if (aType == AttributeType.BINARY)
@@ -59,11 +65,27 @@ public class RefinementList extends ArrayList<Refinement>
 					sb.append("   condition: ");
 					sb.append(aCondition.toString());
 					sb.append("\n");
-					//Log.logCommandLine("   condition: " + aCondition.toString());
 				}
 			}
 		}
 		while ((aCondition = itsTable.getNextCondition(aCondition)) != null);
+
+		Log.logCommandLine(sb.toString());
+	}
+
+	public RefinementList(Subgroup theSubgroup, ConditionBaseSet theConditionBaseSet)
+	{
+		List<Condition> aConditions = theConditionBaseSet.copy();
+		StringBuilder sb = new StringBuilder(aConditions.size() * 32);
+		sb.append("refinementlist\n");
+
+		for (Condition c : aConditions)
+		{
+			super.add(new Refinement(c, theSubgroup));
+			sb.append("   condition: ");
+			sb.append(c.toString());
+			sb.append("\n");
+		}
 
 		Log.logCommandLine(sb.toString());
 	}
