@@ -1,5 +1,6 @@
 package nl.liacs.subdisc;
 
+@Deprecated
 public class MiningAlgorithm
 {
 	protected SearchParameters itsSearchParameters;
