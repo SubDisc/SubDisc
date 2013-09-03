@@ -1742,6 +1742,17 @@ public class Column implements XMLNodeInterface
 		for (Float f : aUniqueValues)
 			aResult[++i] = f.floatValue();
 
+		// alternative
+//		float[] aResult = Arrays.copyOf(itsFloatz, itsFloatz.length);
+//		Arrays.sort(aResult);
+//		// filter duplicates, assume high cardinality
+//		int j = 0;
+//		for (int i = 1; i < aResult.length && j <= itsCardinality; ++i)
+//			if (aResult[i] != aResult[j])
+//				aResult[++j] = aResult[i];
+//		// truncate everything after last unique value
+//		System.arraycopy(aResult, 0, aResult, 0, j+1);
+
 		return aResult;
 	}
 

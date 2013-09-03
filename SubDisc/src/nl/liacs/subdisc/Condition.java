@@ -272,7 +272,7 @@ public class Condition implements Comparable<Condition>
 				logError("nominal");
 				return false;
 			}
-			default : return false;
+			default : return false; // FIXME MM IllegalArgumentException
 		}
 	}
 
@@ -288,7 +288,7 @@ public class Condition implements Comparable<Condition>
 	 * @return <code>true</code> if the evaluation yields <code>true</code>,
 	 * <code>false</code> otherwise.
 	 */
-	public boolean evaluate(Float theValue)
+	public boolean evaluate(float theValue)
 	{
 		switch(itsOperator)
 		{
@@ -300,7 +300,7 @@ public class Condition implements Comparable<Condition>
 				return theValue >= itsNumericValue;
 			case BETWEEN:
 				return itsInterval.between(theValue);
-			default : return false;
+			default : return false; // FIXME MM IllegalArgumentException
 		}
 	}
 
@@ -319,7 +319,7 @@ public class Condition implements Comparable<Condition>
 	public boolean evaluate(boolean theValue)
 	{
 		if (itsOperator != Operator.EQUALS)
-			logError("binary");
+			logError("binary"); // FIXME MM IllegalArgumentException
 		return itsBinaryValue == theValue;
 	}
 
