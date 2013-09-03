@@ -331,6 +331,7 @@ public class Table implements XMLNodeInterface
 		return -1; // not found (causes ArrayIndexOutOfBounds)
 	}
 
+	@Deprecated
 	public Condition getFirstCondition()
 	{
 		return new Condition(itsColumns.get(0));
@@ -338,6 +339,7 @@ public class Table implements XMLNodeInterface
 
 	//TODO this code is overly complex, due to its Safarii-background
 	//Arno needs to fix this, at some point.
+	@Deprecated
 	public Condition getNextCondition(Condition theCurrentCondition)
 	{
 		if (theCurrentCondition.hasNextOperator())

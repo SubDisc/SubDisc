@@ -1164,6 +1164,9 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		else if (theNrThreads == 0)
 			theNrThreads = Runtime.getRuntime().availableProcessors();
 
+		// not in Constructor, Table / SearchParameters may change
+		final ConditionBaseSet aConditions = new ConditionBaseSet(itsTable, itsSearchParameters);
+
 		// make subgroup to start with, containing all elements
 		BitSet aBitSet = new BitSet(itsNrRows);
 		aBitSet.set(0, itsNrRows);
@@ -1267,7 +1270,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			{
 				if (mainWindowNotNull)
 					setTitle(aCandidate);
-				es.execute(new Test(aCandidate, aSearchDepth, theEndTime, s));
+				es.execute(new Test(aCandidate, aSearchDepth, theEndTime, s, aConditions));
 			}
 			// queue was empty, but other threads were running, they
 			// may be in the process of adding new Candidates
@@ -1346,13 +1349,15 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		private final int itsSearchDepth;
 		private final long itsEndTime;
 		private final Semaphore itsSemaphore;
+		private final ConditionBaseSet itsConditionBaseSet;
 
-		public Test(Candidate theCandidate, int theSearchDepth, long theEndTime, Semaphore theSemaphore)
+		public Test(Candidate theCandidate, int theSearchDepth, long theEndTime, Semaphore theSemaphore, ConditionBaseSet theConditionBaseSet)
 		{
 			itsCandidate = theCandidate;
 			itsSearchDepth= theSearchDepth;
 			itsEndTime = theEndTime;
 			itsSemaphore = theSemaphore;
+			itsConditionBaseSet = theConditionBaseSet;
 		}
 
 		@Override
@@ -1362,7 +1367,8 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 
 			if (aSubgroup.getDepth() < itsSearchDepth)
 			{
-				RefinementList aRefinementList = new RefinementList(aSubgroup, itsTable, itsSearchParameters);
+//				RefinementList aRefinementList = new RefinementList(aSubgroup, itsTable, itsSearchParameters);
+				RefinementList aRefinementList = new RefinementList(aSubgroup, itsConditionBaseSet);
 				// .getMembers() creates expensive clone, reuse
 				final BitSet aMembers = aSubgroup.getMembers();
 

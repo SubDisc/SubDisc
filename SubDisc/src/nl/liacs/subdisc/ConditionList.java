@@ -27,6 +27,39 @@ public class ConditionList extends ArrayList<Condition> implements Comparable<Co
 			return false;
 	}
 
+	// throws NullPointerException if theCondition is null.
+	@Override
+	public int compareTo(ConditionList theConditionList)
+	{
+		if (this == theConditionList)
+			return 0;
+
+		int cmp = this.size() - theConditionList.size();
+		if (cmp != 0)
+			return cmp;
+
+		for (int i = 0, j = size(); i < j; ++i)
+		{
+			cmp = this.get(i).compareTo(theConditionList.get(i));
+			if (cmp != 0)
+				return cmp;
+		}
+
+		return 0;
+	}
+
+	/*
+	 * equals() and findCondition() appear not to be used in current code
+	 * these methods are broken in many ways
+	 * 
+	 * when overriding equals(), also override hashcode(), per Map-contract
+	 * 
+	 * findCondition() calls Condition.equals()
+	 * Condition does not override Object.equals()
+	 * but in current code, all Conditions in ConditionLists are copies
+	 * so Objects reference-based comparison would always fail
+	 */
+	@Deprecated
 	private boolean findCondition(Condition theCondition)
 	{
 		for (Condition aCondition : this)
@@ -35,31 +68,10 @@ public class ConditionList extends ArrayList<Condition> implements Comparable<Co
 		return false;
 	}
 
-	// throws NullPointerException if theCondition is null.
-	@Override
-	public int compareTo(ConditionList theConditionList)
-	{
-		if (this == theConditionList)
-			return 0;
-
-		else if (this.size() < theConditionList.size())
-			return -1;
-		else if (this.size() > theConditionList.size())
-			return 1;
-
-		for (int i = 0, j = size(); i < j; ++i)
-		{
-			int aTest = this.get(i).compareTo(theConditionList.get(i));
-			if (aTest != 0)
-				return aTest;
-		}
-
-		return 0;
-	}
-
 	//this method computes logical equivalence. This means that the actual number of conditions or the order may differ.
 	//Just as long as it effectively selects the same subgroup, no matter what the database is.
 	//This method currently doesn't consider equivalence of the type a<10&a<20 vs. a<10 etc.
+	@Deprecated
 	@Override
 	public boolean equals(Object theObject)
 	{

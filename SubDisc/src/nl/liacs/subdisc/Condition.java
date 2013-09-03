@@ -112,14 +112,10 @@ public class Condition implements Comparable<Condition>
 
 	// obviously does not deep-copy itsColumn
 	// itsOperator is primitive type, no need for deep-copy
-	// itsValue new String not really needed, as none of current code ever
-	// changes it, beside it can be overridden through setValue anyway.
 	public Condition copy()
 	{
 		Condition aCopy = new Condition(itsColumn, itsOperator);
-		// new for deep-copy? not strictly needed for code
-		if (itsNominalValue != null)
-			aCopy.itsNominalValue = new String(itsNominalValue);
+		aCopy.itsNominalValue = this.itsNominalValue;
 		aCopy.itsNominalValueSet = this.itsNominalValueSet; //shallow copy!
 		aCopy.itsNumericValue = this.itsNumericValue;
 		aCopy.itsInterval = this.itsInterval; //shallow copy!
@@ -380,26 +376,14 @@ public class Condition implements Comparable<Condition>
 	{
 		if (this == theCondition)
 			return 0;
-		else if (this.itsColumn.getIndex() < theCondition.itsColumn.getIndex())
-			return -1;
-		else if (this.itsColumn.getIndex() > theCondition.itsColumn.getIndex())
-			return 1;
+		int cmp = this.itsColumn.getIndex() - theCondition.itsColumn.getIndex();
+		if (cmp != 0)
+			return cmp;
 		// same column, check operator
-		else if (this.itsOperator.ordinal() < theCondition.itsOperator.ordinal())
-			return -1;
-		else if (this.itsOperator.ordinal() > theCondition.itsOperator.ordinal())
-			return 1;
+		cmp = this.itsOperator.ordinal() - theCondition.itsOperator.ordinal();
+		if (cmp != 0)
+			return cmp;
 		// same column, same operator, check on value
-		/*
-		else if (this.getColumn().isNumericType())
-			return (Float.valueOf(this.getValue()).compareTo(Float.valueOf(theCondition.getValue())));
-		else
-		{
-			// String.compareTo() does not strictly return -1, 0, 1
-			int aCompare = this.getValue().compareTo(theCondition.getValue());
-			return (aCompare < 0 ? -1 : aCompare > 0 ? 1 : 0);
-		}
-		*/
 		switch (itsColumn.getType())
 		{
 			case NOMINAL :
@@ -415,9 +399,7 @@ public class Condition implements Comparable<Condition>
 				 */
 				if (itsNominalValue != null) //single value
 				{
-					// String.compareTo() does not strictly return -1, 0, 1
-					int aCompare = itsNominalValue.compareTo(theCondition.itsNominalValue);
-					return (aCompare < 0 ? -1 : aCompare > 0 ? 1 : 0);
+					return itsNominalValue.compareTo(theCondition.itsNominalValue);
 				}
 				else // assumes ValueSet
 				{
