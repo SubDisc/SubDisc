@@ -39,6 +39,66 @@ class ConditionBaseSet
 		return Collections.unmodifiableList(result);
 	}
 
+//	// for depth_first, leads to some duplicate testing, but OK for now
+//	List<Condition> copyFrom(Condition theCondition)
+//	{
+//		final Column aColumn = theCondition.getColumn();
+//		final Operator anOperator = theCondition.getOperator();
+//
+//		/*
+//		 * start index is NOT at least aColumn.index, as disabled
+//		 * Columns are not included in itsConditions
+//		 */
+//		for (int i = 0, j = itsConditions.size(); i < j; ++i)
+//		{
+//			Condition c = itsConditions.get(i);
+//			if (c.getColumn() != aColumn)
+//				continue;
+//			if (c.getOperator() != anOperator)
+//				continue;
+//
+//			// same Column and same Operator, use everything after i
+//			List<Condition> result = new ArrayList<Condition>(j - i);
+//			while (i < j)
+//				result.add(itsConditions.get(i++));
+//			return Collections.unmodifiableList(result);
+//		}
+//
+//		// should never happen
+//		throw new AssertionError(theCondition);
+//	}
+//
+//	// for true depth_first (n*(n-1))/2, domain needs to be checked from
+//	// last Condition.value, this check would go into evaluate*Refinement
+//	// but is to intrusive to test at the moment
+//	List<Condition> copyBeyond(Condition theCondition)
+//	{
+//		final Column aColumn = theCondition.getColumn();
+//		final Operator anOperator = theCondition.getOperator();
+//
+//		/*
+//		 * start index is NOT at least aColumn.index, as disabled
+//		 * Columns are not included in itsConditions
+//		 */
+//		for (int i = 0, j = itsConditions.size(); i < j; ++i)
+//		{
+//			Condition c = itsConditions.get(i);
+//			if (c.getColumn() != aColumn)
+//				continue;
+//			if (c.getOperator() != anOperator)
+//				continue;
+//
+//			// same Column and same Operator, use everything after i
+//			List<Condition> result = new ArrayList<Condition>(j - i - 1);
+//			while (++i < j)
+//				result.add(itsConditions.get(i));
+//			return Collections.unmodifiableList(result);
+//		}
+//
+//		// should never happen
+//		throw new AssertionError(theCondition);
+//	}
+
 	private static final List<Condition> getBaseConditions(Table theTable, SearchParameters theSearchParameters)
 	{
 		TargetConcept aTC = theSearchParameters.getTargetConcept();

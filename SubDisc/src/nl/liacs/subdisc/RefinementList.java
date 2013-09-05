@@ -78,6 +78,7 @@ public class RefinementList extends ArrayList<Refinement>
 		List<Condition> aConditions = theConditionBaseSet.copy();
 		StringBuilder sb = new StringBuilder(aConditions.size() * 32);
 		sb.append("refinementlist\n");
+		sb.append("\t").append(theSubgroup.getConditions()).append("\n");
 
 		for (Condition c : aConditions)
 		{
@@ -89,4 +90,72 @@ public class RefinementList extends ArrayList<Refinement>
 
 		Log.logCommandLine(sb.toString());
 	}
+
+//	// TMP constructor for new 'depth_first', will be merged
+//	RefinementList(Subgroup theSubgroup, ConditionBaseSet theConditionBaseSet, SearchStrategy theSearchStrategy)
+//	{
+//		// for depth_first create only (n*(n-1)/2 Conditions
+//		// for beams, no smart cut can be done -> n^2 Conditions
+//		List<Condition> aConditions;
+//
+//		// switch is overkill, but properly handles all possibilities
+//		switch (theSearchStrategy)
+//		{
+//			case BEAM :
+//				aConditions = theConditionBaseSet.copy();
+//				break;
+//			case ROC_BEAM :
+//				aConditions = theConditionBaseSet.copy();
+//				break;
+//			case COVER_BASED_BEAM_SELECTION :
+//				aConditions = theConditionBaseSet.copy();
+//				break;
+//// FIXME MM BEST, DEPTH and BREADTH will be removed
+//			case BEST_FIRST :
+//				aConditions = theConditionBaseSet.copy();
+//				break;
+//			case DEPTH_FIRST :
+//				aConditions = getConditions(theSubgroup, theConditionBaseSet);
+//				break;
+//			case NEW_DEPTH_FIRST :
+//				aConditions = getConditions(theSubgroup, theConditionBaseSet);
+//				break;
+//			case BREADTH_FIRST :
+//				aConditions = theConditionBaseSet.copy();
+//				break;
+//			default :
+//				throw new AssertionError(theSearchStrategy);
+//		}
+//
+//		createList(theSubgroup, aConditions);
+//	}
+//
+//	private static final List<Condition> getConditions(Subgroup theSubgroup, ConditionBaseSet theConditionBaseSet)
+//	{
+//		// by construction need to only continue from last
+//		if (theSubgroup.getDepth() > 0)
+//		{
+//			ConditionList cl = theSubgroup.getConditions();
+//			return theConditionBaseSet.copyFrom(cl.get(cl.size()-1));
+//		}
+//		else // for root Candidate / Subgroup only
+//			return theConditionBaseSet.copy();
+//	}
+//
+//	private final void createList(Subgroup theSubgroup, List<Condition> theConditions)
+//	{
+//		StringBuilder sb = new StringBuilder(theConditions.size() * 32);
+//		sb.append("refinementlist\n");
+//		sb.append("\t").append(theSubgroup.getConditions()).append("\n");
+//
+//		for (Condition c : theConditions)
+//		{
+//			super.add(new Refinement(c, theSubgroup));
+//			sb.append("   condition: ");
+//			sb.append(c.toString());
+//			sb.append("\n");
+//		}
+//
+//		Log.logCommandLine(sb.toString());
+//	}
 }

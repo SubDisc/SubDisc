@@ -207,6 +207,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 	{
 		// not in Constructor, Table / SearchParameters may change
 		final ConditionBaseSet aConditions = new ConditionBaseSet(itsTable, itsSearchParameters);
+//		final SearchStrategy aSearchStrategy = itsSearchParameters.getSearchStrategy();
 
 		//make subgroup to start with, containing all elements
 		BitSet aBitSet = new BitSet(itsNrRows);
@@ -231,6 +232,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 			{
 //				RefinementList aRefinementList = new RefinementList(aSubgroup, itsTable, itsSearchParameters);
 				RefinementList aRefinementList = new RefinementList(aSubgroup, aConditions);
+//				RefinementList aRefinementList = new RefinementList(aSubgroup, aConditions, aSearchStrategy);
 				// .getMembers() creates expensive clone, reuse
 				final BitSet aMembers = aSubgroup.getMembers();
 

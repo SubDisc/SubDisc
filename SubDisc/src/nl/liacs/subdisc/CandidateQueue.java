@@ -40,39 +40,53 @@ public class CandidateQueue
 	{
 		itsSearchStrategy = theSearchParameters.getSearchStrategy();
 
+		// all SearchStrategies use itsQueue
+		// most use Candidate's natural ordering (no Comparator)
+		// (though CandidateComparatorBestFirst has same behaviour)
+		// DEPTH_FIRST and BREADTH_FIRST use a different Comparator
 		// setup additional beam constructs if needed
 		switch (itsSearchStrategy)
 		{
 			case BEAM :
+				itsQueue = new TreeSet<Candidate>();
 				itsNextQueue = new TreeSet<Candidate>();
+				itsMaximumQueueSize = theSearchParameters.getSearchStrategyWidth();
 				break;
 			case ROC_BEAM :
 			{
+				itsQueue = new TreeSet<Candidate>();
 				itsNextQueueConvexHullROC = new ConvexHullROCNaive();
 				itsNextQueueROCList = new ROCList();
 				itsNextQueueROCBeam = new ConvexHullROC(true);
+				itsMaximumQueueSize = Integer.MAX_VALUE;
 				break;
 			}
 			case COVER_BASED_BEAM_SELECTION :
+				itsQueue = new TreeSet<Candidate>();
 				// initialise now, avoids NullPointerException later
 				itsNextQueue = new TreeSet<Candidate>();
 				itsTempQueue = new TreeSet<Candidate>();
+				itsMaximumQueueSize = theSearchParameters.getSearchStrategyWidth();
 				break;
-			// other known SearchStrategies, NO FALL-THROUGH
-			case BEST_FIRST : break;
-			case DEPTH_FIRST : break;
-			case BREADTH_FIRST : break;
+			case BEST_FIRST :
+				itsQueue = new TreeSet<Candidate>();
+				itsMaximumQueueSize = Integer.MAX_VALUE;
+				break;
+			case DEPTH_FIRST :
+				itsQueue = new TreeSet<Candidate>(Candidate.getComparator(itsSearchStrategy));
+				itsMaximumQueueSize = Integer.MAX_VALUE;
+				break;
+			case BREADTH_FIRST :
+				itsQueue = new TreeSet<Candidate>(Candidate.getComparator(itsSearchStrategy));
+				itsMaximumQueueSize = Integer.MAX_VALUE;
+				break;
 			// unknown SearchStrategy / null - no AssertionError as
 			// this is a public constructor
 			default :
 				throw new IllegalArgumentException(itsSearchStrategy.toString());
 		}
 
-		// all SearchStrategies use itsQueue
-		itsQueue = new TreeSet<Candidate>();
 		itsQueue.add(theRootCandidate);
-
-		itsMaximumQueueSize = theSearchParameters.getSearchStrategyWidth();
 	}
 
 	// package private special constructor for Fraunhofer random seeds
@@ -113,7 +127,7 @@ public class CandidateQueue
 				return addToQueue(itsNextQueue, theCandidate);
 			case ROC_BEAM :
 			{
-System.out.println("ADDING: " + theCandidate.getSubgroup().toString());
+//System.out.println("ADDING: " + theCandidate.getSubgroup().toString());
 				final SubgroupROCPoint p =
 					new SubgroupROCPoint(theCandidate.getSubgroup());
 				boolean isAdded =
@@ -122,9 +136,9 @@ System.out.println("ADDING: " + theCandidate.getSubgroup().toString());
 				itsNextQueueROCBeam.add(new CandidateROCPoint(theCandidate));
 
 				// debug check
-itsNextQueueConvexHullROC.debug();
-System.out.println("COMPARE");
-				ConvexHullROCNaive.debugCompare(itsNextQueueROCList, itsNextQueueConvexHullROC, itsNextQueueROCBeam);
+//itsNextQueueConvexHullROC.debug();
+//System.out.println("COMPARE");
+//				ConvexHullROCNaive.debugCompare(itsNextQueueROCList, itsNextQueueConvexHullROC, itsNextQueueROCBeam);
 
 				return isAdded;
 			}
@@ -210,8 +224,8 @@ System.out.println("COMPARE");
 				synchronized (itsNextQueueConvexHullROC)
 				{
 // FIXME MM REMOVE
-System.out.println("ROC_BEAM for next level:");
-itsNextQueueConvexHullROC.debug();
+//System.out.println("ROC_BEAM for next level:");
+//itsNextQueueConvexHullROC.debug();
 					itsQueue = itsNextQueueConvexHullROC.toTreeSet();
 					itsNextQueueConvexHullROC = new ConvexHullROCNaive();
 					itsNextQueueROCList = new ROCList();
