@@ -1604,6 +1604,11 @@ public class Column implements XMLNodeInterface
 						// no 1's, just 0's
 						if (set < 0 || set >= itsSize)
 							aResult.add("0");
+						// FIXME MM what happens when
+						// there is only 1's
+						// result should be {1}
+						// else
+						//	aResult.add("1");
 						return aResult;
 					}
 					case 2 :
