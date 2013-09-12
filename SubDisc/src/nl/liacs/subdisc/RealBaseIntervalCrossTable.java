@@ -22,7 +22,8 @@ public class RealBaseIntervalCrossTable
 	public RealBaseIntervalCrossTable(float[] theSplitPoints, Column theColumn, Subgroup theSubgroup, BitSet theTarget, boolean theUseNegInfty)
 	{
 		itsUseNegInfty = theUseNegInfty;
-		itsSplitPointCount = theSplitPoints.length + (itsUseNegInfty ? 1 : 0);
+		int offset = itsUseNegInfty ? 1 : 0;
+		itsSplitPointCount = theSplitPoints.length + offset;
 		itsSplitPoints = new float[itsSplitPointCount];
 		itsPositiveCounts = new int[getNrBaseIntervals()];
 		itsNegativeCounts = new int[getNrBaseIntervals()];
@@ -59,6 +60,29 @@ public class RealBaseIntervalCrossTable
 			itsPositiveCount += itsPositiveCounts[i];
 			itsNegativeCount += itsNegativeCounts[i];
 		}
+
+//		// always create a copy of the theSplitPoints input array
+//		if (itsUseNegInfty)
+//			itsSplitPoints[0] = Float.NEGATIVE_INFINITY;
+//		System.arraycopy(theSplitPoints, 0, itsSplitPoints, offset, theSplitPoints.length);
+//
+//		final BitSet b = theSubgroup.getMembers();
+//		// uses j to break loop as early as possible
+//		for (int i = b.nextSetBit(0), j = theSubgroup.getCoverage(); j != 0 ; i = b.nextSetBit(i+1), --j) {
+//			int anIndex = Arrays.binarySearch(itsSplitPoints, theColumn.getFloat(i));
+//			if (anIndex < 0)
+//				anIndex ~= anIndex; // bitwise inverse: -anIndex - 1;
+//			if (theTarget.get(i))
+//			{
+//				++itsPositiveCounts[anIndex];
+//				++itsPositiveCount;
+//			}
+//			else
+//			{
+//				++itsNegativeCounts[anIndex];
+//				++itsNegativeCount;
+//			}
+//		}
 	}
 
 	public float getSplitPoint(int theIndex)
