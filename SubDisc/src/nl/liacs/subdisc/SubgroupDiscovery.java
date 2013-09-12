@@ -244,6 +244,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 					Refinement aRefinement = aRefinementList.get(i);
 					Condition aCondition = aRefinement.getCondition();
 					// if refinement is (num_attr = value) then treat it as nominal
+					// using EQUALS for numeric conditions is bad, see evaluateNominalBinaryRefinements()
 					if (aCondition.getColumn().getType() == AttributeType.NUMERIC && aCondition.getOperator() != Operator.EQUALS)
 						evaluateNumericRefinements(aMembers, aRefinement);
 					else
@@ -647,6 +648,25 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		}
 		else //regular single-value conditions
 		{
+			// FIXME MM why is this using the whole domain
+			// only values for theMembers are relevant
+			// in Subgroup.addCondition() the call to
+			// itsMembers.and(Condition.Column.evaluate(Condition))
+			// would lead to a coverage of 0
+			// currently this setting is allowed by the GUI
+			// and leads to results in the ResultsList
+			// (given a low enough minimum weight)
+			// this is arguably useless, and leads to errors in 
+			//computation (for example: Probability <?> for WRAcc)
+			// further it is not in line with the numeric setting,
+			// where only relevant values from the domain are
+			// retrieved using Column.get*NumericDomain(theMembers)
+			//
+			// also, using EQUALS for numeric conditions is bad
+			// as it creates |Column.size| Strings for the floats
+			// this is particularly bad as the number of unique
+			// values in the domain may be expected to be around
+			// |Column.size|, as it is a continuous attribute
 			for (String aValue : aCondition.getColumn().getDomain())
 			{
 				Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(aValue);
