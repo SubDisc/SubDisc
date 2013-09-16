@@ -44,16 +44,9 @@ public class SubDisc
 //		"org.eclipse.core.runtime_3.6.0.v20100505.jar",
 //		"org.knime.core.util_4.1.1.0034734.jar",
 	};
-	
-	
-	
+
 	public static void main(String[] args)
 	{
-		
-
-		
-		
-		
 		checkLibs();
 		if (!GraphicsEnvironment.isHeadless() && (SplashScreen.getSplashScreen() != null))
 		{
@@ -69,7 +62,14 @@ public class SubDisc
 		}
 
 		if (XMLAutoRun.autoRunSetting(args))
-			return;
+		{
+			// return;
+			// FIXME MM
+			// somehow AWT daemon threads are still running
+			// preventing the application from exiting on return
+			// no external application should call main()
+			System.exit(0);
+		}
 
 		FileHandler aLoader = new FileHandler(Action.OPEN_FILE);
 		Table aTable = aLoader.getTable();
