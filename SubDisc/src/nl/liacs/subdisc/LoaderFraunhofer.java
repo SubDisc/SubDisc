@@ -36,7 +36,6 @@ public class LoaderFraunhofer
 				if (aLineNr % 100 == 0)
 					Log.logCommandLine(aLineNr + " lines read");
 			}
-			itsSearchParameters.setBeamSeedLoaded(true);
 			itsSearchParameters.setBeamSeed(itsBeamSeed);
 		}
 		catch (IOException e)
@@ -57,14 +56,19 @@ public class LoaderFraunhofer
 		}
 	}
 
+	// TODO MM
+	// KNIME and ExternalKnowledge do the same, merge code
 	private ConditionList convertToConditionList(String theString)
 	{
 		ConditionList aConditionList = new ConditionList();
+		// fails if a column-name or value has a ' '
+		// splitting on ' AND ' would already be much more robust
 		String[] aConditions = theString.split(" ");
 		for (int i=0; i<aConditions.length; i++)
 		{
 			String anAtom = aConditions[i];
 			// assuming that CFTP delivers only equality-conditions, which it currently (July 11, 2013) does
+			// and that both the column-name and value do not contain the '=' sign
 			String[] aRefinement = anAtom.split("=");
 			// assuming that the loaded results match the loaded dataset. This is easy to break!
 			Column col = itsTable.getColumn(aRefinement[0]);
