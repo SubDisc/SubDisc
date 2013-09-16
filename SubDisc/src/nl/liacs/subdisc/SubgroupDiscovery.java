@@ -648,26 +648,14 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		}
 		else //regular single-value conditions
 		{
-			// FIXME MM why is this using the whole domain
-			// only values for theMembers are relevant
-			// in Subgroup.addCondition() the call to
-			// itsMembers.and(Condition.Column.evaluate(Condition))
-			// would lead to a coverage of 0
-			// currently this setting is allowed by the GUI
-			// and leads to results in the ResultsList
-			// (given a low enough minimum weight)
-			// this is arguably useless, and leads to errors in 
-			//computation (for example: Probability <?> for WRAcc)
-			// further it is not in line with the numeric setting,
-			// where only relevant values from the domain are
-			// retrieved using Column.get*NumericDomain(theMembers)
-			//
-			// also, using EQUALS for numeric conditions is bad
-			// as it creates |Column.size| Strings for the floats
+			// FIXME MM
+			// using EQUALS for numeric conditions is bad
+			// as it creates |members| Strings for the floats
 			// this is particularly bad as the number of unique
 			// values in the domain may be expected to be around
 			// |Column.size|, as it is a continuous attribute
-			for (String aValue : aCondition.getColumn().getDomain())
+			// members-based domain, no empty Subgroups will occur
+			for (String aValue : aCondition.getColumn().getUniqueNominalBinaryDomain(theMembers))
 			{
 				Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(aValue);
 				checkAndLog(aNewSubgroup, anOldCoverage);
