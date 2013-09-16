@@ -123,7 +123,7 @@ public class SearchParameters implements XMLNodeInterface
 	public void setNrBins(int theNrBins)			{ itsNrBins = theNrBins; }
 	public int getNrThreads()				{ return itsNrThreads; }
 	public void setNrThreads(int theNrThreads)		{ itsNrThreads = theNrThreads; }
-	public float getAlpha()					{ return itsAlpha; }
+	public float getAlpha()				{ return itsAlpha; }
 	public void setAlpha(float theAlpha)			{ itsAlpha = theAlpha; }
 	public float getBeta()					{ return itsBeta; }
 	public void setBeta(float theBeta)			{ itsBeta = theBeta; }
@@ -132,7 +132,7 @@ public class SearchParameters implements XMLNodeInterface
 	public int getPostProcessingCount()			{ return itsPostProcessingCount; }
 	public void setPostProcessingCount(int theNr)		{ itsPostProcessingCount = theNr; }
 	public List<ConditionList> getBeamSeed()		{ return itsBeamSeed; }
-	public void setBeamSeed(List<ConditionList> theBeamSeed) { itsBeamSeed= theBeamSeed; }
+	public void setBeamSeed(List<ConditionList> theBeamSeed) { itsBeamSeed = theBeamSeed; }
 
 	/**
 	 * Creates an {@link XMLNode XMLNode} representation of this
@@ -192,7 +192,13 @@ public class SearchParameters implements XMLNodeInterface
 			else if("use_nominal_sets".equalsIgnoreCase(aNodeName))
 				itsNominalSets = Boolean.parseBoolean(aSetting.getTextContent());
 			else if("search_strategy_width".equalsIgnoreCase(aNodeName))
-				itsSearchStrategyWidth = Integer.parseInt(aSetting.getTextContent());
+			{
+				String s = aSetting.getTextContent();
+				if (s.length() == 0)
+					itsSearchStrategyWidth = Integer.MIN_VALUE;
+				else
+					itsSearchStrategyWidth = Integer.parseInt(s);
+			}
 			else if("numeric_operators".equalsIgnoreCase(aNodeName))
 				itsNumericOperatorSetting = (NumericOperatorSetting.fromString(aSetting.getTextContent()));
 			else if("numeric_strategy".equalsIgnoreCase(aNodeName))
