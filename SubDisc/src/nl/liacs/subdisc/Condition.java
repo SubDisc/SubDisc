@@ -165,8 +165,13 @@ public class Condition implements Comparable<Condition>
 
 	public Operator getOperator() { return itsOperator; }
 
-	public boolean isElementOf() { return itsOperator == Operator.ELEMENT_OF; }
-	public boolean isEquals() { return itsOperator == Operator.EQUALS; }
+	// package-private as ValueSet and Interval are mutable
+	// no type validity checks are performed
+	String getNominalValue() { return itsNominalValue; }
+	ValueSet getNominalValueSet() { return itsNominalValueSet; }
+	float getNumericValue() { return itsNumericValue; }
+	Interval getNumericInterval() { return itsInterval; }
+	boolean getBinaryValue() { return itsBinaryValue; }
 
 	// see class comment on valueIsSet-boolean indicating (non)-virgin state
 	private String getValue()

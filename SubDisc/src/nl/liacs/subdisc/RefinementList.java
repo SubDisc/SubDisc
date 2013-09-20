@@ -31,6 +31,7 @@ static AtomicInteger ADD = new AtomicInteger(0);
 		{
 COUNT.incrementAndGet();
 			Column aColumn = aCondition.getColumn();
+			Operator anOperator = aCondition.getOperator();
 
 			if (aColumn.getIsEnabled() && !aTC.isTargetAttribute(aColumn))
 			{
@@ -39,19 +40,19 @@ COUNT.incrementAndGet();
 
 				//check validity of operator
 				//numeric
-				if (aType == AttributeType.NUMERIC && NumericOperatorSetting.check(aNO, aCondition.getOperator()))
+				if (aType == AttributeType.NUMERIC && NumericOperatorSetting.check(aNO, anOperator))
 					add = true;
 				//nominal
-				else if (aType == AttributeType.NOMINAL && !useSets && aCondition.isEquals())
+				else if (aType == AttributeType.NOMINAL && !useSets && anOperator == Operator.EQUALS)
 				{
 					// set-valued only allowed for SINGLE_NOMINAL
-					if (isSingleNominalTT || aCondition.getOperator() != Operator.ELEMENT_OF)
+					if (isSingleNominalTT || anOperator != Operator.ELEMENT_OF)
 						add = true;
 					// TODO MM aCondition.isEquals() -> implies 'aCondition.getOperator() != Operator.ELEMENT_OF'
 					// so || is always true
 					// if check is redundant
 				}
-				else if (aType == AttributeType.NOMINAL && useSets && aCondition.isElementOf())
+				else if (aType == AttributeType.NOMINAL && useSets && anOperator == Operator.ELEMENT_OF)
 					// TODO MM SINGLE_NOMINAL check should be here?
 					// probably other code ensured proper
 					// execution coincidentally
@@ -64,7 +65,7 @@ COUNT.incrementAndGet();
 				{
 ADD.incrementAndGet();
 					// FIXME MM this is glue code
-					ConditionBase aConditionBase = new ConditionBase(aCondition.getColumn(), aCondition.getOperator());
+					ConditionBase aConditionBase = new ConditionBase(aColumn, anOperator);
 					add(new Refinement(aConditionBase, itsSubgroup));
 				}
 			}
