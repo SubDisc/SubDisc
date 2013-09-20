@@ -190,6 +190,9 @@ public class TargetConcept implements XMLNodeInterface
 		}
 	}
 
+	public String getGlobalRegressionModel() { return itsGlobalRegressionModel; }
+	public void setGlobalRegressionModel(String theModel) { itsGlobalRegressionModel = theModel; }
+
 	/**
 	 * Creates an {@link XMLNode XMLNode} representation of this TargetConcept.
 	 * @param theParentNode the Node of which this Node will be a ChildNode
@@ -257,6 +260,31 @@ public class TargetConcept implements XMLNodeInterface
  */
 	}
 
-	public String getGlobalRegressionModel() { return itsGlobalRegressionModel; }
-	public void setGlobalRegressionModel(String theModel) { itsGlobalRegressionModel = theModel; }
+	@Override
+	public String toString()
+	{
+		StringBuilder sb = new StringBuilder(1024);
+		sb.append("target_concept\n");
+
+		SearchParameters.addLine(sb, "nr_target_attributes", Integer.toString(itsNrTargetAttributes));
+		SearchParameters.addLine(sb, "target_type", itsTargetType.GUI_TEXT);
+
+		if (itsPrimaryTarget != null)
+			SearchParameters.addLine(sb, "primary_target", itsPrimaryTarget.getName());
+
+		SearchParameters.addLine(sb, "target_value", itsTargetValue);
+
+		if (itsSecondaryTarget != null)
+			SearchParameters.addLine(sb, "secondary_target", itsSecondaryTarget.getName());
+
+		if (itsMultiTargets != null && itsMultiTargets.size() > 0)
+		{
+			StringBuilder sb2 = new StringBuilder(itsMultiTargets.size() * 10);
+			for (Column c : itsMultiTargets)
+				sb2.append(c.getName()).append(", ");
+			SearchParameters.addLine(sb, "multi_targets", sb2.substring(0, sb2.length()-2).toString());
+		}
+
+		return sb.toString();
+	}
 }

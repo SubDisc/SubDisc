@@ -1,7 +1,8 @@
 package nl.liacs.subdisc;
 
 /*
- * TODO MM check Column.type / Operator.type valid for Value (again...)
+ * TODO MM check Column.type / Operator.type valid for Value (again...) or rely
+ * on Condition constructor to check validity
  */
 public class Refinement
 {
@@ -64,11 +65,8 @@ public class Refinement
 
 		// see remarks at Subgroup.copy about deep-copy
 		Subgroup aRefinedSubgroup = theSubgroup.copy();
-		// see remarks at Condition.copy about deep-copy
-//		Condition aCondition = itsCondition.copy();
-//		// only set new value for copied Condition, not for itsCondition
-//		aCondition.setValue(theValue);
 		aRefinedSubgroup.addCondition(theCondition);
+
 		return aRefinedSubgroup;
 	}
 }

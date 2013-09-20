@@ -4,8 +4,6 @@ import java.util.*;
 
 /*
  * TODO
- * The general nextOperator looping-strategy should be changed (in tandem with
- * Table.getNextCondition()).
  * FIRST/ LAST_OPERATORS should be defined in terms of (unmodifiable) EnumSets.
  * Condition Objects should have a boolean member indicating whether a
  * value is set for it.
@@ -13,14 +11,6 @@ import java.util.*;
  */
 public class Condition implements Comparable<Condition>
 {
-	// Operator Constants
-//	public static final int ELEMENT_OF		= 1;
-//	public static final int EQUALS			= 2;
-//	public static final int LESS_THAN_OR_EQUAL	= 3;
-//	public static final int GREATER_THAN_OR_EQUAL	= 4;
-//	public static final int BETWEEN = 5;
-//	public static final int NOT_AN_OPERATOR		= 99;
-
 	private static final Set<Operator> OPERATORS = Operator.set();
 	/*
 	 * FIXME these should be defined in terms of EnumSets
@@ -28,33 +18,27 @@ public class Condition implements Comparable<Condition>
 	 * BINARY operator, if this ever changes, update that code.
 	 */
 	// Binary Operator Constants
-//	public static final int FIRST_BINARY_OPERATOR	= EQUALS;
-//	public static final int LAST_BINARY_OPERATOR	= EQUALS;
 	public static final Operator FIRST_BINARY_OPERATOR	= Operator.EQUALS;
 	public static final Operator LAST_BINARY_OPERATOR	= Operator.EQUALS;
 
 	// Nominal Operator  Constants
-//	public static final int FIRST_NOMINAL_OPERATOR	= ELEMENT_OF;
-//	public static final int LAST_NOMINAL_OPERATOR	= EQUALS;
+	// this allows in (ELEMENT_OF) and =
 	public static final Operator FIRST_NOMINAL_OPERATOR	= Operator.ELEMENT_OF;
 	public static final Operator LAST_NOMINAL_OPERATOR	= Operator.EQUALS;
 
 	// Numeric Operator  Constants
-	//this allows =, <= and >=
-//	public static final int FIRST_NUMERIC_OPERATOR	= EQUALS;
-//	public static final int LAST_NUMERIC_OPERATOR	= BETWEEN;
+	// this allows =, <=, >= and in (BETWEEN)
 	public static final Operator FIRST_NUMERIC_OPERATOR	= Operator.EQUALS;
 	public static final Operator LAST_NUMERIC_OPERATOR	= Operator.BETWEEN;
 
 	private final Column itsColumn;
-//	private final int itsOperator;
 	private final Operator itsOperator;
 
 	private String itsNominalValue = null;		// ColumnType = NOMINAL
 	private ValueSet itsNominalValueSet = null;	// ColumnType = NOMINAL
 	private float itsNumericValue = Float.NaN;	// ColumnType = NUMERIC
 	private Interval itsInterval = null;		// ColumnType = NUMERIC
-	private boolean itsBinaryValue = false;	// ColumnType = BINARY
+	private boolean itsBinaryValue = false;		// ColumnType = BINARY
 
 	/**
 	 * Default initialisation values for {@link Column}} of
@@ -108,7 +92,6 @@ public class Condition implements Comparable<Condition>
 			throw new NullPointerException();
 
 		itsColumn = theColumn;
-		// TODO check if operator is valid for ColumnType
 		itsOperator = theOperator;
 	}
 
@@ -221,59 +204,6 @@ public class Condition implements Comparable<Condition>
 		}
 	}
 
-	/**
-	 * Set the value for this Condition, use:<br>
-	 * Floats.toString(theFloatValue) for a <code>float</code>,<br>
-	 * "0" or "1" for <code>false</code> and <code>true</code> respectively.
-	 */
-	/*
-	 * Setting the value using a (parsed) String is still sub-optimal, but
-	 * unlikely to be a performance drawback. It is done only once per
-	 * condition, contrary to subgroup.size()-calls to evaluate().
-	 *
-	 * Method is called by:
-	 * Refinement getRefinedSubgroup
-	 * SubgroupDiscovery single nominal constructor
-	 * Validation getRandomConditionList randomConditions randomSubgroups
-	 * 
-	 * TODO
-	 * check if supplied value is correct and update valueIsSet
-	 * only allow value to be set once, so it can never be changed
-	 */
-	@Deprecated
-	public void setValue(String theValue)
-	{
-		switch (itsColumn.getType())
-		{
-			case NOMINAL : itsNominalValue = theValue; return;
-			case NUMERIC : // deliberate fall-through to ORDINAL
-			case ORDINAL :
-			{
-				try { itsNumericValue = Float.parseFloat(theValue); }
-				catch (NumberFormatException e) {} // remains NaN
-				return;
-			}
-			case BINARY :
-			{
-				itsBinaryValue = theValue.equals("1");
-				return;
-			}
-			default : logTypeError("setValue"); return;
-		}
-	}
-
-	/**
-	 * Set the value for this Condition, specifically for nominal value sets
-	 */
-	@Deprecated
-	public void setValue(ValueSet theValue) { itsNominalValueSet = theValue; }
-
-	/**
-	 * Set the value for this Condition, specifically for numeric intervals.
-	 */
-	@Deprecated
-	public void setValue(Interval theValue) { itsInterval = theValue; }
-
 	@Deprecated
 	public boolean hasNextOperator()
 	{
@@ -316,19 +246,17 @@ public class Condition implements Comparable<Condition>
 	 */
 	public boolean evaluate(String theValue)
 	{
-		switch(itsOperator)
+		switch (itsOperator)
 		{
 			case ELEMENT_OF :
 				return itsNominalValueSet.contains(theValue);
 			case EQUALS :
 				return theValue.equals(itsNominalValue);
-			case LESS_THAN_OR_EQUAL : // deliberate fall-through
-			case GREATER_THAN_OR_EQUAL :
+			default :
 			{
 				logError("nominal");
-				return false;
+				return false; // FIXME MM IllegalArgumentException
 			}
-			default : return false; // FIXME MM IllegalArgumentException
 		}
 	}
 
@@ -346,8 +274,10 @@ public class Condition implements Comparable<Condition>
 	 */
 	public boolean evaluate(float theValue)
 	{
-		switch(itsOperator)
+		switch (itsOperator)
 		{
+			// FIXME MM should throw error on evaluate(float) call
+			// on a Condition with nominal Column + EQUALS operator
 			case EQUALS :
 				return theValue == itsNumericValue;
 			case LESS_THAN_OR_EQUAL :
@@ -356,7 +286,11 @@ public class Condition implements Comparable<Condition>
 				return theValue >= itsNumericValue;
 			case BETWEEN:
 				return itsInterval.between(theValue);
-			default : return false; // FIXME MM IllegalArgumentException
+			default :
+			{
+				logError("numeric");
+				return false; // FIXME MM IllegalArgumentException
+			}
 		}
 	}
 
@@ -397,10 +331,16 @@ public class Condition implements Comparable<Condition>
 	@Override
 	public String toString()
 	{
+		StringBuilder sb = new StringBuilder(32)
+					.append(itsColumn.getName()).append(" ")
+					.append(itsOperator).append(" ");
+
 		if (itsColumn.getType() == AttributeType.NUMERIC || itsOperator == Operator.ELEMENT_OF)
-			return String.format("%s %s %s", itsColumn.getName(), itsOperator, getValue());
+			sb.append(getValue());
 		else
-			return String.format("%s %s '%s'", itsColumn.getName(), itsOperator, getValue());
+			sb.append("'").append(getValue()).append("'");
+
+		return sb.toString();
 	}
 
 	/*

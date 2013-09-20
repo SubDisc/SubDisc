@@ -42,6 +42,18 @@ class ConditionBaseSet
 
 	final int size() { return itsSize; }
 
+	@Override
+	public String toString()
+	{
+		StringBuilder sb = new StringBuilder(itsSize * 32);
+		sb.append(this.getClass().getSimpleName()).append("\n");
+
+		for (ConditionBase c : itsConditionBases)
+			sb.append("\t").append(c.toString()).append("\n");
+
+		return sb.toString();
+	}
+
 //	// for depth_first, leads to some duplicate testing, but OK for now
 //	List<Condition> copyFrom(Condition theCondition)
 //	{

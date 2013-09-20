@@ -123,7 +123,7 @@ public class SearchParameters implements XMLNodeInterface
 	public void setNrBins(int theNrBins)			{ itsNrBins = theNrBins; }
 	public int getNrThreads()				{ return itsNrThreads; }
 	public void setNrThreads(int theNrThreads)		{ itsNrThreads = theNrThreads; }
-	public float getAlpha()				{ return itsAlpha; }
+	public float getAlpha()					{ return itsAlpha; }
 	public void setAlpha(float theAlpha)			{ itsAlpha = theAlpha; }
 	public float getBeta()					{ return itsBeta; }
 	public void setBeta(float theBeta)			{ itsBeta = theBeta; }
@@ -220,5 +220,40 @@ public class SearchParameters implements XMLNodeInterface
 			else
 				Log.logCommandLine("ignoring unknown XML node: " + aNodeName);
 		}
+	}
+
+	// lame, similar to addNodeTo(Node)
+	@Override
+	public String toString()
+	{
+		StringBuilder sb = new StringBuilder(1024);
+		sb.append("search_parameters\n");
+
+		addLine(sb, "quality_measure", itsQualityMeasure.GUI_TEXT);
+		addLine(sb, "quality_measure_minimum", Float.toString(getQualityMeasureMinimum()));
+		addLine(sb, "search_depth", Integer.toString(getSearchDepth()));
+		addLine(sb, "minimum_coverage", Integer.toString(getMinimumCoverage()));
+		addLine(sb, "maximum_coverage_fraction", Float.toString(getMaximumCoverageFraction()));
+		addLine(sb, "maximum_subgroups", Integer.toString(getMaximumSubgroups()));
+		addLine(sb, "maximum_time", Float.toString(getMaximumTime()));
+		addLine(sb, "search_strategy", getSearchStrategy().GUI_TEXT);
+		addLine(sb, "use_nominal_sets", Boolean.toString(getNominalSets()));
+		addLine(sb, "search_strategy_width", Integer.toString(getSearchStrategyWidth()));
+		addLine(sb, "numeric_operators", getNumericOperatorSetting().getOperators().toString());
+		addLine(sb, "numeric_strategy", getNumericStrategy().GUI_TEXT);
+		addLine(sb, "nr_bins", Integer.toString(getNrBins()));
+		addLine(sb, "nr_threads", Integer.toString(getNrThreads()));
+		addLine(sb, "alpha", Float.toString(getAlpha()));
+		addLine(sb, "beta", Float.toString(getBeta()));
+		addLine(sb, "post_processing_do_autorun", Boolean.toString(getPostProcessingDoAutoRun()));
+		addLine(sb, "post_processing_count", Integer.toString(getPostProcessingCount()));
+		addLine(sb, "beam_seed", getBeamSeed() == null ? "[]" : getBeamSeed().toString());
+
+		return sb.toString();
+	}
+
+	static final void addLine(StringBuilder builder, String setting, String value)
+	{
+		builder.append("\t").append(setting).append(" = ").append(value).append("\n");
 	}
 }

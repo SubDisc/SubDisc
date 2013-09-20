@@ -23,4 +23,10 @@ class ConditionBase
 
 	Column getColumn() { return itsColumn; }
 	Operator getOperator() { return itsOperator; }
+
+	@Override
+	public String toString()
+	{
+		return itsColumn.getName() + " " + itsOperator.GUI_TEXT;
+	}
 }

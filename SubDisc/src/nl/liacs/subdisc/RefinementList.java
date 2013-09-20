@@ -9,16 +9,13 @@ public class RefinementList extends ArrayList<Refinement>
 	private Table itsTable;
 	private Subgroup itsSubgroup;
 
+// TODO MM DEBUG symbols
 static AtomicInteger COUNT = new AtomicInteger(0);
 static AtomicInteger ADD = new AtomicInteger(0);
+
 	@Deprecated
 	public RefinementList(Subgroup theSubgroup, Table theTable, SearchParameters theSearchParameters)
 	{
-		// crude estimate based on 2 operators per column, all numeric
-		final int init = theTable.getNrColumns() * 2 * 32;
-		final StringBuilder sb = new StringBuilder(init);
-		sb.append("refinementlist\n");
-
 		itsSubgroup = theSubgroup;
 		itsTable = theTable;
 
@@ -66,54 +63,23 @@ COUNT.incrementAndGet();
 				if (add)
 				{
 ADD.incrementAndGet();
-					/*
-					 * FIXME MM this is glue code
-					 * Refinement constructor will be rewritten such that is
-					 * takes a ConditionBase instead of Condition
-					 * itsCondition is never used to set a value, but just
-					 * to get the Condition.Column and Condition.Operator
-					 * this will henceforth be known as a ConditionBase
-					 */
-					//add(new Refinement(aCondition, itsSubgroup));
+					// FIXME MM this is glue code
 					ConditionBase aConditionBase = new ConditionBase(aCondition.getColumn(), aCondition.getOperator());
 					add(new Refinement(aConditionBase, itsSubgroup));
-					sb.append("   condition: ");
-					sb.append(aCondition.toString());
-					sb.append("\n");
 				}
 			}
 		}
 		while ((aCondition = itsTable.getNextCondition(aCondition)) != null);
-
-		Log.logCommandLine(sb.toString());
 	}
 
 	public RefinementList(Subgroup theSubgroup, ConditionBaseSet theConditionBaseSet)
 	{
-		StringBuilder sb = new StringBuilder(theConditionBaseSet.size() * 32);
-		sb.append("refinementlist\n");
-		sb.append("\t").append(theSubgroup.getConditions()).append("\n");
-
 		for (ConditionBase c : theConditionBaseSet.getConditionBases())
 		{
 COUNT.incrementAndGet();
 ADD.incrementAndGet();
-			/*
-			 * FIXME MM this is glue code
-			 * Refinement constructor will be rewritten such that is
-			 * takes a ConditionBase instead of Condition
-			 * itsCondition is never used to set a value, but just
-			 * to get the Condition.Column and Condition.Operator
-			 * this will henceforth be known as a ConditionBase
-			 */
-			Condition aCondition = new Condition(c.getColumn(), c.getOperator());
 			super.add(new Refinement(c, theSubgroup));
-			sb.append("   condition: ");
-			sb.append(aCondition.toString());
-			sb.append("\n");
 		}
-
-		Log.logCommandLine(sb.toString());
 	}
 
 	/*

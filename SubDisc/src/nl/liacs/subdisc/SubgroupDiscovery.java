@@ -209,6 +209,8 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		final ConditionBaseSet aConditions = new ConditionBaseSet(itsTable, itsSearchParameters);
 //		final SearchStrategy aSearchStrategy = itsSearchParameters.getSearchStrategy();
 
+		logExperimentSettings(aConditions);
+
 		//make subgroup to start with, containing all elements
 		BitSet aBitSet = new BitSet(itsNrRows);
 		aBitSet.set(0, itsNrRows);
@@ -292,6 +294,14 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		// in MULTI_LABEL, order may have changed
 		// in COVER_BASED_BEAM_SELECTION, subgroups may have been removed
 		itsResult.setIDs(); //assign 1 to n to subgroups, for future reference in subsets
+	}
+
+	private void logExperimentSettings(ConditionBaseSet theConditionBaseSet)
+	{
+		Log.logCommandLine("");
+		Log.logCommandLine(itsSearchParameters.getTargetConcept().toString());
+		Log.logCommandLine(itsSearchParameters.toString());
+		Log.logCommandLine(theConditionBaseSet.toString());
 	}
 
 	/*
@@ -1223,6 +1233,8 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 
 		// not in Constructor, Table / SearchParameters may change
 		final ConditionBaseSet aConditions = new ConditionBaseSet(itsTable, itsSearchParameters);
+
+		logExperimentSettings(aConditions);
 
 		// make subgroup to start with, containing all elements
 		BitSet aBitSet = new BitSet(itsNrRows);
