@@ -79,6 +79,7 @@ public class LoaderFraunhofer
 			Condition aCondition = new Condition(col, op);
 			// set Condition value
 			aCondition.setValue(aRefinement[1]);
+			// FIXME MM use Condition(ConditionBase, value)
 			aConditionList.add(aCondition);
 		}
 		return(aConditionList);

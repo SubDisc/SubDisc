@@ -112,6 +112,7 @@ public class Validation
 		Column aTarget = itsTargetConcept.getPrimaryTarget();
 		Condition aCondition = new Condition(aTarget, Operator.EQUALS);
 		aCondition.setValue(itsTargetConcept.getTargetValue());
+		// FIXME MM use Condition(ConditionBase, value)
 		BitSet aBinaryTarget = aTarget.evaluate(aCondition);
 
 		for (int i = 0; i < theNrRepetitions; ++i)
@@ -586,6 +587,7 @@ public class Validation
 					anOperator = Operator.EQUALS;
 					aCondition = new Condition(aColumn, anOperator);
 					aCondition.setValue(theRandom.nextBoolean() ? "1" : "0");
+					// FIXME MM use Condition(ConditionBase, value)
 					break;
 				}
 				case NOMINAL :
@@ -600,6 +602,7 @@ public class Validation
 					for (int i=0; i<aRandomIndex; i++)
 						aValue = anIterator.next();
 					aCondition.setValue(aValue);
+					// FIXME MM use Condition(ConditionBase, value)
 					break;
 				}
 				case NUMERIC :
@@ -612,6 +615,7 @@ public class Validation
 					float aRange = aMax - aMin;
 					//this is a fairly crude way of producing random thresholds, but will do for now
 					aCondition.setValue(Float.toString(aMin + 0.1f*aRange + 0.8f*aRange*theRandom.nextFloat()));
+					// FIXME MM use Condition(ConditionBase, value)
 					break;
 				}
 				default : throw new AssertionError(aColumn.getType());
