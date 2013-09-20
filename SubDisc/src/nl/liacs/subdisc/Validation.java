@@ -109,10 +109,10 @@ public class Validation
 	{
 		final double[] aQualities = new double[theNrRepetitions];
 
+		// create a binary target
 		Column aTarget = itsTargetConcept.getPrimaryTarget();
-		Condition aCondition = new Condition(aTarget, Operator.EQUALS);
-		aCondition.setValue(itsTargetConcept.getTargetValue());
-		// FIXME MM use Condition(ConditionBase, value)
+		ConditionBase aConditionBase = new ConditionBase(aTarget, Operator.EQUALS);
+		Condition aCondition = new Condition(aConditionBase, itsTargetConcept.getTargetValue());
 		BitSet aBinaryTarget = aTarget.evaluate(aCondition);
 
 		for (int i = 0; i < theNrRepetitions; ++i)
@@ -578,22 +578,13 @@ public class Validation
 				aColumn = itsTable.getColumn(theRandom.nextInt(aNrColumns));
 			while (itsTargetConcept.isTargetAttribute(aColumn) || !aColumn.getIsEnabled());
 
-			Operator anOperator;
+			ConditionBase aConditionBase;
 			Condition aCondition;
 			switch (aColumn.getType())
 			{
-				case BINARY :
-				{
-					anOperator = Operator.EQUALS;
-					aCondition = new Condition(aColumn, anOperator);
-					aCondition.setValue(theRandom.nextBoolean() ? "1" : "0");
-					// FIXME MM use Condition(ConditionBase, value)
-					break;
-				}
 				case NOMINAL :
 				{
-					anOperator = Operator.EQUALS;
-					aCondition = new Condition(aColumn, anOperator);
+					// select a random value from the domain
 					TreeSet<String> aDomain = aColumn.getDomain();
 					int aNrDistinct = aDomain.size();
 					int aRandomIndex = (int) (theRandom.nextDouble() * aNrDistinct);
@@ -601,24 +592,34 @@ public class Validation
 					String aValue = anIterator.next();
 					for (int i=0; i<aRandomIndex; i++)
 						aValue = anIterator.next();
-					aCondition.setValue(aValue);
-					// FIXME MM use Condition(ConditionBase, value)
+
+					aConditionBase = new ConditionBase(aColumn, Operator.EQUALS);
+					aCondition = new Condition(aConditionBase, aValue);
 					break;
 				}
 				case NUMERIC :
 				{
-					anOperator = theRandom.nextBoolean() ?
+					Operator anOperator = theRandom.nextBoolean() ?
 						Operator.LESS_THAN_OR_EQUAL : Operator.GREATER_THAN_OR_EQUAL;
-					aCondition = new Condition(aColumn, anOperator);
+
 					float aMin = aColumn.getMin();
 					float aMax = aColumn.getMax();
 					float aRange = aMax - aMin;
-					//this is a fairly crude way of producing random thresholds, but will do for now
-					aCondition.setValue(Float.toString(aMin + 0.1f*aRange + 0.8f*aRange*theRandom.nextFloat()));
-					// FIXME MM use Condition(ConditionBase, value)
+					// fairly crude way of producing random thresholds, but will do for now
+					float aValue = (aMin + 0.1f*aRange + 0.8f*aRange*theRandom.nextFloat());
+
+					aConditionBase = new ConditionBase(aColumn, anOperator);
+					aCondition = new Condition(aConditionBase, aValue);
 					break;
 				}
-				default : throw new AssertionError(aColumn.getType());
+				case BINARY :
+				{
+					aConditionBase = new ConditionBase(aColumn, Operator.EQUALS);
+					aCondition = new Condition(aConditionBase, theRandom.nextBoolean());
+					break;
+				}
+				default :
+					throw new AssertionError(aColumn.getType());
 			}
 			aCL.addCondition(aCondition);
 		}

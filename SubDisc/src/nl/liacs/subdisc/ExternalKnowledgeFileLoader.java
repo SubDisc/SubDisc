@@ -106,12 +106,8 @@ public class ExternalKnowledgeFileLoader
 				Column col = theTable.getColumn(sa[0]);
 				Operator op = Operator.fromString(sa[1]);
 
-				// create Condition using Column and Operator
-				Condition aCondition = new Condition(col, op);
-				// set Condition value
-				aCondition.setValue(sa[2]);
-				// FIXME MM use Condition(ConditionBase, value)
-				aConditionList.add(aCondition);
+				ConditionBase b = new ConditionBase(col, op);
+				aConditionList.add(new Condition(b, sa[2]));
 			}
 
 			theConditionLists.add(aConditionList);

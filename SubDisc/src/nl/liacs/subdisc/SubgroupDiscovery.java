@@ -71,9 +71,8 @@ public class SubgroupDiscovery extends MiningAlgorithm
 			itsQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), itsNrRows, theNrPositive);
 		itsQualityMeasureMinimum = itsSearchParameters.getQualityMeasureMinimum();
 
-		Condition aCondition = new Condition(aTC.getPrimaryTarget(), Operator.EQUALS);
-		aCondition.setValue(aTC.getTargetValue());
-		// FIXME MM use Condition(ConditionBase, value)
+		ConditionBase aConditionBase = new ConditionBase(aTC.getPrimaryTarget(), Operator.EQUALS);
+		Condition aCondition = new Condition(aConditionBase, aTC.getTargetValue());
 		itsBinaryTarget = aTC.getPrimaryTarget().evaluate(aCondition);
 
 		itsResult = new SubgroupSet(itsSearchParameters.getMaximumSubgroups(), itsNrRows, itsBinaryTarget);

@@ -75,12 +75,8 @@ public class LoaderFraunhofer
 			// again, assuming that CFTP only uses the equality operator
 			Operator op = Operator.EQUALS;
 
-			// create Condition using Column and Operator
-			Condition aCondition = new Condition(col, op);
-			// set Condition value
-			aCondition.setValue(aRefinement[1]);
-			// FIXME MM use Condition(ConditionBase, value)
-			aConditionList.add(aCondition);
+			ConditionBase b = new ConditionBase(col, op);
+			aConditionList.add(new Condition(b, aRefinement[1]));
 		}
 		return(aConditionList);
 	}
