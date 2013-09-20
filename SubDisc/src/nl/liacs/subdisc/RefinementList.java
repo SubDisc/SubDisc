@@ -1,6 +1,7 @@
 package nl.liacs.subdisc;
 
 import java.util.*;
+import java.util.concurrent.atomic.*;
 
 public class RefinementList extends ArrayList<Refinement>
 {
@@ -8,6 +9,8 @@ public class RefinementList extends ArrayList<Refinement>
 	private Table itsTable;
 	private Subgroup itsSubgroup;
 
+static AtomicInteger COUNT = new AtomicInteger(0);
+static AtomicInteger ADD = new AtomicInteger(0);
 	@Deprecated
 	public RefinementList(Subgroup theSubgroup, Table theTable, SearchParameters theSearchParameters)
 	{
@@ -29,6 +32,7 @@ public class RefinementList extends ArrayList<Refinement>
 		AttributeType aType;
 		do
 		{
+COUNT.incrementAndGet();
 			Column aColumn = aCondition.getColumn();
 
 			if (aColumn.getIsEnabled() && !aTC.isTargetAttribute(aColumn))
@@ -61,7 +65,18 @@ public class RefinementList extends ArrayList<Refinement>
 
 				if (add)
 				{
-					add(new Refinement(aCondition, itsSubgroup));
+ADD.incrementAndGet();
+					/*
+					 * FIXME MM this is glue code
+					 * Refinement constructor will be rewritten such that is
+					 * takes a ConditionBase instead of Condition
+					 * itsCondition is never used to set a value, but just
+					 * to get the Condition.Column and Condition.Operator
+					 * this will henceforth be known as a ConditionBase
+					 */
+					//add(new Refinement(aCondition, itsSubgroup));
+					ConditionBase aConditionBase = new ConditionBase(aCondition.getColumn(), aCondition.getOperator());
+					add(new Refinement(aConditionBase, itsSubgroup));
 					sb.append("   condition: ");
 					sb.append(aCondition.toString());
 					sb.append("\n");
@@ -75,16 +90,26 @@ public class RefinementList extends ArrayList<Refinement>
 
 	public RefinementList(Subgroup theSubgroup, ConditionBaseSet theConditionBaseSet)
 	{
-		List<Condition> aConditions = theConditionBaseSet.copy();
-		StringBuilder sb = new StringBuilder(aConditions.size() * 32);
+		StringBuilder sb = new StringBuilder(theConditionBaseSet.size() * 32);
 		sb.append("refinementlist\n");
 		sb.append("\t").append(theSubgroup.getConditions()).append("\n");
 
-		for (Condition c : aConditions)
+		for (ConditionBase c : theConditionBaseSet.getConditionBases())
 		{
+COUNT.incrementAndGet();
+ADD.incrementAndGet();
+			/*
+			 * FIXME MM this is glue code
+			 * Refinement constructor will be rewritten such that is
+			 * takes a ConditionBase instead of Condition
+			 * itsCondition is never used to set a value, but just
+			 * to get the Condition.Column and Condition.Operator
+			 * this will henceforth be known as a ConditionBase
+			 */
+			Condition aCondition = new Condition(c.getColumn(), c.getOperator());
 			super.add(new Refinement(c, theSubgroup));
 			sb.append("   condition: ");
-			sb.append(c.toString());
+			sb.append(aCondition.toString());
 			sb.append("\n");
 		}
 
@@ -127,8 +152,8 @@ public class RefinementList extends ArrayList<Refinement>
 	 * this would just create a ConditionList with the same Condition
 	 * duplicated at the end
 	 * current code does check for multiple identical values in the returned
-	 * domain, but does perform validity checks on them in combination with
-	 * existing Column.Operator.values in the ConditionList
+	 * domain, but does not perform validity checks on them in combination
+	 * with existing Column.Operator.values in the ConditionList
 	 * see NOTE above, some tests make no sense
 	 * (A>=x ^ A>=x) does not, (A>=x ^ A<=x) does, as it selects just A=x
 	 * by construction, (A>=x ^ A<=y), where y<x, is not possible
@@ -202,6 +227,7 @@ public class RefinementList extends ArrayList<Refinement>
  	 * BINARY Operator settings: EQUAL
 	 * there is no use in including a Condition with a Column-EQUAL pair
 	 * that already occurs in Subgroup.ConditionList
+	 * (A=0 ^ A=0) is redundant, (A=0 ^ A=1) is empty
 	 * this is true for all SearchSettings
 	 * 
 	 * NUMERIC Operator settings: EQUAL, LEQ, GEQ, BETWEEN
@@ -211,6 +237,7 @@ public class RefinementList extends ArrayList<Refinement>
 	 * 
 	 * there is no use in including a Condition with a Column-EQUAL pair
 	 * that already occurs in Subgroup.ConditionList
+	 * (A=x ^ A=x) is redundant, (A=x ^ A=y), where x!=y, is empty
 	 * this is true for all SearchSettings
 	 * also see FIXME SubgroupDiscovery.evaluateNominalBinaryRefinement()
 	 * 

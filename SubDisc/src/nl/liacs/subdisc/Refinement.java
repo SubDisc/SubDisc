@@ -1,47 +1,74 @@
 package nl.liacs.subdisc;
 
+/*
+ * TODO MM check Column.type / Operator.type valid for Value (again...)
+ */
 public class Refinement
 {
+	private final ConditionBase itsConditionBase;
 	private final Subgroup itsSubgroup;
-	private final Condition itsCondition;
 
-	public Refinement(Condition aCondition, Subgroup aSubgroup)
+	public Refinement(ConditionBase theConditionBase, Subgroup theSubgroup)
 	{
-		itsCondition = aCondition;
-		itsSubgroup = aSubgroup;
+		if (theConditionBase == null)
+			throw new NullPointerException("Refinement: theConditionBase can not be null");
+		if (theSubgroup == null)
+			throw new NullPointerException("Refinement: theSubgroup can not be null");
+		itsConditionBase = theConditionBase;
+		itsSubgroup = theSubgroup;
 	}
 
+	/** Nominal Column, single value. */
 	public Subgroup getRefinedSubgroup(String theValue)
 	{
-		// see remarks at Subgroup.copy about deep-copy
-		Subgroup aRefinedSubgroup = itsSubgroup.copy();
-		// see remarks at Condition.copy about deep-copy
-		Condition aCondition = itsCondition.copy();
-		// only set new value for copied Condition, not for itsCondition
-		aCondition.setValue(theValue);
-		aRefinedSubgroup.addCondition(aCondition);
-		return aRefinedSubgroup;
+		Condition aCondition = new Condition(itsConditionBase, theValue);
+		return getRefinedSubgroup(itsSubgroup, aCondition);
 	}
 
+	/** Nominal Column, ValueSet. */
 	public Subgroup getRefinedSubgroup(ValueSet theValue)
 	{
-		Subgroup aRefinedSubgroup = itsSubgroup.copy();
-		Condition aCondition = itsCondition.copy();
-		aCondition.setValue(theValue);
-		aRefinedSubgroup.addCondition(aCondition);
-		return aRefinedSubgroup;
+		Condition aCondition = new Condition(itsConditionBase, theValue);
+		return getRefinedSubgroup(itsSubgroup, aCondition);
 	}
 
+	/** Binary Column. */
+	public Subgroup getRefinedSubgroup(boolean theValue)
+	{
+		Condition aCondition = new Condition(itsConditionBase, theValue);
+		return getRefinedSubgroup(itsSubgroup, aCondition);
+	}
+
+	/** Numeric Column, single value. */
+	public Subgroup getRefinedSubgroup(float theValue)
+	{
+		Condition aCondition = new Condition(itsConditionBase, theValue);
+		return getRefinedSubgroup(itsSubgroup, aCondition);
+	}
+
+	/** Numeric Column, Interval. */
 	public Subgroup getRefinedSubgroup(Interval theValue)
 	{
-		Subgroup aRefinedSubgroup = itsSubgroup.copy();
-		Condition aCondition = itsCondition.copy();
-		aCondition.setValue(theValue);
-		aRefinedSubgroup.addCondition(aCondition);
-		return aRefinedSubgroup;
+		Condition aCondition = new Condition(itsConditionBase, theValue);
+		return getRefinedSubgroup(itsSubgroup, aCondition);
 	}
 
-	public Condition getCondition() { return itsCondition; }
+	public ConditionBase getConditionBase() { return itsConditionBase; }
 
 	public Subgroup getSubgroup() { return itsSubgroup; }
+
+	private static final Subgroup getRefinedSubgroup(Subgroup theSubgroup, Condition theCondition)
+	{
+		assert (theSubgroup != null);
+		assert (theCondition != null);
+
+		// see remarks at Subgroup.copy about deep-copy
+		Subgroup aRefinedSubgroup = theSubgroup.copy();
+		// see remarks at Condition.copy about deep-copy
+//		Condition aCondition = itsCondition.copy();
+//		// only set new value for copied Condition, not for itsCondition
+//		aCondition.setValue(theValue);
+		aRefinedSubgroup.addCondition(theCondition);
+		return aRefinedSubgroup;
+	}
 }

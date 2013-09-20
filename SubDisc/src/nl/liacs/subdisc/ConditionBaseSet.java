@@ -22,22 +22,25 @@ import java.util.*;
  */
 class ConditionBaseSet
 {
-	private final List<Condition> itsConditions;
+	private final List<ConditionBase> itsConditionBases;
+	private final int itsSize;
 
 	ConditionBaseSet(Table theTable, SearchParameters theSearchParameters)
 	{
-		itsConditions = Collections.unmodifiableList(getBaseConditions(theTable, theSearchParameters));
+		itsConditionBases = Collections.unmodifiableList(getBaseConditions(theTable, theSearchParameters));
+		itsSize = itsConditionBases.size();
 	}
 
-	// NOTE copy() is not strictly needed, as underlying Conditions are not
-	// modified in any current code
-	List<Condition> copy()
-	{
-		List<Condition> result = new ArrayList<Condition>(itsConditions.size());
-		for (Condition c : itsConditions)
-			result.add(c.copy());
-		return Collections.unmodifiableList(result);
-	}
+	/*
+	 * safe as itsConditionBases is unmodifiable, and a ConditionBase
+	 * contains only two final fields, Column and Operator
+	 * this is not to say nothing can maliciously be broken, if a
+	 * Column.AttributeType is changed, the accompanying Operator may no
+	 * longer be valid
+	 */
+	final List<ConditionBase> getConditionBases() { return itsConditionBases; }
+
+	final int size() { return itsSize; }
 
 //	// for depth_first, leads to some duplicate testing, but OK for now
 //	List<Condition> copyFrom(Condition theCondition)
@@ -99,7 +102,7 @@ class ConditionBaseSet
 //		throw new AssertionError(theCondition);
 //	}
 
-	private static final List<Condition> getBaseConditions(Table theTable, SearchParameters theSearchParameters)
+	private static final List<ConditionBase> getBaseConditions(Table theTable, SearchParameters theSearchParameters)
 	{
 		TargetConcept aTC = theSearchParameters.getTargetConcept();
 
@@ -112,7 +115,7 @@ class ConditionBaseSet
 
 		// overestimate, not all columns are numeric description columns
 		int init = theTable.getNrColumns() * aNumOps.size();
-		List<Condition> result = new ArrayList<Condition>(init);
+		List<ConditionBase> result = new ArrayList<ConditionBase>(init);
 
 		for (Column c : theTable.getColumns())
 		{
@@ -124,13 +127,13 @@ class ConditionBaseSet
 			{
 				case NOMINAL :
 				{
-					result.add(new Condition(c, aNomOp));
+					result.add(new ConditionBase(c, aNomOp));
 					break;
 				}
 				case NUMERIC :
 				{
 					for (Operator o : aNumOps)
-						result.add(new Condition(c, o));
+						result.add(new ConditionBase(c, o));
 					break;
 				}
 				// no fall-through, ORDINAL is not implemented
@@ -141,7 +144,7 @@ class ConditionBaseSet
 				case BINARY :
 				{
 					// assumes just 1 BINARY Operator
-					result.add(new Condition(c, Operator.EQUALS));
+					result.add(new ConditionBase(c, Operator.EQUALS));
 					break;
 				}
 				default :

@@ -73,6 +73,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 
 		Condition aCondition = new Condition(aTC.getPrimaryTarget(), Operator.EQUALS);
 		aCondition.setValue(aTC.getTargetValue());
+		// FIXME MM use Condition(ConditionBase, value)
 		itsBinaryTarget = aTC.getPrimaryTarget().evaluate(aCondition);
 
 		itsResult = new SubgroupSet(itsSearchParameters.getMaximumSubgroups(), itsNrRows, itsBinaryTarget);
@@ -223,6 +224,9 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		if (theEndTime <= theBeginTime)
 			theEndTime = Long.MAX_VALUE;
 
+// TODO MM DEBUG only, set counts to 0
+//RefinementList.COUNT.set(0);
+//RefinementList.ADD.set(0);
 		while ((itsCandidateQueue.size() > 0) && (System.currentTimeMillis() <= theEndTime))
 		{
 			Candidate aCandidate = itsCandidateQueue.removeFirst(); // take off first Candidate from Queue
@@ -242,10 +246,12 @@ public class SubgroupDiscovery extends MiningAlgorithm
 						break;
 
 					Refinement aRefinement = aRefinementList.get(i);
-					Condition aCondition = aRefinement.getCondition();
+					ConditionBase aConditionBase = aRefinement.getConditionBase();
 					// if refinement is (num_attr = value) then treat it as nominal
 					// using EQUALS for numeric conditions is bad, see evaluateNominalBinaryRefinements()
-					if (aCondition.getColumn().getType() == AttributeType.NUMERIC && aCondition.getOperator() != Operator.EQUALS)
+					// evaluateNumericRefinements() should split code path for EQUALS and !EQUALS
+					// only NUMERIC_BINS setting is affected
+					if (aConditionBase.getColumn().getType() == AttributeType.NUMERIC && aConditionBase.getOperator() != Operator.EQUALS)
 						evaluateNumericRefinements(aMembers, aRefinement);
 					else
 						evaluateNominalBinaryRefinements(aMembers, aRefinement);
@@ -255,6 +261,12 @@ public class SubgroupDiscovery extends MiningAlgorithm
 			if (itsCandidateQueue.size() == 0)
 				flushBuffer();
 		}
+
+
+// TODO MM DEBUG only, set counts to 0
+//Log.logCommandLine("RefinementList.COUNT: " + RefinementList.COUNT);
+//Log.logCommandLine("RefinementList.ADD: " + RefinementList.ADD);
+
 		Log.logCommandLine("number of candidates: " + itsCandidateCount.get());
 		if (itsSearchParameters.getQualityMeasure() == QM.COOKS_DISTANCE)
 		{
@@ -300,10 +312,10 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		{
 			case NUMERIC_ALL :
 			{
-				float[] aSplitPoints = theRefinement.getCondition().getColumn().getUniqueNumericDomain(theMembers);
+				float[] aSplitPoints = theRefinement.getConditionBase().getColumn().getUniqueNumericDomain(theMembers);
 				for (float aSplit : aSplitPoints)
 				{
-					Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(Float.toString(aSplit));
+					Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(aSplit);
 					//addToBuffer(aNewSubgroup);
 					checkAndLog(aNewSubgroup, anOldCoverage);
 				}
@@ -315,13 +327,13 @@ public class SubgroupDiscovery extends MiningAlgorithm
 				// code does nothing if aNrSplitPoints == 0
 				int aNrSplitPoints = itsSearchParameters.getNrBins() - 1;
 
-				float[] aSplitPoints = theRefinement.getCondition().getColumn().getSplitPoints(theMembers, aNrSplitPoints);
+				float[] aSplitPoints = theRefinement.getConditionBase().getColumn().getSplitPoints(theMembers, aNrSplitPoints);
 				boolean first = true;
 				for (int j=0; j<aNrSplitPoints; j++)
 				{
 					if (first || aSplitPoints[j] != aSplitPoints[j-1])
 					{
-						Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(Float.toString(aSplitPoints[j]));
+						Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(aSplitPoints[j]);
 						//addToBuffer(aNewSubgroup);
 						checkAndLog(aNewSubgroup, anOldCoverage);
 					}
@@ -344,13 +356,13 @@ public class SubgroupDiscovery extends MiningAlgorithm
 			}
 			case NUMERIC_BEST :
 			{
-				float[] aSplitPoints = theRefinement.getCondition().getColumn().getUniqueNumericDomain(theMembers);
+				float[] aSplitPoints = theRefinement.getConditionBase().getColumn().getUniqueNumericDomain(theMembers);
 				float aMax = Float.NEGATIVE_INFINITY;
 				Subgroup aBestSubgroup = null;
 				Subgroup aNewSubgroup;
 				for (float aSplit : aSplitPoints)
 				{
-					aNewSubgroup = theRefinement.getRefinedSubgroup(Float.toString(aSplit));
+					aNewSubgroup = theRefinement.getRefinedSubgroup(aSplit);
 
 					final int aNewCoverage = aNewSubgroup.getCoverage();
 					if (aNewCoverage >= itsMinimumCoverage && aNewCoverage <= itsMaximumCoverage && aNewCoverage < anOldCoverage)
@@ -375,9 +387,9 @@ public class SubgroupDiscovery extends MiningAlgorithm
 			}
 			case NUMERIC_INTERVALS :
 			{
-				float[] aSplitPoints = theRefinement.getCondition().getColumn().getUniqueNumericDomain(theMembers);
+				float[] aSplitPoints = theRefinement.getConditionBase().getColumn().getUniqueNumericDomain(theMembers);
 				// FIXME MM Subgroup -> theMembers
-				RealBaseIntervalCrossTable aRBICT = new RealBaseIntervalCrossTable(aSplitPoints, theRefinement.getCondition().getColumn(), theRefinement.getSubgroup(), itsBinaryTarget);
+				RealBaseIntervalCrossTable aRBICT = new RealBaseIntervalCrossTable(aSplitPoints, theRefinement.getConditionBase().getColumn(), theRefinement.getSubgroup(), itsBinaryTarget);
 
 				// prune splitpoints for which adjacent base intervals have equal class distribution
 				// TODO: check whether this preprocessing reduces *total* computation time
@@ -528,12 +540,14 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		final int anOldCoverage = theRefinement.getSubgroup().getCoverage();
 		assert (theMembers.cardinality() == anOldCoverage);
 
-		final Condition aCondition = theRefinement.getCondition();
+		final ConditionBase aConditionBase = theRefinement.getConditionBase();
 
-		//set-valued. Note that this implies that the target type is SINGLE_NOMINAL
-		if (aCondition.getOperator() == Operator.ELEMENT_OF)
+		if (aConditionBase.getOperator() == Operator.ELEMENT_OF)
 		{
-			NominalCrossTable aNCT = new NominalCrossTable(aCondition.getColumn(), theMembers, itsBinaryTarget);
+			// set-valued, implies target type is SINGLE_NOMINAL
+			assert (itsSearchParameters.getTargetType() == TargetType.SINGLE_NOMINAL);
+
+			NominalCrossTable aNCT = new NominalCrossTable(aConditionBase.getColumn(), theMembers, itsBinaryTarget);
 			final SortedSet<String> aDomainBestSubSet = new TreeSet<String>();
 
 			final QM aQualityMeasure = itsSearchParameters.getQualityMeasure();
@@ -648,21 +662,55 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		}
 		else //regular single-value conditions
 		{
-			// FIXME MM
-			// using EQUALS for numeric conditions is bad
-			// as it creates |members| Strings for the floats
-			// this is particularly bad as the number of unique
-			// values in the domain may be expected to be around
-			// |Column.size|, as it is a continuous attribute
 			// members-based domain, no empty Subgroups will occur
-			for (String aValue : aCondition.getColumn().getUniqueNominalBinaryDomain(theMembers))
+			Column c = aConditionBase.getColumn();
+			Subgroup aNewSubgroup = null;
+			// switch for now, will separate code paths when numeric EQUALS is fixed 
+			switch (c.getType())
 			{
-				Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(aValue);
-				checkAndLog(aNewSubgroup, anOldCoverage);
+				case NOMINAL :
+				{
+					for (String aValue : c.getUniqueNominalBinaryDomain(theMembers))
+					{
+						aNewSubgroup = theRefinement.getRefinedSubgroup(aValue);
+						checkAndLog(aNewSubgroup, anOldCoverage);
+					}
+					break;
+				}
+				case NUMERIC :
+				{
+					// FIXME MM see mine() comment
+					for (float aValue : c.getUniqueNumericDomain(theMembers))
+					{
+						aNewSubgroup = theRefinement.getRefinedSubgroup(aValue);
+						checkAndLog(aNewSubgroup, anOldCoverage);
+					}
+					break;
+				}
+				case ORDINAL :
+					throw new AssertionError(AttributeType.ORDINAL);
+				case BINARY :
+				{
+					for (String aValue : c.getUniqueNominalBinaryDomain(theMembers))
+					{
+						aNewSubgroup = theRefinement.getRefinedSubgroup(aValue.equals("1"));
+						checkAndLog(aNewSubgroup, anOldCoverage);
+					}
+					break;
+				}
+				default :
+					throw new AssertionError(c.getType());
 			}
 		}
 	}
 
+	/*
+	 * FIXME MM
+	 * when itsCandidateCount overflows, the 2^31-th Candidate will not be
+	 * logged
+	 * itsCandidateCount should be bigger than int anyway, as 2^31
+	 * Candidates is not that much for a NUMERIC_ALL setting
+	 */
 	private static final int DO_NOT_LOG = -1;
 
 	/*
@@ -1388,9 +1436,9 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 						break;
 
 					Refinement aRefinement = aRefinementList.get(i);
-					Condition aCondition = aRefinement.getCondition();
+					ConditionBase aConditionBase = aRefinement.getConditionBase();
 					// if refinement is (num_attr = value) then treat it as nominal
-					if (aCondition.getColumn().getType() == AttributeType.NUMERIC && aCondition.getOperator() != Operator.EQUALS)
+					if (aConditionBase.getColumn().getType() == AttributeType.NUMERIC && aConditionBase.getOperator() != Operator.EQUALS)
 						evaluateNumericRefinements(aMembers, aRefinement);
 					else
 						evaluateNominalBinaryRefinements(aMembers, aRefinement);

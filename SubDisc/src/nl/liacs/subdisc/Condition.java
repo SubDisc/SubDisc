@@ -54,7 +54,7 @@ public class Condition implements Comparable<Condition>
 	private ValueSet itsNominalValueSet = null;	// ColumnType = NOMINAL
 	private float itsNumericValue = Float.NaN;	// ColumnType = NUMERIC
 	private Interval itsInterval = null;		// ColumnType = NUMERIC
-	private boolean itsBinaryValue = false;		// ColumnType = BINARY
+	private boolean itsBinaryValue = false;	// ColumnType = BINARY
 
 	/**
 	 * Default initialisation values for {@link Column}} of
@@ -68,6 +68,7 @@ public class Condition implements Comparable<Condition>
 	 * @throws {@link NullPointerException} if the parameter is
 	 * <code>null</code>.
 	 */
+	@Deprecated
 	public Condition(Column theColumn)
 	{
 		itsColumn = theColumn;
@@ -100,6 +101,7 @@ public class Condition implements Comparable<Condition>
 	 * @throws {@link NullPointerException} if the parameter is
 	 * <code>null</code>.
 	 */
+	@Deprecated
 	public Condition(Column theColumn, Operator theOperator)
 	{
 		if (theColumn == null)
@@ -112,6 +114,7 @@ public class Condition implements Comparable<Condition>
 
 	// obviously does not deep-copy itsColumn
 	// itsOperator is primitive type, no need for deep-copy
+	@Deprecated
 	public Condition copy()
 	{
 		Condition aCopy = new Condition(itsColumn, itsOperator);
@@ -121,6 +124,58 @@ public class Condition implements Comparable<Condition>
 		aCopy.itsInterval = this.itsInterval; //shallow copy!
 		aCopy.itsBinaryValue = this.itsBinaryValue;
 		return aCopy;
+	}
+
+	/*
+	 * TODO MM strict constructors, replaces all above, allows for final
+	 * value field, and simplified syntax and error checking
+	 * value type must be appropriate for Column.type + Operator.type
+	 * might get 2 final fields: ColumnBase, and Value
+	 * in the end 1 ConditionX per ConditionBase combination would be ideal
+	 * as it allows only valid Column-Operator-Value combinations and needs
+	 * no checking (implemented using abstract class Condition)
+	 * 
+	 * TODO MM null check + assert (Column.domain.contains(theValue))
+	 * TODO MM check that Operator is valid for Value type
+	 */
+	/** Condition for NOMINAL Column, single value. */
+	public Condition(ConditionBase theConditionBase, String theValue)
+	{
+		itsColumn = theConditionBase.getColumn();
+		itsOperator = theConditionBase.getOperator();
+		itsNominalValue = theValue;
+	}
+
+	/** Condition for NOMINAL Column, ValueSet. */
+	public Condition(ConditionBase theConditionBase, ValueSet theValueSet)
+	{
+		itsColumn = theConditionBase.getColumn();
+		itsOperator = theConditionBase.getOperator();
+		itsNominalValueSet = theValueSet;
+	}
+
+	/** Condition for BINARY Column. */
+	public Condition(ConditionBase theConditionBase, boolean theValue)
+	{
+		itsColumn = theConditionBase.getColumn();
+		itsOperator = theConditionBase.getOperator();
+		itsBinaryValue = theValue;
+	}
+
+	/** Condition for NUMERIC Column, Interval. */
+	public Condition(ConditionBase theConditionBase, Interval theInterval)
+	{
+		itsColumn = theConditionBase.getColumn();
+		itsOperator = theConditionBase.getOperator();
+		itsInterval = theInterval;
+	}
+
+	/** Condition for NUMERIC Column, single value. */
+	public Condition(ConditionBase theConditionBase, float theValue)
+	{
+		itsColumn = theConditionBase.getColumn();
+		itsOperator = theConditionBase.getOperator();
+		itsNumericValue = theValue;
 	}
 
 	public Column getColumn() { return itsColumn; }
@@ -185,6 +240,7 @@ public class Condition implements Comparable<Condition>
 	 * check if supplied value is correct and update valueIsSet
 	 * only allow value to be set once, so it can never be changed
 	 */
+	@Deprecated
 	public void setValue(String theValue)
 	{
 		switch (itsColumn.getType())
@@ -209,13 +265,16 @@ public class Condition implements Comparable<Condition>
 	/**
 	 * Set the value for this Condition, specifically for nominal value sets
 	 */
+	@Deprecated
 	public void setValue(ValueSet theValue) { itsNominalValueSet = theValue; }
 
 	/**
 	 * Set the value for this Condition, specifically for numeric intervals.
 	 */
+	@Deprecated
 	public void setValue(Interval theValue) { itsInterval = theValue; }
 
+	@Deprecated
 	public boolean hasNextOperator()
 	{
 		final AttributeType aType = itsColumn.getType();
@@ -228,6 +287,7 @@ public class Condition implements Comparable<Condition>
 		return true;
 	}
 
+	@Deprecated
 	public Operator getNextOperator()
 	{
 		//return hasNextOperator() ? itsOperator+1 : NOT_AN_OPERATOR;

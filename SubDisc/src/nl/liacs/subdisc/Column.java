@@ -1681,17 +1681,6 @@ public class Column implements XMLNodeInterface
 							break;
 				break;
 			}
-			// FIXME MM this is added for 'NUMERIC = ' Conditions
-			// will be removed, as it is slow and ill-conceived
-			case NUMERIC :
-			{
-				// abort when all distinct values are added
-				for (int i = theBitSet.nextSetBit(0); i >= 0 && i < itsSize; i = theBitSet.nextSetBit(i + 1))
-					if (aUniqueValues.add(Float.toString(itsFloatz[i])))
-						if (aUniqueValues.size() == itsCardinality)
-							break;
-				break;
-			}
 			case BINARY :
 			{
 				// abort when all distinct values are added
