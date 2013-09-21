@@ -104,9 +104,9 @@ public class Subgroup implements Comparable<Subgroup>
 
 		itsConditions.addCondition(theCondition);
 
-		itsMembers.and(theCondition.getColumn().evaluate(theCondition));
+		//itsMembers.and(theCondition.getColumn().evaluate(theCondition));
 		// reassign, faster than and, possible as itsMembers != final
-		//itsMembers = theCondition.getColumn().evaluate(itsMembers, theCondition);
+		itsMembers = theCondition.getColumn().evaluate(itsMembers, theCondition);
 
 		// crucial to keep it in sync with itsMembers
 		itsCoverage = itsMembers.cardinality();

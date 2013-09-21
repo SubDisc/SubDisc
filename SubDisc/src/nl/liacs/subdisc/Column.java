@@ -1422,6 +1422,180 @@ public class Column implements XMLNodeInterface
 	}
 
 	/**
+	 * Evaluates the supplied Condition, but only for the records of this
+	 * Column selected by the set bits in the supplied BitSet.
+	 * 
+	 * This method does not modify the input BitSet.
+	 * 
+	 * @param theBitSet the Subgroup members.
+	 * @param theCondition the Condition to evaluate.
+	 * 
+	 * @return a BitSet with bits set for those records for which the
+	 * supplied Condition holds, bits are clear otherwise.
+	 * 
+	 * @throws IllegalArgumentException when the supplied Condition is not
+	 * about this Column. 
+	 */
+	BitSet evaluate(BitSet theBitSet, Condition theCondition) throws IllegalArgumentException
+	{
+		if (theBitSet == null)
+			throw new IllegalArgumentException("BitSet can not be null");
+		// XXX evaluation logic is deeply flawed, this hack is needed
+		if (theCondition.getColumn() != this)
+			throw new IllegalArgumentException(
+					String.format("%s does not apply to %s",
+							theCondition.toString(),
+							getName()));
+
+		BitSet aResult;
+		Operator anOperator = theCondition.getOperator();
+
+		// methods do not return immediately, allows for assert below
+		switch (itsType)
+		{
+			case NOMINAL :
+			{
+				aResult = new BitSet(itsSize);
+
+				switch (anOperator)
+				{
+					case ELEMENT_OF :
+						nominalElementOf(theBitSet, theCondition.getNominalValueSet(), aResult);
+						break;
+					case EQUALS :
+						nominalEquals(theBitSet, theCondition.getNominalValue(), aResult);
+						break;
+					default :
+						throw new AssertionError(itsType + " incompatible with " + anOperator);
+				}
+				break;
+			}
+			case NUMERIC :
+			{
+				aResult = new BitSet(itsSize);
+
+				switch (anOperator)
+				{
+					case EQUALS :
+						numericEquals(theBitSet, theCondition.getNumericValue(), aResult);
+						break;
+					case LESS_THAN_OR_EQUAL :
+						numericLEQ(theBitSet, theCondition.getNumericValue(), aResult);
+						break;
+					case GREATER_THAN_OR_EQUAL :
+						numericGEQ(theBitSet, theCondition.getNumericValue(), aResult);
+						break;
+					case BETWEEN :
+						numericBetween(theBitSet, theCondition.getNumericInterval(), aResult);
+						break;
+					default :
+						throw new AssertionError(itsType + " incompatible with " + anOperator);
+				}
+				break;
+			}
+			case ORDINAL :
+			{
+				throw new AssertionError(itsType);
+			}
+			case BINARY :
+			{
+				assert(anOperator == Operator.EQUALS);
+				aResult =  binaryEquals(theBitSet, theCondition.getBinaryValue());
+				break;
+			}
+			default :
+			{
+				logMessage("evaluate", String.format("unknown AttributeType '%s'", itsType));
+				throw new AssertionError(itsType);
+			}
+		}
+
+		// XXX compare against old code, may be removed one day
+		// as it evaluates theCondition twice
+		assert (postTest(aResult, evaluate(theCondition)));
+
+		return aResult;
+	}
+
+	// account for d>1, where _new will not be the same as old
+	// every bit set in new, must also be set in old, and no more
+	private static final boolean postTest(BitSet _new, BitSet old)
+	{
+		// do not modify _new, as it is needed as result
+		BitSet b = (BitSet)_new.clone();
+		b.andNot(old);
+		return b.isEmpty();
+	}
+
+	private BitSet nominalElementOf(BitSet theMembers, ValueSet theValueSet, BitSet theResult)
+	{
+		for (int i = theMembers.nextSetBit(0); i >= 0; i = theMembers.nextSetBit(i + 1))
+			if (theValueSet.contains(itsNominals.get(i)))
+				theResult.set(i);
+
+		return theResult;
+	}
+
+	private BitSet nominalEquals(BitSet theMembers, String theValue, BitSet theResult)
+	{
+		for (int i = theMembers.nextSetBit(0); i >= 0; i = theMembers.nextSetBit(i + 1))
+			if (itsNominals.get(i).equals(theValue))
+				theResult.set(i);
+
+		return theResult;
+	}
+
+	private BitSet numericEquals(BitSet theMembers, float theValue, BitSet theResult)
+	{
+		for (int i = theMembers.nextSetBit(0); i >= 0; i = theMembers.nextSetBit(i + 1))
+			if (itsFloatz[i] == theValue)
+				theResult.set(i);
+
+		return theResult;
+	}
+
+	private BitSet numericLEQ(BitSet theMembers, float theValue, BitSet theResult)
+	{
+		for (int i = theMembers.nextSetBit(0); i >= 0; i = theMembers.nextSetBit(i + 1))
+			if (itsFloatz[i] <= theValue)
+				theResult.set(i);
+
+		return theResult;
+	}
+
+	private BitSet numericGEQ(BitSet theMembers, float theValue, BitSet theResult)
+	{
+		for (int i = theMembers.nextSetBit(0); i >= 0; i = theMembers.nextSetBit(i + 1))
+			if (itsFloatz[i] >= theValue)
+				theResult.set(i);
+
+		return theResult;
+	}
+
+	private BitSet numericBetween(BitSet theMembers, Interval theInterval, BitSet theResult)
+	{
+		for (int i = theMembers.nextSetBit(0); i >= 0; i = theMembers.nextSetBit(i + 1))
+			if (theInterval.between(itsFloatz[i]))
+				theResult.set(i);
+
+		return theResult;
+	}
+
+	private BitSet binaryEquals(BitSet theMembers, boolean theValue)
+	{
+		// faster than or
+		BitSet aResult = (BitSet)itsBinaries.clone();
+
+		if (!theValue)
+			aResult.flip(0, itsSize);
+
+		// faster than bit-loop, operates on underlying longs in long[]
+		aResult.and(theMembers);
+
+		return aResult;
+	}
+
+	/**
 	 * Returns the statistics needed in the computation of quality measures
 	 * for Columns of {@link AttributeType} {@link AttributeType#NUMERIC}
 	 * and {@link AttributeType#ORDINAL}.
