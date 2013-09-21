@@ -1920,18 +1920,30 @@ public class Column implements XMLNodeInterface
 		int i = -1;
 		for (Float f : aUniqueValues)
 			aResult[++i] = f.floatValue();
+/*
+		// FIXME MM use only this alternative
+		int aNrMembers = theBitSet.cardinality();
+		float[] aResult2 = new float[aNrMembers];
+		for (int ii = 0, j = theBitSet.nextSetBit(0); j >= 0; j = theBitSet.nextSetBit(j + 1), ++ii)
+			aResult2[ii] = itsFloatz[j];
 
-		// alternative
-//		float[] aResult = Arrays.copyOf(itsFloatz, itsFloatz.length);
-//		Arrays.sort(aResult);
-//		// filter duplicates, assume high cardinality
-//		int j = 0;
-//		for (int i = 1; i < aResult.length && j <= itsCardinality; ++i)
-//			if (aResult[i] != aResult[j])
-//				aResult[++j] = aResult[i];
-//		// truncate everything after last unique value
-//		System.arraycopy(aResult, 0, aResult, 0, j+1);
+		// sort
+		Arrays.sort(aResult2);
 
+		// filter duplicates, assume high cardinality
+		int j = 0;
+		// for tighter bound, but on Column.init (itsCardinality == 0)
+		int min = (itsCardinality == 0) ?
+					aNrMembers-1 :
+					Math.min(aNrMembers, itsCardinality)-1;
+		// k < aNrMembers not needed, j < min could be (--min != 0)
+		for (int k = 1; k < aNrMembers && j < min; ++k)
+			if (aResult2[k] != aResult2[j])
+				aResult2[++j] = aResult2[k];
+		// truncate everything after last unique value
+		aResult2 = Arrays.copyOf(aResult2, j+1);
+		assert (Arrays.equals(aResult, aResult2));
+*/
 		return aResult;
 	}
 
