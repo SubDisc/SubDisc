@@ -112,7 +112,23 @@ public class Validation
 		// create a binary target
 		Column aTarget = itsTargetConcept.getPrimaryTarget();
 		ConditionBase aConditionBase = new ConditionBase(aTarget, Operator.EQUALS);
-		Condition aCondition = new Condition(aConditionBase, itsTargetConcept.getTargetValue());
+
+		String aValue = itsTargetConcept.getTargetValue();
+		Condition aCondition;
+		switch (aTarget.getType())
+		{
+			case NOMINAL :
+				aCondition = new Condition(aConditionBase, aValue);
+				break;
+			case BINARY :
+				if (!AttributeType.isValidBinaryValue(aValue))
+					throw new IllegalArgumentException(aValue + " is not a valid BINARY value");
+				aCondition = new Condition(aConditionBase, AttributeType.isValidBinaryTrueValue(aValue));
+				break;
+			default :
+				throw new AssertionError(aTarget.getType());
+		}
+
 		BitSet aBinaryTarget = aTarget.evaluate(aCondition);
 
 		for (int i = 0; i < theNrRepetitions; ++i)
