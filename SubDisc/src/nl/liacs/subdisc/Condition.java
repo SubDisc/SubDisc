@@ -2,15 +2,21 @@ package nl.liacs.subdisc;
 
 import java.util.*;
 
-/*
- * TODO
- * FIRST/ LAST_OPERATORS should be defined in terms of (unmodifiable) EnumSets.
- * Condition Objects should have a boolean member indicating whether a
- * value is set for it.
- * Most LogTypeError calls should be changed to new AssertionError().
- */
 public class Condition implements Comparable<Condition>
 {
+	private final Column itsColumn;
+	private final Operator itsOperator;
+
+	private String itsNominalValue = null;		// ColumnType = NOMINAL
+	private ValueSet itsNominalValueSet = null;	// ColumnType = NOMINAL
+	private float itsNumericValue = Float.NaN;	// ColumnType = NUMERIC
+	private Interval itsInterval = null;		// ColumnType = NUMERIC
+	private boolean itsBinaryValue = false;		// ColumnType = BINARY
+
+/* *****************************************************************************
+ * START OF OLD CONDITION CODE, SHOULD NOT BE USED ANYMORE
+ ******************************************************************************/
+
 	private static final Set<Operator> OPERATORS = Operator.set();
 	/*
 	 * FIXME these should be defined in terms of EnumSets
@@ -30,15 +36,6 @@ public class Condition implements Comparable<Condition>
 	// this allows =, <=, >= and in (BETWEEN)
 	public static final Operator FIRST_NUMERIC_OPERATOR	= Operator.EQUALS;
 	public static final Operator LAST_NUMERIC_OPERATOR	= Operator.BETWEEN;
-
-	private final Column itsColumn;
-	private final Operator itsOperator;
-
-	private String itsNominalValue = null;		// ColumnType = NOMINAL
-	private ValueSet itsNominalValueSet = null;	// ColumnType = NOMINAL
-	private float itsNumericValue = Float.NaN;	// ColumnType = NUMERIC
-	private Interval itsInterval = null;		// ColumnType = NUMERIC
-	private boolean itsBinaryValue = false;		// ColumnType = BINARY
 
 	/**
 	 * Default initialisation values for {@link Column}} of
@@ -109,6 +106,164 @@ public class Condition implements Comparable<Condition>
 		return aCopy;
 	}
 
+	@Deprecated
+	public boolean hasNextOperator()
+	{
+		final AttributeType aType = itsColumn.getType();
+		if (itsOperator == LAST_BINARY_OPERATOR && aType == AttributeType.BINARY)
+			return false;
+		if (itsOperator == LAST_NOMINAL_OPERATOR && aType == AttributeType.NOMINAL)
+			return false;
+		if (itsOperator == LAST_NUMERIC_OPERATOR && aType == AttributeType.NUMERIC)
+			return false;
+		return true;
+	}
+
+	@Deprecated
+	public Operator getNextOperator()
+	{
+		//return hasNextOperator() ? itsOperator+1 : NOT_AN_OPERATOR;
+		if (hasNextOperator())
+		{
+			// hasNextOperator() sort of guarantees i.hasNext() 
+			for (Iterator<Operator> i = OPERATORS.iterator(); i.hasNext(); )
+				if (itsOperator == i.next())
+					return i.next();
+		}
+
+		return Operator.NOT_AN_OPERATOR;
+	}
+
+	/*
+	 * NOTE
+	 * Never override equals() without also overriding hashCode().
+	 * Some (Collection) classes use equals to determine equality, others
+	 * use hashCode() (eg. java.lang.HashMap).
+	 * Failing to override both methods will result in strange behaviour.
+	 *
+ 	 * NOTE
+	 * Map interface expects compareTo and equals to be consistent.
+	 *
+	 * Used by ConditionList.findCondition().
+	 * @see java.lang.Object#equals(java.lang.Object)
+	 */
+/*
+	@Override
+	public boolean equals(Object theObject)
+	{
+		if (theObject == null || this.getClass() != theObject.getClass())
+			return false;
+		Condition aCondition = (Condition) theObject;
+		if (itsColumn == aCondition.getColumn() &&
+			itsOperator == aCondition.getOperator() &&
+			itsValue.equals(aCondition.getValue()))
+			return true;
+		return false;
+	}
+*/
+
+	/* EVALUATION IS PUSHED TO Column.evaluate(BitSet, Condition) */
+
+	/**
+	 * Evaluate Condition for {@link Column Column} of type
+	 * {@link AttributeType#NOMINAL AttributeType.NOMINAL}.
+	 * <p>
+	 * The evaluation is performed using the operator and value set for this
+	 * Condition, and {@link String#equals(Object) String.equals()}.
+	 *
+	 * @param theValue the value to compare to the value of this Condition.
+	 *
+	 * @return <code>true</code> if the evaluation yields <code>true</code>,
+	 * <code>false</code> otherwise.
+	 */
+	public boolean evaluate(String theValue)
+	{
+		switch (itsOperator)
+		{
+			case ELEMENT_OF :
+				return itsNominalValueSet.contains(theValue);
+			case EQUALS :
+				return theValue.equals(itsNominalValue);
+			default :
+			{
+				logError("nominal");
+				return false; // FIXME MM IllegalArgumentException
+			}
+		}
+	}
+
+	/**
+	 * Evaluate Condition for {@link Column Column} of type
+	 * {@link AttributeType#NUMERIC AttributeType.NUMERIC}.
+	 * <p>
+	 * The evaluation is performed using the operator and value set for this
+	 * Condition.
+	 *
+	 * @param theValue the value to compare to the value of this Condition.
+	 *
+	 * @return <code>true</code> if the evaluation yields <code>true</code>,
+	 * <code>false</code> otherwise.
+	 */
+	public boolean evaluate(float theValue)
+	{
+		switch (itsOperator)
+		{
+			// FIXME MM should throw error on evaluate(float) call
+			// on a Condition with nominal Column + EQUALS operator
+			case EQUALS :
+				return theValue == itsNumericValue;
+			case LESS_THAN_OR_EQUAL :
+				return theValue <= itsNumericValue;
+			case GREATER_THAN_OR_EQUAL :
+				return theValue >= itsNumericValue;
+			case BETWEEN:
+				return itsInterval.between(theValue);
+			default :
+			{
+				logError("numeric");
+				return false; // FIXME MM IllegalArgumentException
+			}
+		}
+	}
+
+	/**
+	 * Evaluate Condition for {@link Column Column} of type
+	 * {@link AttributeType#BINARY AttributeType.BINARY}.
+	 * <p>
+	 * The evaluation is performed using the operator and value set for this
+	 * Condition.
+	 *
+	 * @param theValue the value to compare to the value of this Condition.
+	 *
+	 * @return <code>true</code> if the evaluation yields <code>true</code>,
+	 * <code>false</code> otherwise.
+	 */
+	public boolean evaluate(boolean theValue)
+	{
+		if (itsOperator != Operator.EQUALS)
+			logError("binary"); // FIXME MM IllegalArgumentException
+		return itsBinaryValue == theValue;
+	}
+
+	private void logError(String theColumnType)
+	{
+		Log.error(String.format("incorrect operator for %s column",
+					theColumnType));
+	}
+
+	private void logTypeError(String theMethod)
+	{
+		Log.logCommandLine(String.format("%s.%s(): unknown AttributeType '%s'. Returning '%s'.",
+							getClass().getSimpleName(),
+							theMethod,
+							itsColumn.getType(),
+							itsOperator));
+	}
+
+/* *****************************************************************************
+ * END OF OLD CONDITION CODE
+ ******************************************************************************/
+
 	/*
 	 * strict constructors, replaces all above, allows for final
 	 * value field, and simplified syntax and error checking
@@ -121,6 +276,9 @@ public class Condition implements Comparable<Condition>
 	 * 
 	 * TODO MM
 	 * assert (Column.domain.contains(theValue)) but this is extremely heavy
+	 * also, it would not work for Validation.getRandomConditionList() for
+	 * NUMERIC Columns, as it uses a 'random' float value
+	 * (likewise for 1-valued BINARY Columns)
 	 */
 	/** Condition for NOMINAL Column, single value. */
 	public Condition(ConditionBase theConditionBase, String theValue)
@@ -251,216 +409,68 @@ public class Condition implements Comparable<Condition>
 
 	public Operator getOperator() { return itsOperator; }
 
-	// package-private as ValueSet and Interval are mutable
 	// no type validity checks are performed
-	String getNominalValue() { return itsNominalValue; }
-	ValueSet getNominalValueSet() { return itsNominalValueSet; }
-	float getNumericValue() { return itsNumericValue; }
-	Interval getNumericInterval() { return itsInterval; }
-	boolean getBinaryValue() { return itsBinaryValue; }
+	public String getNominalValue() { return itsNominalValue; }
+	public ValueSet getNominalValueSet() { return itsNominalValueSet; }
+	public float getNumericValue() { return itsNumericValue; }
+	public Interval getNumericInterval() { return itsInterval; }
+	public boolean getBinaryValue() { return itsBinaryValue; }
 
-	// see class comment on valueIsSet-boolean indicating (non)-virgin state
+	/* Assumes values are set in constructor, and per Column/Operator type*/
 	private String getValue()
 	{
 		switch (itsColumn.getType())
 		{
 			case NOMINAL :
-				if (itsNominalValue != null) //single value?
-					return itsNominalValue;
-				else if (itsNominalValueSet != null) //value set?
-					return itsNominalValueSet.toString();
-				else
-					return null; // TODO no value is set yet
-
+			{
+				switch (itsOperator)
+				{
+					case EQUALS :
+						return "'" + itsNominalValue + "'";
+					case ELEMENT_OF :
+						return itsNominalValueSet.toString();
+					default :
+						throw new AssertionError(AttributeType.NOMINAL);
+				}
+			}
 			case NUMERIC :
-				if (!Float.isNaN(itsNumericValue)) //single value?
-					return Float.toString(itsNumericValue);
-				else if (itsInterval != null) //interval?
-					return itsInterval.toString();
-				else
-					return null; // TODO no value is set yet
-
-			/*
-			 * TODO a "NaN" return may mean that no value is set yet
-			 * or that the value Float.NaN is set deliberately
-			 */
-			case ORDINAL : return Float.toString(itsNumericValue);
-
-			/*
-			 * TODO a "0" return may mean that no value is set yet
-			 * or that the value "0" is set deliberately
-			 */
-			case BINARY : return itsBinaryValue ? "1" : "0";
-			default : logTypeError("getValue"); return "";
-		}
-	}
-
-	@Deprecated
-	public boolean hasNextOperator()
-	{
-		final AttributeType aType = itsColumn.getType();
-		if (itsOperator == LAST_BINARY_OPERATOR && aType == AttributeType.BINARY)
-			return false;
-		if (itsOperator == LAST_NOMINAL_OPERATOR && aType == AttributeType.NOMINAL)
-			return false;
-		if (itsOperator == LAST_NUMERIC_OPERATOR && aType == AttributeType.NUMERIC)
-			return false;
-		return true;
-	}
-
-	@Deprecated
-	public Operator getNextOperator()
-	{
-		//return hasNextOperator() ? itsOperator+1 : NOT_AN_OPERATOR;
-		if (hasNextOperator())
-		{
-			// hasNextOperator() sort of guarantees i.hasNext() 
-			for (Iterator<Operator> i = OPERATORS.iterator(); i.hasNext(); )
-				if (itsOperator == i.next())
-					return i.next();
-		}
-
-		return Operator.NOT_AN_OPERATOR;
-	}
-
-	/**
-	 * Evaluate Condition for {@link Column Column} of type
-	 * {@link AttributeType#NOMINAL AttributeType.NOMINAL}.
-	 * <p>
-	 * The evaluation is performed using the operator and value set for this
-	 * Condition, and {@link String#equals(Object) String.equals()}.
-	 *
-	 * @param theValue the value to compare to the value of this Condition.
-	 *
-	 * @return <code>true</code> if the evaluation yields <code>true</code>,
-	 * <code>false</code> otherwise.
-	 */
-	public boolean evaluate(String theValue)
-	{
-		switch (itsOperator)
-		{
-			case ELEMENT_OF :
-				return itsNominalValueSet.contains(theValue);
-			case EQUALS :
-				return theValue.equals(itsNominalValue);
-			default :
 			{
-				logError("nominal");
-				return false; // FIXME MM IllegalArgumentException
+				switch (itsOperator)
+				{
+					case EQUALS :
+						return Float.toString(itsNumericValue);
+					case LESS_THAN_OR_EQUAL :
+						return Float.toString(itsNumericValue);
+					case GREATER_THAN_OR_EQUAL :
+						return Float.toString(itsNumericValue);
+					case BETWEEN :
+						return itsInterval.toString();
+					default :
+						throw new AssertionError(AttributeType.NUMERIC);
+				}
 			}
-		}
-	}
-
-	/**
-	 * Evaluate Condition for {@link Column Column} of type
-	 * {@link AttributeType#NUMERIC AttributeType.NUMERIC}.
-	 * <p>
-	 * The evaluation is performed using the operator and value set for this
-	 * Condition.
-	 *
-	 * @param theValue the value to compare to the value of this Condition.
-	 *
-	 * @return <code>true</code> if the evaluation yields <code>true</code>,
-	 * <code>false</code> otherwise.
-	 */
-	public boolean evaluate(float theValue)
-	{
-		switch (itsOperator)
-		{
-			// FIXME MM should throw error on evaluate(float) call
-			// on a Condition with nominal Column + EQUALS operator
-			case EQUALS :
-				return theValue == itsNumericValue;
-			case LESS_THAN_OR_EQUAL :
-				return theValue <= itsNumericValue;
-			case GREATER_THAN_OR_EQUAL :
-				return theValue >= itsNumericValue;
-			case BETWEEN:
-				return itsInterval.between(theValue);
-			default :
+			case ORDINAL :
+				throw new AssertionError(AttributeType.ORDINAL);
+			case BINARY :
 			{
-				logError("numeric");
-				return false; // FIXME MM IllegalArgumentException
+				assert (itsOperator == Operator.EQUALS);
+				return itsBinaryValue ? "'1'" : "'0'";
 			}
+			default :
+				throw new AssertionError(itsColumn.getType());
 		}
-	}
-
-	/**
-	 * Evaluate Condition for {@link Column Column} of type
-	 * {@link AttributeType#BINARY AttributeType.BINARY}.
-	 * <p>
-	 * The evaluation is performed using the operator and value set for this
-	 * Condition.
-	 *
-	 * @param theValue the value to compare to the value of this Condition.
-	 *
-	 * @return <code>true</code> if the evaluation yields <code>true</code>,
-	 * <code>false</code> otherwise.
-	 */
-	public boolean evaluate(boolean theValue)
-	{
-		if (itsOperator != Operator.EQUALS)
-			logError("binary"); // FIXME MM IllegalArgumentException
-		return itsBinaryValue == theValue;
-	}
-
-	private void logError(String theColumnType)
-	{
-		Log.error(String.format("incorrect operator for %s column",
-					theColumnType));
-	}
-
-	private void logTypeError(String theMethod)
-	{
-		Log.logCommandLine(String.format("%s.%s(): unknown AttributeType '%s'. Returning '%s'.",
-							getClass().getSimpleName(),
-							theMethod,
-							itsColumn.getType(),
-							itsOperator));
 	}
 
 	@Override
 	public String toString()
 	{
-		StringBuilder sb = new StringBuilder(32)
+		return new StringBuilder(32)
 					.append(itsColumn.getName()).append(" ")
-					.append(itsOperator).append(" ");
-
-		if (itsColumn.getType() == AttributeType.NUMERIC || itsOperator == Operator.ELEMENT_OF)
-			sb.append(getValue());
-		else
-			sb.append("'").append(getValue()).append("'");
-
-		return sb.toString();
+					.append(itsOperator).append(" ")
+					.append(getValue())
+					.toString();
 	}
 
-	/*
-	 * NOTE
-	 * Never override equals() without also overriding hashCode().
-	 * Some (Collection) classes use equals to determine equality, others
-	 * use hashCode() (eg. java.lang.HashMap).
-	 * Failing to override both methods will result in strange behaviour.
-	 *
- 	 * NOTE
-	 * Map interface expects compareTo and equals to be consistent.
-	 *
-	 * Used by ConditionList.findCondition().
-	 * @see java.lang.Object#equals(java.lang.Object)
-	 */
-
-/*	@Override
-	public boolean equals(Object theObject)
-	{
-		if (theObject == null || this.getClass() != theObject.getClass())
-			return false;
-		Condition aCondition = (Condition) theObject;
-		if (itsColumn == aCondition.getColumn() &&
-			itsOperator == aCondition.getOperator() &&
-			itsValue.equals(aCondition.getValue()))
-			return true;
-		return false;
-	}
-*/
 	// throws NullPointerException if theCondition is null.
 	@Override
 	public int compareTo(Condition theCondition)
@@ -479,21 +489,11 @@ public class Condition implements Comparable<Condition>
 		{
 			case NOMINAL :
 			{
-				/*
-				 * reasoning based on (itsNominalValue != null)
-				 * is flawed, if setValue(null) is used to set
-				 * itsNominalValue for a 'SINGLE_NOMINAL'
-				 * Condition, this code erroneously assumes
-				 * ValueSet, which comparison will crash with a
-				 * NullPointerException.
-				 * FIXME add setValue() sanity-checks
-				 */
 				if (itsNominalValue != null) //single value
-				{
 					return itsNominalValue.compareTo(theCondition.itsNominalValue);
-				}
 				else // assumes ValueSet
 				{
+					assert (itsNominalValueSet != null);
 					if (itsNominalValueSet != theCondition.itsNominalValueSet)
 						throw new AssertionError(String.format("Multiple %ss for %s '%s'",
 											itsNominalValueSet.getClass().getSimpleName(),
