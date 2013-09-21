@@ -110,20 +110,36 @@ public class Condition implements Comparable<Condition>
 	}
 
 	/*
-	 * TODO MM strict constructors, replaces all above, allows for final
+	 * strict constructors, replaces all above, allows for final
 	 * value field, and simplified syntax and error checking
-	 * value type must be appropriate for Column.type + Operator.type
+	 * value type must be appropriate for both Column.type and Operator.type
+	 * 
 	 * might get 2 final fields: ColumnBase, and Value
 	 * in the end 1 ConditionX per ConditionBase combination would be ideal
 	 * as it allows only valid Column-Operator-Value combinations and needs
 	 * no checking (implemented using abstract class Condition)
 	 * 
-	 * TODO MM null check + assert (Column.domain.contains(theValue))
-	 * TODO MM check that Operator is valid for Value type
+	 * TODO MM
+	 * assert (Column.domain.contains(theValue)) but this is extremely heavy
 	 */
 	/** Condition for NOMINAL Column, single value. */
 	public Condition(ConditionBase theConditionBase, String theValue)
 	{
+		// check Column
+		Column aColumn = theConditionBase.getColumn();
+		if (aColumn.getType() != AttributeType.NOMINAL)
+			throw exception("ConditionBase.Column.AttributeType", aColumn.getType().toString());
+
+		// assume that ConditionBase checked validity of Column-Operator
+		// String can only be used with EQUALS
+		Operator anOperator = theConditionBase.getOperator();
+		if (anOperator != Operator.EQUALS)
+			throw exception("ConditionBase.Operator", anOperator.GUI_TEXT);
+
+		// check value
+		if (theValue == null)
+			throw exception(String.class.getSimpleName(), "null");
+
 		itsColumn = theConditionBase.getColumn();
 		itsOperator = theConditionBase.getOperator();
 		itsNominalValue = theValue;
@@ -132,6 +148,21 @@ public class Condition implements Comparable<Condition>
 	/** Condition for NOMINAL Column, ValueSet. */
 	public Condition(ConditionBase theConditionBase, ValueSet theValueSet)
 	{
+		// check Column
+		Column aColumn = theConditionBase.getColumn();
+		if (aColumn.getType() != AttributeType.NOMINAL)
+			throw exception("ConditionBase.Column.AttributeType", aColumn.getType().toString());
+
+		// assume that ConditionBase checked validity of Column-Operator
+		// ValueSet can only be used with ELEMENt_OF
+		Operator anOperator = theConditionBase.getOperator();
+		if (anOperator != Operator.ELEMENT_OF)
+			throw exception("ConditionBase.Operator", anOperator.GUI_TEXT);
+
+		// check value
+		if (theValueSet == null)
+			throw exception(ValueSet.class.getSimpleName(), "null");
+
 		itsColumn = theConditionBase.getColumn();
 		itsOperator = theConditionBase.getOperator();
 		itsNominalValueSet = theValueSet;
@@ -140,7 +171,16 @@ public class Condition implements Comparable<Condition>
 	/** Condition for BINARY Column. */
 	public Condition(ConditionBase theConditionBase, boolean theValue)
 	{
-		itsColumn = theConditionBase.getColumn();
+		// check Column
+		Column aColumn = theConditionBase.getColumn();
+		if (aColumn.getType() != AttributeType.BINARY)
+			throw exception("ConditionBase.Column.AttributeType", aColumn.getType().toString());
+
+		// assume that ConditionBase checked validity of Column-Operator
+		// there is only one possibility
+		assert (theConditionBase.getOperator() == Operator.EQUALS);
+
+		itsColumn = aColumn;
 		itsOperator = theConditionBase.getOperator();
 		itsBinaryValue = theValue;
 	}
@@ -148,17 +188,63 @@ public class Condition implements Comparable<Condition>
 	/** Condition for NUMERIC Column, Interval. */
 	public Condition(ConditionBase theConditionBase, Interval theInterval)
 	{
-		itsColumn = theConditionBase.getColumn();
-		itsOperator = theConditionBase.getOperator();
+		// check Column
+		Column aColumn = theConditionBase.getColumn();
+		if (aColumn.getType() != AttributeType.NUMERIC)
+			throw exception("ConditionBase.Column.AttributeType", aColumn.getType().toString());
+
+		// assume that ConditionBase checked validity of Column-Operator
+		// Interval can only be used with BETWEEN
+		Operator anOperator = theConditionBase.getOperator();
+		if (anOperator != Operator.BETWEEN)
+			throw exception("ConditionBase.Operator", anOperator.GUI_TEXT);
+
+		// check value
+		if (theInterval == null)
+			throw exception(Interval.class.getSimpleName(), "null");
+
+		itsColumn = aColumn;
+		itsOperator = anOperator;
 		itsInterval = theInterval;
 	}
 
-	/** Condition for NUMERIC Column, single value. */
+	/** Condition for NUMERIC Column, single value, NaN is not allowed. */
 	public Condition(ConditionBase theConditionBase, float theValue)
 	{
-		itsColumn = theConditionBase.getColumn();
-		itsOperator = theConditionBase.getOperator();
+		// check Column
+		Column aColumn = theConditionBase.getColumn();
+		if (aColumn.getType() != AttributeType.NUMERIC)
+			throw exception("ConditionBase.Column.AttributeType", aColumn.getType().toString());
+
+		// assume that ConditionBase checked validity of Column-Operator
+		// check NUMERIC operators only
+		Operator anOperator = theConditionBase.getOperator();
+		switch (anOperator)
+		{
+			case EQUALS :
+				break;
+			case LESS_THAN_OR_EQUAL :
+				break;
+			case GREATER_THAN_OR_EQUAL :
+				break;
+			case BETWEEN :
+				throw exception("ConditionBase.Operator", anOperator.GUI_TEXT);
+			default :
+				throw new AssertionError(anOperator);
+		}
+
+		// check value
+		if (Float.isNaN(theValue))
+			throw exception("float value", "NaN");
+
+		itsColumn = aColumn;
+		itsOperator = anOperator;
 		itsNumericValue = theValue;
+	}
+
+	private static final IllegalArgumentException exception(String pre, String post)
+	{
+		return new IllegalArgumentException(pre + " can not be " + post);
 	}
 
 	public Column getColumn() { return itsColumn; }

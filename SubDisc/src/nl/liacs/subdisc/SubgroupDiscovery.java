@@ -71,8 +71,28 @@ public class SubgroupDiscovery extends MiningAlgorithm
 			itsQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), itsNrRows, theNrPositive);
 		itsQualityMeasureMinimum = itsSearchParameters.getQualityMeasureMinimum();
 
-		ConditionBase aConditionBase = new ConditionBase(aTC.getPrimaryTarget(), Operator.EQUALS);
-		Condition aCondition = new Condition(aConditionBase, aTC.getTargetValue());
+		Column aTarget = aTC.getPrimaryTarget();
+		ConditionBase aConditionBase = new ConditionBase(aTarget, Operator.EQUALS);
+		String aValue = aTC.getTargetValue();
+		Condition aCondition;
+		switch (aTarget.getType())
+		{
+			case NOMINAL :
+				aCondition = new Condition(aConditionBase, aValue);
+				break;
+			case NUMERIC :
+				throw new AssertionError(AttributeType.NUMERIC);
+			case ORDINAL :
+				throw new AssertionError(AttributeType.ORDINAL);
+			case BINARY :
+				if (!AttributeType.isValidBinaryValue(aValue))
+					throw new IllegalArgumentException(aValue + " is not a valid BINARY value");
+				aCondition = new Condition(aConditionBase, AttributeType.isValidBinaryTrueValue(aValue));
+				break;
+			default :
+				throw new AssertionError(aTarget.getType());
+		}
+
 		itsBinaryTarget = aTC.getPrimaryTarget().evaluate(aCondition);
 
 		itsResult = new SubgroupSet(itsSearchParameters.getMaximumSubgroups(), itsNrRows, itsBinaryTarget);

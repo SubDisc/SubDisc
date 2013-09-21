@@ -56,13 +56,22 @@ public class LoaderFraunhofer
 		}
 	}
 
-	// TODO MM
-	// KNIME and ExternalKnowledge do the same, merge code
+	/*
+	 * TODO MM
+	 * KNIME and ExternalKnowledge do the same, merge code
+	 *
+	 * example from svn/SubgroupDiscovery/publications/Sampling/CFTP/out.txt
+	 * no AND between conjunctions, just space
+	 * no space in Column names
+	 * space at EOL
+	 * 
+	 * 'spectacle-prescrip=myope age=presbyopic '
+	 * 'age=young tear-prod-rate=reduced spectacle-prescrip=hypermetrope '
+	 * 'age=young contact-lenses=soft spectacle-prescrip=hypermetrope '
+	 */
 	private ConditionList convertToConditionList(String theString)
 	{
 		ConditionList aConditionList = new ConditionList();
-		// fails if a column-name or value has a ' '
-		// splitting on ' AND ' would already be much more robust
 		String[] aConditions = theString.split(" ");
 		for (int i=0; i<aConditions.length; i++)
 		{
@@ -75,8 +84,32 @@ public class LoaderFraunhofer
 			// again, assuming that CFTP only uses the equality operator
 			Operator op = Operator.EQUALS;
 
+			// TODO MM / WD what types are allowed
+			// NOMINAL / NUMERIC / BINARY, or only NOMINAL?
+			// if so throw AssertionErrors
 			ConditionBase b = new ConditionBase(col, op);
-			aConditionList.add(new Condition(b, aRefinement[1]));
+			String aValue = aRefinement[1];
+			Condition aCondition;
+			switch (col.getType())
+			{
+				case NOMINAL :
+					aCondition = new Condition(b, aValue);
+					break;
+				case NUMERIC :
+					aCondition = new Condition(b, Float.parseFloat(aValue));
+					break;
+				case ORDINAL :
+					throw new AssertionError(AttributeType.ORDINAL);
+				case BINARY :
+					if (!AttributeType.isValidBinaryValue(aValue))
+						throw new IllegalArgumentException(aValue + " is not a valid BINARY value");
+					aCondition = new Condition(b, AttributeType.isValidBinaryTrueValue(aValue));
+					break;
+				default :
+					throw new AssertionError(col.getType());
+			}
+
+			aConditionList.add(aCondition);
 		}
 		return(aConditionList);
 	}

@@ -107,7 +107,28 @@ public class ExternalKnowledgeFileLoader
 				Operator op = Operator.fromString(sa[1]);
 
 				ConditionBase b = new ConditionBase(col, op);
-				aConditionList.add(new Condition(b, sa[2]));
+				String aValue = sa[2];
+				Condition aCondition;
+				switch (col.getType())
+				{
+					case NOMINAL :
+						aCondition = new Condition(b, aValue);
+						break;
+					case NUMERIC :
+						aCondition = new Condition(b, Float.parseFloat(aValue));
+						break;
+					case ORDINAL :
+						throw new AssertionError(AttributeType.ORDINAL);
+					case BINARY :
+						if (!AttributeType.isValidBinaryValue(aValue))
+							throw new IllegalArgumentException(aValue + " is not a valid BINARY value");
+						aCondition = new Condition(b, AttributeType.isValidBinaryTrueValue(aValue));
+						break;
+					default :
+						throw new AssertionError(col.getType());
+				}
+
+				aConditionList.add(aCondition);
 			}
 
 			theConditionLists.add(aConditionList);
