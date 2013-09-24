@@ -7,7 +7,7 @@ package nl.liacs.subdisc;
  */
 public class QualityMeasure
 {
-	private QM itsQualityMeasure;
+	private final QM itsQualityMeasure;
 	private final int itsNrRecords;
 
 	//SINGLE_NOMINAL
@@ -18,8 +18,8 @@ public class QualityMeasure
 	private LabelRankingMatrix itsAverageRankingMatrix = null;
 
 	//SINGLE_NUMERIC and SINGLE_ORDINAL
-	private float itsTotalAverage = 0.0f;
-	private double itsTotalSampleStandardDeviation = 0.0;
+	private float itsTotalAverage = Float.NaN;
+	private double itsTotalSampleStandardDeviation = Float.NaN;
 	private ProbabilityDensityFunction itsPDF; // pdf for entire dataset
 
 	//Bayesian
@@ -32,6 +32,19 @@ public class QualityMeasure
 	//SINGLE_NOMINAL
 	public QualityMeasure(QM theMeasure, int theTotalCoverage, int theTotalTargetCoverage)
 	{
+		if (theMeasure == null)
+			throw new IllegalArgumentException("QualityMeasure: theMeasure can not be null");
+		if (!QM.getQualityMeasures(TargetType.SINGLE_NOMINAL).contains(theMeasure))
+			throw new IllegalArgumentException("QualityMeasure: not a SINGLE_NOMINAL measure");
+		if (theMeasure == QM.CLAUDIO1 || theMeasure == QM.CLAUDIO2)
+			throw new IllegalArgumentException("QualityMeasure: use LabelRanking relevant constructor");
+		if (theTotalCoverage <= 0)
+			throw new IllegalArgumentException("QualityMeasure: theCoverage must be > 0");
+		if (theTotalTargetCoverage <= 0)
+			throw new IllegalArgumentException("QualityMeasure: theTotalTargetCoverage must be > 0");
+		if (theTotalCoverage < theTotalTargetCoverage)
+			throw new IllegalArgumentException("QualityMeasure: theTotalCoverage < theTotalTargetCoverage");
+
 		itsQualityMeasure = theMeasure;
 		itsNrRecords = theTotalCoverage;
 		itsTotalTargetCoverage = theTotalTargetCoverage;
@@ -40,6 +53,17 @@ public class QualityMeasure
 	//label ranking
 	public QualityMeasure(QM theMeasure, int theTotalCoverage, LabelRanking theAverageRanking, LabelRankingMatrix theAverageRankingMatrix)
 	{
+		if (theMeasure == null)
+			throw new IllegalArgumentException("QualityMeasure: theMeasure can not be null");
+		if (theMeasure != QM.CLAUDIO1 && theMeasure != QM.CLAUDIO2)
+			throw new IllegalArgumentException("QualityMeasure: not a LabelRanking measure");
+		if (theTotalCoverage <= 0)
+			throw new IllegalArgumentException("QualityMeasure: theCoverage must be > 0");
+		if (theAverageRanking == null)
+			throw new IllegalArgumentException("QualityMeasure: theAverageRanking can not be null");
+		if (theAverageRankingMatrix == null)
+			throw new IllegalArgumentException("QualityMeasure: theAverageRankingMatrix can not be null");
+
 		itsQualityMeasure = theMeasure;
 		itsNrRecords = theTotalCoverage;
 		itsAverageRanking = theAverageRanking;
@@ -51,12 +75,26 @@ public class QualityMeasure
 	//SINGLE_NUMERIC
 	public QualityMeasure(QM theMeasure, int theTotalCoverage, float theTotalSum, float theTotalSSD, ProbabilityDensityFunction theDataPDF)
 	{
+		if (theMeasure == null)
+			throw new IllegalArgumentException("QualityMeasure: theMeasure can not be null");
+		if (!QM.getQualityMeasures(TargetType.SINGLE_NUMERIC).contains(theMeasure))
+			throw new IllegalArgumentException("QualityMeasure: not a SINGLE_NUMERIC measure");
+		if (theTotalCoverage <= 0)
+			throw new IllegalArgumentException("QualityMeasure: theTotalCoverage must be > 0");
+		if (Float.isNaN(theTotalSum) || Float.isInfinite(theTotalSum))
+			throw new IllegalArgumentException("QualityMeasure: theTotalSum can not be NaN or (-)Infinity");
+		if (Float.isNaN(theTotalSSD) || Float.isInfinite(theTotalSSD) || theTotalSSD < 0.0f)
+			throw new IllegalArgumentException("QualityMeasure: theTotalSSD can not be NaN, (-)Infinity, or < 0.0f");
+		if (theDataPDF == null)
+			throw new IllegalArgumentException("QualityMeasure: theDataPDF can not be null");
+
 		itsQualityMeasure = theMeasure;
 		itsNrRecords = theTotalCoverage;
-		if (itsNrRecords > 0)
-			itsTotalAverage = theTotalSum/itsNrRecords;
+		itsTotalAverage = theTotalSum/itsNrRecords;
 		if (itsNrRecords > 1)
 			itsTotalSampleStandardDeviation = Math.sqrt(theTotalSSD/(itsNrRecords-1));
+		else
+			itsTotalSampleStandardDeviation = 0.0f;
 		itsPDF = theDataPDF;
 	}
 
@@ -100,9 +138,31 @@ public class QualityMeasure
 	 * <li>n(B) = TotalTargetCoverage (of the data),</li>
 	 * <li>N = TotalCoverage (number of rows in the data).</li>
 	 * </ul>
+	 * 
+	 * The results are often not well defined when (theCoverage = 0), but no
+	 * check is done on this for performance reasons.
+	 * The following should hold, but are not checked for:
+	 * (theCountHeadBody >= 0)
+	 * (theCoverage > 0),
+	 * (theCountHeadBody <= theCoverage),
+	 * (theCountHeadBody <= theTotalTargetCoverage for this QualityMeasure),
+	 * (theCoverage <= theTotalCoverage for this QualityMeasure).
+	 */
+	/* TODO MM
+	 * setup of class forces switch(QM) on each call, useless expense
+	 * 
+	 * FIXME MM
+	 * float should not be used to represent int counts
+	 * when theParameter > 2^24 rounding errors occur
+	 * float has 23 significants, + 1 implicit, so it can represent 16M int
+	 * this is made worse, as sometimes these floats are also multiplied
 	 */
 	public float calculate(float theCountHeadBody, float theCoverage)
 	{
+		// check (theCountHeadBody <= theCoverage)
+		// check (theCountHeadBody <= itsTotalTargetCoverage)
+		// check (theCoverage <= itsNrRecords)
+
 		float aResult = calculate(itsQualityMeasure, itsNrRecords, itsTotalTargetCoverage, theCountHeadBody, theCoverage);
 		if (Float.isNaN(aResult)) // FIXME MM this does not seem wise, see comment below
 			return 0.0f;
@@ -113,17 +173,19 @@ public class QualityMeasure
 	//SINGLE_NOMINAL =======================================================
 
 	/*
-	 * FIXME MM each case should check the result value instead of
-	 * returning junk and let calculate(float, float) handle that
+	 * FIXME MM
+	 * each case should check the result value instead of returning junk and
+	 * let calculate(float, float) handle that
+	 * some measures do not handle B = 0
 	 */
-	public static float calculate(QM theMeasure, int theTotalCoverage, float theTotalTargetCoverage, float theCountHeadBody, float theCoverage)
+	private static float calculate(QM theMeasure, int theTotalCoverage, float theTotalTargetCoverage, float theCountHeadBody, float theCoverage)
 	{
 		float aCountNotHeadBody			= theCoverage - theCountHeadBody;
 		float aTotalTargetCoverageNotBody	= theTotalTargetCoverage - theCountHeadBody;
 		float aCountNotHeadNotBody		= theTotalCoverage - (theTotalTargetCoverage + aCountNotHeadBody);
-		float aCountBody			= aCountNotHeadBody + theCountHeadBody;
+		float aCountBody			= aCountNotHeadBody + theCountHeadBody; // == theCoverage
 
-		float returnValue = -10f; // FIXME MM Bad measure value for default
+		float returnValue = Float.NaN;
 		switch (theMeasure)
 		{
 			case WRACC:
@@ -240,7 +302,7 @@ public class QualityMeasure
 		float aCoverage = (float) theCoverage;
 		float aTotalCount = (float) theTotalCount;
 		float aCountHeadPropensityScore = (float) theCountHeadPropensityScore;
-		float returnValue = -10.0f; // FIXME MM Bad measure value for default
+		float returnValue = Float.NaN;
 
 		switch (theMeasure)
 		{
@@ -524,6 +586,12 @@ public class QualityMeasure
 
 	public final float computeLabelRankingDistance(QM theMeasure, int theSupport, LabelRankingMatrix theSubgroupRankingMatrix)
 	{
+		// why is this an argument
+		assert (itsQualityMeasure == theMeasure);
+
+		if (theMeasure != QM.CLAUDIO1 && theMeasure != QM.CLAUDIO2)
+			throw new IllegalArgumentException("Invalid argument: " + theMeasure);
+
 		Log.logCommandLine("computeLabelRankingDistance ===========================================");
 		Log.logCommandLine("support: " + Math.sqrt(theSupport));
 		Log.logCommandLine("subgroup matrix:");
@@ -534,7 +602,7 @@ public class QualityMeasure
 			aDistance = itsAverageRankingMatrix.distance(theSubgroupRankingMatrix);
 		else //CLAUDIO2
 			aDistance = itsAverageRankingMatrix.altDistance(theSubgroupRankingMatrix);
-		
+
 		//aDistance = aDistance*itsAverageRankingMatrix.homogeneity(theSubgroupRankingMatrix);
 		Log.logCommandLine("distance: " + aDistance);
 
@@ -836,10 +904,21 @@ public class QualityMeasure
 
 	//Baysian ==============================================================
 
-	public QualityMeasure(SearchParameters theSearchParameters, DAG theDAG, int theNrRecords)
+	public QualityMeasure(SearchParameters theSearchParameters, DAG theDAG, int theTotalCoverage)
 	{
+		if (theSearchParameters == null)
+			throw new IllegalArgumentException("QualityMeasure: theSearchParameters can not be null");
+		if (theSearchParameters.getQualityMeasure() == null)
+			throw new IllegalArgumentException("QualityMeasure: theSearchParameters.getQualityMeasure() can not be null");
+		if (!QM.getQualityMeasures(TargetType.MULTI_LABEL).contains(theSearchParameters.getQualityMeasure()))
+			throw new IllegalArgumentException("QualityMeasure: not a MULTI_LABEL measure");
+		if (theDAG == null)
+			throw new IllegalArgumentException("QualityMeasure: theDAG can not be null");
+		if (theTotalCoverage <= 0)
+			throw new IllegalArgumentException("QualityMeasure: theTotalCoverage must be > 0");
+
 		itsQualityMeasure = theSearchParameters.getQualityMeasure();
-		itsNrRecords = theNrRecords;
+		itsNrRecords = theTotalCoverage;
 		itsDAG = theDAG;
 		itsNrNodes = itsDAG.getSize();
 		itsAlpha = theSearchParameters.getAlpha();
@@ -862,13 +941,6 @@ public class QualityMeasure
 			}
 			default :
 			{
-				Log.logCommandLine(
-						String.format("%s.calculate(): invalid measure %s (only '%s' and '%s' allowed).",
-								QualityMeasure.class.getSimpleName(),
-								itsQualityMeasure,
-								QM.WEED,
-								QM.EDIT_DISTANCE));
-
 				/*
 				 * if the QM is valid for this TargetType
 				 * 	it is not implemented here
