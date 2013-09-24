@@ -84,9 +84,7 @@ public class LoaderFraunhofer
 			// again, assuming that CFTP only uses the equality operator
 			Operator op = Operator.EQUALS;
 
-			// TODO MM / WD what types are allowed
-			// NOMINAL / NUMERIC / BINARY, or only NOMINAL?
-			// if so throw AssertionErrors
+			// NOMINAL and BINARY are allowed, NUMERIC is not
 			ConditionBase b = new ConditionBase(col, op);
 			String aValue = aRefinement[1];
 			Condition aCondition;
@@ -96,8 +94,7 @@ public class LoaderFraunhofer
 					aCondition = new Condition(b, aValue);
 					break;
 				case NUMERIC :
-					aCondition = new Condition(b, Float.parseFloat(aValue));
-					break;
+					throw new AssertionError(AttributeType.NUMERIC);
 				case ORDINAL :
 					throw new AssertionError(AttributeType.ORDINAL);
 				case BINARY :
