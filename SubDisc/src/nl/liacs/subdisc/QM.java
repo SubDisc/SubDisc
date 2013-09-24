@@ -48,8 +48,8 @@ public enum QM implements EnumInterface
 	SQUARED_HELLINGER_WEIGHTED_ADJUSTED	("Adjusted Squared Hellinger distance",	"0.0",	TargetType.SINGLE_NUMERIC),
 	KULLBACK_LEIBLER			("Kullback-Leibler divergence",		"0.0",	TargetType.SINGLE_NUMERIC),
 	KULLBACK_LEIBLER_WEIGHTED		("Weighted Kullback-Leibler divergence","0.0",	TargetType.SINGLE_NUMERIC),
-	CWRACC		("CWRAcc",		"0.0",	TargetType.SINGLE_NUMERIC),
-	CWRACC_UNWEIGHTED	("CWRAcc Unweighted",	"0.0",TargetType.SINGLE_NUMERIC),
+	CWRACC					("CWRAcc",		"0.0",	TargetType.SINGLE_NUMERIC),
+	CWRACC_UNWEIGHTED			("CWRAcc Unweighted",	"0.0",TargetType.SINGLE_NUMERIC),
 
 	// SINGLE_ORDINAL quality measures
 	// NOTE when adding a new SINGLE_ORDINAL QM -> add it to requiredStats()
@@ -75,11 +75,10 @@ public enum QM implements EnumInterface
 	COSTS_WRACC		("Costs WRAcc",		"0.0",	TargetType.DOUBLE_CORRELATION),
 	CWTPD			("CWTPD", 		"0.0", 	TargetType.DOUBLE_CORRELATION),
 	TMCC			("TMCC", 		"0.0", 	TargetType.DOUBLE_CORRELATION),
-	MCC				("MCC", 		"0.0", 	TargetType.DOUBLE_CORRELATION),
-	PDC				("PDC", 		"0.0", 	TargetType.DOUBLE_CORRELATION),
-    MVPDC			("MVPDC", 		"0.0", 	TargetType.DOUBLE_CORRELATION),
-	
-    
+	MCC			("MCC", 		"0.0", 	TargetType.DOUBLE_CORRELATION),
+	PDC			("PDC", 		"0.0", 	TargetType.DOUBLE_CORRELATION),
+	MVPDC			("MVPDC", 		"0.0", 	TargetType.DOUBLE_CORRELATION),
+
 	// DOUBLE_REGRESSION quality measures
 	LINEAR_REGRESSION	("Significance of Slope Difference", "0.0", TargetType.DOUBLE_REGRESSION),
 	COOKS_DISTANCE		("Cook's Distance",	"0.0",	TargetType.DOUBLE_REGRESSION);
