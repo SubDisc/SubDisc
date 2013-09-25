@@ -127,4 +127,14 @@ public enum Operator
 			set.add(o);
 		return Collections.unmodifiableSet(set);
 	}
+
+	// for future code safety
+	static Set<Operator> getOperators(AttributeType theAttributeType)
+	{
+		final EnumSet<Operator> set = EnumSet.noneOf(Operator.class);
+		for (Operator o : Operator.values())
+			if (o.isValidFor(theAttributeType))
+				set.add(o);
+		return Collections.unmodifiableSet(set);
+	}
 }
