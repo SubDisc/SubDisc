@@ -131,7 +131,9 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		itsMainWindow = theMainWindow;
 		itsMinimumCoverage = itsSearchParameters.getMinimumCoverage();
 		itsMaximumCoverage = (int) (itsNrRows * itsSearchParameters.getMaximumCoverageFraction());
-		itsQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), itsNrRows, 100); //TODO
+		// ensure theCountHeadBody <= theCoverage
+		itsQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), itsNrRows, itsNrRows); //TODO
+		//itsQualityMeasure = null; // itsQualityMeasure is not needed
 		itsQualityMeasureMinimum = itsSearchParameters.getQualityMeasureMinimum();
 
 		//N.B.: Temporary lines for fetching Cook's experimental statistics
@@ -694,13 +696,20 @@ public class SubgroupDiscovery extends MiningAlgorithm
 			// members-based domain, no empty Subgroups will occur
 			Column c = aConditionBase.getColumn();
 			Subgroup aNewSubgroup = null;
+
 			// switch for now, will separate code paths when numeric EQUALS is fixed 
 			switch (c.getType())
 			{
 				case NOMINAL :
 				{
+					// need to check for useless additions
+//					String aLastValue = getNominalValueToCheck(theRefinement);
+
 					for (String aValue : c.getUniqueNominalBinaryDomain(theMembers))
 					{
+						// check usefulness
+//						if (aValue == aLastValue)
+//							continue;
 						aNewSubgroup = theRefinement.getRefinedSubgroup(aValue);
 						checkAndLog(aNewSubgroup, anOldCoverage);
 					}
@@ -720,8 +729,14 @@ public class SubgroupDiscovery extends MiningAlgorithm
 					throw new AssertionError(AttributeType.ORDINAL);
 				case BINARY :
 				{
+					// need to check for useless additions
+//					String aLastValue = getBinaryValueToCheck(theRefinement);
+
 					for (String aValue : c.getUniqueNominalBinaryDomain(theMembers))
 					{
+						// check usefulness
+//						if (aValue == aLastValue)
+//							continue;
 						aNewSubgroup = theRefinement.getRefinedSubgroup(aValue.equals("1"));
 						checkAndLog(aNewSubgroup, anOldCoverage);
 					}
@@ -1526,5 +1541,201 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	public RegressionMeasure getRegressionMeasureBase()
 	{
 		return itsBaseRM;
+	}
+
+	/* *********************************************************************
+	 * REMOVE USELESS REFINEMENTS - MAY GO INTO DIFFERENT CLASS(ES)
+	 **********************************************************************/
+	private final class Filter
+	{
+		/*
+		 * EQUALS tests needed on
+		 * NOMINAL: when Operator = EQUALS (thus not in set-valued mode)
+		 * NUMERIC: when NominalOperatorSetting.IncludesEquals() == true
+		 * BINARY : when Operator = EQUALS (always in current code)
+		 */
+		private final boolean isNominalEqualsTestRequired;
+		private final boolean isNumericEqualsTestRequired;
+		private final boolean isBinaryEqualsTestRequired;
+		private final boolean isDepthFirstNumericAll;
+
+		// assumes EQUALS is the only binary operator, see static below
+		Filter(SearchParameters theSearchParameters)
+		{
+			isNominalEqualsTestRequired = theSearchParameters.getNominalSets();
+			isNumericEqualsTestRequired = theSearchParameters.getNumericOperatorSetting().includesEquals();
+			isBinaryEqualsTestRequired = true;
+			isDepthFirstNumericAll = theSearchParameters.getSearchStrategy() == SearchStrategy.DEPTH_FIRST &&
+						theSearchParameters.getNumericStrategy() == NumericStrategy.NUMERIC_ALL;
+		}
+
+		// tests on existing ConditionList and 'value-free' Refinement
+		boolean isUseful(ConditionList theConditionList, Refinement theRefinement)
+		{
+			ConditionBase b = theRefinement.getConditionBase();
+			Column c = b.getColumn();
+
+			// this is only for DEPTH_FIRST - NUMERIC_ALL
+			// if c.index <= last.index, where last is the last
+			// Column in theConditionList, evaluating the Refinement
+			// is not needed (by construction of search algorithm)
+			// reduces O(n^2) to O( (n*(n-1)) / 2)
+			// TODO MM
+			// could be in RefinementList, will decide later
+			// false for most settings, skips fast
+			if (isDepthFirstNumericAll &&
+				(c.getIndex() < theConditionList.get(theConditionList.size()-1).getColumn().getIndex()))
+				return false;
+
+			// true most of the time, return fast
+			if (!isOverlap(theConditionList, c))
+				return true;
+
+			// there is some overlap, extra tests are needed
+
+			// EQUALS test
+			switch (c.getType())
+			{
+				case NOMINAL :
+				{
+					if (isNominalEqualsTestRequired && hasOverridingEquals(theConditionList, c))
+						return false;
+					break;
+				}
+				case NUMERIC :
+				{
+					if (isNumericEqualsTestRequired && hasOverridingEquals(theConditionList, c))
+						return false;
+					break;
+				}
+				case BINARY :
+				{
+					if (isBinaryEqualsTestRequired && hasOverridingEquals(theConditionList, c))
+						return false;
+					break;
+				}
+				default :
+					throw new AssertionError(c.getType());
+			}
+
+			return false;
+		}
+
+		// tests on existing ConditionList and Condition with value
+		boolean isUseful()
+		{
+			return false;
+		}
+	}
+	static
+	{
+		// if asserts fail isBinaryEqualsTestRequired needs update
+		// implemented as static block such that it is evaluated only
+		// once at class initialisation
+		// and so asserts are tested only once also
+		// code is not executed when JVM is not started with -ea
+		assert(Operator.getOperators(AttributeType.BINARY).size() == 1);
+		assert((Operator.getOperators(AttributeType.BINARY).contains(Operator.EQUALS)));
+	}
+
+	/*
+	 * TODO MM
+	 * could be ConditionList method, will decide later
+	 * method returns false most of the time
+	 */
+	private static final boolean isOverlap(ConditionList theConditionList, Column theColumn)
+	{
+		for (Condition c : theConditionList)
+			if (c.getColumn() == theColumn)
+				return true;
+		return false;
+	}
+
+	/*
+	 * TODO MM
+	 * could be ConditionList method, will decide later
+	 * 
+	 * hasEquals() to be used in conjunction with hasRelevantEquals() if it
+	 * returns true
+	 * split into multiple methods to make test as light as possible
+	 * as it will be performed on every RefinementList
+	 * split may not improve speed though, will need to profile this
+	 * 
+	 * If the current ConditionList  contains a Condition of the form
+	 * (Column EQUALS value), and Refinement.ConditionBase.Column == Column,
+	 * then non of the Refinements are useful.
+	 * For Refinement (Column EQUALS v), where (v == value), the same
+	 * Subgroup is created. When (v != value), the created Subgroup will be
+	 * empty.
+	 * This is true for NOMINAL, BINARY and NUMERIC Columns.
+	 * This is true for BEAM and non-BEAM SearchSettings.
+	 */
+	private static final boolean hasOverridingEquals(ConditionList theConditionList, Column theColumn)
+	{
+		return hasEquals(theConditionList) && hasRelevantEquals(theConditionList, theColumn);
+	}
+	private static final boolean hasEquals(ConditionList theConditionList)
+	{
+		for (Condition c : theConditionList)
+			if (c.getOperator() == Operator.EQUALS)
+				return true;
+
+		// no EQUALS
+		return false;
+	}
+	private static final boolean hasRelevantEquals(ConditionList theConditionList, Column theColumn)
+	{
+		for (Condition c : theConditionList)
+			if (c.getOperator() == Operator.EQUALS && c.getColumn() == theColumn)
+				return true;
+
+		// no EQUALS or not about the Refinement Column
+		return false;
+	}
+
+	/*
+	 * FIXME MM never add an already present Condition, it is never useful
+	 * 
+	 * there is no use in adding a Condition identical to the last Condition
+	 * if this Refinement is not about the last Condition.Column in the
+	 * Subgroup to be refined, such a check is not needed
+	 */
+	private static final boolean isLastConditionCheckNeeded(Refinement theRefinement)
+	{
+		ConditionList aList = theRefinement.getSubgroup().getConditions();
+		Condition aLast = aList.get(aList.size()-1);
+
+		return (aLast.getColumn() == theRefinement.getConditionBase().getColumn());
+	}
+
+	/*
+	 * there is no use in adding a Condition identical to the last Condition
+	 * 
+	 * if the Refinement is about the same Column last Condition.Column in
+	 * the ConditionList of the Subgroup to be refined, this method returns
+	 * the value that should be checked for
+	 * 
+	 * else this method returns null
+	 */
+	private static final String getNominalValueToCheck(Refinement theRefinement)
+	{
+		ConditionList aList = theRefinement.getSubgroup().getConditions();
+		Condition aLast = aList.get(aList.size()-1);
+
+		if (aLast.getColumn() == theRefinement.getConditionBase().getColumn())
+			return aLast.getNominalValue();
+
+		return null;
+	}
+	// same as above, code should be updated to not use String for boolean
+	private static final String getBinaryValueToCheck(Refinement theRefinement)
+	{
+		ConditionList aList = theRefinement.getSubgroup().getConditions();
+		Condition aLast = aList.get(aList.size()-1);
+
+		if (aLast.getColumn() == theRefinement.getConditionBase().getColumn())
+			return aLast.getBinaryValue() ? "1" : "0";
+
+		return null;
 	}
 }
