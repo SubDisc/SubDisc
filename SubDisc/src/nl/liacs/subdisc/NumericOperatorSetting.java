@@ -12,6 +12,12 @@ public enum NumericOperatorSetting implements EnumInterface
 			return EnumSet.of(Operator.LESS_THAN_OR_EQUAL,
 						Operator.GREATER_THAN_OR_EQUAL);
 		}
+
+		@Override
+		boolean includesEquals()
+		{
+			return false;
+		}
 	},
 	NUMERIC_LEQ("<html>&#8804;</html>")
 	{
@@ -20,6 +26,12 @@ public enum NumericOperatorSetting implements EnumInterface
 		{
 			return EnumSet.of(Operator.LESS_THAN_OR_EQUAL);
 		}
+
+		@Override
+		boolean includesEquals()
+		{
+			return false;
+		}
 	},
 	NUMERIC_GEQ("<html>&#8805;</html>")
 		{
@@ -27,6 +39,12 @@ public enum NumericOperatorSetting implements EnumInterface
 		EnumSet<Operator> getOperators()
 		{
 			return EnumSet.of(Operator.GREATER_THAN_OR_EQUAL);
+		}
+
+		@Override
+		boolean includesEquals()
+		{
+			return false;
 		}
 	},
 	NUMERIC_ALL("<html>&#8804;, &#8805;, =</html>")
@@ -38,6 +56,12 @@ public enum NumericOperatorSetting implements EnumInterface
 						Operator.GREATER_THAN_OR_EQUAL,
 						Operator.EQUALS);
 		}
+
+		@Override
+		boolean includesEquals()
+		{
+			return true;
+		}
 	},
 	NUMERIC_EQ("=")
 	{
@@ -46,6 +70,12 @@ public enum NumericOperatorSetting implements EnumInterface
 		{
 			return EnumSet.of(Operator.EQUALS);
 		}
+
+		@Override
+		boolean includesEquals()
+		{
+			return true;
+		}
 	},
 	NUMERIC_INTERVALS("in")
 	{
@@ -53,6 +83,12 @@ public enum NumericOperatorSetting implements EnumInterface
 		EnumSet<Operator> getOperators()
 		{
 			return EnumSet.of(Operator.BETWEEN);
+		}
+
+		@Override
+		boolean includesEquals()
+		{
+			return false;
 		}
 	};
 
@@ -71,6 +107,7 @@ public enum NumericOperatorSetting implements EnumInterface
 
 	// enforce implementation for new NumericOperatorSettings
 	abstract EnumSet<Operator> getOperators();
+	abstract boolean includesEquals();
 
 	// uses Javadoc from EnumInterface
 	@Override
@@ -133,7 +170,12 @@ public enum NumericOperatorSetting implements EnumInterface
 		return NumericOperatorSetting.NUMERIC_NORMAL;
 	}
 
-	public static boolean check(NumericOperatorSetting theNO, Operator theOperator)
+	/*
+	 * package-private (not in public API)
+	 * deprecated, used only in the now obsolete RefinementList constructor 
+	 */
+	@Deprecated
+	static boolean check(NumericOperatorSetting theNO, Operator theOperator)
 	{
 		if (theNO == NUMERIC_NORMAL && (theOperator == Operator.LESS_THAN_OR_EQUAL || theOperator == Operator.GREATER_THAN_OR_EQUAL))
 			return true;
