@@ -52,6 +52,8 @@ public enum NumericOperatorSetting implements EnumInterface
 		@Override
 		EnumSet<Operator> getOperators()
 		{
+			// FIXME MM put EQUALS first
+			// see SubgroupDiscovery.createsRedundantEquals()
 			return EnumSet.of(Operator.LESS_THAN_OR_EQUAL,
 						Operator.GREATER_THAN_OR_EQUAL,
 						Operator.EQUALS);
@@ -147,7 +149,7 @@ public enum NumericOperatorSetting implements EnumInterface
 		return NumericOperatorSetting.getDefault();
 	}
 
-	// EnumSet
+	// not an EnumSet, List enforces order of Operators in GUI presentation
 	public static List<NumericOperatorSetting> getNormalValues()
 	{
 		List<NumericOperatorSetting> aResult = new ArrayList<NumericOperatorSetting>(5);
