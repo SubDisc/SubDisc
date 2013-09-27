@@ -247,6 +247,8 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		if (theEndTime <= theBeginTime)
 			theEndTime = Long.MAX_VALUE;
 
+//		DebugFilter aFilter = new DebugFilter(itsSearchParameters);
+
 // TODO MM DEBUG only, set counts to 0
 //RefinementList.COUNT.set(0);
 //RefinementList.ADD.set(0);
@@ -269,6 +271,10 @@ public class SubgroupDiscovery extends MiningAlgorithm
 						break;
 
 					Refinement aRefinement = aRefinementList.get(i);
+
+//					if (!aFilter.isUseful(aRefinement))
+//						continue;
+
 					ConditionBase aConditionBase = aRefinement.getConditionBase();
 					// if refinement is (num_attr = value) then treat it as nominal
 					// using EQUALS for numeric conditions is bad, see evaluateNominalBinaryRefinements()
@@ -1549,33 +1555,62 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	private final class Filter
 	{
 		/*
+		 * for Condition-free based checks
+		 * 
 		 * EQUALS tests needed on
 		 * NOMINAL: when Operator = EQUALS (thus not in set-valued mode)
 		 * NUMERIC: when NominalOperatorSetting.IncludesEquals() == true
-		 * BINARY : when Operator = EQUALS (always in current code)
+		 * BINARY : when Operator = EQUALS (always true in current code)
 		 */
 		private final boolean isNominalEqualsTestRequired;
 		private final boolean isNumericEqualsTestRequired;
 		private final boolean isBinaryEqualsTestRequired;
-		private final boolean isDepthFirstNumericAll;
+		private final boolean isDepthFirstNumericAllStrategy;
+		/* for Condition based checks */
+		private final boolean isBreadthFirstNumericAllStrategyNumericAllOperator;
+		private final boolean isNumericNormalOrNumericAll;
 
 		// assumes EQUALS is the only binary operator, see static below
 		Filter(SearchParameters theSearchParameters)
 		{
-			isNominalEqualsTestRequired = theSearchParameters.getNominalSets();
-			isNumericEqualsTestRequired = theSearchParameters.getNumericOperatorSetting().includesEquals();
+			// for EQUALS tests
+			isNominalEqualsTestRequired = !theSearchParameters.getNominalSets();
+			NumericOperatorSetting o = theSearchParameters.getNumericOperatorSetting();
+			isNumericEqualsTestRequired = o.includesEquals();
 			isBinaryEqualsTestRequired = true;
-			isDepthFirstNumericAll = theSearchParameters.getSearchStrategy() == SearchStrategy.DEPTH_FIRST &&
-						theSearchParameters.getNumericStrategy() == NumericStrategy.NUMERIC_ALL;
+			SearchStrategy s = theSearchParameters.getSearchStrategy();
+			NumericStrategy n = theSearchParameters.getNumericStrategy();
+			isDepthFirstNumericAllStrategy =
+				s == SearchStrategy.DEPTH_FIRST &&
+				n == NumericStrategy.NUMERIC_ALL;
+
+			// [ (C >= x)  ^ ... ^ (C <= x) ] -> [ (C = x)  ^ ... ]
+			isBreadthFirstNumericAllStrategyNumericAllOperator =
+				s == SearchStrategy.BREADTH_FIRST &&
+				n == NumericStrategy.NUMERIC_ALL &&
+				o == NumericOperatorSetting.NUMERIC_ALL;
+
+			// [ (C >= x)  ^ ... ^ (C <= x) ] ^ (C.op.v) is useless
+			isNumericNormalOrNumericAll =
+				o == NumericOperatorSetting.NUMERIC_NORMAL ||
+				o == NumericOperatorSetting.NUMERIC_ALL;
 		}
 
 		// tests on existing ConditionList and 'value-free' Refinement
-		boolean isUseful(ConditionList theConditionList, Refinement theRefinement)
+		boolean isUseful(Refinement theRefinement)
 		{
+			// TODO MM could create Refinement.isSelfReferencing()
+			// to indicate that Refinement is about a Column that
+			// already occurs in the ConditionList for its Subgroup
+			ConditionList aConditionList = theRefinement.getSubgroup().getConditions();
+
+			if (aConditionList.size() == 0)
+				return true;
+
 			ConditionBase b = theRefinement.getConditionBase();
 			Column c = b.getColumn();
 
-			// this is only for DEPTH_FIRST - NUMERIC_ALL
+			// this is only for DEPTH_FIRST - Strategy NUMERIC_ALL
 			// if c.index <= last.index, where last is the last
 			// Column in theConditionList, evaluating the Refinement
 			// is not needed (by construction of search algorithm)
@@ -1583,12 +1618,20 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			// TODO MM
 			// could be in RefinementList, will decide later
 			// false for most settings, skips fast
-			if (isDepthFirstNumericAll &&
-				(c.getIndex() < theConditionList.get(theConditionList.size()-1).getColumn().getIndex()))
-				return false;
+			if (isDepthFirstNumericAllStrategy)
+			{
+				Condition aLast = aConditionList.get(aConditionList.size()-1);
+				int cmp = c.getIndex() - aLast.getColumn().getIndex();
+				if (cmp < 0)
+					return false;
+				if (cmp == 0)
+					if (b.getOperator().ordinal() <= aLast.getOperator().ordinal())
+						return false;
+				// else continue with other checks
+			}
 
 			// true most of the time, return fast
-			if (!isOverlap(theConditionList, c))
+			if (!isOverlap(aConditionList, c))
 				return true;
 
 			// there is some overlap, extra tests are needed
@@ -1598,19 +1641,19 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			{
 				case NOMINAL :
 				{
-					if (isNominalEqualsTestRequired && hasOverridingEquals(theConditionList, c))
+					if (isNominalEqualsTestRequired && hasOverridingEquals(aConditionList, c))
 						return false;
 					break;
 				}
 				case NUMERIC :
 				{
-					if (isNumericEqualsTestRequired && hasOverridingEquals(theConditionList, c))
+					if (isNumericEqualsTestRequired && hasOverridingEquals(aConditionList, c))
 						return false;
 					break;
 				}
 				case BINARY :
 				{
-					if (isBinaryEqualsTestRequired && hasOverridingEquals(theConditionList, c))
+					if (isBinaryEqualsTestRequired && hasOverridingEquals(aConditionList, c))
 						return false;
 					break;
 				}
@@ -1618,24 +1661,141 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 					throw new AssertionError(c.getType());
 			}
 
-			return false;
+			// can not find a reason why Refinement should be denied
+			return true;
 		}
 
 		// tests on existing ConditionList and Condition with value
-		boolean isUseful()
+		// NOTE requires Condition to be formed first, even when useless
+		boolean isUseful(ConditionList theConditionList, Condition theCondition)
 		{
-			return false;
+			final int aSize = theConditionList.size();
+			if (aSize == 0)
+				return true;
+
+			final Column aColumn = theCondition.getColumn();
+
+			// if there is no overlap, Refinement is useful
+			if (!isOverlap(theConditionList, aColumn))
+				return true;
+
+			// if identical Condition exists, Refinement is useless
+			if (contains(theConditionList, theCondition))
+				return false;
+
+			// specific tests for NUMERIC Columns
+			// would hold for ORDINAL also, but is not implemented
+			assert (aColumn.getType() != AttributeType.ORDINAL);
+			if (aColumn.getType() != AttributeType.NUMERIC)
+				return true;
+
+			// NOTE for NumericOperatorSetting NUMERIC_ALL any
+			// ConditionList with a Condition (C=x) would not allow
+			// addition of any other Condition about C in the
+			// 'value-free' pre-check
+			// isUseful(ConditionList, Refinement)
+			// and since there is overlap between the ConditionList
+			// and the Condition
+			// and the Column is NUMERIC
+			// the ConditionList will be guaranteed to include
+			// at least one LEQ/ GEQ about the relevant Column
+
+			// specific case for BREADTH_FIRST
+			// could hold for DEPTH_FIRST also, see implementation
+			// != EQUALS assumes LEQ or GEQ
+			if (isBreadthFirstNumericAllStrategyNumericAllOperator &&
+				aSize > 0 &&
+				theCondition.getOperator() != Operator.EQUALS)
+			{
+				if (createsRedundantEquals(theConditionList, theCondition))
+					return false;
+			}
+
+			// relevant for NUMERIC_NORMAL and NUMERIC_ALL
+			if (isNumericNormalOrNumericAll && aSize > 1)
+				if (hasRelevantEqualsThroughLeqGeq(theConditionList, aColumn))
+					return false;
+
+			return true;
 		}
 	}
 	static
 	{
-		// if asserts fail isBinaryEqualsTestRequired needs update
 		// implemented as static block such that it is evaluated only
 		// once at class initialisation
 		// and so asserts are tested only once also
 		// code is not executed when JVM is not started with -ea
-		assert(Operator.getOperators(AttributeType.BINARY).size() == 1);
-		assert((Operator.getOperators(AttributeType.BINARY).contains(Operator.EQUALS)));
+
+		// if assert fails isBinaryEqualsTestRequired needs update
+		assert(equalsIsOnlyBinaryOperator());
+		// if assert fails *** needs update
+		assert(numericAll());
+		// if assert fails *** needs update
+		assert(numericLeqGeq());
+		// if assert fails *** needs update
+		// FIXME MM this does not currently hold, see ***
+		//assert(operatorOrder());
+	}
+	/* test assumption that EQUALS is only Operator for BINARY Columns */
+	private static final boolean equalsIsOnlyBinaryOperator()
+	{
+		Set<Operator> ops = Operator.getOperators(AttributeType.BINARY);
+		return (ops.size() == 1) && (ops.contains(Operator.EQUALS));
+	}
+	/*
+	 * test assumption that NUMERIC_ALL is the only NumericOperatorSetting
+	 * that may cause redundancy of the form:
+	 * [ (C >= x)  ^ (C <= x) ^ ... ] -> which selects [ (C = x)  ^ ... ]
+	 * for DEPTH_FIRST-NUMERIC_ALL (C = x) is created on depth=1
+	 * and combined with every relevant other Condition
+	 */
+	private static final boolean numericAll()
+	{
+		for (NumericOperatorSetting s : NumericOperatorSetting.values())
+		{
+			EnumSet<Operator> set = s.getOperators();
+			if (set.contains(Operator.LESS_THAN_OR_EQUAL) &&
+				set.contains(Operator.GREATER_THAN_OR_EQUAL) &&
+				set.contains(Operator.EQUALS))
+			{
+				if (s != NumericOperatorSetting.NUMERIC_ALL)
+					// assumption fails
+					return false;
+			}
+		}
+
+		// assumption holds
+		return true;
+	}
+	/*
+	 * test assumption that NUMERIC_NORMAL and NUMERIC_ALL are the only
+	 * NumericOperatorSettings that contain both '>=' and '<='
+	 * for any ConditionList of size > 2
+	 * if it contains [ (C >= x)  ^ (C <= x) ^ ... ], there is no use in
+	 * adding any other Condition involving C
+	 */
+	private static final boolean numericLeqGeq()
+	{
+		for (NumericOperatorSetting s : NumericOperatorSetting.values())
+		{
+			EnumSet<Operator> set = s.getOperators();
+			if (set.contains(Operator.LESS_THAN_OR_EQUAL) &&
+				set.contains(Operator.GREATER_THAN_OR_EQUAL))
+			{
+				if (s != NumericOperatorSetting.NUMERIC_NORMAL &&
+					s != NumericOperatorSetting.NUMERIC_ALL)
+					// assumption fails
+					return false;
+			}
+		}
+
+		// assumption holds
+		return true;
+	}
+	private static final boolean operatorOrder()
+	{
+		return (Operator.EQUALS.ordinal() < Operator.LESS_THAN_OR_EQUAL.ordinal()) &&
+			(Operator.EQUALS.ordinal() < Operator.GREATER_THAN_OR_EQUAL.ordinal());
 	}
 
 	/*
@@ -1694,48 +1854,165 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	}
 
 	/*
-	 * FIXME MM never add an already present Condition, it is never useful
+	 * if an identical Condition exists in the ConditionList, the Refinement
+	 * (Condition) is useless
+	 * NOTE ConditionList extends ArrayList<Condition> so its contains()
+	 * method would compare its elements using Condition.equals(), which is
+	 * just Object.equals() as it is not overridden
+	 * overriding would require also overriding hashcode() for correct use
+	 * of a Condition in any Collection
+	 * and per Map-contract equals() and compareTo() should be consistent
+	 * current compareTo() implementation will do for now
 	 * 
-	 * there is no use in adding a Condition identical to the last Condition
-	 * if this Refinement is not about the last Condition.Column in the
-	 * Subgroup to be refined, such a check is not needed
+	 * TODO MM solve this issue, it has been around forever
 	 */
-	private static final boolean isLastConditionCheckNeeded(Refinement theRefinement)
+	private static final boolean contains(ConditionList theConditionList, Condition theCondition)
 	{
-		ConditionList aList = theRefinement.getSubgroup().getConditions();
-		Condition aLast = aList.get(aList.size()-1);
+		for (Condition c : theConditionList)
+			if (theCondition.compareTo(c) == 0)
+				return true;
 
-		return (aLast.getColumn() == theRefinement.getConditionBase().getColumn());
+		return false;
 	}
 
 	/*
-	 * there is no use in adding a Condition identical to the last Condition
+	 * pre-conditions:
+	 * -SearchStrategy = !beam (BREADTH_FIRST only at the moments see below)
+	 * -NumericOperatorSetting contains (<=, >=, =) (only NUMERIC_ALL)
+	 * -Condition.Column.AttributeType == AttributeType.NUMERIC
+	 * -ConditionList.size() > 0
+	 * -isOverlap(theConditionList, theColumn)
+	 * -Condition.Operator has Equals-creation potential (is LEQ / GEQ)
 	 * 
-	 * if the Refinement is about the same Column last Condition.Column in
-	 * the ConditionList of the Subgroup to be refined, this method returns
-	 * the value that should be checked for
+	 * FIXME MM
+	 * currently only for BREATDH_FIRST is this a useful check
+	 * for any [ (C >= x)  ^ (C <= x) ^ ... ] at depth d
+	 * an equivalent  [ (C = x)  ^ ... ] will have been created at depth d-1
 	 * 
-	 * else this method returns null
+	 * BREATDH_FIRST guarantees that all the Refinements for (C = x) will
+	 * have been fully evaluated before moving to depth d
+	 * so evaluating any [ (C >= x)  ^ (C <= x) ^ ... ] will be redundant
+	 * 
+	 * DEPTH_FIRST could benefit from this also
+	 * but the current order of Operators { LEQ, GEQ, EQUALS } in
+	 * NumericOperatorSetting.NUMERIC_ALL does not allow this
+	 * if EQUALS would be first one could guarantee that before any
+	 * [ (C >= x)  ^ (C <= x) ^ ... ] will be evaluated
+	 * every [ (C = x) ] ^ (...) will have been refined
+	 * and the pre-phase of Filter.isUseful(ConditionList, Refinement)
+	 * would then avoid creation of any [ (C = x)  ^ (C ... ) ^ ... ] anyway
+	 * because of the EQUALS check 
 	 */
-	private static final String getNominalValueToCheck(Refinement theRefinement)
+	private static final boolean createsRedundantEquals(ConditionList theConditionList, Condition theCondition)
 	{
-		ConditionList aList = theRefinement.getSubgroup().getConditions();
-		Condition aLast = aList.get(aList.size()-1);
+		Column aColumn = theCondition.getColumn();
+		Operator anOperator = theCondition.getOperator();
+		float aValue = theCondition.getNumericValue();
 
-		if (aLast.getColumn() == theRefinement.getConditionBase().getColumn())
-			return aLast.getNominalValue();
+		assert (aColumn.getType() == AttributeType.NUMERIC);
+		assert (theConditionList.size() > 0);
+		assert (isOverlap(theConditionList, aColumn));
+		assert (anOperator == Operator.LESS_THAN_OR_EQUAL ||
+				anOperator == Operator.GREATER_THAN_OR_EQUAL);
 
-		return null;
+		for (Condition c : theConditionList)
+		{
+			if (c.getColumn() == aColumn &&
+				c.getNumericValue() == aValue &&
+				// harder test
+				isLeqGeqPair(c.getOperator(), anOperator))
+			{
+				return true;
+			}
+		}
+
+		return false;
 	}
-	// same as above, code should be updated to not use String for boolean
-	private static final String getBinaryValueToCheck(Refinement theRefinement)
+
+	private static final boolean isLeqGeqPair(Operator x, Operator y)
 	{
-		ConditionList aList = theRefinement.getSubgroup().getConditions();
-		Condition aLast = aList.get(aList.size()-1);
+		return ((x == Operator.LESS_THAN_OR_EQUAL && y == Operator.GREATER_THAN_OR_EQUAL) ||
+			(x == Operator.GREATER_THAN_OR_EQUAL && y == Operator.LESS_THAN_OR_EQUAL));
+	}
 
-		if (aLast.getColumn() == theRefinement.getConditionBase().getColumn())
-			return aLast.getBinaryValue() ? "1" : "0";
+	/*
+	 * pre-conditions:
+	 * -NumericOperatorSetting has (<=, >=) (NUMERIC_NORMAL, NUMERIC_ALL)
+	 * -Condition.Column.AttributeType == AttributeType.NUMERIC
+	 * -ConditionList.size() > 1 (for at least one possible {<=, >=} pair)
+	 * -isOverlap(theConditionList, theColumn)
+	 * 
+	 * if the ConditionList selects a unique value through the combination
+	 * of [ (C >= x)  ^ (C <= x) ^ ... ], then this case is similar to the
+	 * isUseful(ConditionList, Refinement) EQUALS pre-check
+	 * not any other Condition involving C will ever be useful
+	 */
+	private static final boolean hasRelevantEqualsThroughLeqGeq(ConditionList theConditionList, Column theColumn)
+	{
+		for (int i = 0, j = theConditionList.size()-1; i < j; ++i)
+		{
+			Condition x = theConditionList.get(i);
+			Column xc = x.getColumn();
 
-		return null;
+			// existing Condition not about the relevant Column
+			if (theColumn != xc)
+				continue;
+
+			Operator xo = x.getOperator();
+			float xf = x.getNumericValue();
+
+			// loop can be slightly optimised by marking used items
+			// but ConditionLists are so small, it has no use
+			for (int k = i+1; k != j; ++k)
+			{
+				Condition y = theConditionList.get(k);
+				if (xc == y.getColumn() &&
+					xf == y.getNumericValue() &&
+					// harder test
+					isLeqGeqPair(xo, y.getOperator()))
+				{
+					return true;
+				}
+			}
+		}
+
+		return false;
+	}
+
+	// TODO MM for debug only - wraps around Filter to print output
+	private final class DebugFilter
+	{
+		private final Filter itsFilter;
+
+		DebugFilter(SearchParameters theSearchParameters)
+		{
+			itsFilter = new Filter(theSearchParameters);
+		}
+
+		boolean isUseful(Refinement theRefinement)
+		{
+			boolean b = itsFilter.isUseful(theRefinement);
+			print(b, "PRE\t", theRefinement.getSubgroup().getConditions(), theRefinement.getConditionBase().toString());
+			return b;
+		}
+
+		boolean isUseful(ConditionList theConditionList, Condition theCondition)
+		{
+			boolean b = itsFilter.isUseful(theConditionList, theCondition);
+			print(b, "POST\t", theConditionList, theCondition.toString());
+			return b;
+		}
+
+		// could be faster in calling method - but debug only anyway
+		private final void print(boolean useful, String phase, ConditionList conditionList, String value)
+		{
+			Log.logCommandLine(new StringBuilder(256)
+						.append(useful ? "USEFUL\t" : "USELESS\t")
+						.append(phase)
+						.append(conditionList.toString())
+						.append("\t")
+						.append(value)
+						.toString());
+		}
 	}
 }
