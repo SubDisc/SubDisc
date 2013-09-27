@@ -133,7 +133,7 @@ public enum Operator
 	{
 		final EnumSet<Operator> set = EnumSet.noneOf(Operator.class);
 		for (Operator o : Operator.values())
-			if (o.isValidFor(theAttributeType))
+			if (o != NOT_AN_OPERATOR && o.isValidFor(theAttributeType))
 				set.add(o);
 		return Collections.unmodifiableSet(set);
 	}
