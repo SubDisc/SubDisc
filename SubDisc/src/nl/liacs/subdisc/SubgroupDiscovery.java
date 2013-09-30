@@ -225,6 +225,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		ignoreQualityMinimum = true;
 	}
 
+	private Filter itsFilter = null;
 	public void mine(long theBeginTime)
 	{
 		// not in Constructor, Table / SearchParameters may change
@@ -247,7 +248,8 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		if (theEndTime <= theBeginTime)
 			theEndTime = Long.MAX_VALUE;
 
-//		DebugFilter aFilter = new DebugFilter(itsSearchParameters);
+		// to print filter output use: DebugFilter(itsSearchParameters);
+		itsFilter = new Filter(itsSearchParameters);
 
 // TODO MM DEBUG only, set counts to 0
 //RefinementList.COUNT.set(0);
@@ -272,9 +274,9 @@ public class SubgroupDiscovery extends MiningAlgorithm
 
 					Refinement aRefinement = aRefinementList.get(i);
 
-//					if (!aFilter.isUseful(aRefinement))
-//						continue;
-
+					if (!itsFilter.isUseful(aRefinement))
+						continue;
+System.out.println(aSubgroup + "\t" + aRefinement.getConditionBase());
 					ConditionBase aConditionBase = aRefinement.getConditionBase();
 					// if refinement is (num_attr = value) then treat it as nominal
 					// using EQUALS for numeric conditions is bad, see evaluateNominalBinaryRefinements()
@@ -345,6 +347,10 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		final int anOldCoverage = theRefinement.getSubgroup().getCoverage();
 		assert (theMembers.cardinality() == anOldCoverage);
 
+		// see comment at evaluateNominalBinaryRefinement()
+		ConditionBase aConditionBase = theRefinement.getConditionBase();
+		ConditionList aList = theRefinement.getSubgroup().getConditions();
+
 		switch (itsSearchParameters.getNumericStrategy())
 		{
 			case NUMERIC_ALL :
@@ -352,6 +358,10 @@ public class SubgroupDiscovery extends MiningAlgorithm
 				float[] aSplitPoints = theRefinement.getConditionBase().getColumn().getUniqueNumericDomain(theMembers);
 				for (float aSplit : aSplitPoints)
 				{
+					if (itsFilter != null)
+						if (!itsFilter.isUseful(aList, new Condition(aConditionBase, aSplit)))
+							continue;
+
 					Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(aSplit);
 					//addToBuffer(aNewSubgroup);
 					checkAndLog(aNewSubgroup, anOldCoverage);
@@ -370,6 +380,10 @@ public class SubgroupDiscovery extends MiningAlgorithm
 				{
 					if (first || aSplitPoints[j] != aSplitPoints[j-1])
 					{
+						if (itsFilter != null)
+							if (!itsFilter.isUseful(aList, new Condition(aConditionBase, aSplitPoints[j])))
+								continue;
+
 						Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(aSplitPoints[j]);
 						//addToBuffer(aNewSubgroup);
 						checkAndLog(aNewSubgroup, anOldCoverage);
@@ -399,6 +413,10 @@ public class SubgroupDiscovery extends MiningAlgorithm
 				Subgroup aNewSubgroup;
 				for (float aSplit : aSplitPoints)
 				{
+					if (itsFilter != null)
+						if (!itsFilter.isUseful(aList, new Condition(aConditionBase, aSplit)))
+							continue;
+
 					aNewSubgroup = theRefinement.getRefinedSubgroup(aSplit);
 
 					final int aNewCoverage = aNewSubgroup.getCoverage();
@@ -703,19 +721,28 @@ public class SubgroupDiscovery extends MiningAlgorithm
 			Column c = aConditionBase.getColumn();
 			Subgroup aNewSubgroup = null;
 
+// FIXME MM
+// for now the code creates a Condition that may not be needed at all
+// the final code can be based on isUseful(Refinement, aValue)
+// using Refinement.Subgroup.ConditionList, Refinement.ConditionBase, and aValue
+// but at least Refinement.getRefinedSubgroup(aValue) is not called (expensive)
+// it creates a copy of the Subgroup (members-bitset) and ConditionList
+// and performs a full table scan to add the new Condition
+// as the new Subgroup would not decrease in size / or became empty it was not
+// logged as a Candidate (though it does increment itsNrCandidates)
+			ConditionList aList = theRefinement.getSubgroup().getConditions();
+
 			// switch for now, will separate code paths when numeric EQUALS is fixed 
 			switch (c.getType())
 			{
 				case NOMINAL :
 				{
-					// need to check for useless additions
-//					String aLastValue = getNominalValueToCheck(theRefinement);
-
 					for (String aValue : c.getUniqueNominalBinaryDomain(theMembers))
 					{
-						// check usefulness
-//						if (aValue == aLastValue)
-//							continue;
+						if (itsFilter != null)
+							if (!itsFilter.isUseful(aList, new Condition(aConditionBase, aValue)))
+								continue;
+
 						aNewSubgroup = theRefinement.getRefinedSubgroup(aValue);
 						checkAndLog(aNewSubgroup, anOldCoverage);
 					}
@@ -723,9 +750,14 @@ public class SubgroupDiscovery extends MiningAlgorithm
 				}
 				case NUMERIC :
 				{
-					// FIXME MM see mine() comment
+					// FIXME MM see mine() comment on
+					// evaluating Numeric Refinement here
 					for (float aValue : c.getUniqueNumericDomain(theMembers))
 					{
+						if (itsFilter != null)
+							if (!itsFilter.isUseful(aList, new Condition(aConditionBase, aValue)))
+								continue;
+
 						aNewSubgroup = theRefinement.getRefinedSubgroup(aValue);
 						checkAndLog(aNewSubgroup, anOldCoverage);
 					}
@@ -735,14 +767,12 @@ public class SubgroupDiscovery extends MiningAlgorithm
 					throw new AssertionError(AttributeType.ORDINAL);
 				case BINARY :
 				{
-					// need to check for useless additions
-//					String aLastValue = getBinaryValueToCheck(theRefinement);
-
 					for (String aValue : c.getUniqueNominalBinaryDomain(theMembers))
 					{
-						// check usefulness
-//						if (aValue == aLastValue)
-//							continue;
+						if (itsFilter != null)
+							if (!itsFilter.isUseful(aList, new Condition(aConditionBase, aValue)))
+								continue;
+
 						aNewSubgroup = theRefinement.getRefinedSubgroup(aValue.equals("1"));
 						checkAndLog(aNewSubgroup, anOldCoverage);
 					}
@@ -1560,7 +1590,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	/* *********************************************************************
 	 * REMOVE USELESS REFINEMENTS - MAY GO INTO DIFFERENT CLASS(ES)
 	 **********************************************************************/
-	private final class Filter
+	private class Filter // not final for now, DebugFilter extends Filter
 	{
 		/*
 		 * for Condition-free based checks
@@ -1588,9 +1618,12 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			isBinaryEqualsTestRequired = true;
 			SearchStrategy s = theSearchParameters.getSearchStrategy();
 			NumericStrategy n = theSearchParameters.getNumericStrategy();
-			isDepthFirstNumericAllStrategy =
-				s == SearchStrategy.DEPTH_FIRST &&
-				n == NumericStrategy.NUMERIC_ALL;
+			// FIXME MM seems to be correct but needs more testing
+			isDepthFirstNumericAllStrategy = false;
+			// see isUseful(Refinement) comment below
+//			isDepthFirstNumericAllStrategy =
+//				s == SearchStrategy.DEPTH_FIRST &&
+//				n == NumericStrategy.NUMERIC_ALL;
 
 			// [ (C >= x)  ^ ... ^ (C <= x) ] -> [ (C = x)  ^ ... ]
 			isBreadthFirstNumericAllStrategyNumericAllOperator =
@@ -1724,6 +1757,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 				if (hasRelevantEqualsThroughLeqGeq(theConditionList, aColumn))
 					return false;
 
+			// can not find a reason why Refinement should be denied
 			return true;
 		}
 	}
@@ -1738,11 +1772,10 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		assert(equalsIsOnlyBinaryOperator());
 		// if assert fails *** needs update
 		assert(numericAll());
-		// if assert fails *** needs update
+		// if assert fails isNumericNormalOrNumericAll needs update
 		assert(numericLeqGeq());
-		// if assert fails *** needs update
-		// FIXME MM this does not currently hold, see ***
-		//assert(operatorOrder());
+		// if assert fails isBreadthFirstNumericAllStrategyNumericAllOperator needs update
+		assert(operatorOrder());
 	}
 	/* test assumption that EQUALS is only Operator for BINARY Columns */
 	private static final boolean equalsIsOnlyBinaryOperator()
@@ -1800,6 +1833,12 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		// assumption holds
 		return true;
 	}
+	/*
+	 * test assumption that (C EQUALS v) Conditions are always created
+	 * before (C >= v) and (C <= v)
+	 * this is relevant for equals-creating ConditionLists like
+	 * [ (C >= x)  ^ (C <= x) ^ ... ] for BREADTH_FIRST and in DEPTH_FIRST
+	 */
 	private static final boolean operatorOrder()
 	{
 		return (Operator.EQUALS.ordinal() < Operator.LESS_THAN_OR_EQUAL.ordinal()) &&
@@ -1921,7 +1960,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		assert (theConditionList.size() > 0);
 		assert (isOverlap(theConditionList, aColumn));
 		assert (anOperator == Operator.LESS_THAN_OR_EQUAL ||
-				anOperator == Operator.GREATER_THAN_OR_EQUAL);
+			anOperator == Operator.GREATER_THAN_OR_EQUAL);
 
 		for (Condition c : theConditionList)
 		{
@@ -1957,6 +1996,8 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	 */
 	private static final boolean hasRelevantEqualsThroughLeqGeq(ConditionList theConditionList, Column theColumn)
 	{
+		// FIXME MM assertions go here
+
 		for (int i = 0, j = theConditionList.size()-1; i < j; ++i)
 		{
 			Condition x = theConditionList.get(i);
@@ -1988,25 +2029,27 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	}
 
 	// TODO MM for debug only - wraps around Filter to print output
-	private final class DebugFilter
+	private final class DebugFilter extends Filter
 	{
-		private final Filter itsFilter;
-
 		DebugFilter(SearchParameters theSearchParameters)
 		{
-			itsFilter = new Filter(theSearchParameters);
+			super(theSearchParameters);
 		}
 
+		@Override
 		boolean isUseful(Refinement theRefinement)
 		{
-			boolean b = itsFilter.isUseful(theRefinement);
+			boolean b = super.isUseful(theRefinement);
+			//if (!b) // uncomment to only print refused Refinements 
 			print(b, "PRE\t", theRefinement.getSubgroup().getConditions(), theRefinement.getConditionBase().toString());
 			return b;
 		}
 
+		@Override
 		boolean isUseful(ConditionList theConditionList, Condition theCondition)
 		{
-			boolean b = itsFilter.isUseful(theConditionList, theCondition);
+			boolean b = super.isUseful(theConditionList, theCondition);
+			//if (!b) // uncomment to only print refused Refinements
 			print(b, "POST\t", theConditionList, theCondition.toString());
 			return b;
 		}
