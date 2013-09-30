@@ -1,9 +1,5 @@
 package nl.liacs.subdisc;
 
-/*
- * TODO MM check Column.type / Operator.type valid for Value (again...) or rely
- * on Condition constructor to check validity
- */
 public class Refinement
 {
 	private final ConditionBase itsConditionBase;

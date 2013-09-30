@@ -12,6 +12,7 @@ public enum Operator
 			return theType == AttributeType.NOMINAL;
 		}
 	},
+	// XXX DEPTH_FIRST relies on EQUALS being before LEQ / GEQ
 	EQUALS("=")
 	{
 		@Override
