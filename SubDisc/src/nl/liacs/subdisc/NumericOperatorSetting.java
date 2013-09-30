@@ -52,11 +52,11 @@ public enum NumericOperatorSetting implements EnumInterface
 		@Override
 		EnumSet<Operator> getOperators()
 		{
-			// FIXME MM put EQUALS first
+			// XXX leave EQUALS first
 			// see SubgroupDiscovery.createsRedundantEquals()
-			return EnumSet.of(Operator.LESS_THAN_OR_EQUAL,
-						Operator.GREATER_THAN_OR_EQUAL,
-						Operator.EQUALS);
+			return EnumSet.of(Operator.EQUALS,
+						Operator.LESS_THAN_OR_EQUAL,
+						Operator.GREATER_THAN_OR_EQUAL);
 		}
 
 		@Override
