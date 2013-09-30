@@ -138,7 +138,7 @@ public class XMLAutoRun
 	{
 		File aFile = null;
 		boolean showWindows = false;
-		int aNrThreads = -1;
+		int aNrThreads = Integer.MIN_VALUE;
 
 		if (args.length == 1 || args.length == 2 || args.length == 3)
 		{
@@ -181,7 +181,7 @@ public class XMLAutoRun
 		aTable.update();
 		SearchParameters aSearchParameters = new SearchParameters(aSettings.item(1));
 		// allows to overwrite the number defined in the XML file
-		if (theNrThreads < 0)
+		if (theNrThreads == Integer.MIN_VALUE)
 			theNrThreads = aSearchParameters.getNrThreads();
 		aSearchParameters.setTargetConcept(new TargetConcept(aSettings.item(0), aTable));
 
