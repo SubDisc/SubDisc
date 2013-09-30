@@ -75,7 +75,7 @@ public class Candidate implements Comparable<Candidate>
 		@Override
 		public int compare(Candidate x, Candidate y)
 		{
-			return x.compareTo(y);
+			return (x == y) ? 0 : x.compareTo(y);
 		}
 	}
 
@@ -85,10 +85,25 @@ public class Candidate implements Comparable<Candidate>
 		@Override
 		public int compare(Candidate x, Candidate y)
 		{
+			if (x == y)
+				return 0;
+
 			// check on depth first, higher depth comes first
 			// on equal depth, perform normal comparison
 			int cmp = x.itsSubgroup.itsDepth - y.itsSubgroup.itsDepth;
-			return (cmp != 0) ? -cmp : x.compareTo(y);
+//			return (cmp != 0) ? -cmp : x.compareTo(y);
+			if (cmp != 0)
+				return -cmp;
+
+			// DEPTH_FIRST does not work on depth=0
+			// however it can be made to work by ordering the
+			// Candidates coming from depth=0
+			cmp = x.itsSubgroup.getConditions().compareTo(y.itsSubgroup.getConditions());
+			// for two distinct Candidates the ConditionLists should
+			// never ever be equal in the DEPTH_FIRST setting
+			assert (cmp != 0);
+			return cmp;
+
 		}
 	}
 
@@ -107,6 +122,9 @@ public class Candidate implements Comparable<Candidate>
 		@Override
 		public int compare(Candidate x, Candidate y)
 		{
+			if (x == y)
+				return 0;
+
 			// check on depth first, lower depth comes first
 			// on equal depth, perform normal comparison
 			int cmp = x.itsSubgroup.itsDepth - y.itsSubgroup.itsDepth;
