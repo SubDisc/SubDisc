@@ -20,7 +20,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 
 	private SubgroupSet itsResult;
 	private CandidateQueue itsCandidateQueue;
-	private AtomicInteger itsCandidateCount = new AtomicInteger(0);
+	private AtomicLong itsCandidateCount = new AtomicLong(0);
 
 	//target concept type-specific information, including base models
 	private BitSet itsBinaryTarget;		//SINGLE_NOMINAL
@@ -755,13 +755,10 @@ public class SubgroupDiscovery extends MiningAlgorithm
 	}
 
 	/*
-	 * FIXME MM
-	 * when itsCandidateCount overflows, the 2^31-th Candidate will not be
-	 * logged
-	 * itsCandidateCount should be bigger than int anyway, as 2^31
-	 * Candidates is not that much for a NUMERIC_ALL setting
+	 * itsCandidateCount is unlikely to overflow, so this is safe enough
+	 * else it just denies the 2^63-th Candidate to be logged
 	 */
-	private static final int DO_NOT_LOG = -1;
+	private static final long DO_NOT_LOG = -1L;
 
 	/*
 	 * keep output together using synchronized method
@@ -775,7 +772,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 	 */
 	private final synchronized void valueSetCheckAndLog(ValueSet theBestSubset, Subgroup theNewSubgroup, int theOldCoverage)
 	{
-		final int count = checkAndLog(theNewSubgroup, theOldCoverage);
+		final long count = checkAndLog(theNewSubgroup, theOldCoverage);
 
 		final String values = theBestSubset.toString();
 		final StringBuilder sb = new StringBuilder(values.length());
@@ -795,10 +792,10 @@ public class SubgroupDiscovery extends MiningAlgorithm
 	 * 
 	 * but they must be executed as a single unit, so synchronized check()
 	 */
-	private int checkAndLog(Subgroup theSubgroup, int theOldCoverage)
+	private long checkAndLog(Subgroup theSubgroup, int theOldCoverage)
 	{
 		// synchronized method
-		final int count = check(theSubgroup, theOldCoverage);
+		final long count = check(theSubgroup, theOldCoverage);
 		// unsynchronized, ok as long a count represents n-th check call
 		if (count != DO_NOT_LOG)
 			logCandidateAddition(theSubgroup, count);
@@ -828,9 +825,9 @@ public class SubgroupDiscovery extends MiningAlgorithm
 	 * blocks execute many times slower) the logging is not done in the
 	 * synchronized method, but guarantees to use to the correct value
 	 */
-	private synchronized int check(Subgroup theSubgroup, int theOldCoverage)
+	private synchronized long check(Subgroup theSubgroup, int theOldCoverage)
 	{
-		final int count = itsCandidateCount.getAndIncrement();
+		final long count = itsCandidateCount.getAndIncrement();
 		final int aNewCoverage = theSubgroup.getCoverage();
 
 		if (aNewCoverage < theOldCoverage && aNewCoverage >= itsMinimumCoverage)
@@ -854,7 +851,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 
 	// because of multi-theading consecutive log calls should be grouped
 	// else logs from other threads could end up in between
-	private void logCandidateAddition(Subgroup theSubgroup, int count)
+	private void logCandidateAddition(Subgroup theSubgroup, long count)
 	{
 		StringBuffer sb = new StringBuffer(200);
 		sb.append("candidate ");
