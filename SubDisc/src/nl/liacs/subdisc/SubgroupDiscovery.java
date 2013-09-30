@@ -1432,8 +1432,19 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		itsResult.setIDs(); //assign 1 to n to subgroups, for future reference in subsets
 	}
 
+	// to throttle GUI update, assumes setTitle() is called by 1 Thread only
+	// check in main loop would be slightly faster
+	private static final long INTERVAL = 1000000000L; // in nanoseconds
+	private long itsThen = 0L;
+
 	// NOTE itsCandidateCount and currently refined subgroup are unrelated
-	private final void setTitle(Candidate aCandidate) {
+	private final void setTitle(Candidate aCandidate)
+	{
+		long now = System.nanoTime();
+		if (now - itsThen < INTERVAL)
+			return;
+		itsThen = now;
+
 		final Subgroup aSubgroup = aCandidate.getSubgroup();
 		final String aCurrent = aSubgroup.toString();
 
