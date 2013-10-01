@@ -34,8 +34,8 @@ public class QualityMeasure
 	{
 		if (theMeasure == null)
 			throw new IllegalArgumentException("QualityMeasure: theMeasure can not be null");
-		if (!QM.getQualityMeasures(TargetType.SINGLE_NOMINAL).contains(theMeasure))
-			throw new IllegalArgumentException("QualityMeasure: not a SINGLE_NOMINAL measure");
+//		if (!QM.getQualityMeasures(TargetType.SINGLE_NOMINAL).contains(theMeasure))
+//			throw new IllegalArgumentException("QualityMeasure: not a SINGLE_NOMINAL measure");
 		if (theMeasure == QM.CLAUDIO1 || theMeasure == QM.CLAUDIO2)
 			throw new IllegalArgumentException("QualityMeasure: use LabelRanking relevant constructor");
 		if (theTotalCoverage <= 0)
