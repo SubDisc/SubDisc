@@ -174,13 +174,15 @@ public class Process
 		tc.setTargetValue("1");
 		// set an alternative quality measure
 		final QM backupQM = theSearchParameters.getQualityMeasure();
+		// XXX WRACC is used, but there is no motivation for this choice
 		final QM altQM = QM.WRACC;
 		theSearchParameters.setQualityMeasure(altQM);
 		// set an alternative quality measure minimum
 		final float backupMM = theSearchParameters.getQualityMeasureMinimum();
 		theSearchParameters.setQualityMeasureMinimum(Float.parseFloat(altQM.MEASURE_DEFAULT));
 
-		SubgroupSet aHeavySubgroupSet = new SubgroupSet(-1);
+		Comparator<Subgroup> cmp = new SubgroupConditionListComparator();
+		SubgroupSet aHeavySubgroupSet = new SubgroupSet(cmp);
 
 		// last index is whole dataset
 		for (int i = 0, j = aDomain.length-1; i < j; ++i)

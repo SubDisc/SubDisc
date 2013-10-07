@@ -63,6 +63,16 @@ public class SubgroupSet extends TreeSet<Subgroup>
 		itsBinaryTarget = null;
 	}
 
+	// package-private, for CAUC(Heavy) setting only (see Process)
+	SubgroupSet(Comparator<Subgroup> cmp)
+	{
+		super(cmp);
+		nominalTargetSetting = false;
+		itsMaximumSize = Integer.MAX_VALUE;
+		itsTotalCoverage = -1;
+		itsBinaryTarget = null;
+	}
+
 	/**
 	 * Creates a SubgroupSet of a certain size, but in a nominal target setting
 	 * theTotalCoverage and theBinaryTarget should also be set.
@@ -117,6 +127,7 @@ public class SubgroupSet extends TreeSet<Subgroup>
 	//protected void useSwapRandomisationSetting() {
 	//	itsMaximumSize = 1;
 	//}
+
 
 	/**
 	 * Tries to add the {@link Subgroup Subgroup} passed in as parameter to
@@ -515,13 +526,13 @@ public class SubgroupSet extends TreeSet<Subgroup>
 			itsROCList = new ROCList(this);
 
 // FIXME MM DEBUG ONLY
-print("ROCList", itsROCList);
-ConvexHullROCNaive c = new ConvexHullROCNaive(this);
-print("ConvexHullROC", c.itsHull);
-c.debug();
+//print("ROCList", itsROCList);
+//ConvexHullROCNaive c = new ConvexHullROCNaive(this);
+//print("ConvexHullROC", c.itsHull);
+//c.debug();
 ConvexHullROC b = new ConvexHullROC(this);
 print("ROCBeam", b.itsHull);
-ConvexHullROCNaive.debugCompare(itsROCList, c, b);
+//ConvexHullROCNaive.debugCompare(itsROCList, c, b);
 
 			return itsROCList;
 		}

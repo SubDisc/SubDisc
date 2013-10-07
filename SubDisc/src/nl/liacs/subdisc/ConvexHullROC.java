@@ -46,7 +46,7 @@ private static int DEBUG_MAX_SIZE = 0;
 	{
 		itsHull = new ArrayList<CandidateROCPoint>(INIT_SIZE);
 		this.allowDuplicates = allowDuplicates;
-	};
+	}
 
 	// debug only
 	ConvexHullROC(SubgroupSet set)
@@ -56,11 +56,11 @@ private static int DEBUG_MAX_SIZE = 0;
 		for (Subgroup s : set)
 			if (add(new CandidateROCPoint(new Candidate(s))))
 			{
-				System.out.println("ADD: " + s.getID());
-				debug();
-				System.out.println();
+//				System.out.println("ADD: " + s.getID());
+//				debug();
+//				System.out.println();
 			}
-	};
+	}
 
 	void debug()
 	{

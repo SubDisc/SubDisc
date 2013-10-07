@@ -35,9 +35,9 @@ private static int DEBUG_MAX_SIZE = 0;
 		for (Subgroup s : theSubgroupSet)
 			if (add(new SubgroupROCPoint(s)))
 			{
-				System.out.println("ADD: " + s.getID());
-				debug();
-				System.out.println();
+//				System.out.println("ADD: " + s.getID());
+//				debug();
+//				System.out.println();
 			}
 	}
 
