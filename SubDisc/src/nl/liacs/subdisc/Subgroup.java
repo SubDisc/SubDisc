@@ -167,39 +167,42 @@ public class Subgroup implements Comparable<Subgroup>
 
 	public int getDepth() { return itsDepth; }
 
-	// NOTE Map interface expects compareTo and equals to be consistent.
+	/*
+	 * Compare two Subgroups based on (in order) measureValue, coverage,
+	 * ConditionList.
+	 * 
+	 * Per Comparable Javadoc compareTo(null) throws a NullPointerException.
+	 * 
+	 * Do not use this compareTo() for the CAUC(Heavy) setting of Process.
+	 * itsMeasureValue will vary for Subgroups with the same ConditionList
+	 * (because the target for each run is different).
+	 * 
+	 * NOTE Map interface expects compareTo and equals to be consistent.
+	 * (non-Javadoc)
+	 * @see java.lang.Comparable#compareTo(java.lang.Object)
+	 * 
+	 * throws NullPointerException if theSubgroup is null.
+	 */
 	@Override
 	public int compareTo(Subgroup theSubgroup)
 	{
-		// why not throw NullPointerException if theCondition is null?
-		if (theSubgroup == null)
-			return 1;
-		else if (getMeasureValue() > theSubgroup.getMeasureValue())
-			return -1;
-		else if (getMeasureValue() < theSubgroup.getMeasureValue())
-			return 1;
-		else if (getCoverage() > theSubgroup.getCoverage())
-			return -1;
-		else if (getCoverage() < theSubgroup.getCoverage())
-			return 1;
-		else
-		{
-			int aTest = itsConditions.compareTo(theSubgroup.itsConditions);
-			if (aTest != 0)
-				return aTest;
-		}
+		if (this == theSubgroup)
+			return 0;
 
-		return 0;
-//		return itsMembers.equals(s.itsMembers);
+		// Subgroups that score better come first
+		int cmp = Double.compare(this.itsMeasureValue, theSubgroup.itsMeasureValue);
+		if (cmp != 0)
+			return -cmp;
+
+		// Subgroups that are larger come first
+		cmp = this.itsCoverage - theSubgroup.itsCoverage;
+		if (cmp != 0)
+			return -cmp;
+
+		// equal score and coverage, compare ConditionLists
+		return this.itsConditions.compareTo(theSubgroup.itsConditions);
 	}
 
-/*	@Override
-	public int compareTo(Subgroup theSubgroup)
-	{
-		int aTest = itsConditions.compareTo(theSubgroup.itsConditions);
-		return aTest;
-	}
-*/
 	/**
 	 * NOTE For now this equals implementation is only used for the ROCList
 	 * HashSet implementation.

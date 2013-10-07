@@ -19,10 +19,12 @@ public class Candidate implements Comparable<Candidate>
 	{
 		if (this == theCandidate)
 			return 0;
-		else if (itsPriority > theCandidate.itsPriority)
-			return -1;
-		else if (itsPriority < theCandidate.itsPriority)
-			return 1;
+
+		// Candidates with a higher come first
+		int cmp = Double.compare(this.itsPriority, theCandidate.itsPriority);
+		if (cmp != 0)
+			return -cmp;
+
 		//equal priorities
 		int aTest = itsSubgroup.compareTo(theCandidate.getSubgroup());
 		if (aTest != 0)
@@ -31,6 +33,7 @@ public class Candidate implements Comparable<Candidate>
 		// this should never happen
 		// equal priority, subgroup, condition list, condition(s) would
 		// mean it is the exact same Candidate
+		// FIXME MM / remove and test this code
 		System.out.println(new AssertionError("ERROR: Candidate.compareTo()"));
 		return 1; // ?
 	}

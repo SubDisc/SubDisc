@@ -477,13 +477,17 @@ public class Condition implements Comparable<Condition>
 	{
 		if (this == theCondition)
 			return 0;
+
+		// Conditions about Column with smaller index come first
 		int cmp = this.itsColumn.getIndex() - theCondition.itsColumn.getIndex();
 		if (cmp != 0)
 			return cmp;
+
 		// same column, check operator
 		cmp = this.itsOperator.ordinal() - theCondition.itsOperator.ordinal();
 		if (cmp != 0)
 			return cmp;
+
 		// same column, same operator, check on value
 		switch (itsColumn.getType())
 		{
