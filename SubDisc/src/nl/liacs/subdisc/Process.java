@@ -179,7 +179,11 @@ public class Process
 		theSearchParameters.setQualityMeasure(altQM);
 		// set an alternative quality measure minimum
 		final float backupMM = theSearchParameters.getQualityMeasureMinimum();
-		theSearchParameters.setQualityMeasureMinimum(Float.parseFloat(altQM.MEASURE_DEFAULT));
+		//theSearchParameters.setQualityMeasureMinimum(Float.parseFloat(altQM.MEASURE_DEFAULT));
+		// XXX WOUTER uses 0.01 to compare to old results
+		// QualityMeasure.getMeasureMinimum(WRACC) changed from 0.01 to 0.02 in QM in r1282 (no mention in log)
+		// WRACC.MEASURE_DEFAULT changed from 0.01 to 0.02 in QM in r1569 (synch of both implementations)
+		theSearchParameters.setQualityMeasureMinimum(0.01f);
 
 		Comparator<Subgroup> cmp = new SubgroupConditionListComparator();
 		SubgroupSet aHeavySubgroupSet = new SubgroupSet(cmp);
@@ -211,7 +215,7 @@ public class Process
 			boolean aCommandlinelogState = Log.COMMANDLINELOG;
 			Log.COMMANDLINELOG = false;
 			SubgroupDiscovery sd =
-				runSubgroupDiscovery(theTable, theFold,	aMembers, theSearchParameters, false, theNrThreads, null);
+				runSubgroupDiscovery(theTable, theFold, aMembers, theSearchParameters, false, theNrThreads, null);
 			Log.COMMANDLINELOG = aCommandlinelogState;
 
 			// For seeing the intermediate ROC curves, uncomment the next line
