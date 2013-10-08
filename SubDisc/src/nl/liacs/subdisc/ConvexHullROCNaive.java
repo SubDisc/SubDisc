@@ -67,9 +67,32 @@ if (itsHull.size() > DEBUG_MAX_SIZE)
 				continue;
 			else if (thePoint.x == q.x)
 			{
+				// special, (multiple) points on TPR-axis
+				if (thePoint.x == 0.0)
+				{
+					if (thePoint.y < q.y)
+					{
+						continue;
+					}
+					else if (thePoint.y == q.y)
+					{
+						itsHull.add(i+1, thePoint);
+						// no need to update hull
+						return true;
+					}
+					else // (0, thePoint.TPR) > (0, q.TPR)
+					{
+						itsHull.add(++i, thePoint);
+						// hull lifted, update hull
+						break;
+					}
+				}
+
 				// equal FPR, compare TPR
 				if (thePoint.y < q.y)
+				{
 					return false;
+				}
 				else if (thePoint.y == q.y)
 				{
 					itsHull.add(i+1, thePoint);
@@ -79,8 +102,8 @@ if (itsHull.size() > DEBUG_MAX_SIZE)
 				else // (thePoint.y > q.y)
 				{
 					itsHull.set(i, thePoint);
-					// update needed as multiple points
-					// left of i may be identical to i
+					// update needed as multiple points left
+					// of i may be identical to i
 					break;
 				}
 			}
@@ -99,11 +122,14 @@ if (itsHull.size() > DEBUG_MAX_SIZE)
 		// thePoint.x is smallest x, put it in front
 		if (i == -1)
 		{
+			// special, points on TPR-axis
+			if (thePoint.x == 0.0)
+				itsHull.add(++i, thePoint);
 			// check if valid insertion
-			if (below(ZERO_ZERO, thePoint, 0))
+			else if (below(ZERO_ZERO, thePoint, 0))
 				return false;
-
-			itsHull.add(++i, thePoint);
+			else
+				itsHull.add(++i, thePoint);
 		}
 
 		// i = index of thePoint

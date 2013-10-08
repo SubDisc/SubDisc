@@ -97,7 +97,10 @@ if (itsHull.size() > DEBUG_MAX_SIZE)
 		int size = itsHull.size();
 		if (size == 0)
 		{
-			thePoint.itsSlope = slope(ORIGIN, thePoint);
+			if (thePoint.x == 0.0)
+				thePoint.itsSlope = Double.POSITIVE_INFINITY;
+			else
+				thePoint.itsSlope = slope(ORIGIN, thePoint);
 			return itsHull.add(thePoint);
 		}
 
@@ -109,12 +112,13 @@ if (itsHull.size() > DEBUG_MAX_SIZE)
 			return (i == INSERT_NO_UPDATE);
 
 		// update needed, determine what range should be removed
-		int fromIndex = (i == 0) ? i : updateLeft(i, thePoint);
+		int fromIndex = (thePoint.x == 0.0) ? i : updateLeft(i, thePoint);
 		int toIndex = (i == size) ? size : updateRight(i, thePoint);
 
 		assert(fromIndex >= 0);
 		assert(toIndex <= size);
 		assert(fromIndex <= toIndex);
+
 		// use switch to avoid needless array-copy in some cases
 		switch(toIndex-fromIndex)
 		{
@@ -150,9 +154,50 @@ if (itsHull.size() > DEBUG_MAX_SIZE)
 				continue;
 			else if (thePoint.x == q.x)
 			{
+				// special, (multiple) points on TPR-axis
+				if (thePoint.x == 0.0)
+				{
+					thePoint.itsSlope = Double.POSITIVE_INFINITY;
+					if (thePoint.y < q.y)
+						continue;
+					else if (thePoint.y == q.y)
+					{
+						// use last addition, like ROCList
+						if (!allowDuplicates)
+							itsHull.set(i, thePoint);
+						else
+							itsHull.add(i+1, thePoint);
+
+						// no need to update hull
+						return INSERT_NO_UPDATE;
+					}
+					else // (0, thePoint.TPR) > (0, q.TPR)
+					{
+						// TODO MM strictly convex
+						// check would go here
+						if (right(i+1).x == 0.0)
+						{
+							// use last addition, like ROCList
+							if (!allowDuplicates)
+								itsHull.set(i, thePoint);
+							else
+								itsHull.add(i+1, thePoint);
+
+							// no need to update hull
+							return INSERT_NO_UPDATE;
+						}
+
+						// only when thePoint.TPR is
+						// highest TPR and raises hull
+						return i+1;
+					}
+				}
+
 				// equal FPR, compare TPR
 				if (thePoint.y < q.y)
+				{
 					return NO_INSERT;
+				}
 				else if (thePoint.y == q.y)
 				{
 					// copy slope
@@ -187,16 +232,46 @@ if (itsHull.size() > DEBUG_MAX_SIZE)
 		while (i > 0);
 
 		// thePoint.x is smaller than any other x, put it in front
-		if (pos(ORIGIN, thePoint, itsHull.get(0)) < 0)
-			return NO_INSERT;
-
-		// TODO MM strictly convex check would go here
 		if (thePoint.x == 0.0)
+		{
+			// TODO MM strictly convex check would go here
 			thePoint.itsSlope = Double.POSITIVE_INFINITY;
-		else
-			thePoint.itsSlope = slope(ORIGIN, thePoint);
 
-		return 0;
+			if (right(0).x == 0.0)
+			{
+				// use last addition, like ROCList
+				if (!allowDuplicates)
+					itsHull.set(0, thePoint);
+				else
+					itsHull.add(0, thePoint);
+
+				return INSERT_NO_UPDATE;
+			}
+
+			// only when thePoint.TPR is highest TPR and raises hull
+			return 0;
+		}
+		else
+		{
+			int p = pos(ORIGIN, thePoint, itsHull.get(0));
+
+			if (p < 0)
+				return NO_INSERT;
+			if (p == 0)
+			{
+				thePoint.itsSlope = itsHull.get(0).itsSlope;
+				// use last addition, like ROCList
+				if (!allowDuplicates)
+					itsHull.set(0, thePoint);
+				else
+					itsHull.add(0, thePoint);
+				return INSERT_NO_UPDATE;
+			}
+
+			//if (p > 0)
+			thePoint.itsSlope = slope(ORIGIN, thePoint);
+			return 0;
+		}
 	}
 
 	private final PointDouble right(int index)
@@ -224,22 +299,18 @@ if (itsHull.size() > DEBUG_MAX_SIZE)
 	// mark all points p left of thePoint that have p.slope < thePoint.slope
 	private final int updateLeft(int index, CandidateROCPoint thePoint)
 	{
-		// TODO MM strictly convex check for fpr=0.0 would go here
-		// keep all points on FPR-axis for now
-		if (thePoint.x == 0.0)
-		{
-			thePoint.itsSlope = Double.POSITIVE_INFINITY;
-			return index;
-		}
+		assert(thePoint.x > 0.0);
+		assert(right(index).x > 0.0);
 
-		do
+		while (index > 0)
 		{
 			CandidateROCPoint p = itsHull.get(index-1);
 
 			if (p.x == thePoint.x)
 			{
 				assert(p.y < thePoint.y);
-				continue; // find first p with p.x < thePoint.x
+				--index;
+				// find first p with p.x < thePoint.x
 			}
 			else // p.x < thePoint.x
 			{
@@ -247,16 +318,14 @@ if (itsHull.size() > DEBUG_MAX_SIZE)
 				thePoint.itsSlope = slope(p, thePoint);
 
 				if (p.itsSlope < thePoint.itsSlope)
-					continue;
+					--index;
 				// TODO MM strictly convex check would go here
 				//else if (p.itsSlope == thePoint.itsSlope)
 				//	;
 				else
 					return index;
 			}
-
 		}
-		while (--index > 0);
 
 		// all slopes left of thePoint are tested, angles are not convex
 		thePoint.itsSlope = slope(ORIGIN, thePoint);
@@ -278,11 +347,11 @@ if (itsHull.size() > DEBUG_MAX_SIZE)
 	private final int updateRightTPR(int index, PointDouble thePoint)
 	{
 		int size = itsHull.size();
-		double x = thePoint.x;
+		double y = thePoint.y;
 
 		do
 		{
-			if (itsHull.get(index).x > x)
+			if (itsHull.get(index).y > y)
 				return index;
 		}
 		while (++index < size);
