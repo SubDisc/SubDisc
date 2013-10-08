@@ -854,6 +854,20 @@ System.out.println(aSubgroup + "\t" + aRefinement.getConditionBase());
 	 * but to keep the scope of the synchronized method small (synchronized
 	 * blocks execute many times slower) the logging is not done in the
 	 * synchronized method, but guarantees to use to the correct value
+	 * 
+	 * technically the synchronisation need only range from right before:
+	 * if (ignoreQualityMinimum || aQuality > itsQualityMeasureMinimum))
+	 * to right after:
+	 * itsCandidateQueue.add(new Candidate(theSubgroup));
+	 * but count (sort of) promises that a Candidate with a lower count will
+	 * be completely handled (added to the queues) before a Candidate with
+	 * a higher count
+	 * this is related to the (legacy) code using fixed max_sizes for queues
+	 * 
+	 * NOTE that in case of ties on the itsCandidateQueue/ itsResult
+	 * max_size boundary this may effect the final search result
+	 * this is related to the fixed max size and has the potential to break
+	 * invocation invariant results in multi-threaded settings
 	 */
 	private synchronized long check(Subgroup theSubgroup, int theOldCoverage)
 	{

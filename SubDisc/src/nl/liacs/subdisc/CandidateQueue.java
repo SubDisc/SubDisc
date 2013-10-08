@@ -127,7 +127,6 @@ public class CandidateQueue
 				return addToQueue(itsNextQueue, theCandidate);
 			case ROC_BEAM :
 			{
-//System.out.println("ADDING: " + theCandidate.getSubgroup().toString());
 				final SubgroupROCPoint p =
 					new SubgroupROCPoint(theCandidate.getSubgroup());
 				boolean isAdded =
@@ -135,10 +134,14 @@ public class CandidateQueue
 				itsNextQueueROCList.add(p);
 				itsNextQueueROCBeam.add(new CandidateROCPoint(theCandidate));
 
-				// debug check
+// FIXME MM debug check
+if (Process.ROC_BEAM_TEST)
+{
 //itsNextQueueConvexHullROC.debug();
-//System.out.println("COMPARE");
-//				ConvexHullROCNaive.debugCompare(itsNextQueueROCList, itsNextQueueConvexHullROC, itsNextQueueROCBeam);
+//itsNextQueueROCBeam.debug();
+//System.out.println();
+//ConvexHullROCNaive.debugCompare(itsNextQueueROCList, itsNextQueueConvexHullROC, itsNextQueueROCBeam);
+}
 
 				return isAdded;
 			}
@@ -224,8 +227,11 @@ public class CandidateQueue
 				synchronized (itsNextQueueConvexHullROC)
 				{
 // FIXME MM REMOVE
-//System.out.println("ROC_BEAM for next level:");
-//itsNextQueueConvexHullROC.debug();
+if (Process.ROC_BEAM_TEST)
+{
+System.out.println("ROC_BEAM for next level:");
+itsNextQueueConvexHullROC.debug();
+}
 					itsQueue = itsNextQueueConvexHullROC.toTreeSet();
 					itsNextQueueConvexHullROC = new ConvexHullROCNaive();
 					itsNextQueueROCList = new ROCList();

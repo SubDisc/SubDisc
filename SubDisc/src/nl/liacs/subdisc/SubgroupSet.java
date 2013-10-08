@@ -526,14 +526,20 @@ public class SubgroupSet extends TreeSet<Subgroup>
 			itsROCList = new ROCList(this);
 
 // FIXME MM DEBUG ONLY
-//print("ROCList", itsROCList);
-//ConvexHullROCNaive c = new ConvexHullROCNaive(this);
-//print("ConvexHullROC", c.itsHull);
-//c.debug();
+if (Process.ROC_BEAM_TEST)
+{
+Log.logCommandLine("COMPARE ROC HULL CLASSES");
+print("ROCList", itsROCList);
+ConvexHullROCNaive c = new ConvexHullROCNaive(this);
+print("ConvexHullROCNaive", c.itsHull);
+c.debug();
 ConvexHullROC b = new ConvexHullROC(this);
-print("ROCBeam", b.itsHull);
-//ConvexHullROCNaive.debugCompare(itsROCList, c, b);
-
+print("ConvexHullROC", b.itsHull);
+b.debug();
+ConvexHullROCNaive.debugCompare(itsROCList, c, b);
+// AUC
+Log.logCommandLine("\nAUC: " + itsROCList.getAreaUnderCurve());
+}
 			return itsROCList;
 		}
 	}

@@ -12,6 +12,7 @@ public class Process
 	private static final boolean CAUC_LIGHT = false;
 	private static boolean CAUC_HEAVY = false;
 	private static final boolean CAUC_HEAVY_CONVEX = false; // select subgroups on convex hull if true, select top-1 if false
+	static final boolean ROC_BEAM_TEST = false;
 
 	public static SubgroupDiscovery runSubgroupDiscovery(Table theTable, int theFold, BitSet theBitSet, SearchParameters theSearchParameters, boolean showWindows, int theNrThreads, JFrame theMainWindow)
 	{
@@ -120,6 +121,10 @@ public class Process
 		for (Subgroup s : aSubgroupSetWithEntropy)
 			Log.logCommandLine("    "+s.getConditions().toString());
 */		// end temp
+
+		// FIXME MM temporary, force AUC + debug print for ROC classes
+		if (ROC_BEAM_TEST && aTargetType == TargetType.SINGLE_NOMINAL)
+			aSubgroupDiscovery.getResult().getROCList();
 
 		return aSubgroupDiscovery;
 	}
