@@ -403,4 +403,41 @@ if (itsHull.size() > DEBUG_MAX_SIZE)
 		for (SubgroupROCPoint s : list)
 			System.out.println(s);
 	}
+
+	/*
+	 * XXX MM last minute hack
+	 * 
+	 * remove all point on the TPR-axis
+	 * rationale: they can not be refined in such a way that the FPR
+	 * decreases, additionally, the TPR can also not improve
+	 * 
+	 * however, during the search on one level, at least the highest
+	 * (0.0, TPR) point should be kept, it raises the convex hull
+	 * and therefore is influences what other points are valid
+	 * 
+	 * keeping only this maximum point should be done in the main hull
+	 * maintenance algorithm, but there is too little time to test this
+	 * hence this shortcut
+	 * 
+	 * also note that all (0.0, TPR) point will still end up in the end
+	 * result, given that their quality score is good enough
+	 */
+	final void removePureSubgroups()
+	{
+		// nothing to do
+		if (itsHull.size() == 0 || itsHull.get(0).x != 0.0)
+			return;
+
+		// avoid array-copy on each removal of an individual point
+		// just do a single array-copy
+		// 0 (inclusive) to i (exclusive) are (0.0, TPR) points
+		for (int i = 0, j = itsHull.size(); i < j; ++i)
+		{
+			if (itsHull.get(i).x != 0.0)
+			{
+				itsHull.subList(0, i).clear();
+				return;
+			}
+		}
+	}
 }

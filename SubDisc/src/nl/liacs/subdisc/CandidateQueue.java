@@ -230,6 +230,10 @@ if (Process.ROC_BEAM_TEST)
 if (Process.ROC_BEAM_TEST)
 {
 System.out.println("ROC_BEAM for next level:");
+System.out.println("PRE (0.0, TPR) removal:");
+itsNextQueueConvexHullROC.debug();
+itsNextQueueConvexHullROC.removePureSubgroups();
+System.out.println("POST (0.0, TPR) removal:");
 itsNextQueueConvexHullROC.debug();
 }
 					itsQueue = itsNextQueueConvexHullROC.toTreeSet();
