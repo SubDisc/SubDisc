@@ -364,6 +364,36 @@ itsNextQueueConvexHullROC.debug();
 		synchronized (itsQueue) { return itsQueue.size(); }
 	}
 
+	/*
+	 * FIXME MM
+	 *
+	 * this is one of the things that makes cbbs extremely slow
+	 * for beam-width times, for every Candidate in itsTempQueue,
+	 * for every Candidate.member, for every Candidate in itsTempQueue,
+	 * a check is performed to see if the member is also covered by another
+	 * Candidate
+	 *
+	 * retrieving this information needs to be done just once
+	 * and computing the multiplicative weight for a Candidate becomes
+	 * linear in the number of its members
+	 *
+	 * // coverCounts[i] = times record i was coved by all Candidates in itsTempQueue
+	 * int[] coverCounts = new int[nrRows];
+	 *
+	 * // update coverCounts per Candidate, not per record
+	 * for (Candidate c : itsTempQueue)
+	 * {
+	 *	BitSet m = c.getSubgroup().getMembers();
+	 *
+	 *	// loop over members the most efficient way
+	 *	for (int i = m.nextSetBit(0); i >= 0; i = m.nextSetBit(i+1))
+	 *		++coverCounts[i];
+	 * }
+	 *
+	 * now computeMultiplicativeWeight(Candidate) loop becomes O(|m|)
+	 * for (int i = m.nextSetBit(0); i >= 0; i = m.nextSetBit(i+1))
+	 *	aResult += Math.pow(anAlpha, coverCount[i]);
+	 */
 	/**
 	* Computes the cover count of a particular example: the number of times this example is a member of a subgroup. \n
 	* See van Leeuwen & Knobbe, ECML PKDD 2011. \n
@@ -391,6 +421,13 @@ itsNextQueueConvexHullROC.debug();
 		double aResult = 0;
 		double anAlpha = 0.9;
 		Subgroup aSubgroup = theCandidate.getSubgroup();
+		/*
+		 * FIXME MM
+		 *
+		 * this is one of the things that makes cbbs extremely slow
+		 * getMembers() returns a clone of the members
+		 * for large dataset this is costly
+		 */
 		BitSet aMember = aSubgroup.getMembers();
 
 		for(int i=aMember.nextSetBit(0); i>=0; i=aMember.nextSetBit(i+1))
