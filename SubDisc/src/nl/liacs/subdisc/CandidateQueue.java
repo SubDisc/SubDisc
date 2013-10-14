@@ -249,6 +249,8 @@ itsNextQueueConvexHullROC.debug();
 				// synchronized (itsQueue) done by removeFirst()
 				synchronized (itsNextQueue) {
 				synchronized (itsTempQueue) {
+					postProcessCBBS();
+/*
 					Log.logCommandLine("candidates: " + itsTempQueue.size());
 					int aLoopSize = Math.min(itsMaximumQueueSize, itsTempQueue.size());
 					BitSet aUsed = new BitSet(itsTempQueue.size());
@@ -287,6 +289,7 @@ itsNextQueueConvexHullROC.debug();
 
 					itsNextQueue = new TreeSet<Candidate>();
 					itsTempQueue = new TreeSet<Candidate>();
+*/
 				}
 				}
 				break;
@@ -364,36 +367,6 @@ itsNextQueueConvexHullROC.debug();
 		synchronized (itsQueue) { return itsQueue.size(); }
 	}
 
-	/*
-	 * FIXME MM
-	 *
-	 * this is one of the things that makes cbbs extremely slow
-	 * for beam-width times, for every Candidate in itsTempQueue,
-	 * for every Candidate.member, for every Candidate in itsTempQueue,
-	 * a check is performed to see if the member is also covered by another
-	 * Candidate
-	 *
-	 * retrieving this information needs to be done just once
-	 * and computing the multiplicative weight for a Candidate becomes
-	 * linear in the number of its members
-	 *
-	 * // coverCounts[i] = times record i was coved by all Candidates in itsTempQueue
-	 * int[] coverCounts = new int[nrRows];
-	 *
-	 * // update coverCounts per Candidate, not per record
-	 * for (Candidate c : itsTempQueue)
-	 * {
-	 *	BitSet m = c.getSubgroup().getMembers();
-	 *
-	 *	// loop over members the most efficient way
-	 *	for (int i = m.nextSetBit(0); i >= 0; i = m.nextSetBit(i+1))
-	 *		++coverCounts[i];
-	 * }
-	 *
-	 * now computeMultiplicativeWeight(Candidate) loop becomes O(|m|)
-	 * for (int i = m.nextSetBit(0); i >= 0; i = m.nextSetBit(i+1))
-	 *	aResult += Math.pow(anAlpha, coverCount[i]);
-	 */
 	/**
 	* Computes the cover count of a particular example: the number of times this example is a member of a subgroup. \n
 	* See van Leeuwen & Knobbe, ECML PKDD 2011. \n
@@ -435,4 +408,129 @@ itsNextQueueConvexHullROC.debug();
 
 		return aResult/aSubgroup.getCoverage();
 	}
+
+/******************************************************************************/
+
+	/*
+	 * TODO MM
+	 * from here on itsTempQueue is not needed as Tree structure anymore
+	 * creating a linear access linear access data view of its items may be
+	 * faster to access, as it can be better predicted by the cpu
+	 * and avoids the use of extra positioning variables
+	 */
+	private final void postProcessCBBS()
+	{
+		int aSize = itsTempQueue.size();
+		int[] aCoverCounts = createCoverCounts(itsTempQueue);
+
+		// in each execution of the loop, a Candidate will be added to
+		// itsNextQueue, and the covercounts go up
+		// as covercounts go up, multiplicative weights go down
+		// so for each round, the maximum score a Candidate can attain
+		// is upper bounded by the score attained in the previous round
+		// this is useful for pruning, see main loop below
+		// the scores are initiates to c.getPriority()
+		// see the comment on the first loop below
+		double[] aLastWeight = new double[aSize];
+		int idx = -1;
+		for (Candidate c : itsTempQueue)
+			aLastWeight[++idx] = c.getPriority();
+
+		int aLoopSize = Math.min(itsMaximumQueueSize, aSize);
+		BitSet aUsed = new BitSet(aSize);
+
+		// the first loop is special, as there are no Candidates in
+		// itsNextQueue yet, the multiplicative weight for each
+		// Candidate is equal to 1.0
+		// so the Candidate with the highest priority wins
+		// and its new quality = 1.0 * c.getPriority()
+		// therefore the first execution of the loop is taken out
+		Log.logCommandLine("loop 0");
+		Log.logCommandLine(String.format("best (0): %f, 1.0, %1$f", aLastWeight[0]));
+		Candidate aFirst = itsTempQueue.first();
+		aUsed.set(0);
+		addToQueue(itsNextQueue, aFirst);
+		updateCoverCounts(aCoverCounts, aFirst);
+
+		Log.logCommandLine("candidates: " + aSize);
+		for (int i = 1; i < aLoopSize; ++i) //copy candidates into itsNextQueue
+		{
+			Log.logCommandLine("loop " + i);
+			Candidate aBestCandidate = null;
+			double aMaxQuality = Double.NEGATIVE_INFINITY;
+			int aCount = -1;
+			int aChosen = -1;
+			for (Candidate aCandidate : itsTempQueue)
+			{
+				++aCount;
+
+				if (aUsed.get(aCount))
+					continue;
+
+				// score can not get better than last time, so
+				// if that would not have been good enough
+				// there is no use in checking this Candidate
+				if (aLastWeight[aCount] <= aMaxQuality)
+					continue;
+
+				// could get members here and reuse for update()
+				double aQuality = computeMultiplicativeWeight(aCandidate, aCoverCounts) * aCandidate.getPriority();
+				aLastWeight[aCount] = aQuality;
+
+				if (aQuality > aMaxQuality)
+				{
+					aMaxQuality = aQuality;
+					aBestCandidate = aCandidate;
+					aChosen = aCount;
+				}
+			}
+			Log.logCommandLine(String.format("best (%d): %f, %f, %f", aChosen, aBestCandidate.getPriority(), aLastWeight[aChosen], aMaxQuality));
+			aUsed.set(aChosen);
+			aBestCandidate.setPriority(aMaxQuality);
+			addToQueue(itsNextQueue, aBestCandidate);
+			updateCoverCounts(aCoverCounts, aBestCandidate);
+		}
+		itsQueue = itsNextQueue;
+
+		Log.logCommandLine("========================================================");
+		Log.logCommandLine("used: " + aUsed.toString());
+		for (Candidate aCandidate : itsQueue)
+			Log.logCommandLine("priority: " + aCandidate.getPriority());
+
+		itsNextQueue = new TreeSet<Candidate>();
+		itsTempQueue = new TreeSet<Candidate>();
+	}
+
+	private static final int[] createCoverCounts(TreeSet<Candidate> theTempQueue)
+	{
+		if (theTempQueue.size() == 0)
+			return new int[0];
+
+		// first() is safe as theTempQueue is not empty
+		int aNrRows = theTempQueue.first().getSubgroup().getMembers().size();
+		int[] aCoverCounts = new int[aNrRows];
+		return aCoverCounts;
+	}
+
+	private static final void updateCoverCounts(int[] theCoverCounts, Candidate theCandidate)
+	{
+		BitSet b = theCandidate.getSubgroup().getMembers();
+
+		for (int i = b.nextSetBit(0); i >= 0; i = b.nextSetBit(i+1))
+			++theCoverCounts[i];
+	}
+
+	private static final double ALPHA = 0.9;
+	private static final double computeMultiplicativeWeight(Candidate theCandidate, int[] theCoverCounts)
+	{
+		Subgroup aSubgroup = theCandidate.getSubgroup();
+		BitSet b = aSubgroup.getMembers();
+
+		double aResult = 0.0;
+		for (int i = b.nextSetBit(0); i >= 0; i = b.nextSetBit(i+1))
+			aResult += Math.pow(ALPHA, theCoverCounts[i]);
+
+		return aResult / aSubgroup.getCoverage();
+	}
 }
+
