@@ -582,9 +582,8 @@ public class Validation
 
 	private ConditionList getRandomConditionList(int theDepth, Random theRandom)
 	{
-		ConditionList aCL = new ConditionList();
-
 		int aDepth = 1+theRandom.nextInt(theDepth); //random nr between 1 and theDepth (incl)
+		ConditionList aCL = new ConditionList(aDepth);
 		int aNrColumns = itsTable.getNrColumns();
 
 		for (int j = 0; j < aDepth; j++) // j conditions

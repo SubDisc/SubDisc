@@ -97,10 +97,11 @@ public class ExternalKnowledgeFileLoader
 	{
 		for (String aLine : theKnowledge)
 		{
-			ConditionList aConditionList = new ConditionList();
+			String[] aConjuncts = getConjuncts(aLine);
+			ConditionList aConditionList = new ConditionList(aConjuncts.length);
 
 			// add every conjunct to the ConditionList
-			for (String conjunct : getConjuncts(aLine))
+			for (String conjunct : aConjuncts)
 			{
 				String[] sa = disect(conjunct);
 				Column col = theTable.getColumn(sa[0]);

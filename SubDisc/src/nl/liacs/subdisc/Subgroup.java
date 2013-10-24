@@ -57,7 +57,7 @@ public class Subgroup implements Comparable<Subgroup>
 		if (theMembers == null || theMembers.cardinality() == 0)
 			throw new IllegalArgumentException("Subgroups must have members");
 
-		itsConditions = (theConditions == null ? new ConditionList() : theConditions);
+		itsConditions = (theConditions == null ? new ConditionList(0) : theConditions);
 		itsDepth = itsConditions.size();
 
 		itsMembers = theMembers;

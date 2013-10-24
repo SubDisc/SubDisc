@@ -71,8 +71,8 @@ public class LoaderFraunhofer
 	 */
 	private ConditionList convertToConditionList(String theString)
 	{
-		ConditionList aConditionList = new ConditionList();
 		String[] aConditions = theString.split(" ");
+		ConditionList aConditionList = new ConditionList(aConditions.length);
 		for (int i=0; i<aConditions.length; i++)
 		{
 			String anAtom = aConditions[i];

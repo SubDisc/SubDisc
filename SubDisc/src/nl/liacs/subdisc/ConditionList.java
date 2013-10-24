@@ -2,17 +2,21 @@ package nl.liacs.subdisc;
 
 import java.util.*;
 
+@Deprecated
 public class ConditionList extends ArrayList<Condition> implements Comparable<ConditionList>
 {
 	private static final long serialVersionUID = 1L;
 
-	public ConditionList() {}
+	public ConditionList(int size) { super(size); }
 
 	public ConditionList copy()
 	{
-		ConditionList aNewConditionList = new ConditionList();
-		for(Condition aCondition : this)
-			aNewConditionList.addCondition(aCondition.copy());
+		// a copy is made just before adding a new Condition -> size+1
+		ConditionList aNewConditionList = new ConditionList(this.size() + 1);
+		// NOTE reuse would be safe as Conditions are immutable
+		for (Condition aCondition : this)
+			aNewConditionList.addCondition(new Condition(aCondition));
+			//aNewConditionList.addCondition(aCondition);
 		return aNewConditionList;
 	}
 
