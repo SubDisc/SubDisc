@@ -13,10 +13,8 @@ public class ConditionList extends ArrayList<Condition> implements Comparable<Co
 	{
 		// a copy is made just before adding a new Condition -> size+1
 		ConditionList aNewConditionList = new ConditionList(this.size() + 1);
-		// NOTE reuse would be safe as Conditions are immutable
 		for (Condition aCondition : this)
-			aNewConditionList.addCondition(new Condition(aCondition));
-			//aNewConditionList.addCondition(aCondition);
+			aNewConditionList.addCondition(aCondition);
 		return aNewConditionList;
 	}
 
