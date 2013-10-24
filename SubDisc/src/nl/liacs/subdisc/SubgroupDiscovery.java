@@ -7,6 +7,8 @@ import java.util.concurrent.atomic.*;
 
 import javax.swing.*;
 
+import nl.liacs.subdisc.ConditionListBuilder.ConditionListA;
+
 public class SubgroupDiscovery extends MiningAlgorithm
 {
 	private final Table itsTable;
@@ -349,7 +351,8 @@ System.out.println(aSubgroup + "\t" + aRefinement.getConditionBase());
 
 		// see comment at evaluateNominalBinaryRefinement()
 		ConditionBase aConditionBase = theRefinement.getConditionBase();
-		ConditionList aList = theRefinement.getSubgroup().getConditions();
+		//ConditionList aList = theRefinement.getSubgroup().getConditions();
+		ConditionListA aList = theRefinement.getSubgroup().getConditions();
 
 		switch (itsSearchParameters.getNumericStrategy())
 		{
@@ -730,7 +733,8 @@ System.out.println(aSubgroup + "\t" + aRefinement.getConditionBase());
 // and performs a full table scan to add the new Condition
 // as the new Subgroup would not decrease in size / or became empty it was not
 // logged as a Candidate (though it does increment itsNrCandidates)
-			ConditionList aList = theRefinement.getSubgroup().getConditions();
+			//ConditionList aList = theRefinement.getSubgroup().getConditions();
+			ConditionListA aList = theRefinement.getSubgroup().getConditions();
 
 			// switch for now, will separate code paths when numeric EQUALS is fixed 
 			switch (c.getType())
@@ -1330,15 +1334,18 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			// using a different CandidateQueue constructor would
 			// make this code much cleaner, and avoid any crash
 
-			List<ConditionList> aBeamSeed = itsSearchParameters.getBeamSeed();
-			ConditionList aFirstConditionList = aBeamSeed.get(0);
+			//List<ConditionList> aBeamSeed = itsSearchParameters.getBeamSeed();
+			List<ConditionListA> aBeamSeed = itsSearchParameters.getBeamSeed();
+			//ConditionList aFirstConditionList = aBeamSeed.get(0);
+			ConditionListA aFirstConditionList = aBeamSeed.get(0);
 			//TODO there may be no members, in which case the following statement crashes
 			BitSet aFirstMembers = itsTable.evaluate(aFirstConditionList);
 			Subgroup aFirstSubgroup = new Subgroup(aFirstConditionList, aFirstMembers, itsResult);
 			CandidateQueue aSeededCandidateQueue = new CandidateQueue(itsSearchParameters, new Candidate(aFirstSubgroup));
 			aBeamSeed.remove(0); // does a full array-copy of aBeamSeed
 			int aNrEmptySeeds = 0;
-			for (ConditionList aConditionList : aBeamSeed)
+			//for (ConditionList aConditionList : aBeamSeed)
+			for (ConditionListA aConditionList : aBeamSeed)
 			//for (int i = 1, j = aBeamSeed.size(); i < j; ++i)
 			{
 				//ConditionList aConditionList = aBeamSeed.get(i);
@@ -1657,7 +1664,8 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			// TODO MM could create Refinement.isSelfReferencing()
 			// to indicate that Refinement is about a Column that
 			// already occurs in the ConditionList for its Subgroup
-			ConditionList aConditionList = theRefinement.getSubgroup().getConditions();
+			//ConditionList aConditionList = theRefinement.getSubgroup().getConditions();
+			ConditionListA aConditionList = theRefinement.getSubgroup().getConditions();
 
 			if (aConditionList.size() == 0)
 				return true;
@@ -1722,7 +1730,8 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 
 		// tests on existing ConditionList and Condition with value
 		// NOTE requires Condition to be formed first, even when useless
-		boolean isUseful(ConditionList theConditionList, Condition theCondition)
+		//boolean isUseful(ConditionList theConditionList, Condition theCondition)
+		boolean isUseful(ConditionListA theConditionList, Condition theCondition)
 		{
 			final int aSize = theConditionList.size();
 			if (aSize == 0)
@@ -1792,7 +1801,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		assert(operatorOrder());
 	}
 	/* test assumption that EQUALS is only Operator for BINARY Columns */
-	private static final boolean equalsIsOnlyBinaryOperator()
+	static final boolean equalsIsOnlyBinaryOperator()
 	{
 		Set<Operator> ops = Operator.getOperators(AttributeType.BINARY);
 		return (ops.size() == 1) && (ops.contains(Operator.EQUALS));
@@ -1864,11 +1873,16 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	 * could be ConditionList method, will decide later
 	 * method returns false most of the time
 	 */
-	private static final boolean isOverlap(ConditionList theConditionList, Column theColumn)
+	//private static final boolean isOverlap(ConditionList theConditionList, Column theColumn)
+	private static final boolean isOverlap(ConditionListA theConditionList, Column theColumn)
 	{
-		for (Condition c : theConditionList)
+		for (int i = 0, j = theConditionList.size(); i < j; ++i)
+		{
+			Condition c = theConditionList.get(i);
 			if (c.getColumn() == theColumn)
 				return true;
+		}
+
 		return false;
 	}
 
@@ -1891,24 +1905,33 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	 * This is true for NOMINAL, BINARY and NUMERIC Columns.
 	 * This is true for BEAM and non-BEAM SearchSettings.
 	 */
-	private static final boolean hasOverridingEquals(ConditionList theConditionList, Column theColumn)
+	//private static final boolean hasOverridingEquals(ConditionList theConditionList, Column theColumn)
+	private static final boolean hasOverridingEquals(ConditionListA theConditionList, Column theColumn)
 	{
 		return hasEquals(theConditionList) && hasRelevantEquals(theConditionList, theColumn);
 	}
-	private static final boolean hasEquals(ConditionList theConditionList)
+	//private static final boolean hasEquals(ConditionList theConditionList)
+	private static final boolean hasEquals(ConditionListA theConditionList)
 	{
-		for (Condition c : theConditionList)
+		for (int i = 0, j = theConditionList.size(); i < j; ++i)
+		{
+			Condition c = theConditionList.get(i);
 			if (c.getOperator() == Operator.EQUALS)
 				return true;
+		}
 
 		// no EQUALS
 		return false;
 	}
-	private static final boolean hasRelevantEquals(ConditionList theConditionList, Column theColumn)
+	//private static final boolean hasRelevantEquals(ConditionList theConditionList, Column theColumn)
+	private static final boolean hasRelevantEquals(ConditionListA theConditionList, Column theColumn)
 	{
-		for (Condition c : theConditionList)
+		for (int i = 0, j = theConditionList.size(); i < j; ++i)
+		{
+			Condition c = theConditionList.get(i);
 			if (c.getOperator() == Operator.EQUALS && c.getColumn() == theColumn)
 				return true;
+		}
 
 		// no EQUALS or not about the Refinement Column
 		return false;
@@ -1927,11 +1950,15 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	 * 
 	 * TODO MM solve this issue, it has been around forever
 	 */
-	private static final boolean contains(ConditionList theConditionList, Condition theCondition)
+	//private static final boolean contains(ConditionList theConditionList, Condition theCondition)
+	private static final boolean contains(ConditionListA theConditionList, Condition theCondition)
 	{
-		for (Condition c : theConditionList)
+		for (int i = 0, j = theConditionList.size(); i < j; ++i)
+		{
+			Condition c = theConditionList.get(i);
 			if (theCondition.compareTo(c) == 0)
 				return true;
+		}
 
 		return false;
 	}
@@ -1964,7 +1991,8 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	 * would then avoid creation of any [ (C = x)  ^ (C ... ) ^ ... ] anyway
 	 * because of the EQUALS check 
 	 */
-	private static final boolean createsRedundantEquals(ConditionList theConditionList, Condition theCondition)
+	//private static final boolean createsRedundantEquals(ConditionList theConditionList, Condition theCondition)
+	private static final boolean createsRedundantEquals(ConditionListA theConditionList, Condition theCondition)
 	{
 		Column aColumn = theCondition.getColumn();
 		Operator anOperator = theCondition.getOperator();
@@ -1976,8 +2004,9 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		assert (anOperator == Operator.LESS_THAN_OR_EQUAL ||
 			anOperator == Operator.GREATER_THAN_OR_EQUAL);
 
-		for (Condition c : theConditionList)
+		for (int i = 0, j = theConditionList.size(); i < j; ++i)
 		{
+			Condition c = theConditionList.get(i);
 			if (c.getColumn() == aColumn &&
 				c.getNumericValue() == aValue &&
 				// harder test
@@ -2007,8 +2036,11 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	 * of [ (C >= x)  ^ (C <= x) ^ ... ], then this case is similar to the
 	 * isUseful(ConditionList, Refinement) EQUALS pre-check
 	 * not any other Condition involving C will ever be useful
+	 * 
+	 * FIXME MM this should be a PRE check, does not use new Condition.value
 	 */
-	private static final boolean hasRelevantEqualsThroughLeqGeq(ConditionList theConditionList, Column theColumn)
+	//private static final boolean hasRelevantEqualsThroughLeqGeq(ConditionList theConditionList, Column theColumn)
+	private static final boolean hasRelevantEqualsThroughLeqGeq(ConditionListA theConditionList, Column theColumn)
 	{
 		// FIXME MM assertions go here
 
@@ -2060,7 +2092,8 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		}
 
 		@Override
-		boolean isUseful(ConditionList theConditionList, Condition theCondition)
+		//boolean isUseful(ConditionList theConditionList, Condition theCondition)
+		boolean isUseful(ConditionListA theConditionList, Condition theCondition)
 		{
 			boolean b = super.isUseful(theConditionList, theCondition);
 			//if (!b) // uncomment to only print refused Refinements
@@ -2069,7 +2102,8 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		}
 
 		// could be faster in calling method - but debug only anyway
-		private final void print(boolean useful, String phase, ConditionList conditionList, String value)
+		//private final void print(boolean useful, String phase, ConditionList conditionList, String value)
+		private final void print(boolean useful, String phase, ConditionListA conditionList, String value)
 		{
 			Log.logCommandLine(new StringBuilder(256)
 						.append(useful ? "USEFUL\t" : "USELESS\t")
