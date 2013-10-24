@@ -331,28 +331,28 @@ public class Table implements XMLNodeInterface
 		return -1; // not found (causes ArrayIndexOutOfBounds)
 	}
 
-	@Deprecated
-	public Condition getFirstCondition()
-	{
-		return new Condition(itsColumns.get(0));
-	}
+//	@Deprecated
+//	public Condition getFirstCondition()
+//	{
+//		return new Condition(itsColumns.get(0));
+//	}
 
-	//TODO this code is overly complex, due to its Safarii-background
-	//Arno needs to fix this, at some point.
-	@Deprecated
-	public Condition getNextCondition(Condition theCurrentCondition)
-	{
-		if (theCurrentCondition.hasNextOperator())
-			return new Condition(theCurrentCondition.getColumn(), theCurrentCondition.getNextOperator());
-		else
-		{
-			int anIndex = theCurrentCondition.getColumn().getIndex();
-			if (anIndex == itsNrColumns-1) // No more attributes
-				return null;
-			else
-				return new Condition(itsColumns.get(anIndex + 1));
-		}
-	}
+//	//TODO this code is overly complex, due to its Safarii-background
+//	//Arno needs to fix this, at some point.
+//	@Deprecated
+//	public Condition getNextCondition(Condition theCurrentCondition)
+//	{
+//		if (theCurrentCondition.hasNextOperator())
+//			return new Condition(theCurrentCondition.getColumn(), theCurrentCondition.getNextOperator());
+//		else
+//		{
+//			int anIndex = theCurrentCondition.getColumn().getIndex();
+//			if (anIndex == itsNrColumns-1) // No more attributes
+//				return null;
+//			else
+//				return new Condition(itsColumns.get(anIndex + 1));
+//		}
+//	}
 
 
 	// Misc ===============================

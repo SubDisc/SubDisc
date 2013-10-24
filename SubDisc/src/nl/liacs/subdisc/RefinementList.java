@@ -1,86 +1,81 @@
 package nl.liacs.subdisc;
 
 import java.util.*;
-import java.util.concurrent.atomic.*;
 
 public class RefinementList extends ArrayList<Refinement>
 {
 	private static final long serialVersionUID = 1L;
-	private Table itsTable;
-	private Subgroup itsSubgroup;
-
+//	private Table itsTable;
+//	private Subgroup itsSubgroup;
+//
 // TODO MM DEBUG symbols
-static AtomicInteger COUNT = new AtomicInteger(0);
-static AtomicInteger ADD = new AtomicInteger(0);
-
-	@Deprecated
-	public RefinementList(Subgroup theSubgroup, Table theTable, SearchParameters theSearchParameters)
-	{
-		itsSubgroup = theSubgroup;
-		itsTable = theTable;
-
-		final SearchParameters aSP = theSearchParameters;
-		final boolean useSets = aSP.getNominalSets();
-		final NumericOperatorSetting aNO = aSP.getNumericOperatorSetting();
-		final TargetConcept aTC = aSP.getTargetConcept();
-		final boolean isSingleNominalTT = (aTC.getTargetType() == TargetType.SINGLE_NOMINAL);
-
-		Condition aCondition = itsTable.getFirstCondition();
-		AttributeType aType;
-		do
-		{
-COUNT.incrementAndGet();
-			Column aColumn = aCondition.getColumn();
-			Operator anOperator = aCondition.getOperator();
-
-			if (aColumn.getIsEnabled() && !aTC.isTargetAttribute(aColumn))
-			{
-				boolean add = false;
-				aType = aColumn.getType();
-
-				//check validity of operator
-				//numeric
-				if (aType == AttributeType.NUMERIC && NumericOperatorSetting.check(aNO, anOperator))
-					add = true;
-				//nominal
-				else if (aType == AttributeType.NOMINAL && !useSets && anOperator == Operator.EQUALS)
-				{
-					// set-valued only allowed for SINGLE_NOMINAL
-					if (isSingleNominalTT || anOperator != Operator.ELEMENT_OF)
-						add = true;
-					// TODO MM aCondition.isEquals() -> implies 'aCondition.getOperator() != Operator.ELEMENT_OF'
-					// so || is always true
-					// if check is redundant
-				}
-				else if (aType == AttributeType.NOMINAL && useSets && anOperator == Operator.ELEMENT_OF)
-					// TODO MM SINGLE_NOMINAL check should be here?
-					// probably other code ensured proper
-					// execution coincidentally
-					add = true;
-				//binary
-				else if (aType == AttributeType.BINARY)
-					add = true;
-
-				if (add)
-				{
-ADD.incrementAndGet();
-					// FIXME MM this is glue code
-					ConditionBase aConditionBase = new ConditionBase(aColumn, anOperator);
-					add(new Refinement(aConditionBase, itsSubgroup));
-				}
-			}
-		}
-		while ((aCondition = itsTable.getNextCondition(aCondition)) != null);
-	}
-
+//static AtomicInteger COUNT = new AtomicInteger(0);
+//static AtomicInteger ADD = new AtomicInteger(0);
+//
+//	@Deprecated
+//	public RefinementList(Subgroup theSubgroup, Table theTable, SearchParameters theSearchParameters)
+//	{
+//		itsSubgroup = theSubgroup;
+//		itsTable = theTable;
+//
+//		final SearchParameters aSP = theSearchParameters;
+//		final boolean useSets = aSP.getNominalSets();
+//		final NumericOperatorSetting aNO = aSP.getNumericOperatorSetting();
+//		final TargetConcept aTC = aSP.getTargetConcept();
+//		final boolean isSingleNominalTT = (aTC.getTargetType() == TargetType.SINGLE_NOMINAL);
+//
+//		Condition aCondition = itsTable.getFirstCondition();
+//		AttributeType aType;
+//		do
+//		{
+//COUNT.incrementAndGet();
+//			Column aColumn = aCondition.getColumn();
+//			Operator anOperator = aCondition.getOperator();
+//
+//			if (aColumn.getIsEnabled() && !aTC.isTargetAttribute(aColumn))
+//			{
+//				boolean add = false;
+//				aType = aColumn.getType();
+//
+//				//check validity of operator
+//				//numeric
+//				if (aType == AttributeType.NUMERIC && NumericOperatorSetting.check(aNO, anOperator))
+//					add = true;
+//				//nominal
+//				else if (aType == AttributeType.NOMINAL && !useSets && anOperator == Operator.EQUALS)
+//				{
+//					// set-valued only allowed for SINGLE_NOMINAL
+//					if (isSingleNominalTT || anOperator != Operator.ELEMENT_OF)
+//						add = true;
+//					// TODO MM aCondition.isEquals() -> implies 'aCondition.getOperator() != Operator.ELEMENT_OF'
+//					// so || is always true
+//					// if check is redundant
+//				}
+//				else if (aType == AttributeType.NOMINAL && useSets && anOperator == Operator.ELEMENT_OF)
+//					// TODO MM SINGLE_NOMINAL check should be here?
+//					// probably other code ensured proper
+//					// execution coincidentally
+//					add = true;
+//				//binary
+//				else if (aType == AttributeType.BINARY)
+//					add = true;
+//
+//				if (add)
+//				{
+//ADD.incrementAndGet();
+//					// FIXME MM this is glue code
+//					ConditionBase aConditionBase = new ConditionBase(aColumn, anOperator);
+//					add(new Refinement(aConditionBase, itsSubgroup));
+//				}
+//			}
+//		}
+//		while ((aCondition = itsTable.getNextCondition(aCondition)) != null);
+//	}
+//
 	public RefinementList(Subgroup theSubgroup, ConditionBaseSet theConditionBaseSet)
 	{
 		for (ConditionBase c : theConditionBaseSet.getConditionBases())
-		{
-COUNT.incrementAndGet();
-ADD.incrementAndGet();
 			super.add(new Refinement(c, theSubgroup));
-		}
 	}
 
 	/*
