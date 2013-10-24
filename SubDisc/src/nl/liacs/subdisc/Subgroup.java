@@ -289,6 +289,8 @@ public class Subgroup implements Comparable<Subgroup>
 
 		int aTotalTargetCoverage = itsParentSet.getTotalTargetCoverage();
 
+		// aTotalTargetCoverage can not be 0, as the target value used
+		// should not have been allowed to be selected
 		if (aTotalTargetCoverage <= 0)
 			throw new AssertionError();
 
@@ -314,13 +316,19 @@ public class Subgroup implements Comparable<Subgroup>
 
 		int aTotalCoverage = itsParentSet.getTotalCoverage();
 		int aTotalTargetCoverage = itsParentSet.getTotalTargetCoverage();
-		int aBody = (aTotalCoverage - aTotalTargetCoverage);
+		int aNotHead = (aTotalCoverage - aTotalTargetCoverage);
 
+		// aTotalTargetCoverage can not be 0, as the target value used
+		// should not have been allowed to be selected
+		// aNotHead can be 0 for a target concept that contains just 1
+		// target value, this is awkward, but not incorrect and this is
+		// not the location to check for this
 		if (aTotalCoverage <= 0 || aTotalTargetCoverage < 0 ||
-			aTotalCoverage < aTotalTargetCoverage || aBody <= 0)
+			aTotalCoverage < aTotalTargetCoverage || aNotHead < 0)
 			throw new AssertionError();
 
-		return ((double)(itsCoverage - tmp.cardinality())) / aBody;
+		// (FP / !H)
+		return ((double)(itsCoverage - tmp.cardinality())) / aNotHead;
 	}
 
 	public double getPValue()
