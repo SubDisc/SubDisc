@@ -1,12 +1,15 @@
 package nl.liacs.subdisc;
 
-import java.util.*;
 //import java.awt.*;
 import java.io.*;
+import java.util.*;
+
+import nl.liacs.subdisc.ConditionListBuilder.ConditionListA;
 
 public class LoaderFraunhofer
 {
-	private List<ConditionList> itsBeamSeed;
+	//private List<ConditionList> itsBeamSeed;
+	private List<ConditionListA> itsBeamSeed;
 	private Table itsTable;
 	private SearchParameters itsSearchParameters;
 
@@ -14,7 +17,8 @@ public class LoaderFraunhofer
 	public LoaderFraunhofer(File theFile, Table theTable, SearchParameters theSearchParameters)
 	{
 //		beamseed = new CandidateQueue(theSearchParameters, new Candidate(aStart));
-		itsBeamSeed = new ArrayList<ConditionList>();
+		//itsBeamSeed = new ArrayList<ConditionList>();
+		itsBeamSeed = new ArrayList<ConditionListA>();
 		itsTable = theTable;
 		itsSearchParameters = theSearchParameters;
 		BufferedReader aReader = null;
@@ -29,7 +33,8 @@ public class LoaderFraunhofer
 				++aLineNr;
 
 				//Log.logCommandLine(aLine);
-				ConditionList aConditionList = convertToConditionList(aLine);
+				//ConditionList aConditionList = convertToConditionList(aLine);
+				ConditionListA aConditionList = convertToConditionList(aLine);
 				itsBeamSeed.add(aConditionList);
 				//Subgroup aSubgroup = convertToSubgroup(aConditionList);
 
@@ -69,10 +74,12 @@ public class LoaderFraunhofer
 	 * 'age=young tear-prod-rate=reduced spectacle-prescrip=hypermetrope '
 	 * 'age=young contact-lenses=soft spectacle-prescrip=hypermetrope '
 	 */
-	private ConditionList convertToConditionList(String theString)
+	//private ConditionList convertToConditionList(String theString)
+	private ConditionListA convertToConditionList(String theString)
 	{
 		String[] aConditions = theString.split(" ");
-		ConditionList aConditionList = new ConditionList(aConditions.length);
+		//ConditionList aConditionList = new ConditionList(aConditions.length);
+		ConditionListA aConditionList = ConditionListBuilder.emptyList();
 		for (int i=0; i<aConditions.length; i++)
 		{
 			String anAtom = aConditions[i];
@@ -106,7 +113,8 @@ public class LoaderFraunhofer
 					throw new AssertionError(col.getType());
 			}
 
-			aConditionList.add(aCondition);
+			//aConditionList.add(aCondition);
+			aConditionList = ConditionListBuilder.createList(aConditionList, aCondition);
 		}
 		return(aConditionList);
 	}

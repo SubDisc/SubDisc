@@ -2,6 +2,8 @@ package nl.liacs.subdisc;
 
 import java.util.*;
 
+import nl.liacs.subdisc.ConditionListBuilder.ConditionListA;
+
 public class LocalKnowledge
 {
 	private List<ConditionList> itsExplanatoryConditions;
@@ -123,9 +125,16 @@ public class LocalKnowledge
 		Set<BitSet> aBitSetsExplanatoryConditionLists = new HashSet<BitSet>();
 		Set<ConditionList> aConditionListsInvolvedWithColumn = new HashSet<ConditionList>();
 		// First obtain conditionLists that are involved with the subgroup
-		for (Condition c : theSubgroupToEvaluate.getConditions())
+//		for (Condition c : theSubgroupToEvaluate.getConditions())
+//			if (mapColumnToConditionList.get(c.getColumn()) != null)
+//				aConditionListsInvolvedWithColumn.addAll(mapColumnToConditionList.get(c.getColumn()));
+		ConditionListA aConditions = theSubgroupToEvaluate.getConditions();
+		for (int i = 0, j = aConditions.size(); i < j; ++i)
+		{
+			Condition c = aConditions.get(i);
 			if (mapColumnToConditionList.get(c.getColumn()) != null)
 				aConditionListsInvolvedWithColumn.addAll(mapColumnToConditionList.get(c.getColumn()));
+		}
 
 		//now get the bitsets from  conditionLists involved from the mapping 
 		for (ConditionList cl : aConditionListsInvolvedWithColumn)
@@ -140,13 +149,22 @@ public class LocalKnowledge
 		Set<StatisticsBayesRule> aSetStatisticsBayesRule = new HashSet<StatisticsBayesRule>();
 		Set<ConditionList> aConditionListsInvolvedWithColumn = new HashSet<ConditionList>();
 		// First obtain conditionLists that are involved with the subgroup
-		for (Condition c : theSubgroupToEvaluate.getConditions())
+//		for (Condition c : theSubgroupToEvaluate.getConditions())
+//		{
+//			System.out.println(c.getColumn().getName());
+//			if (mapColumnToConditionList.get(c.getColumn()) != null)
+//				aConditionListsInvolvedWithColumn.addAll(mapColumnToConditionList.get(c.getColumn()));
+//
+//		}
+		ConditionListA aConditions = theSubgroupToEvaluate.getConditions();
+		for (int i = 0, j = aConditions.size(); i < j; ++i)
 		{
+			Condition c = aConditions.get(i);
 			System.out.println(c.getColumn().getName());
 			if (mapColumnToConditionList.get(c.getColumn()) != null)
 				aConditionListsInvolvedWithColumn.addAll(mapColumnToConditionList.get(c.getColumn()));
-
 		}
+
 		//now get the statistics from  conditionLists involved from the mapping 
 		for (ConditionList cl : aConditionListsInvolvedWithColumn)
 			aSetStatisticsBayesRule.add(mapConditionListBayesRule.get(cl));

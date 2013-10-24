@@ -1,7 +1,10 @@
 package nl.liacs.subdisc;
 
-import org.w3c.dom.*;
 import java.util.*;
+
+import nl.liacs.subdisc.ConditionListBuilder.ConditionListA;
+
+import org.w3c.dom.*;
 
 /**
  * SearchParameters contains all search parameters for an experiment.
@@ -38,7 +41,8 @@ public class SearchParameters implements XMLNodeInterface
 	private int		itsPostProcessingCount;
 
 	// TODO MM add to loadData() + autorun.dtd
-	private List<ConditionList> itsBeamSeed;
+	//private List<ConditionList> itsBeamSeed;
+	private List<ConditionListA> itsBeamSeed;
 
 	public SearchParameters(Node theSearchParametersNode)
 	{
@@ -131,8 +135,11 @@ public class SearchParameters implements XMLNodeInterface
 	public void setPostProcessingDoAutoRun(boolean theAutoRunSetting) { itsPostProcessingDoAutoRun = theAutoRunSetting; }
 	public int getPostProcessingCount()			{ return itsPostProcessingCount; }
 	public void setPostProcessingCount(int theNr)		{ itsPostProcessingCount = theNr; }
-	public List<ConditionList> getBeamSeed()		{ return itsBeamSeed; }
-	public void setBeamSeed(List<ConditionList> theBeamSeed) { itsBeamSeed = theBeamSeed; }
+//	public List<ConditionList> getBeamSeed()		{ return itsBeamSeed; }
+//	public void setBeamSeed(List<ConditionList> theBeamSeed) { itsBeamSeed = theBeamSeed; }
+	public List<ConditionListA> getBeamSeed()		{ return itsBeamSeed; }
+	public void setBeamSeed(List<ConditionListA> theBeamSeed) { itsBeamSeed = theBeamSeed; }
+
 
 	/**
 	 * Creates an {@link XMLNode XMLNode} representation of this

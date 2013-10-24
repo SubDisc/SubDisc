@@ -2,6 +2,7 @@ package nl.liacs.subdisc;
 
 import java.util.*;
 
+import nl.liacs.subdisc.ConditionListBuilder.ConditionListA;
 import nl.liacs.subdisc.gui.*;
 
 /**
@@ -303,7 +304,8 @@ public class Validation
 		final int aNrRows = itsTable.getNrRows();
 		int aSubgroupSize;
 
-		ConditionList aCL;
+		//ConditionList aCL;
+		ConditionListA aCL;
 		BitSet aMembers;
 
 		do
@@ -580,10 +582,12 @@ public class Validation
 		return aCount/(double)theQualities.length;
 	}
 
-	private ConditionList getRandomConditionList(int theDepth, Random theRandom)
+	//private ConditionList getRandomConditionList(int theDepth, Random theRandom)
+	private ConditionListA getRandomConditionList(int theDepth, Random theRandom)
 	{
 		int aDepth = 1+theRandom.nextInt(theDepth); //random nr between 1 and theDepth (incl)
-		ConditionList aCL = new ConditionList(aDepth);
+		//ConditionList aCL = new ConditionList(aDepth);
+		ConditionListA aCL = ConditionListBuilder.emptyList();
 		int aNrColumns = itsTable.getNrColumns();
 
 		for (int j = 0; j < aDepth; j++) // j conditions
@@ -636,7 +640,8 @@ public class Validation
 				default :
 					throw new AssertionError(aColumn.getType());
 			}
-			aCL.addCondition(aCondition);
+			//aCL.addCondition(aCondition);
+			aCL = ConditionListBuilder.createList(aCL, aCondition);
 		}
 		return aCL;
 	}

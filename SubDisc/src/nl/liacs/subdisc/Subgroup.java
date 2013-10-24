@@ -2,6 +2,8 @@ package nl.liacs.subdisc;
 
 import java.util.*;
 
+import nl.liacs.subdisc.ConditionListBuilder.ConditionListA;
+
 /**
  * A Subgroup contains a number of instances from the original data. Subgroups
  * are formed by, a number of, {@link Condition Condition}s. Its members include
@@ -19,7 +21,8 @@ import java.util.*;
  */
 public class Subgroup implements Comparable<Subgroup>
 {
-	private ConditionList itsConditions;
+//	private ConditionList itsConditions;
+	private ConditionListA itsConditions;
 	private BitSet itsMembers;
 	private int itsID = 0;
 	private int itsCoverage; // crucial to keep it in sync with itsMembers
@@ -52,12 +55,14 @@ public class Subgroup implements Comparable<Subgroup>
 	 * @throws IllegalArgumentException if (theMembers == <code>null</code>)
 	 * or (theMembers.cardinality() == 0).
 	 */
-	public Subgroup(ConditionList theConditions, BitSet theMembers, SubgroupSet theSubgroupSet) throws IllegalArgumentException
+	//public Subgroup(ConditionList theConditions, BitSet theMembers, SubgroupSet theSubgroupSet) throws IllegalArgumentException
+	public Subgroup(ConditionListA theConditions, BitSet theMembers, SubgroupSet theSubgroupSet) throws IllegalArgumentException
 	{
 		if (theMembers == null || theMembers.cardinality() == 0)
 			throw new IllegalArgumentException("Subgroups must have members");
 
-		itsConditions = (theConditions == null ? new ConditionList(0) : theConditions);
+		//itsConditions = (theConditions == null ? new ConditionList(0) : theConditions);
+		itsConditions = (theConditions == null ? ConditionListBuilder.emptyList() : theConditions);
 		itsDepth = itsConditions.size();
 
 		itsMembers = theMembers;
@@ -81,7 +86,9 @@ public class Subgroup implements Comparable<Subgroup>
 	public Subgroup copy()
 	{
 		// sets conditions, depth, members, coverage, parentSet
-		Subgroup aReturn = new Subgroup(itsConditions.copy(), (BitSet) itsMembers.clone(), itsParentSet);
+		//Subgroup aReturn = new Subgroup(itsConditions.copy(), (BitSet) itsMembers.clone(), itsParentSet);
+		// NOTE ConditionListA is immutable, so reuse is safe
+		Subgroup aReturn = new Subgroup(itsConditions, (BitSet) itsMembers.clone(), itsParentSet);
 
 		aReturn.itsMeasureValue = itsMeasureValue;
 		// itsDAG = null;
@@ -102,7 +109,9 @@ public class Subgroup implements Comparable<Subgroup>
 			return;
 		}
 
-		itsConditions.addCondition(theCondition);
+		//itsConditions.addCondition(theCondition);
+		// add theCondition to current itsConditions
+		itsConditions = ConditionListBuilder.createList(itsConditions, theCondition);
 
 		//itsMembers.and(theCondition.getColumn().evaluate(theCondition));
 		// reassign, faster than and, possible as itsMembers != final
@@ -162,7 +171,8 @@ public class Subgroup implements Comparable<Subgroup>
 
 	public int getCoverage() { return itsCoverage; }
 
-	public ConditionList getConditions() { return itsConditions; }
+	//public ConditionList getConditions() { return itsConditions; }
+	public ConditionListA getConditions() { return itsConditions; }
 	public int getNrConditions() { return itsConditions.size(); }
 
 	public int getDepth() { return itsDepth; }

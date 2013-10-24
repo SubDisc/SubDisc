@@ -33,9 +33,23 @@ public class Candidate implements Comparable<Candidate>
 		// this should never happen
 		// equal priority, subgroup, condition list, condition(s) would
 		// mean it is the exact same Candidate
-		// FIXME MM / remove and test this code
-		System.out.println(new AssertionError("ERROR: Candidate.compareTo()"));
-		return 1; // ?
+		// FIXME MM / test and remove this code
+		// UPDATE MM: since revision r2174 this happens as a result of
+		// the canonical ordering of Conditions
+		// two equivalent ConditionLists (same set of Conditions)
+		// return a compareTo()  of 0, which is correct
+		// the return of this method is changed from 1 to 0
+		// this removes redundancy
+		// Note that creating (A ^ B) and (B ^ A) is invalid in a depth
+		// first search, but valid in beam or breadth first search
+		// checking for already tested Candidates is probably more work
+		// than re-evaluation of a small number of them
+		// at some point the return will be:
+		// return itsSubgroup.compareTo(theCandidate.getSubgroup());
+		System.out.format("WARNING REDUNDANCY: Candidate.compareTo()%n\t%s%n\t%s%n",
+					itsSubgroup.toString(),
+					theCandidate.getSubgroup().toString());
+		return 0;
 	}
 
 	public double getPriority() { return itsPriority; }

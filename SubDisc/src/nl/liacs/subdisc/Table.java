@@ -5,6 +5,7 @@ import java.util.*;
 
 import javax.swing.*;
 
+import nl.liacs.subdisc.ConditionListBuilder.ConditionListA;
 import nl.liacs.subdisc.FileHandler.Action;
 
 import org.w3c.dom.*;
@@ -285,7 +286,7 @@ public class Table implements XMLNodeInterface
 	/*
 	 * This method is too expensive in most cases,
 	 * Validation.randomConditions and SubgroupDiscovery.makeNewSubgroup use
-	 * it.
+	 * it, as well as the constructor BinaryTable(Table, Subgroup).
 	 * Actually, when making a refinement (in makeNewSubgroup), the new
 	 * BitSet can be created from
 	 * old_Subgroup.getMembers().and(new_condition.getAttribute.evaluate(new_condition))
@@ -296,10 +297,24 @@ public class Table implements XMLNodeInterface
 	 * Condition that form the ConditionList.
 	 */
 	// as above but only checks type once
-	public BitSet evaluate(ConditionList theList)
+//	public BitSet evaluate(ConditionList theList)
+//	{
+//		// Validation.randomConditions does not check for null
+//		if (theList == null || theList.isEmpty())
+//			return new BitSet(0);
+//
+//		// these 3 lines replace all code below, slightly less efficient
+//		BitSet aSet = theList.get(0).getColumn().evaluate(theList.get(0));
+//		for (int i = 1, j =  theList.size(); i < j; ++i)
+//			aSet.and(theList.get(i).getColumn().evaluate(theList.get(i)));
+//
+//		return aSet;
+//	}
+
+	public BitSet evaluate(ConditionListA theList)
 	{
 		// Validation.randomConditions does not check for null
-		if (theList == null || theList.isEmpty())
+		if (theList == null || theList.size() == 0)
 			return new BitSet(0);
 
 		// these 3 lines replace all code below, slightly less efficient
