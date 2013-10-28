@@ -17,6 +17,8 @@ public enum AttributeType implements EnumInterface
 		new HashSet<String>(Arrays.asList(new String[] { "1", "true", "t", "yes" }));
 	private static final Set<String> BOOLEAN_NEGATIVES =
 		new HashSet<String>(Arrays.asList(new String[] { "0", "false", "f", "no" }));
+	static final String DEFAULT_BINARY_TRUE_STRING = "1";
+	static final String DEFAULT_BINARY_FALSE_STRING = "0";
 
 	/*
 	 * NOTE if DEFAULT_MISSING_VALUE is changed for NUMERIC/ORDINAL, check

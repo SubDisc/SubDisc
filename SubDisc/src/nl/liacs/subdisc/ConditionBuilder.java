@@ -1,8 +1,18 @@
 package nl.liacs.subdisc;
 
 /*
- * class is implemented as an enum to enforce a single unique instance
- * class offers only static methods, these internally call the sole instance
+ * Class is implemented as an enum to enforce a single unique instance.
+ * Class offers only static methods, these internally call the sole instance.
+ * 
+ * Condition*.compareTo()
+ * It is assumed, but not tested, that, for Column types for which both single
+ * value and set Conditions are possible (ValueSet, Interval), the available
+ * Operators are exclusive for the single value type or set type.
+ * For example, EQUALS is for String, ELEMENT_OF is for ValueSet, and EQUALS can
+ * not be used for ValueSets.
+ * The same holds for {EQUALS, LEQ, GEQ} versus BETWEEN for NUMERIC Columns.
+ * The Condition implementation classes would require an update of the 
+ * compareTo() implementation should this ever change.
  * 
  * methods that can be called externally are:
  * build(ConditionBase theConditionBase, String theValue)
@@ -134,6 +144,7 @@ public enum ConditionBuilder
 		// to compare values
 		// when Column and Operator match, (throughout an experiment) it
 		// is safe to assume the Conditions are of the same class
+		// XXX see ConditionBuilder class comment on compareTo()
 
 		// this is a special return value, it lies outside the range of
 		// possible return values for the above three tests
@@ -167,12 +178,21 @@ public enum ConditionBuilder
 		// to be overridden only by ConditionBinaryEquals
 		public boolean getBinaryValue();
 
+		// XXX see ConditionBuilder class comment on compareTo()
 		@Override
 		public int compareTo(ConditionA theCondition);
 
 		@Override
 		public String toString();
 	}
+
+	// determined dynamically at runtime, more robust against refactoring
+	private static final String CONDITION_BASE = ConditionBase.class.getSimpleName();
+	private static final String COLUMN = Column.class.getSimpleName();
+	private static final String OPERATOR = Operator.class.getSimpleName();
+	private static final String ATTRIBUTE_TYPE = AttributeType.class.getSimpleName();
+	private static final String COLUMN_TYPE = CONDITION_BASE + "." + COLUMN + "." + ATTRIBUTE_TYPE;
+	private static final String OPERATOR_TYPE = CONDITION_BASE + "." + OPERATOR;
 
 	/*
 	 * this is the base class that all implementation classes should extend
@@ -185,17 +205,16 @@ public enum ConditionBuilder
 
 		private ConditionA(ConditionBase theConditionBase, AttributeType theExpectedType, Operator theExpectedOperator)
 		{
-			if (theConditionBase == null)
-				throw new IllegalArgumentException("theConditionBase can not be null");
+			checkValue(CONDITION_BASE, theConditionBase);
 
 			// check Column
 			Column aColumn = theConditionBase.getColumn();
 			if (aColumn.getType() != theExpectedType)
-				throw exception("ConditionBase.Column.AttributeType", aColumn.getType().toString());
+				throw exception(COLUMN_TYPE, aColumn.getType().toString());
 
 			Operator anOperator = theConditionBase.getOperator();
 			if (anOperator != theExpectedOperator)
-				throw exception("ConditionBase.Operator", anOperator.GUI_TEXT);
+				throw exception(OPERATOR_TYPE, anOperator.GUI_TEXT);
 
 			itsColumn = aColumn;
 		}
@@ -228,6 +247,7 @@ public enum ConditionBuilder
 		public abstract String getValueString();
 
 		// no base implementation, forces subclasses to implement method
+		// XXX see ConditionBuilder class comment on compareTo()
 		@Override
 		public abstract int compareTo(ConditionA theCondition);
 
@@ -254,13 +274,13 @@ public enum ConditionBuilder
 		return new IllegalArgumentException(pre + " can not be " + post);
 	}
 
-	// TODO MM theValue.getClass() might return the correct class -> test
 	private static final void checkValue(String theValueClass, Object theValue)
 	{
 		if (theValue == null)
 			throw exception(theValueClass, "null");
 	}
 
+	private static final String STRING = String.class.getSimpleName();
 	private class ConditionNominalEquals extends ConditionA
 	{
 		private final String itsValue;
@@ -270,7 +290,7 @@ public enum ConditionBuilder
 			// assume that ConditionBase checked validity of Column-Operator
 			// String can only be used with EQUALS
 			super(theConditionBase, AttributeType.NOMINAL, Operator.EQUALS);
-			checkValue(String.class.getSimpleName(), theValue);
+			checkValue(STRING, theValue);
 			itsValue = theValue;
 		}
 
@@ -289,12 +309,13 @@ public enum ConditionBuilder
 			int cmp = compare(this, theCondition);
 			if (cmp != UNDETERMINED)
 				return cmp;
-			// safe enough, when Column and Operator match
+			// XXX see ConditionBuilder class comment on compareTo()
 			ConditionNominalEquals that = ((ConditionNominalEquals) theCondition);
 			return this.itsValue.compareTo(that.itsValue);
 		}
 	}
 
+	private static final String VALUE_SET = ValueSet.class.getSimpleName();
 	private class ConditionNominalElementOf extends ConditionA
 	{
 		private final ValueSet itsValue;
@@ -304,7 +325,7 @@ public enum ConditionBuilder
 			// assume that ConditionBase checked validity of Column-Operator
 			// ValueSet can only be used with ELEMENt_OF
 			super(theConditionBase, AttributeType.NOMINAL, Operator.ELEMENT_OF);
-			checkValue(ValueSet.class.getSimpleName(), theValue);
+			checkValue(VALUE_SET, theValue);
 			itsValue = theValue;
 		}
 
@@ -323,20 +344,23 @@ public enum ConditionBuilder
 			int cmp = compare(this, theCondition);
 			if (cmp != UNDETERMINED)
 				return cmp;
-			assert (uniqueValueSet(this, theCondition));
-			return 0;
+			// XXX see ConditionBuilder class comment on compareTo()
+			ConditionNominalElementOf that = ((ConditionNominalElementOf) theCondition);
+			return itsValue.compareTo(that.itsValue);
 		}
 	}
 
+	// this assertion should be check in ConditionList, if ever
+	private static final String VS_LOG =
+		new StringBuilder(64).append("Multiple ")
+					.append(VALUE_SET).append("s for ")
+					.append(COLUMN).append(": ").toString();
 	private static final boolean uniqueValueSet(ConditionNominalElementOf x, ConditionA y)
 	{
-		// safe enough, when Column and Operator match
+		// XXX see ConditionBuilder class comment on compareTo()
 		if (x.itsValue != ((ConditionNominalElementOf) y).itsValue)
 		{
-			Log.logCommandLine(String.format("Multiple %ss for %s '%s'",
-					x.itsValue.getClass().getSimpleName(),
-					x.itsColumn.getClass().getSimpleName(),
-					x.itsColumn.getName()));
+			Log.logCommandLine(VS_LOG + x.itsColumn.getName());
 			return false;
 		}
 		return true;
@@ -370,7 +394,8 @@ public enum ConditionBuilder
 			int cmp = compare(this, theCondition);
 			if (cmp != UNDETERMINED)
 				return cmp;
-			// safe enough, when Column and Operator match
+
+			// XXX see ConditionBuilder class comment on compareTo()
 			ConditionNumericValue that = ((ConditionNumericValue) theCondition);
 			// NOTE considers 0.0 to be greater than -0.0
 			return Float.compare(this.itsValue, that.itsValue);
@@ -410,6 +435,7 @@ public enum ConditionBuilder
 		public final Operator getOperator() { return Operator.EQUALS; }
 	}
 
+	private static final String INTERVAL = Interval.class.getSimpleName();
 	private class ConditionNumericBetween extends ConditionA
 	{
 		private final Interval itsValue;
@@ -419,7 +445,7 @@ public enum ConditionBuilder
 			// assume that ConditionBase checked validity of Column-Operator
 			// Interval can only be used with BETWEEN
 			super(theConditionBase, AttributeType.NUMERIC, Operator.BETWEEN);
-			checkValue(Interval.class.getSimpleName(), theValue);
+			checkValue(INTERVAL, theValue);
 			itsValue = theValue;
 		}
 
@@ -438,9 +464,9 @@ public enum ConditionBuilder
 			int cmp = compare(this, theCondition);
 			if (cmp != UNDETERMINED)
 				return cmp;
-			// safe enough, when Column and Operator match
+			// XXX see ConditionBuilder class comment on compareTo()
 			ConditionNumericBetween that = ((ConditionNumericBetween) theCondition);
-			return Float.compare(this.itsValue, that.itsValue);
+			return this.itsValue.compareTo(that.itsValue);
 		}
 	}
 
@@ -473,9 +499,17 @@ public enum ConditionBuilder
 		}
 
 		@Override
-		public int compareTo(ConditionI theCondition)
+		public int compareTo(ConditionA theCondition)
 		{
-			throw exception(getClass());
+			int cmp = compare(this, theCondition);
+			if (cmp != UNDETERMINED)
+				return cmp;
+			// XXX see ConditionBuilder class comment on compareTo()
+			ConditionBinaryEquals that = ((ConditionBinaryEquals) theCondition);
+			if (!itsValue)
+				return that.itsValue ? -1 : 0;
+			else
+				return that.itsValue ? 0 : 1;
 		}
 	}
 }
