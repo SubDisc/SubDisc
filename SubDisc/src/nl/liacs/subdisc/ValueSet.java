@@ -14,7 +14,7 @@ import java.util.*;
 /**
  * ValueSets are sorted sets that hold a number of <code>String</code> values.
  */
-public class ValueSet
+public class ValueSet implements Comparable<ValueSet>
 {
 	private final SortedSet<String >itsValues;
 
@@ -47,6 +47,68 @@ public class ValueSet
 	{
 		return itsValues.contains(theValue);
 	};
+
+	/*
+	 * NOTE that there is no real logic in testing just ValueSets, as there
+	 * is no information about the Column they are ValueSets of
+	 * so it is assumed that, when ValueSets are compared as part of a
+	 * Condition comparison, this compareTo() is called on ValueSets that
+	 * are build from the same Column
+	 */
+	/**
+	 * Compares this <code>ValueSet</code> against the argument.
+	 * <p>
+	 * The equality tests are performed in the following order:</br>
+	 * if the sets contain exactly the same values, they compare equal,</br>
+	 * if the sets are not of equal size, comparison is based on size,</br>
+	 * if the sets are of equal size, the non-shared values are ordered
+	 * lexicographically, and the String comparison of the lexicographically
+	 * smallest value of each set is used for the return value.
+	 */
+	// throws NullPointerException on null argument
+	@Override
+	public int compareTo(ValueSet theValueSet)
+	{
+		if (this == theValueSet)
+			return 0;
+
+		// smaller sets come first
+		int cmp = this.itsValues.size() - theValueSet.itsValues.size();
+		if (cmp != 0)
+			return cmp;
+
+		// equal size, determine shared values
+		final HashSet<String> i = new HashSet<String>(this.itsValues);
+		i.retainAll(theValueSet.itsValues);
+
+		// if all values are in the intersection, ValueSets are equal
+		if (itsValues.size() == i.size())
+			return 0;
+
+		// sets are of same size, but not all values are shared
+		// could be done faster by looking at size of intersection and
+		// complement, but this is good enough for now
+		return getSmallest(this.itsValues, i).compareTo(getSmallest(theValueSet.itsValues, i));
+	}
+
+	// resurrected from r1545
+	private static String getSmallest(Set<String> theSet, Set<String> theShared)
+	{
+		final Iterator<String> i = theSet.iterator();
+		String smallest; // SortedSets do not allow nulls (by default)
+
+		// safe under assumption that theSet contains at least 1 value
+		// that is not in theShared
+		while (theShared.contains(smallest = i.next()));
+		while (i.hasNext())
+		{
+			final String s = i.next();
+			if (!theShared.contains(s) && s.compareTo(smallest) < 0)
+				smallest = s;
+		}
+
+		return smallest;
+	}
 
 	@Override
 	public String toString()

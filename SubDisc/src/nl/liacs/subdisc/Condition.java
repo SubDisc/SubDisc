@@ -281,19 +281,6 @@ public class Condition implements Comparable<Condition>
  * END OF OLD CONDITION CODE
  ******************************************************************************/
 
-	// replaces old copy(), sets all final member fields
-	// there is no error checking for this constructor
-	Condition(Condition theCondition)
-	{
-		this.itsColumn = theCondition.itsColumn;
-		this.itsOperator = theCondition.itsOperator;
-		this.itsNominalValue = theCondition.itsNominalValue;
-		this.itsNominalValueSet = theCondition.itsNominalValueSet; //shallow copy!
-		this.itsNumericValue = theCondition.itsNumericValue;
-		this.itsInterval = theCondition.itsInterval; //shallow copy!
-		this.itsBinaryValue = theCondition.itsBinaryValue;
-	}
-
 	/*
 	 * strict constructors, replaces all above, allows for final
 	 * value field, and simplified syntax and error checking
@@ -553,21 +540,23 @@ public class Condition implements Comparable<Condition>
 		{
 			case NOMINAL :
 			{
-				if (itsNominalValue != null) //single value
+				// one of these must hold, but not both
+				assert ((itsNominalValue != UNINITIALISED_NOMINAL) ^ (itsNominalValueSet != UNINITIALISED_NOMINAL_SET));
+
+				if (itsNominalValue != UNINITIALISED_NOMINAL) //single value
 					return itsNominalValue.compareTo(theCondition.itsNominalValue);
-				else // assumes ValueSet
-				{
-					assert (itsNominalValueSet != null);
-					if (itsNominalValueSet != theCondition.itsNominalValueSet)
-						throw new AssertionError(String.format("Multiple %ss for %s '%s'",
-											itsNominalValueSet.getClass().getSimpleName(),
-											itsColumn.getClass().getSimpleName(),
-											itsColumn.getName()));
-					return 0;
-				}
+
+				// else assumes ValueSet
+				return this.itsNominalValueSet.compareTo(theCondition.itsNominalValueSet);
 			}
 			case NUMERIC :
 			{
+				// one of these must hold, but not both
+				assert ((Float.compare(itsNumericValue, UNINITIALISED_NUMERIC) != 0) ^ (itsInterval != UNINITIALISED_INTERVAL));
+
+				if (itsInterval != UNINITIALISED_INTERVAL)
+					return itsInterval.compareTo(theCondition.itsInterval);
+
 				// NOTE considers 0.0 to be greater than -0.0
 				return Float.compare(itsNumericValue, theCondition.itsNumericValue);
 			}
