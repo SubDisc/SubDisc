@@ -1,5 +1,5 @@
 /*
- * TODO rewrite this class, fileLoading is a mess. Split loadFile() into 
+ * TODO rewrite this class, fileLoading is a mess. Split loadFile() into
  * loadFileAndCreateTable() and loadFileCheckWithXMLTable()
  */
 package nl.liacs.subdisc;
@@ -102,12 +102,12 @@ public class FileLoaderARFF implements FileLoaderInterface
 			boolean dataFound = false;
 			int anAttributeIndex = 0;	// if > 0, same as attributeFound = true
 			Matcher aMatcher;
-//			int aLineNr = 0;	// TODO use for error reporting
+			int aLineNr = 0;	// TODO use for error reporting
 
 			// .toLowerCase()
 			while ((aLine = aReader.readLine()) != null)
 			{
-//				++aLineNr;
+				aLineNr++;
 				aLine.trim();
 				if (Keyword.COMMENT.atStartOfLine(aLine) || aLine.isEmpty())
 					continue;
@@ -137,7 +137,7 @@ public class FileLoaderARFF implements FileLoaderInterface
 						// TODO if TableNames don't match that's OK for now
 						// if Table was provided by 2-argument constructor
 						if (checkDataWithXMLTable)
-						{	
+						{
 							continue;
 						}
 						else
@@ -232,6 +232,8 @@ public class FileLoaderARFF implements FileLoaderInterface
 				{
 					// TODO malformedFileWarning(), try to continue
 				}
+				if (aLineNr % 10000 == 0)
+					Log.logCommandLine("loadFile: " + aLineNr/1000 + "k lines read");
 			}
 		}
 		catch (IOException e)
