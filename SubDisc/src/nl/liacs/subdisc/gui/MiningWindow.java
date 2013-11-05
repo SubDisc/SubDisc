@@ -444,6 +444,9 @@ public class MiningWindow extends JFrame implements ActionListener
 		jButtonSubgroupDiscovery = initButton(STD.SUBGROUP_DISCOVERY);
 		jPanelMineButtons.add(jButtonSubgroupDiscovery);
 
+		jButtonSubgroupDiscoveryLoop = initButton(STD.SUBGROUP_DISCOVERY_LOOP);
+		jPanelMineButtons.add(jButtonSubgroupDiscoveryLoop);
+
 		jButtonCrossValidate = initButton(STD.CROSS_VALIDATE);
 		jPanelMineButtons.add(jButtonCrossValidate);
 
@@ -665,6 +668,7 @@ public class MiningWindow extends JFrame implements ActionListener
 						jButtonMetaData,
 						jButtonCrossValidate,
 						jButtonSubgroupDiscovery,
+						jButtonSubgroupDiscoveryLoop,
 						jButtonComputeThreshold,
 						jButtonMultiTargets,
 						jButtonMultiRegressionTargets};
@@ -1472,6 +1476,29 @@ public class MiningWindow extends JFrame implements ActionListener
 		initTitle(); // reset the window's title
 	}
 
+	private void subgroupDiscoveryLoopActionPerformed()
+	{
+		setBusy(true);
+		setupSearchParameters(); //do initial set-up
+
+		int aLoopNr = 0;
+		TreeSet<String> aValues = itsTable.getColumn(getTargetAttributeName()).getDomain();
+		for (String aValue : aValues)
+		{
+			Log.logCommandLine("================= Starting run nr. " + aLoopNr + " ==================");
+			itsTargetConcept.setTargetValue(aValue); //temporarily modify the target value
+			Process.runSubgroupDiscovery(itsTable, 0, null, itsSearchParameters, true, getNrThreads(), this);
+			Log.logCommandLine("================= Finished run nr. " + aLoopNr + " ==================");
+			
+			int aReply = JOptionPane.showConfirmDialog(null,	"Continue with next target value?", "Continue?", JOptionPane.YES_NO_OPTION);			
+			if (aReply == JOptionPane.NO_OPTION)
+				break;
+			aLoopNr++;
+		}
+		setBusy(false);
+		initTitle(); // reset the window's title
+	}
+
 	private void runSubgroupDiscovery(Table theTable, int theFold, BitSet theBitSet)
 	{
 		setupSearchParameters();
@@ -1944,6 +1971,7 @@ public class MiningWindow extends JFrame implements ActionListener
 	private JPanel jPanelSouth;
 	private JPanel jPanelMineButtons;
 	private JButton jButtonSubgroupDiscovery;
+	private JButton jButtonSubgroupDiscoveryLoop;
 	private JButton jButtonCrossValidate;
 	private JButton jButtonComputeThreshold;
 
@@ -2035,7 +2063,8 @@ public class MiningWindow extends JFrame implements ActionListener
 		BROWSE(			"Browse...",		KeyEvent.VK_B,	true),
 		EXPLORE(		"Explore...",		KeyEvent.VK_E,	true),
 		META_DATA(		"Meta Data...",		KeyEvent.VK_D,	true),
-		SUBGROUP_DISCOVERY(	"Subgroup Discovery",	KeyEvent.VK_S,	true),
+		SUBGROUP_DISCOVERY("Subgroup Discovery",	KeyEvent.VK_S,	true),
+		SUBGROUP_DISCOVERY_LOOP("SD Loop",	KeyEvent.VK_L,	true),
 		CREATE_AUTORUN_FILE(	"Create Autorun File",	KeyEvent.VK_C,	true),
 		ADD_TO_AUTORUN_FILE(	"Add to Autorun File",	KeyEvent.VK_A,	true),
 		LOAD_SAMPLED_SUBGROUPS(	"Load Sampled Subgroups", KeyEvent.VK_L, true),
@@ -2090,6 +2119,8 @@ public class MiningWindow extends JFrame implements ActionListener
 			metaDataActionPerformed();
 		else if (STD.SUBGROUP_DISCOVERY.GUI_TEXT.equals(aCommand))
 			subgroupDiscoveryActionPerformed();
+		else if (STD.SUBGROUP_DISCOVERY_LOOP.GUI_TEXT.equals(aCommand))
+			subgroupDiscoveryLoopActionPerformed();
 		else if (STD.CREATE_AUTORUN_FILE.GUI_TEXT.equals(aCommand))
 			jMenuItemAutoRunFileActionPerformed(AutoRun.CREATE);
 		else if (STD.ADD_TO_AUTORUN_FILE.GUI_TEXT.equals(aCommand))
