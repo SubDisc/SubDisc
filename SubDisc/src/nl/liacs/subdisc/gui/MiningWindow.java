@@ -1487,12 +1487,19 @@ public class MiningWindow extends JFrame implements ActionListener
 		{
 			Log.logCommandLine("================= Starting run nr. " + aLoopNr + " ==================");
 			itsTargetConcept.setTargetValue(aValue); //temporarily modify the target value
-			Process.runSubgroupDiscovery(itsTable, 0, null, itsSearchParameters, true, getNrThreads(), this);
+			SubgroupDiscovery aSubgroupDiscovery = Process.runSubgroupDiscovery(itsTable, 0, null, itsSearchParameters, false, getNrThreads(), this);
+			if (!aSubgroupDiscovery.getResult().isEmpty())
+			{
+				XMLAutoRun.save(aSubgroupDiscovery.getResult(), "test_" + aValue + ".txt", itsSearchParameters.getTargetType());
+				Log.logCommandLine("File \"test_" + aValue + ".txt\" saved.");
+			}
+			else
+				Log.logCommandLine("No subgroups found. No file saved.");
 			Log.logCommandLine("================= Finished run nr. " + aLoopNr + " ==================");
 			
-			int aReply = JOptionPane.showConfirmDialog(null,	"Continue with next target value?", "Continue?", JOptionPane.YES_NO_OPTION);			
-			if (aReply == JOptionPane.NO_OPTION)
-				break;
+//			int aReply = JOptionPane.showConfirmDialog(null, "Continue with next target value?", "Continue?", JOptionPane.YES_NO_OPTION);			
+//			if (aReply == JOptionPane.NO_OPTION)
+//				break;
 			aLoopNr++;
 		}
 		setBusy(false);
