@@ -87,6 +87,9 @@ public class DataLoaderTXT implements FileLoaderInterface
 			int aLineNr = 0;
 			final boolean aMissingBinary = Boolean.parseBoolean(AttributeType.BINARY.DEFAULT_MISSING_VALUE);
 			final float aMissingNumeric = Float.parseFloat(AttributeType.NUMERIC.DEFAULT_MISSING_VALUE);
+			// print progress every once in a while
+			int aPrintTrigger = 1000;
+			int aPrintUpdate = 1000;
 
 			// skip header, make sure line is not empty/ null
 			while ((aLine = aReader.readLine()) != null)
@@ -229,8 +232,18 @@ public class DataLoaderTXT implements FileLoaderInterface
 				}
 				if (aColumn != aNrColumns-1)
 					message("loadFile", "error on line " + aLineNr);
-				if (aLineNr % 1000 == 0)
+				if (aLineNr == aPrintTrigger)
+				{
 					message("loadFile", aLineNr + " lines read");
+					aPrintTrigger += aPrintUpdate;
+					// increase print update interval, but
+					// print at least every 10.000.000 lines
+					if ((aPrintTrigger == (aPrintUpdate * 10)) && (aPrintUpdate != 10000000))
+					{
+						aPrintUpdate *= 10;
+						message("loadFile", "number of lines for update interval changed to: " + aPrintUpdate);
+					}
+				}
 			}
 
 			// one final check about the validity of the XML file
