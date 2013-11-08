@@ -193,6 +193,20 @@ public class QualityMeasure
 				returnValue = (theCountHeadBody/theTotalCoverage)-(theTotalTargetCoverage/theTotalCoverage)*(aCountBody/theTotalCoverage);
 				break;
 			}
+			case ABSWRACC:
+			{
+				returnValue = (theCountHeadBody/theTotalCoverage) - (theTotalTargetCoverage/theTotalCoverage)*(aCountBody/theTotalCoverage);
+				returnValue = Math.abs(returnValue);
+				break;
+			}
+			case CORTANA_QUALITY:
+			{
+				float aQuotient = theTotalTargetCoverage/theTotalCoverage;
+				float aWRAcc = (theCountHeadBody/theTotalCoverage) - aQuotient*(aCountBody/theTotalCoverage);
+				float aMaxWRAcc = aQuotient - aQuotient*aQuotient;
+				returnValue = aWRAcc/aMaxWRAcc;
+				break;
+			}
 			case CHI_SQUARED:
 			{
 				returnValue = calculateChiSquared(theTotalCoverage, theTotalTargetCoverage, aCountBody, theCountHeadBody);
@@ -259,12 +273,6 @@ public class QualityMeasure
 				returnValue = theCountHeadBody/aCountBody;
 				if (returnValue < 0.5f)
 					returnValue = 1.0f - returnValue;
-				break;
-			}
-			case ABSWRACC:
-			{
-				returnValue = theCountHeadBody/theTotalCoverage - ((theTotalTargetCoverage/theTotalCoverage) * aCountBody/theTotalCoverage);
-				returnValue = Math.abs(returnValue);
 				break;
 			}
 			case BAYESIAN_SCORE:
