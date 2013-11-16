@@ -95,6 +95,10 @@ public class ModelWindow extends JFrame implements ActionListener
 			else
 				aName = "2D distribution";
 		}
+		if (forSubgroup)
+			aName += "\n('" + theSubgroup.toString() + "')";
+		else
+			aName += " (all data)";
 
 		//data
 		XYSeries aSeries = new XYSeries("data");
@@ -117,7 +121,7 @@ public class ModelWindow extends JFrame implements ActionListener
 		JFreeChart aChart =
 			ChartFactory.createScatterPlot(aName, theXColumn.getName(), theYColumn.getName(), aDataSet, PlotOrientation.VERTICAL, false, true, false);
 		aChart.setAntiAlias(true);
-		aChart.getTitle().setFont(new Font("title", Font.BOLD, 14));
+		aChart.getTitle().setFont(new Font("title", Font.BOLD, 12));
 
 		XYPlot plot = aChart.getXYPlot();
 		plot.setBackgroundPaint(Color.white);

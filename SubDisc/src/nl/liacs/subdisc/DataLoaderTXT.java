@@ -237,8 +237,8 @@ public class DataLoaderTXT implements FileLoaderInterface
 					message("loadFile", aLineNr + " lines read");
 					aPrintTrigger += aPrintUpdate;
 					// increase print update interval, but
-					// print at least every 10.000.000 lines
-					if ((aPrintTrigger == (aPrintUpdate * 10)) && (aPrintUpdate != 10000000))
+					// print at least every 10,000 lines
+					if ((aPrintTrigger == (aPrintUpdate * 10)) && (aPrintUpdate != 10000))
 					{
 						aPrintUpdate *= 10;
 						message("loadFile", "number of lines for update interval changed to: " + aPrintUpdate);

@@ -8,9 +8,9 @@ public enum QM implements EnumInterface
 	// ENUM		GUI text	default measure minimum	TargetType
 
 	// SINGLE_NOMINAL quality measures
+	CORTANA_QUALITY	("Cortana Quality",	"0.1",	TargetType.SINGLE_NOMINAL),
 	WRACC			("WRAcc",			"0.02",	TargetType.SINGLE_NOMINAL),
 	ABSWRACC		("Abs WRAcc",		"0.02",	TargetType.SINGLE_NOMINAL),
-	CORTANA_QUALITY	("Cortana quality",	"0.1",	TargetType.SINGLE_NOMINAL),
 	CHI_SQUARED		("Chi-squared",		"50",	TargetType.SINGLE_NOMINAL),
 	INFORMATION_GAIN("Information gain","0.02",	TargetType.SINGLE_NOMINAL),
 	BINOMIAL		("Binomial test",	"0.05",	TargetType.SINGLE_NOMINAL),
