@@ -970,7 +970,10 @@ public class MiningWindow extends JFrame implements ActionListener
 
 		// if SINGLE_NOMINAL add INTERVALS, else remove it
 		if (itsTargetConcept.getTargetType() == TargetType.SINGLE_NOMINAL)
-			jComboBoxNumericStrategy.addItem(NumericStrategy.NUMERIC_INTERVALS.GUI_TEXT);
+		{
+			if (jComboBoxNumericStrategy.getItemCount() == 3) //is INTERVALS not present yet? note there are more future-proof ways to do this
+				jComboBoxNumericStrategy.addItem(NumericStrategy.NUMERIC_INTERVALS.GUI_TEXT);
+		}
 		else
 		{
 			// assumes first normal value is not INTERVALS

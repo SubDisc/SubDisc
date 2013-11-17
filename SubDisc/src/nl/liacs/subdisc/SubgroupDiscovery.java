@@ -1485,7 +1485,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 
 	// to throttle GUI update, assumes setTitle() is called by 1 Thread only
 	// check in main loop would be slightly faster
-	private static final long INTERVAL = 1000000000L; // in nanoseconds
+	private static final long INTERVAL = 100000000L; // in nanoseconds
 	private long itsThen = 0L;
 
 	// NOTE itsCandidateCount and currently refined subgroup are unrelated
