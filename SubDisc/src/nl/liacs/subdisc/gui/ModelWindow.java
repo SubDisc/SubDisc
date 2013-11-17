@@ -101,7 +101,8 @@ public class ModelWindow extends JFrame implements ActionListener
 			aName += " (all data)";
 
 		//data
-		XYSeries aSeries = new XYSeries("data");
+		XYSeries aSeries = new XYSeries("database");
+		XYSeries aSubgroup = new XYSeries("subgroup");
 
 		//if i is a member of the specified subgroup
 		if (forSubgroup)
@@ -109,13 +110,14 @@ public class ModelWindow extends JFrame implements ActionListener
 			BitSet aMembers = theSubgroup.getMembers();
 			for (int i = 0, j = theXColumn.size(); i < j; ++i)
 				if (aMembers.get(i))
-					aSeries.add(theXColumn.getFloat(i), theYColumn.getFloat(i));
+					aSubgroup.add(theXColumn.getFloat(i), theYColumn.getFloat(i));
 		}
-		//if complete database
-		else
-			for (int i = 0, j = theXColumn.size(); i < j; ++i)
-				aSeries.add(theXColumn.getFloat(i), theYColumn.getFloat(i));
-		XYSeriesCollection aDataSet = new XYSeriesCollection(aSeries);
+		XYSeriesCollection aDataSet = new XYSeriesCollection(aSubgroup);
+
+		//complete database
+		for (int i = 0, j = theXColumn.size(); i < j; ++i)
+			aSeries.add(theXColumn.getFloat(i), theYColumn.getFloat(i));
+		aDataSet.addSeries(aSeries);
 
 		// create the chart
 		JFreeChart aChart =
@@ -128,7 +130,17 @@ public class ModelWindow extends JFrame implements ActionListener
 		plot.setDomainGridlinePaint(Color.gray);
 		plot.setRangeGridlinePaint(Color.gray);
 		plot.getRenderer().setSeriesPaint(0, Color.black);
-		plot.getRenderer().setSeriesShape(0, new Rectangle2D.Float(0.0f, 0.0f, 2.5f, 2.5f));
+		plot.getRenderer().setSeriesShape(0, new Rectangle2D.Float(-1.25f, -1.25f, 1.25f, 1.25f));
+		if (forSubgroup) //if subgroup is also show, make remainder gray
+		{
+			plot.getRenderer().setSeriesPaint(1, Color.gray);
+			plot.getRenderer().setSeriesShape(1, new Rectangle2D.Float(-1.25f, -1.25f, 1.25f, 1.25f));
+		}
+		else
+		{
+			plot.getRenderer().setSeriesPaint(1, Color.black);
+			plot.getRenderer().setSeriesShape(1, new Rectangle2D.Float(-1.25f, -1.25f, 1.25f, 1.25f));
+		}
 
 		//line
 		if (isRegression)
