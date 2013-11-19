@@ -35,11 +35,19 @@ public class ModelWindow extends JFrame implements ActionListener
 		{
 			aDatasetSeries.add(theDatasetPDF.getMiddle(i), theDatasetPDF.getDensity(i));
 			if (addSubgroup)
-				aSubgroupSeries.add(theSubgroupPDF.getMiddle(i), theSubgroupPDF.getDensity(i));
+			{
+				float aScale = theSubgroupPDF.getAbsoluteCount()/(float)theDatasetPDF.getAbsoluteCount();
+				aSubgroupSeries.add(theSubgroupPDF.getMiddle(i), theSubgroupPDF.getDensity(i)*aScale);
+			}
 		}
-		XYSeriesCollection aDataCollection = new XYSeriesCollection(aDatasetSeries);
-		if (addSubgroup)
-			aDataCollection.addSeries(aSubgroupSeries);
+		XYSeriesCollection aDataCollection;
+		if (addSubgroup) // if there is a subgroup, add that one first. Otherwise just add the dataset first
+		{
+			aDataCollection = new XYSeriesCollection(aSubgroupSeries);
+			aDataCollection.addSeries(aDatasetSeries);
+		}
+		else
+			aDataCollection = new XYSeriesCollection(aDatasetSeries);
 
 		JFreeChart aChart =
 			ChartFactory.createXYLineChart("", theDomain.getName(), "density", aDataCollection, PlotOrientation.VERTICAL, false, true, false);
@@ -48,12 +56,19 @@ public class ModelWindow extends JFrame implements ActionListener
 		plot.setBackgroundPaint(Color.white);
 		plot.setDomainGridlinePaint(Color.gray);
 		plot.setRangeGridlinePaint(Color.gray);
-		plot.getRenderer().setSeriesPaint(0, Color.black);
-		plot.getRenderer().setSeriesStroke(0, new BasicStroke(2.0f));
-		plot.getRenderer().setSeriesPaint(1, Color.red); //subgroup
-		plot.getRenderer().setSeriesStroke(1, new BasicStroke(2.0f)); //subgroup
 		if (addSubgroup)
+		{
+			plot.getRenderer().setSeriesPaint(1, Color.gray);
+			plot.getRenderer().setSeriesStroke(1, new BasicStroke(2.5f));
+			plot.getRenderer().setSeriesPaint(0, Color.black); //subgroup
+			plot.getRenderer().setSeriesStroke(0, new BasicStroke(1.5f)); //subgroup
 			aChart.addLegend(new LegendTitle(plot));
+		}
+		else
+		{
+			plot.getRenderer().setSeriesPaint(0, Color.black);
+			plot.getRenderer().setSeriesStroke(0, new BasicStroke(2.5f));
+		}
 
 		itsJScrollPaneCenter.setViewportView(new ChartPanel(aChart));
 

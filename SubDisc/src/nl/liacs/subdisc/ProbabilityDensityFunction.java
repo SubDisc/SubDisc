@@ -10,6 +10,7 @@ public class ProbabilityDensityFunction
 
 	private final Column itsData;
 	private float[] itsDensity;
+	private int itsAbsoluteCount;
 	// future update may allow custom number of bins
 	private int itsNrBins = DEFAULT_NR_BINS;
 	private float itsMin, itsMax, itsBinWidth;
@@ -27,9 +28,9 @@ public class ProbabilityDensityFunction
 		//Log.logCommandLine("Min = " + itsMin);
 		//Log.logCommandLine("Max = " + itsMax);
 		//Log.logCommandLine("BinWidth = " + itsBinWidth);
-		int aSize = itsData.size();
-		float anIncrement = 1.0f / aSize;
-		for (int i=0; i<aSize; i++)
+		itsAbsoluteCount = itsData.size();
+		float anIncrement = 1.0f / itsAbsoluteCount;
+		for (int i=0; i<itsAbsoluteCount; i++)
 		{
 			float aValue = itsData.getFloat(i);
 			add(aValue, anIncrement);
@@ -44,6 +45,7 @@ public class ProbabilityDensityFunction
 		itsMin = thePDF.itsMin;
 		itsMax = thePDF.itsMax;
 		itsBinWidth = thePDF.itsBinWidth;
+		itsAbsoluteCount = theMembers.cardinality();
 
 		float anIncrement = 1.0f / theMembers.cardinality();
 		for (int i = theMembers.nextSetBit(0); i >= 0; i = theMembers.nextSetBit(i + 1))
@@ -72,6 +74,8 @@ public class ProbabilityDensityFunction
 	{
 		return itsMin + (theIndex + 0.5f)*itsBinWidth;
 	}
+	
+	public int getAbsoluteCount() { return itsAbsoluteCount; }
 
 	/*
 	 * FIXME
