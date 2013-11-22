@@ -1,9 +1,7 @@
 package nl.liacs.subdisc;
 
 import java.util.*;
-
 import nl.liacs.subdisc.gui.*;
-
 import org.w3c.dom.*;
 
 /**
@@ -35,6 +33,7 @@ public class Column implements XMLNodeInterface
 	// List is not the most ideal interface, bi-directional map or
 	// itsNominals storing Integer indices would be better/ faster/ leaner
 	private List<String> itsDistinctValues;
+	private AbstractSet<String> itsDistinctValuesAsSet; //for supporting a quicker contains-test. Should have the same contents as itsDistinctValues, but unordered.
 
 	private String itsMissingValue;
 	private BitSet itsMissing = new BitSet();
@@ -144,6 +143,7 @@ public class Column implements XMLNodeInterface
 			{
 				itsNominals = new ArrayList<String>(theNrRows);
 				itsDistinctValues = new ArrayList<String>();
+				itsDistinctValuesAsSet = new HashSet<String>(10000);
 				itsMissingValue = AttributeType.NOMINAL.DEFAULT_MISSING_VALUE;
 				return;
 			}
@@ -227,6 +227,7 @@ public class Column implements XMLNodeInterface
 		aCopy.itsNominals = itsNominals;
 		aCopy.itsBinaries = itsBinaries;
 		aCopy.itsDistinctValues = itsDistinctValues;
+		aCopy.itsDistinctValuesAsSet = itsDistinctValuesAsSet;
 		aCopy.itsMissingValue = itsMissingValue;
 		aCopy.itsMissing = itsMissing;
 		aCopy.itsMissingValueIsUnique = itsMissingValueIsUnique;
@@ -280,6 +281,7 @@ public class Column implements XMLNodeInterface
 		int aColumnSize = theSet.cardinality();
 		Column aColumn = new Column(itsName, itsShort, itsType, itsIndex, aColumnSize);
 		aColumn.itsDistinctValues = this.itsDistinctValues;
+		aColumn.itsDistinctValuesAsSet = this.itsDistinctValuesAsSet;
 		aColumn.itsMissingValue = this.itsMissingValue;
 		aColumn.itsSize = aColumnSize;
 		aColumn.isEnabled = this.isEnabled;
@@ -335,9 +337,10 @@ public class Column implements XMLNodeInterface
 	{
 		if (theNominal == null)
 			throw new NullPointerException();
-		if (!itsDistinctValues.contains(theNominal))
+		if (!itsDistinctValuesAsSet.contains(theNominal))
 		{
-			itsDistinctValues.add(theNominal);
+			itsDistinctValuesAsSet.add(theNominal); //keep identical set of values
+			itsDistinctValues.add(theNominal); //keep identical set of values
 			// !contains so inserted at end of list
 			itsNominals.add(itsDistinctValues.get(itsDistinctValues.size()-1));
 		}
@@ -387,7 +390,7 @@ public class Column implements XMLNodeInterface
 		if (itsNominals != null)
 			((ArrayList<String>) itsNominals).trimToSize();
 		if (itsDistinctValues != null)
-			((ArrayList<String>) itsDistinctValues).trimToSize();
+			((ArrayList<String>) itsDistinctValues).trimToSize(); //not necessary for itsDistinctValuesAsSet
 		if ((itsFloatz != null) && (itsFloatz.length > itsSize))
 			itsFloatz = Arrays.copyOf(itsFloatz, itsSize);
 	}
@@ -598,6 +601,7 @@ public class Column implements XMLNodeInterface
 
 		// relies on itsCardinality to be set at this time
 		itsDistinctValues = new ArrayList<String>(itsCardinality);
+		itsDistinctValuesAsSet = new HashSet<String>(10000);
 		itsNominals = new ArrayList<String>(itsSize);
 
 		switch (itsType)
@@ -637,12 +641,21 @@ public class Column implements XMLNodeInterface
 				{
 					itsDistinctValues.add("0");
 					itsDistinctValues.add("1");
+					itsDistinctValuesAsSet.add("0");
+					itsDistinctValuesAsSet.add("1");
 				}
 				else if (itsBinaries.cardinality() == 0 && itsSize > 0)
+				{
+					
 					itsDistinctValues.add("0");
+					itsDistinctValuesAsSet.add("0");
+				}
 				else if (itsSize > 0)
+				{
 					itsDistinctValues.add("1");
-
+					itsDistinctValuesAsSet.add("1");
+				}
+				
 				for (int i = 0, j = itsSize; i < j; ++i)
 					itsNominals.add(itsBinaries.get(i) ? "1" : "0");
 
@@ -670,13 +683,20 @@ public class Column implements XMLNodeInterface
 	{
 		// relies on itsCardinality to be set at this time
 		itsDistinctValues = new ArrayList<String>(itsCardinality);
+		itsDistinctValuesAsSet = new HashSet<String>(10000);
 		itsNominals = new ArrayList<String>(itsSize);
 		itsMissingValue = AttributeType.NOMINAL.DEFAULT_MISSING_VALUE;
 
 		if (aFalse != null)
+		{
 			itsDistinctValues.add(aFalse);
+			itsDistinctValuesAsSet.add(aFalse);
+		}
 		if (aTrue != null)
+		{
 			itsDistinctValues.add(aTrue);
+			itsDistinctValuesAsSet.add(aTrue);
+		}
 
 		for (int i = 0, j = itsSize; i < j; ++i)
 			if (aTrue == null && aFalse == null) //just missing values so far
@@ -731,6 +751,7 @@ public class Column implements XMLNodeInterface
 				 * itsSize == 0). Cleanup (for GarbageCollector).
 				 */
 				itsDistinctValues = null;
+				itsDistinctValuesAsSet = null;
 				itsNominals = null;
 
 				if (itsMissing.cardinality() == 0 && !isValidValue(theNewType, itsMissingValue))
@@ -857,6 +878,7 @@ public class Column implements XMLNodeInterface
 					}
 				}
 				itsDistinctValues = null;
+				itsDistinctValuesAsSet = null;
 				itsNominals = null;
 				break;
 			}
