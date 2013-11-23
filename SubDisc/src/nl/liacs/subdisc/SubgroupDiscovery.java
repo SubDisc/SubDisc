@@ -20,7 +20,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 	private final float itsQualityMeasureMinimum;	// itsSearchParameters.getQualityMeasureMinimum();
 	private boolean ignoreQualityMinimum = false; //used for swap-randomization purposes, and to get random qualities
 
-	private SubgroupSet itsResult;
+	private final SubgroupSet itsResult;
 	private CandidateQueue itsCandidateQueue;
 	private AtomicLong itsCandidateCount = new AtomicLong(0);
 
@@ -121,7 +121,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		itsQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), itsNrRows, aCounts[0], aCounts[1], aPDF);
 		itsQualityMeasureMinimum = itsSearchParameters.getQualityMeasureMinimum();
 
-		itsResult = new SubgroupSet(itsSearchParameters.getMaximumSubgroups(), itsNrRows, null); //TODO
+		itsResult = new SubgroupSet(itsSearchParameters.getMaximumSubgroups(), itsNrRows);
 	}
 
 	//DOUBLE_CORRELATION and DOUBLE_REGRESSION
@@ -182,7 +182,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 			itsBaseCM = new CorrelationMeasure(itsSearchParameters.getQualityMeasure(), itsPrimaryColumn, itsSecondaryColumn);
 		}
 
-		itsResult = new SubgroupSet(itsSearchParameters.getMaximumSubgroups());
+		itsResult = new SubgroupSet(itsSearchParameters.getMaximumSubgroups(), itsNrRows);
 	}
 
 	//MULTI_LABEL
@@ -207,7 +207,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 							itsNrRows);
 		itsQualityMeasureMinimum = itsSearchParameters.getQualityMeasureMinimum();
 
-		itsResult = new SubgroupSet(itsSearchParameters.getMaximumSubgroups());
+		itsResult = new SubgroupSet(itsSearchParameters.getMaximumSubgroups(), itsNrRows);
 	}
 
 	/*
@@ -227,8 +227,15 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		ignoreQualityMinimum = true;
 	}
 
+	/*
+	 * this method remains only for debugging purposes
+	 * it should not be called by code outside this class
+	 * currently Validation.runSRSD() calls this method
+	 * meaning it will not make use of parallel computation, making it slow
+	 */
 	private Filter itsFilter = null;
-	public void mine(long theBeginTime)
+	@Deprecated
+	void mine(long theBeginTime)
 	{
 		// not in Constructor, Table / SearchParameters may change
 		final ConditionBaseSet aConditions = new ConditionBaseSet(itsTable, itsSearchParameters);
@@ -239,7 +246,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		//make subgroup to start with, containing all elements
 		BitSet aBitSet = new BitSet(itsNrRows);
 		aBitSet.set(0, itsNrRows);
-		Subgroup aStart = new Subgroup(null, aBitSet, itsResult);
+		Subgroup aStart = new Subgroup(ConditionListBuilder.emptyList(), aBitSet, itsResult);
 
 		itsCandidateQueue = new CandidateQueue(itsSearchParameters, new Candidate(aStart));
 
@@ -321,7 +328,14 @@ System.out.println(aSubgroup + "\t" + aRefinement.getConditionBase());
 
 		//now just for cover-based beam search post selection
 		// TODO MM see note at SubgroupSet.postProcess(), all itsResults will remain in memory
-		itsResult = itsResult.postProcess(itsSearchParameters.getSearchStrategy());
+		SubgroupSet aSet = itsResult.postProcess(itsSearchParameters.getSearchStrategy());
+		// FIXME MM hack to deal with strange postProcess implementation
+		if (itsResult != aSet)
+		{
+			// no reassign, we want itsResult to be final
+			itsResult.clear();
+			itsResult.addAll(aSet);
+		}
 
 		// in MULTI_LABEL, order may have changed
 		// in COVER_BASED_BEAM_SELECTION, subgroups may have been removed
@@ -1251,7 +1265,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		}
 
 		// Iterate over subgroups
-		SubgroupSet aNewSubgroupSet = new SubgroupSet(itsSearchParameters.getMaximumSubgroups());
+		SubgroupSet aNewSubgroupSet = new SubgroupSet(itsSearchParameters.getMaximumSubgroups(), itsNrRows);
 		// most methods of SubgroupSet are not thread save, but this is
 		// no problem for this method as it is run by a single thread
 		// however all itsResult sets, of all refinement depths,  will
@@ -1275,7 +1289,8 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			aNewSubgroupSet.add(s);
 		}
 		aNewSubgroupSet.setIDs();
-		itsResult = aNewSubgroupSet;
+		itsResult.clear();
+		itsResult.addAll(aNewSubgroupSet);
 	}
 
 	public int getNumberOfSubgroups() { return itsResult.size(); }
@@ -1325,7 +1340,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		// make subgroup to start with, containing all elements
 		BitSet aBitSet = new BitSet(itsNrRows);
 		aBitSet.set(0, itsNrRows);
-		Subgroup aStart = new Subgroup(null, aBitSet, itsResult);
+		Subgroup aStart = new Subgroup(ConditionListBuilder.emptyList(), aBitSet, itsResult);
 
 		if (itsSearchParameters.getBeamSeed() == null)
 			itsCandidateQueue = new CandidateQueue(itsSearchParameters, new Candidate(aStart));
@@ -1476,7 +1491,14 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 
 		//now just for cover-based beam search post selection
 		// TODO MM see note at SubgroupSet.postProcess(), all itsResults will remain in memory
-		itsResult = itsResult.postProcess(itsSearchParameters.getSearchStrategy());
+		SubgroupSet aSet = itsResult.postProcess(itsSearchParameters.getSearchStrategy());
+		// FIXME MM hack to deal with strange postProcess implementation
+		if (itsResult != aSet)
+		{
+			// no reassign, we want itsResult to be final
+			itsResult.clear();
+			itsResult.addAll(aSet);
+		}
 
 		// in MULTI_LABEL, order may have changed
 		// in COVER_BASED_BEAM_SELECTION, subgroups may have been removed

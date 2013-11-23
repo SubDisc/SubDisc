@@ -44,23 +44,59 @@ public class SubgroupSet extends TreeSet<Subgroup>
 	private final BlockingQueue<Subgroup> QUEUE =
 			new ArrayBlockingQueue<Subgroup>(MAX_QUEUE_SIZE);
 
-	/*
-	 * SubgroupSets' other members are only used in a nominal target setting,
-	 * but still set so the members can be final.
-	 */
+	/* private, meant to be used within this class only */
+	private SubgroupSet(int theSize, int theTotalCoverage, BitSet theBinaryTarget, boolean theNominalTargetSetting)
+	{
+		// basic checks
+		if (theTotalCoverage <= 0)
+			throw new IllegalArgumentException("SubgroupSet<init>: theTotalCoverage must be > 0, not: " + theTotalCoverage);
+		if (theNominalTargetSetting)
+		{
+			if (theBinaryTarget == null)
+				throw new IllegalArgumentException("SubgroupSet<init>: theBinaryTarget can not be null");
+			if (theBinaryTarget.length() > theTotalCoverage)
+				throw new IllegalArgumentException("SubgroupSet<init>:  theBinaryTarget.length() > theTotalCoverage");
+		}
+		assert (!theNominalTargetSetting ^ itsBinaryTarget != null);
+
+		itsMaximumSize = theSize <= 0 ? Integer.MAX_VALUE : theSize;
+		itsTotalCoverage = theTotalCoverage;
+		nominalTargetSetting = theNominalTargetSetting;
+		itsBinaryTarget = theBinaryTarget;
+	}
+
 	/**
-	 * Create a SubgroupSet of a certain size.
+	 * Creates a SubgroupSet of a certain size, but in a nominal target
+	 * setting theTotalCoverage and theBinaryTarget should also be set.
 	 *
 	 * @param theSize the size of this SubgroupSet, use theSize <= 0 for no
 	 * maximum size (technically it is limited to Integer.MAX_VALUE).
+	 * @param theTotalCoverage the total number of instances in the data
+	 * (number of rows in the {@link Table}).
+	 * @param theBinaryTarget a {@code BitSet} with {@code bit}s set for the
+	 * instances covered by the target value.
 	 */
 	// TODO optionally this class could take a MINSCORE threshold parameter
-	public SubgroupSet(int theSize)
+	public SubgroupSet(int theSize, int theTotalCoverage)
 	{
-		nominalTargetSetting = false;
-		itsMaximumSize = theSize <= 0 ? Integer.MAX_VALUE : theSize;
-		itsTotalCoverage = -1;
-		itsBinaryTarget = null;
+		this(theSize, theTotalCoverage, null, false);
+	}
+
+	/**
+	 * Creates a SubgroupSet of a certain size, but in a nominal target
+	 * setting theTotalCoverage and theBinaryTarget should also be set.
+	 *
+	 * @param theSize the size of this SubgroupSet, use theSize <= 0 for no
+	 * maximum size (technically it is limited to Integer.MAX_VALUE).
+	 * @param theTotalCoverage the total number of instances in the data
+	 * (number of rows in the {@link Table}).
+	 * @param theBinaryTarget a {@code BitSet} with {@code bit}s set for the
+	 * instances covered by the target value.
+	 */
+	// TODO optionally this class could take a MINSCORE threshold parameter
+	public SubgroupSet(int theSize, int theTotalCoverage, BitSet theBinaryTarget)
+	{
+		this(theSize, theTotalCoverage, theBinaryTarget, true);
 	}
 
 	// package-private, for CAUC(Heavy) setting only (see Process)
@@ -74,38 +110,37 @@ public class SubgroupSet extends TreeSet<Subgroup>
 	}
 
 	/**
-	 * Creates a SubgroupSet of a certain size, but in a nominal target setting
-	 * theTotalCoverage and theBinaryTarget should also be set.
-	 *
-	 * @param theSize the size of this SubgroupSet, use theSize <= 0 for no
-	 * maximum size (technically it is limited to Integer.MAX_VALUE).
-	 * @param theTotalCoverage the total number of instances in the data (number
-	 * of rows in the {@link Table Table}).
-	 * @param theBinaryTarget a <code>BitSet</code> with <code>bit</code>s set
-	 * for the instances covered by the target value.
-	 */
-	// TODO optionally this class could take a MINSCORE threshold parameter
-	public SubgroupSet(int theSize, int theTotalCoverage, BitSet theBinaryTarget)
-	{
-		nominalTargetSetting = true;
-		itsMaximumSize = theSize <= 0 ? Integer.MAX_VALUE : theSize;
-		itsTotalCoverage = theTotalCoverage;
-		itsBinaryTarget = theBinaryTarget;
-
-		if (theTotalCoverage <= 0)
-			Log.logCommandLine("SubgroupSet<init>: theTotalCoverage = " + theTotalCoverage + ", but can not be <= 0");
-	}
-
-	/**
 	 * Creates a SubgroupSet just like the argument, except empty.
+	 * The following members are copied:
+	 * itsMaximumSize,
+	 * itsTotalCoverage,
+	 * itsBinaryTarget,
+	 * nominalTargetSetting
+	 * itsROCList (shallow copy.)
 	 */
-	// used only by postProcess()
+	// used by getPatternTeam(), postProcess(), getROCListSubgroupSet()
+	/*
+	 * FIXME MM some code comment mention something like:
+	 * 'create SubgroupSet like this one but empty'
+	 * it seems strange to use this method for that purpose, as the ROCList
+	 * is copied, and it may very well not be empty
+	 * and worse, if not, it is irrelevant to the 'clone' SubgroupSet
+	 * it holds no subgroups, so its ROCList based on the Subgroups should
+	 * be in line with that, meaning it should be empty
+	 * 
+	 * to create a clone, use a copy-through-constructor pattern
+	 * to create an empty SubgroupSet, create a new one, with arguments
+	 * taken from the original if it should be similar to that it
+	 * DO NOT mix the two strategies
+	 * some of the SubgroupSets that are currently create make no sense
+	 * as they are internally inconsistent
+	 */
 	private SubgroupSet(SubgroupSet theOriginal)
 	{
-		nominalTargetSetting = theOriginal.nominalTargetSetting;
-		itsMaximumSize = theOriginal.itsMaximumSize;
-		itsTotalCoverage = theOriginal.itsTotalCoverage;
-		itsBinaryTarget = theOriginal.itsBinaryTarget;
+		this(theOriginal.itsMaximumSize,
+			theOriginal.itsTotalCoverage,
+			theOriginal.itsBinaryTarget,
+			theOriginal.nominalTargetSetting);
 		//itsTotalTargetCoverage = theOriginal.itsTotalTargetCoverage;
 		itsROCList = theOriginal.itsROCList;
 		// needs to be set by postProcess()
@@ -214,6 +249,7 @@ public class SubgroupSet extends TreeSet<Subgroup>
 	{
 		BinaryTable aBinaryTable = getBinaryTable(theTable);
 		ItemSet aSubset = aBinaryTable.getApproximateMiki(k);
+		// FIXME MM see constructor comment, it is not truly empty
 		SubgroupSet aResult = new SubgroupSet(this); //make empty copy
 		int index = 0;
 
@@ -361,11 +397,23 @@ public class SubgroupSet extends TreeSet<Subgroup>
 
 	public int getTotalCoverage() { return itsTotalCoverage; }
 
+	/** Throws NullPointerException when not in a nominal setting. */
 	public int getTotalTargetCoverage()
 	{
-		return itsBinaryTarget == null ? -1 : itsBinaryTarget.cardinality();
+		if (!nominalTargetSetting)
+			throw new NullPointerException("only available in nominal setting");
+		return itsBinaryTarget.cardinality();
 	}
 
+	/*
+	 * FIXME MM
+	 * this methods return either just this SubgroupSet
+	 * of another new one
+	 * this is confusing, and not needed
+	 * this methods should just update the current instance
+	 * however, it is broken anyway
+	 * so needs additional updates as well
+	 */
 	/**
 	* Computes the multiplicative weight of a subgroup<br>
 	* See van Leeuwen & Knobbe, ECML PKDD 2011.
@@ -383,6 +431,7 @@ public class SubgroupSet extends TreeSet<Subgroup>
 
 		int aSize = 100; //TODO
 		Log.logCommandLine("subgroups found: " + size());
+		// FIXME MM see constructor comment, it is not truly empty
 		SubgroupSet aResult = new SubgroupSet(this); //make empty copy
 		int aLoopSize = Math.min(aSize, size());
 		BitSet aUsed = new BitSet(size());
@@ -589,7 +638,11 @@ Log.logCommandLine("\nAUC: " + itsROCList.getAreaUnderCurve());
 	{
 		update();
 		int aSize = itsROCList.size();
-		SubgroupSet aResult = new SubgroupSet(-1);
+		// FIXME MM see constructor comment
+		// aResult will consist of items in the ROCList
+		// but aResult.itsROCList may contain more points / Subgroups
+		// that aResult itself
+		SubgroupSet aResult = new SubgroupSet(this);
 
 		for (int i = 0, j = aSize; i < j; ++i)
 		{
@@ -603,6 +656,20 @@ Log.logCommandLine("\nAUC: " + itsROCList.getAreaUnderCurve());
 		}
 
 		return aResult;
+	}
+
+	/*
+	 * NOTE since the copy-through-constructor creates a shallow copy of
+	 * itsROCList, calling this method may have side effects.
+	 * All clones of this SubgroupSet will be affected.
+	 */
+	@Override
+	public void clear()
+	{
+		super.clear();
+		itsROCList.clear();
+		itsLowestScore = Double.NaN;
+		itsJointEntropy = Double.NaN;
 	}
 
 	@Override

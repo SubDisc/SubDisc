@@ -42,39 +42,65 @@ public class Subgroup implements Comparable<Subgroup>
 	/**
 	 * Creates a Subgroup with initial measureValue of 0.0 and a depth of 0.
 	 * <p>
-	 * The {@link BitSet} can not be <code>null</code> and at least 1 bit
-	 * must be set, each set bit represents a member of this Subgroup.
+	 * The {@link BitSet} can not be {@code null} and at least 1 bit must be
+	 * set, each set bit represents a member of this Subgroup.
 	 * <p>
-	 * the {@link ConditionList} and {@link SubgroupSet} argument can be
-	 * </code>null</code>, in which case new empty items are created.
+	 * the {@link ConditionList} and {@link SubgroupSet} argument can not be
+	 * {@code null}.
 	 *
 	 * @param theConditions the ConditionList for this Subgroup.
 	 * @param theMembers the BitSet representing members of this Subgroup.
 	 * @param theSubgroupSet the SubgroupSet this Subgroup is contained in.
 	 *
-	 * @throws IllegalArgumentException if (theMembers == <code>null</code>)
-	 * or (theMembers.cardinality() == 0).
+	 * @throws IllegalArgumentException if any of the arguments is
+	 * {@code null} and when (theMembers.cardinality() == 0).
 	 */
 	//public Subgroup(ConditionList theConditions, BitSet theMembers, SubgroupSet theSubgroupSet) throws IllegalArgumentException
 	public Subgroup(ConditionListA theConditions, BitSet theMembers, SubgroupSet theSubgroupSet) throws IllegalArgumentException
 	{
-		if (theMembers == null || theMembers.cardinality() == 0)
+		if (theConditions == null || theMembers == null || theSubgroupSet == null)
+			throw new IllegalArgumentException("arguments can not be null");
+		if (theMembers.length() == 0)
 			throw new IllegalArgumentException("Subgroups must have members");
 
 		//itsConditions = (theConditions == null ? new ConditionList(0) : theConditions);
-		itsConditions = (theConditions == null ? ConditionListBuilder.emptyList() : theConditions);
+		itsConditions = theConditions;
 		itsDepth = itsConditions.size();
 
 		itsMembers = theMembers;
 		itsCoverage = itsMembers.cardinality();
 
-		itsParentSet = (theSubgroupSet == null ? new SubgroupSet(0) : theSubgroupSet);
+		itsParentSet = theSubgroupSet;
 
 		itsMeasureValue = 0.0f;
 		itsDAG = null;	//not set yet
 		itsLabelRanking = null;
 		itsLabelRankingMatrix = null;
 		isPValueComputed = false;
+	}
+
+	/*
+	 * package private
+	 * used only by Validation.getValidSubgroup((int,) int, Random)
+	 * most Subgroup methods will not work when using this Constructor
+	 * but Validation is only interested in:
+	 * getMembers()
+	 * getCoverage()
+	 * getDAG() (multi-label only)
+	 */
+	Subgroup(BitSet theMembers) throws IllegalArgumentException
+	{
+		if (theMembers == null)
+			throw new IllegalArgumentException("arguments can not be null");
+		if (theMembers.length() == 0)
+			throw new IllegalArgumentException("Subgroups must have members");
+
+		itsMembers = theMembers;
+		itsCoverage = itsMembers.cardinality();
+		itsDAG = null;
+
+		// final, needs to be set
+		itsParentSet = null;
 	}
 
 	// itsMeasureValue, itsCoverage, itsDepth are primitive types, no need

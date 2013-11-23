@@ -295,7 +295,7 @@ public class Validation
 			aSubgroupSize = (int) (theRandom.nextDouble() * aNrRows);
 		while (aSubgroupSize < theMinimumCoverage || aSubgroupSize == aNrRows);
 
-		return itsTable.getRandomSubgroup(aSubgroupSize);
+		return new Subgroup(itsTable.getRandomSubgroupMembers(aSubgroupSize));
 	}
 
 	// for RANDOM_DESCRIPTIONS/Conditions, always uses the same Random value
@@ -318,7 +318,7 @@ public class Validation
 
 		Log.logCommandLine(aCL.toString());
 
-		return new Subgroup(aCL, aMembers, null);
+		return new Subgroup(aMembers);
 	}
 
 	/**
@@ -478,6 +478,8 @@ public class Validation
 
 		Log.COMMANDLINELOG = false;
 		theSubgroupDiscovery.mine(System.currentTimeMillis());
+		// TODO MM use parallel SubgroupDiscovery.mine()
+		// theSubgroupDiscovery.mine(System.currentTimeMillis(), nrThreads);
 		Log.COMMANDLINELOG = true;
 		SubgroupSet aSubgroupSet = theSubgroupDiscovery.getResult();
 		if (aSubgroupSet.size() == 0)

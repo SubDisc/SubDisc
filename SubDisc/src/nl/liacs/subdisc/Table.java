@@ -372,7 +372,7 @@ public class Table implements XMLNodeInterface
 
 	// Misc ===============================
 
-	public Subgroup getRandomSubgroup(int theSize)
+	public BitSet getRandomSubgroupMembers(int theSize)
 	{
 		BitSet aSample = new BitSet(itsNrRows);
 		int m = 0;
@@ -395,7 +395,7 @@ public class Table implements XMLNodeInterface
 				t++;
 		}
 
-		return new Subgroup(null, aSample, null);
+		return aSample;
 	}
 
 	/**
