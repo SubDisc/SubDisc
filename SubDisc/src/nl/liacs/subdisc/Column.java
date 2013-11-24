@@ -1688,7 +1688,7 @@ public class Column implements XMLNodeInterface
 			// this code path needs a copy of the data for median
 			// get relevant values and do summing in single loop
 			float aSum = 0.0f;
-			float[] aValues = new float[theBitSet.size()];
+			float[] aValues = new float[theBitSet.cardinality()];
 			for (int i = theBitSet.nextSetBit(0), j = -1; i >= 0; i = theBitSet.nextSetBit(i + 1))
 				aSum += (aValues[++j] = itsFloatz[i]);
 			Arrays.sort(aValues);
