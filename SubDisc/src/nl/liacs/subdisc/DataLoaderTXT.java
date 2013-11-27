@@ -13,7 +13,7 @@ public class DataLoaderTXT implements FileLoaderInterface
 	private static final String[] CLEAN_DELIMITERS = { "\t", ",", ";" };
 
 	private Table itsTable = null;
-	private String itsDelimiter = DELIMITERS[0];
+	private int itsDelimiter = 0;
 	private int itsNrLines = 0;
 
 	// default file loader
@@ -157,7 +157,7 @@ public class DataLoaderTXT implements FileLoaderInterface
 				 * harder to identify faulty lines.
 				 * Using .split() this would be trivial.
 				 */
-				Scanner aScanner = new Scanner(aLine).useDelimiter(itsDelimiter);
+				Scanner aScanner = new Scanner(aLine).useDelimiter(getDelimiter());
 
 				//read fields
 				int aColumn = -1;
@@ -345,14 +345,14 @@ public class DataLoaderTXT implements FileLoaderInterface
 		}
 
 		if (aNrOptions == 0)
-			aMessage = "unable to determine delimiter, using: " + CLEAN_DELIMITERS[0];
+			aMessage = "unable to determine delimiter, using \'" + CLEAN_DELIMITERS[0] + "\'";
 		else if (aNrOptions == 1)
 		{
 			for (int i = 0, j = aNrDelimiters; i < j; ++i)
 				if (aCounts[i] > 1)
 				{
-					itsDelimiter = DELIMITERS[i];
-					aMessage = "successfully established delimiter, using: " + CLEAN_DELIMITERS[i];
+					itsDelimiter = i;
+					aMessage = "successfully established delimiter, using \'" + CLEAN_DELIMITERS[i] + "\'";
 				}
 		}
 		else // (aNrOptions > 1)
@@ -364,14 +364,14 @@ public class DataLoaderTXT implements FileLoaderInterface
 					// just pick the first one
 					if (aCounts[i] == theSecondLine.split(DELIMITERS[i], -1).length)
 					{
-						itsDelimiter = DELIMITERS[i];
-						aMessage = "unsure about delimiter, using: " + CLEAN_DELIMITERS[i];
+						itsDelimiter = i;
+						aMessage = "unsure about delimiter, using \'" + CLEAN_DELIMITERS[i] + "\'";
 						break;
 					}
 				}
 			}
 
-			aMessage = "unable to determine delimiter, using: " + CLEAN_DELIMITERS[0];
+			aMessage = "unable to determine delimiter, using \'" + CLEAN_DELIMITERS[0] + "\'";
 		}
 		message("establishDelimiter", aMessage);
 	}
@@ -380,7 +380,7 @@ public class DataLoaderTXT implements FileLoaderInterface
 	// the returned array contains the ColumnTypes as declared in XML
 	private AttributeType[] checkXMLTable(String theHeaderLine, File theFile)
 	{
-		final String[] aHeaders = theHeaderLine.split(itsDelimiter, -1);
+		final String[] aHeaders = theHeaderLine.split(getDelimiter(), -1);
 		final int aNrColumns = aHeaders.length;
 		boolean returnNull = false;
 
@@ -426,8 +426,8 @@ public class DataLoaderTXT implements FileLoaderInterface
 	private void createTable(File theFile, String aHeaderLine, String aDataLine)
 	{
 		message("createTable", "creating Table");
-		String[] aHeaders = aHeaderLine.split(itsDelimiter);
-		String[] aData = aDataLine.split(itsDelimiter);
+		String[] aHeaders = aHeaderLine.split(getDelimiter());
+		String[] aData = aDataLine.split(getCleanDelimiter());
 
 		// for-each loop might not work for data changes
 		for (String s : aHeaders)
@@ -527,5 +527,15 @@ public class DataLoaderTXT implements FileLoaderInterface
 		// TODO will still return a table, even if no data is loaded, change
 		// MiningWindow could fall back to 'no table' if itsTable.getNrRows == 0
 		return itsTable;
+	}
+	
+	public String getDelimiter()
+	{
+		return DELIMITERS[itsDelimiter];
+	}
+	
+	public String getCleanDelimiter()
+	{
+		return CLEAN_DELIMITERS[itsDelimiter];
 	}
 }
