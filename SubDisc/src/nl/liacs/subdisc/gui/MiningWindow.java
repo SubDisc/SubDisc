@@ -1431,16 +1431,13 @@ public class MiningWindow extends JFrame implements ActionListener
 			{
 				Column aPrimaryColumn = itsTargetConcept.getPrimaryTarget();
 				Column aSecondaryColumn = itsTargetConcept.getSecondaryTarget();
-
-				RegressionMeasure anRM =
-					new RegressionMeasure(itsSearchParameters.getQualityMeasure(), aPrimaryColumn, aSecondaryColumn);
-
-				new ModelWindow(aPrimaryColumn, aSecondaryColumn, anRM, null); //trendline, no subset
+				RegressionMeasure anRM = new RegressionMeasure(itsSearchParameters.getQualityMeasure(), aPrimaryColumn, aSecondaryColumn);
+				new ModelWindow(itsTable, aPrimaryColumn, aSecondaryColumn, anRM, null); //trendline, no subset
 				break;
 			}
 			case DOUBLE_CORRELATION :
 			{
-				new ModelWindow(itsTargetConcept.getPrimaryTarget(), itsTargetConcept.getSecondaryTarget(), null, null); //no trendline, no subset
+				new ModelWindow(itsTable, itsTargetConcept.getPrimaryTarget(), itsTargetConcept.getSecondaryTarget(), null, null); //no trendline, no subset
 				break;
 			}
 			case MULTI_LABEL :

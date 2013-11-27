@@ -410,7 +410,7 @@ public class ResultWindow extends JFrame implements ActionListener
 				aRM.getEvaluationMeasureValue();
 			}
 
-			new ModelWindow(aTargetConcept.getPrimaryTarget(),
+			new ModelWindow(itsTable, aTargetConcept.getPrimaryTarget(),
 					aTargetConcept.getSecondaryTarget(),
 					aRM,
 					aSubgroup);
