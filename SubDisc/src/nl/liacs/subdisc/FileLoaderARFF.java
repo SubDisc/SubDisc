@@ -15,6 +15,7 @@ public class FileLoaderARFF implements FileLoaderInterface
 	private int itsNrDataRows = 0;
 	private List<NominalAttribute> itsNominalAttributes =
 		new ArrayList<NominalAttribute>();	// used to check data declarations
+	private int itsNrBadRows = 0;
 
 	private static enum Keyword
 	{
@@ -225,16 +226,18 @@ public class FileLoaderARFF implements FileLoaderInterface
 				}
 				else if (dataFound)
 				{
-					loadData(aLine);
-					++itsNrDataRows;
+					loadData(aLine, itsNrDataRows);
+					itsNrDataRows++;
 				}
 //				else
 				{
 					// TODO malformedFileWarning(), try to continue
 				}
-				if (aLineNr % 10000 == 0)
-					Log.logCommandLine("loadFile: " + aLineNr/1000 + "k lines read");
+				if (itsNrDataRows > 0 && itsNrDataRows % 10000 == 0)
+					Log.logCommandLine("loadFile: " + itsNrDataRows/1000 + "k lines read");
 			}
+			if (itsNrBadRows > 0)
+				Log.logCommandLine("FileLoaderARFF: " + itsNrBadRows + " offending lines encounterd.");
 		}
 		catch (IOException e)
 		{
@@ -320,9 +323,10 @@ public class FileLoaderARFF implements FileLoaderInterface
 	}
 
 	// TODO checking of declared nominal classes for @attributes { class1, class2, ..} declarations
-	private void loadData(String theString)
+	private void loadData(String theString, int theLine)
 	{
 		String aCell;
+		boolean isBad = false;
 		for (int i = 0, j = itsTable.getColumns().size(); i < j; i++)
 		{
 			Column aColumn = itsTable.getColumns().get(i);
@@ -346,9 +350,20 @@ public class FileLoaderARFF implements FileLoaderInterface
 				addMissingToColumn(aColumn);
 			}
 			else
-				addValueToColumn(aColumn, aCell);
+			{
+				boolean isAdded = addValueToColumn(aColumn, aCell, theLine);
+				if (!isAdded)
+					isBad = true;
+			}
 		}
 
+		if (isBad)
+		{
+			if (itsNrBadRows == 0)
+				Log.logCommandLine("FileLoaderARFF: more lines with missing values for numeric columns will not be reported per line.");
+			itsNrBadRows++;
+		}
+		
 		if (!theString.isEmpty())
 			if (!Keyword.COMMENT.atStartOfLine(theString))
 				Log.logCommandLine(
@@ -356,13 +371,26 @@ public class FileLoaderARFF implements FileLoaderInterface
 				// TODO criticalError(toManyArgumentsError);
 	}
 
-	private void addValueToColumn(Column theColumn, String theCell)
+	//returns true if added correctly, false if cell was empty for numeric
+	private boolean addValueToColumn(Column theColumn, String theCell, int theLine)
 	{
 		switch (theColumn.getType())
 		{
 			case NOMINAL : theColumn.add(theCell); break;
 			case NUMERIC :
-			case ORDINAL : theColumn.add(Float.parseFloat(theCell)); break;
+			case ORDINAL : 
+			{
+				if (theCell.isEmpty())
+				{
+					if (itsNrBadRows == 0)
+						Log.logCommandLine("FileLoaderARFF: missing value in numeric column \"" + theColumn.getName() + "\" on line " + theLine + ". Inserting 0.");
+					theColumn.add(0f);
+					return false;
+				}
+				else
+					theColumn.add(Float.parseFloat(theCell));
+				break;
+			}
 			case BINARY :
 			{
 				// TODO any other value is accepted as 'false'
@@ -374,6 +402,7 @@ public class FileLoaderARFF implements FileLoaderInterface
 			}
 			default : break;	// TODO unknown AttributeType warning
 		}
+		return true;
 	}
 
 	private void addMissingToColumn(Column theColumn)
