@@ -97,11 +97,6 @@ public class FileHandler
 
 		FileType aFileType = FileType.getFileType(itsFile);
 		Timer aTimer = new Timer();
-// TODO remove debug only
-System.gc();
-// NOTE extra memory can be claimed at runtime
-Runtime r = Runtime.getRuntime();
-long usedPre = r.totalMemory() - r.freeMemory();
 
 		JFrame aLoaderDialog = null;
 		if (!GraphicsEnvironment.isHeadless() && aFileType != FileType.XML)
@@ -156,8 +151,6 @@ long usedPre = r.totalMemory() - r.freeMemory();
 		printLoadingInfo();
 		if (aLoaderDialog != null)
 			aLoaderDialog.setVisible(false);
-System.gc();
-System.out.println(((r.totalMemory()-r.freeMemory()) - usedPre) / 1048576 + "MB used for Table loading.");
 	}
 
 	private void openDatabase()
