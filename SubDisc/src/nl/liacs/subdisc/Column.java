@@ -339,6 +339,7 @@ public class Column implements XMLNodeInterface
 			throw new NullPointerException();
 		if (!itsDistinctValuesAsSet.contains(theNominal))
 		{
+			theNominal = new String(theNominal);
 			itsDistinctValuesAsSet.add(theNominal); //keep identical set of values
 			itsDistinctValues.add(theNominal); //keep identical set of values
 			// !contains so inserted at end of list
