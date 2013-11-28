@@ -17,6 +17,7 @@ import org.w3c.dom.*;
 public class Column implements XMLNodeInterface
 {
 	public static final int DEFAULT_INIT_SIZE = 2048;
+	private static final int MAP_DEFAULT_INIT_SIZE = DEFAULT_INIT_SIZE / 32;
 
 	// NOTE when adding members, update constructors, copy() and select()
 	private AttributeType itsType;
@@ -33,7 +34,14 @@ public class Column implements XMLNodeInterface
 	// List is not the most ideal interface, bi-directional map or
 	// itsNominals storing Integer indices would be better/ faster/ leaner
 	private List<String> itsDistinctValues;
-	private AbstractSet<String> itsDistinctValuesAsSet; //for supporting a quicker contains-test. Should have the same contents as itsDistinctValues, but unordered.
+	// for supporting a quicker contains() and get() test
+	// Should have the same contents as itsDistinctValues, but unordered.
+	// TODO MM see above
+	// will be merged with itsDistinctValues, itsNominals will become int[]
+	// this allows for (int == int) comparison instead of String.equals()
+	// storage tradeoff lies around (n == 16c, plus some implementation type
+	// dependent storage requirement
+	private Map<String, Integer> itsDistinctValuesMap;
 
 	private String itsMissingValue;
 	private BitSet itsMissing = new BitSet();
@@ -143,7 +151,7 @@ public class Column implements XMLNodeInterface
 			{
 				itsNominals = new ArrayList<String>(theNrRows);
 				itsDistinctValues = new ArrayList<String>();
-				itsDistinctValuesAsSet = new HashSet<String>(10000);
+				itsDistinctValuesMap = new HashMap<String, Integer>(MAP_DEFAULT_INIT_SIZE);
 				itsMissingValue = AttributeType.NOMINAL.DEFAULT_MISSING_VALUE;
 				return;
 			}
@@ -227,7 +235,7 @@ public class Column implements XMLNodeInterface
 		aCopy.itsNominals = itsNominals;
 		aCopy.itsBinaries = itsBinaries;
 		aCopy.itsDistinctValues = itsDistinctValues;
-		aCopy.itsDistinctValuesAsSet = itsDistinctValuesAsSet;
+		aCopy.itsDistinctValuesMap = itsDistinctValuesMap;
 		aCopy.itsMissingValue = itsMissingValue;
 		aCopy.itsMissing = itsMissing;
 		aCopy.itsMissingValueIsUnique = itsMissingValueIsUnique;
@@ -281,7 +289,7 @@ public class Column implements XMLNodeInterface
 		int aColumnSize = theSet.cardinality();
 		Column aColumn = new Column(itsName, itsShort, itsType, itsIndex, aColumnSize);
 		aColumn.itsDistinctValues = this.itsDistinctValues;
-		aColumn.itsDistinctValuesAsSet = this.itsDistinctValuesAsSet;
+		aColumn.itsDistinctValuesMap = this.itsDistinctValuesMap;
 		aColumn.itsMissingValue = this.itsMissingValue;
 		aColumn.itsSize = aColumnSize;
 		aColumn.isEnabled = this.isEnabled;
@@ -337,16 +345,20 @@ public class Column implements XMLNodeInterface
 	{
 		if (theNominal == null)
 			throw new NullPointerException();
-		if (!itsDistinctValuesAsSet.contains(theNominal))
+
+		Integer i = itsDistinctValuesMap.get(theNominal);
+		if (i == null)
 		{
+			// String constructor trims of baggage
 			theNominal = new String(theNominal);
-			itsDistinctValuesAsSet.add(theNominal); //keep identical set of values
-			itsDistinctValues.add(theNominal); //keep identical set of values
-			// !contains so inserted at end of list
-			itsNominals.add(itsDistinctValues.get(itsDistinctValues.size()-1));
+			int size = itsDistinctValues.size();
+			// keep identical sets of values
+			itsDistinctValues.add(theNominal);
+			itsDistinctValuesMap.put(theNominal, size);
+			itsNominals.add(theNominal);
 		}
 		else
-			itsNominals.add(itsDistinctValues.get(itsDistinctValues.indexOf(theNominal)));
+			itsNominals.add(itsDistinctValues.get(i));
 
 		++itsSize;
 	}
@@ -602,7 +614,9 @@ public class Column implements XMLNodeInterface
 
 		// relies on itsCardinality to be set at this time
 		itsDistinctValues = new ArrayList<String>(itsCardinality);
-		itsDistinctValuesAsSet = new HashSet<String>(10000);
+		// warning (itsCardinality * 2) without overflow check is unsafe
+		// besides HashMap constructor always uses next power of 2
+		itsDistinctValuesMap = new HashMap<String, Integer>(itsCardinality);
 		itsNominals = new ArrayList<String>(itsSize);
 
 		switch (itsType)
@@ -638,27 +652,36 @@ public class Column implements XMLNodeInterface
 			}
 			case BINARY :
 			{
-				if (itsCardinality == 2)
-				{
-					itsDistinctValues.add("0");
-					itsDistinctValues.add("1");
-					itsDistinctValuesAsSet.add("0");
-					itsDistinctValuesAsSet.add("1");
-				}
-				else if (itsBinaries.cardinality() == 0 && itsSize > 0)
-				{
-					
-					itsDistinctValues.add("0");
-					itsDistinctValuesAsSet.add("0");
-				}
-				else if (itsSize > 0)
-				{
-					itsDistinctValues.add("1");
-					itsDistinctValuesAsSet.add("1");
-				}
-				
+
+// this code is slightly faster, than the code at the bottom as it does not call
+// itsDistinctValuesMap.get(String) to determine existence of key
+// but switching of Column type is hardly ever done
+// and calling add(String) is more robust as it takes care of maintaining sane
+// internal state
+//				if (itsCardinality == 2)
+//				{
+//					itsDistinctValues.add("0");
+//					itsDistinctValuesMap.put("0", 0);
+//					itsDistinctValues.add("1");
+//					itsDistinctValuesMap.put("1", 1);
+//				}
+//				else if (itsBinaries.cardinality() == 0 && itsSize > 0)
+//				{
+//					itsDistinctValues.add("0");
+//					itsDistinctValuesMap.put("0", 0);
+//				}
+//				else if (itsSize > 0)
+//				{
+//					itsDistinctValues.add("1");
+//					itsDistinctValuesMap.put("1", 0);
+//				}
+//
+//				for (int i = 0, j = itsSize; i < j; ++i)
+//					itsNominals.add(itsBinaries.get(i) ? "1" : "0");
+
+				// new code, replaces all above
 				for (int i = 0, j = itsSize; i < j; ++i)
-					itsNominals.add(itsBinaries.get(i) ? "1" : "0");
+					this.add(itsBinaries.get(i) ? "1" : "0");
 
 				// Cleanup (for GarbageCollector).
 				itsBinaries = null;
@@ -684,26 +707,41 @@ public class Column implements XMLNodeInterface
 	{
 		// relies on itsCardinality to be set at this time
 		itsDistinctValues = new ArrayList<String>(itsCardinality);
-		itsDistinctValuesAsSet = new HashSet<String>(10000);
+		itsDistinctValuesMap = new HashMap<String, Integer>(itsCardinality);
 		itsNominals = new ArrayList<String>(itsSize);
 		itsMissingValue = AttributeType.NOMINAL.DEFAULT_MISSING_VALUE;
 
-		if (aFalse != null)
-		{
-			itsDistinctValues.add(aFalse);
-			itsDistinctValuesAsSet.add(aFalse);
-		}
-		if (aTrue != null)
-		{
-			itsDistinctValues.add(aTrue);
-			itsDistinctValuesAsSet.add(aTrue);
-		}
+// this code is slightly faster, than the code at the bottom as it does not call
+// itsDistinctValuesMap.get(String) to determine existence of key
+// but switching of Column type is hardly ever done
+// and calling add(String) is more robust as it takes care of maintaining sane
+// internal state
+//		if (aFalse != null)
+//		{
+//			itsDistinctValues.add(aFalse);
+//			itsDistinctValuesMap.add(aFalse);
+//		}
+//		if (aTrue != null)
+//		{
+//			itsDistinctValues.add(aTrue);
+//			itsDistinctValuesMap.add(aTrue);
+//		}
+//
+//		for (int i = 0, j = itsSize; i < j; ++i)
+//			if (aTrue == null && aFalse == null) //just missing values so far
+//				itsNominals.add(itsMissingValue);
+//			else
+//				itsNominals.add(itsFloatz[i] > 0.5f ? aTrue : aFalse);
 
+		// new code replaces all above
 		for (int i = 0, j = itsSize; i < j; ++i)
-			if (aTrue == null && aFalse == null) //just missing values so far
-				itsNominals.add(itsMissingValue);
+		{
+			// just missing values so far
+			if (aTrue == null && aFalse == null)
+				this.add(itsMissingValue);
 			else
-				itsNominals.add(itsFloatz[i] > 0.5f ? aTrue : aFalse);
+				this.add(itsFloatz[i] > 0.5f ? aTrue : aFalse);
+		}
 
 		// Cleanup (for GarbageCollector).
 		itsBinaries = null;
@@ -752,7 +790,7 @@ public class Column implements XMLNodeInterface
 				 * itsSize == 0). Cleanup (for GarbageCollector).
 				 */
 				itsDistinctValues = null;
-				itsDistinctValuesAsSet = null;
+				itsDistinctValuesMap = null;
 				itsNominals = null;
 
 				if (itsMissing.cardinality() == 0 && !isValidValue(theNewType, itsMissingValue))
@@ -879,7 +917,7 @@ public class Column implements XMLNodeInterface
 					}
 				}
 				itsDistinctValues = null;
-				itsDistinctValuesAsSet = null;
+				itsDistinctValuesMap = null;
 				itsNominals = null;
 				break;
 			}
