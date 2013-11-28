@@ -201,8 +201,9 @@ public class FileHandler
 		JFrame aFrame = new JFrame();
 		aFrame.setIconImage(MiningWindow.ICON);
 		JFileChooser aChooser = new JFileChooser(new File(itsLastFileLocation));
-		aChooser.addChoosableFileFilter(new FileTypeFilter(theType));
-		aChooser.setFileFilter(new FileTypeFilter(theType));
+		FileTypeFilter aFileTypeFilter = new FileTypeFilter(theType);
+		aChooser.addChoosableFileFilter(aFileTypeFilter);
+		aChooser.setFileFilter(aFileTypeFilter);
 
 		int theOption = aChooser.showSaveDialog(aFrame);
 		if (theOption == JFileChooser.APPROVE_OPTION)

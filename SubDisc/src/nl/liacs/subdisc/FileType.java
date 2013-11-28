@@ -13,8 +13,7 @@ public enum FileType
 		@Override
 		public List<String> getExtensions()
 		{
-			return new ArrayList<String>(
-						Arrays.asList(new String[] {".txt", ".text", ".csv" }));
+			return Arrays.asList(new String[] {".txt", ".text", ".csv", ".tsv" });
 		}
 	},
 	ARFF("ARFF Files")
@@ -22,7 +21,7 @@ public enum FileType
 		@Override
 		public List<String> getExtensions()
 		{
-			return new ArrayList<String>(Collections.singletonList(".arff"));
+			return Collections.singletonList(".arff");
 		}
 	},
 	XML("XML Files")
@@ -30,7 +29,7 @@ public enum FileType
 		@Override
 		public List<String> getExtensions()
 		{
-			return new ArrayList<String>(Collections.singletonList(".xml"));
+			return Collections.singletonList(".xml");
 		}
 	},
 	PLT("GnuPlot Files")
@@ -38,7 +37,7 @@ public enum FileType
 		@Override
 		public List<String> getExtensions()
 		{
-			return new ArrayList<String>(Collections.singletonList(".plt"));
+			return Collections.singletonList(".plt");
 		}
 	},
 	ALL_DATA_FILES("Data Files")
@@ -46,11 +45,10 @@ public enum FileType
 		@Override
 		public List<String> getExtensions()
 		{
-			List<String> returnList =
-				new ArrayList<String>(TXT.getExtensions());
+			List<String> returnList = new ArrayList<String>();
+			returnList.addAll(TXT.getExtensions());
 			returnList.addAll(ARFF.getExtensions());
 			returnList.addAll(XML.getExtensions());
-			returnList.addAll(PLT.getExtensions());
 			return returnList;
 		}
 	};
