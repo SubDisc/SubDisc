@@ -13,10 +13,13 @@ public class FileLoaderARFF implements FileLoaderInterface
 	private Table itsTable = null;
 	private boolean checkDataWithXMLTable = false; // if loaded from XML
 	private int itsNrDataRows = 0;
+	// used to check data declarations
 	private List<NominalAttribute> itsNominalAttributes =
-		new ArrayList<NominalAttribute>();	// used to check data declarations
+					new ArrayList<NominalAttribute>();
 	private int itsNrBadRows = 0;
 
+	private static float MISSING_NUMERIC =
+		Float.parseFloat(AttributeType.NUMERIC.DEFAULT_MISSING_VALUE);
 	private static enum Keyword
 	{
 		COMMENT("%"),
@@ -30,7 +33,7 @@ public class FileLoaderARFF implements FileLoaderInterface
 		Keyword(String theKeyword)
 		{
 			text = Pattern.compile("^\\s*" + theKeyword + "\\s*",
-									Pattern.CASE_INSENSITIVE);
+						Pattern.CASE_INSENSITIVE);
 		}
 
 		boolean atStartOfLine(String theString)
@@ -60,8 +63,8 @@ public class FileLoaderARFF implements FileLoaderInterface
 		{
 			// TODO new ErrorDialog(e, ErrorDialog.noSuchFileError);
 			Log.logCommandLine(
-					String.format("FileLoaderARFF: can not open File '%s'",
-							theFile.getAbsolutePath()));
+				String.format("FileLoaderARFF: can not open File '%s'",
+						theFile.getAbsolutePath()));
 			return;
 		}
 		else
@@ -74,8 +77,8 @@ public class FileLoaderARFF implements FileLoaderInterface
 		{
 			// TODO new ErrorDialog(e, ErrorDialog.noSuchFileError);
 			Log.logCommandLine(
-					String.format("FileLoaderARFF: can not open File '%s'",
-									theFile.getAbsolutePath()));
+				String.format("FileLoaderARFF: can not open File '%s'",
+						theFile.getAbsolutePath()));
 			return;
 		}
 		else if (theTable == null)
@@ -124,9 +127,10 @@ public class FileLoaderARFF implements FileLoaderInterface
 					if (!dataFound)
 						aMissing += "\nNo '@data' found.";
 
-					Log.logCommandLine(
-						"FileLoaderARFF: premature '@end' declaration in" +
-						" File '" + theFile.getName() + "'." + aMissing);
+					if (!aMissing.isEmpty())
+						Log.logCommandLine(
+							"FileLoaderARFF: premature '@end' declaration in" +
+							" File '" + theFile.getName() + "'." + aMissing);
 					break;
 				}
 
@@ -142,10 +146,7 @@ public class FileLoaderARFF implements FileLoaderInterface
 							continue;
 						}
 						else
-							itsTable =
-								new Table(theFile,
-											removeOuterQuotes(
-													aLine.split("\\s", 2)[1]));
+							itsTable = new Table(theFile, removeOuterQuotes(aLine.split("\\s", 2)[1]));
 //							itsTable.setName();	// TODO use m.end()
 //							itsTable.setSource(theFile.getName());
 					}
@@ -183,8 +184,8 @@ public class FileLoaderARFF implements FileLoaderInterface
 					{
 						if (checkDataWithXMLTable)
 						{
-							if (parseAttribute(aLine.substring(aMatcher.end()),
-									anAttributeIndex).getName().equals(itsTable.getColumn(anAttributeIndex).getName()))
+							if (parseAttribute(aLine.substring(aMatcher.end()), 
+								anAttributeIndex).getName().equals(itsTable.getColumn(anAttributeIndex).getName()))
 							{
 								++anAttributeIndex;
 								continue;
@@ -196,10 +197,8 @@ public class FileLoaderARFF implements FileLoaderInterface
 							}
 						}
 						else
-							itsTable
-							.getColumns()
-							.add(parseAttribute(aLine.substring(aMatcher.end()),
-												anAttributeIndex++));
+							itsTable.getColumns()
+								.add(parseAttribute(aLine.substring(aMatcher.end()), anAttributeIndex++));
 					}
 				}
 				else if (Keyword.DATA.atStartOfLine(aLine))
@@ -234,7 +233,7 @@ public class FileLoaderARFF implements FileLoaderInterface
 					// TODO malformedFileWarning(), try to continue
 				}
 				if (itsNrDataRows > 0 && itsNrDataRows % 10000 == 0)
-					Log.logCommandLine("loadFile: " + itsNrDataRows/1000 + "k lines read");
+					Log.logCommandLine("loadFile: " + itsNrDataRows + " lines read");
 			}
 			if (itsNrBadRows > 0)
 				Log.logCommandLine("FileLoaderARFF: " + itsNrBadRows + " offending lines encounterd.");
@@ -340,8 +339,7 @@ public class FileLoaderARFF implements FileLoaderInterface
 			else
 				aCell= theString.split(",\\s*", 2)[0];
 
-			theString = theString
-						.substring(aCell.length() + offset)
+			theString = theString.substring(aCell.length() + offset)
 						.replaceFirst(",\\s*", "");
 
 			if (aCell.equals("?"))
@@ -350,11 +348,7 @@ public class FileLoaderARFF implements FileLoaderInterface
 				addMissingToColumn(aColumn);
 			}
 			else
-			{
-				boolean isAdded = addValueToColumn(aColumn, aCell, theLine);
-				if (!isAdded)
-					isBad = true;
-			}
+				isBad = !addValueToColumn(aColumn, aCell, theLine);
 		}
 
 		// empty numeric cell (missing value) or parseFloat(cell) failed
@@ -367,8 +361,7 @@ public class FileLoaderARFF implements FileLoaderInterface
 		
 		if (!theString.isEmpty())
 			if (!Keyword.COMMENT.atStartOfLine(theString))
-				Log.logCommandLine(
-					"FileLoaderARFF: many arguments at line:\n\t " + theString);
+				Log.logCommandLine("FileLoaderARFF: many arguments at line:\n\t " + theString);
 				// TODO criticalError(toManyArgumentsError);
 	}
 
@@ -388,7 +381,7 @@ public class FileLoaderARFF implements FileLoaderInterface
 				}
 				catch (NumberFormatException e)
 				{
-					theColumn.add(Float.parseFloat(AttributeType.NUMERIC.DEFAULT_MISSING_VALUE));
+					theColumn.add(MISSING_NUMERIC);
 
 					// only log once
 					if (itsNrBadRows == 0)
@@ -422,8 +415,8 @@ public class FileLoaderARFF implements FileLoaderInterface
 	private static final void logNumericError(int theLine, String theCause, Column theColumn)
 	{
 		Log.logCommandLine(
-			String.format("FileLoaderARFF: line %d, %s in numeric column '%s'. Inserting %s.",
-					theLine, theCause, theColumn.getName(), AttributeType.NUMERIC.DEFAULT_MISSING_VALUE));
+			String.format("FileLoaderARFF: line %d, %s in numeric column '%s'. Inserting %f.",
+					theLine, theCause, theColumn.getName(), MISSING_NUMERIC));
 	}
 
 	private void addMissingToColumn(Column theColumn)
@@ -443,16 +436,12 @@ public class FileLoaderARFF implements FileLoaderInterface
 				if (checkDataWithXMLTable)
 					theColumn.add(Float.parseFloat(theColumn.getMissingValue()));
 				else
-					theColumn.add(Float.parseFloat(AttributeType.NUMERIC.DEFAULT_MISSING_VALUE));
+					theColumn.add(MISSING_NUMERIC);
 				break;
 			}
 			case ORDINAL :
 			{
-				if (checkDataWithXMLTable)
-					theColumn.add(Float.parseFloat(theColumn.getMissingValue()));
-				else
-					theColumn.add(Float.parseFloat(AttributeType.ORDINAL.DEFAULT_MISSING_VALUE));
-				break;
+				throw new AssertionError(theColumn.getType());
 			}
 			case BINARY :
 			{
