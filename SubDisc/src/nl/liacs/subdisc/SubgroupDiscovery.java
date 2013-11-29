@@ -385,6 +385,44 @@ System.out.println(aSubgroup + "\t" + aRefinement.getConditionBase());
 				}
 				break;
 			}
+			case NUMERIC_BEST_BINS :
+			{
+				//this is the crucial translation from nr bins to nr splitpoint
+				// code does nothing if aNrSplitPoints == 0
+				int aNrSplitPoints = itsSearchParameters.getNrBins() - 1;
+				float aMax = Float.NEGATIVE_INFINITY;
+				Subgroup aBestSubgroup = null;
+				Subgroup aNewSubgroup = null;
+
+				float[] aSplitPoints = theRefinement.getConditionBase().getColumn().getSplitPoints(theMembers, aNrSplitPoints);
+				boolean first = true;
+				for (int j=0; j<aNrSplitPoints; j++)
+				{
+					if (first || aSplitPoints[j] != aSplitPoints[j-1])
+					{
+						if (itsFilter != null)
+							if (!itsFilter.isUseful(aList, new Condition(aConditionBase, aSplitPoints[j])))
+								continue;
+
+						aNewSubgroup = theRefinement.getRefinedSubgroup(aSplitPoints[j]);
+						final int aNewCoverage = aNewSubgroup.getCoverage();
+						if (aNewCoverage >= itsMinimumCoverage && aNewCoverage <= itsMaximumCoverage && aNewCoverage < anOldCoverage)
+						{
+							float aQuality = evaluateCandidate(aNewSubgroup);
+							if (aQuality > aMax)
+							{
+								aMax = aQuality;
+								aNewSubgroup.setMeasureValue(aQuality);
+								aBestSubgroup = aNewSubgroup;
+							}
+						}
+					}
+					first = false;
+				}
+				if (aBestSubgroup != null)
+					checkAndLog(aBestSubgroup, anOldCoverage);
+				break;
+			}
 			case NUMERIC_BINS :
 			{
 				//this is the crucial translation from nr bins to nr splitpoint
@@ -448,7 +486,6 @@ System.out.println(aSubgroup + "\t" + aRefinement.getConditionBase());
 						}
 					}
 				}
-
 				//add best
 				if (aBestSubgroup!=null) //at least one threshold found that has enough quality and coverage
 					//addToBuffer(aBestSubgroup);

@@ -7,6 +7,7 @@ import java.util.*;
  */
 public enum NumericStrategy implements EnumInterface
 {
+	NUMERIC_BEST_BINS("best-bins"),
 	NUMERIC_BINS("bins"),
 	NUMERIC_BEST("best"),
 	NUMERIC_ALL("all"),
@@ -54,7 +55,8 @@ public enum NumericStrategy implements EnumInterface
 
 	public static ArrayList<NumericStrategy> getNormalValues()
 	{
-		ArrayList<NumericStrategy> aResult = new ArrayList<NumericStrategy>(3);
+		ArrayList<NumericStrategy> aResult = new ArrayList<NumericStrategy>(4);
+		aResult.add(NUMERIC_BEST_BINS);
 		aResult.add(NUMERIC_BINS);
 		aResult.add(NUMERIC_BEST);
 		aResult.add(NUMERIC_ALL);
@@ -69,7 +71,7 @@ public enum NumericStrategy implements EnumInterface
 	 */
 	public static NumericStrategy getDefault()
 	{
-		return NumericStrategy.NUMERIC_BINS;
+		return NumericStrategy.NUMERIC_BEST_BINS;
 	}
 
 	// uses Javadoc from EnumInterface
@@ -78,4 +80,6 @@ public enum NumericStrategy implements EnumInterface
 	{
 		return GUI_TEXT;
 	}
+	
+	public static int getNrExcludingIntervals() { return 4; }
 }

@@ -971,7 +971,7 @@ public class MiningWindow extends JFrame implements ActionListener
 		// if SINGLE_NOMINAL add INTERVALS, else remove it
 		if (itsTargetConcept.getTargetType() == TargetType.SINGLE_NOMINAL)
 		{
-			if (jComboBoxNumericStrategy.getItemCount() == 3) //is INTERVALS not present yet? note there are more future-proof ways to do this
+			if (jComboBoxNumericStrategy.getItemCount() == NumericStrategy.getNrExcludingIntervals()) //is INTERVALS not present yet?
 				jComboBoxNumericStrategy.addItem(NumericStrategy.NUMERIC_INTERVALS.GUI_TEXT);
 		}
 		else
@@ -1360,8 +1360,9 @@ public class MiningWindow extends JFrame implements ActionListener
 		if (aName != null)
 		{
 			itsSearchParameters.setNumericStrategy(aName);
-			boolean aBin = (itsSearchParameters.getNumericStrategy() == NumericStrategy.NUMERIC_BINS);
-			jTextFieldNumberOfBins.setEnabled(aBin); //disable nr bins?
+			boolean aBinning = (itsSearchParameters.getNumericStrategy() == NumericStrategy.NUMERIC_BEST_BINS ||
+								itsSearchParameters.getNumericStrategy() == NumericStrategy.NUMERIC_BINS);
+			jTextFieldNumberOfBins.setEnabled(aBinning); //disable nr bins?
 			boolean anIntervals = (itsSearchParameters.getNumericStrategy() == NumericStrategy.NUMERIC_INTERVALS);
 			jComboBoxNumericOperators.setEnabled(!anIntervals); //disable numeric operators?
 		}

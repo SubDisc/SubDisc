@@ -143,7 +143,7 @@ public class ModelWindow extends JFrame implements ActionListener
 		aPlot.getRenderer().setSeriesShape(0, new Rectangle2D.Float(-1.25f, -1.25f, 1.25f, 1.25f));
 		if (forSubgroup) //if subgroup is also shown, make remainder gray
 		{
-			aPlot.getRenderer().setSeriesPaint(1, Color.gray);
+			aPlot.getRenderer().setSeriesPaint(1, Color.lightGray);
 			aPlot.getRenderer().setSeriesShape(1, new Rectangle2D.Float(-1.25f, -1.25f, 1.25f, 1.25f));
 		}
 		else
