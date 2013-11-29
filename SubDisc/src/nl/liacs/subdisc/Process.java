@@ -101,7 +101,25 @@ public class Process
 		echoMiningEnd(anEnd - aBegin, aSubgroupDiscovery.getNumberOfSubgroups());
 
 		if (showWindows)
+		{
+			/*
+			 * Subgroup members need to be revived
+			 * if after this experiment the Table used for this
+			 * experiment is altered, it may be impossible to
+			 * (correctly) re-create the Subgroup members from the
+			 * Subgroup conditions
+			 * (for example, when the AttributeType of a
+			 * Condition.Column is altered, or the missing value for
+			 * a Column is altered)
+			 * reviving need not be done for other settings
+			 * as none will need access to (unmodified) members
+			 * when no window is shown, there is no danger of a
+			 * an altered Table (through the GUI at least)
+			 */
+			for (Subgroup s : aSubgroupDiscovery.getResult())
+				s.reviveMembers();
 			new ResultWindow(theTable, aSubgroupDiscovery, theFold, theBitSet);
+		}
 
 		if (CAUC_LIGHT)
 			caucLight(aSubgroupDiscovery, theBitSet);
@@ -233,17 +251,17 @@ public class Process
 				// this seems pointless, but the ROC curve needs to be computed to prevent the next line from NullPointerError'ing
 				ROCCurve aROCCurve = new ROCCurve(sd.getResult(), theSearchParameters, sd.getQualityMeasure());
 
-				SubgroupSet ROCSubgroups = sd.getResult().getROCListSubgroupSet();
+				SubgroupSet aROCSubgroups = sd.getResult().getROCListSubgroupSet();
 
 				// force update(), should have been in .getROCListSubgroupSet()
-				ROCSubgroups.size();
+				aROCSubgroups.size();
 
 				//Log.logCommandLine("ROC subgroups : " + aSize);
-				for (Subgroup s : ROCSubgroups)
+				for (Subgroup s : aROCSubgroups)
 					Log.logCommandLine("    " + s.getConditions().toString());
 
 				//select convex hull subgroups from the resulting subgroup set
-				aHeavySubgroupSet.addAll(ROCSubgroups);
+				aHeavySubgroupSet.addAll(aROCSubgroups);
 
 				// compile statistics
 //				statistics.add(compileStatistics(aDomain[i],

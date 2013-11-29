@@ -130,8 +130,16 @@ public class CandidateQueue
 	 */
 	public boolean add(Candidate theCandidate)
 	{
-		if (theCandidate.getSubgroup().getDepth() >= itsMaxDepth)
+		Subgroup aSubgroup = theCandidate.getSubgroup();
+		if (aSubgroup.getDepth() >= itsMaxDepth)
 			return false;
+
+		// kill members in all settings for now
+		// COVER_BASED_BEAM_SELECTION actually still needs the members
+		// but that code needs revisions anyway
+		// ROC_BEAM kills members AFTER the SubgroupROCPoint is created
+		if (itsSearchStrategy != SearchStrategy.ROC_BEAM)
+			aSubgroup.killMembers();
 
 		switch (itsSearchStrategy)
 		{
@@ -155,6 +163,7 @@ if (Process.ROC_BEAM_TEST)
 //ConvexHullROCNaive.debugCompare(itsNextQueueROCList, itsNextQueueConvexHullROC, itsNextQueueROCBeam);
 }
 
+				aSubgroup.killMembers();
 				return isAdded;
 			}
 			case COVER_BASED_BEAM_SELECTION :
