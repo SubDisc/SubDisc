@@ -1,37 +1,43 @@
 package nl.liacs.subdisc;
 
 import java.util.*;
+import java.util.concurrent.locks.*;
 
 import nl.liacs.subdisc.ConditionListBuilder.ConditionListA;
 
 /**
- * A Subgroup contains a number of instances from the original data. Subgroups
- * are formed by, a number of, {@link Condition Condition}s. Its members include
- * : a {@link ConditionList ConditionList}, a BitSet representing the instances
- * included in this Subgroup, the number of instances in this Subgroup (its
- * coverage), a unique identifier, and the value used to form this Subgroup. It
- * may also contain a {@link DAG DAG}, and a {@link SubgroupSet SubgroupSet}.
+ * A Subgroup contains a number of instances from the original data.
+ * 
+ * Subgroups are formed by, a number of, {@link Condition}s. Its members include
+ * : a {@link ConditionListA}, a BitSet representing the instances included in
+ * this Subgroup, the number of instances in this Subgroup (its coverage),
+ * an identifier and a {@link SubgroupSet}.
+ * It may also contain a {@link DAG}.
+ * 
+ * Note this class is not thread safe.
+ * 
  * @see Condition
- * @see ConditionList
+ * @see ConditionListA
  * @see DAG
  * @see nl.liacs.subdisc.gui.MiningWindow
  * @see SubgroupDiscovery
  * @see SubgroupSet
- * @see Condition
  */
 public class Subgroup implements Comparable<Subgroup>
 {
 //	private ConditionList itsConditions;
 	private ConditionListA itsConditions;
 	private BitSet itsMembers;
+	// not a ReadWriteLock, members may be nulled at any moment
+	private Lock itsMembersLock = new ReentrantLock();
 	private int itsID = 0;
 	private int itsCoverage; // crucial to keep it in sync with itsMembers
 	private DAG itsDAG;
 	private LabelRanking itsLabelRanking;
 	private LabelRankingMatrix itsLabelRankingMatrix;
-	private double itsMeasureValue;
-	private double itsSecondaryStatistic = 0;
-	private double itsTertiaryStatistic = 0;
+	private double itsMeasureValue = 0.0;
+	private double itsSecondaryStatistic = 0.0;
+	private double itsTertiaryStatistic = 0.0;
 	int itsDepth;
 	private final SubgroupSet itsParentSet;
 	// XXX not strictly needed when setting itsPValue to NaN
@@ -67,8 +73,7 @@ public class Subgroup implements Comparable<Subgroup>
 		itsConditions = theConditions;
 		itsDepth = itsConditions.size();
 
-		itsMembers = theMembers;
-		itsCoverage = itsMembers.cardinality();
+		constructorMembersInit(theMembers);
 
 		itsParentSet = theSubgroupSet;
 
@@ -84,7 +89,7 @@ public class Subgroup implements Comparable<Subgroup>
 	 * used only by Validation.getValidSubgroup((int,) int, Random)
 	 * most Subgroup methods will not work when using this Constructor
 	 * but Validation is only interested in:
-	 * getMembers()
+	 * getMembers() (they should never be null in the Validation setting)
 	 * getCoverage()
 	 * getDAG() (multi-label only)
 	 */
@@ -95,14 +100,46 @@ public class Subgroup implements Comparable<Subgroup>
 		if (theMembers.length() == 0)
 			throw new IllegalArgumentException("Subgroups must have members");
 
-		itsMembers = theMembers;
-		itsCoverage = itsMembers.cardinality();
+		constructorMembersInit(theMembers);
 		itsDAG = null;
 
 		// final, needs to be set
 		itsParentSet = null;
 	}
 
+	private void constructorMembersInit(BitSet theMembers)
+	{
+		itsMembersLock.lock();
+		try
+		{
+			// TODO MM a copy of theMembers would be safer
+			itsMembers = theMembers;
+			itsCoverage = itsMembers.cardinality();
+		}
+		finally
+		{
+			itsMembersLock.unlock();
+		}
+	}
+
+	/*
+	 * XXX MM
+	 * itsMembers is cloned for the subgroup.copy()
+	 * copy() is called by Refinement:
+	 * Subgroup newSG = Refinement.getRefinedSubgroup(Condition);
+	 * where the call is immediately followed by:
+	 * newSG.addCondition(Condition);
+	 * addCondition(Condition) calls:
+	 * BitSet result = Column.evaluate(itsMembers, Condition)
+	 * result is used to set itsMembers = result;
+	 * so, the previous itsMembers clone exist only for a few (milli)seconds
+	 * mining would be much faster when Column.evaluate would modify the
+	 * BitSet argument, clearing bits for which the Condition does not hold
+	 * as long as it clearly states that the input will be modified this
+	 * should not be a problem
+	 * it avoids 2 BitSet creations, that, especially for large datasets,
+	 * pose a computational and memory challenge
+	 */
 	// itsMeasureValue, itsCoverage, itsDepth are primitive types, no need
 	// to deep-copy
 	// itsParentSet must not be deep-copied
@@ -114,7 +151,7 @@ public class Subgroup implements Comparable<Subgroup>
 		// sets conditions, depth, members, coverage, parentSet
 		//Subgroup aReturn = new Subgroup(itsConditions.copy(), (BitSet) itsMembers.clone(), itsParentSet);
 		// NOTE ConditionListA is immutable, so reuse is safe
-		Subgroup aReturn = new Subgroup(itsConditions, (BitSet) itsMembers.clone(), itsParentSet);
+		Subgroup aReturn = new Subgroup(itsConditions, (BitSet) getMembers(), itsParentSet);
 
 		aReturn.itsMeasureValue = itsMeasureValue;
 		// itsDAG = null;
@@ -125,8 +162,7 @@ public class Subgroup implements Comparable<Subgroup>
 		return aReturn;
 	}
 
-	// significant speedup in mining algorithm
-	// use old_subgroup.members and update it for new Condition
+	// see comment at copy(), mining could be much faster
 	public void addCondition(Condition theCondition)
 	{
 		if (theCondition == null)
@@ -135,29 +171,75 @@ public class Subgroup implements Comparable<Subgroup>
 			return;
 		}
 
-		//itsConditions.addCondition(theCondition);
-		// add theCondition to current itsConditions
 		itsConditions = ConditionListBuilder.createList(itsConditions, theCondition);
-
-		//itsMembers.and(theCondition.getColumn().evaluate(theCondition));
-		// reassign, faster than and, possible as itsMembers != final
-		itsMembers = theCondition.getColumn().evaluate(itsMembers, theCondition);
-
-		// crucial to keep it in sync with itsMembers
-		itsCoverage = itsMembers.cardinality();
-
 		++itsDepth;
-	}
 
-	public void print()
-	{
-		Log.logCommandLine("conditions: " + itsConditions.toString());
-		Log.logCommandLine("bitset: " + itsMembers.toString());
+		itsMembersLock.lock();
+		try
+		{
+			Column c = theCondition.getColumn();
+
+			if (itsMembers != null)
+			{
+				// update itsMemebrs based on new Condition
+				itsMembers = c.evaluate(itsMembers, theCondition);
+				itsCoverage = itsMembers.cardinality();
+			}
+			else
+			{
+				// NOTE itsConditions must include new Condition
+				// set itsMemebrs and itsCoverage
+				getMembersUnsafe();
+			}
+		}
+		finally 
+		{
+			itsMembersLock.unlock();
+		}
 	}
 
 	public String toString()
 	{
 		return itsConditions.toString();
+	}
+
+	// private, for use within this class only, do no expose members
+	// does not return a clone, but the actual itsMembers
+	// re-instantiates itsMembers, not in separate method, as it requires
+	// extra Lock logic
+	private final BitSet getMembersUnsafe()
+	{
+		itsMembersLock.lock();
+		try
+		{
+			if (itsMembers == null)
+			{
+				// the default Constructor ensures SubgroupSet
+				int size = itsParentSet.getTotalCoverage();
+				BitSet b = new BitSet(size);
+				b.set(0, size);
+
+				// does nothing when ConditionListA is empty
+				for (int i = 0, j = itsConditions.size(); i < j; ++i)
+				{
+					Condition c = itsConditions.get(i);
+					b.and(c.getColumn().evaluate(b, c));
+				}
+
+				// only assign to itsMembers when aBitSet is in
+				// its final state, avoid intermediate non-null
+				// state of itsMembers
+				itsMembers = b;
+				itsCoverage = itsMembers.cardinality();
+			}
+
+			// within lock, so no other Thread can null itsMembers
+			return itsMembers;
+		}
+		finally
+		{
+			itsMembersLock.unlock();
+		}
 	}
 
 	/**
@@ -173,9 +255,32 @@ public class Subgroup implements Comparable<Subgroup>
 	 *
 	 * @return a BitSet representing this Subgroups members.
 	 */
-	public BitSet getMembers() { return (BitSet) itsMembers.clone(); }
+	public BitSet getMembers() { return (BitSet) getMembersUnsafe().clone(); }
 
-	public boolean covers(int theRow) { return itsMembers.get(theRow); }
+	/*
+	 * package private, called by CandidateQueue to reduce memory load
+	 * the rationale is as follows:
+	 * (depending on the search strategy) many Candidates go into the Queue
+	 * but most will be purged from it, as they will not have a high enough
+	 * score (priority)
+	 * for those that do remain, the members BitSet is generally not needed
+	 * straight away, but would claim large amounts of memory (especially
+	 * for long data sets (many rows))
+	 * only when the BitSet is needed, it will be re-instantiated
+	 * the cost for this is re-evaluation every Condition in the
+	 * ConditionList itsConditions (generally few)
+	 * and the few evaluations this takes is far less than the number of
+	 * Refinements that is evaluated for the Subgroup
+	 * so the re-evaluation does not substantially impact performance
+	 */
+	void killMembers()
+	{
+		itsMembersLock.lock();
+		try { itsMembers = null; }
+		finally { itsMembersLock.unlock(); }
+	}
+
+	public boolean covers(int theRow) { return getMembersUnsafe().get(theRow); }
 
 	public int getID() { return itsID; }
 	public void setID(int theID) { itsID = theID; }
@@ -195,6 +300,7 @@ public class Subgroup implements Comparable<Subgroup>
 	public void setLabelRankingMatrix(LabelRankingMatrix theLabelRankingMatrix) { itsLabelRankingMatrix = theLabelRankingMatrix; }
 	public LabelRankingMatrix getLabelRankingMatrix() { return itsLabelRankingMatrix; }
 
+	// could be out of sync with itsMembers in between addCondition() update
 	public int getCoverage() { return itsCoverage; }
 
 	//public ConditionList getConditions() { return itsConditions; }
@@ -313,6 +419,7 @@ public class Subgroup implements Comparable<Subgroup>
 	 *
 	 * @return the TruePositiveRate, also known as TPR.
 	 */
+	/* FIXME MM need only cardinality(), obtain without expensive clone */
 	public double getTruePositiveRate()
 	{
 		BitSet tmp = itsParentSet.getBinaryTargetClone();
@@ -320,7 +427,7 @@ public class Subgroup implements Comparable<Subgroup>
 		if (tmp == null)
 			return 0.0;
 
-		tmp.and(itsMembers);
+		tmp.and(getMembersUnsafe());
 		// NOTE now tmp.cardinality() = aHeadBody
 
 		int aTotalTargetCoverage = itsParentSet.getTotalTargetCoverage();
@@ -340,6 +447,7 @@ public class Subgroup implements Comparable<Subgroup>
 	 *
 	 * @return the FalsePositiveRate, also known as FPR.
 	 */
+	/* FIXME MM need only cardinality(), obtain without expensive clone */
 	public double getFalsePositiveRate()
 	{
 		BitSet tmp = itsParentSet.getBinaryTargetClone();
@@ -347,7 +455,7 @@ public class Subgroup implements Comparable<Subgroup>
 		if (tmp == null)
 			return 0.0;
 
-		tmp.and(itsMembers);
+		tmp.and(getMembersUnsafe());
 		// NOTE now tmp.cardinality() = aHeadBody
 
 		int aTotalCoverage = itsParentSet.getTotalCoverage();
