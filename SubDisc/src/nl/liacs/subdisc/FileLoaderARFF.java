@@ -348,7 +348,7 @@ public class FileLoaderARFF implements FileLoaderInterface
 				addMissingToColumn(aColumn);
 			}
 			else
-				isBad = !addValueToColumn(aColumn, aCell, theLine);
+				isBad |= !addValueToColumn(aColumn, aCell, theLine);
 		}
 
 		// empty numeric cell (missing value) or parseFloat(cell) failed
@@ -358,7 +358,7 @@ public class FileLoaderARFF implements FileLoaderInterface
 				Log.logCommandLine("FileLoaderARFF: more lines with erroneous values for numeric columns will not be reported per line.");
 			itsNrBadRows++;
 		}
-		
+
 		if (!theString.isEmpty())
 			if (!Keyword.COMMENT.atStartOfLine(theString))
 				Log.logCommandLine("FileLoaderARFF: many arguments at line:\n\t " + theString);
@@ -373,7 +373,6 @@ public class FileLoaderARFF implements FileLoaderInterface
 		{
 			case NOMINAL : theColumn.add(theCell); break;
 			case NUMERIC :
-			case ORDINAL : 
 			{
 				try
 				{
@@ -398,6 +397,10 @@ public class FileLoaderARFF implements FileLoaderInterface
 				}
 				break;
 			}
+			case ORDINAL :
+			{
+				throw new AssertionError(theColumn.getType());
+			}
 			case BINARY :
 			{
 				// TODO any other value is accepted as 'false'
@@ -415,7 +418,7 @@ public class FileLoaderARFF implements FileLoaderInterface
 	private static final void logNumericError(int theLine, String theCause, Column theColumn)
 	{
 		Log.logCommandLine(
-			String.format("FileLoaderARFF: line %d, %s in numeric column '%s'. Inserting %f.",
+			String.format("FileLoaderARFF: line %d, %s in numeric column '%s', inserting %.0f.",
 					theLine, theCause, theColumn.getName(), MISSING_NUMERIC));
 	}
 
