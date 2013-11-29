@@ -29,6 +29,7 @@ public class BinaryTable
 
 		for (Subgroup aSubgroup : theSubgroups)
 		{
+			// FIXME MM is this not aSubgroup.getMembers()
 			BitSet aColumn = theTable.evaluate(aSubgroup.getConditions());
 			itsColumns.add(aColumn);
 		}
