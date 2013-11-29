@@ -409,7 +409,8 @@ if (itsHull.size() > DEBUG_MAX_SIZE)
 	 * 
 	 * remove all point on the TPR-axis
 	 * rationale: they can not be refined in such a way that the FPR
-	 * decreases, additionally, the TPR can also not improve
+	 * decreases, additionally, the TPR can also not improve (the Subgroups
+	 * can only get smaller)
 	 * 
 	 * however, during the search on one level, at least the highest
 	 * (0.0, TPR) point should be kept, it raises the convex hull
@@ -419,7 +420,7 @@ if (itsHull.size() > DEBUG_MAX_SIZE)
 	 * maintenance algorithm, but there is too little time to test this
 	 * hence this shortcut
 	 * 
-	 * also note that all (0.0, TPR) point will still end up in the end
+	 * also note that all (0.0, TPR) points will still end up in the end
 	 * result, given that their quality score is good enough
 	 */
 	final void removePureSubgroups()
