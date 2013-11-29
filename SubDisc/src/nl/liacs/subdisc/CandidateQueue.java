@@ -27,7 +27,8 @@ import java.util.*;
  */
 public class CandidateQueue
 {
-	private SearchStrategy itsSearchStrategy;
+	private final SearchStrategy itsSearchStrategy;
+	private final int itsMaxDepth;
 	private TreeSet<Candidate> itsQueue;
 	private TreeSet<Candidate> itsNextQueue;
 	private ConvexHullROCNaive itsNextQueueConvexHullROC;
@@ -38,7 +39,15 @@ public class CandidateQueue
 
 	public CandidateQueue(SearchParameters theSearchParameters, Candidate theRootCandidate)
 	{
+		if (theSearchParameters == null ||
+			theSearchParameters.getSearchStrategy() == null ||
+			theRootCandidate == null)
+			throw new IllegalArgumentException("arguments can not be null");
+
 		itsSearchStrategy = theSearchParameters.getSearchStrategy();
+		itsMaxDepth = theSearchParameters.getSearchDepth();
+		if (itsMaxDepth <= 0)
+			throw new IllegalArgumentException("search depth must be > 0");
 
 		// all SearchStrategies use itsQueue
 		// most use Candidate's natural ordering (no Comparator)
@@ -121,6 +130,9 @@ public class CandidateQueue
 	 */
 	public boolean add(Candidate theCandidate)
 	{
+		if (theCandidate.getSubgroup().itsDepth >= itsMaxDepth)
+			return false;
+
 		switch (itsSearchStrategy)
 		{
 			case BEAM :
