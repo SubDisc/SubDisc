@@ -357,10 +357,11 @@ public class FileLoaderARFF implements FileLoaderInterface
 			}
 		}
 
+		// empty numeric cell (missing value) or parseFloat(cell) failed
 		if (isBad)
 		{
 			if (itsNrBadRows == 0)
-				Log.logCommandLine("FileLoaderARFF: more lines with missing values for numeric columns will not be reported per line.");
+				Log.logCommandLine("FileLoaderARFF: more lines with erroneous values for numeric columns will not be reported per line.");
 			itsNrBadRows++;
 		}
 		
@@ -371,7 +372,8 @@ public class FileLoaderARFF implements FileLoaderInterface
 				// TODO criticalError(toManyArgumentsError);
 	}
 
-	//returns true if added correctly, false if cell was empty for numeric
+	// returns true if added correctly
+	// false if numeric cell was empty, or could not be parsed as Float
 	private boolean addValueToColumn(Column theColumn, String theCell, int theLine)
 	{
 		switch (theColumn.getType())
@@ -380,15 +382,27 @@ public class FileLoaderARFF implements FileLoaderInterface
 			case NUMERIC :
 			case ORDINAL : 
 			{
-				if (theCell.isEmpty())
+				try
 				{
+					theColumn.add(Float.parseFloat(theCell));
+				}
+				catch (NumberFormatException e)
+				{
+					theColumn.add(Float.parseFloat(AttributeType.NUMERIC.DEFAULT_MISSING_VALUE));
+
+					// only log once
 					if (itsNrBadRows == 0)
-						Log.logCommandLine("FileLoaderARFF: missing value in numeric column \"" + theColumn.getName() + "\" on line " + theLine + ". Inserting 0.");
-					theColumn.add(0f);
+					{
+						String aCause;
+						if (theCell.isEmpty())
+							aCause = "missing value";
+						else
+							aCause = "unparsable value '" + theCell + "'";
+						logNumericError(theLine, aCause, theColumn);
+					}
+
 					return false;
 				}
-				else
-					theColumn.add(Float.parseFloat(theCell));
 				break;
 			}
 			case BINARY :
@@ -403,6 +417,13 @@ public class FileLoaderARFF implements FileLoaderInterface
 			default : break;	// TODO unknown AttributeType warning
 		}
 		return true;
+	}
+
+	private static final void logNumericError(int theLine, String theCause, Column theColumn)
+	{
+		Log.logCommandLine(
+			String.format("FileLoaderARFF: line %d, %s in numeric column '%s'. Inserting %s.",
+					theLine, theCause, theColumn.getName(), AttributeType.NUMERIC.DEFAULT_MISSING_VALUE));
 	}
 
 	private void addMissingToColumn(Column theColumn)
