@@ -96,7 +96,7 @@ public class ResultTableModel extends AbstractTableModel
 		switch(theColumnIndex)
 		{
 			case 0: return aSubgroup.getID();
-			case 1: return aSubgroup.getNrConditions();
+			case 1: return aSubgroup.getDepth();
 			case 2: return aSubgroup.getCoverage();
 			case 3: return RendererNumber.FORMATTER.format(aSubgroup.getMeasureValue());
 			case 4: return RendererNumber.FORMATTER.format(aSubgroup.getSecondaryStatistic());

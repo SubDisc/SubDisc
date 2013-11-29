@@ -29,7 +29,7 @@ public class Subgroup implements Comparable<Subgroup>
 	private ConditionListA itsConditions;
 	private BitSet itsMembers;
 	// not a ReadWriteLock, members may be nulled at any moment
-	private Lock itsMembersLock = new ReentrantLock();
+	private final Lock itsMembersLock = new ReentrantLock();
 	private int itsID = 0;
 	private int itsCoverage; // crucial to keep it in sync with itsMembers
 	private DAG itsDAG;
@@ -38,7 +38,6 @@ public class Subgroup implements Comparable<Subgroup>
 	private double itsMeasureValue = 0.0;
 	private double itsSecondaryStatistic = 0.0;
 	private double itsTertiaryStatistic = 0.0;
-	int itsDepth;
 	private final SubgroupSet itsParentSet;
 	// XXX not strictly needed when setting itsPValue to NaN
 	private boolean isPValueComputed;
@@ -71,7 +70,6 @@ public class Subgroup implements Comparable<Subgroup>
 
 		//itsConditions = (theConditions == null ? new ConditionList(0) : theConditions);
 		itsConditions = theConditions;
-		itsDepth = itsConditions.size();
 
 		constructorMembersInit(theMembers);
 
@@ -172,7 +170,6 @@ public class Subgroup implements Comparable<Subgroup>
 		}
 
 		itsConditions = ConditionListBuilder.createList(itsConditions, theCondition);
-		++itsDepth;
 
 		itsMembersLock.lock();
 		try
@@ -279,6 +276,7 @@ public class Subgroup implements Comparable<Subgroup>
 		try { itsMembers = null; }
 		finally { itsMembersLock.unlock(); }
 	}
+	void reviveMembers() { getMembersUnsafe(); }
 
 	public boolean covers(int theRow) { return getMembersUnsafe().get(theRow); }
 
@@ -305,9 +303,8 @@ public class Subgroup implements Comparable<Subgroup>
 
 	//public ConditionList getConditions() { return itsConditions; }
 	public ConditionListA getConditions() { return itsConditions; }
-	public int getNrConditions() { return itsConditions.size(); }
 
-	public int getDepth() { return itsDepth; }
+	public int getDepth() { return itsConditions.size(); }
 
 	/*
 	 * Compare two Subgroups based on (in order) measureValue, coverage,

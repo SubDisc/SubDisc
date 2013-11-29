@@ -130,7 +130,7 @@ public class CandidateQueue
 	 */
 	public boolean add(Candidate theCandidate)
 	{
-		if (theCandidate.getSubgroup().itsDepth >= itsMaxDepth)
+		if (theCandidate.getSubgroup().getDepth() >= itsMaxDepth)
 			return false;
 
 		switch (itsSearchStrategy)

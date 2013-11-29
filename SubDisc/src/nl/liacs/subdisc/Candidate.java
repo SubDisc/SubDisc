@@ -107,7 +107,7 @@ public class Candidate implements Comparable<Candidate>
 
 			// check on depth first, higher depth comes first
 			// on equal depth, perform normal comparison
-			int cmp = x.itsSubgroup.itsDepth - y.itsSubgroup.itsDepth;
+			int cmp = x.itsSubgroup.getDepth() - y.itsSubgroup.getDepth();
 //			return (cmp != 0) ? -cmp : x.compareTo(y);
 			if (cmp != 0)
 				return -cmp;
@@ -144,7 +144,7 @@ public class Candidate implements Comparable<Candidate>
 
 			// check on depth first, lower depth comes first
 			// on equal depth, perform normal comparison
-			int cmp = x.itsSubgroup.itsDepth - y.itsSubgroup.itsDepth;
+			int cmp = x.itsSubgroup.getDepth() - y.itsSubgroup.getDepth();
 			return (cmp != 0) ? cmp : x.compareTo(y);
 		}
 	}
