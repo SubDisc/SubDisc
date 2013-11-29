@@ -57,7 +57,7 @@ public class SubgroupSet extends TreeSet<Subgroup>
 			if (theBinaryTarget.length() > theTotalCoverage)
 				throw new IllegalArgumentException("SubgroupSet<init>:  theBinaryTarget.length() > theTotalCoverage");
 		}
-		assert (!theNominalTargetSetting ^ itsBinaryTarget != null);
+		assert (!theNominalTargetSetting ^ theBinaryTarget != null);
 
 		itsMaximumSize = theSize <= 0 ? Integer.MAX_VALUE : theSize;
 		itsTotalCoverage = theTotalCoverage;
