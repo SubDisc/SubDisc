@@ -191,8 +191,8 @@ public class MiningWindow extends JFrame implements ActionListener
 		jLabelNrExamples = initJLabel("# examples");
 		jPanelDataSetLabels.add(jLabelNrExamples);
 
-		jLabelNrColumns = initJLabel("# columns");
-		jPanelDataSetLabels.add(jLabelNrColumns);
+		jLabelNrAttributes = initJLabel("# attributes");
+		jPanelDataSetLabels.add(jLabelNrAttributes);
 
 		jLabelNrNominals = initJLabel("# nominals");
 		jPanelDataSetLabels.add(jLabelNrNominals);
@@ -214,8 +214,8 @@ public class MiningWindow extends JFrame implements ActionListener
 		jLabelNrExamplesNr = initJLabel("");
 		jPanelDataSetFields.add(jLabelNrExamplesNr);
 
-		jLabelNrColumnsNr = initJLabel("");
-		jPanelDataSetFields.add(jLabelNrColumnsNr);
+		jLabelNrAttributesNr = initJLabel("");
+		jPanelDataSetFields.add(jLabelNrAttributesNr);
 
 		jLabelNrNominalsNr = initJLabel("");
 		jPanelDataSetFields.add(jLabelNrNominalsNr);
@@ -621,7 +621,7 @@ public class MiningWindow extends JFrame implements ActionListener
 			int[] aTotals = { itsTable.getNrColumns(), 0 };
 			for (int[] ia : aCounts)
 				aTotals[1] += ia[1];
-			jLabelNrColumnsNr.setText(initGuiComponentsDataSetHelper(aTotals));
+			jLabelNrAttributesNr.setText(initGuiComponentsDataSetHelper(aTotals));
 			jLabelNrNominalsNr.setText(initGuiComponentsDataSetHelper(aCounts[0]));
 			jLabelNrNumericsNr.setText(initGuiComponentsDataSetHelper(aCounts[1]));
 //			jLFieldNrOrdinals.setText(initGuiComponentsDataSetHelper(aCounts[2]));
@@ -1894,14 +1894,14 @@ public class MiningWindow extends JFrame implements ActionListener
 	private JPanel jPanelDataSetLabels;
 	private JLabel jLabelTargetTable;
 	private JLabel jLabelNrExamples;
-	private JLabel jLabelNrColumns;
+	private JLabel jLabelNrAttributes;
 	private JLabel jLabelNrNominals;
 	private JLabel jLabelNrNumerics;
 	private JLabel jLabelNrBinaries;
 	private JPanel jPanelDataSetFields;
 	private JLabel jLabelTargetTableName;
 	private JLabel jLabelNrExamplesNr;
-	private JLabel jLabelNrColumnsNr;
+	private JLabel jLabelNrAttributesNr;
 	private JLabel jLabelNrNominalsNr;
 	private JLabel jLabelNrNumericsNr;
 	private JLabel jLabelNrBinariesNr;

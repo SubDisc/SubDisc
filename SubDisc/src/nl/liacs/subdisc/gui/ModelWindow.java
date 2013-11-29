@@ -38,20 +38,20 @@ public class ModelWindow extends JFrame implements ActionListener
 		final boolean addSubgroup = (theSubgroupPDF != null);
 
 		XYSeries aDatasetSeries = new XYSeries("dataset");
-		XYSeries aSubgroupSeriesSeries = addSubgroup ? new XYSeries("subgroup") : null;
+		XYSeries aSubgroupSeries = addSubgroup ? new XYSeries("subgroup") : null;
 		for (int i = 0, j = theDatasetPDF.size(); i < j; ++i)
 		{
 			aDatasetSeries.add(theDatasetPDF.getMiddle(i), theDatasetPDF.getDensity(i));
 			if (addSubgroup)
 			{
 				float aScale = theSubgroupPDF.getAbsoluteCount()/(float)theDatasetPDF.getAbsoluteCount();
-				aSubgroupSeriesSeries.add(theSubgroupPDF.getMiddle(i), theSubgroupPDF.getDensity(i)*aScale);
+				aSubgroupSeries.add(theSubgroupPDF.getMiddle(i), theSubgroupPDF.getDensity(i)*aScale);
 			}
 		}
 		XYSeriesCollection aDataCollection;
 		if (addSubgroup) // if there is a subgroup, add that one first. Otherwise just add the dataset first
 		{
-			aDataCollection = new XYSeriesCollection(aSubgroupSeriesSeries);
+			aDataCollection = new XYSeriesCollection(aSubgroupSeries);
 			aDataCollection.addSeries(aDatasetSeries);
 		}
 		else
