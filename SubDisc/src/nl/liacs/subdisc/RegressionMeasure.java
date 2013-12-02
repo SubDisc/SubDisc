@@ -64,7 +64,11 @@ public class RegressionMeasure
 
 		switch (itsQualityMeasure)
 		{
-			case LINEAR_REGRESSION:
+			//all require the same initialisation
+			case REGRESSION_SSD_COMPLEMENT:
+			case REGRESSION_SSD_DATASET:
+			case REGRESSION_FLATNESS:
+			case REGRESSION_SSD_4:
 			{
 				itsBase = null; //this *is* the base
 				itsComplementData = null; //will remain empty for the base RM
@@ -180,13 +184,16 @@ public class RegressionMeasure
 	//TODO test and verify method
 	public double getEvaluationMeasureValue()
 	{
+		//common computation
 		updateRegressionFunction();
 		updateErrorTerms();
-		return getSSD();
+
+		//measure-specific computation
+		return getValue();
 	}
 
 	//TODO turn this t-value into a p-value.
-	public double getSSD()
+	public double getValue()
 	{
 		//determine the sums for the complement
 		double aComplementXSum = itsBase.getXSum()-itsXSum;
@@ -199,8 +206,8 @@ public class RegressionMeasure
 		double aNumerator = getErrorTermVariance(itsErrorTermSquaredSum, itsSampleSize);
 		double aDenominator = itsXSquaredSum - 2*itsXSum*itsXSum/itsSampleSize + itsXSum*itsXSum/itsSampleSize;
 		double aVariance = aNumerator / aDenominator;
-		
-		//if we divided by zero along the way, we are considering a degenerate candidate subgroup, hence quality=0 
+
+		//if we divided by zero along the way, we are considering a degenerate candidate subgroup, hence quality=0
 		if (itsSampleSize==0 || itsSampleSize==2 || aDenominator==0)
 			return 0;
 
@@ -209,23 +216,51 @@ public class RegressionMeasure
 		aDenominator = aComplementXSquaredSum - 2*aComplementXSum*aComplementXSum/aComplementSampleSize + aComplementXSum*aComplementXSum/aComplementSampleSize;
 		double aComplementVariance = aNumerator/aDenominator;
 
-		//if we divided by zero along the way, we are considering a degenerate candidate subgroup complement, hence quality=0 
+		//if we divided by zero along the way, we are considering a degenerate candidate subgroup complement, hence quality=0
 		if (aComplementSampleSize==0 || aComplementSampleSize==2 || aDenominator==0)
 			return 0;
 
 		//calculate the difference between slopes of this measure and its complement
 		double aSlope = getSlope(itsXSum, itsYSum, itsXSquaredSum, itsXYSum, itsSampleSize);
 		double aComplementSlope = getSlope(aComplementXSum, aComplementYSum, aComplementXSquaredSum, aComplementXYSum, aComplementSampleSize);
-		double aSlopeDifference = Math.abs(aComplementSlope - aSlope);
+		if (aVariance+aComplementVariance == 0)
+			return 0;
 
-//		Log.logCommandLine("\n           slope: " + aSlope);
-//		Log.logCommandLine("complement slope: " + aComplementSlope);
+		Log.logCommandLine("\n           slope: " + aSlope);
+		Log.logCommandLine("complement slope: " + aComplementSlope);
 //		Log.logCommandLine("           variance: " + aVariance);
 //		Log.logCommandLine("complement variance: " + aComplementVariance);
 
-		if (aVariance+aComplementVariance==0)
-			return 0;
-		else {return aSlopeDifference / Math.sqrt(aVariance+aComplementVariance);}
+		double aSlopeDifference = 0;
+		double aResult = 0;
+		switch (itsQualityMeasure)
+		{
+			case REGRESSION_SSD_COMPLEMENT :
+			{
+				aSlopeDifference = Math.abs(aComplementSlope - aSlope);
+				aResult = aSlopeDifference / Math.sqrt(aVariance+aComplementVariance);
+				break;
+			}
+			case REGRESSION_SSD_DATASET :
+			{
+				aSlopeDifference = Math.abs(itsBase.getSlope() - aSlope);
+				aResult = aSlopeDifference / Math.sqrt(aVariance+aComplementVariance);
+				break;
+			}
+			case REGRESSION_FLATNESS :
+			{
+				aSlopeDifference = Math.abs(aSlope);
+				aResult = -aSlopeDifference;
+				break;
+			}
+			case REGRESSION_SSD_4 : //TODO implement
+			{
+				aSlopeDifference = Math.abs(aComplementSlope - aSlope);
+				aResult = aSlopeDifference / Math.sqrt(aVariance+aComplementVariance);
+				break;
+			}
+		}
+		return aResult;
 	}
 
 	public double calculate(Subgroup theNewSubgroup)
@@ -243,7 +278,7 @@ public class RegressionMeasure
 		//calculate the upper bound values. Before each bound, only the necessary computations are done.
 		double aT = itsT[aSampleSize];
 		double aRSquared = itsRSquared[aSampleSize];
-		
+
 		double aBoundSeven = computeBoundSeven(aSampleSize, aT, aRSquared);
 		if (aBoundSeven>Double.MIN_VALUE)
 		{
@@ -271,7 +306,7 @@ public class RegressionMeasure
 
 		Matrix aRemovedResiduals = itsResidualMatrix.getMatrix(aRemovedIndices,0,0);
 		double aSquaredResidualSum = squareSum(aRemovedResiduals);
-		double aBoundSix = computeBoundSix(aSampleSize, aT, aSquaredResidualSum);		
+		double aBoundSix = computeBoundSix(aSampleSize, aT, aSquaredResidualSum);
 		if (aBoundSix>Double.MIN_VALUE)
 		{
 			Log.logCommandLine("                   Bound 6: " + aBoundSix);
@@ -294,7 +329,7 @@ public class RegressionMeasure
 			itsBoundFourCount++;
 		}
 
-		//compute estimate based on projection of single influence values 
+		//compute estimate based on projection of single influence values
 		double anSVPDistance = computeSVPDistance(itsSampleSize-aSampleSize, aRemovedIndices);
 		Log.logCommandLine("                   SVP est: " + anSVPDistance);
 
@@ -541,7 +576,7 @@ public class RegressionMeasure
 	/**
 	 * Computes and returns the correlation given the observations contained
 	 * by CorrelationMeasure.
-	 * 
+	 *
 	 * @return the computed correlation
 	 */
 	// never used
@@ -567,7 +602,7 @@ public class RegressionMeasure
 	{
 		return theX*itsSlope + itsIntercept;
 	}
-	
+
 	public int getNrBoundSeven() { return itsBoundSevenCount; }
 	public int getNrBoundSix() { return itsBoundSixCount; }
 	public int getNrBoundFive() { return itsBoundFiveCount; }

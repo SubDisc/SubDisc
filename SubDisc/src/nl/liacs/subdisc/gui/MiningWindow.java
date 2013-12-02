@@ -692,7 +692,7 @@ public class MiningWindow extends JFrame implements ActionListener
 	 * jComboBoxMiscField (TargetValues / 2nd Target)
 	 * jListMultiTargets
 	 * jListMultiRegressionTargets
-	 * 
+	 *
 	 * see jComboBoxTargetTypeActionPerformed
 	 */
 	private void initTargetAttributes()
@@ -741,7 +741,7 @@ public class MiningWindow extends JFrame implements ActionListener
 		 * setMultiTargets() is in initTargetAttributeItems()
 		 * MultiTargets do not change on
 		 * jComboBoxTargetAttributeActionPerformed
-		 * 
+		 *
 		 * this is contrary to DOUBLE_REGRESSION + COOKS_DISTANCE
 		 * computeMultiRegressionTargets(), they change whenever the
 		 * PrimaryTarget is changed, so they need to be updated on every
@@ -758,12 +758,12 @@ public class MiningWindow extends JFrame implements ActionListener
 	/*
 	 * only called on TargetAttribute change through:
 	 * jComboBoxTargetAttributeActionPerformed
-	 * 
+	 *
 	 * technically the List need not be completely cleared
 	 * because just the primary target is changed, a simple substitution
 	 * would suffice
 	 * it seems unlikely that current code would be a performance drawback
-	 *  
+	 *
 	 * see jComboBoxTargetTypeActionPerformed
 	 */
 	private void setMultiRegressionTargets()
@@ -795,7 +795,7 @@ public class MiningWindow extends JFrame implements ActionListener
 	 * for more efficient code Table / MetaDataWindow need updates to ensure
 	 * changes are immediately pushed to underlying Table (which holds the
 	 * secondaryTargets Column(s))
-	 * 
+	 *
 	 * see jComboBoxTargetTypeActionPerformed
 	 */
 	private void setMultiTargets()
@@ -821,7 +821,7 @@ public class MiningWindow extends JFrame implements ActionListener
 	 * for DOUBLE_REGRESSION/ DOUBLE_CORRELATION the values in the
 	 * jComboBoxMiscField do not need to be updated after a change of
 	 * PrimaryTarget (jComboBoxTargetAttributeActionPerformed)
-	 * 
+	 *
  	 * see jComboBoxTargetTypeActionPerformed
 	 */
 	private void initTargetValues()
@@ -889,7 +889,7 @@ public class MiningWindow extends JFrame implements ActionListener
 					break;
 				}
 
-				// not COOKS_DISTANCE, assume LINEAR_REGRESSION
+				// not COOKS_DISTANCE, assume linear regression models
 
 				// may not be exactly 1.0 (rounding errors)
 				if (aPrimaryColumn == aSecondaryColumn)
@@ -899,8 +899,7 @@ public class MiningWindow extends JFrame implements ActionListener
 					break;
 				}
 
-				RegressionMeasure aRM =
-					new RegressionMeasure(QM.LINEAR_REGRESSION, aPrimaryColumn, aSecondaryColumn);
+				RegressionMeasure aRM = new RegressionMeasure(QM.REGRESSION_SSD_COMPLEMENT, aPrimaryColumn, aSecondaryColumn); //REGRESSION_SSD_COMPLEMENT is the default here, but doesn't really matter
 				NumberFormat aFormatter = NumberFormat.getNumberInstance();
 				aFormatter.setMaximumFractionDigits(2);
 				jLabelTargetInfo.setText(" regression");
@@ -1170,9 +1169,9 @@ public class MiningWindow extends JFrame implements ActionListener
 	 * This is the Top-level ComboBox that can be changed.
 	 * From here changes find their ways down to other ComboBoxes, Labels
 	 * and Fields in the following order:
-	 * 
+	 *
 	 * jComboBoxTargetTypeActionPerformed() calls in order:
-	 * 
+	 *
 	 * initQualityMeasure() -> initEvaluationMinimum()
 	 * initTargetAttributes() -> put Column Names in TargetAttributeComboBox
 	 * misc_field.setVisible()			-> based on TargetType
@@ -1182,24 +1181,24 @@ public class MiningWindow extends JFrame implements ActionListener
 	 * TargetAttributeLabel/ComboBox.setVisible()	-> based on TargetType
 	 * initNumericStrategy()			-> based on TargetType
 	 * jComboBoxTargetAttributeActionPerformed()
-	 * 
-	 * 
+	 *
+	 *
 	 * jComboBoxTargetAttributeActionPerformed() calls in order:
-	 * 
+	 *
 	 * itsTargetConcept.setPrimaryTarget()
 	 * initTargetValues (for TargetTypes that have TargetValues)
 	 * setMultiTargets() if needed
 	 * jComboBoxMiscFieldActionPerformed()
-	 * 
-	 * 
+	 *
+	 *
 	 * jComboBoxMiscFieldActionPerformed() calls in order:
-	 * 
+	 *
 	 * setTargetValue() / setSecondaryTarget()	-> based on TargetType
 	 * initTargetInfo()
-	 * 
+	 *
 	 * initTargetInfo() sets the appropriate texts for jLabelTargetInfo and
 	 * jLabelTargetInfoText				-> based on TargetType
-	 * 
+	 *
 	 * After this all information should be up to date.
 	 */
 	private void jComboBoxTargetTypeActionPerformed()
@@ -1246,8 +1245,8 @@ public class MiningWindow extends JFrame implements ActionListener
 		boolean hasMultiTargets = TargetType.hasMultiTargets(aTargetType);
 		jLabelMultiTargets.setVisible(hasMultiTargets);
 		jButtonMultiTargets.setVisible(hasMultiTargets);
-		// disable if no binary attributes 
-		// initTargetAttributeItems above populates jListMultiTargets 
+		// disable if no binary attributes
+		// initTargetAttributeItems above populates jListMultiTargets
 		jButtonMultiTargets.setEnabled(jListMultiTargets.getSelectedIndices().length != 0);
 
 		// has base model?
@@ -1283,7 +1282,7 @@ public class MiningWindow extends JFrame implements ActionListener
 
 		/*
 		 * for most TargetTypes, populates / clears jComboBoxMiscField
-		 * 
+		 *
 		 * for DOUBLE_REGRESSION / DOUBLE_CORRELATION the MiscField
 		 * items do not need to be updated on a
 		 * jComboBoxTargetAttributeActionPerformed
@@ -1299,7 +1298,7 @@ public class MiningWindow extends JFrame implements ActionListener
 		 * setMultiTargets() is in initTargetAttributeItems()
 		 * MultiTargets do not change on
 		 * jComboBoxTargetAttributeActionPerformed
-		 * 
+		 *
 		 * this is contrary to DOUBLE_REGRESSION + COOKS_DISTANCE
 		 * computeMultiRegressionTargets(), they change whenever the
 		 * PrimaryTarget is changed, so they need to be updated on every
@@ -1497,8 +1496,8 @@ public class MiningWindow extends JFrame implements ActionListener
 			else
 				Log.logCommandLine("No subgroups found. No file saved.");
 			Log.logCommandLine("================= Finished run nr. " + aLoopNr + " ==================");
-			
-//			int aReply = JOptionPane.showConfirmDialog(null, "Continue with next target value?", "Continue?", JOptionPane.YES_NO_OPTION);			
+
+//			int aReply = JOptionPane.showConfirmDialog(null, "Continue with next target value?", "Continue?", JOptionPane.YES_NO_OPTION);
 //			if (aReply == JOptionPane.NO_OPTION)
 //				break;
 			aLoopNr++;
@@ -1693,7 +1692,7 @@ public class MiningWindow extends JFrame implements ActionListener
 	{
 		/*
 		 * TARGET CONCEPT
-		 * some cleaning is done to create proper AutoRun-XMLs 
+		 * some cleaning is done to create proper AutoRun-XMLs
 		 */
 		TargetType aType = itsTargetConcept.getTargetType();
 

@@ -69,7 +69,7 @@ public class RegressionMeasureCook
 	public RegressionMeasureCook(QM theType, TargetConcept theTargetConcept)
 	{//TODO MM: Either remove legacy code, or make something decent out of it. For now, it is hacked.
 		//get target data
-		Column aPrimaryTarget = theTargetConcept.getPrimaryTarget(); 
+		Column aPrimaryTarget = theTargetConcept.getPrimaryTarget();
 		List<Column> aSecondaryTargets = theTargetConcept.getSecondaryTargets();
 		List<Column> aTertiaryTargets = theTargetConcept.getTertiaryTargets();
 
@@ -77,7 +77,7 @@ public class RegressionMeasureCook
 		itsJ = aTertiaryTargets.size();
 		itsP = 1+itsI+itsJ;
 		itsQ = itsI;
-		itsInterceptRelevance = theTargetConcept.getInterceptRelevance(); 
+		itsInterceptRelevance = theTargetConcept.getInterceptRelevance();
 		if (itsInterceptRelevance)
 			itsQ++;
 
@@ -105,7 +105,10 @@ public class RegressionMeasureCook
 
 		switch (itsQualityMeasure)
 		{
-			case LINEAR_REGRESSION:
+			case REGRESSION_SSD_COMPLEMENT:
+			case REGRESSION_SSD_DATASET:
+			case REGRESSION_FLATNESS:
+			case REGRESSION_SSD_4:
 			{/* TODO: fix or remove
 				itsBase = null; //this *is* the base
 				itsComplementData = null; //will remain empty for the base RM
@@ -118,30 +121,30 @@ public class RegressionMeasureCook
 				//updateRegressionFunction(); //updating error terms unnecessary since Cook's distance does not care
 				//"I see no reason for this to continue"
 				//  -- Electric Six, `Lenny Kravitz'
-				
+
 				/*fill arrays which will contain the data. Schematically it looks like this (where x denotes a secondary and x' a tertiary target):
 				 * aData =
-				 *   x_1^1 ... x_1^i  x'_1^1 ... x'_1^j  y_1 
+				 *   x_1^1 ... x_1^i  x'_1^1 ... x'_1^j  y_1
 				 *     .   .     .       .   .      .     .
 				 *     .    .    .       .    .     .     .
-				 *     .     .   .       .     .    .     .   
+				 *     .     .   .       .     .    .     .
 				 *   x_n^1 ... x_n^i  x'_n^1 ... x'_n^j  y_n
-				 * 
+				 *
 				 * anXValues =
-				 *   1  x_1^1 ... x_1^i  x'_1^1 ... x'_1^j 
+				 *   1  x_1^1 ... x_1^i  x'_1^1 ... x'_1^j
 				 *   .    .   .     .       .   .      .
 				 *   .    .    .    .       .    .     .
-				 *   .    .     .   .       .     .    .   
+				 *   .    .     .   .       .     .    .
 				 *   1  x_n^1 ... x_n^i  x'_n^1 ... x'_n^j
 				 *
 				 * aYValues =
-				 *   y_1 
+				 *   y_1
 				 *    .
 				 *    .
-				 *    .   
+				 *    .
 				 *   y_n
-				 *   
-				 * the indices in the for-loops will correspond to the indices used here.  
+				 *
+				 * the indices in the for-loops will correspond to the indices used here.
 				 */
 
 				double[][] anXValues = new double[itsSampleSize][(int) itsP];
@@ -161,7 +164,7 @@ public class RegressionMeasureCook
 						Column aTertiaryColumn = aTertiaryTargets.get(j);
 						anXValues[n][1+itsI+j] = aTertiaryColumn.getFloat(n);
 					}
-					aYValues[n][0] = aPrimaryTarget.getFloat(n); 
+					aYValues[n][0] = aPrimaryTarget.getFloat(n);
 				}
 
 				// build Z-matrix values; indicating which subset of beta we're interested in
@@ -234,7 +237,7 @@ public class RegressionMeasureCook
 		itsBetaHat = itsXTXInverseMatrix.times(itsXMatrix.transpose()).times(itsYMatrix);
 		itsHatMatrix = itsXMatrix.times(itsXTXInverseMatrix).times(itsXMatrix.transpose());
 		itsResidualMatrix = (Matrix.identity(itsSampleSize,itsSampleSize).minus(itsHatMatrix)).times(itsYMatrix);
-		
+
 		itsSSquared = (itsResidualMatrix.transpose().times(itsResidualMatrix)).get(0,0)/((double) itsSampleSize-itsP);
 	}
 
@@ -286,8 +289,8 @@ public class RegressionMeasureCook
 		double aNumerator = getErrorTermVariance(itsErrorTermSquaredSum, itsSampleSize);
 		double aDenominator = itsXSquaredSum - 2*itsXSum*itsXSum/itsSampleSize + itsXSum*itsXSum/itsSampleSize;
 		double aVariance = aNumerator / aDenominator;
-		
-		//if we divided by zero along the way, we are considering a degenerate candidate subgroup, hence quality=0 
+
+		//if we divided by zero along the way, we are considering a degenerate candidate subgroup, hence quality=0
 		if (itsSampleSize==0 || itsSampleSize==2 || aDenominator==0)
 			return 0;
 
@@ -296,7 +299,7 @@ public class RegressionMeasureCook
 		aDenominator = aComplementXSquaredSum - 2*aComplementXSum*aComplementXSum/aComplementSampleSize + aComplementXSum*aComplementXSum/aComplementSampleSize;
 		double aComplementVariance = aNumerator/aDenominator;
 
-		//if we divided by zero along the way, we are considering a degenerate candidate subgroup complement, hence quality=0 
+		//if we divided by zero along the way, we are considering a degenerate candidate subgroup complement, hence quality=0
 		if (aComplementSampleSize==0 || aComplementSampleSize==2 || aDenominator==0)
 			return 0;
 
@@ -314,7 +317,7 @@ public class RegressionMeasureCook
 			return 0;
 		else {return aSlopeDifference / Math.sqrt(aVariance+aComplementVariance);}
 	}
-*/	
+*/
 	public double calculate(Subgroup theNewSubgroup)
 	{
 //		int aSampleSize = theNewSubgroup.getCoverage();
@@ -329,7 +332,7 @@ public class RegressionMeasureCook
 			return -Double.MAX_VALUE;
 
 		//compute regression
-		Matrix anXTXMatrix = anXMatrix.transpose().times(anXMatrix); 
+		Matrix anXTXMatrix = anXMatrix.transpose().times(anXMatrix);
 		LUDecomposition itsXTXDecomp = new LUDecomposition(anXTXMatrix);
 		if (!itsXTXDecomp.isNonsingular())
 			return -Double.MAX_VALUE;
@@ -346,7 +349,7 @@ public class RegressionMeasureCook
 //		double anSSquared = (aResidualMatrix.transpose().times(aResidualMatrix)).get(0,0)/((double) aSampleSize-itsP);
 
 //		double anOldQuality = aBetaHat.minus(itsBetaHat).transpose().times(anXMatrix.transpose()).times(anXMatrix).times(aBetaHat.minus(itsBetaHat)).get(0,0)/(itsP*anSSquared);
-		Matrix aZXTXInverseZTMatrix = itsZMatrix.times(itsXTXInverseMatrix).times(itsZMatrix.transpose()); 
+		Matrix aZXTXInverseZTMatrix = itsZMatrix.times(itsXTXInverseMatrix).times(itsZMatrix.transpose());
 		LUDecomposition itsOtherDecomp = new LUDecomposition(aZXTXInverseZTMatrix);
 		if (!itsOtherDecomp.isNonsingular())
 			return -Double.MAX_VALUE;
@@ -583,9 +586,9 @@ public class RegressionMeasureCook
 	{
 		return theX*itsSlope + itsIntercept;
 	}
-	
+
 	public String getGlobalModel() { return itsGlobalModel; }
-	
+
 	public double getT(int theSampleSize) { return itsT[theSampleSize]; }
 	public double getRSquared(int theSampleSize) { return itsRSquared[theSampleSize]; }
 
@@ -611,19 +614,19 @@ public class RegressionMeasureCook
 		itsIndices = anIndices;
 		itsRemovedIndices = aRemovedIndices;
 	}
-	
+
 	public void updateSquaredResidualSum()
 	{
 		Matrix aRemovedResiduals = itsResidualMatrix.getMatrix(itsRemovedIndices,0,0);
 		itsSquaredResidualSum = squareSum(aRemovedResiduals);
 	}
-	
+
 	public void updateRemovedTrace()
 	{
 		Matrix aRemovedHatMatrix = itsHatMatrix.getMatrix(itsRemovedIndices,itsRemovedIndices);
 		itsRemovedTrace = aRemovedHatMatrix.trace();
 	}
-	
+
 	public void logMatrix( Matrix theMatrix )
 	{
 		for (int i=0; i<theMatrix.getRowDimension(); i++)

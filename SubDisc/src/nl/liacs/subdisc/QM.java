@@ -76,13 +76,16 @@ public enum QM implements EnumInterface
 	COSTS_WRACC		("Costs WRAcc",		"0.0",	TargetType.DOUBLE_CORRELATION),
 	CWTPD			("CWTPD", 		"0.0", 	TargetType.DOUBLE_CORRELATION),
 	TMCC			("TMCC", 		"0.0", 	TargetType.DOUBLE_CORRELATION),
-	MCC			("MCC", 		"0.0", 	TargetType.DOUBLE_CORRELATION),
-	PDC			("PDC", 		"0.0", 	TargetType.DOUBLE_CORRELATION),
+	MCC				("MCC", 		"0.0", 	TargetType.DOUBLE_CORRELATION),
+	PDC				("PDC", 		"0.0", 	TargetType.DOUBLE_CORRELATION),
 	MVPDC			("MVPDC", 		"0.0", 	TargetType.DOUBLE_CORRELATION),
 
 	// DOUBLE_REGRESSION quality measures
-	LINEAR_REGRESSION	("Significance of Slope Difference", "0.0", TargetType.DOUBLE_REGRESSION),
-	COOKS_DISTANCE		("Cook's Distance",	"0.0",	TargetType.DOUBLE_REGRESSION);
+	REGRESSION_SSD_COMPLEMENT	("Sign. of Slope Diff. (complement)", "0.0", TargetType.DOUBLE_REGRESSION),
+	REGRESSION_SSD_DATASET	("Sign. of Slope Diff. (dataset)", "0.0", TargetType.DOUBLE_REGRESSION),
+	REGRESSION_FLATNESS	("Flatness", "0.0", TargetType.DOUBLE_REGRESSION),
+	REGRESSION_SSD_4	("Sign. of Slope Diff. 4", "0.0", TargetType.DOUBLE_REGRESSION),
+	COOKS_DISTANCE	("Cook's Distance",	"0.0",	TargetType.DOUBLE_REGRESSION);
 
 	// to enforce implementation of SINGLE_NUMERIC and SINGLE_ORDINAL QMs
 	static { requiredStatsTest(); };

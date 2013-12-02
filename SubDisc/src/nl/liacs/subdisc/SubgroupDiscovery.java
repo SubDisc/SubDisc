@@ -787,7 +787,7 @@ System.out.println(aSubgroup + "\t" + aRefinement.getConditionBase());
 			//ConditionList aList = theRefinement.getSubgroup().getConditions();
 			ConditionListA aList = theRefinement.getSubgroup().getConditions();
 
-			// switch for now, will separate code paths when numeric EQUALS is fixed 
+			// switch for now, will separate code paths when numeric EQUALS is fixed
 			switch (c.getType())
 			{
 				case NOMINAL :
@@ -849,7 +849,7 @@ System.out.println(aSubgroup + "\t" + aRefinement.getConditionBase());
 	 * keep output together using synchronized method
 	 * NOTE other threads calling this method are stalled for a while when
 	 * checkAndLog().check() needs to resize itsCandidateQueue/ itsResult
-	 * 
+	 *
 	 * NOTE that in case of ties on the itsCandidateQueue/ itsResult
 	 * max_size boundary this may effect the final search result
 	 * this is related to to the fixed max size and has the potential to
@@ -874,7 +874,7 @@ System.out.println(aSubgroup + "\t" + aRefinement.getConditionBase());
 	 * SubgroupsSet's add() method is thread save.
 	 * CandidateQueue's add() method is thread save.
 	 * itsCandidateCount is Atomic (synchronized by nature).
-	 * 
+	 *
 	 * but they must be executed as a single unit, so synchronized check()
 	 */
 	private long checkAndLog(Subgroup theSubgroup, int theOldCoverage)
@@ -892,15 +892,15 @@ System.out.println(aSubgroup + "\t" + aRefinement.getConditionBase());
 	 * whole method must be executed as a logical unit
 	 * the contents of itsResult and itsCandidateQueue would become
 	 * undefined in a multi-threaded scenario:
-	 * 
+	 *
 	 * Thread 1 itsResult.add()
 	 * Thread 2 itsResult.add()
 	 * Thread 2 itsCandidateQueue.add()
 	 * Thread 1 itsCandidateQueue.add()
-	 * 
+	 *
 	 * both itsResults and itsCandidateQueue are trimmed if the have a max
 	 * capacity and a candidate may end up in the one, but not in the other
-	 * 
+	 *
 	 * additionally the value of itsCandidateCount.getAndIncrement() should
 	 * indicate the n-th call to this method, so the n-th checked Candidate
 	 * and the subgroup.nr should be this value also
@@ -909,7 +909,7 @@ System.out.println(aSubgroup + "\t" + aRefinement.getConditionBase());
 	 * but to keep the scope of the synchronized method small (synchronized
 	 * blocks execute many times slower) the logging is not done in the
 	 * synchronized method, but guarantees to use to the correct value
-	 * 
+	 *
 	 * technically the synchronisation need only range from right before:
 	 * if (ignoreQualityMinimum || aQuality > itsQualityMeasureMinimum))
 	 * to right after:
@@ -918,7 +918,7 @@ System.out.println(aSubgroup + "\t" + aRefinement.getConditionBase());
 	 * be completely handled (added to the queues) before a Candidate with
 	 * a higher count
 	 * this is related to the (legacy) code using fixed max_sizes for queues
-	 * 
+	 *
 	 * NOTE that in case of ties on the itsCandidateQueue/ itsResult
 	 * max_size boundary this may effect the final search result
 	 * this is related to the fixed max size and has the potential to break
@@ -1051,13 +1051,15 @@ System.out.println(aSubgroup + "\t" + aRefinement.getConditionBase());
 			{
 				switch (itsBaseRM.itsQualityMeasure)
 				{
-					case LINEAR_REGRESSION:
+					case REGRESSION_SSD_COMPLEMENT:
+					case REGRESSION_SSD_DATASET:
+					case REGRESSION_FLATNESS:
+					case REGRESSION_SSD_4:
 					{
 						RegressionMeasure aRM = new RegressionMeasure(itsBaseRM, theNewSubgroup.getMembers());
 						aQuality = (float) aRM.getEvaluationMeasureValue();
 						theNewSubgroup.setSecondaryStatistic(aRM.getSlope()); //slope
 						theNewSubgroup.setTertiaryStatistic(aRM.getIntercept()); //intercept
-
 						break;
 					}
 /*
@@ -1674,7 +1676,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	{
 		/*
 		 * for Condition-free based checks
-		 * 
+		 *
 		 * EQUALS tests needed on
 		 * NOMINAL: when Operator = EQUALS (thus not in set-valued mode)
 		 * NUMERIC: when NominalOperatorSetting.IncludesEquals() == true
@@ -1948,13 +1950,13 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	/*
 	 * TODO MM
 	 * could be ConditionList method, will decide later
-	 * 
+	 *
 	 * hasEquals() to be used in conjunction with hasRelevantEquals() if it
 	 * returns true
 	 * split into multiple methods to make test as light as possible
 	 * as it will be performed on every RefinementList
 	 * split may not improve speed though, will need to profile this
-	 * 
+	 *
 	 * If the current ConditionList  contains a Condition of the form
 	 * (Column EQUALS value), and Refinement.ConditionBase.Column == Column,
 	 * then non of the Refinements are useful.
@@ -2006,7 +2008,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	 * of a Condition in any Collection
 	 * and per Map-contract equals() and compareTo() should be consistent
 	 * current compareTo() implementation will do for now
-	 * 
+	 *
 	 * TODO MM solve this issue, it has been around forever
 	 */
 	//private static final boolean contains(ConditionList theConditionList, Condition theCondition)
@@ -2030,16 +2032,16 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	 * -ConditionList.size() > 0
 	 * -isOverlap(theConditionList, theColumn)
 	 * -Condition.Operator has Equals-creation potential (is LEQ / GEQ)
-	 * 
+	 *
 	 * FIXME MM
 	 * currently only for BREATDH_FIRST is this a useful check
 	 * for any [ (C >= x)  ^ (C <= x) ^ ... ] at depth d
 	 * an equivalent  [ (C = x)  ^ ... ] will have been created at depth d-1
-	 * 
+	 *
 	 * BREATDH_FIRST guarantees that all the Refinements for (C = x) will
 	 * have been fully evaluated before moving to depth d
 	 * so evaluating any [ (C >= x)  ^ (C <= x) ^ ... ] will be redundant
-	 * 
+	 *
 	 * DEPTH_FIRST could benefit from this also
 	 * but the current order of Operators { LEQ, GEQ, EQUALS } in
 	 * NumericOperatorSetting.NUMERIC_ALL does not allow this
@@ -2048,7 +2050,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	 * every [ (C = x) ] ^ (...) will have been refined
 	 * and the pre-phase of Filter.isUseful(ConditionList, Refinement)
 	 * would then avoid creation of any [ (C = x)  ^ (C ... ) ^ ... ] anyway
-	 * because of the EQUALS check 
+	 * because of the EQUALS check
 	 */
 	//private static final boolean createsRedundantEquals(ConditionList theConditionList, Condition theCondition)
 	private static final boolean createsRedundantEquals(ConditionListA theConditionList, Condition theCondition)
@@ -2090,12 +2092,12 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	 * -Condition.Column.AttributeType == AttributeType.NUMERIC
 	 * -ConditionList.size() > 1 (for at least one possible {<=, >=} pair)
 	 * -isOverlap(theConditionList, theColumn)
-	 * 
+	 *
 	 * if the ConditionList selects a unique value through the combination
 	 * of [ (C >= x)  ^ (C <= x) ^ ... ], then this case is similar to the
 	 * isUseful(ConditionList, Refinement) EQUALS pre-check
 	 * not any other Condition involving C will ever be useful
-	 * 
+	 *
 	 * FIXME MM this should be a PRE check, does not use new Condition.value
 	 */
 	//private static final boolean hasRelevantEqualsThroughLeqGeq(ConditionList theConditionList, Column theColumn)
@@ -2145,7 +2147,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		boolean isUseful(Refinement theRefinement)
 		{
 			boolean b = super.isUseful(theRefinement);
-			//if (!b) // uncomment to only print refused Refinements 
+			//if (!b) // uncomment to only print refused Refinements
 			print(b, "PRE\t", theRefinement.getSubgroup().getConditions(), theRefinement.getConditionBase().toString());
 			return b;
 		}
