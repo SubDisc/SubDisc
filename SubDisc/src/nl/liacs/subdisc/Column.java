@@ -27,7 +27,8 @@ public class Column implements XMLNodeInterface
 
 	// when adding/removing members be sure to update addNodeTo() and loadNode()
 	private float[] itsFloatz;
-	private List<String> itsNominals;
+//	private List<String> itsNominals;
+	private int[] itsNominalz;
 	private BitSet itsBinaries;
 	// TODO new needs field tests (eg. when switching AttributeTypes)
 	// store only references to unique Strings, not individual Strings
@@ -145,11 +146,12 @@ public class Column implements XMLNodeInterface
 
 	private void setupColumn(int theNrRows)
 	{
-		switch(itsType)
+		switch (itsType)
 		{
 			case NOMINAL :
 			{
-				itsNominals = new ArrayList<String>(theNrRows);
+//				itsNominals = new ArrayList<String>(theNrRows);
+				itsNominalz = new int[theNrRows];
 				itsDistinctValues = new ArrayList<String>();
 				itsDistinctValuesMap = new HashMap<String, Integer>(MAP_DEFAULT_INIT_SIZE);
 				itsMissingValue = AttributeType.NOMINAL.DEFAULT_MISSING_VALUE;
@@ -163,9 +165,7 @@ public class Column implements XMLNodeInterface
 			}
 			case ORDINAL :
 			{
-				itsFloatz = new float[theNrRows];
-				itsMissingValue = AttributeType.ORDINAL.DEFAULT_MISSING_VALUE;
-				return;
+				throw new AssertionError(itsType);
 			}
 			case BINARY :
 			{
@@ -232,7 +232,8 @@ public class Column implements XMLNodeInterface
 	{
 		Column aCopy = new Column(itsName, itsShort, itsType, itsIndex, itsSize);
 		aCopy.itsFloatz = itsFloatz;
-		aCopy.itsNominals = itsNominals;
+//		aCopy.itsNominals = itsNominals;
+		aCopy.itsNominalz = itsNominalz;
 		aCopy.itsBinaries = itsBinaries;
 		aCopy.itsDistinctValues = itsDistinctValues;
 		aCopy.itsDistinctValuesMap = itsDistinctValuesMap;
@@ -299,19 +300,25 @@ public class Column implements XMLNodeInterface
 		{
 			case NOMINAL :
 			{
-				aColumn.itsNominals = new ArrayList<String>(aColumnSize);
+//				aColumn.itsNominals = new ArrayList<String>(aColumnSize);
+				aColumn.itsNominalz = new int[aColumnSize];
 				//preferred way to loop over BitSet (itsSize for safety)
-				for (int i = theSet.nextSetBit(0); i >= 0 && i < itsSize; i = theSet.nextSetBit(i + 1))
-					aColumn.itsNominals.add(getNominal(i));
+//				for (int i = theSet.nextSetBit(0); i >= 0 && i < itsSize; i = theSet.nextSetBit(i + 1))
+//					aColumn.itsNominals.add(getNominal(i));
+				for (int i = theSet.nextSetBit(0), j = -1; i >= 0 && i < itsSize; i = theSet.nextSetBit(i + 1))
+					aColumn.itsNominalz[++j] = this.itsNominalz[i];
 				break;
 			}
 			case NUMERIC :
-			case ORDINAL :
 			{
 				aColumn.itsFloatz = new float[aColumnSize];
 				for (int i = theSet.nextSetBit(0), j = -1; i >= 0 && i < itsSize; i = theSet.nextSetBit(i + 1))
 					aColumn.itsFloatz[++j] = this.itsFloatz[i];
 				break;
+			}
+			case ORDINAL :
+			{
+				throw new AssertionError(itsType);
 			}
 			case BINARY :
 			{
@@ -341,10 +348,34 @@ public class Column implements XMLNodeInterface
 	 *
 	 * @param theNominal the value to append to this Column.
 	 */
+//	public void add(String theNominal)
+//	{
+//		if (theNominal == null)
+//			throw new NullPointerException();
+//
+//		Integer i = itsDistinctValuesMap.get(theNominal);
+//		if (i == null)
+//		{
+//			// String constructor trims of baggage
+//			theNominal = new String(theNominal);
+//			int size = itsDistinctValues.size();
+//			// keep identical sets of values
+//			itsDistinctValues.add(theNominal);
+//			itsDistinctValuesMap.put(theNominal, size);
+//			itsNominals.add(theNominal);
+//		}
+//		else
+//			itsNominals.add(itsDistinctValues.get(i));
+//
+//		++itsSize;
+//	}
 	public void add(String theNominal)
 	{
 		if (theNominal == null)
 			throw new NullPointerException();
+
+		if (itsSize == itsNominalz.length)
+			itsNominalz = Arrays.copyOf(itsNominalz, itsSize*2);
 
 		Integer i = itsDistinctValuesMap.get(theNominal);
 		if (i == null)
@@ -355,10 +386,10 @@ public class Column implements XMLNodeInterface
 			// keep identical sets of values
 			itsDistinctValues.add(theNominal);
 			itsDistinctValuesMap.put(theNominal, size);
-			itsNominals.add(theNominal);
+			itsNominalz[itsSize] = size;
 		}
 		else
-			itsNominals.add(itsDistinctValues.get(i));
+			itsNominalz[itsSize] = i;
 
 		++itsSize;
 	}
@@ -400,10 +431,13 @@ public class Column implements XMLNodeInterface
 	 */
 	public void close()
 	{
-		if (itsNominals != null)
-			((ArrayList<String>) itsNominals).trimToSize();
+//		if (itsNominals != null)
+//			((ArrayList<String>) itsNominals).trimToSize();
+		if ((itsNominalz != null) && (itsNominalz.length > itsSize))
+			itsNominalz = Arrays.copyOf(itsNominalz, itsSize);
 		if (itsDistinctValues != null)
-			((ArrayList<String>) itsDistinctValues).trimToSize(); //not necessary for itsDistinctValuesAsSet
+			((ArrayList<String>) itsDistinctValues).trimToSize();
+		// trimming is not necessary for itsDistinctValuesMap
 		if ((itsFloatz != null) && (itsFloatz.length > itsSize))
 			itsFloatz = Arrays.copyOf(itsFloatz, itsSize);
 	}
@@ -427,7 +461,8 @@ public class Column implements XMLNodeInterface
 	public int getIndex() { return itsIndex; }	// is never set for MRML
 	public String getNominal(int theIndex)
 	{
-		return isOutOfBounds(theIndex) ? "" : itsNominals.get(theIndex);
+		//return isOutOfBounds(theIndex) ? "" : itsNominals.get(theIndex);
+		return isOutOfBounds(theIndex) ? "" : itsDistinctValues.get(itsNominalz[theIndex]);
 	}
 	public float getFloat(int theIndex)
 	{
@@ -442,8 +477,8 @@ public class Column implements XMLNodeInterface
 		switch (itsType)
 		{
 			case NOMINAL : return getNominal(theIndex);
-			case NUMERIC : // deliberate fall-through to ORDINAL
-			case ORDINAL : return Float.toString(getFloat(theIndex));
+			case NUMERIC : return Float.toString(getFloat(theIndex));
+			case ORDINAL : throw new AssertionError(itsType);
 			case BINARY : return getBinary(theIndex) ? "1" : "0";
 			default :
 			{
@@ -522,18 +557,23 @@ public class Column implements XMLNodeInterface
 		switch (itsType)
 		{
 			case NOMINAL :
-				List<String> aNominals = new ArrayList<String>(thePermutation.length);
-				for (int i : thePermutation)
-					aNominals.add(itsNominals.get(i));
-				itsNominals = aNominals;
+//				List<String> aNominals = new ArrayList<String>(thePermutation.length);
+//				for (int i : thePermutation)
+//					aNominals.add(itsNominals.get(i));
+//				itsNominals = aNominals;
+				int[] aNominalz = new int[thePermutation.length];
+				for (int i = 0, j = thePermutation.length; i < j; ++i)
+					aNominalz[i] = itsNominalz[thePermutation[i]];
+				itsNominalz = aNominalz;
 				break;
-			case NUMERIC : // deliberate fall-through to ORDINAL
-			case ORDINAL :
+			case NUMERIC :
 				float[] aFloats = new float[thePermutation.length];
 				for (int i = 0, j = thePermutation.length; i < j; ++i)
 					aFloats[i] = itsFloatz[thePermutation[i]];
 				itsFloatz = aFloats;
 				break;
+			case ORDINAL :
+				throw new AssertionError(itsType);
 			case BINARY :
 				int n = thePermutation.length;
 				BitSet aBinaries = new BitSet(n);
@@ -555,9 +595,10 @@ public class Column implements XMLNodeInterface
 
 		switch(itsType)
 		{
-			case NOMINAL : Log.logCommandLine(itsNominals.toString()); break;
-			case NUMERIC : // deliberate fall-through to ORDINAL
-			case ORDINAL : Log.logCommandLine(Arrays.toString(itsFloatz)); break;
+//			case NOMINAL : Log.logCommandLine(itsNominals.toString()); break;
+			case NOMINAL : Log.logCommandLine(Arrays.toString(itsNominalz)); break;
+			case NUMERIC : Log.logCommandLine(Arrays.toString(itsFloatz)); break;
+			case ORDINAL : throw new AssertionError(itsType);
 			case BINARY : Log.logCommandLine(itsBinaries.toString()); break;
 			default :
 			{
@@ -590,8 +631,8 @@ public class Column implements XMLNodeInterface
 		switch (theAttributeType)
 		{
 			case NOMINAL : return toNominalType();
-			case NUMERIC : // deliberate fall-through to ORDINAL
-			case ORDINAL : return toNumericType(theAttributeType);
+			case NUMERIC : return toNumericType(theAttributeType);
+			case ORDINAL : throw new AssertionError(itsType);
 			case BINARY : return toBinaryType();
 			default :
 			{
@@ -608,22 +649,22 @@ public class Column implements XMLNodeInterface
 	 */
 	private boolean toNominalType()
 	{
-		// avoid creation of itsDistinctValues and itsNominals
-		if (itsType == AttributeType.NOMINAL)
-			return true;
+		assert (itsType != AttributeType.NOMINAL);
 
 		// relies on itsCardinality to be set at this time
 		itsDistinctValues = new ArrayList<String>(itsCardinality);
 		// warning (itsCardinality * 2) without overflow check is unsafe
 		// besides HashMap constructor always uses next power of 2
 		itsDistinctValuesMap = new HashMap<String, Integer>(itsCardinality);
-		itsNominals = new ArrayList<String>(itsSize);
+//		itsNominals = new ArrayList<String>(itsSize);
+		itsNominalz = new int[itsSize];
+		itsSize = 0;
 
 		switch (itsType)
 		{
-			case NOMINAL : throw new AssertionError(itsType);
-			case NUMERIC : // deliberate fall-through to ORDINAL
-			case ORDINAL :
+			case NOMINAL :
+				throw new AssertionError(itsType);
+			case NUMERIC :
 			{
 				int aNrTrueIntegers = 0;
 
@@ -632,24 +673,26 @@ public class Column implements XMLNodeInterface
 					if (Float.toString(f).matches(trueInteger))
 						++aNrTrueIntegers ;
 
-				itsSize = 0;
-				// NOTE uses add(String) to populate itsDistinctValues
+				// NOTE uses this.add(String) to populate
+				// itsDistinctValues(Map), requires itsSize = 0;
 				if (aNrTrueIntegers == itsSize)
 				{
-					for (float f : itsFloatz)
-						add(new String(Float.toString(f).split(".")[0]));
+					for (int i = 0, j = itsNominalz.length; i < j; ++i)
+						this.add(new String(Float.toString(itsFloatz[i]).split(".")[0]));
 
 					// no missing values or itsMissingValue is a true Integer
 					itsMissingValue = String.valueOf(Float.valueOf(itsMissingValue).intValue());
 				}
 				else
-					for (float f : itsFloatz)
-						add(Float.toString(f));
+					for (int i = 0, j = itsNominalz.length; i < j; ++i)
+						this.add(Float.toString(itsFloatz[i]));
 
 				// Cleanup (for GarbageCollector).
 				itsFloatz = null;
 				break;
 			}
+			case ORDINAL :
+				throw new AssertionError(itsType);
 			case BINARY :
 			{
 
@@ -680,8 +723,12 @@ public class Column implements XMLNodeInterface
 //					itsNominals.add(itsBinaries.get(i) ? "1" : "0");
 
 				// new code, replaces all above
-				for (int i = 0, j = itsSize; i < j; ++i)
-					this.add(itsBinaries.get(i) ? "1" : "0");
+				String f = AttributeType.DEFAULT_BINARY_FALSE_STRING;
+				String t = AttributeType.DEFAULT_BINARY_TRUE_STRING;
+				// NOTE uses this.add(String) to populate
+				// itsDistinctValues(Map), requires itsSize = 0;
+				for (int i = 0, j = itsNominalz.length; i < j; ++i)
+					this.add(itsBinaries.get(i) ? t : f);
 
 				// Cleanup (for GarbageCollector).
 				itsBinaries = null;
@@ -701,14 +748,15 @@ public class Column implements XMLNodeInterface
 	/*
 	 * Specifically needed during loading, to change a column that at first appeared to be binary to nominal.
 	 * It requires at least one of the two values that were erroneously interpreted as a binary value
-	 * This function also sets the missingvalue to nominal.
+	 * This function also sets the missing value to nominal.
 	 */
-	public boolean toNominalType(String aTrue, String aFalse)
+	boolean toNominalType(String aTrue, String aFalse)
 	{
 		// relies on itsCardinality to be set at this time
 		itsDistinctValues = new ArrayList<String>(itsCardinality);
 		itsDistinctValuesMap = new HashMap<String, Integer>(itsCardinality);
-		itsNominals = new ArrayList<String>(itsSize);
+//		itsNominals = new ArrayList<String>(itsSize);
+		itsNominalz = new int[itsSize];
 		itsMissingValue = AttributeType.NOMINAL.DEFAULT_MISSING_VALUE;
 
 // this code is slightly faster, than the code at the bottom as it does not call
@@ -734,7 +782,10 @@ public class Column implements XMLNodeInterface
 //				itsNominals.add(itsFloatz[i] > 0.5f ? aTrue : aFalse);
 
 		// new code replaces all above
-		for (int i = 0, j = itsSize; i < j; ++i)
+		// NOTE uses this.add(String) to populate
+		// itsDistinctValues(Map), requires itsSize = 0;
+		itsSize = 0;
+		for (int i = 0, j = itsNominalz.length; i < j; ++i)
 		{
 			// just missing values so far
 			if (aTrue == null && aFalse == null)
@@ -748,7 +799,6 @@ public class Column implements XMLNodeInterface
 		itsType = AttributeType.NOMINAL;
 		return true;
 	}
-
 
 	/*
 	 * Switching between Column AttributeTypes of NUMERIC and ORDINAL is
@@ -764,6 +814,13 @@ public class Column implements XMLNodeInterface
 	{
 		switch (itsType)
 		{
+			/*
+			 * for he NOMINAL case, parsing each value in
+			 * itsDistinctValues would probably be much faster
+			 * if it fails, this method would return early
+			 * if it succeeds, all values in itsNominals/z are
+			 * guaranteed to be 'floats'
+			 */
 			case NOMINAL :
 			{
 				itsFloatz = new float[itsSize];
@@ -773,7 +830,8 @@ public class Column implements XMLNodeInterface
 					// complicates cardinality logic
 					try
 					{
-						itsFloatz[i] = Float.valueOf(itsNominals.get(i));
+//						itsFloatz[i] = Float.valueOf(itsNominals.get(i));
+						itsFloatz[i] = Float.valueOf(itsDistinctValues.get(itsNominalz[i]));
 					}
 					catch (NumberFormatException e)
 					{
@@ -791,7 +849,8 @@ public class Column implements XMLNodeInterface
 				 */
 				itsDistinctValues = null;
 				itsDistinctValuesMap = null;
-				itsNominals = null;
+//				itsNominals = null;
+				itsNominalz = null;
 
 				if (itsMissing.cardinality() == 0 && !isValidValue(theNewType, itsMissingValue))
 				{
@@ -818,8 +877,10 @@ public class Column implements XMLNodeInterface
 					itsMissingValue = Float.valueOf(itsMissingValue).toString();
 				break;
 			}
-			case NUMERIC : // deliberate fall-through to ORDINAL
-			case ORDINAL : break; // nothing to do
+			case NUMERIC :
+				break; // nothing to do
+			case ORDINAL :
+				throw new AssertionError(itsType);
 			case BINARY :
 			{
 				itsFloatz = new float[itsSize];
@@ -870,6 +931,8 @@ public class Column implements XMLNodeInterface
 	 */
 	private boolean toBinaryType()
 	{
+		assert (itsType != AttributeType.BINARY);
+
 		if (getCardinality() > 2 || getCardinality() < 0)
 			return false;
 
@@ -877,31 +940,76 @@ public class Column implements XMLNodeInterface
 		{
 			case NOMINAL :
 			{
+//				itsBinaries = new BitSet(itsSize);
+//
+//				if (itsSize > 0)
+//				{
+//					String aValue = itsNominals.get(0);
+//
+//					if (AttributeType.isValidBinaryTrueValue(aValue))
+//					{
+//						// All false initially, only set 'true' bits.
+//						for (int i = 0; i < itsSize; i++)
+//							if (aValue.equals(itsNominals.get(i)))
+//								itsBinaries.set(i);
+//					}
+//					else if (AttributeType.isValidBinaryFalseValue(aValue))
+//					{
+//						// All false initially, only set 'true' bits.
+//						for (int i = 0; i < itsSize; i++)
+//							if (!aValue.equals(itsNominals.get(i)))
+//								itsBinaries.set(i);
+//					}
+//					// TODO ask user which value to use as 'true'
+//					// now sets all non-missing to 'true'
+//					else if (AttributeType.NOMINAL.DEFAULT_MISSING_VALUE.equals(aValue))
+//					{
+//						if ((itsMissing.cardinality() < itsSize) && AttributeType.isValidBinaryTrueValue(itsNominals.get(itsMissing.nextClearBit(0))))
+//							// All false initially, only set non-missing values to 'true'.
+//							for (int i = itsMissing.nextClearBit(0); i >= 0 && i < itsSize; i = itsMissing.nextClearBit(i + 1))
+//								itsBinaries.set(i);
+//					}
+//					// TODO ask user which value to use as 'true'
+//					// now sets all itsNominals.get(0) values to 'true'
+//					else
+//					{
+//						// All false initially, only set 'true' bits.
+//						for (int i = 0; i < itsSize; i++)
+//							if (aValue.equals(itsNominals.get(i)))
+//								itsBinaries.set(i);
+//					}
+//				}
+//				itsDistinctValues = null;
+//				itsDistinctValuesMap = null;
+//				itsNominals = null;
+//				break;
 				itsBinaries = new BitSet(itsSize);
 
 				if (itsSize > 0)
 				{
-					String aValue = itsNominals.get(0);
+					// String aValue = itsNominals.get(0);
+					int v = itsNominalz[0];
+					String aValue = itsDistinctValues.get(v);
 
 					if (AttributeType.isValidBinaryTrueValue(aValue))
 					{
 						// All false initially, only set 'true' bits.
-						for (int i = 0; i < itsSize; i++)
-							if (aValue.equals(itsNominals.get(i)))
+						for (int i = 0; i < itsSize; ++i)
+							if (v == itsNominalz[i])
 								itsBinaries.set(i);
 					}
 					else if (AttributeType.isValidBinaryFalseValue(aValue))
 					{
 						// All false initially, only set 'true' bits.
-						for (int i = 0; i < itsSize; i++)
-							if (!aValue.equals(itsNominals.get(i)))
+						for (int i = 0; i < itsSize; ++i)
+							if (v != itsNominalz[i])
 								itsBinaries.set(i);
 					}
 					// TODO ask user which value to use as 'true'
 					// now sets all non-missing to 'true'
 					else if (AttributeType.NOMINAL.DEFAULT_MISSING_VALUE.equals(aValue))
 					{
-						if ((itsMissing.cardinality() < itsSize) && AttributeType.isValidBinaryTrueValue(itsNominals.get(itsMissing.nextClearBit(0))))
+						if ((itsMissing.cardinality() < itsSize) && AttributeType.isValidBinaryTrueValue(itsDistinctValues.get(itsNominalz[itsMissing.nextClearBit(0)])))
 							// All false initially, only set non-missing values to 'true'.
 							for (int i = itsMissing.nextClearBit(0); i >= 0 && i < itsSize; i = itsMissing.nextClearBit(i + 1))
 								itsBinaries.set(i);
@@ -911,18 +1019,17 @@ public class Column implements XMLNodeInterface
 					else
 					{
 						// All false initially, only set 'true' bits.
-						for (int i = 0; i < itsSize; i++)
-							if (aValue.equals(itsNominals.get(i)))
+						for (int i = 0; i < itsSize; ++i)
+							if (v == itsNominalz[i])
 								itsBinaries.set(i);
 					}
 				}
 				itsDistinctValues = null;
 				itsDistinctValuesMap = null;
-				itsNominals = null;
+				itsNominalz = null;
 				break;
 			}
 			case NUMERIC :
-			case ORDINAL :
 			{
 				/*
 				 * NOTE (+0.0f).equals(-0.0f) returns false by definition
@@ -982,7 +1089,8 @@ public class Column implements XMLNodeInterface
 				itsFloatz = null;
 				break;
 			}
-			case BINARY : break; // nothing to do
+			case ORDINAL : throw new AssertionError(itsType);
+			case BINARY :  throw new AssertionError(itsType);
 			default :
 			{
 				logTypeError("Column.toBinaryType()");
@@ -1121,6 +1229,9 @@ public class Column implements XMLNodeInterface
 	 */
 	public boolean setNewMissingValue(String theNewValue)
 	{
+		if (theNewValue == null)
+			throw new IllegalArgumentException("arguments can not be null");
+
 		if (itsMissingValue.equals(theNewValue))
 			return true;
 		else if (!isValidValue(itsType, theNewValue))
@@ -1130,14 +1241,27 @@ public class Column implements XMLNodeInterface
 		{
 			case NOMINAL :
 			{
+				// remove Entry for old itsMissingValue
+				Integer value = itsDistinctValuesMap.remove(itsMissingValue);
+				// indicates no missing values in data
+				if (value == null)
+				{
+					Log.logCommandLine("no missing values in the data");
+					return true;
+				}
+				// add Entry for new itsMissingValue
+				itsDistinctValuesMap.put(theNewValue, value);
+				int v = value;
+				assert (itsDistinctValues.get(v).equals(itsMissingValue));
+				itsDistinctValues.set(v, theNewValue);
+
 				itsMissingValue = theNewValue;
 				updateCardinality(itsDistinctValues);
-				for (int i = itsMissing.nextSetBit(0); i >= 0; i = itsMissing.nextSetBit(i + 1))
-					itsNominals.set(i, itsMissingValue);
+//				for (int i = itsMissing.nextSetBit(0); i >= 0; i = itsMissing.nextSetBit(i + 1))
+//					itsNominals.set(i, itsMissingValue);
 				return true;
 			}
-			case NUMERIC : // deliberate fall-through to ORDINAL
-			case ORDINAL :
+			case NUMERIC :
 			{
 				itsMissingValue = Float.valueOf(theNewValue).toString();
 				updateCardinality(Arrays.asList(itsFloatz));
@@ -1145,6 +1269,10 @@ public class Column implements XMLNodeInterface
 				for (int i = itsMissing.nextSetBit(0); i >= 0; i = itsMissing.nextSetBit(i + 1))
 					itsFloatz[i] = aNewValue;
 				return true;
+			}
+			case ORDINAL :
+			{
+				throw new AssertionError(itsType);
 			}
 			case BINARY :
 			{
@@ -1172,15 +1300,17 @@ public class Column implements XMLNodeInterface
 	// "?" is invalid for float/ binary, to be handled by conversion-methods
 	private boolean isValidValue(AttributeType theAttributeType, String theNewValue)
 	{
-		switch(theAttributeType)
+		switch (theAttributeType)
 		{
-			case NOMINAL : return true;
-			case NUMERIC : // deliberate fall-through to ORDINAL
-			case ORDINAL :
+			case NOMINAL :
+				return true;
+			case NUMERIC :
 			{
 				try { Float.parseFloat(theNewValue); return true; }
 				catch (NumberFormatException anException) { return false; }
 			}
+			case ORDINAL :
+				throw new AssertionError(theAttributeType);
 			case BINARY :
 			{
 				return AttributeType.isValidBinaryTrueValue(theNewValue) ||
@@ -1228,8 +1358,7 @@ public class Column implements XMLNodeInterface
 				itsCardinality = itsDistinctValues.size();
 				return itsCardinality;
 			}
-			case NUMERIC : // deliberate fall-through to ORDINAL
-			case ORDINAL :
+			case NUMERIC :
 			{
 				float aMissingValue = Float.valueOf(itsType.DEFAULT_MISSING_VALUE).floatValue();
 				for (int i = 0; i < itsSize; i++)
@@ -1247,6 +1376,8 @@ public class Column implements XMLNodeInterface
 				itsCardinality = getUniqueNumericDomain(b).length;
 				return itsCardinality;
 			}
+			case ORDINAL : 
+				throw new AssertionError(itsType);
 			case BINARY :
 			{
 				// BINARY.DEFAULT_MISSING_VALUE is "0", but could be "1"
@@ -1452,19 +1583,23 @@ public class Column implements XMLNodeInterface
 		{
 			case NOMINAL :
 			{
+//				for (int i = 0, j = itsSize; i < j; ++i)
+//					if (theCondition.evaluate(itsNominals.get(i)))
+//						aSet.set(i);
 				for (int i = 0, j = itsSize; i < j; ++i)
-					if (theCondition.evaluate(itsNominals.get(i)))
+					if (theCondition.evaluate(itsDistinctValues.get(itsNominalz[i])))
 						aSet.set(i);
 				break;
 			}
-			case NUMERIC : // deliberate fall-through to ORDINAL
-			case ORDINAL :
+			case NUMERIC :
 			{
 				for (int i = 0, j = itsSize; i < j; ++i)
 					if (theCondition.evaluate(itsFloatz[i]))
 						aSet.set(i);
 				break;
 			}
+			case ORDINAL :
+				throw new AssertionError(itsType);
 			case BINARY :
 			{
 				for (int i = 0, j = itsSize; i < j; ++i)
@@ -1590,17 +1725,41 @@ public class Column implements XMLNodeInterface
 
 	private BitSet nominalElementOf(BitSet theMembers, ValueSet theValueSet, BitSet theResult)
 	{
+//		for (int i = theMembers.nextSetBit(0); i >= 0; i = theMembers.nextSetBit(i + 1))
+//			if (theValueSet.contains(itsNominals.get(i)))
+//				theResult.set(i);
+
 		for (int i = theMembers.nextSetBit(0); i >= 0; i = theMembers.nextSetBit(i + 1))
-			if (theValueSet.contains(itsNominals.get(i)))
+			if (theValueSet.contains(itsDistinctValues.get(itsNominalz[i])))
 				theResult.set(i);
+
+		// TODO MM loop could be faster not using itsDistinctValues
+		// instead ValueSet would be transformed into its equivalent
+		// (sorted) int[] using itsDistinctValuesMap
+//		int[] vs = new int[theValueSet.size()];
+//		for (int i = 0; i < vs.length; ++i)
+//			vs[i] = theValueSet.get(i);
+//		Arrays.sort(vs);
+//		for (int i = theMembers.nextSetBit(0); i >= 0; i = theMembers.nextSetBit(i + 1))
+//			if (Arrays.binarySearch(vs, itsNominalz[i]) >= 0)
+//				theResult.set(i);
 
 		return theResult;
 	}
 
+	/*
+	 * package-private evaluate() calls this private method
+	 * if itsDistinctValuesMap.get(theValue) returns null something is very
+	 * wrong and this method will generate a NullPointerException
+	 */
 	private BitSet nominalEquals(BitSet theMembers, String theValue, BitSet theResult)
 	{
+//		for (int i = theMembers.nextSetBit(0); i >= 0; i = theMembers.nextSetBit(i + 1))
+//			if (itsNominals.get(i).equals(theValue))
+//				theResult.set(i);
+		int v = itsDistinctValuesMap.get(theValue);
 		for (int i = theMembers.nextSetBit(0); i >= 0; i = theMembers.nextSetBit(i + 1))
-			if (itsNominals.get(i).equals(theValue))
+			if (itsNominalz[i] == v)
 				theResult.set(i);
 
 		return theResult;
@@ -1898,6 +2057,7 @@ public class Column implements XMLNodeInterface
 	 * @see Subgroup
 	 * @see java.util.BitSet
 	 */
+	// TODO MM return Set, instead of creating Set, and returning toArray()
 	public String[] getUniqueNominalBinaryDomain(BitSet theBitSet)
 	{
 		if (theBitSet.length() > itsSize)
@@ -1910,8 +2070,12 @@ public class Column implements XMLNodeInterface
 			case NOMINAL :
 			{
 				// abort when all distinct values are added
+//				for (int i = theBitSet.nextSetBit(0); i >= 0 && i < itsSize; i = theBitSet.nextSetBit(i + 1))
+//					if (aUniqueValues.add(itsNominals.get(i)))
+//						if (aUniqueValues.size() == itsCardinality)
+//							break;
 				for (int i = theBitSet.nextSetBit(0); i >= 0 && i < itsSize; i = theBitSet.nextSetBit(i + 1))
-					if (aUniqueValues.add(itsNominals.get(i)))
+					if (aUniqueValues.add(itsDistinctValues.get(itsNominalz[i])))
 						if (aUniqueValues.size() == itsCardinality)
 							break;
 				break;
@@ -2112,7 +2276,10 @@ public class Column implements XMLNodeInterface
 			return null;
 		}
 
-		LabelRanking aResult = new LabelRanking(itsNominals.get(0));
+//		LabelRanking aResult = new LabelRanking(itsNominals.get(0));
+		LabelRanking aResult = new LabelRanking(itsDistinctValues.get(itsNominalz[0]));
+		// equivalent to below, as itsNominalz[0] should always be 0
+		//LabelRanking aResult = new LabelRanking(itsDistinctValues.get(0));
 		int aSize = aResult.getSize(); //number of labels
 		int[] aTotalRanks = new int[aSize];
 		Arrays.fill(aTotalRanks, 0);
@@ -2122,7 +2289,8 @@ public class Column implements XMLNodeInterface
 		for (int i=0; i<itsSize; ++i)
 			if (aMembers == null || aMembers.get(i)) //part of the subgroup?
 			{
-				String aValue = itsNominals.get(i);
+//				String aValue = itsNominals.get(i);
+				String aValue = itsDistinctValues.get(itsNominalz[i]);
 				LabelRanking aRanking = new LabelRanking(aValue);
 				for (int j=0; j<aSize; j++)
 					aTotalRanks[j] += aRanking.getRank(j);
@@ -2168,7 +2336,11 @@ public class Column implements XMLNodeInterface
 			return null;
 		}
 
-		LabelRankingMatrix aResult = new LabelRankingMatrix(itsNominals.get(0).length()); //take the size of the first example as the total number of labels
+		//take the size of the first example as the total number of labels
+//		LabelRankingMatrix aResult = new LabelRankingMatrix(itsNominals.get(0).length());
+		LabelRankingMatrix aResult = new LabelRankingMatrix(itsDistinctValues.get(itsNominalz[0]).length());
+		// equivalent to below, as itsNominalz[0] should always be 0
+		//LabelRankingMatrix aResult = new LabelRankingMatrix(itsDistinctValues.get(0).length());
 		int aCount = 0;
 
 		BitSet aMembers = (theSubgroup == null) ? null : theSubgroup.getMembers();
@@ -2176,7 +2348,8 @@ public class Column implements XMLNodeInterface
 		for (int i=0; i<itsSize; ++i)
 			if (aMembers == null || aMembers.get(i)) //part of the subgroup?
 			{
-				String aValue = itsNominals.get(i);
+//				String aValue = itsNominals.get(i);
+				String aValue = itsDistinctValues.get(itsNominalz[i]);
 				LabelRanking aRanking = new LabelRanking(aValue);
 				LabelRankingMatrix aRankingMatrix = new LabelRankingMatrix(aRanking); //translate to LRM
 				aResult.add(aRankingMatrix);
@@ -2214,8 +2387,20 @@ public class Column implements XMLNodeInterface
 			case NOMINAL :
 			{
 				int aResult = 0;
-				for (String s : itsNominals)
-					if (s.equals(theValue))
+//				for (String s : itsNominals)
+//					if (s.equals(theValue))
+//						++aResult;
+				Integer v = itsDistinctValuesMap.get(theValue);
+				if (v == null)
+				{
+					// actually AssertionError(), but public
+					Log.logCommandLine(theValue + " does not occur in Column " + itsName);
+					return 0;
+				}
+
+				int value = v;
+				for (int i = 0, j = itsNominalz.length; i < j; ++i)
+					if (itsNominalz[i] == value)
 						++aResult;
 				return aResult;
 			}
