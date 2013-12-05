@@ -100,6 +100,7 @@ public class ResultWindow extends JFrame implements ActionListener
 		itsSubgroupTable.setRowSelectionAllowed(true);
 		itsSubgroupTable.setColumnSelectionAllowed(false);
 		itsSubgroupTable.getSelectionModel().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+		itsSubgroupTable.setAutoCreateRowSorter(true);
 
 		itsSubgroupTable.addKeyListener(new KeyListener()
 		{
