@@ -21,14 +21,14 @@ public class ModelWindow extends JFrame implements ActionListener
 
 	private JScrollPane itsJScrollPaneCenter = new JScrollPane();
 	private BitSet itsSample = null;
-	private final int SAMPLE_SIZE = 100000;
+	private final int SAMPLE_SIZE = 200000;
 	private Table itsTable;
 	private Column itsXColumn;
-	private Column itsYColumn; 
+	private Column itsYColumn;
 	private RegressionMeasure itsRM;
 	private Subgroup itsSubgroup;
 	private JFreeChart itsChart = null;
-	
+
 	// SINGLE_NUMERIC: show distribution over numeric target and Subgroup =====================================
 
 	public ModelWindow(Column theDomain, ProbabilityDensityFunction theDatasetPDF, ProbabilityDensityFunction theSubgroupPDF, String theName)
@@ -101,7 +101,7 @@ public class ModelWindow extends JFrame implements ActionListener
 		itsYColumn = theYColumn;
 		itsRM = theRM;
 		itsSubgroup = theSubgroup;
-		
+
 		//sampling
 		int aSize = theTable.getNrRows();
 		if (aSize > SAMPLE_SIZE)
@@ -109,7 +109,7 @@ public class ModelWindow extends JFrame implements ActionListener
 			Log.logCommandLine("Sampling before plotting dataset.");
 			itsSample = theTable.getRandomSubgroupMembers(SAMPLE_SIZE);
 		}
-		
+
 		initComponents();
 		final boolean isRegression = (theRM != null);
 		final boolean forSubgroup = (theSubgroup != null);
@@ -211,9 +211,9 @@ public class ModelWindow extends JFrame implements ActionListener
 		aDataSet.addSeries(aSeries);
 		return aDataSet;
 	}
-	
-	
-	
+
+
+
 	// MULTI_LABEL: show Subgroup induced DAG ==============================
 
 	public ModelWindow(DAG theDAG, int theDAGWidth, int theDAGHeight)
