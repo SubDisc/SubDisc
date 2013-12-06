@@ -100,7 +100,8 @@ public class ResultWindow extends JFrame implements ActionListener
 		itsSubgroupTable.setRowSelectionAllowed(true);
 		itsSubgroupTable.setColumnSelectionAllowed(false);
 		itsSubgroupTable.getSelectionModel().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-		itsSubgroupTable.setAutoCreateRowSorter(true);
+		//sorting of rows disables, as it destroys the order of subgroups
+		//itsSubgroupTable.setAutoCreateRowSorter(true);
 
 		itsSubgroupTable.addKeyListener(new KeyListener()
 		{
@@ -360,29 +361,6 @@ public class ResultWindow extends JFrame implements ActionListener
 			{
 				modelWindowHelper(TargetType.DOUBLE_REGRESSION);
 				break;
-// TODO for stable jar, disable, added in revision 844
-/*
-				int i=0;
-				Log.logCommandLine("======================================================");
-				Log.logCommandLine("Global model:");
-				Log.logCommandLine(itsSearchParameters.getTargetConcept().getGlobalRegressionModel());
-				Log.logCommandLine("------------------------------------------------------");
-				while (i<aSelectionIndex.length)
-				{
-					Log.logCommandLine("Model for subgroup " + (aSelectionIndex[i]+1) + ":");
-					int aCount = 0;
-					for (Subgroup s : itsSubgroupSet)
-					{
-						if (aCount == aSelectionIndex[i])
-							Log.logCommandLine(s.getRegressionModel());
-						aCount++;
-					}
-
-					i++;
-				}
-				Log.logCommandLine("======================================================");
-				break;
-*/
 			}
 			default :
 				break;

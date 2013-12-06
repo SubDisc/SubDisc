@@ -7,6 +7,7 @@ import nl.liacs.subdisc.gui.*;
 public class ProbabilityDensityFunction
 {
 	private final int DEFAULT_NR_BINS = 1000;
+	private final int DETAIL = 256;
 
 	private final Column itsData;
 	private float[] itsDensity;
@@ -141,7 +142,7 @@ public class ProbabilityDensityFunction
 	/**
 	 * Smooths the density histogram using a default &sigma; that is
 	 * determined as follows:</br>
-	 * &sigma; = (max - min) / 64, where min and max are the minimum and
+	 * &sigma; = (max - min) / DETAIL, where min and max are the minimum and
 	 * maximum value in the data that was used to build this
 	 * ProbabilityDensityFunction.</br>
 	 * To use a different &sigma;, use {@link #smooth(float)}.
@@ -156,7 +157,7 @@ public class ProbabilityDensityFunction
 	 */
 	public float[] smooth()
 	{
-		return smooth((itsMax-itsMin) / 64);
+		return smooth((itsMax-itsMin) / DETAIL);
 	}
 
 	// can not be applied if width > theInput
