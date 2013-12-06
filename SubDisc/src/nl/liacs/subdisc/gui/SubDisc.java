@@ -71,6 +71,10 @@ public class SubDisc
 			System.exit(0);
 		}
 
+		new MiningWindow(); //simply open an empty window
+/*
+		//This old startup code started with a file loader, but this was problematic on OSX
+		
 		FileHandler aLoader = new FileHandler(Action.OPEN_FILE);
 		Table aTable = aLoader.getTable();
 		SearchParameters aSearchParameters = aLoader.getSearchParameters();
@@ -80,7 +84,8 @@ public class SubDisc
 		else if (aSearchParameters == null)
 			new MiningWindow(aTable);
 		else
-			new MiningWindow(aTable, aSearchParameters);
+			new MiningWindow(aTable, aSearchParameters); //XML
+*/
 	}
 
 	// may move to a separate class

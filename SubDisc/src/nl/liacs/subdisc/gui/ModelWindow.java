@@ -105,10 +105,7 @@ public class ModelWindow extends JFrame implements ActionListener
 		//sampling
 		int aSize = theTable.getNrRows();
 		if (aSize > SAMPLE_SIZE)
-		{
-			Log.logCommandLine("Sampling before plotting dataset.");
 			itsSample = theTable.getRandomSubgroupMembers(SAMPLE_SIZE);
-		}
 
 		initComponents();
 		final boolean isRegression = (theRM != null);
@@ -125,7 +122,7 @@ public class ModelWindow extends JFrame implements ActionListener
 				aName = "2D distribution";
 		}
 		if (forSubgroup)
-			aName += "\n('" + theSubgroup.toString() + "')";
+			aName += "\n(" + theSubgroup.toString() + ", " + theSubgroup.getCoverage() + " examples)";
 		else
 			aName += " (all data)";
 
@@ -205,9 +202,12 @@ public class ModelWindow extends JFrame implements ActionListener
 			for (int i = 0, j = itsXColumn.size(); i < j; ++i)
 				aSeries.add(itsXColumn.getFloat(i), itsYColumn.getFloat(i));
 		else //only show a sample
+		{
+			Log.logCommandLine("Sampling before plotting dataset.");
 			for (int i = 0, j = itsXColumn.size(); i < j; ++i)
 				if (itsSample.get(i))
 					aSeries.add(itsXColumn.getFloat(i), itsYColumn.getFloat(i));
+		}
 		aDataSet.addSeries(aSeries);
 		return aDataSet;
 	}
