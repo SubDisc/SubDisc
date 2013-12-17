@@ -685,6 +685,16 @@ public class QualityMeasure
 				aReturn = -theSum/theCoverage;
 				break;
 			}
+			case QM_SUM :
+			{
+				aReturn = theSum;
+				break;
+			}
+			case INVERSE_SUM :
+			{
+				aReturn = -theSum;
+				break;
+			}
 			case MEAN_TEST :
 			{
 				aReturn = (float) (Math.sqrt(theCoverage) * ((theSum/theCoverage) - itsTotalAverage));
