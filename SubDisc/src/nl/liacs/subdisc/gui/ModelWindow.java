@@ -44,7 +44,8 @@ public class ModelWindow extends JFrame implements ActionListener
 			aDatasetSeries.add(theDatasetPDF.getMiddle(i), theDatasetPDF.getDensity(i));
 			if (addSubgroup)
 			{
-				float aScale = theSubgroupPDF.getAbsoluteCount()/(float)theDatasetPDF.getAbsoluteCount();
+//				float aScale = theSubgroupPDF.getAbsoluteCount()/(float)theDatasetPDF.getAbsoluteCount();
+				float aScale = 1;
 				aSubgroupSeries.add(theSubgroupPDF.getMiddle(i), theSubgroupPDF.getDensity(i)*aScale);
 			}
 		}
@@ -66,7 +67,7 @@ public class ModelWindow extends JFrame implements ActionListener
 		aPlot.setRangeGridlinePaint(Color.gray);
 		if (addSubgroup)
 		{
-			aPlot.getRenderer().setSeriesPaint(1, Color.gray);
+			aPlot.getRenderer().setSeriesPaint(1, Color.lightGray);
 			aPlot.getRenderer().setSeriesStroke(1, new BasicStroke(2.5f));
 			aPlot.getRenderer().setSeriesPaint(0, Color.black); //subgroup
 			aPlot.getRenderer().setSeriesStroke(0, new BasicStroke(1.5f)); //subgroup

@@ -201,16 +201,18 @@ public class ResultWindow extends JFrame implements ActionListener
 		else
 			s.append(itsSubgroupSet.size() + " subgroups found");
 
-		s.append(";  target table = ");
-		s.append(itsTable.getName());
-
-		s.append(";  quality measure = ");
-		s.append(itsSearchParameters.getQualityMeasure().GUI_TEXT);
-
 		TargetType aTargetType = itsSearchParameters.getTargetType();
+		TargetConcept aTC = itsSearchParameters.getTargetConcept();
+
+		if (aTargetType == TargetType.SINGLE_NOMINAL || aTargetType == TargetType.SINGLE_NUMERIC)
+		{
+			s.append("; target = ");
+			s.append(aTC.getPrimaryTarget().getName());
+		}
+
 		if (TargetType.hasTargetValue(aTargetType))
 		{
-			s.append(";  target value = ");
+			s.append("; value = ");
 			if (aTargetType == TargetType.SINGLE_NOMINAL)
 				s.append(itsSearchParameters.getTargetConcept().getTargetValue());
 			// else DOUBLE_REGRESSION or DOUBLE_CORRELATION
@@ -218,12 +220,15 @@ public class ResultWindow extends JFrame implements ActionListener
 				s.append(itsSearchParameters.getTargetConcept().getSecondaryTarget().getName());
 		}
 		if (itsFold != 0)
-			s.append(";  fold = " + itsFold);
+			s.append("; fold = " + itsFold);
+
+		s.append("; quality measure = ");
+		s.append(itsSearchParameters.getQualityMeasure().GUI_TEXT);
 
 		NumberFormat aFormatter = NumberFormat.getNumberInstance();
 		aFormatter.setMaximumFractionDigits(3);
 		if (!Double.isNaN(itsSubgroupSet.getJointEntropy()))
-			s.append(";  joint entropy = " + aFormatter.format(itsSubgroupSet.getJointEntropy()));
+			s.append("; joint entropy = " + aFormatter.format(itsSubgroupSet.getJointEntropy()));
 		setTitle(s.toString());
 	}
 
