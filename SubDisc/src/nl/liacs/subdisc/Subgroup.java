@@ -44,6 +44,25 @@ public class Subgroup implements Comparable<Subgroup>
 	private double itsPValue;
 	private String itsRegressionModel;
 
+	/*
+	 * member BitSet compressed using (G)ZIP (LZ77)
+	 * NOTE logical operations on this Object require it to be unpacked
+	 * so it should not be used for that
+	 * however, for large (sparse) BitSets that remain unchanged, it saves
+	 * a lot of space (true for Subgroups shown in ResultWindow)
+	 * during search, the member BitSets are modified, and used in logical
+	 * operations
+	 * BBC, (E/PL)WAH and other compression schemes exist that offer both
+	 * compression and fast modification, as decompression is not needed
+	 * additionally, for Cortana's Subgroup Discovery algorithm Refinements
+	 * are guaranteed to not increase the number of Subgroup members
+	 */
+//	private byte[] itsCompressedMembers;
+//	ObjectOutputStream os = new ObjectOutputStream(new GZIPOutputStream(new ByteArrayOutputStream(), itsMembers.length())));
+//	os.writeObject(itsMembers);
+//	os.close();
+//	itsCompressedMembers = os.toByteArray();
+
 	/**
 	 * Creates a Subgroup with initial measureValue of 0.0 and a depth of 0.
 	 * <p>
