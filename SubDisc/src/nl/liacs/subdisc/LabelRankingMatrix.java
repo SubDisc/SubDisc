@@ -35,6 +35,8 @@ public class LabelRankingMatrix
 					itsMatrix[i][j] = -1;
 	}
 
+	public int getSize() { return itsSize; }
+
 	public void add(LabelRankingMatrix theMatrix)
 	{
 		for (int i=0; i<itsSize; i++)
@@ -72,7 +74,7 @@ public class LabelRankingMatrix
 			}
 		return aDistance;
 	}
-	
+
 	public float maxDistance(LabelRankingMatrix theMatrix)
 	{
 		float aDistance = 0;
@@ -86,7 +88,7 @@ public class LabelRankingMatrix
 			}
 		return aDistance;
 	}
-	
+
 	public float homogeneity(LabelRankingMatrix theMatrix)
 	{
 		float aDistance = 0;
@@ -100,7 +102,7 @@ public class LabelRankingMatrix
 		Log.logCommandLine("<>" + aDistance + "<>");
 		return aDistance;
 	}
-	
+
 	public float get(int i, int j) { return itsMatrix[i][j]; }
 
 	public void print()
@@ -118,16 +120,16 @@ public class LabelRankingMatrix
 		}
 		Log.logCommandLine("  ================================");
 	}
-	
+
 	/*
 	 * Print the higher values in the LabelRankingMatrix
 	 */
 	String anOutputPrint;
 	public void printMax()
 	{
-		
+
 		float aFloat = 0;
-		
+
 		Log.logCommandLine("  ================================");
 		for (int i=0; i<itsSize; i++)
 		{

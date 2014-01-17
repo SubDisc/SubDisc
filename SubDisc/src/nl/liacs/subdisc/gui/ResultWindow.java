@@ -537,8 +537,10 @@ public class ResultWindow extends JFrame implements ActionListener
 		Subgroup aSubgroup = anIterator.next();
 		Log.logCommandLine("subgroup " + aSelection + ": " + aSubgroup.toString());
 		aSubgroup.getLabelRanking().print();
-		aSubgroup.getLabelRankingMatrix().print();
-		aSubgroup.getLabelRankingMatrix().printMax();
+		LabelRankingMatrix aLRM = aSubgroup.getLabelRankingMatrix();
+		aLRM.print();
+		aLRM.printMax();
+		new LabelRankingMatrixWindow(aLRM);
 
 		setBusy(false);
 	}
