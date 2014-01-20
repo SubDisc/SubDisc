@@ -1376,7 +1376,7 @@ public class Column implements XMLNodeInterface
 				itsCardinality = getUniqueNumericDomain(b).length;
 				return itsCardinality;
 			}
-			case ORDINAL : 
+			case ORDINAL :
 				throw new AssertionError(itsType);
 			case BINARY :
 			{
@@ -1620,17 +1620,17 @@ public class Column implements XMLNodeInterface
 	/**
 	 * Evaluates the supplied Condition, but only for the records of this
 	 * Column selected by the set bits in the supplied BitSet.
-	 * 
+	 *
 	 * This method does not modify the input BitSet.
-	 * 
+	 *
 	 * @param theBitSet the Subgroup members.
 	 * @param theCondition the Condition to evaluate.
-	 * 
+	 *
 	 * @return a BitSet with bits set for those records for which the
 	 * supplied Condition holds, bits are clear otherwise.
-	 * 
+	 *
 	 * @throws IllegalArgumentException when the supplied Condition is not
-	 * about this Column. 
+	 * about this Column.
 	 */
 	BitSet evaluate(BitSet theBitSet, Condition theCondition) throws IllegalArgumentException
 	{
@@ -2276,10 +2276,7 @@ public class Column implements XMLNodeInterface
 			return null;
 		}
 
-//		LabelRanking aResult = new LabelRanking(itsNominals.get(0));
 		LabelRanking aResult = new LabelRanking(itsDistinctValues.get(itsNominalz[0]));
-		// equivalent to below, as itsNominalz[0] should always be 0
-		//LabelRanking aResult = new LabelRanking(itsDistinctValues.get(0));
 		int aSize = aResult.getSize(); //number of labels
 		int[] aTotalRanks = new int[aSize];
 		Arrays.fill(aTotalRanks, 0);
@@ -2289,7 +2286,6 @@ public class Column implements XMLNodeInterface
 		for (int i=0; i<itsSize; ++i)
 			if (aMembers == null || aMembers.get(i)) //part of the subgroup?
 			{
-//				String aValue = itsNominals.get(i);
 				String aValue = itsDistinctValues.get(itsNominalz[i]);
 				LabelRanking aRanking = new LabelRanking(aValue);
 				for (int j=0; j<aSize; j++)
@@ -2300,8 +2296,6 @@ public class Column implements XMLNodeInterface
 		int[] aRanks = new int[aSize];
 		for (int i=0; i<aSize; i++)
 			aRanks[i] = aTotalRanks[i];
-//		for (int i=0; i<aSize; i++)
-//			Log.logCommandLine("=" + aRanks[i]/(float)aSize);
 		Arrays.sort(aRanks);
 
 		//translate average ranks to a ranking

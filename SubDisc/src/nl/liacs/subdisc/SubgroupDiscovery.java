@@ -73,31 +73,35 @@ public class SubgroupDiscovery extends MiningAlgorithm
 			itsQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), itsNrRows, theNrPositive);
 		itsQualityMeasureMinimum = itsSearchParameters.getQualityMeasureMinimum();
 
-		Column aTarget = aTC.getPrimaryTarget();
-		ConditionBase aConditionBase = new ConditionBase(aTarget, Operator.EQUALS);
-		String aValue = aTC.getTargetValue();
-		Condition aCondition;
-		switch (aTarget.getType())
+		if (itsSearchParameters.getQualityMeasure() != QM.CLAUDIO1 && itsSearchParameters.getQualityMeasure() != QM.CLAUDIO2)
 		{
-			case NOMINAL :
-				aCondition = new Condition(aConditionBase, aValue);
-				break;
-			case NUMERIC :
-				throw new AssertionError(AttributeType.NUMERIC);
-			case ORDINAL :
-				throw new AssertionError(AttributeType.ORDINAL);
-			case BINARY :
-				if (!AttributeType.isValidBinaryValue(aValue))
-					throw new IllegalArgumentException(aValue + " is not a valid BINARY value");
-				aCondition = new Condition(aConditionBase, AttributeType.isValidBinaryTrueValue(aValue));
-				break;
-			default :
-				throw new AssertionError(aTarget.getType());
+			Column aTarget = aTC.getPrimaryTarget();
+			ConditionBase aConditionBase = new ConditionBase(aTarget, Operator.EQUALS);
+			String aValue = aTC.getTargetValue();
+			Condition aCondition;
+			switch (aTarget.getType())
+			{
+				case NOMINAL :
+					aCondition = new Condition(aConditionBase, aValue);
+					break;
+				case NUMERIC :
+					throw new AssertionError(AttributeType.NUMERIC);
+				case ORDINAL :
+					throw new AssertionError(AttributeType.ORDINAL);
+				case BINARY :
+					if (!AttributeType.isValidBinaryValue(aValue))
+						throw new IllegalArgumentException(aValue + " is not a valid BINARY value");
+					aCondition = new Condition(aConditionBase, AttributeType.isValidBinaryTrueValue(aValue));
+					break;
+				default :
+					throw new AssertionError(aTarget.getType());
+			}
+
+			itsBinaryTarget = aTC.getPrimaryTarget().evaluate(aCondition);
+			itsResult = new SubgroupSet(itsSearchParameters.getMaximumSubgroups(), itsNrRows, itsBinaryTarget);
 		}
-
-		itsBinaryTarget = aTC.getPrimaryTarget().evaluate(aCondition);
-
-		itsResult = new SubgroupSet(itsSearchParameters.getMaximumSubgroups(), itsNrRows, itsBinaryTarget);
+		else
+			itsResult = new SubgroupSet(itsSearchParameters.getMaximumSubgroups(), itsNrRows);
 	}
 
 	//SINGLE_NUMERIC, float > signature differs from multi-label constructor
@@ -205,6 +209,27 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		itsQualityMeasure = new QualityMeasure(itsSearchParameters,
 							aBayesian.getDAG(),
 							itsNrRows);
+		itsQualityMeasureMinimum = itsSearchParameters.getQualityMeasureMinimum();
+
+		itsResult = new SubgroupSet(itsSearchParameters.getMaximumSubgroups(), itsNrRows);
+	}
+
+	//LABEL_RANKING
+	public SubgroupDiscovery(SearchParameters theSearchParameters, JFrame theMainWindow, Table theTable)
+	{
+		super(theSearchParameters);
+		itsTable = theTable;
+		itsNrRows = itsTable.getNrRows();
+		itsMainWindow = theMainWindow;
+		TargetConcept aTC = itsSearchParameters.getTargetConcept();
+
+		itsMinimumCoverage = itsSearchParameters.getMinimumCoverage();
+		itsMaximumCoverage = (int) (itsNrRows * itsSearchParameters.getMaximumCoverageFraction());
+
+		itsTargetRankings = aTC.getPrimaryTarget();
+		LabelRanking aLR = itsTargetRankings.getAverageRanking(null); //average ranking over entire dataset
+		LabelRankingMatrix aLRM = itsTargetRankings.getAverageRankingMatrix(null); //average ranking over entire dataset
+		itsQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), itsNrRows, aLR, aLRM);
 		itsQualityMeasureMinimum = itsSearchParameters.getQualityMeasureMinimum();
 
 		itsResult = new SubgroupSet(itsSearchParameters.getMaximumSubgroups(), itsNrRows);
@@ -1193,6 +1218,21 @@ System.out.println(aSubgroup + "\t" + aRefinement.getConditionBase());
 				aQuality = multiLabelCalculate(theNewSubgroup); //also stores DAG in Subgroup
 				theNewSubgroup.setSecondaryStatistic(itsQualityMeasure.calculateEditDistance(theNewSubgroup.getDAG())); //edit distance
 				theNewSubgroup.setTertiaryStatistic(QualityMeasure.calculateEntropy(itsNrRows, theNewSubgroup.getCoverage())); //entropy
+				break;
+			}
+			case LABEL_RANKING :
+			{
+				final int aCoverage = theNewSubgroup.getCoverage();
+				final QM aMeasure = itsSearchParameters.getQualityMeasure();
+
+				LabelRankingMatrix aLRM = itsTargetRankings.getAverageRankingMatrix(theNewSubgroup);
+				aQuality = itsQualityMeasure.computeLabelRankingDistance(aMeasure, aCoverage, aLRM);
+				theNewSubgroup.setLabelRanking(itsTargetRankings.getAverageRanking(theNewSubgroup)); //store the average ranking for later reference
+				theNewSubgroup.setLabelRankingMatrix(aLRM); //store the matrix for later reference
+
+				//TODO: make this more sensible
+				//theNewSubgroup.setSecondaryStatistic(aCountHeadBody / (double) aCoverage); //relative occurence of positives in subgroup
+				//theNewSubgroup.setTertiaryStatistic(aCountHeadBody); //count of positives in the subgroup
 				break;
 			}
 			default : break;

@@ -14,13 +14,15 @@ public class MatrixPlot extends JPanel
 	private static final long serialVersionUID = 1L;
 	private GeneralPath itsLines;
 	private LabelRankingMatrix itsLRM;
+	private String itsTitle;
 
-	public MatrixPlot(LabelRankingMatrix theLRM)
+	public MatrixPlot(LabelRankingMatrix theLRM, String theTitle)
 	{
 		super();
 		setBackground(Color.white);
 
 		itsLRM = theLRM;
+		itsTitle = theTitle;
 		itsLines = new GeneralPath();
 		itsLines.moveTo(0, 0);
 		itsLines.lineTo(0, -1);
@@ -46,7 +48,7 @@ public class MatrixPlot extends JPanel
 		super.paintComponent(theGraphic);
 		Graphics2D aGraphic = (Graphics2D)theGraphic;
 		aGraphic.scale(aSize, aSize);
-		aGraphic.translate(0.15, 1.05);
+		aGraphic.translate(0.15, 1.1);
 		aGraphic.setStroke(new BasicStroke(3.0f/aSize));
 
 		//matrix colors
@@ -84,5 +86,6 @@ public class MatrixPlot extends JPanel
 			aGraphic.drawString(LabelRanking.getLabel(i), (i+0.5f)/itsLRM.getSize(), 0.04f);
 			aGraphic.drawString(LabelRanking.getLabel(i), -0.07f, -(i+0.5f)/itsLRM.getSize());
 		}
+		aGraphic.drawString(itsTitle, 0.4f, -1.03f);
 	}
 }

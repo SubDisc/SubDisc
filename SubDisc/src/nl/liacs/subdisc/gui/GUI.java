@@ -25,6 +25,7 @@ public class GUI
 	public static final Dimension TEXT_FIELD_DEFAULT_SIZE = new Dimension(86, 22);
 	public static final Dimension WINDOW_DEFAULT_SIZE = new Dimension(1000, 600);
 	public static final Dimension ROC_WINDOW_DEFAULT_SIZE = new Dimension(600, 600);
+	public static final Dimension MATRIX_WINDOW_DEFAULT_SIZE = new Dimension(900, 400);
 	// button
 	public static final Dimension BUTTON_DEFAULT_SIZE = new Dimension(120, 25);
 	public static final Dimension BUTTON_MINIMUM_SIZE = new Dimension(75, 25);

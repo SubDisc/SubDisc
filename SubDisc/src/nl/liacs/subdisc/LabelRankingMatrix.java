@@ -10,7 +10,7 @@ public class LabelRankingMatrix
 
 	private int itsSize; //number of labels
 	private float[][] itsMatrix; //the actual values.
-	int[] pairwVector;
+	//int[] pairwVector;
 
 	public LabelRankingMatrix(int theSize)
 	{
@@ -35,6 +35,15 @@ public class LabelRankingMatrix
 					itsMatrix[i][j] = -1;
 	}
 
+	public Object clone()
+	{
+		LabelRankingMatrix aClone = new LabelRankingMatrix(itsSize);
+		for (int i=0; i<itsSize; i++)
+			for (int j=0; j<itsSize; j++)
+				aClone.itsMatrix[i][j] = itsMatrix[i][j];
+		return aClone;
+	}
+
 	public int getSize() { return itsSize; }
 
 	public void add(LabelRankingMatrix theMatrix)
@@ -42,6 +51,13 @@ public class LabelRankingMatrix
 		for (int i=0; i<itsSize; i++)
 			for (int j=0; j<itsSize; j++)
 				itsMatrix[i][j] += theMatrix.itsMatrix[i][j];
+	}
+
+	public void subtract(LabelRankingMatrix theMatrix)
+	{
+		for (int i=0; i<itsSize; i++)
+			for (int j=0; j<itsSize; j++)
+				itsMatrix[i][j] -= theMatrix.itsMatrix[i][j];
 	}
 
 	public void divide(float theValue)

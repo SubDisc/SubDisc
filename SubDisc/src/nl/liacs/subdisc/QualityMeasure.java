@@ -138,7 +138,7 @@ public class QualityMeasure
 	 * <li>n(B) = TotalTargetCoverage (of the data),</li>
 	 * <li>N = TotalCoverage (number of rows in the data).</li>
 	 * </ul>
-	 * 
+	 *
 	 * The results are often not well defined when (theCoverage = 0), but no
 	 * check is done on this for performance reasons.
 	 * The following should hold, but are not checked for:
@@ -150,7 +150,7 @@ public class QualityMeasure
 	 */
 	/* TODO MM
 	 * setup of class forces switch(QM) on each call, useless expense
-	 * 
+	 *
 	 * FIXME MM
 	 * float should not be used to represent int counts
 	 * when theParameter > 2^24 rounding errors occur
@@ -592,6 +592,12 @@ public class QualityMeasure
 		return itsAverageRanking;
 	}
 
+	//returns the average label ranking matrix of the entire dataset, which this QM uses to compare rankings of subgroups to
+	public final LabelRankingMatrix getBaseLabelRankingMatrix()
+	{
+		return itsAverageRankingMatrix;
+	}
+
 	public final float computeLabelRankingDistance(QM theMeasure, int theSupport, LabelRankingMatrix theSubgroupRankingMatrix)
 	{
 		// why is this an argument
@@ -899,7 +905,7 @@ public class QualityMeasure
 				aReturn = (float) aTotalDifference;
 				break;
 			}
-			
+
 			default :
 			{
 				/*

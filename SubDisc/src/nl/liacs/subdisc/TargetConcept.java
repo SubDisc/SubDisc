@@ -135,7 +135,7 @@ public class TargetConcept implements XMLNodeInterface
 	 * copy of the old <code>Table</code> it was pointing to.
 	 * This method is used in the case of {@link CrossValidation}, where new
 	 * <code>Table</code>s are being generated for each fold.
-	 * 
+	 *
 	 * @param theTable
 	 */
 	public void updateToNewTable(Table theTable)
@@ -185,6 +185,8 @@ public class TargetConcept implements XMLNodeInterface
 						return true;
 				return false;
 			}
+			case LABEL_RANKING :
+				return itsPrimaryTarget == theColumn;
 			default :
 				throw new AssertionError(itsTargetType);
 		}

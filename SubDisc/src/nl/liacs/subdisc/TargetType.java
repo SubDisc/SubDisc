@@ -15,7 +15,8 @@ public enum TargetType implements EnumInterface
 	DOUBLE_REGRESSION("double regression"),
 	DOUBLE_CORRELATION("double correlation"),
 	MULTI_LABEL("multi-label"),
-	MULTI_BINARY_CLASSIFICATION("multi binary classification");
+	MULTI_BINARY_CLASSIFICATION("multi binary classification"),
+	LABEL_RANKING("label ranking");
 
 	/**
 	 * For each TargetType, this is the text that will be used in the GUI.
@@ -80,9 +81,10 @@ public enum TargetType implements EnumInterface
 			case SINGLE_NOMINAL		: return true;
 			case SINGLE_NUMERIC		: return true;
 			case SINGLE_ORDINAL		: return false;
-			case DOUBLE_REGRESSION		: return true;
-			case DOUBLE_CORRELATION		: return true;
+			case DOUBLE_REGRESSION	: return true;
+			case DOUBLE_CORRELATION	: return true;
 			case MULTI_LABEL		: return true;
+			case LABEL_RANKING		: return true;
 			case MULTI_BINARY_CLASSIFICATION: return false;
 			default :
 			{
@@ -100,9 +102,10 @@ public enum TargetType implements EnumInterface
 			case SINGLE_NOMINAL		: return false;
 			case SINGLE_NUMERIC		: return false;
 			case SINGLE_ORDINAL		: return false;
-			case DOUBLE_REGRESSION		: return true;
-			case DOUBLE_CORRELATION		: return true;
+			case DOUBLE_REGRESSION	: return true;
+			case DOUBLE_CORRELATION	: return true;
 			case MULTI_LABEL		: return false;
+			case LABEL_RANKING		: return false;
 			case MULTI_BINARY_CLASSIFICATION: return false;
 			default :
 			{
@@ -120,9 +123,10 @@ public enum TargetType implements EnumInterface
 			case SINGLE_NOMINAL		: return false;
 			case SINGLE_NUMERIC		: return false;
 			case SINGLE_ORDINAL		: return false;
-			case DOUBLE_REGRESSION		: return false;
-			case DOUBLE_CORRELATION		: return false;
+			case DOUBLE_REGRESSION	: return false;
+			case DOUBLE_CORRELATION	: return false;
 			case MULTI_LABEL		: return true;
+			case LABEL_RANKING		: return false;
 			case MULTI_BINARY_CLASSIFICATION: return true;
 			default :
 			{
@@ -140,9 +144,10 @@ public enum TargetType implements EnumInterface
 			case SINGLE_NOMINAL		: return false;
 			case SINGLE_NUMERIC		: return false;
 			case SINGLE_ORDINAL		: return false;
-			case DOUBLE_REGRESSION		: return true;
-			case DOUBLE_CORRELATION		: return false;
+			case DOUBLE_REGRESSION	: return true;
+			case DOUBLE_CORRELATION	: return false;
 			case MULTI_LABEL		: return false;
+			case LABEL_RANKING		: return false;
 			case MULTI_BINARY_CLASSIFICATION: return false;
 			default :
 			{
@@ -160,9 +165,10 @@ public enum TargetType implements EnumInterface
 			case SINGLE_NOMINAL		: return true;
 			case SINGLE_NUMERIC		: return false;
 			case SINGLE_ORDINAL		: return false;
-			case DOUBLE_REGRESSION		: return true;
-			case DOUBLE_CORRELATION		: return true;
+			case DOUBLE_REGRESSION	: return true;
+			case DOUBLE_CORRELATION	: return true;
 			case MULTI_LABEL		: return false;
+			case LABEL_RANKING		: return false;
 			case MULTI_BINARY_CLASSIFICATION: return true;
 			default :
 			{
@@ -180,9 +186,10 @@ public enum TargetType implements EnumInterface
 			case SINGLE_NOMINAL		: return true;
 			case SINGLE_NUMERIC		: return true;
 			case SINGLE_ORDINAL		: return true;
-			case DOUBLE_REGRESSION		: return true;
-			case DOUBLE_CORRELATION		: return true;
+			case DOUBLE_REGRESSION	: return true;
+			case DOUBLE_CORRELATION	: return true;
 			case MULTI_LABEL		: return false;
+			case LABEL_RANKING		: return true;
 			case MULTI_BINARY_CLASSIFICATION: return false;	// TODO true?
 			default :
 			{
@@ -201,9 +208,10 @@ public enum TargetType implements EnumInterface
 			case SINGLE_NOMINAL		: return true;
 			case SINGLE_NUMERIC		: return false;
 			case SINGLE_ORDINAL		: return false;
-			case DOUBLE_REGRESSION		: return false;
-			case DOUBLE_CORRELATION		: return false;
+			case DOUBLE_REGRESSION	: return false;
+			case DOUBLE_CORRELATION	: return false;
 			case MULTI_LABEL		: return false;
+			case LABEL_RANKING		: return false;
 			case MULTI_BINARY_CLASSIFICATION: return false;	// TODO true?
 			default :
 			{
@@ -222,9 +230,10 @@ public enum TargetType implements EnumInterface
 			case SINGLE_NOMINAL		: return false;
 			case SINGLE_NUMERIC		: return true;
 			case SINGLE_ORDINAL		: return false;
-			case DOUBLE_REGRESSION		: return true;
-			case DOUBLE_CORRELATION		: return true;
+			case DOUBLE_REGRESSION	: return true;
+			case DOUBLE_CORRELATION	: return true;
 			case MULTI_LABEL		: return true;
+			case LABEL_RANKING		: return true;
 			case MULTI_BINARY_CLASSIFICATION: return false;	// TODO true?
 			default :
 			{
@@ -233,26 +242,6 @@ public enum TargetType implements EnumInterface
 			}
 		}
 	}
-/*
-	public static boolean isEMM(TargetType theType)
-	{
-		switch (theType)
-		{
-			case SINGLE_NOMINAL			: return false;
-			case SINGLE_NUMERIC			: return false;
-			case SINGLE_ORDINAL			: return false;
-			case DOUBLE_REGRESSION			: return true;
-			case DOUBLE_CORRELATION			: return true;
-			case MULTI_LABEL			: return true;
-			case MULTI_BINARY_CLASSIFICATION	: return true;
-			default :
-			{
-				unknownTargetType("isEMM", theType);
-				return false;
-			}
-		}
-	}
-*/
 
 	// TODO this should actually throw an AssertionError
 	private static void unknownTargetType(String theSource, TargetType theType)

@@ -37,7 +37,6 @@ public class Process
 				aSubgroupDiscovery = new SubgroupDiscovery(theSearchParameters, theTable, itsPositiveCount, theMainWindow);
 				break;
 			}
-
 			case SINGLE_NUMERIC:
 			{
 				// new runCAUC() receives result after SD.mine()
@@ -69,6 +68,11 @@ public class Process
 			case DOUBLE_CORRELATION :
 			{
 				aSubgroupDiscovery = new SubgroupDiscovery(theSearchParameters, theTable, false, theMainWindow);
+				break;
+			}
+			case LABEL_RANKING :
+			{
+				aSubgroupDiscovery = new SubgroupDiscovery(theSearchParameters, theMainWindow, theTable);
 				break;
 			}
 			default :

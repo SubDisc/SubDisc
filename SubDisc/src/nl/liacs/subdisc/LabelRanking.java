@@ -15,7 +15,11 @@ public class LabelRanking
 		itsSize = theString.length();
 		itsRanking = new int[itsSize];
 		for (int i=0; i<itsSize; i++)
-			itsRanking[Character.getNumericValue(theString.charAt(i)) - 10] = i; //0 means 'a'
+		{
+			int anIndex = Math.max(0, Character.getNumericValue(theString.charAt(i)) - 10); //0 means 'a'
+			anIndex = Math.min(anIndex, itsSize-1);
+			itsRanking[anIndex] = i;
+		}
 	}
 
 	final public float kendallTau(LabelRanking anLR)
@@ -51,7 +55,14 @@ public class LabelRanking
 		return ALPHABET.substring(theLabel, theLabel+1);
 	}
 
-	public final int getRank(int anIndex)	{ return itsRanking[anIndex]; }
+	public final int getRank(int anIndex)
+	{
+		if (anIndex >= 0 && anIndex <itsSize) //not all columns are necessarily well-formed, so this is just to add robustness
+			return itsRanking[anIndex];
+		else
+			return 0;
+	}
+
 	public void setRank(int anIndex, int aRank)	{ itsRanking[anIndex] = aRank; }
 	public final int getSize() { return itsSize; }
 }

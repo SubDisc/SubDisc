@@ -720,6 +720,7 @@ public class MiningWindow extends JFrame implements ActionListener
 				(aTargetType == TargetType.DOUBLE_REGRESSION && anAttributeType == AttributeType.NUMERIC) ||
 				(aTargetType == TargetType.DOUBLE_CORRELATION && anAttributeType == AttributeType.NUMERIC) ||
 				(aTargetType == TargetType.MULTI_LABEL && anAttributeType == AttributeType.NUMERIC) ||
+				(aTargetType == TargetType.LABEL_RANKING && anAttributeType == AttributeType.NOMINAL) ||
 				(aTargetType == TargetType.MULTI_BINARY_CLASSIFICATION && anAttributeType == AttributeType.BINARY) ||
 				(aTargetType == TargetType.MULTI_BINARY_CLASSIFICATION && anAttributeType == AttributeType.NOMINAL))
 			{
@@ -923,6 +924,14 @@ public class MiningWindow extends JFrame implements ActionListener
 			{
 				jLabelTargetInfo.setText(" # binary targets");
 				jLabelTargetInfoText.setText(String.valueOf(itsTargetConcept.getMultiTargets().size()));
+				break;
+			}
+			case LABEL_RANKING :
+			{
+				jLabelTargetInfo.setText(" # average ranking");
+				Column aColumn = itsTargetConcept.getPrimaryTarget();
+				LabelRanking aLR = aColumn.getAverageRanking(null); //average ranking over entire dataset
+				jLabelTargetInfoText.setText(aLR.getRanking());
 				break;
 			}
 			case MULTI_BINARY_CLASSIFICATION :

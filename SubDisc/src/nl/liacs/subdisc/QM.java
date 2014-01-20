@@ -28,8 +28,6 @@ public enum QM implements EnumInterface
 	PROP_SCORE_RATIO("Propensity score ratio",	"1.0",		TargetType.SINGLE_NOMINAL),
 	BAYESIAN_SCORE	("Bayesian Score",	"0.0",	TargetType.SINGLE_NOMINAL),
 	LIFT			("Lift",			"1.0",	TargetType.SINGLE_NOMINAL),
-	CLAUDIO1		("Claudio 1",		"0.0",	TargetType.SINGLE_NOMINAL),
-	CLAUDIO2		("Claudio 2",		"0.0",	TargetType.SINGLE_NOMINAL),
 
 	// SINGLE_NUMERIC quality measures
 	// NOTE when adding a new SINGLE_NUMERIC QM -> add it to requiredStats()
@@ -65,6 +63,11 @@ public enum QM implements EnumInterface
 	// MULTI_LABEL quality measures
 	WEED		("Wtd Ent Edit Dist",	"0",	TargetType.MULTI_LABEL),
 	EDIT_DISTANCE	("Edit Distance",	"0",	TargetType.MULTI_LABEL),
+
+
+	// LABEL_RANKING
+	CLAUDIO1		("Claudio 1",		"0.0",	TargetType.LABEL_RANKING),
+	CLAUDIO2		("Claudio 2",		"0.0",	TargetType.LABEL_RANKING),
 
 	// DOUBLE_CORRELATION  quality measures
 	CORRELATION_R		("r",			"0.2",	TargetType.DOUBLE_CORRELATION),
