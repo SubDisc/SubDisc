@@ -858,7 +858,7 @@ public class MiningWindow extends JFrame implements ActionListener
 					itsTable.getColumn(aTarget).countValues(getMiscFieldName());
 				float aPercentage = (itsPositiveCount * 100) / (float) itsTable.getNrRows();
 				NumberFormat aFormatter = NumberFormat.getNumberInstance();
-				aFormatter.setMaximumFractionDigits(1);
+				aFormatter.setMaximumFractionDigits(2);
 				jLabelTargetInfo.setText(" # positive");
 				jLabelTargetInfoText.setText(itsPositiveCount + " (" + aFormatter.format(aPercentage) + " %)");
 				break;
