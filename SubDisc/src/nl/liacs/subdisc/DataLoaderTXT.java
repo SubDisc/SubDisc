@@ -231,7 +231,7 @@ public class DataLoaderTXT implements FileLoaderInterface
 						aColumns.get(aColumn).add(s);
 				}
 				if (aColumn != aNrColumns-1)
-					message("loadFile", "error on line " + aLineNr);
+					message("loadFile", "incorrect number of fields on line " + aLineNr +". " + aNrColumns + " expected, " + (aColumn+1) + " found.");
 				if (aLineNr == aPrintTrigger)
 				{
 					message("loadFile", aLineNr + " lines read");
