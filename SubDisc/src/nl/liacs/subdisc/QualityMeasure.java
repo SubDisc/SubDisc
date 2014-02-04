@@ -606,9 +606,9 @@ public class QualityMeasure
 		if (theMeasure != QM.CLAUDIO1 && theMeasure != QM.CLAUDIO2)
 			throw new IllegalArgumentException("Invalid argument: " + theMeasure);
 
-		Log.logCommandLine("computeLabelRankingDistance ===========================================");
-		Log.logCommandLine("support: " + Math.sqrt(theSupport));
-		Log.logCommandLine("subgroup matrix:");
+		//Log.logCommandLine("computeLabelRankingDistance ===========================================");
+		//Log.logCommandLine("support: " + Math.sqrt(theSupport));
+		//Log.logCommandLine("subgroup matrix:");
 		//theSubgroupRankingMatrix.print();
 
 		float aDistance = 0.0f;
@@ -618,7 +618,7 @@ public class QualityMeasure
 			aDistance = itsAverageRankingMatrix.altDistance(theSubgroupRankingMatrix);
 
 		//aDistance = aDistance*itsAverageRankingMatrix.homogeneity(theSubgroupRankingMatrix);
-		Log.logCommandLine("distance: " + aDistance);
+		//Log.logCommandLine("distance: " + aDistance);
 
 		float aSize = (float) Math.sqrt(theSupport);
 		return  aSize * aDistance;

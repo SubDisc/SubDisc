@@ -526,8 +526,8 @@ public class ResultWindow extends JFrame implements ActionListener
 		if (itsSubgroupSet.isEmpty())
 			return;
 
-		Log.logCommandLine("entire dataset:");
-		itsQualityMeasure.getBaseLabelRanking().print(); //base ranking over entire dataset
+		//Log.logCommandLine("entire dataset:");
+		//itsQualityMeasure.getBaseLabelRanking().print(); //base ranking over entire dataset
 
 		int aSelection = itsSubgroupTable.getSelectedRow();
 		Iterator<Subgroup> anIterator = itsSubgroupSet.iterator();

@@ -2275,7 +2275,7 @@ public class Column implements XMLNodeInterface
 			logMessage("getAverageRanking", getTypeError("NOMINAL"));
 			return null;
 		}
-
+		
 		LabelRanking aResult = new LabelRanking(itsDistinctValues.get(itsNominalz[0]));
 		int aSize = aResult.getSize(); //number of labels
 		int[] aTotalRanks = new int[aSize];
@@ -2315,6 +2315,10 @@ public class Column implements XMLNodeInterface
 			//TODO: properly deal with ties in the ranking
 			aResult.setRank(i, aFirst);
 		}
+//		for (int i=0; i<itsSize; i++)
+//		{
+//			itsIndex[itsRanking[i]] += getLetter(i);
+//		}
 
 		return aResult;
 	}
@@ -2332,7 +2336,7 @@ public class Column implements XMLNodeInterface
 
 		//take the size of the first example as the total number of labels
 //		LabelRankingMatrix aResult = new LabelRankingMatrix(itsNominals.get(0).length());
-		LabelRankingMatrix aResult = new LabelRankingMatrix(itsDistinctValues.get(itsNominalz[0]).length());
+		LabelRankingMatrix aResult = new LabelRankingMatrix(itsDistinctValues.get(itsNominalz[0]).replace(">","").length());
 		// equivalent to below, as itsNominalz[0] should always be 0
 		//LabelRankingMatrix aResult = new LabelRankingMatrix(itsDistinctValues.get(0).length());
 		int aCount = 0;

@@ -1,8 +1,14 @@
 package nl.liacs.subdisc;
 
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.TreeMap;
+
 public class LabelRanking
 {
 	private final int[] itsRanking;
+	private static String[] itsIndex;
 	private final int itsSize;
 	private static final String ALPHABET = "abcdefghijklmnopqrstuvwxyz";
 
@@ -12,14 +18,28 @@ public class LabelRanking
 
 	public LabelRanking(String theString)
 	{
-		itsSize = theString.length();
+		String[] thePrefString = theString.split(">");
+		int itsPrefSize = thePrefString.length;
+		
+		itsSize = theString.replace(">","").length();
+		
+		
 		itsRanking = new int[itsSize];
-		for (int i=0; i<itsSize; i++)
+		for (int i=0; i<itsPrefSize; i++)
 		{
-			int anIndex = Math.max(0, Character.getNumericValue(theString.charAt(i)) - 10); //0 means 'a'
-			anIndex = Math.min(anIndex, itsSize-1);
-			itsRanking[anIndex] = i;
+			String theSubString = thePrefString[i];
+			for(int j = 0; j < theSubString.length(); j++)
+			{
+				//Log.logCommandLine("substring:" + theSubString + "-" + theSubString.charAt(j));
+				int anIndex = Math.max(0, Character.getNumericValue(theSubString.charAt(j)) - 10); //0 means 'a'
+				anIndex = Math.min(anIndex, itsSize-1); // why is this needed?
+				itsRanking[anIndex] = i;
+				
+				//Log.logCommandLine("ranking:" + i + " index: " + anIndex);
+			}
 		}
+		
+		itsIndex = new String[itsSize];
 	}
 
 	final public float kendallTau(LabelRanking anLR)
@@ -42,17 +62,47 @@ public class LabelRanking
 		Log.logCommandLine("ranking:" + getRanking());
 	}
 
+//	final public String getRanking()
+//	{
+//		String aString = "[";
+//		for (int i=0; i<itsSize; i++)
+//			aString += getLabel(getRank(i));
+//		return aString + "]";
+//	}
+	
 	final public String getRanking()
 	{
 		String aString = "[";
+		
+		itsIndex = makeIndex();
 		for (int i=0; i<itsSize; i++)
-			aString += getLabel(getRank(i));
+		{
+			if (itsIndex[i] != "" && i != 0)
+				aString += ">";
+			aString += itsIndex[i];
+		}
+		
 		return aString + "]";
 	}
-
-	static public String getLabel(int theLabel)
+	
+	final public String[] makeIndex()
+	{
+		Arrays.fill(itsIndex, "");
+		for (int i=0; i<itsSize; i++)
+		{
+			itsIndex[itsRanking[i]] += getLetter(i);
+		}
+		
+		return itsIndex;
+	}
+	
+	static public String getLetter(int theLabel)
 	{
 		return ALPHABET.substring(theLabel, theLabel+1);
+	}
+	static public String getLabel(int theLabel)
+	{
+		return itsIndex[theLabel];
 	}
 
 	public final int getRank(int anIndex)
@@ -63,6 +113,9 @@ public class LabelRanking
 			return 0;
 	}
 
-	public void setRank(int anIndex, int aRank)	{ itsRanking[anIndex] = aRank; }
+	public void setRank(int anIndex, int aRank)
+	{
+		itsRanking[anIndex] = aRank;
+	}
 	public final int getSize() { return itsSize; }
 }

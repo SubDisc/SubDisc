@@ -83,8 +83,8 @@ public class MatrixPlot extends JPanel
 		aGraphic.setFont(aNewFont);
 		for(int i=0; i<itsLRM.getSize(); i++)
 		{
-			aGraphic.drawString(LabelRanking.getLabel(i), (i+0.5f)/itsLRM.getSize(), 0.04f);
-			aGraphic.drawString(LabelRanking.getLabel(i), -0.07f, -(i+0.5f)/itsLRM.getSize());
+			aGraphic.drawString(LabelRanking.getLetter(i), (i+0.5f)/itsLRM.getSize(), 0.04f);
+			aGraphic.drawString(LabelRanking.getLetter(i), -0.07f, -(i+0.5f)/itsLRM.getSize());
 		}
 		aGraphic.drawString(itsTitle, 0.4f, -1.03f);
 	}
