@@ -236,7 +236,7 @@ public class Table implements XMLNodeInterface
 	 * {@link AttributeType#NOMINAL}, {@link AttributeType#NUMERIC},
 	 * {@link AttributeType#ORDINAL} and {@link AttributeType#BINARY},
 	 * respectively.
-	 * 
+	 *
 	 * @return an array of <code>int[]</code>s, containing for each
 	 * AttributeType the number of Columns of that type, and the number of
 	 * those Columns that is enabled.
@@ -403,9 +403,9 @@ public class Table implements XMLNodeInterface
 	 * in the {@link BitSet BitSet} passed in as argument.
 	 * <p>
 	 * NOTE the new Table is not a true deep-copy.
-	 * 
+	 *
 	 * @param theSet BitSet indicating which records to use.
-	 * 
+	 *
 	 * @return a new Table consisting of a selection of the original one.
 	 */
 	public Table select(BitSet theSet)
@@ -431,9 +431,9 @@ public class Table implements XMLNodeInterface
 	 * NOTE this method is destructive to the {@link TargetConcept} passed
 	 * in as parameter. If the TargetConcept needs to be restored to its
 	 * original state, be sure to back it up before calling this method.
-	 * 
+	 *
 	 * @param theTC the TargetConcept to swapRandomize.
-	 * 
+	 *
 	 * @see Column#permute(int[])
 	 * @see Validation#swapRandomization(int)
 	 */
@@ -451,6 +451,7 @@ public class Table implements XMLNodeInterface
 				//no break
 			case SINGLE_NOMINAL : // deliberate fall-through
 			case SINGLE_NUMERIC :
+			case LABEL_RANKING :
 				aTargets.add(theTC.getPrimaryTarget());
 				break;
 			case MULTI_LABEL :

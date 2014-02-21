@@ -598,21 +598,15 @@ public class QualityMeasure
 		return itsAverageRankingMatrix;
 	}
 
-	public final float computeLabelRankingDistance(QM theMeasure, int theSupport, LabelRankingMatrix theSubgroupRankingMatrix)
+	public final float computeLabelRankingDistance(int theSupport, LabelRankingMatrix theSubgroupRankingMatrix)
 	{
-		// why is this an argument
-		assert (itsQualityMeasure == theMeasure);
-
-		if (theMeasure != QM.CLAUDIO1 && theMeasure != QM.CLAUDIO2)
-			throw new IllegalArgumentException("Invalid argument: " + theMeasure);
-
 		//Log.logCommandLine("computeLabelRankingDistance ===========================================");
 		//Log.logCommandLine("support: " + Math.sqrt(theSupport));
 		//Log.logCommandLine("subgroup matrix:");
 		//theSubgroupRankingMatrix.print();
 
 		float aDistance = 0.0f;
-		if (theMeasure == QM.CLAUDIO1)
+		if (itsQualityMeasure == QM.CLAUDIO1)
 			aDistance = itsAverageRankingMatrix.distance(theSubgroupRankingMatrix);
 		else //CLAUDIO2
 			aDistance = itsAverageRankingMatrix.altDistance(theSubgroupRankingMatrix);

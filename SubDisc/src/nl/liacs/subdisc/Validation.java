@@ -57,7 +57,8 @@ public class Validation
 			theTargetType == TargetType.SINGLE_NUMERIC ||
 			theTargetType == TargetType.DOUBLE_REGRESSION ||
 			theTargetType == TargetType.DOUBLE_CORRELATION ||
-			theTargetType == TargetType.MULTI_LABEL;
+			theTargetType == TargetType.MULTI_LABEL ||
+			theTargetType == TargetType.LABEL_RANKING;
 	}
 
 	private double[] getRandomQualities(boolean forSubgroups, int theNrRepetitions)
@@ -92,6 +93,10 @@ public class Validation
 			case MULTI_LABEL :
 			{
 				return getMultiLabelQualities(forSubgroups, theNrRepetitions, aMinimumCoverage, aRandom, aDepth);
+			}
+			case LABEL_RANKING :
+			{
+				return getLabelRankingQualities(forSubgroups, theNrRepetitions, aMinimumCoverage, aRandom, aDepth);
 			}
 			case MULTI_BINARY_CLASSIFICATION :
 			{
@@ -285,6 +290,36 @@ public class Validation
 		return aQualities;
 	}
 
+	//TODO: fix implementation
+	// if forSubgroups is true, create Subgroups, else create Conditions
+	// if forSubgroups is true, theDepth is ignored
+	private double[] getLabelRankingQualities(boolean forSubgroups, int theNrRepetitions, int theMinimumCoverage, Random theRandom, int theDepth)
+	{
+		final double[] aQualities = new double[theNrRepetitions];
+
+		Column aTarget = itsTargetConcept.getPrimaryTarget();
+		LabelRanking aLR = aTarget.getAverageRanking(null); //average ranking over entire dataset
+		LabelRankingMatrix aLRM = aTarget.getAverageRankingMatrix(null);
+		QualityMeasure aQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), itsTable.getNrRows(), aLR, aLRM);
+
+		for (int i = 0; i < theNrRepetitions; ++i)
+		{
+			Subgroup aSubgroup;
+
+			// essential switch between Subgroups/ Conditions
+			if (forSubgroups)
+				aSubgroup = getValidSubgroup(theMinimumCoverage, theRandom);
+			else
+				aSubgroup = getValidSubgroup(theDepth, theMinimumCoverage, theRandom);
+
+			BitSet aMembers = aSubgroup.getMembers();
+			LabelRankingMatrix aSubgroupLRM = aTarget.getAverageRankingMatrix(aSubgroup);
+			aQualities[i] = aQualityMeasure.computeLabelRankingDistance(aMembers.cardinality(), aSubgroupLRM);
+		}
+
+		return aQualities;
+	}
+
 	// for RANDOM_SUBSETS/Subgroups, always uses an updated Random value
 	private Subgroup getValidSubgroup(int theMinimumCoverage, Random theRandom)
 	{
@@ -453,6 +488,27 @@ public class Validation
 			case MULTI_BINARY_CLASSIFICATION :
 			{
 				throw new AssertionError(aTargetType);
+			}
+			case LABEL_RANKING:
+			{
+				// back up column that will be swap randomized
+				Column aPrimaryCopy = itsTargetConcept.getPrimaryTarget().copy();
+				int aPositiveCount =
+					itsTargetConcept.getPrimaryTarget().countValues(itsTargetConcept.getTargetValue());
+
+				// generate swap randomized random results
+				for (int i = 0, j = theNrRepetitions; i < j; ++i)
+				{
+					// swapRandomization should be performed before creating new SubgroupDiscovery
+					itsTable.swapRandomizeTarget(itsTargetConcept);
+					i = runSRSD(new SubgroupDiscovery(itsSearchParameters, itsTable, aPositiveCount, null), aQualities, i);
+				}
+
+				// restore column that was swap randomized
+				itsTargetConcept.setPrimaryTarget(aPrimaryCopy);
+				itsTable.getColumns().set(aPrimaryCopy.getIndex(), aPrimaryCopy);
+
+				break;
 			}
 			default :
 			{

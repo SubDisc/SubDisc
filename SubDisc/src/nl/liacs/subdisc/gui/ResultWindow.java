@@ -177,9 +177,6 @@ public class ResultWindow extends JFrame implements ActionListener
 		jButtonFold = GUI.buildButton("Fold members", 'F', "fold", this);
 		aSubgroupSetPanel.add(jButtonFold);
 
-		jButtonSubRank = GUI.buildButton("Sub-rankings", 'Z', "show_subrank", this);
-		aSubgroupSetPanel.add(jButtonSubRank);
-
 		//close *********************************
 
 		jButtonCloseWindow = GUI.buildButton("Close", 'C', "close", this);
@@ -252,8 +249,6 @@ public class ResultWindow extends JFrame implements ActionListener
 			jButtonRegressionTestActionPerformed();
 		else if ("empirical_p".equals(aCommand))
 			jButtonEmpiricalActionPerformed();
-		else if ("show_subrank".equals(aCommand))
-			jButtonSubRankingPrint();
 		else if ("fold".equals(aCommand))
 			jButtonFoldActionPerformed();
 		else if ("save".equals(aCommand))
@@ -365,6 +360,21 @@ public class ResultWindow extends JFrame implements ActionListener
 			case DOUBLE_REGRESSION :
 			{
 				modelWindowHelper(TargetType.DOUBLE_REGRESSION);
+				break;
+			}
+			case LABEL_RANKING :
+			{
+				int aSelection = itsSubgroupTable.getSelectedRow();
+				Iterator<Subgroup> anIterator = itsSubgroupSet.iterator();
+				int i = 0;
+				while (i++ < aSelection)
+					anIterator.next();
+				Subgroup aSubgroup = anIterator.next();
+				LabelRankingMatrix aLRM = aSubgroup.getLabelRankingMatrix();
+//				aLRM.print();
+//				aLRM.printMax();
+				new LabelRankingMatrixWindow(itsQualityMeasure.getBaseLabelRankingMatrix(), aLRM,
+					" (" + aSubgroup.toString() + ")   " + aSubgroup.getLabelRanking().getRanking());
 				break;
 			}
 			default :
@@ -519,32 +529,6 @@ public class ResultWindow extends JFrame implements ActionListener
 		setBusy(false);
 	}
 
-	private void jButtonSubRankingPrint()
-	{
-		setBusy(true);
-
-		if (itsSubgroupSet.isEmpty())
-			return;
-
-		//Log.logCommandLine("entire dataset:");
-		//itsQualityMeasure.getBaseLabelRanking().print(); //base ranking over entire dataset
-
-		int aSelection = itsSubgroupTable.getSelectedRow();
-		Iterator<Subgroup> anIterator = itsSubgroupSet.iterator();
-		int i = 0;
-		while (i++ < aSelection)
-			anIterator.next();
-		Subgroup aSubgroup = anIterator.next();
-		Log.logCommandLine("subgroup " + aSelection + ": " + aSubgroup.toString());
-		aSubgroup.getLabelRanking().print();
-		LabelRankingMatrix aLRM = aSubgroup.getLabelRankingMatrix();
-		aLRM.print();
-		aLRM.printMax();
-		new LabelRankingMatrixWindow(itsQualityMeasure.getBaseLabelRankingMatrix(), aLRM);
-
-		setBusy(false);
-	}
-
 	private void jButtonFoldActionPerformed()
 	{
 		Log.logCommandLine("Members of the training set of fold " + itsFold);
@@ -605,7 +589,6 @@ public class ResultWindow extends JFrame implements ActionListener
 	private JButton jButtonPValues;
 	private JButton jButtonRegressionTest;
 	private JButton jButtonEmpirical;
-	private JButton jButtonSubRank;
 	private JButton jButtonPatternTeam;
 	private JButton jButtonROC;
 	private JButton jButtonSave;

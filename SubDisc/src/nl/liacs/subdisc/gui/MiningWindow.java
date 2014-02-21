@@ -1469,6 +1469,15 @@ public class MiningWindow extends JFrame implements ActionListener
 			{
 				throw new AssertionError(aTargetType);
 			}
+			case LABEL_RANKING :
+			{
+				Column aColumn = itsTargetConcept.getPrimaryTarget();
+				LabelRanking aLR = aColumn.getAverageRanking(null); //average ranking over entire dataset
+				LabelRankingMatrix aLRM = aColumn.getAverageRankingMatrix(null);
+				new LabelRankingMatrixWindow(aLRM, null, //no subgroup yet
+					"   " + aLR.getRanking());
+				break;
+			}
 			default :
 			{
 				throw new AssertionError(aTargetType);
@@ -1574,6 +1583,14 @@ public class MiningWindow extends JFrame implements ActionListener
 				Bayesian aBayesian = new Bayesian(aBaseTable);
 				aBayesian.climb();
 				aQualityMeasure = new QualityMeasure(itsSearchParameters, aBayesian.getDAG(), itsTable.getNrRows());
+				break;
+			}
+			case LABEL_RANKING :
+			{
+				Column aTarget = itsTable.getColumn(getTargetAttributeName());
+				LabelRanking aLR = aTarget.getAverageRanking(null); //average ranking over entire dataset
+				LabelRankingMatrix aLRM = new LabelRankingMatrix(aLR);
+				aQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), itsTable.getNrRows(), aLR, aLRM);
 				break;
 			}
 			default :

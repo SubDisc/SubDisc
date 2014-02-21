@@ -10,7 +10,6 @@ public class LabelRankingMatrix
 
 	private int itsSize; //number of labels
 	private float[][] itsMatrix; //the actual values.
-	//int[] pairwVector;
 
 	public LabelRankingMatrix(int theSize)
 	{
@@ -23,7 +22,7 @@ public class LabelRankingMatrix
  	public LabelRankingMatrix(LabelRanking theRanking)
 	{
 		itsSize = theRanking.getSize();
-		
+
 		itsMatrix = new float[itsSize][itsSize];
 
 		for (int i=0; i<itsSize; i++)
@@ -76,7 +75,7 @@ public class LabelRankingMatrix
 				aDistance += Math.abs(itsMatrix[i][j] - theMatrix.itsMatrix[i][j]);
 		return aDistance;
 	}
-	
+
 	public float distance(LabelRankingMatrix theMatrix)
 	{
 		float aDistance = 0;
@@ -91,7 +90,7 @@ public class LabelRankingMatrix
 			}
 		return aDistance/count;
 	}
-	
+
 	public float sqdistance(LabelRankingMatrix theMatrix)
 	{
 		float aDistance = 0;
@@ -104,7 +103,7 @@ public class LabelRankingMatrix
 			}
 		return aDistance/count;
 	}
-	
+
 //	public float distance(LabelRankingMatrix theMatrix)
 //	{
 //		float aDistance = 0;
@@ -215,7 +214,7 @@ public class LabelRankingMatrix
 
 		anAverageMatrix.print();
     }
-	
+
 //	public LabelRanking LabelRankingMatrix2ranking(LabelRankingMatrix theMatrix)
 //	{
 //		itsSize = theMatrix.getSize();
@@ -229,6 +228,6 @@ public class LabelRankingMatrix
 //					itsMatrix[i][j] = 1;
 //				else
 //					itsMatrix[i][j] = -1;
-//		
+//
 //	}
 }

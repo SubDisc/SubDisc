@@ -20,10 +20,10 @@ public class LabelRanking
 	{
 		String[] thePrefString = theString.split(">");
 		int itsPrefSize = thePrefString.length;
-		
+
 		itsSize = theString.replace(">","").length();
-		
-		
+
+
 		itsRanking = new int[itsSize];
 		for (int i=0; i<itsPrefSize; i++)
 		{
@@ -34,11 +34,11 @@ public class LabelRanking
 				int anIndex = Math.max(0, Character.getNumericValue(theSubString.charAt(j)) - 10); //0 means 'a'
 				anIndex = Math.min(anIndex, itsSize-1); // why is this needed?
 				itsRanking[anIndex] = i;
-				
+
 				//Log.logCommandLine("ranking:" + i + " index: " + anIndex);
 			}
 		}
-		
+
 		itsIndex = new String[itsSize];
 	}
 
@@ -62,40 +62,40 @@ public class LabelRanking
 		Log.logCommandLine("ranking:" + getRanking());
 	}
 
-//	final public String getRanking()
-//	{
-//		String aString = "[";
-//		for (int i=0; i<itsSize; i++)
-//			aString += getLabel(getRank(i));
-//		return aString + "]";
-//	}
-	
 	final public String getRanking()
 	{
-		String aString = "[";
-		
-		itsIndex = makeIndex();
-		for (int i=0; i<itsSize; i++)
-		{
-			if (itsIndex[i] != "" && i != 0)
-				aString += ">";
-			aString += itsIndex[i];
-		}
-		
-		return aString + "]";
+		String aString = "";
+
+		if (makeIndex()) //sanity check for robustness
+			for (int i=0; i<itsSize; i++)
+			{
+				if (itsIndex[i] != "" && i != 0)
+					aString += ">";
+				aString += itsIndex[i];
+			}
+		else
+			aString = "(incorrect ranking target)";
+
+		return aString;
 	}
-	
-	final public String[] makeIndex()
+
+	public boolean makeIndex()
 	{
 		Arrays.fill(itsIndex, "");
 		for (int i=0; i<itsSize; i++)
 		{
-			itsIndex[itsRanking[i]] += getLetter(i);
+			int anIndex = itsRanking[i];
+			if (anIndex>=0 && anIndex<itsIndex.length) //this should normally not be necessary, but the target column may be mall-formed
+				itsIndex[anIndex] += getLetter(i);
+			else
+			{
+				Log.logCommandLine("This target column doesn't seem to be a correct label ranking.");
+				return false; //failed to complete
+			}
 		}
-		
-		return itsIndex;
+		return true;
 	}
-	
+
 	static public String getLetter(int theLabel)
 	{
 		return ALPHABET.substring(theLabel, theLabel+1);

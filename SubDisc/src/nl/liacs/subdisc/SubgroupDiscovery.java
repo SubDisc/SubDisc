@@ -62,6 +62,8 @@ public class SubgroupDiscovery extends MiningAlgorithm
 
 		itsMinimumCoverage = itsSearchParameters.getMinimumCoverage();
 		itsMaximumCoverage = (int) (itsNrRows * itsSearchParameters.getMaximumCoverageFraction());
+
+		//TODO: this special case can be deleted? It should be in a new constructor by now
 		if (itsSearchParameters.getQualityMeasure() == QM.CLAUDIO1 || itsSearchParameters.getQualityMeasure() == QM.CLAUDIO2) //label ranking?
 		{
 			itsTargetRankings = aTC.getPrimaryTarget();
@@ -1037,10 +1039,12 @@ System.out.println(aSubgroup + "\t" + aRefinement.getConditionBase());
 					//System.out.println(aSum);
 					aQuality = QualityMeasure.calculatePropensityBased(aMeasure, aCountHeadBody, aCoverage, itsNrRows , aCountHeadPropensityScore);
 				}
+
+				//TODO: is this special case still needed?
 				else if (aMeasure == QM.CLAUDIO1 || aMeasure == QM.CLAUDIO2)
 				{
 					LabelRankingMatrix aLRM = itsTargetRankings.getAverageRankingMatrix(theNewSubgroup);
-					aQuality = itsQualityMeasure.computeLabelRankingDistance(aMeasure, aCoverage, aLRM);
+					aQuality = itsQualityMeasure.computeLabelRankingDistance(aCoverage, aLRM);
 					theNewSubgroup.setLabelRanking(itsTargetRankings.getAverageRanking(theNewSubgroup)); //store the average ranking for later reference
 					theNewSubgroup.setLabelRankingMatrix(aLRM); //store the matrix for later reference
 				}
@@ -1223,10 +1227,8 @@ System.out.println(aSubgroup + "\t" + aRefinement.getConditionBase());
 			case LABEL_RANKING :
 			{
 				final int aCoverage = theNewSubgroup.getCoverage();
-				final QM aMeasure = itsSearchParameters.getQualityMeasure();
-
 				LabelRankingMatrix aLRM = itsTargetRankings.getAverageRankingMatrix(theNewSubgroup);
-				aQuality = itsQualityMeasure.computeLabelRankingDistance(aMeasure, aCoverage, aLRM);
+				aQuality = itsQualityMeasure.computeLabelRankingDistance(aCoverage, aLRM);
 				theNewSubgroup.setLabelRanking(itsTargetRankings.getAverageRanking(theNewSubgroup)); //store the average ranking for later reference
 				theNewSubgroup.setLabelRankingMatrix(aLRM); //store the matrix for later reference
 

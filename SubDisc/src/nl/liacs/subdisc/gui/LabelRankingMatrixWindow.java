@@ -11,7 +11,7 @@ public class LabelRankingMatrixWindow extends JFrame implements ActionListener
 {
 	private static final long serialVersionUID = 1L;
 
-	public LabelRankingMatrixWindow(LabelRankingMatrix theBaseLRM, LabelRankingMatrix theLRM)
+	public LabelRankingMatrixWindow(LabelRankingMatrix theBaseLRM, LabelRankingMatrix theLRM, String theTitle)
 	{
 		JPanel aClosePanel = new JPanel();
 		aClosePanel.add(GUI.buildButton("Close", 'C', "close", this));
@@ -20,17 +20,21 @@ public class LabelRankingMatrixWindow extends JFrame implements ActionListener
 		JPanel aCenterPanel = new JPanel();
 		aCenterPanel.setLayout(new GridLayout(1, 3));
 
-		MatrixPlot aMatrixPlot1 = new MatrixPlot(theBaseLRM, "Base Matrix");
-		MatrixPlot aMatrixPlot2 = new MatrixPlot(theLRM, "Subgroup Matrix");
-		LabelRankingMatrix aClone = (LabelRankingMatrix) theBaseLRM.clone();
-		aClone.subtract(theLRM);
-		MatrixPlot aMatrixPlot3 = new MatrixPlot(aClone, "Difference");
+		MatrixPlot aMatrixPlot1, aMatrixPlot2, aMatrixPlot3;
+		aMatrixPlot1 = new MatrixPlot(theBaseLRM, "Base Matrix");
 		aCenterPanel.add(aMatrixPlot1);
-		aCenterPanel.add(aMatrixPlot2);
-		aCenterPanel.add(aMatrixPlot3);
+		if (theLRM != null)
+		{
+			aMatrixPlot2 = new MatrixPlot(theLRM, "Subgroup Matrix");
+			LabelRankingMatrix aClone = (LabelRankingMatrix) theBaseLRM.clone();
+			aClone.subtract(theLRM);
+			aMatrixPlot3 = new MatrixPlot(aClone, "Difference");
+			aCenterPanel.add(aMatrixPlot2);
+			aCenterPanel.add(aMatrixPlot3);
+		}
 		add(aCenterPanel, BorderLayout.CENTER);
 
-		setTitle("Label Ranking Matrix");
+		setTitle("Label Ranking Matrix: " + theTitle);
 		setIconImage(MiningWindow.ICON);
 		setLocation(100, 100);
 		setSize(GUI.MATRIX_WINDOW_DEFAULT_SIZE);
