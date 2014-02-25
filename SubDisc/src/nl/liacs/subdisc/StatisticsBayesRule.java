@@ -21,6 +21,20 @@ public class StatisticsBayesRule
 	private double[] probabilitiesDataPXGivenT;
 	private double[] probabilitiesDataPXGivenNotT;
 
+	/*
+	 * a number of things is wrong with this class
+	 * 1. size() returns the size of the BitSet, this is not logically
+	 *    tied to the size of the Table / nrRows
+	 *    currently they are the same, but this is just a coincidence and
+	 *    has not always been this way
+	 * 2. cardinality() is called a number of times for the same BitSets
+	 *    it is O(n), and very expensive on large data, as the BitSet will
+	 *    not fit in cpu cache
+	 * 3. the computation of these simple statistics does not need a clone
+	 *    of potentially large BitSets, from which only cardinality and size
+	 *    are required
+	 *    there are better ways to compute these statistics
+	 */
 	public StatisticsBayesRule(BitSet theX, BitSet theTarget)
 	{
 		itsX = theX;
