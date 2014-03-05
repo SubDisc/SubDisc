@@ -2215,6 +2215,9 @@ public class Column implements XMLNodeInterface
 
 		if (theNrSplits < 0)
 			throw new IllegalArgumentException(theNrSplits + " (theNrSplits) < 0");
+		// valid, but useless
+		if (theNrSplits == 0)
+			return new float[0];
 
 		final float[] aSplitPoints = new float[theNrSplits];
 		final int size = theBitSet.cardinality();

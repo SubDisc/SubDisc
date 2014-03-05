@@ -415,8 +415,10 @@ System.out.println(aSubgroup + "\t" + aRefinement.getConditionBase());
 			case NUMERIC_BEST_BINS :
 			{
 				//this is the crucial translation from nr bins to nr splitpoint
-				// code does nothing if aNrSplitPoints == 0
 				int aNrSplitPoints = itsSearchParameters.getNrBins() - 1;
+				if (aNrSplitPoints == 0)
+					break;
+
 				float aMax = Float.NEGATIVE_INFINITY;
 				Subgroup aBestSubgroup = null;
 				Subgroup aNewSubgroup = null;
