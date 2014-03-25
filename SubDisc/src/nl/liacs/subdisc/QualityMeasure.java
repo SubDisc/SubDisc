@@ -55,7 +55,7 @@ public class QualityMeasure
 	{
 		if (theMeasure == null)
 			throw new IllegalArgumentException("QualityMeasure: theMeasure can not be null");
-		if (theMeasure != QM.CLAUDIO1 && theMeasure != QM.CLAUDIO2)
+		if (theMeasure != QM.CLAUDIO1 && theMeasure != QM.CLAUDIO2 && theMeasure != QM.LRmin && theMeasure != QM.LRmax && theMeasure != QM.LRavg && theMeasure != QM.LRstrdv && theMeasure != QM.LRsqr)
 			throw new IllegalArgumentException("QualityMeasure: not a LabelRanking measure");
 		if (theTotalCoverage <= 0)
 			throw new IllegalArgumentException("QualityMeasure: theCoverage must be > 0");
@@ -608,8 +608,18 @@ public class QualityMeasure
 		float aDistance = 0.0f;
 		if (itsQualityMeasure == QM.CLAUDIO1)
 			aDistance = itsAverageRankingMatrix.distance(theSubgroupRankingMatrix);
-		else //CLAUDIO2
+		else if (itsQualityMeasure == QM.CLAUDIO2)
 			aDistance = itsAverageRankingMatrix.altDistance(theSubgroupRankingMatrix);
+		else if (itsQualityMeasure == QM.LRmin)
+			aDistance = itsAverageRankingMatrix.minDistance(theSubgroupRankingMatrix);
+		else if (itsQualityMeasure == QM.LRmax)
+			aDistance = itsAverageRankingMatrix.maxDistance(theSubgroupRankingMatrix);
+		else if (itsQualityMeasure == QM.LRavg)
+			aDistance = itsAverageRankingMatrix.avgDistance(theSubgroupRankingMatrix);
+		else if (itsQualityMeasure == QM.LRstrdv)
+			aDistance = itsAverageRankingMatrix.altDistance(theSubgroupRankingMatrix);
+//		else if (itsQualityMeasure == QM.LRsqr)
+//			aDistance = itsAverageRankingMatrix.sqrDistance(theSubgroupRankingMatrix);
 
 		//aDistance = aDistance*itsAverageRankingMatrix.homogeneity(theSubgroupRankingMatrix);
 		//Log.logCommandLine("distance: " + aDistance);

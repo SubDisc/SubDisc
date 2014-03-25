@@ -91,19 +91,29 @@ public class LabelRankingMatrix
 		return aDistance/count;
 	}
 
-	public float sqdistance(LabelRankingMatrix theMatrix)
+	public double sqrDistance(LabelRankingMatrix theMatrix)
+	{
+		double aDistance = 0;
+		for (int i=0; i<itsSize; i++)
+			for (int j=i+1; j<itsSize; j++)
+			{
+				aDistance += Math.pow(Math.abs(itsMatrix[i][j] - theMatrix.itsMatrix[i][j]),2);
+			}
+		return Math.sqrt(aDistance);
+	}
+
+	public float avgDistance(LabelRankingMatrix theMatrix)
 	{
 		float aDistance = 0;
 		int count=0;
 		for (int i=0; i<itsSize; i++)
 			for (int j=i+1; j<itsSize; j++)
 			{
-				aDistance += Math.pow(Math.abs(itsMatrix[i][j] - theMatrix.itsMatrix[i][j]),2);
-				count += 2;
+				aDistance += Math.abs(itsMatrix[i][j] - theMatrix.itsMatrix[i][j]);
+				count += 1;
 			}
 		return aDistance/count;
 	}
-
 //	public float distance(LabelRankingMatrix theMatrix)
 //	{
 //		float aDistance = 0;
@@ -138,6 +148,20 @@ public class LabelRankingMatrix
 			{
 				float aDistanceTest = Math.abs(itsMatrix[i][j] - theMatrix.itsMatrix[i][j]);
 				if (aDistanceTest >= aDistance)
+					aDistance = aDistanceTest;
+			}
+		return aDistance;
+	}
+	
+	public float minDistance(LabelRankingMatrix theMatrix)
+	{
+		float aDistance = 0;
+
+		for (int i=0; i<itsSize; i++)
+			for (int j=i+1; j<itsSize; j++)
+			{
+				float aDistanceTest = Math.abs(itsMatrix[i][j] - theMatrix.itsMatrix[i][j]);
+				if (aDistanceTest < aDistance)
 					aDistance = aDistanceTest;
 			}
 		return aDistance;
