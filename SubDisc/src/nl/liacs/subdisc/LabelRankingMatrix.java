@@ -90,40 +90,7 @@ public class LabelRankingMatrix
 			}
 		return aDistance/count;
 	}
-
-	public double sqrDistance(LabelRankingMatrix theMatrix)
-	{
-		double aDistance = 0;
-		for (int i=0; i<itsSize; i++)
-			for (int j=i+1; j<itsSize; j++)
-			{
-				aDistance += Math.pow(Math.abs(itsMatrix[i][j] - theMatrix.itsMatrix[i][j]),2);
-			}
-		return Math.sqrt(aDistance);
-	}
-
-	public float avgDistance(LabelRankingMatrix theMatrix)
-	{
-		float aDistance = 0;
-		int count=0;
-		for (int i=0; i<itsSize; i++)
-			for (int j=i+1; j<itsSize; j++)
-			{
-				aDistance += Math.abs(itsMatrix[i][j] - theMatrix.itsMatrix[i][j]);
-				count += 1;
-			}
-		return aDistance/count;
-	}
-//	public float distance(LabelRankingMatrix theMatrix)
-//	{
-//		float aDistance = 0;
-//		float aMin = 1f/0f;
-//		for (int i=0; i<itsSize; i++)
-//			for (int j=i+1; j<itsSize; j++)
-//				aDistance = Math.abs(itsMatrix[i][j] - theMatrix.itsMatrix[i][j]);
-//				aMin = Math.min(aMin, aDistance);
-//		return aMin;
-//	}
+	
 	public float altDistance(LabelRankingMatrix theMatrix)
 	{
 		float aParameter = 1.0f;
@@ -138,34 +105,103 @@ public class LabelRankingMatrix
 			}
 		return aDistance;
 	}
-
-	public float maxDistance(LabelRankingMatrix theMatrix)
-	{
-		float aDistance = 0;
-
-		for (int i=0; i<itsSize; i++)
-			for (int j=i+1; j<itsSize; j++)
-			{
-				float aDistanceTest = Math.abs(itsMatrix[i][j] - theMatrix.itsMatrix[i][j]);
-				if (aDistanceTest >= aDistance)
-					aDistance = aDistanceTest;
-			}
-		return aDistance;
-	}
 	
 	public float minDistance(LabelRankingMatrix theMatrix)
 	{
 		float aDistance = 0;
-
+		float aMin = 1f/0f;
 		for (int i=0; i<itsSize; i++)
 			for (int j=i+1; j<itsSize; j++)
 			{
-				float aDistanceTest = Math.abs(itsMatrix[i][j] - theMatrix.itsMatrix[i][j]);
-				if (aDistanceTest < aDistance)
-					aDistance = aDistanceTest;
+				aDistance = Math.abs(itsMatrix[i][j] - theMatrix.itsMatrix[i][j]);
+				aMin = Math.min(aMin, aDistance);
 			}
-		return aDistance;
+		return aMin;
 	}
+	public float minsqrtDistance(LabelRankingMatrix theMatrix)
+	{
+		float aDistance = 0;
+		float aMin = 1f/0f;
+		for (int i=0; i<itsSize; i++)
+			for (int j=i+1; j<itsSize; j++)
+			{
+				aDistance = Math.abs(itsMatrix[i][j] - theMatrix.itsMatrix[i][j]);
+				aMin = Math.min(aMin, aDistance);
+			}
+		return (float) Math.sqrt(aMin);
+	}
+	
+	public float maxDistance(LabelRankingMatrix theMatrix)
+	{
+		float aDistance = 0;
+		float aMax = 1f/0f;
+		for (int i=0; i<itsSize; i++)
+			for (int j=i+1; j<itsSize; j++)
+			{
+				aDistance = Math.abs(itsMatrix[i][j] - theMatrix.itsMatrix[i][j]);
+				aMax = Math.min(aMax, aDistance);
+			}
+		return aMax;
+	}
+	
+	public float maxsqrtDistance(LabelRankingMatrix theMatrix)
+	{
+		float aDistance = 0;
+		float aMax = 1f/0f;
+		for (int i=0; i<itsSize; i++)
+			for (int j=i+1; j<itsSize; j++)
+			{
+				aDistance = Math.abs(itsMatrix[i][j] - theMatrix.itsMatrix[i][j]);
+				aMax = Math.min(aMax, aDistance);
+			}
+		return (float) Math.sqrt(aMax);
+	}
+	
+	public float avgDistance(LabelRankingMatrix theMatrix)
+	{
+		float aDistance = 0;
+		int count=0;
+		for (int i=0; i<itsSize; i++)
+			for (int j=i+1; j<itsSize; j++)
+			{
+				aDistance += Math.abs(itsMatrix[i][j] - theMatrix.itsMatrix[i][j]);
+				count += 1;
+			}
+		return aDistance/count;
+	}
+	
+	public float strdvDistance(LabelRankingMatrix theMatrix)
+	{
+		float aDistance = 0;
+		float theMeanDistance = avgDistance(theMatrix);
+		int count=0;
+		for (int i=0; i<itsSize; i++)
+			for (int j=i+1; j<itsSize; j++)
+			{
+				aDistance += Math.pow(theMeanDistance - Math.abs(itsMatrix[i][j] - theMatrix.itsMatrix[i][j]),2);
+				count += 1;
+			}
+		return (float) Math.sqrt(aDistance/count);
+	}
+	
+	public float sqrDistance(LabelRankingMatrix theMatrix)
+	{
+		double aDistance = 0;
+		for (int i=0; i<itsSize; i++)
+			for (int j=i+1; j<itsSize; j++)
+			{
+				aDistance += Math.pow(itsMatrix[i][j] - theMatrix.itsMatrix[i][j],2);
+			}
+		return (float) Math.sqrt(aDistance);
+	}
+
+
+
+
+
+
+	
+
 
 	public float homogeneity(LabelRankingMatrix theMatrix)
 	{
