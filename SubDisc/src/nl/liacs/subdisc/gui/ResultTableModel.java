@@ -47,18 +47,22 @@ public class ResultTableModel extends AbstractTableModel
 			case 1 : return "Depth";
 			case 2 : return "Coverage";
 			case 3 : return "Quality";
-			case 4 : {
+			case 4 :
+			{
 				switch (theTargetType) {
 					case SINGLE_NOMINAL : return "Probability";
 					case SINGLE_NUMERIC : return "Average";
 					case DOUBLE_CORRELATION : return "Correlation";
 					case DOUBLE_REGRESSION : return "Slope";
 					case MULTI_LABEL : return "Edit Distance";
+					case LABEL_RANKING : return "Ranking";
 					default : return "";
 				}
 			}
-			case 5 : {
-				switch (theTargetType) {
+			case 5 :
+			{
+				switch (theTargetType)
+				{
 					case SINGLE_NOMINAL : return "Positives";
 					case SINGLE_NUMERIC : return "St. Dev.";
 					case DOUBLE_CORRELATION : return "Distance";
@@ -99,7 +103,16 @@ public class ResultTableModel extends AbstractTableModel
 			case 1: return aSubgroup.getDepth();
 			case 2: return aSubgroup.getCoverage();
 			case 3: return RendererNumber.FORMATTER.format(aSubgroup.getMeasureValue());
-			case 4: return RendererNumber.FORMATTER.format(aSubgroup.getSecondaryStatistic());
+			case 4:
+			{
+				switch (itsTargetType)
+				{
+					case LABEL_RANKING :
+						return aSubgroup.getLabelRanking().getRanking();
+					default :
+						return RendererNumber.FORMATTER.format(aSubgroup.getSecondaryStatistic());
+				}
+			}
 			case 5: return RendererNumber.FORMATTER.format(aSubgroup.getTertiaryStatistic());
 			case 6:
 			{
