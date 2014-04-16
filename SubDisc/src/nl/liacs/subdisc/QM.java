@@ -66,15 +66,15 @@ public enum QM implements EnumInterface
 
 
 	// LABEL_RANKING
-	CLAUDIO1		("Claudio 1",		"0.0",	TargetType.LABEL_RANKING),
-	CLAUDIO2		("Claudio 2",		"0.0",	TargetType.LABEL_RANKING),
-	LRmin			("Min",		"0.0",	TargetType.LABEL_RANKING),
-	LRminsqrt		("Min Sqrt",		"0.0",	TargetType.LABEL_RANKING),
-	LRmax			("Max",		"0.0",	TargetType.LABEL_RANKING),
-	LRmaxsqrt		("Max Sqrt",		"0.0",	TargetType.LABEL_RANKING),
-	LRavg			("Average",		"0.0",	TargetType.LABEL_RANKING),
-	LRstrdv			("Standard Deviation",		"0.0",	TargetType.LABEL_RANKING),
-	LRsqr			("Square Root",		"0.0",	TargetType.LABEL_RANKING),
+	CLAUDIO1		("Claudio 1",			"0.0",	TargetType.LABEL_RANKING),
+	CLAUDIO2		("Claudio 2",			"0.0",	TargetType.LABEL_RANKING),
+	LRmin			("Min",					"0.0",	TargetType.LABEL_RANKING),
+	LRminsqrt		("Min Sqrt",			"0.0",	TargetType.LABEL_RANKING),
+	LRmax			("Max",					"0.0",	TargetType.LABEL_RANKING),
+	LRmaxsqrt		("Max Sqrt",			"0.0",	TargetType.LABEL_RANKING),
+	LRavg			("Average",				"0.0",	TargetType.LABEL_RANKING),
+	LRstrdv			("Standard Deviation",	"0.0",	TargetType.LABEL_RANKING),
+	LRsqr			("Square Root",			"0.0",	TargetType.LABEL_RANKING),
 
 	// DOUBLE_CORRELATION  quality measures
 	CORRELATION_R		("r",			"0.2",	TargetType.DOUBLE_CORRELATION),

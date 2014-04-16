@@ -64,7 +64,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		itsMaximumCoverage = (int) (itsNrRows * itsSearchParameters.getMaximumCoverageFraction());
 
 		//TODO: this special case can be deleted? It should be in a new constructor by now
-		if (itsSearchParameters.getQualityMeasure() == QM.CLAUDIO1 || itsSearchParameters.getQualityMeasure() == QM.CLAUDIO2) //label ranking?
+		if (itsSearchParameters.getQualityMeasure().TARGET_TYPE == TargetType.LABEL_RANKING) //label ranking?
 		{
 			itsTargetRankings = aTC.getPrimaryTarget();
 			LabelRanking aLR = itsTargetRankings.getAverageRanking(null); //average ranking over entire dataset
@@ -75,7 +75,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 			itsQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), itsNrRows, theNrPositive);
 		itsQualityMeasureMinimum = itsSearchParameters.getQualityMeasureMinimum();
 
-		if (itsSearchParameters.getQualityMeasure() != QM.CLAUDIO1 && itsSearchParameters.getQualityMeasure() != QM.CLAUDIO2)
+		if (itsSearchParameters.getQualityMeasure().TARGET_TYPE != TargetType.LABEL_RANKING)
 		{
 			Column aTarget = aTC.getPrimaryTarget();
 			ConditionBase aConditionBase = new ConditionBase(aTarget, Operator.EQUALS);
