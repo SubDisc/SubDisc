@@ -48,15 +48,15 @@ public class ProbabilityDensityFunction
 		itsBinWidth = thePDF.itsBinWidth;
 		itsAbsoluteCount = theMembers.cardinality();
 
-		float anIncrement = 1.0f / theMembers.cardinality();
+		float anIncrement = 1.0f / itsAbsoluteCount;
 		for (int i = theMembers.nextSetBit(0); i >= 0; i = theMembers.nextSetBit(i + 1))
 			add(thePDF.itsData.getFloat(i), anIncrement);
 	}
 
-	public float getDensity(float theValue)
-	{
-		return getDensity(getIndex(theValue));
-	}
+//	public float getDensity(float theValue)
+//	{
+//		return getDensity(getIndex(theValue));
+//	}
 
 	public float getDensity(int theIndex)
 	{
@@ -75,8 +75,6 @@ public class ProbabilityDensityFunction
 	{
 		return itsMin + (theIndex + 0.5f)*itsBinWidth;
 	}
-	
-	public int getAbsoluteCount() { return itsAbsoluteCount; }
 
 	/*
 	 * FIXME
@@ -135,7 +133,7 @@ public class ProbabilityDensityFunction
 		// NOTE rounding errors may still prevent this
 		for (int i = 0, j = aWidth; i < j; ++i)
 			aKernel[i] /= aCorrection;
-
+System.out.format("##### theSigma = %f\tKERNEL SIZE = %d%n", theSigma, aKernel.length);
 		return aKernel;
 	}
 
