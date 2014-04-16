@@ -1427,7 +1427,12 @@ public class MiningWindow extends JFrame implements ActionListener
 			case SINGLE_NUMERIC :
 			{
 				Column aTarget = itsTargetConcept.getPrimaryTarget();
-				ProbabilityDensityFunction aPDF = new ProbabilityDensityFunction(aTarget);
+				ProbabilityDensityFunction aPDF;
+				// DEBUG
+				if (!ProbabilityDensityFunction.USE_ProbabilityDensityFunction2)
+					aPDF = new ProbabilityDensityFunction(aTarget);
+				else
+					aPDF = new ProbabilityDensityFunction2(aTarget);
 				aPDF.smooth();
 				new ModelWindow(aTarget, aPDF, null, itsTable.getName());
 				break;
@@ -1560,7 +1565,12 @@ public class MiningWindow extends JFrame implements ActionListener
 				float[] aStats = aTarget.getStatistics(b, false);
 
 				// get smoothed PDF with default number of bins
-				ProbabilityDensityFunction aPDF = new ProbabilityDensityFunction(aTarget);
+				ProbabilityDensityFunction aPDF;
+				// DEBUG
+				if (!ProbabilityDensityFunction.USE_ProbabilityDensityFunction2)
+					aPDF = new ProbabilityDensityFunction(aTarget);
+				else
+					aPDF = new ProbabilityDensityFunction2(aTarget);
 				aPDF.smooth();
 
 				aQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), aNrRows, aStats[0], aStats[1], aPDF);

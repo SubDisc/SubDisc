@@ -306,7 +306,12 @@ public class ResultWindow extends JFrame implements ActionListener
 			case SINGLE_NUMERIC :
 			{
 				Column aTarget = itsSearchParameters.getTargetConcept().getPrimaryTarget();
-				ProbabilityDensityFunction aPDF = new ProbabilityDensityFunction(aTarget);
+				ProbabilityDensityFunction aPDF;
+				// DEBUG
+				if (!ProbabilityDensityFunction.USE_ProbabilityDensityFunction2)
+					aPDF = new ProbabilityDensityFunction(aTarget);
+				else
+					aPDF = new ProbabilityDensityFunction2(aTarget);
 				aPDF.smooth();
 
 				int[] aSelection = itsSubgroupTable.getSelectedRows();
@@ -319,7 +324,12 @@ public class ResultWindow extends JFrame implements ActionListener
 						anIterator.next();
 					Subgroup aSubgroup = anIterator.next();
 
-					ProbabilityDensityFunction aSubgroupPDF = new ProbabilityDensityFunction(aPDF, aSubgroup.getMembers());
+					ProbabilityDensityFunction aSubgroupPDF;
+					// DEBUG
+					if (!ProbabilityDensityFunction.USE_ProbabilityDensityFunction2)
+						aSubgroupPDF = new ProbabilityDensityFunction(aPDF, aSubgroup.getMembers());
+					else
+						aSubgroupPDF = new ProbabilityDensityFunction2(aPDF, aSubgroup.getMembers());
 					aSubgroupPDF.smooth();
 					new ModelWindow(aTarget, aPDF, aSubgroupPDF, "Subgroup " + aSubgroup.getID());
 				}

@@ -10,7 +10,8 @@ import java.util.Map.Entry;
  * a PDFNode consists of [value, delta_to_previous_value, probability(value)]
  * 
  * the delta is determined at creation time, by sorting the original unique data
- * the continuous version of KL uses this delta for the integral
+ * the continuous version of KL does not use the delta
+ * the continuous version of H^2 uses the delta for the integral dx
  * 
  * for both the data and every subgroup, a Map<value, occurrences> is created
  * from only the unique values that it covers (might be few for subgroups)
@@ -21,14 +22,19 @@ import java.util.Map.Entry;
  * only the non-zero subgroup values are required for the computation
  * because, when p(x) = 0 -> no contribution is made to the summation
  * 
- * for each value x in the subgroup, the lookup of delta(x) and q(x) is done in
- * constant time O(1), as the data.pdf is a HashMap
+ * for each value x in the subgroup, the lookup of q(x) is done in constant time
+ * O(1), as the data.pdf is a HashMap
  * so the KL divergence can be computed in linear time O(|D_sg|)
  * a sorted pdf would require O(|D_sg| * log(|D_d|))
  * (+ time required to get D_sg -> O(|D_sg| * log(|D_sg|))
  * 
  * Hellinger H^2(P,Q): 1/2 * integral( sqrt(dP/dl) - sqrt(dQ/dl) )^2 * dl
  * visits all unique values in D_d
+ * 
+ * 
+ * 
+ * 
+ * 
  */
 public class ProbabilityDensityFunctionContinuous
 {

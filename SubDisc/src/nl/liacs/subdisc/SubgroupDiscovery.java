@@ -121,7 +121,12 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		BitSet aBitSet = new BitSet();
 		aBitSet.set(0, itsNrRows);
 		float[] aCounts = itsNumericTarget.getStatistics(aBitSet, false);
-		ProbabilityDensityFunction aPDF = new ProbabilityDensityFunction(itsNumericTarget);
+		ProbabilityDensityFunction aPDF;
+		// DEBUG
+		if (!ProbabilityDensityFunction.USE_ProbabilityDensityFunction2)
+			aPDF = new ProbabilityDensityFunction(itsNumericTarget);
+		else
+			aPDF = new ProbabilityDensityFunction2(itsNumericTarget);
 		aPDF.smooth();
 
 		itsQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), itsNrRows, aCounts[0], aCounts[1], aPDF);
@@ -416,6 +421,16 @@ System.out.println(aSubgroup + "\t" + aRefinement.getConditionBase());
 			{
 				//this is the crucial translation from nr bins to nr splitpoint
 				int aNrSplitPoints = itsSearchParameters.getNrBins() - 1;
+				/*
+				 * (aNrSplitPoints == 0) or (nrBins == 1) would
+				 * result in adding a Condition that selects all
+				 * data for the Condition.Column
+				 * combined with the existing Conditions, this
+				 * yields a ConditionList that selects the exact
+				 * same Subgroup extension
+				 * this is considered useless, as it does not
+				 * decrease the size of the Subgroup
+				 */
 				if (aNrSplitPoints == 0)
 					break;
 
