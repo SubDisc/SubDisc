@@ -72,9 +72,9 @@ public enum QM implements EnumInterface
 	LRminsqrt		("Min Sqrt",			"0.0",	TargetType.LABEL_RANKING),
 	LRmax			("Max",					"0.0",	TargetType.LABEL_RANKING),
 	LRmaxsqrt		("Max Sqrt",			"0.0",	TargetType.LABEL_RANKING),
-	LRavg			("Average",				"0.0",	TargetType.LABEL_RANKING),
-	LRstrdv			("Standard Deviation",	"0.0",	TargetType.LABEL_RANKING),
-	LRsqr			("Square Root",			"0.0",	TargetType.LABEL_RANKING),
+	LRavg			("LRM Average",			"0.0",	TargetType.LABEL_RANKING),
+	LRstrdv			("LRM Std Deviation",	"0.0",	TargetType.LABEL_RANKING),
+	LRsqr			("LRM Square Root",		"0.0",	TargetType.LABEL_RANKING),
 
 	// DOUBLE_CORRELATION  quality measures
 	CORRELATION_R		("r",			"0.2",	TargetType.DOUBLE_CORRELATION),

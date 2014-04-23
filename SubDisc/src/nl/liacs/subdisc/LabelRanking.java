@@ -69,9 +69,10 @@ public class LabelRanking
 		if (makeIndex()) //sanity check for robustness
 			for (int i=0; i<itsSize; i++)
 			{
-				if (itsIndex[i] != "" && i != 0)
-					aString += ">";
+				
 				aString += itsIndex[i];
+				if (itsIndex[i] != "" && i < (itsSize - 1))
+					aString += ">";
 			}
 		else
 			aString = "(incorrect ranking target)";

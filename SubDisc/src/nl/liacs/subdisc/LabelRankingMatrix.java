@@ -74,11 +74,12 @@ public class LabelRankingMatrix
 		for (int i=0; i<itsSize; i++)
 			for (int j=i+1; j<itsSize; j++)
 			{
-				aDistance += Math.pow(Math.abs(itsMatrix[i][j] - theMatrix.itsMatrix[i][j]), 2);
+				//aDistance += Math.pow(Math.abs(itsMatrix[i][j] - theMatrix.itsMatrix[i][j]), 2);
+				aDistance += Math.abs(itsMatrix[i][j] - theMatrix.itsMatrix[i][j]);
 				count += 1;
 			}
-		//return (aDistance/count)*homogeneity(theMatrix);
-		return aDistance/count;
+		return (aDistance/count)*homogeneity(theMatrix);
+		//return aDistance/count;
 	}
 	
 	public float altDistance(LabelRankingMatrix theMatrix)
@@ -212,7 +213,7 @@ public class LabelRankingMatrix
 				aDistance += Math.abs(theMatrix.itsMatrix[i][j]);
 			}
 		aDistance = aDistance/((itsSize*(itsSize+1))/2);
-		Log.logCommandLine("<>" + aDistance + "<>");
+		//Log.logCommandLine("<>" + aDistance + "<>");
 		return aDistance;
 	}
 
