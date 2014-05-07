@@ -178,6 +178,8 @@ public class TargetConcept implements XMLNodeInterface
 				return ((itsPrimaryTarget == theColumn) || (itsSecondaryTarget == theColumn));
 			case DOUBLE_CORRELATION :
 				return ((itsPrimaryTarget == theColumn) || (itsSecondaryTarget == theColumn));
+			case SCAPE :
+				return ((itsPrimaryTarget == theColumn) || (itsSecondaryTarget == theColumn));
 			case MULTI_LABEL :
 			{
 				for (Column aColumn : itsMultiTargets)

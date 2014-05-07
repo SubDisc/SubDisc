@@ -562,7 +562,8 @@ public class MiningWindow extends JFrame implements ActionListener
 				if (aTargetType == TargetType.SINGLE_NOMINAL)
 					aMiscField = itsTargetConcept.getTargetValue();
 				else if (aTargetType == TargetType.DOUBLE_REGRESSION ||
-						aTargetType == TargetType.DOUBLE_CORRELATION)
+						aTargetType == TargetType.DOUBLE_CORRELATION ||
+						aTargetType == TargetType.SCAPE)
 					aMiscField = itsTargetConcept.getSecondaryTarget().getName();
 			}
 		}
@@ -586,7 +587,8 @@ public class MiningWindow extends JFrame implements ActionListener
 					itsTargetConcept.setTargetValue(aMiscField);
 				}
 				else if (aTargetType == TargetType.DOUBLE_REGRESSION ||
-						aTargetType == TargetType.DOUBLE_CORRELATION)
+						aTargetType == TargetType.DOUBLE_CORRELATION ||
+						aTargetType == TargetType.SCAPE)
 				{
 					setMiscFieldName(aMiscField);
 					itsTargetConcept.setSecondaryTarget(itsTable.getColumn(aMiscField));
@@ -708,7 +710,7 @@ public class MiningWindow extends JFrame implements ActionListener
 		removeAllMultiTargetsItems();
 		removeAllMultiRegressionTargetsItems();
 
-		boolean fillMiscField = (aTargetType == TargetType.DOUBLE_REGRESSION) || (aTargetType == TargetType.DOUBLE_CORRELATION);
+		boolean fillMiscField = (aTargetType == TargetType.DOUBLE_REGRESSION) || (aTargetType == TargetType.DOUBLE_CORRELATION) || (aTargetType == TargetType.SCAPE);
 		// primary target and (optional) MiscField
 		for (Column c : itsTable.getColumns())
 		{
@@ -733,6 +735,13 @@ public class MiningWindow extends JFrame implements ActionListener
 				 * see initTargetValues()
 				 */
 				if (fillMiscField)
+					addMiscFieldItem(c.getName());
+			}
+			if (aTargetType == TargetType.SCAPE && anAttributeType == AttributeType.BINARY)
+				addTargetAttributeItem(c.getName());
+			else
+			{
+				if (aTargetType == TargetType.SCAPE && anAttributeType == AttributeType.NUMERIC)
 					addMiscFieldItem(c.getName());
 			}
 		}
@@ -918,6 +927,15 @@ public class MiningWindow extends JFrame implements ActionListener
 					new CorrelationMeasure(QM.CORRELATION_R, aPrimaryColumn, aSecondaryColumn);
 				jLabelTargetInfo.setText(" correlation");
 				jLabelTargetInfoText.setText(Double.toString(aCM.getEvaluationMeasureValue()));
+				break;
+			}
+			case SCAPE :
+			{
+//				Column aBinaryColumn = itsTargetConcept.getPrimaryTarget();
+//				Column aNumericColumn = itsTargetConcept.getSecondaryTarget();
+				
+				jLabelTargetInfo.setText(" overall ranking loss");
+				jLabelTargetInfoText.setText(Integer.toString(3));
 				break;
 			}
 			case MULTI_LABEL :
@@ -1299,7 +1317,8 @@ public class MiningWindow extends JFrame implements ActionListener
 		 */
 		TargetType aTargetType = itsTargetConcept.getTargetType();
 		if (aTargetType != TargetType.DOUBLE_REGRESSION &&
-				aTargetType != TargetType.DOUBLE_CORRELATION)
+				aTargetType != TargetType.DOUBLE_CORRELATION &&
+				aTargetType != TargetType.SCAPE)
 			initTargetValues();
 
 		/*
@@ -1334,6 +1353,11 @@ public class MiningWindow extends JFrame implements ActionListener
 				break;
 			}
 			case DOUBLE_CORRELATION :
+			{
+				itsTargetConcept.setSecondaryTarget(itsTable.getColumn(getMiscFieldName()));
+				break;
+			}
+			case SCAPE :
 			{
 				itsTargetConcept.setSecondaryTarget(itsTable.getColumn(getMiscFieldName()));
 				break;
@@ -1453,6 +1477,15 @@ public class MiningWindow extends JFrame implements ActionListener
 			{
 				new ModelWindow(itsTable, itsTargetConcept.getPrimaryTarget(), itsTargetConcept.getSecondaryTarget(), null, null); //no trendline, no subset
 				break;
+			}
+			case SCAPE :
+			{
+				Column aTarget = itsTargetConcept.getSecondaryTarget();
+				ProbabilityDensityFunction aPDF;
+				aPDF = new ProbabilityDensityFunction(aTarget);
+				aPDF.smooth();
+				new ModelWindow(aTarget, aPDF, null, itsTable.getName());
+				break;				
 			}
 			case MULTI_LABEL :
 			{
@@ -1582,6 +1615,11 @@ public class MiningWindow extends JFrame implements ActionListener
 				break;
 			}
 			case DOUBLE_CORRELATION :
+			{
+				aQualityMeasure = null;
+				break;
+			}
+			case SCAPE :
 			{
 				aQualityMeasure = null;
 				break;

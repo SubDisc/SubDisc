@@ -14,6 +14,7 @@ public enum TargetType implements EnumInterface
 	SINGLE_ORDINAL("single ordinal"),
 	DOUBLE_REGRESSION("double regression"),
 	DOUBLE_CORRELATION("double correlation"),
+	SCAPE("soft classifier performance evaluation"),
 	MULTI_LABEL("multi-label"),
 	MULTI_BINARY_CLASSIFICATION("multi binary classification"),
 	LABEL_RANKING("label ranking");
@@ -83,6 +84,7 @@ public enum TargetType implements EnumInterface
 			case SINGLE_ORDINAL		: return false;
 			case DOUBLE_REGRESSION	: return true;
 			case DOUBLE_CORRELATION	: return true;
+			case SCAPE				: return false;
 			case MULTI_LABEL		: return true;
 			case LABEL_RANKING		: return true;
 			case MULTI_BINARY_CLASSIFICATION: return false;
@@ -104,6 +106,7 @@ public enum TargetType implements EnumInterface
 			case SINGLE_ORDINAL		: return false;
 			case DOUBLE_REGRESSION	: return true;
 			case DOUBLE_CORRELATION	: return true;
+			case SCAPE				: return false;		//WD: probably. Dunno. I didn't change any XML stuff, so I guess no.
 			case MULTI_LABEL		: return false;
 			case LABEL_RANKING		: return false;
 			case MULTI_BINARY_CLASSIFICATION: return false;
@@ -125,6 +128,7 @@ public enum TargetType implements EnumInterface
 			case SINGLE_ORDINAL		: return false;
 			case DOUBLE_REGRESSION	: return false;
 			case DOUBLE_CORRELATION	: return false;
+			case SCAPE				: return false;
 			case MULTI_LABEL		: return true;
 			case LABEL_RANKING		: return false;
 			case MULTI_BINARY_CLASSIFICATION: return true;
@@ -146,6 +150,7 @@ public enum TargetType implements EnumInterface
 			case SINGLE_ORDINAL		: return false;
 			case DOUBLE_REGRESSION	: return true;
 			case DOUBLE_CORRELATION	: return false;
+			case SCAPE				: return false;
 			case MULTI_LABEL		: return false;
 			case LABEL_RANKING		: return false;
 			case MULTI_BINARY_CLASSIFICATION: return false;
@@ -167,6 +172,7 @@ public enum TargetType implements EnumInterface
 			case SINGLE_ORDINAL		: return false;
 			case DOUBLE_REGRESSION	: return true;
 			case DOUBLE_CORRELATION	: return true;
+			case SCAPE				: return true;
 			case MULTI_LABEL		: return false;
 			case LABEL_RANKING		: return false;
 			case MULTI_BINARY_CLASSIFICATION: return true;
@@ -188,6 +194,7 @@ public enum TargetType implements EnumInterface
 			case SINGLE_ORDINAL		: return true;
 			case DOUBLE_REGRESSION	: return true;
 			case DOUBLE_CORRELATION	: return true;
+			case SCAPE				: return true;
 			case MULTI_LABEL		: return false;
 			case LABEL_RANKING		: return true;
 			case MULTI_BINARY_CLASSIFICATION: return false;	// TODO true?
@@ -210,6 +217,7 @@ public enum TargetType implements EnumInterface
 			case SINGLE_ORDINAL		: return false;
 			case DOUBLE_REGRESSION	: return false;
 			case DOUBLE_CORRELATION	: return false;
+			case SCAPE				: return false;
 			case MULTI_LABEL		: return false;
 			case LABEL_RANKING		: return false;
 			case MULTI_BINARY_CLASSIFICATION: return false;	// TODO true?
@@ -232,6 +240,7 @@ public enum TargetType implements EnumInterface
 			case SINGLE_ORDINAL		: return false;
 			case DOUBLE_REGRESSION	: return true;
 			case DOUBLE_CORRELATION	: return true;
+			case SCAPE				: return true;
 			case MULTI_LABEL		: return true;
 			case LABEL_RANKING		: return true;
 			case MULTI_BINARY_CLASSIFICATION: return false;	// TODO true?

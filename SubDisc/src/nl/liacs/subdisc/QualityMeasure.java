@@ -934,7 +934,7 @@ public class QualityMeasure
 	}
 
 
-	//Baysian ==============================================================
+	//Bayesian ==============================================================
 
 	public QualityMeasure(SearchParameters theSearchParameters, DAG theDAG, int theTotalCoverage)
 	{
@@ -1003,5 +1003,42 @@ public class QualityMeasure
 						if (theDAG.testVStructure(j,i) != itsVStructures[j][i])
 							nrEdits++;
 		return (float) nrEdits / (float) (itsNrNodes*(itsNrNodes-1)/2); // Actually n choose 2, but this boils down to the same...
+	}
+	
+	//SCAPE =======================================================
+
+	public float calculate(int theCoverage)
+	{
+		switch (itsQualityMeasure)
+		{
+			//SCAPE
+			case SUBRANKING_LOSS :
+			{
+				if (itsNrRecords <= 1)
+					return 0.0f;
+				else
+					return 2.0f;
+			}
+			case AVERAGE_SUBRANKING_LOSS :
+			{
+				if (itsNrRecords <= 1)
+					return 0.0f;
+				else
+					return 1.0f;
+			}
+			default :
+			{
+				/*
+				 * if the QM is valid for this TargetType
+				 * 	it is not implemented here
+				 * else
+				 * 	this method should not have been called
+				 */
+				if (QM.getQualityMeasures(TargetType.SCAPE).contains(itsQualityMeasure))
+					throw new AssertionError(itsQualityMeasure);
+				else
+					throw new IllegalArgumentException("Invalid QM: " + itsQualityMeasure);
+			}
+		}
 	}
 }

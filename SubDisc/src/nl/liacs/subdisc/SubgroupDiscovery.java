@@ -28,8 +28,8 @@ public class SubgroupDiscovery extends MiningAlgorithm
 	private BitSet itsBinaryTarget;		//SINGLE_NOMINAL
 	private Column itsTargetRankings;	//SINGLE_NOMINAL (label ranking)
 	private Column itsNumericTarget;	//SINGLE_NUMERIC
-	private Column itsPrimaryColumn;	//DOUBLE_CORRELATION / DOUBLE_REGRESSION
-	private Column itsSecondaryColumn;	//DOUBLE_CORRELATION / DOUBLE_REGRESSION
+	private Column itsPrimaryColumn;	//DOUBLE_CORRELATION / DOUBLE_REGRESSION / SCAPE
+	private Column itsSecondaryColumn;	//DOUBLE_CORRELATION / DOUBLE_REGRESSION / SCAPE
 	private CorrelationMeasure itsBaseCM;	//DOUBLE_CORRELATION
 	private RegressionMeasure itsBaseRM;	//DOUBLE_REGRESSION
 	private BinaryTable itsBinaryTable;	//MULTI_LABEL
@@ -123,10 +123,10 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		float[] aCounts = itsNumericTarget.getStatistics(aBitSet, false);
 		ProbabilityDensityFunction aPDF;
 		// DEBUG
-		if (!ProbabilityDensityFunction.USE_ProbabilityDensityFunction2)
+//		if (!ProbabilityDensityFunction.USE_ProbabilityDensityFunction2)
 			aPDF = new ProbabilityDensityFunction(itsNumericTarget);
-		else
-			aPDF = new ProbabilityDensityFunction2(itsNumericTarget);
+//		else
+//			aPDF = new ProbabilityDensityFunction2(itsNumericTarget);
 		aPDF.smooth();
 
 		itsQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), itsNrRows, aCounts[0], aCounts[1], aPDF);
@@ -192,6 +192,28 @@ public class SubgroupDiscovery extends MiningAlgorithm
 //			itsSecondaryColumn = aTC.getSecondaryTarget();
 			itsBaseCM = new CorrelationMeasure(itsSearchParameters.getQualityMeasure(), itsPrimaryColumn, itsSecondaryColumn);
 		}
+
+		itsResult = new SubgroupSet(itsSearchParameters.getMaximumSubgroups(), itsNrRows);
+	}
+
+	//SCAPE
+	public SubgroupDiscovery(JFrame theMainWindow, SearchParameters theSearchParameters, Table theTable)
+	{
+		super(theSearchParameters);
+		itsTable = theTable;
+		itsNrRows = itsTable.getNrRows();
+		itsMainWindow = theMainWindow;
+		itsMinimumCoverage = itsSearchParameters.getMinimumCoverage();
+		itsMaximumCoverage = (int) (itsNrRows * itsSearchParameters.getMaximumCoverageFraction());
+
+		//compute base model
+		TargetConcept aTC = itsSearchParameters.getTargetConcept();
+		// TODO for stable jar, initiated here, SubgroupDiscovery revision 893 moved this to else below
+		itsPrimaryColumn = aTC.getPrimaryTarget();
+		itsSecondaryColumn = aTC.getSecondaryTarget();
+
+		itsQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), itsNrRows, itsNrRows);
+		itsQualityMeasureMinimum = itsSearchParameters.getQualityMeasureMinimum();
 
 		itsResult = new SubgroupSet(itsSearchParameters.getMaximumSubgroups(), itsNrRows);
 	}

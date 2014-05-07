@@ -70,6 +70,11 @@ public class Process
 				aSubgroupDiscovery = new SubgroupDiscovery(theSearchParameters, theTable, false, theMainWindow);
 				break;
 			}
+			case SCAPE :
+			{
+				aSubgroupDiscovery = new SubgroupDiscovery(theMainWindow, theSearchParameters, theTable);
+				break;
+			}
 			case LABEL_RANKING :
 			{
 				aSubgroupDiscovery = new SubgroupDiscovery(theSearchParameters, theMainWindow, theTable);
@@ -289,20 +294,19 @@ public class Process
 		// dump results
 //		caucWrite("caucHeavy", aBackup, statistics);
 
+		Log.logCommandLine("======================================================");
+		Log.logCommandLine("Diverse Subgroup Set Size : " + aHeavySubgroupSet.size());
+		Log.logCommandLine("Subgroups : ");
+		for (Subgroup s : aHeavySubgroupSet)
+			Log.logCommandLine("    "+s.getConditions().toString());
 		boolean aCommandlinelogState = Log.COMMANDLINELOG;
 		Log.COMMANDLINELOG = false;
 		SubgroupSet aSubgroupSetWithEntropy = aHeavySubgroupSet.getPatternTeam(theTable, aHeavySubgroupSet.size());
 		Log.COMMANDLINELOG = aCommandlinelogState;
-
-		Log.logCommandLine("======================================================");
-		Log.logCommandLine("Diverse Subgroup Set Size : " + aHeavySubgroupSet.size());
 //		Log.logCommandLine("Joint Entropy             : " + aHeavySubgroupSet.getJointEntropy());
 //		Log.logCommandLine("Entropy / Set Size        : " + aHeavySubgroupSet.getJointEntropy()/aHeavySubgroupSet.size());
 		Log.logCommandLine("Joint Entropy             : " + aSubgroupSetWithEntropy.getJointEntropy());
 		Log.logCommandLine("Entropy / Set Size        : " + aSubgroupSetWithEntropy.getJointEntropy()/aHeavySubgroupSet.size());
-		Log.logCommandLine("Subgroups : ");
-		for (Subgroup s : aHeavySubgroupSet)
-			Log.logCommandLine("    "+s.getConditions().toString());
 
 		// restore original Column
 		aColumns.set(anIndex, aBackup);

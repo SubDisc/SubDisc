@@ -97,7 +97,11 @@ public enum QM implements EnumInterface
 	REGRESSION_SSD_DATASET	("Sign. of Slope Diff. (dataset)", "0.0", TargetType.DOUBLE_REGRESSION),
 	REGRESSION_FLATNESS	("Flatness", "0.0", TargetType.DOUBLE_REGRESSION),
 	REGRESSION_SSD_4	("Sign. of Slope Diff. 4", "0.0", TargetType.DOUBLE_REGRESSION),
-	COOKS_DISTANCE	("Cook's Distance",	"0.0",	TargetType.DOUBLE_REGRESSION);
+	COOKS_DISTANCE	("Cook's Distance",	"0.0",	TargetType.DOUBLE_REGRESSION),
+	
+	// SCAPE quality measures
+	SUBRANKING_LOSS ("Subranking loss", "0.0", TargetType.SCAPE),
+	AVERAGE_SUBRANKING_LOSS ("Avg subranking loss", "0.0", TargetType.SCAPE);
 
 	// to enforce implementation of SINGLE_NUMERIC and SINGLE_ORDINAL QMs
 	static { requiredStatsTest(); };
