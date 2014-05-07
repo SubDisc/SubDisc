@@ -1084,7 +1084,11 @@ System.out.println(aSubgroup + "\t" + aRefinement.getConditionBase());
 				ProbabilityDensityFunction aPDF = null;
 				if (aRequiredStats.contains(Stat.PDF))
 				{
-					aPDF = new ProbabilityDensityFunction(itsQualityMeasure.getProbabilityDensityFunction(), aMembers);
+// DEBUG
+if (!ProbabilityDensityFunction.USE_ProbabilityDensityFunction2)
+	aPDF = new ProbabilityDensityFunction(itsQualityMeasure.getProbabilityDensityFunction(), aMembers);
+else
+	aPDF = new ProbabilityDensityFunction2(itsQualityMeasure.getProbabilityDensityFunction(), aMembers);
 					aPDF.smooth();
 				}
 

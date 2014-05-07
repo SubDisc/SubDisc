@@ -179,7 +179,13 @@ public class Validation
 			BitSet aMembers = aSubgroup.getMembers();
 
 			float[] aCounts = aTarget.getStatistics(aMembers, itsSearchParameters.getQualityMeasure() == QM.MMAD);
-			ProbabilityDensityFunction aPDF = new ProbabilityDensityFunction(itsQualityMeasure.getProbabilityDensityFunction(), aMembers);
+
+			ProbabilityDensityFunction aPDF = null;
+			// DEBUG
+			if (!ProbabilityDensityFunction.USE_ProbabilityDensityFunction2)
+				aPDF = new ProbabilityDensityFunction(itsQualityMeasure.getProbabilityDensityFunction(), aMembers);
+			else
+				aPDF = new ProbabilityDensityFunction2(itsQualityMeasure.getProbabilityDensityFunction(), aMembers);
 			aPDF.smooth();
 
 			aQualities[i] = itsQualityMeasure.calculate(aMembers.cardinality(), aCounts[0], aCounts[1], aCounts[2], aCounts[3], aPDF);
