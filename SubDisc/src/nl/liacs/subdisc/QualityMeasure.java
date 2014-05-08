@@ -1,5 +1,9 @@
 package nl.liacs.subdisc;
 
+import java.util.Arrays;
+import java.util.BitSet;
+import java.util.Collections;
+
 // TODO MM put Contingency table here without screwing up package classes layout.
 /**
  * The QualityMeasure class includes all quality measures used
@@ -10,7 +14,7 @@ public class QualityMeasure
 	private final QM itsQualityMeasure;
 	private final int itsNrRecords;
 
-	//SINGLE_NOMINAL
+	//SINGLE_NOMINAL and SCAPE
 	private int itsTotalTargetCoverage;
 
 	//Label ranking (SINGLE_NOMINAL)
@@ -28,6 +32,12 @@ public class QualityMeasure
 	private static float itsAlpha;
 	private static float itsBeta;
 	private static boolean[][] itsVStructures;
+	
+	//SCAPE
+	private static Column itsBinaryTarget;
+	private static Column itsNumericTarget;
+	private static int[] itsDescendingOrderingPermutation;
+	private static float itsAverageSubrankingLoss;
 
 	//SINGLE_NOMINAL
 	public QualityMeasure(QM theMeasure, int theTotalCoverage, int theTotalTargetCoverage)
@@ -951,6 +961,7 @@ public class QualityMeasure
 
 		itsQualityMeasure = theSearchParameters.getQualityMeasure();
 		itsNrRecords = theTotalCoverage;
+		
 		itsDAG = theDAG;
 		itsNrNodes = itsDAG.getSize();
 		itsAlpha = theSearchParameters.getAlpha();
@@ -1007,24 +1018,106 @@ public class QualityMeasure
 	
 	//SCAPE =======================================================
 
-	public float calculate(int theCoverage)
+	public QualityMeasure(QM theQualityMeasure, int theTotalCoverage, int theTotalTargetCoverage, Column theBinaryTarget, Column theNumericTarget)
+	{
+		if (theQualityMeasure == null)
+			throw new IllegalArgumentException("QualityMeasure: theQualityMeasure can not be null");
+		if (theTotalCoverage <= 0)
+			throw new IllegalArgumentException("QualityMeasure: theTotalCoverage must be > 0");
+		if (theTotalTargetCoverage <= 0)
+			throw new IllegalArgumentException("QualityMeasure: theTotalTargetCoverage must be > 0");
+		if (theBinaryTarget == null)
+			throw new IllegalArgumentException("QualityMeasure: theBinaryTarget can not be null");
+		if (theNumericTarget == null)
+			throw new IllegalArgumentException("QualityMeasure: theNumericTarget can not be null");
+
+		itsQualityMeasure = theQualityMeasure;
+		itsNrRecords = theTotalCoverage;
+		itsTotalTargetCoverage = theTotalTargetCoverage;
+		itsBinaryTarget = theBinaryTarget;
+		itsNumericTarget = theNumericTarget;
+		
+		itsDescendingOrderingPermutation = generateOrderingPermutation();
+
+		setAverageSubrankingLoss();
+	}
+	
+	/*
+	 * Generates permutation that would order the values in the numeric target, using 
+	 * a custom-built Comparator. This ordering is used in the computation of the 
+	 * (sub-)ranking loss in the quality measures. 
+	 */
+	private int[] generateOrderingPermutation()
+	{
+		float[] afloatArray = itsNumericTarget.getFloats();
+		Float[] aFloatArray = convertToFloats(afloatArray);
+
+		ArrayIndexComparator comparator = new ArrayIndexComparator(aFloatArray);
+		
+		Integer[] anIntegerArray = comparator.createIndexArray();
+		Arrays.sort(anIntegerArray, comparator);
+		return convertToints(anIntegerArray);
+	}
+	
+	private Float[] convertToFloats(float[] thefloatArray)
+	{
+		Float[] aResult = new Float[itsNrRecords];
+		for (int i=0; i<itsNrRecords; i++)
+			aResult[i] = (Float) thefloatArray[i];
+		return aResult;
+	}
+	
+	private int[] convertToints(Integer[] theIntegerArray)
+	{
+		int[] aResult = new int[itsNrRecords];
+		for (int i=0; i<itsNrRecords; i++)
+			aResult[i] = (int) theIntegerArray[i];
+		return aResult;
+	}
+	
+	/*
+	 * Instead of having the permutation that orders the data, I want the order in which
+	 * I have to _visit_ the data without actually performing the permutation of the whole
+	 * dataset. Inverting the ordering permutation produces an array containing the record 
+	 * indexes in the correct order.
+	 */
+	public int[] invertPermutation(int[] aPermutation)
+	{
+		int[] aResult = new int[itsNrRecords];
+		for (int i=0; i<itsNrRecords; i++)
+		{
+			int anIndex = aPermutation[i];
+			aResult[anIndex] = i;
+		}
+		return aResult;
+	}
+	
+	private void setAverageSubrankingLoss()
+	{
+		BitSet theWholeDataset = new BitSet(itsNrRecords);
+		theWholeDataset.set(0, itsNrRecords);
+		itsAverageSubrankingLoss = calculate(theWholeDataset, itsNrRecords, itsTotalTargetCoverage);
+	}
+	
+	public float getAverageSubrankingLoss() { return itsAverageSubrankingLoss;	}
+	
+	public float calculate(BitSet theSubgroup, int theCoverage, int theTargetCoverage)
 	{
 		switch (itsQualityMeasure)
 		{
-			//SCAPE
-			case SUBRANKING_LOSS :
+			case MAX_SUBRANKING_LOSS :
 			{
 				if (itsNrRecords <= 1)
-					return 0.0f;
+					return 0.0f; //TODO Actually compute the ranking loss now.
 				else
-					return 2.0f;
+					return calculateSubrankingLoss(theSubgroup, theCoverage, theTargetCoverage);
 			}
-			case AVERAGE_SUBRANKING_LOSS :
+			case MIN_SUBRANKING_LOSS :
 			{
 				if (itsNrRecords <= 1)
 					return 0.0f;
 				else
-					return 1.0f;
+					return -1.0f*calculateSubrankingLoss(theSubgroup, theCoverage, theTargetCoverage);
 			}
 			default :
 			{
@@ -1040,5 +1133,52 @@ public class QualityMeasure
 					throw new IllegalArgumentException("Invalid QM: " + itsQualityMeasure);
 			}
 		}
+	}
+	
+	/*
+	 * For the time being, I assume that there are no ties in the numeric target.
+	 * This needs to be fixed later.
+	 */
+	public float calculateSubrankingLoss(BitSet theSubgroup, int theCoverage, int theNrPositives)
+	{
+		int aNrNegatives = theCoverage-theNrPositives;
+		int aPositiveLoopCount = 0;
+		int aNegativeLoopCount = 0;
+		float aTotalRankingLoss = 0.0f;
+		
+		/*
+		 * Run in descending order through the numeric target. If the record is not a member of the
+		 * subgroup, ignore it. If it is, check its binary target value. If it is positive, add
+		 * the number of negatives seen so far to the total ranking loss. Update the positives or 
+		 * negatives loop counter by the newly seen records. Stop if we have seen all the positives,
+		 * or all the negatives in the subgroup. If we have seen all the negatives, we have to add
+		 * punishment for the unseen positives to the ranking loss. Divide by the number of 
+		 * positives to find an average.
+		 */
+		boolean aContinueLoop = true;
+		for (int i=0; aContinueLoop; i++)
+		{
+				int aCurrentIndex = itsDescendingOrderingPermutation[i];
+				if (theSubgroup.get(aCurrentIndex))
+				{
+					if (itsBinaryTarget.getBinary(aCurrentIndex))
+					{
+						aPositiveLoopCount++;
+						aTotalRankingLoss += aNegativeLoopCount;
+					}
+					else
+					{
+						aNegativeLoopCount++;
+					}
+				}
+				if (aPositiveLoopCount == theNrPositives) 
+					aContinueLoop = false;
+				if (aNegativeLoopCount == aNrNegatives)
+				{
+					aContinueLoop = false;
+					aTotalRankingLoss += (theNrPositives-aPositiveLoopCount)*aNrNegatives;
+				}
+		}
+		return aTotalRankingLoss / (float) theNrPositives;
 	}
 }

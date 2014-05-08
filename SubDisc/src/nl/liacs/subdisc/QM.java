@@ -100,8 +100,8 @@ public enum QM implements EnumInterface
 	COOKS_DISTANCE	("Cook's Distance",	"0.0",	TargetType.DOUBLE_REGRESSION),
 	
 	// SCAPE quality measures
-	SUBRANKING_LOSS ("Subranking loss", "0.0", TargetType.SCAPE),
-	AVERAGE_SUBRANKING_LOSS ("Avg subranking loss", "0.0", TargetType.SCAPE);
+	MAX_SUBRANKING_LOSS ("Subranking loss", "0.0", TargetType.SCAPE),
+	MIN_SUBRANKING_LOSS ("Min. subranking loss", "-8243721.5", TargetType.SCAPE); //WD: I needed something fierce, so here's Ernie's favorite number, but negative.
 
 	// to enforce implementation of SINGLE_NUMERIC and SINGLE_ORDINAL QMs
 	static { requiredStatsTest(); };

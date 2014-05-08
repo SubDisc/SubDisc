@@ -331,7 +331,7 @@ public class ResultWindow extends JFrame implements ActionListener
 					else
 						aSubgroupPDF = new ProbabilityDensityFunction2(aPDF, aSubgroup.getMembers());
 					aSubgroupPDF.smooth();
-					new ModelWindow(aTarget, aPDF, aSubgroupPDF, "Subgroup " + aSubgroup.getID());
+					new ModelWindow(aTarget, aPDF, aSubgroupPDF, "Subgroup " + aSubgroup.getID(), false);
 				}
 
 				break;
@@ -339,6 +339,57 @@ public class ResultWindow extends JFrame implements ActionListener
 			case DOUBLE_CORRELATION :
 			{
 				modelWindowHelper(TargetType.DOUBLE_CORRELATION);
+				break;
+			}
+			case SCAPE :
+			{
+				Column aBinaryTarget = itsSearchParameters.getTargetConcept().getPrimaryTarget();
+				Column aNumericTarget = itsSearchParameters.getTargetConcept().getSecondaryTarget();
+				BitSet aBinaries = aBinaryTarget.getBinaries();
+				ProbabilityDensityFunction aPDF;
+				// DEBUG
+				if (!ProbabilityDensityFunction.USE_ProbabilityDensityFunction2)
+					aPDF = new ProbabilityDensityFunction(aNumericTarget);
+				else
+					aPDF = new ProbabilityDensityFunction2(aNumericTarget);
+				aPDF.smooth();
+
+				int[] aSelection = itsSubgroupTable.getSelectedRows();
+				Iterator<Subgroup> anIterator = itsSubgroupSet.iterator();
+
+				for (int i = 0, j = aSelection.length, k = 0; i < j; ++k)
+				{
+					int aNext = aSelection[k];
+					while (i++ < aNext)
+						anIterator.next();
+					Subgroup aSubgroup = anIterator.next();
+
+					BitSet aPositiveMembers = (BitSet) aSubgroup.getMembers().clone();
+					aPositiveMembers.and(aBinaries);
+
+					BitSet aNegativeMembers = (BitSet) aSubgroup.getMembers().clone();
+					BitSet aNonTarget = (BitSet) aBinaries.clone();
+					aNonTarget.flip(0,aNonTarget.length());
+					aNegativeMembers.and(aNonTarget);
+
+					ProbabilityDensityFunction aPositivePDF;
+					// DEBUG
+					if (!ProbabilityDensityFunction.USE_ProbabilityDensityFunction2)
+						aPositivePDF = new ProbabilityDensityFunction(aPDF, aPositiveMembers);
+					else
+						aPositivePDF = new ProbabilityDensityFunction2(aPDF, aPositiveMembers);
+					aPositivePDF.smooth();
+					
+					ProbabilityDensityFunction aNegativePDF;
+					// DEBUG
+					if (!ProbabilityDensityFunction.USE_ProbabilityDensityFunction2)
+						aNegativePDF = new ProbabilityDensityFunction(aPDF, aNegativeMembers);
+					else
+						aNegativePDF = new ProbabilityDensityFunction2(aPDF, aNegativeMembers);
+					aNegativePDF.smooth();
+					
+					new ModelWindow(aNumericTarget, aPositivePDF, aNegativePDF, "Subgroup " + aSubgroup.getID(), true);
+				}
 				break;
 			}
 			case MULTI_LABEL :

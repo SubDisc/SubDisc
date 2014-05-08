@@ -502,6 +502,11 @@ public class Column implements XMLNodeInterface
 		return (BitSet) itsBinaries.clone();
 	}
 
+	public float[] getFloats() throws NullPointerException
+	{
+		return itsFloatz;
+	}
+
 	private boolean isOutOfBounds(int theIndex)
 	{
 		boolean isOutOfBounds = (theIndex < 0 || theIndex >= itsSize);

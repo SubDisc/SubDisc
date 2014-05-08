@@ -931,11 +931,14 @@ public class MiningWindow extends JFrame implements ActionListener
 			}
 			case SCAPE :
 			{
-//				Column aBinaryColumn = itsTargetConcept.getPrimaryTarget();
-//				Column aNumericColumn = itsTargetConcept.getSecondaryTarget();
+				Column aBinaryTarget = itsTargetConcept.getPrimaryTarget();
+				Column aNumericTarget = itsTargetConcept.getSecondaryTarget();
+				itsPositiveCount = aBinaryTarget.getBinaries().cardinality();
 				
-				jLabelTargetInfo.setText(" overall ranking loss");
-				jLabelTargetInfoText.setText(Integer.toString(3));
+				QualityMeasure aQM = new QualityMeasure(QM.MAX_SUBRANKING_LOSS, itsTable.getNrRows(), itsPositiveCount, aBinaryTarget, aNumericTarget);
+				float anAverageSubrankingLoss = aQM.getAverageSubrankingLoss();
+				jLabelTargetInfo.setText(" average ranking loss");
+				jLabelTargetInfoText.setText(Float.toString(anAverageSubrankingLoss));
 				break;
 			}
 			case MULTI_LABEL :
@@ -1458,7 +1461,7 @@ public class MiningWindow extends JFrame implements ActionListener
 				else
 					aPDF = new ProbabilityDensityFunction2(aTarget);
 				aPDF.smooth();
-				new ModelWindow(aTarget, aPDF, null, itsTable.getName());
+				new ModelWindow(aTarget, aPDF, null, itsTable.getName(), false);
 				break;
 			}
 			case SINGLE_ORDINAL :
@@ -1480,12 +1483,38 @@ public class MiningWindow extends JFrame implements ActionListener
 			}
 			case SCAPE :
 			{
-				Column aTarget = itsTargetConcept.getSecondaryTarget();
+				Column aBinaryTarget = itsTargetConcept.getPrimaryTarget();
+				Column aNumericTarget = itsTargetConcept.getSecondaryTarget();
+				BitSet aBinaries = aBinaryTarget.getBinaries();
 				ProbabilityDensityFunction aPDF;
-				aPDF = new ProbabilityDensityFunction(aTarget);
+				// DEBUG
+				if (!ProbabilityDensityFunction.USE_ProbabilityDensityFunction2)
+					aPDF = new ProbabilityDensityFunction(aNumericTarget);
+				else
+					aPDF = new ProbabilityDensityFunction2(aNumericTarget);
 				aPDF.smooth();
-				new ModelWindow(aTarget, aPDF, null, itsTable.getName());
-				break;				
+
+				BitSet aNegativeBinaries = (BitSet) aBinaries.clone();
+				aNegativeBinaries.flip(0,aNegativeBinaries.length());
+
+				ProbabilityDensityFunction aPositivePDF;
+				// DEBUG
+				if (!ProbabilityDensityFunction.USE_ProbabilityDensityFunction2)
+					aPositivePDF = new ProbabilityDensityFunction(aPDF, aBinaries);
+				else
+					aPositivePDF = new ProbabilityDensityFunction2(aPDF, aBinaries);
+				aPositivePDF.smooth();
+					
+				ProbabilityDensityFunction aNegativePDF;
+				// DEBUG
+				if (!ProbabilityDensityFunction.USE_ProbabilityDensityFunction2)
+					aNegativePDF = new ProbabilityDensityFunction(aPDF, aNegativeBinaries);
+				else
+					aNegativePDF = new ProbabilityDensityFunction2(aPDF, aNegativeBinaries);
+				aNegativePDF.smooth();
+					
+				new ModelWindow(aNumericTarget, aPositivePDF, aNegativePDF, itsTable.getName(), true);
+				break;
 			}
 			case MULTI_LABEL :
 			{
@@ -1621,7 +1650,7 @@ public class MiningWindow extends JFrame implements ActionListener
 			}
 			case SCAPE :
 			{
-				aQualityMeasure = null;
+				aQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), itsTable.getNrRows(), itsPositiveCount, itsTargetConcept.getPrimaryTarget(), itsTargetConcept.getSecondaryTarget());
 				break;
 			}
 			case MULTI_LABEL :

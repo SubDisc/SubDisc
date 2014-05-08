@@ -212,7 +212,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		itsPrimaryColumn = aTC.getPrimaryTarget();
 		itsSecondaryColumn = aTC.getSecondaryTarget();
 
-		itsQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), itsNrRows, itsNrRows);
+		itsQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), itsNrRows, itsPrimaryColumn.getBinaries().cardinality(), itsPrimaryColumn, itsSecondaryColumn);
 		itsQualityMeasureMinimum = itsSearchParameters.getQualityMeasureMinimum();
 
 		itsResult = new SubgroupSet(itsSearchParameters.getMaximumSubgroups(), itsNrRows);
@@ -1258,6 +1258,18 @@ else
 				theNewSubgroup.setSecondaryStatistic(aCM.getCorrelation()); //correlation
 				theNewSubgroup.setTertiaryStatistic(aCM.computeCorrelationDistance()); //intercept
 				aQuality = (float) aCM.getEvaluationMeasureValue();
+				break;
+			}
+			case SCAPE :
+			{
+				int aCoverage = theNewSubgroup.getCoverage();
+				BitSet aMembers = theNewSubgroup.getMembers();
+				// NOTE aMembers is a clone so this is safe
+				aMembers.and(itsPrimaryColumn.getBinaries());
+				int aCountHeadBody = aMembers.cardinality();
+
+				aQuality = itsQualityMeasure.calculate(theNewSubgroup.getMembers(), aCoverage, aCountHeadBody);
+				
 				break;
 			}
 			case MULTI_LABEL :

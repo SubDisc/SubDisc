@@ -30,15 +30,25 @@ public class ModelWindow extends JFrame implements ActionListener
 	private JFreeChart itsChart = null;
 
 	// SINGLE_NUMERIC: show distribution over numeric target and Subgroup =====================================
-
-	public ModelWindow(Column theDomain, ProbabilityDensityFunction theDatasetPDF, ProbabilityDensityFunction theSubgroupPDF, String theName)
+	// SCAPE: show distribution of numeric target, for positives and negatives in binary target ===============
+	public ModelWindow(Column theDomain, ProbabilityDensityFunction theDatasetPDF, ProbabilityDensityFunction theSubgroupPDF, String theName, boolean isScapeSetting)
 	{
 		initComponents();
 
 		final boolean addSubgroup = (theSubgroupPDF != null);
 
-		XYSeries aDatasetSeries = new XYSeries("dataset");
-		XYSeries aSubgroupSeries = addSubgroup ? new XYSeries("subgroup") : null;
+		XYSeries aDatasetSeries;
+		XYSeries aSubgroupSeries;
+		if (!isScapeSetting)
+		{
+			aDatasetSeries = new XYSeries("dataset");
+			aSubgroupSeries = addSubgroup ? new XYSeries("subgroup") : null;
+		}
+		else
+		{
+			aDatasetSeries = new XYSeries("positives");
+			aSubgroupSeries = addSubgroup ? new XYSeries("negatives") : null;
+		}
 		for (int i = 0, j = theDatasetPDF.size(); i < j; ++i)
 		{
 			aDatasetSeries.add(theDatasetPDF.getMiddle(i), theDatasetPDF.getDensity(i));
@@ -65,18 +75,28 @@ public class ModelWindow extends JFrame implements ActionListener
 		aPlot.setBackgroundPaint(Color.white);
 		aPlot.setDomainGridlinePaint(Color.gray);
 		aPlot.setRangeGridlinePaint(Color.gray);
+		Paint aDatasetPaint = Color.black;
+		Paint aSubgroupPaint = Color.lightGray;
+		float aDatasetWidth = 1.5f;
+		float aSubgroupWidth = 2.5f;
+		if (isScapeSetting)
+		{
+			aDatasetPaint = Color.blue;
+			aSubgroupPaint = Color.red;
+			aDatasetWidth = 2.5f;
+		}
 		if (addSubgroup)
 		{
-			aPlot.getRenderer().setSeriesPaint(1, Color.lightGray);
-			aPlot.getRenderer().setSeriesStroke(1, new BasicStroke(2.5f));
-			aPlot.getRenderer().setSeriesPaint(0, Color.black); //subgroup
-			aPlot.getRenderer().setSeriesStroke(0, new BasicStroke(1.5f)); //subgroup
+			aPlot.getRenderer().setSeriesPaint(1, aSubgroupPaint);
+			aPlot.getRenderer().setSeriesStroke(1, new BasicStroke(aSubgroupWidth));
+			aPlot.getRenderer().setSeriesPaint(0, aDatasetPaint); //subgroup
+			aPlot.getRenderer().setSeriesStroke(0, new BasicStroke(aDatasetWidth)); //subgroup
 			aChart.addLegend(new LegendTitle(aPlot));
 		}
 		else
 		{
-			aPlot.getRenderer().setSeriesPaint(0, Color.black);
-			aPlot.getRenderer().setSeriesStroke(0, new BasicStroke(2.5f));
+			aPlot.getRenderer().setSeriesPaint(0, aDatasetPaint);
+			aPlot.getRenderer().setSeriesStroke(0, new BasicStroke(aSubgroupWidth));
 		}
 
 		itsJScrollPaneCenter.setViewportView(new ChartPanel(aChart));
