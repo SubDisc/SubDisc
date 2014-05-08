@@ -81,8 +81,8 @@ public class ModelWindow extends JFrame implements ActionListener
 		float aSubgroupWidth = 2.5f;
 		if (isScapeSetting)
 		{
-			aDatasetPaint = Color.blue;
-			aSubgroupPaint = Color.red;
+			aDatasetPaint = Color.red;
+			aSubgroupPaint = Color.blue;
 			aDatasetWidth = 2.5f;
 		}
 		if (addSubgroup)
