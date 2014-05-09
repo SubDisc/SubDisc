@@ -212,7 +212,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		itsPrimaryColumn = aTC.getPrimaryTarget();
 		itsSecondaryColumn = aTC.getSecondaryTarget();
 
-		itsQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), itsNrRows, itsPrimaryColumn.getBinaries().cardinality(), itsPrimaryColumn, itsSecondaryColumn);
+		itsQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), itsNrRows, itsPrimaryColumn.getBinaries().cardinality(), itsPrimaryColumn, itsSecondaryColumn, itsSearchParameters.getOverallRankingLoss());
 		itsQualityMeasureMinimum = itsSearchParameters.getQualityMeasureMinimum();
 
 		itsResult = new SubgroupSet(itsSearchParameters.getMaximumSubgroups(), itsNrRows);
@@ -1269,6 +1269,9 @@ else
 				int aCountHeadBody = aMembers.cardinality();
 
 				aQuality = itsQualityMeasure.calculate(theNewSubgroup.getMembers(), aCoverage, aCountHeadBody);
+
+				theNewSubgroup.setSecondaryStatistic(aCountHeadBody); //count of positives in the subgroup
+				theNewSubgroup.setTertiaryStatistic(aCoverage - aCountHeadBody); //count of negatives in the subgroup
 				
 				break;
 			}

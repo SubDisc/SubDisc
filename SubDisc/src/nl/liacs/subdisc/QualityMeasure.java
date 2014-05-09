@@ -2,7 +2,7 @@ package nl.liacs.subdisc;
 
 import java.util.Arrays;
 import java.util.BitSet;
-import java.util.Collections;
+//import java.util.Collections;
 
 // TODO MM put Contingency table here without screwing up package classes layout.
 /**
@@ -37,7 +37,7 @@ public class QualityMeasure
 	private static Column itsBinaryTarget;
 	private static Column itsNumericTarget;
 	private static int[] itsDescendingOrderingPermutation;
-	private static float itsAverageSubrankingLoss;
+	private static float itsOverallSubrankingLoss;
 
 	//SINGLE_NOMINAL
 	public QualityMeasure(QM theMeasure, int theTotalCoverage, int theTotalTargetCoverage)
@@ -1040,6 +1040,35 @@ public class QualityMeasure
 	}
 	
 	/*
+	 * WD: The following additional constructor should not be necessary. However, Java is once again biting me;
+	 * in the mining window my quality measure is perfectly able to compute the overall subranking loss and displaying
+	 * it in the corresponding field, but when I want to incorporate it in quality measures in the SD process, its
+	 * value magically reverts to zero. Hence, I'm passing it through the SearchParameters.
+	 */
+	public QualityMeasure(QM theQualityMeasure, int theTotalCoverage, int theTotalTargetCoverage, Column theBinaryTarget, Column theNumericTarget, float theOverallSubrankingLoss)
+	{
+		if (theQualityMeasure == null)
+			throw new IllegalArgumentException("QualityMeasure: theQualityMeasure can not be null");
+		if (theTotalCoverage <= 0)
+			throw new IllegalArgumentException("QualityMeasure: theTotalCoverage must be > 0");
+		if (theTotalTargetCoverage <= 0)
+			throw new IllegalArgumentException("QualityMeasure: theTotalTargetCoverage must be > 0");
+		if (theBinaryTarget == null)
+			throw new IllegalArgumentException("QualityMeasure: theBinaryTarget can not be null");
+		if (theNumericTarget == null)
+			throw new IllegalArgumentException("QualityMeasure: theNumericTarget can not be null");
+
+		itsQualityMeasure = theQualityMeasure;
+		itsNrRecords = theTotalCoverage;
+		itsTotalTargetCoverage = theTotalTargetCoverage;
+		itsBinaryTarget = theBinaryTarget;
+		itsNumericTarget = theNumericTarget;
+		itsOverallSubrankingLoss = theOverallSubrankingLoss;
+		
+		itsDescendingOrderingPermutation = generateOrderingPermutation();
+	}
+	
+	/*
 	 * Generates permutation that would order the values in the numeric target, using 
 	 * a custom-built Comparator. This ordering is used in the computation of the 
 	 * (sub-)ranking loss in the quality measures. 
@@ -1072,49 +1101,53 @@ public class QualityMeasure
 		return aResult;
 	}
 	
-	/*
-	 * Instead of having the permutation that orders the data, I want the order in which
-	 * I have to _visit_ the data without actually performing the permutation of the whole
-	 * dataset. Inverting the ordering permutation produces an array containing the record 
-	 * indexes in the correct order.
-	 */
-	public int[] invertPermutation(int[] aPermutation)
-	{
-		int[] aResult = new int[itsNrRecords];
-		for (int i=0; i<itsNrRecords; i++)
-		{
-			int anIndex = aPermutation[i];
-			aResult[anIndex] = i;
-		}
-		return aResult;
-	}
-	
 	private void setAverageSubrankingLoss()
 	{
 		BitSet theWholeDataset = new BitSet(itsNrRecords);
 		theWholeDataset.set(0, itsNrRecords);
-		itsAverageSubrankingLoss = calculate(theWholeDataset, itsNrRecords, itsTotalTargetCoverage);
+		itsOverallSubrankingLoss = calculate(theWholeDataset, itsNrRecords, itsTotalTargetCoverage);
 	}
 	
-	public float getAverageSubrankingLoss() { return itsAverageSubrankingLoss;	}
+	public float getOverallSubrankingLoss() { return itsOverallSubrankingLoss;	}
 	
 	public float calculate(BitSet theSubgroup, int theCoverage, int theTargetCoverage)
 	{
+		float aResult;
 		switch (itsQualityMeasure)
 		{
-			case MAX_SUBRANKING_LOSS :
+			case SUBRANKING_LOSS :
 			{
 				if (itsNrRecords <= 1)
-					return 0.0f; //TODO Actually compute the ranking loss now.
+					aResult = 0.0f;
 				else
-					return calculateSubrankingLoss(theSubgroup, theCoverage, theTargetCoverage);
+					aResult = calculateSubrankingLoss(theSubgroup, theCoverage, theTargetCoverage);
+				break;
 			}
-			case MIN_SUBRANKING_LOSS :
+			case NEGATIVE_SUBRANKING_LOSS :
 			{
 				if (itsNrRecords <= 1)
-					return 0.0f;
+					aResult = 0.0f;
 				else
-					return -1.0f*calculateSubrankingLoss(theSubgroup, theCoverage, theTargetCoverage);
+					aResult = -1.0f * calculateSubrankingLoss(theSubgroup, theCoverage, theTargetCoverage);
+				break;
+			}
+			case RELATIVE_SUBRANKING_LOSS :
+			{
+				if (itsNrRecords <= 1)
+					aResult = 0.0f;
+				else
+				{
+					aResult = calculateSubrankingLoss(theSubgroup, theCoverage, theTargetCoverage) - itsOverallSubrankingLoss;
+				}
+				break;
+			}
+			case REVERSE_RELATIVE_SUBRANKING_LOSS :
+			{
+				if (itsNrRecords <= 1)
+					aResult = 0.0f;
+				else
+					aResult = itsOverallSubrankingLoss - calculateSubrankingLoss(theSubgroup, theCoverage, theTargetCoverage);
+				break;
 			}
 			default :
 			{
@@ -1130,6 +1163,7 @@ public class QualityMeasure
 					throw new IllegalArgumentException("Invalid QM: " + itsQualityMeasure);
 			}
 		}
+		return aResult;
 	}
 	
 	/*

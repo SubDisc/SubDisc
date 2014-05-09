@@ -39,6 +39,8 @@ public class SearchParameters implements XMLNodeInterface
 	private float		itsBeta;
 	private boolean	itsPostProcessingDoAutoRun;
 	private int		itsPostProcessingCount;
+	
+	private float	itsOverallRankingLoss;
 
 	// TODO MM add to loadData() + autorun.dtd
 	//private List<ConditionList> itsBeamSeed;
@@ -139,6 +141,8 @@ public class SearchParameters implements XMLNodeInterface
 //	public void setBeamSeed(List<ConditionList> theBeamSeed) { itsBeamSeed = theBeamSeed; }
 	public List<ConditionListA> getBeamSeed()		{ return itsBeamSeed; }
 	public void setBeamSeed(List<ConditionListA> theBeamSeed) { itsBeamSeed = theBeamSeed; }
+	public float getOverallRankingLoss()					{ return itsOverallRankingLoss; }
+	public void setOverallRankingLoss(float theOverallRankingLoss)			{ itsOverallRankingLoss = theOverallRankingLoss; }
 
 
 	/**
@@ -171,6 +175,7 @@ public class SearchParameters implements XMLNodeInterface
 		XMLNode.addNodeTo(aNode, "post_processing_do_autorun", getPostProcessingDoAutoRun());
 		XMLNode.addNodeTo(aNode, "post_processing_count", getPostProcessingCount());
 		XMLNode.addNodeTo(aNode, "beam_seed", getBeamSeed());
+		XMLNode.addNodeTo(aNode, "overall_ranking_loss", getOverallRankingLoss());
 	}
 
 	private void loadData(Node theSearchParametersNode)
@@ -224,6 +229,8 @@ public class SearchParameters implements XMLNodeInterface
 				itsPostProcessingCount = Integer.parseInt(aSetting.getTextContent());
 			else if("beam_seed".equalsIgnoreCase(aNodeName))
 				itsBeamSeed = null; // FIXME MM see multi-targets
+			else if("overall_ranking_loss".equalsIgnoreCase(aNodeName))
+				itsOverallRankingLoss = Float.parseFloat(aSetting.getTextContent());
 			else
 				Log.logCommandLine("ignoring unknown XML node: " + aNodeName);
 		}
@@ -255,6 +262,7 @@ public class SearchParameters implements XMLNodeInterface
 		addLine(sb, "post_processing_do_autorun", Boolean.toString(getPostProcessingDoAutoRun()));
 		addLine(sb, "post_processing_count", Integer.toString(getPostProcessingCount()));
 		addLine(sb, "beam_seed", getBeamSeed() == null ? "[]" : getBeamSeed().toString());
+		addLine(sb, "overall_ranking_loss", Float.toString(getOverallRankingLoss()));
 
 		return sb.toString();
 	}

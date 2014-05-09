@@ -54,6 +54,7 @@ public class ResultTableModel extends AbstractTableModel
 					case SINGLE_NUMERIC : return "Average";
 					case DOUBLE_CORRELATION : return "Correlation";
 					case DOUBLE_REGRESSION : return "Slope";
+					case SCAPE : return "Positives";
 					case MULTI_LABEL : return "Edit Distance";
 					case LABEL_RANKING : return "Ranking";
 					default : return "";
@@ -67,6 +68,7 @@ public class ResultTableModel extends AbstractTableModel
 					case SINGLE_NUMERIC : return "St. Dev.";
 					case DOUBLE_CORRELATION : return "Distance";
 					case DOUBLE_REGRESSION : return "Intercept";
+					case SCAPE : return "Negatives";
 					case MULTI_LABEL : return "Entropy";
 					default : return "";
 				}
