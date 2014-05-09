@@ -65,7 +65,7 @@ public class QualityMeasure
 	{
 		if (theMeasure == null)
 			throw new IllegalArgumentException("QualityMeasure: theMeasure can not be null");
-		if (theMeasure != QM.CLAUDIO1 && theMeasure != QM.CLAUDIO2 && theMeasure != QM.LRmin && theMeasure != QM.LRminsqrt && theMeasure != QM.LRmax && theMeasure != QM.LRmaxsqrt && theMeasure != QM.LRavg && theMeasure != QM.LRstrdv && theMeasure != QM.LRsqr)
+		if (theMeasure != QM.CLAUDIO1 && theMeasure != QM.CLAUDIO2 && theMeasure != QM.LRmin && theMeasure != QM.LRmax && theMeasure != QM.LRavg && theMeasure != QM.LRstrdv && theMeasure != QM.LRsqr)
 			throw new IllegalArgumentException("QualityMeasure: not a LabelRanking measure");
 		if (theTotalCoverage <= 0)
 			throw new IllegalArgumentException("QualityMeasure: theCoverage must be > 0");
@@ -622,23 +622,20 @@ public class QualityMeasure
 			aDistance = itsAverageRankingMatrix.altDistance(theSubgroupRankingMatrix);
 		else if (itsQualityMeasure == QM.LRmin)
 			aDistance = itsAverageRankingMatrix.minDistance(theSubgroupRankingMatrix);
-		else if (itsQualityMeasure == QM.LRminsqrt)
-			aDistance = itsAverageRankingMatrix.minsqrtDistance(theSubgroupRankingMatrix);
 		else if (itsQualityMeasure == QM.LRmax)
 			aDistance = itsAverageRankingMatrix.maxDistance(theSubgroupRankingMatrix);
-		else if (itsQualityMeasure == QM.LRmaxsqrt)
-			aDistance = itsAverageRankingMatrix.maxsqrtDistance(theSubgroupRankingMatrix);
 		else if (itsQualityMeasure == QM.LRavg)
 			aDistance = itsAverageRankingMatrix.avgDistance(theSubgroupRankingMatrix);
 		else if (itsQualityMeasure == QM.LRstrdv)
 			aDistance = itsAverageRankingMatrix.strdvDistance(theSubgroupRankingMatrix);
-//		else if (itsQualityMeasure == QM.LRsqr)
-//			aDistance = itsAverageRankingMatrix.sqrDistance(theSubgroupRankingMatrix);
+		else if (itsQualityMeasure == QM.LRsqr)
+			aDistance = itsAverageRankingMatrix.sqrDistance(theSubgroupRankingMatrix);
 
 		//aDistance = aDistance*itsAverageRankingMatrix.homogeneity(theSubgroupRankingMatrix);
 		//Log.logCommandLine("distance: " + aDistance);
 
-		float aSize = (float) Math.sqrt(theSupport);
+		float aPercentage = (float) theSupport/itsNrRecords;
+		float aSize = (float) Math.sqrt(aPercentage);
 		return  aSize * aDistance;
 	}
 

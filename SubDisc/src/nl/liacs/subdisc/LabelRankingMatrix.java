@@ -125,23 +125,7 @@ public class LabelRankingMatrix
 		}
 		return aMin;
 	}
-	public float minsqrtDistance(LabelRankingMatrix theMatrix)
-	{
-		return (float) Math.sqrt(minDistance(theMatrix));
-	}
 	
-	public float maxDistance0(LabelRankingMatrix theMatrix)
-	{
-		float aDistance = 0;
-		float aMax = -1f/0f;
-		for (int i=0; i<itsSize; i++)
-			for (int j=i+1; j<itsSize; j++)
-			{
-				aDistance = Math.abs(itsMatrix[i][j] - theMatrix.itsMatrix[i][j]);
-				aMax = Math.max(aMax, aDistance);
-			}
-		return aMax;
-	}
 	public float maxDistance(LabelRankingMatrix theMatrix)
 	{
 		
@@ -157,10 +141,6 @@ public class LabelRankingMatrix
 			aMax = Math.max(aMax, aDistance);
 		}
 		return aMax;
-	}
-	public float maxsqrtDistance(LabelRankingMatrix theMatrix)
-	{
-		return (float) Math.sqrt(maxDistance(theMatrix));
 	}
 	
 	public float avgDistance(LabelRankingMatrix theMatrix)
