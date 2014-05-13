@@ -1167,10 +1167,11 @@ public class QualityMeasure
 	}
 	
 	/*
-	 * For the time being, I assume that there are no ties in the numeric target.
-	 * This needs to be fixed later.
+	 * This is the worky version that ignores ties in the numeric attribute. I would like to keep
+	 * this available in comments for the time being, just in case that some reviewer doesn't like
+	 * the 0.5 factor in the tie-incorporating version below.
 	 */
-	public float calculateSubrankingLoss(BitSet theSubgroup, int theCoverage, int theNrPositives)
+/*	public float calculateSubrankingLoss(BitSet theSubgroup, int theCoverage, int theNrPositives)
 	{
 		int aNrNegatives = theCoverage-theNrPositives;
 		int aPositiveLoopCount = 0;
@@ -1185,7 +1186,7 @@ public class QualityMeasure
 		 * or all the negatives in the subgroup. If we have seen all the negatives, we have to add
 		 * punishment for the unseen positives to the ranking loss. Divide by the number of 
 		 * positives to find an average.
-		 */
+		 
 		boolean aContinueLoop = true;
 		for (int i=0; aContinueLoop; i++)
 		{
@@ -1209,6 +1210,84 @@ public class QualityMeasure
 					aContinueLoop = false;
 					aTotalRankingLoss += (theNrPositives-aPositiveLoopCount)*aNrNegatives;
 				}
+		}
+		return aTotalRankingLoss / (float) theNrPositives;
+	}*/
+
+	public float calculateSubrankingLoss(BitSet theSubgroup, int theCoverage, int theNrPositives)
+	{
+		// Statistics for the main loop, counting the results that have been completely handled so far
+		int aNrNegatives = theCoverage-theNrPositives;
+		int aPositiveLoopCount = 0;
+		int aNegativeLoopCount = 0;
+		float aTotalRankingLoss = 0.0f;
+		
+		// Statistics for tie breaking, maintaining the results that may still fall under ties in the numeric target
+		int aPositiveTiesCount = 0;
+		int aNegativeTiesCount = 0;
+		float aPreviousFloatValue = Float.MAX_VALUE;
+		
+		boolean aContinueLoop = true;
+		for (int i=0; aContinueLoop && i < itsNrRecords; i++)
+		{
+			// Get the current index
+			int aCurrentIndex = itsDescendingOrderingPermutation[i];
+
+			/*
+			 * When the numeric target has changed, punish tied records by a factor 1/2. For each tied 
+			 * positive I want to add to the total ranking loss the number of tied negatives divided
+			 * by two. This can be expressed by tied positives * tied negatives * 1/2.
+			 * 
+			 * Afterwards, store the new numeric target value, flush the temporary counters into the 
+			 * full loop counters, and reset the temporary counters to zero.
+			 */
+			
+			float aCurrentFloatValue = itsNumericTarget.getFloat(aCurrentIndex); 
+			if (aCurrentFloatValue < aPreviousFloatValue)
+			{
+				aTotalRankingLoss += aPositiveTiesCount * aNegativeTiesCount * 0.5f;
+				aPreviousFloatValue = aCurrentFloatValue;
+				aPositiveLoopCount += aPositiveTiesCount;
+				aNegativeLoopCount += aNegativeTiesCount;
+				aPositiveTiesCount = 0;
+				aNegativeTiesCount = 0;
+
+				/*
+				 * Stop if we have seen all the positives,
+				 * or all the negatives in the subgroup. If we have seen all the negatives, we have to add
+				 * punishment for the unseen positives to the ranking loss. Divide by the number of 
+				 * positives to find an average.
+				 */
+				if (aPositiveLoopCount == theNrPositives) 
+					aContinueLoop = false;
+				if (aNegativeLoopCount == aNrNegatives)
+				{
+					aContinueLoop = false;
+					aTotalRankingLoss += (theNrPositives-aPositiveLoopCount)*aNrNegatives;
+				}
+			}
+			
+			/*
+			 * Run in descending order through the numeric target. If the record is not a member of the
+			 * subgroup, ignore it. If it is, check its binary target value. If it is positive, add
+			 * the number of negatives handled so far to the total ranking loss. Update the corresponding
+			 * temporary counter to handle ties.
+			 * 
+			 * Extra test in the loop for when the flushing of the tied records in the previous loop
+			 * completes our mission; in this case every remaining positive has already been punished.
+			 */
+			if (theSubgroup.get(aCurrentIndex) && aContinueLoop)
+			{
+				if (itsBinaryTarget.getBinary(aCurrentIndex))
+				{
+					aPositiveTiesCount++;
+					aTotalRankingLoss += aNegativeLoopCount;
+				}
+				else
+				{
+					aNegativeTiesCount++;
+				}
+			}			
 		}
 		return aTotalRankingLoss / (float) theNrPositives;
 	}
