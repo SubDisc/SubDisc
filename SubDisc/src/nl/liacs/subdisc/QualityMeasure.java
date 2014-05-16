@@ -1,8 +1,6 @@
 package nl.liacs.subdisc;
 
-import java.util.Arrays;
-import java.util.BitSet;
-//import java.util.Collections;
+import java.util.*;
 
 // TODO MM put Contingency table here without screwing up package classes layout.
 /**
@@ -1037,6 +1035,7 @@ public class QualityMeasure
 		itsNumericTarget = theNumericTarget;
 		
 		itsDescendingOrderingPermutation = generateOrderingPermutation();
+		assert(generateOrderingPermutationTest());
 
 		setAverageSubrankingLoss();
 	}
@@ -1068,6 +1067,7 @@ public class QualityMeasure
 		itsOverallSubrankingLoss = theOverallSubrankingLoss;
 		
 		itsDescendingOrderingPermutation = generateOrderingPermutation();
+		assert(generateOrderingPermutationTest());
 	}
 	
 	/*
@@ -1102,7 +1102,7 @@ public class QualityMeasure
 			aResult[i] = (int) theIntegerArray[i];
 		return aResult;
 	}
-	
+
 	private void setAverageSubrankingLoss()
 	{
 		BitSet theWholeDataset = new BitSet(itsNrRecords);
@@ -1292,5 +1292,82 @@ public class QualityMeasure
 			}			
 		}
 		return aTotalRankingLoss / (float) theNrPositives;
+	}
+
+	//  N 16B Objects, 2N + N*log(N) operations instead of
+	// 2N 16B Objects, 3N + N*log(N) operations (and higher data locality)
+	private int[] generateOrderingPermutationAlt()
+	{
+		// couple value-to-index through Pair
+		Pair[] pairs = new Pair[itsNrRecords];
+		for (int i = 0; i < itsNrRecords; ++i)
+			pairs[i] = new Pair(itsNumericTarget.getFloat(i), i);
+
+		// sort Pairs, based on (descending) float-values
+		Arrays.sort(pairs);
+
+		// create result from permuted indexes
+		int[] result = new int[itsNrRecords];
+		for (int i = 0; i < itsNrRecords; ++i)
+			result[i] = pairs[i].itsIndex;
+
+		return result;
+	}
+
+	// couple value-to-index
+	// could be Triple(float data, int index, boolean target)
+	// and use sorted Triple[] in calculateSubrankingLoss() directly (not
+	// 'extracting' sorted indexes into itsDescendingOrderingPermutation)
+	// that way all required info is bundled (very local) - improving speed
+	// but Triple[] uses more memory than int[]
+	private static final class Pair implements Comparable<Pair>
+	{
+		final float itsData;
+		final int itsIndex;
+
+		Pair(float data, int index)
+		{
+			itsData = data;
+			itsIndex = index;
+		}
+
+		// descending order
+		// returns > 0, if (this.itsData < other.itsData)
+		// returns < 0, if (this.itsData > other.itsData)
+		@Override
+		public int compareTo(Pair other)
+		{
+			// not strictly needed - but fast pointer comparison
+			if (this == other)
+				return 0;
+
+			// at this point a return of 0, occurs only when
+			// (other.itsIndex - this.itsIndex) == 0,
+			// would indicate an error, as no two Pairs should have
+			// the same float AND index
+			int cmp = Float.compare(other.itsData, this.itsData);
+			return (cmp != 0) ? cmp : (other.itsIndex - this.itsIndex);
+		}
+	}
+
+	// debug only -> should always return true
+	private boolean generateOrderingPermutationTest()
+	{
+		int[] itsDescendingOrderingPermutationAlt = generateOrderingPermutationAlt();
+
+		boolean concordant = true;
+		for (int i = 0; i < itsNrRecords; ++i)
+		{
+			int x = itsDescendingOrderingPermutation[i];
+			int y = itsDescendingOrderingPermutationAlt[i];
+			float fx = itsNumericTarget.getFloat(x);
+			float fy = itsNumericTarget.getFloat(y);
+
+			System.out.format("%d=%f    %d=%f    (x==y)=%s    (fx==xy)=%s%n", x, fx, y, fy, (x==y), (fx==fy));
+			if (fx!=fy)
+				concordant = false;
+		}
+
+		return concordant;
 	}
 }
