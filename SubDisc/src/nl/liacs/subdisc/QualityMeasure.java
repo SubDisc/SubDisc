@@ -759,7 +759,7 @@ public class QualityMeasure
 			case AUC :
 			{
 				float aComplementCoverage = itsNrRecords - theCoverage;
-				float aSequenceSum = theCoverage*(theCoverage+1)/2.0f; //sum of all positive ranks, assuming ideal case
+				float aSequenceSum = theCoverage*(theCoverage+1.0f)/2.0f; //sum of all positive ranks, assuming ideal case
 				aReturn = 1.0f + (aSequenceSum-theSum)/(theCoverage*aComplementCoverage);
 				break;
 			}
@@ -792,6 +792,7 @@ public class QualityMeasure
 				aReturn = (theCoverage/(2.0f*theMedian+theMedianAD));
 				break;
 			}
+			// DISTRIBUTION
 			// normal H^2 for continuous PDFs
 			case SQUARED_HELLINGER :
 			{
@@ -840,8 +841,9 @@ public class QualityMeasure
 
 				// now weight SQUARED_HELLINGER
 				// magic number = maximum possible score
+				// it lies at (5/9, 4/27)
 //				aReturn = (float) (aTotalSquaredDifference * (theCoverage / (2.0 * itsNrRecords)));
-				aReturn = (float) (aReturn / 0.1481481481481481);
+				aReturn = (float) (aReturn / (4.0/27.0));
 				break;
 			}
 			case KULLBACK_LEIBLER :
