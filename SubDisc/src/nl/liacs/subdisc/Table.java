@@ -23,7 +23,8 @@ public class Table implements XMLNodeInterface
 //	private int itsNrNumerics = 0;
 //	private int itsNrOrdinals = 0;
 //	private int itsNrBinaries = 0;
-	private Random itsRandomNumber = new Random(System.currentTimeMillis());
+	//private Random itsRandomNumber = new Random(System.currentTimeMillis());
+	private Random itsRandomNumber = new Random(10);
 	private List<String> itsDomains;
 	private List<Integer> itsDomainIndices; //allows for much faster removal
 

@@ -84,17 +84,16 @@ public class LabelRankingMatrix
 	
 	public float altDistance(LabelRankingMatrix theMatrix)
 	{
-		float aParameter = 1.0f;
+		float aMax = -1f/0f;
 		float aDistance = 0;
 
 		for (int i=0; i<itsSize; i++)
 			for (int j=i+1; j<itsSize; j++)
 			{
-				float aDistanceTest = Math.abs(itsMatrix[i][j] - theMatrix.itsMatrix[i][j]);
-				if (aDistanceTest >= aParameter)
-					aDistance += 0.5;
+				aDistance = Math.abs((itsMatrix[i][j] - theMatrix.itsMatrix[i][j])/2);
+				aMax = Math.max(aMax, aDistance);
 			}
-		return aDistance;
+		return aMax*sqrDistance(theMatrix);
 	}
 	
 	public float minDistance0(LabelRankingMatrix theMatrix)
@@ -158,16 +157,46 @@ public class LabelRankingMatrix
 	
 	public float strdvDistance(LabelRankingMatrix theMatrix)
 	{
-		float aDistance = 0;
-		float theMeanDistance = avgDistance(theMatrix);
-		int count=0;
+		float aCovariance = 0;
 		for (int i=0; i<itsSize; i++)
-			for (int j=i+1; j<itsSize; j++)
+		{
+			float aDistance = 0;
+			float theLabelMean = labelMean(theMatrix.itsMatrix, i);
+			float theLabelMean2 = labelMean(itsMatrix, i);
+			for (int j=0; j<itsSize; j++)
 			{
-				aDistance += Math.pow(theMeanDistance - Math.abs(itsMatrix[i][j] - theMatrix.itsMatrix[i][j]),2);
-				count += 1;
+				aDistance += (theMatrix.itsMatrix[i][j] - theLabelMean)*(itsMatrix[i][j] - theLabelMean2);
 			}
-		return (float) Math.sqrt(aDistance/count);
+			aCovariance += -aDistance/(itsSize-1);
+			//Log.logCommandLine("cov: " + aCovariance);
+		}
+		return (float) aCovariance/itsSize;
+	}
+	
+	public float strdvDistance2(LabelRankingMatrix theMatrix)
+	{
+		float aCovariance = 0;
+		for (int i=0; i<itsSize; i++)
+		{
+			float theLabelMean = labelMean(theMatrix.itsMatrix, i);
+			float theLabelMean2 = labelMean(itsMatrix, i);
+			for (int j=0; j<itsSize; j++)
+			{
+				aCovariance += (theMatrix.itsMatrix[i][j] - theLabelMean)*(itsMatrix[i][j] - theLabelMean2);
+			}
+		}
+		aCovariance = aCovariance/(2*itsSize-3);
+		Log.logCommandLine("cov: " + aCovariance);
+		return (float) aCovariance;
+	}
+	
+	public float labelMean(float[][] theRankingMatrix, int label)
+	{
+		 float sum = 0;
+		 for (int i = 0; i < itsSize; i++) {
+		   sum += theRankingMatrix[label][i];
+		 }
+		 return sum / (itsSize-1);
 	}
 	
 	public float sqrDistance(LabelRankingMatrix theMatrix)
@@ -176,7 +205,7 @@ public class LabelRankingMatrix
 		for (int i=0; i<itsSize; i++)
 			for (int j=i+1; j<itsSize; j++)
 			{
-				aDistance += Math.pow(itsMatrix[i][j] - theMatrix.itsMatrix[i][j],2);
+				aDistance += Math.pow((itsMatrix[i][j] - theMatrix.itsMatrix[i][j])/2,2);
 			}
 		return (float) Math.sqrt(aDistance);
 	}
@@ -237,23 +266,6 @@ public class LabelRankingMatrix
 		Log.logCommandLine(anOutputPrint);
 		Log.logCommandLine("  ================================");
 	}
-
-	public static void main(String[] args)
-	{
-        System.out.println("na boa");
-
-		int aQuantity = 3;
-        LabelRanking a1 = new LabelRanking("abcd");
-		LabelRanking a2 = new LabelRanking("dbac");
-		LabelRanking a3 = new LabelRanking("bdac");
-		LabelRankingMatrix anAverageMatrix = new LabelRankingMatrix(4); //empty matrix first
-		anAverageMatrix.add(new LabelRankingMatrix(a1));
-		anAverageMatrix.add(new LabelRankingMatrix(a2));
-		anAverageMatrix.add(new LabelRankingMatrix(a3));
-		anAverageMatrix.divide(aQuantity);
-
-		anAverageMatrix.print();
-    }
 
 //	public LabelRanking LabelRankingMatrix2ranking(LabelRankingMatrix theMatrix)
 //	{

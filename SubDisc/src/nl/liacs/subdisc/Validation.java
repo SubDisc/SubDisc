@@ -1,5 +1,9 @@
 package nl.liacs.subdisc;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.*;
 
 import nl.liacs.subdisc.ConditionListBuilder.ConditionListA;
@@ -64,7 +68,8 @@ public class Validation
 	private double[] getRandomQualities(boolean forSubgroups, int theNrRepetitions)
 	{
 		final int aMinimumCoverage = itsSearchParameters.getMinimumCoverage();
-		final Random aRandom = new Random(System.currentTimeMillis());
+		//final Random aRandom = new Random(System.currentTimeMillis());
+		final Random aRandom = new Random(10);
 		final int aDepth = itsSearchParameters.getSearchDepth();
 
 		final TargetType aTargetType = itsTargetConcept.getTargetType();
@@ -307,7 +312,15 @@ public class Validation
 		LabelRanking aLR = aTarget.getAverageRanking(null); //average ranking over entire dataset
 		LabelRankingMatrix aLRM = aTarget.getAverageRankingMatrix(null);
 		QualityMeasure aQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), itsTable.getNrRows(), aLR, aLRM);
-
+		
+		//temp<--
+		BufferedWriter br = null;
+		try
+		{
+		final File f  = new File("output.txt");
+		br = new BufferedWriter(new FileWriter(f));
+		//temp-->
+		
 		for (int i = 0; i < theNrRepetitions; ++i)
 		{
 			Subgroup aSubgroup;
@@ -321,8 +334,25 @@ public class Validation
 			BitSet aMembers = aSubgroup.getMembers();
 			LabelRankingMatrix aSubgroupLRM = aTarget.getAverageRankingMatrix(aSubgroup);
 			aQualities[i] = aQualityMeasure.computeLabelRankingDistance(aMembers.cardinality(), aSubgroupLRM);
+			Log.logCommandLine("qual: " + aQualities[i]);
+			
+			//temp<--
+			br.write(aQualities[i] + "\r");
+			//temp-->
 		}
-
+		}
+		//temp<--
+		catch (IOException e) {}
+		finally
+		{
+			if (br != null)
+			{
+				try { br.close(); }
+				catch (IOException e) {}
+			}
+		}
+		//temp-->
+		
 		return aQualities;
 	}
 

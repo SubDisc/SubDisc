@@ -63,7 +63,7 @@ public class QualityMeasure
 	{
 		if (theMeasure == null)
 			throw new IllegalArgumentException("QualityMeasure: theMeasure can not be null");
-		if (theMeasure != QM.CLAUDIO1 && theMeasure != QM.CLAUDIO2 && theMeasure != QM.LRmin && theMeasure != QM.LRmax && theMeasure != QM.LRavg && theMeasure != QM.LRstrdv && theMeasure != QM.LRsqr)
+		if (!QM.getQualityMeasures(TargetType.LABEL_RANKING).contains(theMeasure))
 			throw new IllegalArgumentException("QualityMeasure: not a LabelRanking measure");
 		if (theTotalCoverage <= 0)
 			throw new IllegalArgumentException("QualityMeasure: theCoverage must be > 0");

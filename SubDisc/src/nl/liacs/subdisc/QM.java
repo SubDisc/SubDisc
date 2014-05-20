@@ -72,7 +72,7 @@ public enum QM implements EnumInterface
 	LRmin			("LRM row Min",			"0.0",	TargetType.LABEL_RANKING),
 	LRsqr			("LRM norm",			"0.0",	TargetType.LABEL_RANKING),
 	LRstrdv			("LRM Std Deviation",	"0.0",	TargetType.LABEL_RANKING),
-	CLAUDIO2		("Alternative",			"0.0",	TargetType.LABEL_RANKING),
+	CLAUDIO2		("LRM Max",				"0.0",	TargetType.LABEL_RANKING),
 
 	// DOUBLE_CORRELATION  quality measures
 	CORRELATION_R		("r",			"0.2",	TargetType.DOUBLE_CORRELATION),
