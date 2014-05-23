@@ -667,7 +667,8 @@ Log.logCommandLine("\nAUC: " + itsROCList.getAreaUnderCurve());
 	public void clear()
 	{
 		super.clear();
-		itsROCList.clear();
+		if (itsROCList != null)
+			itsROCList.clear();
 		itsLowestScore = Double.NaN;
 		itsJointEntropy = Double.NaN;
 	}
