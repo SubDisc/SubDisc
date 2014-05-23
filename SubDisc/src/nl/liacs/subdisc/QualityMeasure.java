@@ -1035,7 +1035,7 @@ public class QualityMeasure
 		itsNumericTarget = theNumericTarget;
 		
 		itsDescendingOrderingPermutation = generateOrderingPermutation();
-		assert(generateOrderingPermutationTest());
+//		assert(generateOrderingPermutationTest());
 
 		setAverageSubrankingLoss();
 	}
@@ -1067,7 +1067,7 @@ public class QualityMeasure
 		itsOverallSubrankingLoss = theOverallSubrankingLoss;
 		
 		itsDescendingOrderingPermutation = generateOrderingPermutation();
-		assert(generateOrderingPermutationTest());
+//		assert(generateOrderingPermutationTest());
 	}
 	
 	/*
