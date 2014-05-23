@@ -27,7 +27,7 @@ public class TargetConcept implements XMLNodeInterface
 	// for double regression code:
 	private List<Column>	itsSecondaryTargets;
 	private List<Column>	itsTertiaryTargets;
-	private boolean		itsInterceptRelevance;
+	private boolean	itsInterceptRelevance;
 	private String		itsGlobalRegressionModel;
 
 	public TargetConcept()
@@ -82,10 +82,7 @@ public class TargetConcept implements XMLNodeInterface
 	public int getNrTargetAttributes() { return itsNrTargetAttributes; }
 	public void setNrTargetAttributes(int theNr) { itsNrTargetAttributes = theNr; }
 	public TargetType getTargetType() { return itsTargetType; }
-	public void setTargetType(String theTargetTypeName)
-	{
-		itsTargetType = TargetType.fromString(theTargetTypeName);
-	}
+	public void setTargetType(String theTargetTypeName) { itsTargetType = TargetType.fromString(theTargetTypeName); }
 
 	public Column getPrimaryTarget() { return itsPrimaryTarget; }
 	public void setPrimaryTarget(Column thePrimaryTarget) { itsPrimaryTarget = thePrimaryTarget; }
@@ -96,28 +93,16 @@ public class TargetConcept implements XMLNodeInterface
 	public void setSecondaryTarget(Column theSecondaryTarget) { itsSecondaryTarget = theSecondaryTarget; }
 
 	public List<Column> getMultiTargets() { return itsMultiTargets; }
-	public void setMultiTargets(List<Column> theMultiTargets)
-	{
-		itsMultiTargets = theMultiTargets;
-	}
+	public void setMultiTargets(List<Column> theMultiTargets) { itsMultiTargets = theMultiTargets; }
 
 	public List<Column> getMultiRegressionTargets() { return itsMultiRegressionTargets; }
-	public void setMultiRegressionTargets(List<Column> theMultiRegressionTargets)
-	{
-		itsMultiRegressionTargets = theMultiRegressionTargets;
-	}
+	public void setMultiRegressionTargets(List<Column> theMultiRegressionTargets) { itsMultiRegressionTargets = theMultiRegressionTargets; }
 
 	public List<Column> getSecondaryTargets() { return itsSecondaryTargets; }
-	public void setSecondaryTargets(List<Column> theSecondaryTargets)
-	{
-		itsSecondaryTargets = theSecondaryTargets;
-	}
+	public void setSecondaryTargets(List<Column> theSecondaryTargets) { itsSecondaryTargets = theSecondaryTargets; }
 
 	public List<Column> getTertiaryTargets() { return itsTertiaryTargets; }
-	public void setTertiaryTargets(List<Column> theTertiaryTargets)
-	{
-		itsTertiaryTargets = theTertiaryTargets;
-	}
+	public void setTertiaryTargets(List<Column> theTertiaryTargets) { itsTertiaryTargets = theTertiaryTargets; }
 
 	public int getNrTargets()
 	{
@@ -174,6 +159,13 @@ public class TargetConcept implements XMLNodeInterface
 				return itsPrimaryTarget == theColumn;
 			case SINGLE_NUMERIC :
 				return itsPrimaryTarget == theColumn;
+			case MULTI_NUMERIC :
+			{
+				for (Column aColumn : itsMultiTargets)
+					if (aColumn == theColumn)
+						return true;
+				return false;
+			}
 			case DOUBLE_REGRESSION :
 				return ((itsPrimaryTarget == theColumn) || (itsSecondaryTarget == theColumn));
 			case DOUBLE_CORRELATION :

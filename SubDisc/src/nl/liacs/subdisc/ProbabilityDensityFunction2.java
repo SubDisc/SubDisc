@@ -18,7 +18,7 @@ public class ProbabilityDensityFunction2 extends ProbabilityDensityFunction
 {
 	// related to Gaussian | standard normal distrubution
 	// kernel spans [-CUTOFF : CUTOFF], and consists of SAMPLES points
-	private static final double CUTOFF = 8.0;
+	private static final double CUTOFF = 4.0;
 	private static final double SAMPLES = 1001;
 
 	// related to original domain
@@ -85,7 +85,7 @@ System.out.format("h=%f lo=%f hi=%f range=%f s=%f k=%d dx=%f%n", itsH, itsLo, it
 	}
 
 	// TODO MM rounding error might cause: itsLo+(n*dx) < itsHi
-	private final float[] getDensity(Column theData, BitSet theMembers, int n)
+	private final float[] getDensity_(Column theData, BitSet theMembers, int n)
 	{
 		float[] density = new float[n];
 
@@ -101,6 +101,45 @@ System.out.format("h=%f lo=%f hi=%f range=%f s=%f k=%d dx=%f%n", itsH, itsLo, it
 		for (int i = 0; i < density.length; ++i)
 			density[i] /= nh;
 
+		return density;
+	}
+	private final float[] getDensity(Column theData, BitSet theMembers, int n)
+	{
+		// cache these values first
+		// results in higher memory use + slightly larger rounding error
+		double[] d_h = new double[theMembers.cardinality()];
+		for (int i = 0, j = theMembers.nextSetBit(0); j >= 0; j = theMembers.nextSetBit(j + 1), ++i)
+			d_h[i] = itsData.getFloat(j) / itsH;
+
+		float[] density = new float[n];
+		for (int i = 0; i < density.length; ++i)
+		{
+			double mu = itsLo + (i * dx);
+			double mu_h = mu / itsH;
+
+			for (int j = 0; j < d_h.length; ++j)
+			{
+				double diff = d_h[j] - mu_h;
+				// hack - should find start i before this loop
+				// and break as soon as diff > CUTOFF
+				if (Math.abs(diff) < CUTOFF)
+					density[i] += Gaussian.phi(diff);
+			}
+		}
+		//Vec.divide(density, theMembers.cardinality()*itsH);
+		double nh = d_h.length*itsH;
+		for (int i = 0; i < density.length; ++i)
+			density[i] /= nh;
+/*
+double[] density_d = new double[density.length];
+for (int i = 0; i < density_d.length; ++i)
+	density_d[i] = density[i];
+double[] bins = new double[density.length];
+for (int i = 0; i < bins.length; ++i)
+	bins[i] = itsLo + (i * dx);
+System.out.format("integral(bins, density)=%.16f%n", Vec.integral(bins, density_d));
+System.out.println("E[bins, density]="+Vec.expected_value(bins, density_d));
+*/
 		return density;
 	}
 
