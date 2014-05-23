@@ -123,10 +123,10 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		float[] aCounts = itsNumericTarget.getStatistics(aBitSet, false);
 		ProbabilityDensityFunction aPDF;
 		// DEBUG
-//		if (!ProbabilityDensityFunction.USE_ProbabilityDensityFunction2)
+		if (!ProbabilityDensityFunction.USE_ProbabilityDensityFunction2)
 			aPDF = new ProbabilityDensityFunction(itsNumericTarget);
-//		else
-//			aPDF = new ProbabilityDensityFunction2(itsNumericTarget);
+		else
+			aPDF = new ProbabilityDensityFunction2(itsNumericTarget);
 		aPDF.smooth();
 
 		itsQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), itsNrRows, aCounts[0], aCounts[1], aPDF);
