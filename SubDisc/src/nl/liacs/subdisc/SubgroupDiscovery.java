@@ -1080,7 +1080,7 @@ System.out.println(aSubgroup + "\t" + aRefinement.getConditionBase());
 				}
 
 				//TODO: is this special case still needed?
-				else if (aMeasure == QM.CLAUDIO1 || aMeasure == QM.CLAUDIO2)
+				else if ( QM.getQualityMeasures(TargetType.LABEL_RANKING).contains(aMeasure) )
 				{
 					LabelRankingMatrix aLRM = itsTargetRankings.getAverageRankingMatrix(theNewSubgroup);
 					aQuality = itsQualityMeasure.computeLabelRankingDistance(aCoverage, aLRM);

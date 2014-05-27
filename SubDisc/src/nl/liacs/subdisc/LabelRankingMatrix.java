@@ -67,33 +67,57 @@ public class LabelRankingMatrix
 				itsMatrix[i][j] /= theValue;
 	}
 
-	public float distance(LabelRankingMatrix theMatrix)
+	public float normDistance(LabelRankingMatrix theMatrix)
 	{
-		float aDistance = 0;
-		int count=0;
+		double aDistance = 0;
 		for (int i=0; i<itsSize; i++)
 			for (int j=i+1; j<itsSize; j++)
 			{
-				//aDistance += Math.pow(Math.abs(itsMatrix[i][j] - theMatrix.itsMatrix[i][j]), 2);
-				aDistance += Math.abs(itsMatrix[i][j] - theMatrix.itsMatrix[i][j]);
-				count += 1;
+				aDistance += Math.pow((itsMatrix[i][j] - theMatrix.itsMatrix[i][j])/2,2);
 			}
-		return (aDistance/count)*homogeneity(theMatrix);
+		return (float) Math.sqrt(aDistance);
+	}
+	
+	public float wnormDistance(LabelRankingMatrix theMatrix)
+	{
+//		float aDistance = 0;
+//		int count=0;
+//		for (int i=0; i<itsSize; i++)
+//			for (int j=i+1; j<itsSize; j++)
+//			{
+//				//aDistance += Math.pow(Math.abs(itsMatrix[i][j] - theMatrix.itsMatrix[i][j]), 2);
+//				aDistance += Math.abs(itsMatrix[i][j] - theMatrix.itsMatrix[i][j]);
+//				count += 1;
+//			}
+//		return (aDistance/count)*homogeneity(theMatrix);
 		//return aDistance/count;
+		return normDistance(theMatrix)*homogeneity(theMatrix);
 	}
 	
 	public float altDistance(LabelRankingMatrix theMatrix)
 	{
 		float aMax = -1f/0f;
-		float aDistance = 0;
-
 		for (int i=0; i<itsSize; i++)
 			for (int j=i+1; j<itsSize; j++)
+				aMax = Math.max(aMax, (itsMatrix[i][j] - theMatrix.itsMatrix[i][j])/2);
+		return aMax;
+	}
+	
+	public float maxDistance(LabelRankingMatrix theMatrix)
+	{
+		
+		float aMax = -1f/0f;
+		for (int i=0; i<itsSize; i++)
+		{
+			float aDistance = 0;
+			for (int j=0; j<itsSize; j++)
 			{
-				aDistance = Math.abs((itsMatrix[i][j] - theMatrix.itsMatrix[i][j])/2);
-				aMax = Math.max(aMax, aDistance);
+				if (i!=j) aDistance += Math.abs(itsMatrix[i][j] - theMatrix.itsMatrix[i][j]);
 			}
-		return aMax*sqrDistance(theMatrix);
+			aDistance = aDistance/(itsSize-1);
+			aMax = Math.max(aMax, aDistance);
+		}
+		return aMax;
 	}
 	
 	public float minDistance0(LabelRankingMatrix theMatrix)
@@ -125,22 +149,7 @@ public class LabelRankingMatrix
 		return aMin;
 	}
 	
-	public float maxDistance(LabelRankingMatrix theMatrix)
-	{
-		
-		float aMax = -1f/0f;
-		for (int i=0; i<itsSize; i++)
-		{
-			float aDistance = 0;
-			for (int j=0; j<itsSize; j++)
-			{
-				if (i!=j) aDistance += Math.abs(itsMatrix[i][j] - theMatrix.itsMatrix[i][j]);
-			}
-			aDistance = aDistance/(itsSize-1);
-			aMax = Math.max(aMax, aDistance);
-		}
-		return aMax;
-	}
+
 	
 	public float avgDistance(LabelRankingMatrix theMatrix)
 	{
@@ -155,7 +164,27 @@ public class LabelRankingMatrix
 		return aDistance/count;
 	}
 	
-	public float strdvDistance(LabelRankingMatrix theMatrix)
+	public float strdvDistance0(LabelRankingMatrix theMatrix)
+	{
+		float aMax = -1f/0f;
+		float aCovariance = 0;
+		for (int i=0; i<itsSize; i++)
+		{
+			float aDistance = 0;
+			float theLabelMean = labelMean(theMatrix.itsMatrix, i);
+			float theLabelMean2 = labelMean(itsMatrix, i);
+			for (int j=0; j<itsSize; j++)
+			{
+				if (i!=j)	aDistance += (theMatrix.itsMatrix[i][j] - theLabelMean)*(itsMatrix[i][j] - theLabelMean2);
+			}
+			aCovariance = -aDistance/(itsSize-2);
+			aMax = Math.max(aMax, aCovariance);
+			Log.logCommandLine("cov: " + aMax);
+		}
+		return aMax;
+	}
+	
+	public float covDistance(LabelRankingMatrix theMatrix)
 	{
 		float aCovariance = 0;
 		for (int i=0; i<itsSize; i++)
@@ -165,10 +194,10 @@ public class LabelRankingMatrix
 			float theLabelMean2 = labelMean(itsMatrix, i);
 			for (int j=0; j<itsSize; j++)
 			{
-				aDistance += (theMatrix.itsMatrix[i][j] - theLabelMean)*(itsMatrix[i][j] - theLabelMean2);
+				if (i!=j)	aDistance += (theMatrix.itsMatrix[i][j] - theLabelMean)*(itsMatrix[i][j] - theLabelMean2);
 			}
-			aCovariance += -aDistance/(itsSize-1);
-			//Log.logCommandLine("cov: " + aCovariance);
+			aCovariance += -aDistance/(itsSize-2);
+			//Log.logCommandLine("cov: " + aDistance/(itsSize-2));
 		}
 		return (float) aCovariance/itsSize;
 	}
@@ -186,7 +215,7 @@ public class LabelRankingMatrix
 			}
 		}
 		aCovariance = aCovariance/(2*itsSize-3);
-		Log.logCommandLine("cov: " + aCovariance);
+		//Log.logCommandLine("cov: " + aCovariance);
 		return (float) aCovariance;
 	}
 	
@@ -199,16 +228,7 @@ public class LabelRankingMatrix
 		 return sum / (itsSize-1);
 	}
 	
-	public float sqrDistance(LabelRankingMatrix theMatrix)
-	{
-		double aDistance = 0;
-		for (int i=0; i<itsSize; i++)
-			for (int j=i+1; j<itsSize; j++)
-			{
-				aDistance += Math.pow((itsMatrix[i][j] - theMatrix.itsMatrix[i][j])/2,2);
-			}
-		return (float) Math.sqrt(aDistance);
-	}
+
 	
 
 

@@ -614,20 +614,20 @@ public class QualityMeasure
 		//theSubgroupRankingMatrix.print();
 
 		float aDistance = 0.0f;
-		if (itsQualityMeasure == QM.CLAUDIO1)
-			aDistance = itsAverageRankingMatrix.distance(theSubgroupRankingMatrix);
-		else if (itsQualityMeasure == QM.CLAUDIO2)
+		if (itsQualityMeasure == QM.LRnorm)
+			aDistance = itsAverageRankingMatrix.normDistance(theSubgroupRankingMatrix);
+		else if (itsQualityMeasure == QM.LRwnorm)
+			aDistance = itsAverageRankingMatrix.wnormDistance(theSubgroupRankingMatrix);
+		else if (itsQualityMeasure == QM.LRpairwise)
 			aDistance = itsAverageRankingMatrix.altDistance(theSubgroupRankingMatrix);
 		else if (itsQualityMeasure == QM.LRmin)
 			aDistance = itsAverageRankingMatrix.minDistance(theSubgroupRankingMatrix);
-		else if (itsQualityMeasure == QM.LRmax)
+		else if (itsQualityMeasure == QM.LRlabelwise)
 			aDistance = itsAverageRankingMatrix.maxDistance(theSubgroupRankingMatrix);
-		else if (itsQualityMeasure == QM.LRavg)
-			aDistance = itsAverageRankingMatrix.avgDistance(theSubgroupRankingMatrix);
-		else if (itsQualityMeasure == QM.LRstrdv)
-			aDistance = itsAverageRankingMatrix.strdvDistance(theSubgroupRankingMatrix);
-		else if (itsQualityMeasure == QM.LRsqr)
-			aDistance = itsAverageRankingMatrix.sqrDistance(theSubgroupRankingMatrix);
+		else if (itsQualityMeasure == QM.LRcov)
+			aDistance = itsAverageRankingMatrix.covDistance(theSubgroupRankingMatrix);
+		//else if (itsQualityMeasure == QM.LRsqr)
+		//	aDistance = itsAverageRankingMatrix.distance(theSubgroupRankingMatrix);
 
 		//aDistance = aDistance*itsAverageRankingMatrix.homogeneity(theSubgroupRankingMatrix);
 		//Log.logCommandLine("distance: " + aDistance);
