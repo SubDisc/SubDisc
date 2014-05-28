@@ -2,13 +2,10 @@ package nl.liacs.subdisc;
 
 import java.util.*;
 
-import org.apache.commons.math3.linear.*;
-import org.apache.commons.math3.stat.correlation.*;
-import org.jfree.data.xy.*;
-
 import nl.liacs.histo.*;
-import nl.liacs.subdisc.FileHandler.Action;
 import nl.liacs.subdisc.Jama.*;
+
+import org.jfree.data.xy.*;
 
 public class ProbabilityDensityFunctionMV
 {
@@ -27,38 +24,38 @@ public class ProbabilityDensityFunctionMV
 
 	ProbabilityDensityFunctionMV(Table t)
 	{
-		int rows = t.getNrRows();
-		int cols = t.getNrColumns();
-
-		int[][] types = t.getTypeCounts();
-		double[][] data = new double[types[1][0]][rows];
-
-		for (int i = 0, j = 0; i < cols; ++i)
-		{
-			Column c = t.getColumn(i);
-			if (c.getType() == AttributeType.NUMERIC)
-			{
-				double[] da = data[j++];
-				for (int k = 0; k < rows; ++k)
-					da[k] = c.getFloat(k);
-			}
-		}
-
-		Covariance cov = new Covariance(data);
-		RealMatrix cm = cov.getCovarianceMatrix();
-		for (int i = 0; i < rows; ++i)
-			System.out.println(Arrays.toString(cm.getRow(i)));
+//		int rows = t.getNrRows();
+//		int cols = t.getNrColumns();
+//
+//		int[][] types = t.getTypeCounts();
+//		double[][] data = new double[types[1][0]][rows];
+//
+//		for (int i = 0, j = 0; i < cols; ++i)
+//		{
+//			Column c = t.getColumn(i);
+//			if (c.getType() == AttributeType.NUMERIC)
+//			{
+//				double[] da = data[j++];
+//				for (int k = 0; k < rows; ++k)
+//					da[k] = c.getFloat(k);
+//			}
+//		}
+//
+//		Covariance cov = new Covariance(data);
+//		RealMatrix cm = cov.getCovarianceMatrix();
+//		for (int i = 0; i < rows; ++i)
+//			System.out.println(Arrays.toString(cm.getRow(i)));
 	}
 
 	ProbabilityDensityFunctionMV(double[][] data)
 	{
-		int rows = data.length;
-
-		Covariance cov = new Covariance(data);
-		RealMatrix cm = cov.getCovarianceMatrix();
-		double[][] data2 = cm.getData();
-		for (int i = 0; i < data2.length; ++i)
-			System.out.println(Arrays.toString(data2[i]));
+//		int rows = data.length;
+//
+//		Covariance cov = new Covariance(data);
+//		RealMatrix cm = cov.getCovarianceMatrix();
+//		double[][] data2 = cm.getData();
+//		for (int i = 0; i < data2.length; ++i)
+//			System.out.println(Arrays.toString(data2[i]));
 	}
 
 	// Silverman's rule suggests using
@@ -79,7 +76,7 @@ public class ProbabilityDensityFunctionMV
 		for (int i = 0; i < d; ++i)
 		{
 			H[i] = new double[d];
-			double h_ii = fac * Vec.std_dev(data[0], true);
+			double h_ii = fac * Vec.std_dev(data[i], true);
 			H[i][i] = h_ii*h_ii; // sqrt(H_ii) = fac*std_dev_i
 		}
 
