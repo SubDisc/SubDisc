@@ -619,7 +619,7 @@ public class QualityMeasure
 		else if (itsQualityMeasure == QM.LRwnorm)
 			aDistance = itsAverageRankingMatrix.wnormDistance(theSubgroupRankingMatrix);
 		else if (itsQualityMeasure == QM.LRpairwise)
-			aDistance = itsAverageRankingMatrix.altDistance(theSubgroupRankingMatrix);
+			aDistance = itsAverageRankingMatrix.pairwiseMax(theSubgroupRankingMatrix);
 		else if (itsQualityMeasure == QM.LRmin)
 			aDistance = itsAverageRankingMatrix.minDistance(theSubgroupRankingMatrix);
 		else if (itsQualityMeasure == QM.LRlabelwise)

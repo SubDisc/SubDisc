@@ -94,7 +94,7 @@ public class LabelRankingMatrix
 		return normDistance(theMatrix)*homogeneity(theMatrix);
 	}
 	
-	public float altDistance(LabelRankingMatrix theMatrix)
+	public float pairwiseMax(LabelRankingMatrix theMatrix)
 	{
 		float aMax = -1f/0f;
 		for (int i=0; i<itsSize; i++)
@@ -253,7 +253,7 @@ public class LabelRankingMatrix
 		Log.logCommandLine("  ================================");
 		for (int i=0; i<itsSize; i++)
 		{
-			String aRow = new String(LabelRanking.getLabel(i) + " [");
+			String aRow = new String(LabelRanking.getLetter(i) + " [");
 			for (int j=0; j<itsSize; j++)
 				if (j==0)
 					aRow += (itsMatrix[i][j]);
@@ -278,7 +278,7 @@ public class LabelRankingMatrix
 		{
 			for (int j=i+1; j<itsSize; j++) {
 				if (aFloat < Math.abs(itsMatrix[i][j])) {
-					anOutputPrint = new String(LabelRanking.getLabel(i) + ">" + LabelRanking.getLabel(j) + ": " + itsMatrix[i][j] + "  (" + i + ">" + j + ")");
+					anOutputPrint = new String(LabelRanking.getLetter(i) + ">" + LabelRanking.getLetter(j) + ": " + itsMatrix[i][j] + "  (" + i + ">" + j + ")");
 					aFloat = Math.abs(itsMatrix[i][j]);
 				}
 			}

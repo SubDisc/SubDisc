@@ -55,11 +55,11 @@ public class MatrixPlot extends JPanel
 		int aResolution = itsLRM.getSize();
 		for (int i=0; i<aResolution; i++)
 		{
-			float anX = i/(float)aResolution;
+			float aY = i/(float)itsLRM.getSize()-1;
 			for (int j=0; j<aResolution; j++)
 			{
-				float aY = -(j+1)/(float)itsLRM.getSize();
-
+				float anX = j/(float)aResolution;
+				
 				int aValue = (int) (255*itsLRM.get(i,j));
 				boolean isNegative = (aValue<0);
 				if (isNegative)
@@ -84,8 +84,8 @@ public class MatrixPlot extends JPanel
 		for(int i=0; i<itsLRM.getSize(); i++)
 		{
 			aGraphic.drawString(LabelRanking.getLetter(i), (i+0.5f)/itsLRM.getSize(), 0.04f);
-			aGraphic.drawString(LabelRanking.getLetter(i), -0.07f, -(i+0.5f)/itsLRM.getSize());
+			aGraphic.drawString(LabelRanking.getLetter(itsLRM.getSize()-i-1), -0.07f, -(i+0.5f)/itsLRM.getSize());
 		}
-		aGraphic.drawString(itsTitle, 0.4f, -1.03f);
+		aGraphic.drawString(itsTitle, 0.4f, -1.04f);
 	}
 }

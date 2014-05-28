@@ -17,12 +17,16 @@ public class LabelRankingMatrixWindow extends JFrame implements ActionListener
 		aClosePanel.add(GUI.buildButton("Close", 'C', "close", this));
 		add(aClosePanel, BorderLayout.SOUTH);
 
+		JPanel aCenterPanelM = new JPanel();
+		aCenterPanelM.setLayout(new GridLayout(2, 1));
+		
 		JPanel aCenterPanel = new JPanel();
 		aCenterPanel.setLayout(new GridLayout(1, 3));
 
 		MatrixPlot aMatrixPlot1, aMatrixPlot2, aMatrixPlot3;
 		aMatrixPlot1 = new MatrixPlot(theBaseLRM, "Base Matrix");
 		aCenterPanel.add(aMatrixPlot1);
+		
 		if (theLRM != null)
 		{
 			aMatrixPlot2 = new MatrixPlot(theLRM, "Subgroup Matrix");
@@ -32,8 +36,18 @@ public class LabelRankingMatrixWindow extends JFrame implements ActionListener
 			aCenterPanel.add(aMatrixPlot2);
 			aCenterPanel.add(aMatrixPlot3);
 		}
-		add(aCenterPanel, BorderLayout.CENTER);
-
+		aCenterPanelM.add(aCenterPanel);
+		
+		JPanel a2CenterPanel = new JPanel();
+		//a2CenterPanel.setLayout(new GridLayout(1, 3));
+		String aString = "Pairwise Max: "+ theLRM.pairwiseMax(theBaseLRM);
+		JLabel two  = new JLabel(aString);
+		a2CenterPanel.add(two);
+		
+		aCenterPanelM.add(a2CenterPanel);
+		
+		add(aCenterPanelM, BorderLayout.CENTER);
+			
 		setTitle("Label Ranking Matrix: " + theTitle);
 		setIconImage(MiningWindow.ICON);
 		setLocation(100, 100);
