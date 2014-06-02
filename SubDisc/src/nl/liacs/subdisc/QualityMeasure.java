@@ -140,12 +140,6 @@ public class QualityMeasure
 	 * 	</tr>
 	 * </table>
 	 * <p>
-	 * Please note the following:
-	 * <ul>
-	 * <li>n(H) = Coverage (subgroup coverage),</li>
-	 * <li>n(B) = TotalTargetCoverage (of the data),</li>
-	 * <li>N = TotalCoverage (number of rows in the data).</li>
-	 * </ul>
 	 *
 	 * The results are often not well defined when (theCoverage = 0), but no
 	 * check is done on this for performance reasons.
@@ -156,6 +150,13 @@ public class QualityMeasure
 	 * (theCountHeadBody <= theTotalTargetCoverage for this QualityMeasure),
 	 * (theCoverage <= theTotalCoverage for this QualityMeasure).
 	 */
+	// 
+//	 * Please note the following:
+//	 * <ul>
+//	 * <li>n(H) = TotalTargetCoverage (of the data),</li>
+//	 * <li>n(B) = Coverage (subgroup coverage),</li>
+//	 * <li>N = TotalCoverage (number of rows in the data).</li>
+//	 * </ul>
 	/* TODO MM
 	 * setup of class forces switch(QM) on each call, useless expense
 	 *
@@ -199,6 +200,44 @@ public class QualityMeasure
 			case WRACC:
 			{
 				returnValue = (theCountHeadBody/theTotalCoverage)-(theTotalTargetCoverage/theTotalCoverage)*(aCountBody/theTotalCoverage);
+				break;
+			}
+			case MUTUAL_INFORMATION:
+			{
+				// redefine
+				double N = theTotalCoverage;
+				double H = theTotalTargetCoverage;
+				double B = theCoverage;
+
+				double HB = theCountHeadBody / N;
+				double nHB = (B-theCountHeadBody) / N;
+				double HnB = (H-theCountHeadBody) / N;
+				double nHnB = ((N-H)-(B-theCountHeadBody)) / N;
+				// nHnB is equivalent to:
+				// double nHnB = (N-HB-HnB-nHB) / N;
+				// but N and H are constant and could be cached
+
+				returnValue = (float)(
+				(
+					mi(HB, HnB, nHB) +
+					mi(nHB, nHnB, HB) +
+					mi(HnB, HB, nHnB) +
+					mi(nHnB, nHB, HnB)
+				));
+//				System.out.println("*********************************************************");
+//				System.out.println("   N = " + N);
+//				System.out.println("   H = " + H);
+//				System.out.println("   B = " + B);
+//				System.out.println();
+//				System.out.println("  HB = " + HB);
+//				System.out.println(" !HB = " + nHB);
+//				System.out.println(" H!B = " + HnB);
+//				System.out.println("!H!B = " + nHnB);
+//				System.out.println(" SUM = " + (HB + nHB + HnB + nHnB));
+//				System.out.println("   MI= " + returnValue);
+//				System.out.println("WRACC= " + calculate(QM.WRACC, theTotalCoverage, theTotalTargetCoverage, theCountHeadBody, theCoverage));
+//				System.out.println("*********************************************************");
+
 				break;
 			}
 			case ABSWRACC:
@@ -310,6 +349,17 @@ public class QualityMeasure
 			}
 		}
 		return returnValue;
+	}
+
+	private static final double mi(double a, double b, double c)
+	{
+		// by definition 0*log(x) = 0 (NOTE 0*Infinity would return NaN)
+		if (a == 0.0)
+			return 0.0;
+		// x/0=Infinity (0/0 = NaN, but caught above)
+		if (b == 0.0 || c == 0.0)
+			return Double.POSITIVE_INFINITY;
+		return(a * Math.log(a / ((a+b) * (a+c))));
 	}
 
 	public static float calculatePropensityBased(QM theMeasure, int theCountHeadBody, int theCoverage, int theTotalCount, double theCountHeadPropensityScore)
