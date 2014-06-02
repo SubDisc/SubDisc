@@ -9,41 +9,42 @@ public enum QM implements EnumInterface
 
 	// SINGLE_NOMINAL quality measures
 	CORTANA_QUALITY	("Cortana Quality",	"0.1",	TargetType.SINGLE_NOMINAL),
-	WRACC			("WRAcc",			"0.02",	TargetType.SINGLE_NOMINAL),
+	WRACC			("WRAcc",		"0.02",	TargetType.SINGLE_NOMINAL),
+	MUTUAL_INFORMATION	("Mutual Information",	"0.01",	TargetType.SINGLE_NOMINAL),
 	ABSWRACC		("Abs WRAcc",		"0.02",	TargetType.SINGLE_NOMINAL),
 	CHI_SQUARED		("Chi-squared",		"50",	TargetType.SINGLE_NOMINAL),
-	INFORMATION_GAIN("Information gain","0.02",	TargetType.SINGLE_NOMINAL),
+	INFORMATION_GAIN	("Information gain",	"0.02",	TargetType.SINGLE_NOMINAL),
 	BINOMIAL		("Binomial test",	"0.05",	TargetType.SINGLE_NOMINAL),
 	ACCURACY		("Accuracy",		"0.0",	TargetType.SINGLE_NOMINAL),
-	PURITY			("Purity",			"0.5",	TargetType.SINGLE_NOMINAL),
-	JACCARD			("Jaccard",			"0.2",	TargetType.SINGLE_NOMINAL),
+	PURITY			("Purity",		"0.5",	TargetType.SINGLE_NOMINAL),
+	JACCARD			("Jaccard",		"0.2",	TargetType.SINGLE_NOMINAL),
 	COVERAGE		("Coverage",		"10",	TargetType.SINGLE_NOMINAL),
 	SPECIFICITY		("Specificity",		"0.5",	TargetType.SINGLE_NOMINAL),
 	SENSITIVITY		("Sensitivity",		"0.5",	TargetType.SINGLE_NOMINAL),
-	LAPLACE			("Laplace",			"0.2",	TargetType.SINGLE_NOMINAL),
+	LAPLACE			("Laplace",		"0.2",	TargetType.SINGLE_NOMINAL),
 	F_MEASURE		("F-measure",		"0.2",	TargetType.SINGLE_NOMINAL),
 	G_MEASURE		("G-measure",		"0.2",	TargetType.SINGLE_NOMINAL),
 	CORRELATION		("Correlation",		"0.1",	TargetType.SINGLE_NOMINAL),
-	PROP_SCORE_WRACC("Propensity score wracc",	"-0.25",	TargetType.SINGLE_NOMINAL),
-	PROP_SCORE_RATIO("Propensity score ratio",	"1.0",		TargetType.SINGLE_NOMINAL),
-	BAYESIAN_SCORE	("Bayesian Score",	"0.0",	TargetType.SINGLE_NOMINAL),
-	LIFT			("Lift",			"1.0",	TargetType.SINGLE_NOMINAL),
+	PROP_SCORE_WRACC	("Propensity score wracc",	"-0.25",	TargetType.SINGLE_NOMINAL),
+	PROP_SCORE_RATIO	("Propensity score ratio",	"1.0",		TargetType.SINGLE_NOMINAL),
+	BAYESIAN_SCORE		("Bayesian Score",	"0.0",	TargetType.SINGLE_NOMINAL),
+	LIFT			("Lift",		"1.0",	TargetType.SINGLE_NOMINAL),
 
 	// SINGLE_NUMERIC quality measures
 	// NOTE when adding a new SINGLE_NUMERIC QM -> add it to requiredStats()
-	Z_SCORE		("Z-Score",		"1.0",	TargetType.SINGLE_NUMERIC),
-	INVERSE_Z_SCORE	("Inverse Z-Score",	"1.0",	TargetType.SINGLE_NUMERIC),
-	ABS_Z_SCORE	("Abs Z-Score",		"1.0",	TargetType.SINGLE_NUMERIC),
-	AVERAGE		("Average",		"0.0",	TargetType.SINGLE_NUMERIC),	// bogus minimum value, should come from data
-	INVERSE_AVERAGE	("Inverse Average",	"0.0",	TargetType.SINGLE_NUMERIC),	// bogus minimum value, should come from data
-	QM_SUM		("Sum",		"0.0",	TargetType.SINGLE_NUMERIC),	// bogus minimum value, should come from data, note the irregular name, to avoid conflict with SUM
-	INVERSE_SUM	("Inverse Sum",	"0.0",	TargetType.SINGLE_NUMERIC),	// bogus minimum value, should come from data
-	MEAN_TEST	("Mean Test",		"0.01",	TargetType.SINGLE_NUMERIC),
-	INVERSE_MEAN_TEST("Inverse Mean Test",	"0.01",	TargetType.SINGLE_NUMERIC),
-	ABS_MEAN_TEST	("Abs Mean Test",	"0.01",	TargetType.SINGLE_NUMERIC),
-	T_TEST		("t-Test",		"1.0",	TargetType.SINGLE_NUMERIC),
-	INVERSE_T_TEST	("Inverse t-Test",	"1.0",	TargetType.SINGLE_NUMERIC),
-	ABS_T_TEST	("Abs t-Test",		"1.0",	TargetType.SINGLE_NUMERIC),
+	Z_SCORE			("Z-Score",		"1.0",	TargetType.SINGLE_NUMERIC),
+	INVERSE_Z_SCORE		("Inverse Z-Score",	"1.0",	TargetType.SINGLE_NUMERIC),
+	ABS_Z_SCORE		("Abs Z-Score",		"1.0",	TargetType.SINGLE_NUMERIC),
+	AVERAGE			("Average",		"0.0",	TargetType.SINGLE_NUMERIC),	// bogus minimum value, should come from data
+	INVERSE_AVERAGE		("Inverse Average",	"0.0",	TargetType.SINGLE_NUMERIC),	// bogus minimum value, should come from data
+	QM_SUM			("Sum",			"0.0",	TargetType.SINGLE_NUMERIC),	// bogus minimum value, should come from data, note the irregular name, to avoid conflict with SUM
+	INVERSE_SUM		("Inverse Sum",		"0.0",	TargetType.SINGLE_NUMERIC),	// bogus minimum value, should come from data
+	MEAN_TEST		("Mean Test",		"0.01",	TargetType.SINGLE_NUMERIC),
+	INVERSE_MEAN_TEST	("Inverse Mean Test",	"0.01",	TargetType.SINGLE_NUMERIC),
+	ABS_MEAN_TEST		("Abs Mean Test",	"0.01",	TargetType.SINGLE_NUMERIC),
+	T_TEST			("t-Test",		"1.0",	TargetType.SINGLE_NUMERIC),
+	INVERSE_T_TEST		("Inverse t-Test",	"1.0",	TargetType.SINGLE_NUMERIC),
+	ABS_T_TEST		("Abs t-Test",		"1.0",	TargetType.SINGLE_NUMERIC),
 	SQUARED_HELLINGER			("Squared Hellinger distance",		"0.0",	TargetType.SINGLE_NUMERIC),
 	SQUARED_HELLINGER_WEIGHTED		("Weighted Squared Hellinger distance",	"0.0",	TargetType.SINGLE_NUMERIC),
 	SQUARED_HELLINGER_WEIGHTED_ADJUSTED	("Adjusted Squared Hellinger distance",	"0.0",	TargetType.SINGLE_NUMERIC),
@@ -54,25 +55,25 @@ public enum QM implements EnumInterface
 
 	// SINGLE_ORDINAL quality measures
 	// NOTE when adding a new SINGLE_ORDINAL QM -> add it to requiredStats()
-	AUC		("AUC of ROC",		"0.5",	TargetType.SINGLE_ORDINAL),
-	WMW_RANKS	("WMW-Ranks test",	"1.0",	TargetType.SINGLE_ORDINAL),
-	INVERSE_WMW_RANKS("Inverse WMW-Ranks test",	"1.0",	TargetType.SINGLE_ORDINAL),
-	ABS_WMW_RANKS	("Abs WMW-Ranks test",	"1.0",	TargetType.SINGLE_ORDINAL),
-	MMAD		("Median MAD metric",	"0",	TargetType.SINGLE_ORDINAL),
+	AUC			("AUC of ROC",			"0.5",	TargetType.SINGLE_ORDINAL),
+	WMW_RANKS		("WMW-Ranks test",		"1.0",	TargetType.SINGLE_ORDINAL),
+	INVERSE_WMW_RANKS	("Inverse WMW-Ranks test",	"1.0",	TargetType.SINGLE_ORDINAL),
+	ABS_WMW_RANKS		("Abs WMW-Ranks test",		"1.0",	TargetType.SINGLE_ORDINAL),
+	MMAD			("Median MAD metric",		"0",	TargetType.SINGLE_ORDINAL),
 
 	// MULTI_LABEL quality measures
-	WEED		("Wtd Ent Edit Dist",	"0",	TargetType.MULTI_LABEL),
-	EDIT_DISTANCE	("Edit Distance",	"0",	TargetType.MULTI_LABEL),
+	WEED			("Wtd Ent Edit Dist",	"0",	TargetType.MULTI_LABEL),
+	EDIT_DISTANCE		("Edit Distance",	"0",	TargetType.MULTI_LABEL),
 
 
 	// LABEL_RANKING
-	LRnorm			("LRM Norm",			"0.0",	TargetType.LABEL_RANKING),
+	LRnorm			("LRM Norm",		"0.0",	TargetType.LABEL_RANKING),
 	LRwnorm			("LRM Norm & homog",	"0.0",	TargetType.LABEL_RANKING),
-	LRlabelwise		("Labelwise Max",		"0.0",	TargetType.LABEL_RANKING),
-	LRmin			("LRM row Min",			"0.0",	TargetType.LABEL_RANKING),
-	LRsqr			("LRM norm",			"0.0",	TargetType.LABEL_RANKING),
-	LRcov			("LRM Covariance",		"0.0",	TargetType.LABEL_RANKING),
-	LRpairwise		("Pairwise Max",		"0.0",	TargetType.LABEL_RANKING),
+	LRlabelwise		("Labelwise Max",	"0.0",	TargetType.LABEL_RANKING),
+	LRmin			("LRM row Min",		"0.0",	TargetType.LABEL_RANKING),
+	LRsqr			("LRM norm",		"0.0",	TargetType.LABEL_RANKING),
+	LRcov			("LRM Covariance",	"0.0",	TargetType.LABEL_RANKING),
+	LRpairwise		("Pairwise Max",	"0.0",	TargetType.LABEL_RANKING),
 
 	// DOUBLE_CORRELATION  quality measures
 	CORRELATION_R		("r",			"0.2",	TargetType.DOUBLE_CORRELATION),
@@ -86,17 +87,17 @@ public enum QM implements EnumInterface
 	COSTS_WRACC		("Costs WRAcc",		"0.0",	TargetType.DOUBLE_CORRELATION),
 	CWTPD			("CWTPD", 		"0.0", 	TargetType.DOUBLE_CORRELATION),
 	TMCC			("TMCC", 		"0.0", 	TargetType.DOUBLE_CORRELATION),
-	MCC				("MCC", 		"0.0", 	TargetType.DOUBLE_CORRELATION),
-	PDC				("PDC", 		"0.0", 	TargetType.DOUBLE_CORRELATION),
+	MCC			("MCC", 		"0.0", 	TargetType.DOUBLE_CORRELATION),
+	PDC			("PDC", 		"0.0", 	TargetType.DOUBLE_CORRELATION),
 	MVPDC			("MVPDC", 		"0.0", 	TargetType.DOUBLE_CORRELATION),
 
 	// DOUBLE_REGRESSION quality measures
-	REGRESSION_SSD_COMPLEMENT	("Sign. of Slope Diff. (complement)", "0.0", TargetType.DOUBLE_REGRESSION),
-	REGRESSION_SSD_DATASET	("Sign. of Slope Diff. (dataset)", "0.0", TargetType.DOUBLE_REGRESSION),
-	REGRESSION_FLATNESS	("Flatness", "0.0", TargetType.DOUBLE_REGRESSION),
-	REGRESSION_SSD_4	("Sign. of Slope Diff. 4", "0.0", TargetType.DOUBLE_REGRESSION),
-	COOKS_DISTANCE	("Cook's Distance",	"0.0",	TargetType.DOUBLE_REGRESSION),
-	
+	REGRESSION_SSD_COMPLEMENT	("Sign. of Slope Diff. (complement)",	"0.0",	TargetType.DOUBLE_REGRESSION),
+	REGRESSION_SSD_DATASET		("Sign. of Slope Diff. (dataset)",	"0.0",	TargetType.DOUBLE_REGRESSION),
+	REGRESSION_FLATNESS		("Flatness", 				"0.0",	TargetType.DOUBLE_REGRESSION),
+	REGRESSION_SSD_4		("Sign. of Slope Diff. 4",		"0.0",	TargetType.DOUBLE_REGRESSION),
+	COOKS_DISTANCE			("Cook's Distance",			"0.0",	TargetType.DOUBLE_REGRESSION),
+
 	// SCAPE quality measures
 	SUBRANKING_LOSS ("Subranking loss", "0.0", TargetType.SCAPE),
 	NEGATIVE_SUBRANKING_LOSS ("Negative subranking loss", "-8243721.5", TargetType.SCAPE), //WD: I needed something fierce, so here's Ernie's favorite number, but negative.
