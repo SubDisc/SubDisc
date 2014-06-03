@@ -365,7 +365,7 @@ System.out.format("%f %f %f %f %f %d %n", g_min, g_max, range, h, s, k);
 		double[][] data = new double[][] { x_data, y_data };
 		ProbabilityDensityFunction2_2D pdf = new ProbabilityDensityFunction2_2D(data);
 		System.out.println("START PLOT");
-		new TMPW(pdf.density, "");
+//		new TMPW(pdf.density, "");
 
 //		double[] x = { 1,3,2,5,8,7,12,2,4 };
 //		double[] y = { 8,6,9,4,3,3,2,7,7 };

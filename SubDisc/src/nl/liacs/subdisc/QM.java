@@ -53,6 +53,9 @@ public enum QM implements EnumInterface
 	CWRACC					("CWRAcc",		"0.0",	TargetType.SINGLE_NUMERIC),
 	CWRACC_UNWEIGHTED			("CWRAcc Unweighted",	"0.0",TargetType.SINGLE_NUMERIC),
 
+	// MULTI_NUMERIC
+	SQUARED_HELLINGER_2D			("Squared Hellinger distance",		"0.0",	TargetType.MULTI_NUMERIC),
+	
 	// SINGLE_ORDINAL quality measures
 	// NOTE when adding a new SINGLE_ORDINAL QM -> add it to requiredStats()
 	AUC			("AUC of ROC",			"0.5",	TargetType.SINGLE_ORDINAL),

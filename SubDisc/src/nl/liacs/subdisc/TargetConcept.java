@@ -161,10 +161,12 @@ public class TargetConcept implements XMLNodeInterface
 				return itsPrimaryTarget == theColumn;
 			case MULTI_NUMERIC :
 			{
-				for (Column aColumn : itsMultiTargets)
-					if (aColumn == theColumn)
-						return true;
-				return false;
+				//TODO when multi-numeric becomes more than 2, reinstate this code
+//				for (Column aColumn : itsMultiTargets)
+//					if (aColumn == theColumn)
+//						return true;
+//				return false;
+				return ((itsPrimaryTarget == theColumn) || (itsSecondaryTarget == theColumn));
 			}
 			case DOUBLE_REGRESSION :
 				return ((itsPrimaryTarget == theColumn) || (itsSecondaryTarget == theColumn));
