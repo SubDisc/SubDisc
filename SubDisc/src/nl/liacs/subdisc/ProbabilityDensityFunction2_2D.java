@@ -38,7 +38,7 @@ public class ProbabilityDensityFunction2_2D
 	 * hs[dimension]
 	 * std_devs[dimension]
 	 */
-	ProbabilityDensityFunction2_2D(double[][] data)
+	public ProbabilityDensityFunction2_2D(double[][] data)
 	{
 		// no checks for now
 		this.data = data;
@@ -46,6 +46,21 @@ public class ProbabilityDensityFunction2_2D
 		this.std_devs = computeStdDevs(this.data);
 		this.grids = computeGrids(this.data, this.hs, this.std_devs, -1);
 		this.density = density(grids[0], grids[1], data, hs);
+	}
+
+	public final int getSizeX() { return density.length; }
+	public final int getSizeY() { return density[0].length; }
+	public final double get(int x, int y) { return density[x][y]; }
+
+	public final double getMaxDensity() 
+	{
+		double aMax = 0;
+		
+		for (int i=0; i<getSizeX(); i++) 
+			for (int j=0; j<getSizeX(); j++) 
+				if (density[i][j] > aMax)
+					aMax = density[i][j];
+		return aMax;
 	}
 
 	// NOTE this only computes the diagonal of the Covariance Matrix

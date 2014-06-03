@@ -1485,6 +1485,26 @@ public class MiningWindow extends JFrame implements ActionListener
 				new ModelWindow(aTarget, aPDF, null, itsTable.getName(), false);
 				break;
 			}
+			case MULTI_NUMERIC :
+			{
+				Column aPrimaryColumn = itsTargetConcept.getPrimaryTarget();
+				Column aSecondaryColumn = itsTargetConcept.getSecondaryTarget();
+				
+				final int aRows = aPrimaryColumn.size();
+				double[][] aData = new double[2][aRows];
+				double[] da = new double[aRows];
+				for (int i=0; i<aRows; i++)
+					da[i] = aPrimaryColumn.getFloat(i);
+				aData[0] = da;
+				da = new double[aRows];
+				for (int i=0; i<aRows; i++)
+					da[i] = aSecondaryColumn.getFloat(i);
+				aData[1] = da;
+				ProbabilityDensityFunction2_2D aPdf = new ProbabilityDensityFunction2_2D(aData);
+				System.out.println("START PLOT");
+				new PDFWindow2D(aPdf, "title");
+				break;
+			}
 			case SINGLE_ORDINAL :
 			{
 				throw new AssertionError(aTargetType);
