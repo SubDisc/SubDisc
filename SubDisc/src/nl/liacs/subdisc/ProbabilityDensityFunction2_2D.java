@@ -29,6 +29,7 @@ public class ProbabilityDensityFunction2_2D
 	// limits are at [0] and [|grid|-1]
 	private final double[][] grids;
 	private final double[][] density;
+	private double itsMinX = Double.MAX_VALUE, itsMaxX = Double.MIN_VALUE, itsMinY = Double.MAX_VALUE, itsMaxY = Double.MIN_VALUE; 
 
 	/*
 	 * data.length = number of variables (dimension)
@@ -42,6 +43,18 @@ public class ProbabilityDensityFunction2_2D
 	{
 		// no checks for now
 		this.data = data;
+		for (int i=0; i<data[0].length; i++)
+		{
+			if (this.data[0][i] < itsMinX)
+				itsMinX = this.data[0][i];
+			if (this.data[0][i] > itsMaxX)
+				itsMaxX = this.data[0][i];
+			if (this.data[1][i] < itsMinY)
+				itsMinY = this.data[1][i];
+			if (this.data[1][i] > itsMaxY)
+				itsMaxY = this.data[1][i];
+		}
+		
 		this.hs = ProbabilityDensityFunctionMV.h_silverman(this.data);
 		this.std_devs = computeStdDevs(this.data);
 		this.grids = computeGrids(this.data, this.hs, this.std_devs, -1);
@@ -51,13 +64,17 @@ public class ProbabilityDensityFunction2_2D
 	public final int getSizeX() { return density.length; }
 	public final int getSizeY() { return density[0].length; }
 	public final double get(int x, int y) { return density[x][y]; }
+	public final double getMinX() { return itsMinX; }
+	public final double getMaxX() { return itsMaxX; }
+	public final double getMinY() { return itsMinY; }
+	public final double getMaxY() { return itsMaxY; }
 
 	public final double getMaxDensity() 
 	{
 		double aMax = 0;
 		
 		for (int i=0; i<getSizeX(); i++) 
-			for (int j=0; j<getSizeX(); j++) 
+			for (int j=0; j<getSizeY(); j++)
 				if (density[i][j] > aMax)
 					aMax = density[i][j];
 		return aMax;
@@ -117,8 +134,10 @@ public class ProbabilityDensityFunction2_2D
 		// s = sigmas covered by range
 		double s = range/h;
 		// 1 sigma=(samples/(2*CUTOFF))
-		int k = (int) ((Math.ceil(s) * SAMPLES) / (2.0 * CUTOFF));
-System.out.format("%f %f %f %f %f %d %n", g_min, g_max, range, h, s, k);
+		final int ARNO = 7; //total hack
+		
+		int k = (int) ((Math.ceil(s) * SAMPLES) / (2.0 * CUTOFF)) * ARNO;
+		System.out.format("%f %f %f %f %f %d %n", g_min, g_max, range, h, s, k);
 		return k;
 	}
 

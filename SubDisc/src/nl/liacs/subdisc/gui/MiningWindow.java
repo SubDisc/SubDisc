@@ -1501,8 +1501,7 @@ public class MiningWindow extends JFrame implements ActionListener
 					da[i] = aSecondaryColumn.getFloat(i);
 				aData[1] = da;
 				ProbabilityDensityFunction2_2D aPdf = new ProbabilityDensityFunction2_2D(aData);
-				System.out.println("START PLOT");
-				new PDFWindow2D(aPdf, "title");
+				new PDFWindow2D(aPdf, "whole data");
 				break;
 			}
 			case SINGLE_ORDINAL :

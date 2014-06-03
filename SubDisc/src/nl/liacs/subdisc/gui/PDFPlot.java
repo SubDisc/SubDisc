@@ -58,7 +58,7 @@ public class PDFPlot extends JPanel
 		double aMax = itsPDF.getMaxDensity();
 		for (int i=0; i<itsPDF.getSizeY(); i++)
 		{
-			float aY = i/(float)itsPDF.getSizeY()-1;
+			float aY = (itsPDF.getSizeY()-i)/(float)itsPDF.getSizeY()-1;
 			for (int j=0; j<itsPDF.getSizeX(); j++)
 			{
 				float anX = j/(float)itsPDF.getSizeX();

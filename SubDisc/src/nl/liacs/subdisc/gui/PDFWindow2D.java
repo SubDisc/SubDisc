@@ -18,20 +18,14 @@ public class PDFWindow2D extends JFrame implements ActionListener
 		add(aClosePanel, BorderLayout.SOUTH);
 
 		JPanel aCenterPanelM = new JPanel();
-		aCenterPanelM.setLayout(new GridLayout(2, 1));
+		aCenterPanelM.setLayout(new GridLayout(1, 1));
 		
 		JPanel aCenterPanel = new JPanel();
-		aCenterPanel.setLayout(new GridLayout(1, 3));
+		aCenterPanel.setLayout(new GridLayout(1, 2));
 
 		PDFPlot aPDFPlot = new PDFPlot(thePDF, "PDF");
 		aCenterPanel.add(aPDFPlot);
 		aCenterPanelM.add(aCenterPanel);
-		
-//		JPanel a2CenterPanel = new JPanel();
-//		String aString = "Pairwise Max: "+ theLRM.pairwiseMax(theBaseLRM);
-//		JLabel two  = new JLabel(aString);
-//		a2CenterPanel.add(two);
-//		aCenterPanelM.add(a2CenterPanel);
 		
 		add(aCenterPanelM, BorderLayout.CENTER);
 			
