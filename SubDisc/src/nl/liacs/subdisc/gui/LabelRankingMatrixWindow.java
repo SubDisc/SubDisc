@@ -38,14 +38,17 @@ public class LabelRankingMatrixWindow extends JFrame implements ActionListener
 		}
 		aCenterPanelM.add(aCenterPanel);
 		
-		JPanel a2CenterPanel = new JPanel();
-		//a2CenterPanel.setLayout(new GridLayout(1, 3));
-		String aString = "Pairwise Max: "+ theLRM.pairwiseMax(theBaseLRM);
-		JLabel two  = new JLabel(aString);
-		a2CenterPanel.add(two);
-		
-		aCenterPanelM.add(a2CenterPanel);
-		
+		if (theLRM != null)
+		{
+			JPanel a2CenterPanel = new JPanel();
+			//a2CenterPanel.setLayout(new GridLayout(1, 3));
+			String aString = "<html>Pairwise Max: "+ theLRM.findMax()  + " (" + theLRM.pairwiseMax(theLRM) + ") <br>" ;
+			aString += "Most different label: "+ theLRM.findMaxLabel() + "</html>";
+			JLabel two  = new JLabel(aString);
+			a2CenterPanel.add(two);
+			
+			aCenterPanelM.add(a2CenterPanel);
+		}
 		add(aCenterPanelM, BorderLayout.CENTER);
 			
 		setTitle("Label Ranking Matrix: " + theTitle);

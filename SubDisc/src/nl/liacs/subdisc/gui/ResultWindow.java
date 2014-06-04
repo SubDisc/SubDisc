@@ -433,7 +433,6 @@ public class ResultWindow extends JFrame implements ActionListener
 				Subgroup aSubgroup = anIterator.next();
 				LabelRankingMatrix aLRM = aSubgroup.getLabelRankingMatrix();
 				aLRM.print();
-				aLRM.printMax();
 				new LabelRankingMatrixWindow(itsQualityMeasure.getBaseLabelRankingMatrix(), aLRM,
 					" (" + aSubgroup.toString() + ")   " + aSubgroup.getLabelRanking().getRanking());
 				break;

@@ -668,19 +668,14 @@ public class QualityMeasure
 			aDistance = itsAverageRankingMatrix.normDistance(theSubgroupRankingMatrix);
 		else if (itsQualityMeasure == QM.LRwnorm)
 			aDistance = itsAverageRankingMatrix.wnormDistance(theSubgroupRankingMatrix);
-		else if (itsQualityMeasure == QM.LRpairwise)
-			aDistance = itsAverageRankingMatrix.pairwiseMax(theSubgroupRankingMatrix);
 		else if (itsQualityMeasure == QM.LRmin)
 			aDistance = itsAverageRankingMatrix.minDistance(theSubgroupRankingMatrix);
 		else if (itsQualityMeasure == QM.LRlabelwise)
-			aDistance = itsAverageRankingMatrix.maxDistance(theSubgroupRankingMatrix);
+			aDistance = itsAverageRankingMatrix.labelwiseMax(theSubgroupRankingMatrix);
+		else if (itsQualityMeasure == QM.LRpairwise)
+			aDistance = itsAverageRankingMatrix.pairwiseMax(theSubgroupRankingMatrix);
 		else if (itsQualityMeasure == QM.LRcov)
 			aDistance = itsAverageRankingMatrix.covDistance(theSubgroupRankingMatrix);
-		//else if (itsQualityMeasure == QM.LRsqr)
-		//	aDistance = itsAverageRankingMatrix.distance(theSubgroupRankingMatrix);
-
-		//aDistance = aDistance*itsAverageRankingMatrix.homogeneity(theSubgroupRankingMatrix);
-		//Log.logCommandLine("distance: " + aDistance);
 
 		float aPercentage = (float) theSupport/itsNrRecords;
 		float aSize = (float) Math.sqrt(aPercentage);

@@ -76,13 +76,13 @@ public enum QM implements EnumInterface
 
 
 	// LABEL_RANKING
-	LRnorm			("LRM Norm",		"0.0",	TargetType.LABEL_RANKING),
-	LRwnorm			("LRM Norm & homog",	"0.0",	TargetType.LABEL_RANKING),
-	LRlabelwise		("Labelwise Max",	"0.0",	TargetType.LABEL_RANKING),
-	LRmin			("LRM row Min",		"0.0",	TargetType.LABEL_RANKING),
-	LRsqr			("LRM norm",		"0.0",	TargetType.LABEL_RANKING),
-	LRcov			("LRM Covariance",	"0.0",	TargetType.LABEL_RANKING),
-	LRpairwise		("Pairwise Max",	"0.0",	TargetType.LABEL_RANKING),
+	LRnorm			("LRM Norm",				"0.0",	TargetType.LABEL_RANKING),
+	LRwnorm			("LRM Norm & homog",		"0.0",	TargetType.LABEL_RANKING),
+	LRmin			("Labelwise Minimum",		"0.0",	TargetType.LABEL_RANKING),
+	LRlabelwise		("Labelwise Maximization",	"0.0",	TargetType.LABEL_RANKING),
+	LRpairwise		("Pairwise Maximization",	"0.0",	TargetType.LABEL_RANKING),
+	LRcov			("Covariance",				"0.0",	TargetType.LABEL_RANKING),
+	
 
 	// DOUBLE_CORRELATION  quality measures
 	CORRELATION_R		("r",			"0.2",	TargetType.DOUBLE_CORRELATION),

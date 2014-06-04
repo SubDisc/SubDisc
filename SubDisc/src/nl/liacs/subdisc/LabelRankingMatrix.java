@@ -80,18 +80,41 @@ public class LabelRankingMatrix
 	
 	public float wnormDistance(LabelRankingMatrix theMatrix)
 	{
-//		float aDistance = 0;
-//		int count=0;
-//		for (int i=0; i<itsSize; i++)
-//			for (int j=i+1; j<itsSize; j++)
-//			{
-//				//aDistance += Math.pow(Math.abs(itsMatrix[i][j] - theMatrix.itsMatrix[i][j]), 2);
-//				aDistance += Math.abs(itsMatrix[i][j] - theMatrix.itsMatrix[i][j]);
-//				count += 1;
-//			}
-//		return (aDistance/count)*homogeneity(theMatrix);
-		//return aDistance/count;
 		return normDistance(theMatrix)*homogeneity(theMatrix);
+	}
+	
+	public float minDistance(LabelRankingMatrix theMatrix)
+	{
+		
+		float aMin = 1f/0f;
+		for (int i=0; i<itsSize; i++)
+		{
+			float aDistance = 0;
+			for (int j=0; j<itsSize; j++)
+			{
+				if (i!=j) aDistance += Math.pow((itsMatrix[i][j] - theMatrix.itsMatrix[i][j])/2, 2);
+			}
+			aDistance = (float) Math.sqrt(aDistance);
+			aMin = Math.min(aMin, aDistance);
+		}
+		return aMin;
+	}
+	
+	public float labelwiseMax(LabelRankingMatrix theMatrix)
+	{
+		
+		float aMax = -1f/0f;
+		for (int i=0; i<itsSize; i++)
+		{
+			float aDistance = 0;
+			for (int j=0; j<itsSize; j++)
+			{
+				if (i!=j) aDistance += Math.pow((itsMatrix[i][j] - theMatrix.itsMatrix[i][j])/2, 2);
+			}
+			aDistance = (float) Math.sqrt(aDistance);
+			aMax = Math.max(aMax, aDistance);
+		}
+		return aMax;
 	}
 	
 	public float pairwiseMax(LabelRankingMatrix theMatrix)
@@ -102,54 +125,6 @@ public class LabelRankingMatrix
 				aMax = Math.max(aMax, (itsMatrix[i][j] - theMatrix.itsMatrix[i][j])/2);
 		return aMax;
 	}
-	
-	public float maxDistance(LabelRankingMatrix theMatrix)
-	{
-		
-		float aMax = -1f/0f;
-		for (int i=0; i<itsSize; i++)
-		{
-			float aDistance = 0;
-			for (int j=0; j<itsSize; j++)
-			{
-				if (i!=j) aDistance += Math.abs(itsMatrix[i][j] - theMatrix.itsMatrix[i][j]);
-			}
-			aDistance = aDistance/(itsSize-1);
-			aMax = Math.max(aMax, aDistance);
-		}
-		return aMax;
-	}
-	
-	public float minDistance0(LabelRankingMatrix theMatrix)
-	{
-		float aDistance = 0;
-		float aMin = 1f/0f;
-		for (int i=0; i<itsSize; i++)
-			for (int j=i+1; j<itsSize; j++)
-			{
-				aDistance = Math.abs(itsMatrix[i][j] - theMatrix.itsMatrix[i][j]);
-				aMin = Math.min(aMin, aDistance);
-			}
-		return aMin;
-	}
-	public float minDistance(LabelRankingMatrix theMatrix)
-	{
-		
-		float aMin = 1f/0f;
-		for (int i=0; i<itsSize; i++)
-		{
-			float aDistance = 0;
-			for (int j=0; j<itsSize; j++)
-			{
-				if (i!=j) aDistance += Math.abs(itsMatrix[i][j] - theMatrix.itsMatrix[i][j]);
-			}
-			aDistance = aDistance/(itsSize-1);
-			aMin = Math.min(aMin, aDistance);
-		}
-		return aMin;
-	}
-	
-
 	
 	public float avgDistance(LabelRankingMatrix theMatrix)
 	{
@@ -162,26 +137,6 @@ public class LabelRankingMatrix
 				count += 1;
 			}
 		return aDistance/count;
-	}
-	
-	public float strdvDistance0(LabelRankingMatrix theMatrix)
-	{
-		float aMax = -1f/0f;
-		float aCovariance = 0;
-		for (int i=0; i<itsSize; i++)
-		{
-			float aDistance = 0;
-			float theLabelMean = labelMean(theMatrix.itsMatrix, i);
-			float theLabelMean2 = labelMean(itsMatrix, i);
-			for (int j=0; j<itsSize; j++)
-			{
-				if (i!=j)	aDistance += (theMatrix.itsMatrix[i][j] - theLabelMean)*(itsMatrix[i][j] - theLabelMean2);
-			}
-			aCovariance = -aDistance/(itsSize-2);
-			aMax = Math.max(aMax, aCovariance);
-			Log.logCommandLine("cov: " + aMax);
-		}
-		return aMax;
 	}
 	
 	public float covDistance(LabelRankingMatrix theMatrix)
@@ -197,40 +152,17 @@ public class LabelRankingMatrix
 				if (i!=j)	aDistance += (theMatrix.itsMatrix[i][j] - theLabelMean)*(itsMatrix[i][j] - theLabelMean2);
 			}
 			aCovariance += -aDistance/(itsSize-2);
-			//Log.logCommandLine("cov: " + aDistance/(itsSize-2));
 		}
 		return (float) aCovariance/itsSize;
-	}
-	
-	public float strdvDistance2(LabelRankingMatrix theMatrix)
-	{
-		float aCovariance = 0;
-		for (int i=0; i<itsSize; i++)
-		{
-			float theLabelMean = labelMean(theMatrix.itsMatrix, i);
-			float theLabelMean2 = labelMean(itsMatrix, i);
-			for (int j=0; j<itsSize; j++)
-			{
-				aCovariance += (theMatrix.itsMatrix[i][j] - theLabelMean)*(itsMatrix[i][j] - theLabelMean2);
-			}
-		}
-		aCovariance = aCovariance/(2*itsSize-3);
-		//Log.logCommandLine("cov: " + aCovariance);
-		return (float) aCovariance;
 	}
 	
 	public float labelMean(float[][] theRankingMatrix, int label)
 	{
 		 float sum = 0;
-		 for (int i = 0; i < itsSize; i++) {
-		   sum += theRankingMatrix[label][i];
-		 }
+		 for (int i = 0; i < itsSize; i++)
+			 sum += theRankingMatrix[label][i];
 		 return sum / (itsSize-1);
 	}
-	
-
-	
-
 
 	public float homogeneity(LabelRankingMatrix theMatrix)
 	{
@@ -267,24 +199,63 @@ public class LabelRankingMatrix
 	/*
 	 * Print the higher values in the LabelRankingMatrix
 	 */
-	String anOutputPrint;
-	public void printMax()
+//	String anOutputPrint;
+//	public void printMax()
+//	{
+//
+//		float aFloat = 0;
+//
+//		Log.logCommandLine("  ================================");
+//		for (int i=0; i<itsSize; i++)
+//		{
+//			for (int j=i+1; j<itsSize; j++) {
+//				if (aFloat < Math.abs(itsMatrix[i][j])) {
+//					anOutputPrint = new String(LabelRanking.getLetter(i) + ">" + LabelRanking.getLetter(j) + ": " + itsMatrix[i][j] + "  (" + i + ">" + j + ")");
+//					aFloat = Math.abs(itsMatrix[i][j]);
+//				}
+//			}
+//		}
+//		Log.logCommandLine(anOutputPrint);
+//		Log.logCommandLine("  ================================");
+//	}
+	
+	String anOutput;
+	public String findMax()
 	{
-
 		float aFloat = 0;
+		float roundedValue;
 
-		Log.logCommandLine("  ================================");
 		for (int i=0; i<itsSize; i++)
 		{
 			for (int j=i+1; j<itsSize; j++) {
 				if (aFloat < Math.abs(itsMatrix[i][j])) {
-					anOutputPrint = new String(LabelRanking.getLetter(i) + ">" + LabelRanking.getLetter(j) + ": " + itsMatrix[i][j] + "  (" + i + ">" + j + ")");
+					roundedValue = Math.round(itsMatrix[i][j]*1000f)/1000f;
+					anOutput = new String(LabelRanking.getLetter(i) + ">" + LabelRanking.getLetter(j) + " -> " + roundedValue);
 					aFloat = Math.abs(itsMatrix[i][j]);
 				}
 			}
 		}
-		Log.logCommandLine(anOutputPrint);
-		Log.logCommandLine("  ================================");
+		return anOutput;
+	}
+	
+	public String findMaxLabel()
+	{
+		float aFloat = -1f/0f;
+		float roundedValue;
+		
+		for (int i=0; i<itsSize; i++)
+		{
+			float theLabelSum = 0;
+			for (int j=0; j<itsSize; j++) {
+				if (i!=j)	theLabelSum += Math.abs(itsMatrix[i][j]);
+			}
+			if (aFloat < theLabelSum) {
+				roundedValue = Math.round(aFloat*1000f)/1000f;
+				anOutput = new String(LabelRanking.getLetter(i) + " (" + roundedValue + ")");
+				aFloat = theLabelSum;
+			}
+		}
+		return anOutput;
 	}
 
 //	public LabelRanking LabelRankingMatrix2ranking(LabelRankingMatrix theMatrix)
