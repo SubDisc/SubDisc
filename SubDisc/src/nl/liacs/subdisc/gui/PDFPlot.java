@@ -37,6 +37,19 @@ public class PDFPlot extends JPanel
 			itsLines.moveTo(0.0f, -i/(float)itsPDF.getSizeY());
 			itsLines.lineTo(-0.01f, -i/(float)itsPDF.getSizeY());
 		}
+		
+		//bounding box
+		double aScaleX = itsPDF.getHighX() - itsPDF.getLowX();
+		double aScaleY = itsPDF.getHighY() - itsPDF.getLowY();
+		itsLines.moveTo(itsPDF.getMinX()/aScaleX, (itsPDF.getHighY()-itsPDF.getMinY())/aScaleY);
+		itsLines.lineTo(itsPDF.getMaxX()/aScaleX, (itsPDF.getHighY()-itsPDF.getMinY())/aScaleY);
+		itsLines.moveTo(itsPDF.getMinX()/aScaleX, (itsPDF.getHighY()-itsPDF.getMaxY())/aScaleY);
+		itsLines.lineTo(itsPDF.getMaxX()/aScaleX, (itsPDF.getHighY()-itsPDF.getMaxY())/aScaleY);
+
+		itsLines.moveTo(itsPDF.getMinX()/aScaleX, (itsPDF.getHighY()-itsPDF.getMinY())/aScaleY);
+		itsLines.lineTo(itsPDF.getMinX()/aScaleX, (itsPDF.getHighY()-itsPDF.getMaxY())/aScaleY);
+		itsLines.moveTo(itsPDF.getMaxX()/aScaleX, (itsPDF.getHighY()-itsPDF.getMinY())/aScaleY);
+		itsLines.lineTo(itsPDF.getMaxX()/aScaleX, (itsPDF.getHighY()-itsPDF.getMaxY())/aScaleY);
 	}
 
 	@Override
@@ -61,7 +74,7 @@ public class PDFPlot extends JPanel
 			{
 				float anX = j/(float)itsPDF.getSizeX();
 
-				int aValue = (int) (255*(itsPDF.get(i,j)/aMax));
+				int aValue = (int) (255*(itsPDF.get(j,i)/aMax));
 				aValue = Math.min(aValue, 255);
 				aValue = Math.max(aValue, 0);
 					aGraphic.setColor(new Color(255-aValue, 255-aValue, 255-aValue)); //green
@@ -72,6 +85,9 @@ public class PDFPlot extends JPanel
 		aGraphic.setColor(Color.black);
 		aGraphic.setStroke(new BasicStroke(1.0f/aSize));
 		aGraphic.draw(itsLines);
+		
+//		Log.logCommandLine("X: (" + itsPDF.getMinX() + ", " + itsPDF.getMaxX() + ")" + " (" + itsPDF.getLowX() + ", " + itsPDF.getHighX() + ")");
+//		Log.logCommandLine("Y: (" + itsPDF.getMinY() + ", " + itsPDF.getMaxY() + ")" + " (" + itsPDF.getLowY() + ", " + itsPDF.getHighY() + ")");
 
 		Font aFont = new Font("SansSerif", Font.PLAIN, 11);
 		Font aNewFont = aFont.deriveFont(11.0f/aSize);
