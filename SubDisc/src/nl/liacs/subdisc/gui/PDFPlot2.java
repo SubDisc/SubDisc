@@ -5,21 +5,25 @@ import java.awt.geom.*;
 
 import javax.swing.*;
 
-import nl.liacs.subdisc.*;
-
-public class PDFPlot extends JPanel
+public class PDFPlot2 extends JPanel
 {
 	private static final long serialVersionUID = 1L;
-	private GeneralPath itsLines;
-	private ProbabilityDensityFunction2_2D itsPDF;
+	private final GeneralPath itsLines;
+	private final float[][] itsPDF;
+	private final int itsXSize;
+	private final int itsYSize;
+	private final float itsMaxDensity;
 	private String itsTitle;
 
-	public PDFPlot(ProbabilityDensityFunction2_2D thePDF, String theTitle)
+	public PDFPlot2(float[][] thePDF, String theTitle)
 	{
 		super();
-		setBackground(Color.white);
+		setBackground(Color.WHITE);
 
 		itsPDF = thePDF;
+		itsXSize = thePDF.length;
+		itsYSize = thePDF[0].length;
+		itsMaxDensity = getMaxDensity(thePDF);
 		itsTitle = theTitle;
 		itsLines = new GeneralPath();
 		itsLines.moveTo(0, 0);
@@ -27,16 +31,26 @@ public class PDFPlot extends JPanel
 		itsLines.lineTo(1, -1);
 		itsLines.lineTo(1, 0);
 		itsLines.lineTo(0, 0);
-		for(int i=0; i<itsPDF.getSizeX()+1; i++)
+		for(int i=0; i<itsXSize+1; i++)
 		{
-			itsLines.moveTo(i/(float)itsPDF.getSizeX(), 0.0f);
-			itsLines.lineTo(i/(float)itsPDF.getSizeX(), 0.01f);
+			itsLines.moveTo(i/(float)itsXSize, 0.0f);
+			itsLines.lineTo(i/(float)itsXSize, 0.01f);
 		}
-		for(int i=0; i<itsPDF.getSizeY()+1; i++)
+		for(int i=0; i<itsYSize+1; i++)
 		{
-			itsLines.moveTo(0.0f, -i/(float)itsPDF.getSizeY());
-			itsLines.lineTo(-0.01f, -i/(float)itsPDF.getSizeY());
+			itsLines.moveTo(0.0f, -i/(float)itsYSize);
+			itsLines.lineTo(-0.01f, -i/(float)itsYSize);
 		}
+	}
+
+	private static final float getMaxDensity(float[][] thePDF)
+	{
+		float aMax = -Float.MAX_VALUE;
+		for (float[] row : thePDF)
+			for (int j = 0; j < row.length; ++j)
+				if (row[j] > aMax)
+					aMax = row[j];
+		return aMax;
 	}
 
 	@Override
@@ -52,24 +66,21 @@ public class PDFPlot extends JPanel
 		aGraphic.translate(0.15, 1.1);
 		aGraphic.setStroke(new BasicStroke(3.0f/aSize));
 
-		//densities
-		double aMax = itsPDF.getMaxDensity();
-		for (int i=0; i<itsPDF.getSizeY(); i++)
+		for (int i = 0; i < itsXSize; ++i)
 		{
-			float aY = (itsPDF.getSizeY()-i)/(float)itsPDF.getSizeY()-1;
-			for (int j=0; j<itsPDF.getSizeX(); j++)
+			float anX = i/(float)itsXSize;
+			for (int j = itsYSize-1; j>=0; --j)
 			{
-				float anX = j/(float)itsPDF.getSizeX();
-
-				int aValue = (int) (255*(itsPDF.get(i,j)/aMax));
+				float aY = (j+1.0f)/(float)itsYSize;
+				int aValue = (int) (255*(itsPDF[i][j]/itsMaxDensity));
 				aValue = Math.min(aValue, 255);
 				aValue = Math.max(aValue, 0);
-					aGraphic.setColor(new Color(255-aValue, 255-aValue, 255-aValue)); //green
-				aGraphic.fill(new Rectangle2D.Double(anX, aY, 1/(float)itsPDF.getSizeX(), 1/(float)itsPDF.getSizeY()));
+				aGraphic.setColor(new Color(255-aValue, 255-aValue, 255-aValue));
+				aGraphic.fill(new Rectangle2D.Double(anX, -aY, 1.0/itsXSize, 1.0/itsYSize));
 			}
 		}
 
-		aGraphic.setColor(Color.black);
+		aGraphic.setColor(Color.BLACK);
 		aGraphic.setStroke(new BasicStroke(1.0f/aSize));
 		aGraphic.draw(itsLines);
 
