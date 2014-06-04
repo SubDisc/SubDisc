@@ -1,5 +1,6 @@
 package nl.liacs.subdisc;
 
+import java.io.*;
 import java.util.*;
 
 public class ProbabilityDensityFunction_ND
@@ -205,6 +206,7 @@ System.out.println("grid row: " + i);
 	}
 
 	// diff and transpose are used as scratchpad and modified
+	// FIXME MM this can be done without using tmp arrays, see L2
 	private static final double mahalanobisSquared(float[] x, float[] theMu, float[][] theCovarianceMatrixInverse, float[] diff, double[] transpose)
 	{
 		final int d = x.length;
@@ -305,15 +307,15 @@ System.out.println("grid row: " + i);
 
 	private static final float[][] inverse(float[][] theMatrix)
 	{
-		// 2D special case: 1/det(M) * M
+		// 2D special case: 1/det(M) * [d,-b][-c,a]
 		if (theMatrix.length == 2)
 		{
 			float f = det(theMatrix);
 			float[][] inv = new float[2][2];
-			inv[0][0] = theMatrix[0][0]/f;
-			inv[0][1] = theMatrix[0][1]/f;
-			inv[1][0] = theMatrix[1][0]/f;
-			inv[1][1] = theMatrix[1][1]/f;
+			inv[0][0] = +theMatrix[1][1]/f;
+			inv[0][1] = -theMatrix[0][1]/f;
+			inv[1][0] = -theMatrix[1][0]/f;
+			inv[1][1] = +theMatrix[0][0]/f;
 			return inv;
 		}
 		else
@@ -398,7 +400,7 @@ System.out.println("grid row: " + i);
 		double dx = (x_max-x_min)/x_n;
 		double dy = (y_max-y_min)/y_n;
 
-		int D = itsData.length/itsGrid.length;
+		int D = itsGrid.length;
 		int N = itsData.length/D;
 		// S = subgroup, C = complement or complete data
 		int S_size = theSubgroup.cardinality();
@@ -425,8 +427,8 @@ System.out.println("grid row: " + i);
 //		else
 //			C_mu = itsMus;
 
-		float[][] S_cm = getCovarianceMatrix(itsData, 2, theSubgroup, S_mu);
-		float[][] C_cm = getCovarianceMatrix(itsData, 2, theNotSubgroup, C_mu);
+		float[][] S_cm = getCovarianceMatrix(itsData, D, theSubgroup, S_mu);
+		float[][] C_cm = getCovarianceMatrix(itsData, D, theNotSubgroup, C_mu);
 		// inverse cm
 		float[][] S_cm_inv = inverse(S_cm);
 		float[][] C_cm_inv = inverse(C_cm);
@@ -437,8 +439,8 @@ System.out.println("grid row: " + i);
 		float[][] densityDifference = qm_only ? null : new float[x_n][y_n];
 		double difference = 0.0;
 		// Kh = 1/n*sum(1/h*K(x/h)), 1/n*1/sqrt(2*PI)^k*|SIGMA|)
-		double S_f = (float)(1.0 / (2.0 * Math.PI * Math.sqrt(det(S_cm) * S_size)));
-		double C_f = (float)(1.0 / (2.0 * Math.PI * Math.sqrt(det(C_cm) * C_size)));
+		double S_f = 1.0 / (2.0 * Math.PI * Math.sqrt(det(S_cm) * S_size));
+		double C_f = 1.0 / (2.0 * Math.PI * Math.sqrt(det(C_cm) * C_size));
 		float[] xy = new float[2]; // re-used
 
 		for (int i = 0; i < x_n; ++i)
@@ -454,7 +456,7 @@ System.out.println("grid row: " + i);
 				// test xy against each point in Subgroup data
 				double S_i = S_f * qf(xy, S_cm_inv, itsData, theSubgroup);
 				// subtract NotSubgroup data
-				double C_i = (float) (C_f * qf(xy, C_cm_inv, itsData, theNotSubgroup));
+				double C_i = C_f * qf(xy, C_cm_inv, itsData, theNotSubgroup);
 
 				if (!qm_only)
 					r[i] = (float)(S_i-C_i);
@@ -509,5 +511,90 @@ System.out.println("grid row: " + i);
 			default :
 				throw new AssertionError(theQM);
 		}
+	}
+
+	// will load a huge frame stack
+	final double L2(BitSet theSubgroup, boolean toComplement)
+	{
+		int D = itsGrid.length;
+		int N = itsData.length/D;
+		// S = subgroup, C = complement or complete data
+		int S_size = theSubgroup.cardinality();
+		int C_size = N - (toComplement ? S_size : 0);
+
+		// create a BitSet for NotSubgroup
+		// very inefficient but simple
+		BitSet theNotSubgroup = new BitSet(N);
+		theNotSubgroup.set(0, N);
+		if (toComplement)
+			theNotSubgroup.xor(theSubgroup);
+
+		// mu vector and covariance matrix according to theBitSet
+		float[] S_mu = getMuVector(itsData, D, theSubgroup);
+		float[] C_mu = getMuVector(itsData, D, theNotSubgroup);
+
+		float[][] S_cm = getCovarianceMatrix(itsData, D, theSubgroup, S_mu);
+		float[][] C_cm = getCovarianceMatrix(itsData, D, theNotSubgroup, C_mu);
+		// V1+V2
+		float[][] cm = new float[D][D];
+		for (int i = 0; i < D; ++i)
+		{
+			float[] si = S_cm[i];
+			float[] ci = C_cm[i];
+			float[] cmi = new float[D];
+			cm[i] = cmi;
+			for (int j = 0; j < D; ++j)
+				cmi[j] = (si[j] + ci[j]);
+		}
+		// (V1+V2)^-1
+		float[][] cm_inv = inverse(cm);
+		if (!isSquared(cm_inv))
+			throw new AssertionError("SIGMA^-1 is not a squared 2D matrix");
+
+		double L2 = 0.0;
+		double f = (1.0 / (Math.pow(2.0 * Math.PI, D/2.0) * Math.sqrt(det(cm) * (S_size*C_size))));
+		float[] x = new float[D];
+		float[] diff = new float[D];
+		for (int i = theSubgroup.nextSetBit(0); i >= 0; i = theSubgroup.nextSetBit(i+1))
+		{
+			// load subgroup vector data
+			for(int j = 0, k = i*D; j < D; ++j, ++k)
+				x[j] = itsData[k];
+			for (int j = theNotSubgroup.nextSetBit(0); j >= 0; j = theNotSubgroup.nextSetBit(j+1))
+			{
+				// x - mu (here Subgroup-NotSubgroup)
+				for(int k = 0, m = j*D; j < D; ++j, ++m)
+					diff[k] = x[k]-itsData[m];
+				// alternative mahalanobis squared
+				// 1 running sum, no (temporary) array/matrix
+				// uses fact that cm is squared and symmetric
+				// loops over upper triangle only
+				double M2 = 0.0;
+				for (int k = 0; k < D; ++k)
+				{
+					double p = diff[k];
+					float[] r = cm_inv[k];
+					M2 += (p * p * r[k]);
+					for (int m = 0; m < D; ++m)
+						M2 += (2.0 * p * diff[m] * r[m]);
+				}
+				L2 += Math.exp(-0.5 * M2);
+			}
+		}
+
+		return f*L2;
+	}
+
+	public static void main(String[] args)
+	{
+		File f = new File("/home/marvin/data/svn/SubgroupDiscovery/SubDisc/Regr_datasets/boston-housing.csv");
+		Table t = new DataLoaderTXT(f).getTable();
+		Column[] c = { t.getColumn(0), t.getColumn(13)};
+		ProbabilityDensityFunction_ND pdf = new ProbabilityDensityFunction_ND(c);
+		BitSet b = new BitSet(t.getNrRows());
+		b.set(0, t.getNrRows());
+		// should return 0
+		double d = pdf.L2(b, false);
+		System.out.println("L2=" + d);
 	}
 }

@@ -1,10 +1,6 @@
 package nl.liacs.subdisc;
 
-import java.util.*;
-
 import nl.liacs.histo.*;
-import nl.liacs.subdisc.FileHandler.Action;
-import nl.liacs.subdisc.gui.*;
 import Jama.*;
 
 // for 2D now - should be extended to higher dimensions

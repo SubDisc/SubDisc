@@ -30,7 +30,8 @@ public class ProbabilityDensityFunction2 extends ProbabilityDensityFunction
 	private final double itsHi;
 	private final double itsH; // h
 	private final double dx;
-	//
+	// do not not cache (large) x-grid, re-computation is fast enough
+	// private final float[] x_grid;
 	private final float[] itsDensity;
 
 	public ProbabilityDensityFunction2(Column theData)
@@ -114,7 +115,7 @@ System.out.format("h=%f lo=%f hi=%f range=%f s=%f k=%d dx=%f%n", itsH, itsLo, it
 		float[] density = new float[n];
 		for (int i = 0; i < density.length; ++i)
 		{
-			double mu = itsLo + (i * dx);
+			double mu = itsLo + (i * dx); // XXX recompute x_grid
 			double mu_h = mu / itsH;
 
 			for (int j = 0; j < d_h.length; ++j)
