@@ -184,7 +184,7 @@ System.out.println("grid row: " + i);
 		final float[] mu = new float[d];
 		final float[] diff = new float[d];
 		final double[] transpose = new double[d];
-		double result = 0.0f;
+		double result = 0.0;
 
 		for (int i = theBitSet.nextSetBit(0); i >= 0; i = theBitSet.nextSetBit(i+1))
 		{
@@ -212,26 +212,21 @@ System.out.println("grid row: " + i);
 		final int d = x.length;
 		double result = 0.0f;
 
-		for (int i = 0; i >= 0; ++i)
+		// (x-mu)
+		for (int i = 0; i < d; ++i)
+			diff[i] = (x[i]-theMu[i]);
+		// (x-mu)^T * theCovarianceMatrix
+		// tmp to loop over covariance matrix by row, not column
+		for (int i = 0; i < d; ++i)
 		{
-			// (x-mu)
-			for (int j = 0, k = i*d; j < d; ++j, ++k)
-				diff[j] = (x[j]-theMu[k]);
-
-			// (x-mu)^T * theCovarianceMatrix
-			// tmp to loop over covariance matrix by row, not column
+			float f = diff[i];
+			float[] r = theCovarianceMatrixInverse[i];
 			for (int j = 0; j < d; ++j)
-			{
-				float f = diff[j];
-				float[] r = theCovarianceMatrixInverse[j];
-				for (int k = 0; k < d; ++k)
-					transpose[k] += (f*r[k]);
-			}
-
-			// ((x-mu)^T * theCovarianceMatrix) * (x-mu)
-			for (int j = 0; j < d; ++j)
-				result += (transpose[j]*diff[j]);
+				transpose[j] += (f*r[j]);
 		}
+		// ((x-mu)^T * theCovarianceMatrix) * (x-mu)
+		for (int i = 0; i < d; ++i)
+			result += (transpose[i]*diff[i]);
 
 		return result;
 	}
@@ -442,6 +437,22 @@ System.out.println("grid row: " + i);
 		double S_f = 1.0 / (2.0 * Math.PI * Math.sqrt(det(S_cm) * S_size));
 		double C_f = 1.0 / (2.0 * Math.PI * Math.sqrt(det(C_cm) * C_size));
 		float[] xy = new float[2]; // re-used
+debug("SG");
+debug(Integer.toString(theSubgroup.cardinality()));
+debug(Arrays.toString(S_cm[0]));
+debug(Arrays.toString(S_cm[1]));
+debug(Arrays.toString(S_cm_inv[0]));
+debug(Arrays.toString(S_cm_inv[1]));
+debug(Double.toString(S_f));
+debug("");
+debug("!SG");
+debug(Integer.toString(theNotSubgroup.cardinality()));
+debug(Arrays.toString(C_cm[0]));
+debug(Arrays.toString(C_cm[1]));
+debug(Arrays.toString(C_cm_inv[0]));
+debug(Arrays.toString(C_cm_inv[1]));
+debug(Double.toString(C_f));
+debug("");
 
 		for (int i = 0; i < x_n; ++i)
 		{
@@ -462,6 +473,13 @@ System.out.println("grid row: " + i);
 					r[i] = (float)(S_i-C_i);
 				else
 					difference += divergence(theQM, S_i, C_i, S_size, N);
+
+				// no need to continue
+				if (Double.isInfinite(difference))
+				{
+					debug(i + " " + j + " " + Arrays.toString(xy) + " " + S_i + " " +  C_i);
+					return new float[][] { {(float)difference}, null };
+				}
 			}
 		}
 
@@ -470,6 +488,14 @@ System.out.println("grid row: " + i);
 		return densityDifference;
 	}
 
+	/*
+	 * NOTE this code needs special cases for 0 and Infinity
+	 * for example 0 * Infinity = NaN
+	 * but actually, 0.0 is not 0.0
+	 * it is just the exp(-x) that returned 0.0
+	 * because |x| was to to large, the result is infinitesimally small
+	 * so we define 0.0*Infinite as Infinite
+	 */
 	private static final double divergence(QM theQM, double P_i, double Q_i, int theCoverage, int theNrRecords)
 	{
 		switch(theQM)
@@ -498,7 +524,14 @@ System.out.println("grid row: " + i);
 				 * (aSubgroupDensity == 0) for at least
 				 * all situations where (aDenisity == 0)
 				 */
-				if (P_i == 0.0)
+				//if (P_i == 0.0)
+				//	return 0.0;
+
+				// NOTE the above is no longer true when testing
+				// against complement
+				// see javadoc comment
+				// (0/0)=NaN, log(NaN)=NaN, 0*NaN=NaN
+				if ((P_i == 0.0) && (Q_i == 0.0))
 					return 0.0;
 				return P_i * Math.log(P_i/Q_i);
 			}
@@ -585,6 +618,85 @@ System.out.println("grid row: " + i);
 		return f*L2;
 	}
 
+	// will load a huge frame stack
+	final double L2_(BitSet theSubgroup, boolean toComplement)
+	{
+		int D = itsGrid.length;
+		int N = itsData.length/D;
+		// S = subgroup, C = complement or complete data
+		int S_size = theSubgroup.cardinality();
+		int C_size = N - (toComplement ? S_size : 0);
+
+		// create a BitSet for NotSubgroup
+		// very inefficient but simple
+		BitSet theNotSubgroup = new BitSet(N);
+		theNotSubgroup.set(0, N);
+		if (toComplement)
+			theNotSubgroup.xor(theSubgroup);
+
+		// mu vector and covariance matrix according to theBitSet
+		float[] S_mu = getMuVector(itsData, D, theSubgroup);
+		float[] C_mu = getMuVector(itsData, D, theNotSubgroup);
+
+		float[][] S_cm = getCovarianceMatrix(itsData, D, theSubgroup, S_mu);
+		float[][] C_cm = getCovarianceMatrix(itsData, D, theNotSubgroup, C_mu);
+		// V1+V2
+		float[][] cm = new float[D][D];
+		for (int i = 0; i < D; ++i)
+		{
+			float[] si = S_cm[i];
+			float[] ci = C_cm[i];
+			float[] cmi = new float[D];
+			cm[i] = cmi;
+			for (int j = 0; j < D; ++j)
+				cmi[j] = (si[j] + ci[j]);
+		}
+		// (V1+V2)^-1
+		float[][] cm_inv = inverse(cm);
+		if (!isSquared(cm_inv))
+			throw new AssertionError("SIGMA^-1 is not a squared 2D matrix");
+
+		double L2 = 0.0;
+		double f = (1.0 / (Math.pow(2.0 * Math.PI, D/2.0) * Math.sqrt(det(cm) * (S_size*C_size))));
+		float[] x = new float[D];
+		float[] diff = new float[D];
+		for (int i = theSubgroup.nextSetBit(0); i >= 0; i = theSubgroup.nextSetBit(i+1))
+		{
+			// load subgroup vector data
+			for(int j = 0, k = i*D; j < D; ++j, ++k)
+				x[j] = itsData[k];
+			for (int j = theNotSubgroup.nextSetBit(0); j >= 0; j = theNotSubgroup.nextSetBit(j+1))
+			{
+				// x - mu (here Subgroup-NotSubgroup)
+				for(int k = 0, m = j*D; j < D; ++j, ++m)
+					diff[k] = x[k]-itsData[m];
+				// alternative mahalanobis squared
+				// 1 running sum, no (temporary) array/matrix
+				// uses fact that cm is squared and symmetric
+				// loops over upper triangle only
+				double M2 = 0.0;
+				for (int k = 0; k < D; ++k)
+				{
+					double p = diff[k];
+					float[] r = cm_inv[k];
+					M2 += (p * p * r[k]);
+					for (int m = 0; m < D; ++m)
+						M2 += (2.0 * p * diff[m] * r[m]);
+				}
+				L2 += Math.exp(-0.5 * M2);
+			}
+		}
+
+		return f*L2;
+	}
+
+	private static final boolean DEBUG = true;
+	private static final void debug(String theMessage)
+	{
+		if (DEBUG)
+			System.out.println(theMessage);
+	}
+
 	public static void main(String[] args)
 	{
 		File f = new File("/home/marvin/data/svn/SubgroupDiscovery/SubDisc/Regr_datasets/boston-housing.csv");
@@ -593,8 +705,39 @@ System.out.println("grid row: " + i);
 		ProbabilityDensityFunction_ND pdf = new ProbabilityDensityFunction_ND(c);
 		BitSet b = new BitSet(t.getNrRows());
 		b.set(0, t.getNrRows());
-		// should return 0
-		double d = pdf.L2(b, false);
-		System.out.println("L2=" + d);
+//		// should return 0
+//		double d = pdf.L2(b, false);
+//		System.out.println("L2=" + d);
+		b.set(0, 50, false);
+		b.set(100, 150, false);
+Timer timer = new Timer();
+		float[][] d = pdf.getDensityDifference2D(b, true, QM.KULLBACK_LEIBLER_2D);
+System.out.println(timer.getElapsedTimeString());
+System.out.println("DD=" + d[0][0]);
+
+		//check();
+	}
+
+	private static final void check()
+	{
+		// NOTE
+		// Math.exp(x) is +Infinity for all x > 710
+		// Math.exp(-x) is 0 for all x > 746
+//		for (int i = 0; i < 1000; ++i)
+//		{
+//			System.out.println("i = " + i);
+//			System.out.println("exp(i) = " + Math.exp(i));
+//			System.out.println("exp(-i) = " + Math.exp(-i));
+//		}
+
+		// base cases
+		System.out.println(0.0 / 0.0);
+		System.out.println(0.0 / Double.POSITIVE_INFINITY);
+		System.out.println(Double.POSITIVE_INFINITY / 0.0);
+		System.out.println(Double.POSITIVE_INFINITY / Double.POSITIVE_INFINITY);
+
+		System.out.println(0.0 * Double.POSITIVE_INFINITY);
+		System.out.println(Double.POSITIVE_INFINITY * Double.POSITIVE_INFINITY);
+		System.out.println(Double.POSITIVE_INFINITY * Double.NEGATIVE_INFINITY);
 	}
 }
