@@ -7,7 +7,7 @@ import nl.liacs.subdisc.gui.*;
 public class ProbabilityDensityFunction
 {
 	// for DEBUG
-	public static final boolean USE_ProbabilityDensityFunction2 = false;
+	public static final boolean USE_ProbabilityDensityFunction2 = true;
 
 	private final int DEFAULT_NR_BINS = 1000;
 	private final int DETAIL = 256;

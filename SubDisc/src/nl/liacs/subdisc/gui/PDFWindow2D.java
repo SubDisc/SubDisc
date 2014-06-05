@@ -11,7 +11,7 @@ public class PDFWindow2D extends JFrame implements ActionListener
 {
 	private static final long serialVersionUID = 1L;
 
-	public PDFWindow2D(ProbabilityDensityFunction2_2D thePDF, String theTitle)
+	public PDFWindow2D(ProbabilityDensityFunction2_2D thePDF, String theTitle, String theXAxis, String theYAxis)
 	{
 		JPanel aClosePanel = new JPanel();
 		aClosePanel.add(GUI.buildButton("Close", 'C', "close", this));
@@ -23,7 +23,7 @@ public class PDFWindow2D extends JFrame implements ActionListener
 		JPanel aCenterPanel = new JPanel();
 		aCenterPanel.setLayout(new GridLayout(1, 2));
 
-		PDFPlot aPDFPlot = new PDFPlot(thePDF, "PDF");
+		PDFPlot aPDFPlot = new PDFPlot(thePDF, "PDF", theXAxis, theYAxis);
 		aCenterPanel.add(aPDFPlot);
 		aCenterPanelM.add(aCenterPanel);
 

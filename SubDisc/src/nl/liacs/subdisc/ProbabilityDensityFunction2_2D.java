@@ -114,20 +114,6 @@ public class ProbabilityDensityFunction2_2D
 		return daa;
 	}
 
-/*
-	private final double[][] computeGrids_old(double[][] data, double[] hs, double[] std_devs, int n)
-	{
-		// must be same number for all grids
-		if (n <= 0)
-			n = computeGridSize(data[0], hs[0], std_devs[0], true);
-
-		double[][] daa = new double[data.length][];
-		for (int i = 0; i < daa.length; ++i)
-			daa[i] = computeGrid(data[i], hs[i], std_devs[i], n);
-		return daa;
-	}
-*/
-
 	private final int computeGridSize(double[] data, double h, double std_dev, boolean isFirstDimension)
 	{
 		double min = Vec.minimum(data);
@@ -138,7 +124,6 @@ public class ProbabilityDensityFunction2_2D
 		// s = sigmas covered by range
 		double s = range/h;
 		// 1 sigma=(samples/(2*CUTOFF))
-		final int ARNO = 7; //total hack
 		
 		if (isFirstDimension)
 		{
@@ -151,10 +136,10 @@ public class ProbabilityDensityFunction2_2D
 			itsHighY = g_max;
 		}
 		
-		int k = (int) ((Math.ceil(s) * SAMPLES) / (2.0 * CUTOFF)) * ARNO;
-		k = Math.min(k, 256); //AK: maximum on k, to avoid overly large matrices
+		int k = (int) ((Math.ceil(s) * SAMPLES) / (2.0 * CUTOFF));
+		k = Math.min(k, 128); //AK: maximum on k, to avoid overly large matrices
 		
-		//System.out.format("%f %f %f %f %f %d %n", g_min, g_max, range, h, s, k);
+		System.out.format("%f %f %f %f %f %d %n", g_min, g_max, range, h, s, k);
 		return k;
 	}
 
