@@ -721,14 +721,14 @@ System.out.println("DD=" + d[0][0]);
 	private static final void check()
 	{
 		// NOTE
-		// Math.exp(x) is +Infinity for all x > 710
-		// Math.exp(-x) is 0 for all x > 746
-//		for (int i = 0; i < 1000; ++i)
-//		{
-//			System.out.println("i = " + i);
-//			System.out.println("exp(i) = " + Math.exp(i));
-//			System.out.println("exp(-i) = " + Math.exp(-i));
-//		}
+		// Math.exp(x) is +Infinity for all x >= 710
+		// Math.exp(-x) is 0 for all x >= 746
+		for (int i = 0; i < 1000; ++i)
+		{
+			System.out.println("i = " + i);
+			System.out.println("exp(i) = " + Math.exp(i));
+			System.out.println("exp(-i) = " + Math.exp(-i));
+		}
 
 		// base cases
 		System.out.println(0.0 / 0.0);
