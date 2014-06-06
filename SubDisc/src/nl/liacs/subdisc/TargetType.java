@@ -105,7 +105,7 @@ public enum TargetType implements EnumInterface
 		{
 			case SINGLE_NOMINAL		: return false;
 			case SINGLE_NUMERIC		: return false;
-			case MULTI_NUMERIC		: return true;
+			case MULTI_NUMERIC		: return false;
 			case SINGLE_ORDINAL		: return false;
 			case DOUBLE_REGRESSION		: return true;
 			case DOUBLE_CORRELATION		: return true;
@@ -128,7 +128,7 @@ public enum TargetType implements EnumInterface
 		{
 			case SINGLE_NOMINAL		: return false;
 			case SINGLE_NUMERIC		: return false;
-			case MULTI_NUMERIC		: return false;
+			case MULTI_NUMERIC		: return true;
 			case SINGLE_ORDINAL		: return false;
 			case DOUBLE_REGRESSION		: return false;
 			case DOUBLE_CORRELATION		: return false;
@@ -174,7 +174,7 @@ public enum TargetType implements EnumInterface
 		{
 			case SINGLE_NOMINAL		: return true;
 			case SINGLE_NUMERIC		: return false;
-			case MULTI_NUMERIC		: return true;	// XXX MM could be bandwidth h
+			case MULTI_NUMERIC		: return false;	// XXX MM could be bandwidth h
 			case SINGLE_ORDINAL		: return false;
 			case DOUBLE_REGRESSION		: return true;
 			case DOUBLE_CORRELATION		: return true;
@@ -197,7 +197,7 @@ public enum TargetType implements EnumInterface
 		{
 			case SINGLE_NOMINAL		: return true;
 			case SINGLE_NUMERIC		: return true;
-			case MULTI_NUMERIC		: return true;
+			case MULTI_NUMERIC		: return false;
 			case SINGLE_ORDINAL		: return true;
 			case DOUBLE_REGRESSION		: return true;
 			case DOUBLE_CORRELATION		: return true;

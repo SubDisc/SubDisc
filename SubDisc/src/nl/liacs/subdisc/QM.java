@@ -54,13 +54,14 @@ public enum QM implements EnumInterface
 	CWRACC_UNWEIGHTED			("CWRAcc Unweighted",			"0.0",	TargetType.SINGLE_NUMERIC),
 
 	// MULTI_NUMERIC
-	SQUARED_HELLINGER_2D			("Squared Hellinger distance",		"0.0",	TargetType.MULTI_NUMERIC),
-	SQUARED_HELLINGER_WEIGHTED_2D		("Weighted Squared Hellinger distance",	"0.0",	TargetType.MULTI_NUMERIC),
-	SQUARED_HELLINGER_WEIGHTED_ADJUSTED_2D	("Adjusted Squared Hellinger distance",	"0.0",	TargetType.MULTI_NUMERIC),
-	KULLBACK_LEIBLER_2D			("Kullback-Leibler divergence",		"0.0",	TargetType.MULTI_NUMERIC),
-	KULLBACK_LEIBLER_WEIGHTED_2D		("Weighted Kullback-Leibler divergence","0.0",	TargetType.MULTI_NUMERIC),
-	CWRACC_2D				("CWRAcc",				"0.0",	TargetType.MULTI_NUMERIC),
-	CWRACC_UNWEIGHTED_2D			("CWRAcc Unweighted",			"0.0",	TargetType.MULTI_NUMERIC),
+	SQUARED_HELLINGER_2D			("Squared Hellinger distance 2D",		"0.0",	TargetType.MULTI_NUMERIC),
+	SQUARED_HELLINGER_WEIGHTED_2D		("Weighted Squared Hellinger distance 2D",	"0.0",	TargetType.MULTI_NUMERIC),
+	SQUARED_HELLINGER_WEIGHTED_ADJUSTED_2D	("Adjusted Squared Hellinger distance 2D",	"0.0",	TargetType.MULTI_NUMERIC),
+	KULLBACK_LEIBLER_2D			("Kullback-Leibler divergence 2D",		"0.0",	TargetType.MULTI_NUMERIC),
+	KULLBACK_LEIBLER_WEIGHTED_2D		("Weighted Kullback-Leibler divergence 2D",	"0.0",	TargetType.MULTI_NUMERIC),
+	CWRACC_2D				("CWRAcc_2D",					"0.0",	TargetType.MULTI_NUMERIC),
+	CWRACC_UNWEIGHTED_2D			("CWRAcc Unweighted_2D",			"0.0",	TargetType.MULTI_NUMERIC),
+	L2					("L2",						"0.0",	TargetType.MULTI_NUMERIC),
 
 	// SINGLE_ORDINAL quality measures
 	// NOTE when adding a new SINGLE_ORDINAL QM -> add it to requiredStats()
