@@ -2260,11 +2260,8 @@ public class Column implements XMLNodeInterface
 	 */
 	public float getAverage()
 	{
-		if (!(itsType == AttributeType.NUMERIC || itsType == AttributeType.ORDINAL))
-		{
-			logMessage("getAverage", getTypeError("NUMERIC or ORDINAL"));
-			return Float.NaN;
-		}
+		if (itsType != AttributeType.NUMERIC)
+			throw new IllegalArgumentException("Invalid call for AttriuteType: " + itsType);
 
 		float aSum = 0.0f;
 		for (float f : itsFloatz)
