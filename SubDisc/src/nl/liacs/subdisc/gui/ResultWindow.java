@@ -336,6 +336,11 @@ public class ResultWindow extends JFrame implements ActionListener
 
 				break;
 			}
+			case MULTI_NUMERIC :
+			{
+				JOptionPane.showMessageDialog(this, "Not implemented yet!", "Multi Numeric Error", JOptionPane.INFORMATION_MESSAGE);
+				break;
+			}
 			case DOUBLE_CORRELATION :
 			{
 				modelWindowHelper(TargetType.DOUBLE_CORRELATION);
