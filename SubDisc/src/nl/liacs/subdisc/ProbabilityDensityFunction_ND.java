@@ -5,12 +5,13 @@ import java.util.*;
 
 public class ProbabilityDensityFunction_ND
 {
-	private static final double CUTOFF = 4.0; // |CUTOFF*SIGMA| = 0.0
+	private static final double CUTOFF = 3.0; // |CUTOFF*SIGMA| = 0.0
 	private static final int SAMPLES = 101; // [-LIMIT:+LIMIT]
 	private static final int GRID_STATS = 3; // min, max, samples
 	private static final int MIN = 0;
 	private static final int MAX = 1;
 	private static final int GRID_SIZE = 2;
+	private static final int MAX_GRIDPOINTS = 128;
 
 	// structured as: [ x1d1, x1d2, ..., x1dd, x2d1, x2d2, x2dd, ..., xndd ]
 	private final float[] itsData;
@@ -73,10 +74,11 @@ public class ProbabilityDensityFunction_ND
 		max += ext;
 		double range = max-min;
 		double n = Math.floor((range / sigma) * theNrSamples);
-System.out.format("min=%f max=%f range=%f sigma=%f n=%f%n", min, max, range, sigma, n);
+		n = Math.min(n, MAX_GRIDPOINTS);
+		System.out.format("min=%f max=%f range=%f sigma=%f n=%f%n", min, max, range, sigma, n);
 
-		if (n > Integer.MAX_VALUE)
-			throw new ArrayIndexOutOfBoundsException("NO MANY GRID POINTS");
+//		if (n > Integer.MAX_VALUE)
+//			throw new ArrayIndexOutOfBoundsException("NO MANY GRID POINTS");
 
 		double[] stats = new double[GRID_STATS];
 		stats[0] = min;
