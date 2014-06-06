@@ -37,7 +37,7 @@ public class Process
 				aSubgroupDiscovery = new SubgroupDiscovery(theSearchParameters, theTable, itsPositiveCount, theMainWindow);
 				break;
 			}
-			case SINGLE_NUMERIC:
+			case SINGLE_NUMERIC :
 			{
 				// new runCAUC() receives result after SD.mine()
 				// not fully implemented yet
@@ -53,6 +53,11 @@ public class Process
 					Log.logCommandLine("average: " + itsTargetAverage);
 					aSubgroupDiscovery = new SubgroupDiscovery(theSearchParameters, theTable, itsTargetAverage, theMainWindow);
 				}
+				break;
+			}
+			case MULTI_NUMERIC :
+			{
+				aSubgroupDiscovery = new SubgroupDiscovery(theTable, theMainWindow, theSearchParameters);
 				break;
 			}
 			case MULTI_LABEL :

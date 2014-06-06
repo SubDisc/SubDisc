@@ -3,6 +3,8 @@ package nl.liacs.subdisc;
 import java.io.*;
 import java.util.*;
 
+import Jama.*;
+
 public class ProbabilityDensityFunction_ND
 {
 	private static final double CUTOFF = 3.0; // |CUTOFF*SIGMA| = 0.0
@@ -11,7 +13,6 @@ public class ProbabilityDensityFunction_ND
 	private static final int MIN = 0;
 	private static final int MAX = 1;
 	private static final int GRID_SIZE = 2;
-	private static final int MAX_GRIDPOINTS = 128;
 
 	// structured as: [ x1d1, x1d2, ..., x1dd, x2d1, x2d2, x2dd, ..., xndd ]
 	private final float[] itsData;
@@ -74,11 +75,10 @@ public class ProbabilityDensityFunction_ND
 		max += ext;
 		double range = max-min;
 		double n = Math.floor((range / sigma) * theNrSamples);
-		n = Math.min(n, MAX_GRIDPOINTS);
 		System.out.format("min=%f max=%f range=%f sigma=%f n=%f%n", min, max, range, sigma, n);
 
-//		if (n > Integer.MAX_VALUE)
-//			throw new ArrayIndexOutOfBoundsException("NO MANY GRID POINTS");
+		if (n > Integer.MAX_VALUE)
+			throw new ArrayIndexOutOfBoundsException("TOO MANY GRID POINTS");
 
 		double[] stats = new double[GRID_STATS];
 		stats[0] = min;
@@ -87,6 +87,8 @@ public class ProbabilityDensityFunction_ND
 
 		return stats;
 	}
+
+	public final int getNrDimensions() { return itsGrid.length; }
 
 	// 2D version
 	final float[][] getDensity(BitSet theBitSet)
@@ -304,8 +306,10 @@ System.out.println("grid row: " + i);
 
 	private static final float[][] inverse(float[][] theMatrix)
 	{
+		int d = theMatrix.length;
+
 		// 2D special case: 1/det(M) * [d,-b][-c,a]
-		if (theMatrix.length == 2)
+		if (d == 2)
 		{
 			float f = det(theMatrix);
 			float[][] inv = new float[2][2];
@@ -315,8 +319,11 @@ System.out.println("grid row: " + i);
 			inv[1][1] = +theMatrix[0][0]/f;
 			return inv;
 		}
-		else
-			throw new AssertionError("Not a 2D matrix");
+
+		if (!isSquared(theMatrix))
+			throw new AssertionError("Not a squared matrix");
+
+		return toFloat(new Matrix(toDouble(theMatrix), d, d).inverse().getArray());
 	}
 
 	private static final float det(float[][] theMatrix)
@@ -329,7 +336,7 @@ System.out.println("grid row: " + i);
 			// ad-bc
 			return (theMatrix[0][0]*theMatrix[1][1])-(theMatrix[0][1]*theMatrix[1][0]);
 		else
-			throw new AssertionError("Not a 2D matrix");
+			return (float) new Matrix(toDouble(theMatrix)).det();
 	}
 
 	private static final boolean isSquared(float[][] theMatrix)
@@ -339,6 +346,34 @@ System.out.println("grid row: " + i);
 			if (fa.length != r)
 				return false;
 		return true;
+	}
+
+	private static final float[][] toFloat(double[][] theMatrix)
+	{
+		int d = theMatrix.length;
+		// to float[][]
+		float[][] fa = new float[d][d];
+		for (int i = 0; i < d; ++i)
+		{
+			fa[i] = new float[d];
+			for (int j = 0; j < d; ++j)
+				fa[i][j] = (float) theMatrix[i][j];
+		}
+		return fa;
+	}
+
+	private static final double[][] toDouble(float[][] theMatrix)
+	{
+		int d = theMatrix.length;
+		// to double[][]
+		double[][] da = new double[d][d];
+		for (int i = 0; i < d; ++i)
+		{
+			da[i] = new double[d];
+			for (int j = 0; j < d; ++j)
+				da[i][j] = theMatrix[i][j];
+		}
+		return da;
 	}
 
 //	// single-pass, numerically stable, based on cov_n = co-moment_n / n
@@ -370,6 +405,20 @@ System.out.println("grid row: " + i);
 	private static final double[][] getDensity3D(BitSet theBitSet)
 	{
 		return null;
+	}
+
+	float getDensityDifference(BitSet theSubgroup, boolean toComplement, QM theQM)
+	{
+		if (theQM.TARGET_TYPE != TargetType.MULTI_NUMERIC)
+			throw new IllegalArgumentException(theQM + " != " + TargetType.MULTI_NUMERIC);
+		if (theQM == QM.L2)
+			return (float) L2(theSubgroup, toComplement);
+		else
+		{
+			if (itsGrid.length != 2)
+				throw new IllegalArgumentException(theQM + " only implemented for 2D");
+			return getDensityDifference2D(theSubgroup, toComplement, theQM)[0][0];
+		}
 	}
 
 	// boolean toComplement:
@@ -454,8 +503,7 @@ debug(Arrays.toString(C_cm[1]));
 debug(Arrays.toString(C_cm_inv[0]));
 debug(Arrays.toString(C_cm_inv[1]));
 debug(Double.toString(C_f));
-debug("");
-
+Timer t = new Timer();
 		for (int i = 0; i < x_n; ++i)
 		{
 			float[] r = qm_only ? null : new float[y_n];
@@ -480,13 +528,21 @@ debug("");
 				if (Double.isInfinite(difference))
 				{
 					debug(i + " " + j + " " + Arrays.toString(xy) + " " + S_i + " " +  C_i);
+					debug("QM = " + difference);
+					debug(t.getElapsedTimeString());
 					return new float[][] { {(float)difference}, null };
 				}
 			}
 		}
 
 		if (qm_only)
+		{
+			debug("QM = " + difference);
+			debug(t.getElapsedTimeString() + "\n\n");
 			return new float[][] { {(float)difference}, null };
+		}
+
+		debug(t.getElapsedTimeString() + "\n\n");
 		return densityDifference;
 	}
 
@@ -712,10 +768,7 @@ debug("");
 //		System.out.println("L2=" + d);
 		b.set(0, 50, false);
 		b.set(100, 150, false);
-Timer timer = new Timer();
 		float[][] d = pdf.getDensityDifference2D(b, true, QM.KULLBACK_LEIBLER_2D);
-System.out.println(timer.getElapsedTimeString());
-System.out.println("DD=" + d[0][0]);
 
 		//check();
 	}

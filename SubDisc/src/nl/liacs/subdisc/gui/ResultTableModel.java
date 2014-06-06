@@ -49,15 +49,19 @@ public class ResultTableModel extends AbstractTableModel
 			case 3 : return "Quality";
 			case 4 :
 			{
+
 				switch (theTargetType) {
 					case SINGLE_NOMINAL : return "Probability";
 					case SINGLE_NUMERIC : return "Average";
-					case DOUBLE_CORRELATION : return "Correlation";
+					case MULTI_NUMERIC : return "|Subgroup|";
+					case SINGLE_ORDINAL : throw new AssertionError(theTargetType);
 					case DOUBLE_REGRESSION : return "Slope";
+					case DOUBLE_CORRELATION : return "Correlation";
 					case SCAPE : return "Positives";
 					case MULTI_LABEL : return "Edit Distance";
+					case MULTI_BINARY_CLASSIFICATION : throw new AssertionError(theTargetType);
 					case LABEL_RANKING : return "Ranking";
-					default : return "";
+					default : throw new AssertionError(theTargetType);
 				}
 			}
 			case 5 :
@@ -66,11 +70,15 @@ public class ResultTableModel extends AbstractTableModel
 				{
 					case SINGLE_NOMINAL : return "Positives";
 					case SINGLE_NUMERIC : return "St. Dev.";
-					case DOUBLE_CORRELATION : return "Distance";
+					case MULTI_NUMERIC : return "|!Subgroup|";
+					case SINGLE_ORDINAL : throw new AssertionError(theTargetType);
 					case DOUBLE_REGRESSION : return "Intercept";
+					case DOUBLE_CORRELATION : return "Distance";
 					case SCAPE : return "Negatives";
 					case MULTI_LABEL : return "Entropy";
-					default : return "";
+					case MULTI_BINARY_CLASSIFICATION : throw new AssertionError(theTargetType);
+					case LABEL_RANKING : return "";
+					default : throw new AssertionError(theTargetType);
 				}
 			}
 			case 6 : return "p-Value";

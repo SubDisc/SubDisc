@@ -33,7 +33,8 @@ public class SubgroupDiscovery extends MiningAlgorithm
 	private CorrelationMeasure itsBaseCM;	//DOUBLE_CORRELATION
 	private RegressionMeasure itsBaseRM;	//DOUBLE_REGRESSION
 	private BinaryTable itsBinaryTable;	//MULTI_LABEL
-	private List<Column> itsTargets;	//MULTI_LABEL
+	private List<Column> itsTargets;	//MULTI_LABEL / MULTI_NUMERIC
+	private ProbabilityDensityFunction_ND itsPDF_ND; //MULTI_NUMERIC
 
 	private LocalKnowledge itsLocalKnowledge; //PROPENSITY SCORE BASED
 	private GlobalKnowledge itsGlobalKnowledge;//PROPENSITY SCORE BASED
@@ -50,6 +51,42 @@ public class SubgroupDiscovery extends MiningAlgorithm
 
 	private TreeSet<Candidate> itsBuffer;
 	private JFrame itsMainWindow; //for feeding back progress info
+
+//	public SubgroupDiscovery(SearchParameters theSearchParameters, Table theTable, JFrame theMainWindow)
+//	{
+//// GENERIC
+//		super(theSearchParameters);
+//		itsTable = theTable;
+//		itsNrRows = itsTable.getNrRows();
+//		itsMainWindow = theMainWindow;
+//		TargetConcept aTC = itsSearchParameters.getTargetConcept();
+//		itsMinimumCoverage = itsSearchParameters.getMinimumCoverage();
+//		itsMaximumCoverage = (int) (itsNrRows * itsSearchParameters.getMaximumCoverageFraction());
+//
+//// TYPE SPECIFICS
+//// NOMINAL
+//// NUMERIC
+////		itsNumericTarget = aTC.getPrimaryTarget();
+//// DOUBLE CORRELATION
+//// DOUBLE REGRESSION
+//// SCAPE
+////		itsPrimaryColumn = aTC.getPrimaryTarget();
+////		itsSecondaryColumn = aTC.getSecondaryTarget();
+//// MULTI_LABEL
+////		itsBinaryTable = new BinaryTable(itsTable, itsTargets);
+////		Bayesian aBayesian = new Bayesian(itsBinaryTable, itsTargets);
+//// LABEL RANKING
+////		itsTargetRankings = aTC.getPrimaryTarget();
+////		LabelRanking aLR = itsTargetRankings.getAverageRanking(null); //average ranking over entire dataset
+////		LabelRankingMatrix aLRM = itsTargetRankings.getAverageRankingMatrix(null); //average ranking over entire dataset
+//// MULTI_NUMERIC
+////
+//
+//// GENERIC
+////		itsQualityMeasure
+////		itsQualityMeasureMinimum
+////		itsResult = new SubgroupSet()
+//	}
 
 	//SINGLE_NOMINAL
 	public SubgroupDiscovery(SearchParameters theSearchParameters, Table theTable, int theNrPositive, JFrame theMainWindow)
@@ -259,6 +296,26 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		LabelRanking aLR = itsTargetRankings.getAverageRanking(null); //average ranking over entire dataset
 		LabelRankingMatrix aLRM = itsTargetRankings.getAverageRankingMatrix(null); //average ranking over entire dataset
 		itsQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), itsNrRows, aLR, aLRM);
+		itsQualityMeasureMinimum = itsSearchParameters.getQualityMeasureMinimum();
+
+		itsResult = new SubgroupSet(itsSearchParameters.getMaximumSubgroups(), itsNrRows);
+	}
+
+	// MULTI_NUMERIC
+	public SubgroupDiscovery(Table theTable, JFrame theMainWindow, SearchParameters theSearchParameters)
+	{
+		super(theSearchParameters);
+		itsTable = theTable;
+		itsNrRows = itsTable.getNrRows();
+		itsMainWindow = theMainWindow;
+		itsMinimumCoverage = itsSearchParameters.getMinimumCoverage();
+		itsMaximumCoverage = (int) (itsNrRows * itsSearchParameters.getMaximumCoverageFraction());
+
+		// compute base model
+		itsTargets = itsSearchParameters.getTargetConcept().getMultiTargets();
+		itsPDF_ND = new ProbabilityDensityFunction_ND(itsTargets.toArray(new Column[0]));
+
+		itsQualityMeasure = null;
 		itsQualityMeasureMinimum = itsSearchParameters.getQualityMeasureMinimum();
 
 		itsResult = new SubgroupSet(itsSearchParameters.getMaximumSubgroups(), itsNrRows);
@@ -1117,6 +1174,17 @@ else
 				aQuality = itsQualityMeasure.calculate(theNewSubgroup.getCoverage(), aCounts[0], aCounts[1], aCounts[2], aCounts[3], aPDF);
 				theNewSubgroup.setSecondaryStatistic(aCounts[0]/(double)theNewSubgroup.getCoverage()); //average
 				theNewSubgroup.setTertiaryStatistic(Math.sqrt(aCounts[1]/(double)theNewSubgroup.getCoverage())); // standard deviation
+				break;
+			}
+			case MULTI_NUMERIC :
+			{
+				final BitSet aMembers = theNewSubgroup.getMembers();
+				// for now always test against complement
+				aQuality = itsPDF_ND.getDensityDifference(aMembers, true, itsSearchParameters.getQualityMeasure());
+				// for now set just the sizes, most computations
+				// are expensive and neglected anyway
+				theNewSubgroup.setSecondaryStatistic(theNewSubgroup.getCoverage());
+				theNewSubgroup.setTertiaryStatistic(itsNrRows-theNewSubgroup.getCoverage());
 				break;
 			}
 			case DOUBLE_REGRESSION :

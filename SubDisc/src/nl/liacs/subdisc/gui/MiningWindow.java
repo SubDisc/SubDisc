@@ -563,7 +563,7 @@ public class MiningWindow extends JFrame implements ActionListener
 					aMiscField = itsTargetConcept.getTargetValue();
 				else if (aTargetType == TargetType.DOUBLE_REGRESSION ||
 						aTargetType == TargetType.DOUBLE_CORRELATION ||
-						aTargetType == TargetType.MULTI_NUMERIC ||	//for the moment, when multi = 2
+						//aTargetType == TargetType.MULTI_NUMERIC ||	//for the moment, when multi = 2
 						aTargetType == TargetType.SCAPE)
 					aMiscField = itsTargetConcept.getSecondaryTarget().getName();
 			}
@@ -589,7 +589,7 @@ public class MiningWindow extends JFrame implements ActionListener
 				}
 				else if (aTargetType == TargetType.DOUBLE_REGRESSION ||
 						aTargetType == TargetType.DOUBLE_CORRELATION ||
-						aTargetType == TargetType.MULTI_NUMERIC ||	//for the moment, when multi = 2
+						//aTargetType == TargetType.MULTI_NUMERIC ||	//for the moment, when multi = 2
 						aTargetType == TargetType.SCAPE)
 				{
 					setMiscFieldName(aMiscField);
@@ -712,7 +712,10 @@ public class MiningWindow extends JFrame implements ActionListener
 		removeAllMultiTargetsItems();
 		removeAllMultiRegressionTargetsItems();
 
-		boolean fillMiscField = (aTargetType == TargetType.DOUBLE_REGRESSION) || (aTargetType == TargetType.DOUBLE_CORRELATION) || (aTargetType == TargetType.MULTI_NUMERIC) || (aTargetType == TargetType.SCAPE);
+		boolean fillMiscField = (aTargetType == TargetType.DOUBLE_REGRESSION) ||
+					(aTargetType == TargetType.DOUBLE_CORRELATION) ||
+					//(aTargetType == TargetType.MULTI_NUMERIC) ||
+					(aTargetType == TargetType.SCAPE);
 		// primary target and (optional) MiscField
 		for (Column c : itsTable.getColumns())
 		{
@@ -724,7 +727,7 @@ public class MiningWindow extends JFrame implements ActionListener
 				(aTargetType == TargetType.SINGLE_ORDINAL && anAttributeType == AttributeType.NUMERIC) ||
 				(aTargetType == TargetType.DOUBLE_REGRESSION && anAttributeType == AttributeType.NUMERIC) ||
 				(aTargetType == TargetType.DOUBLE_CORRELATION && anAttributeType == AttributeType.NUMERIC) ||
-				(aTargetType == TargetType.MULTI_LABEL && anAttributeType == AttributeType.NUMERIC) ||
+				//(aTargetType == TargetType.MULTI_LABEL && anAttributeType == AttributeType.NUMERIC) ||
 				(aTargetType == TargetType.LABEL_RANKING && anAttributeType == AttributeType.NOMINAL) ||
 				(aTargetType == TargetType.MULTI_BINARY_CLASSIFICATION && anAttributeType == AttributeType.BINARY) ||
 				(aTargetType == TargetType.MULTI_BINARY_CLASSIFICATION && anAttributeType == AttributeType.NOMINAL))
@@ -740,11 +743,11 @@ public class MiningWindow extends JFrame implements ActionListener
 				if (fillMiscField)
 					addMiscFieldItem(c.getName());
 			}
-			if (aTargetType == TargetType.SCAPE && anAttributeType == AttributeType.BINARY)
-				addTargetAttributeItem(c.getName());
-			else
+			if (aTargetType == TargetType.SCAPE)
 			{
-				if (aTargetType == TargetType.SCAPE && anAttributeType == AttributeType.NUMERIC)
+				if (anAttributeType == AttributeType.BINARY)
+					addTargetAttributeItem(c.getName());
+				else if (anAttributeType == AttributeType.NUMERIC)
 					addMiscFieldItem(c.getName());
 			}
 		}
@@ -760,8 +763,8 @@ public class MiningWindow extends JFrame implements ActionListener
 		 * PrimaryTarget is changed, so they need to be updated on every
 		 * jComboBoxTargetAttributeActionPerformed
 		 */
-		if (aTargetType == TargetType.MULTI_LABEL)
-			setMultiTargets();
+		if (aTargetType == TargetType.MULTI_LABEL || aTargetType == TargetType.MULTI_NUMERIC)
+			setMultiTargets(aTargetType);
 
 		// Re-enable ActionEvents from these two ComboBoxes.
 		jComboBoxTargetAttribute.addActionListener(this);
@@ -811,14 +814,21 @@ public class MiningWindow extends JFrame implements ActionListener
 	 *
 	 * see jComboBoxTargetTypeActionPerformed
 	 */
-	private void setMultiTargets()
+	private void setMultiTargets(TargetType theTargetType)
 	{
 		removeAllMultiTargetsItems();
 
+		AttributeType aType;
+		if (theTargetType == TargetType.MULTI_LABEL)
+			aType = AttributeType.BINARY;
+		else if (theTargetType == TargetType.MULTI_NUMERIC)
+			aType = AttributeType.NUMERIC;
+		else
+			throw new AssertionError("Unvalid TargetType: " + theTargetType);
 		List<Column> aList = new ArrayList<Column>();
 		for (Column c: itsTable.getColumns())
 		{
-			if (c.getType() == AttributeType.BINARY && c.getIsEnabled())
+			if (c.getType() == aType && c.getIsEnabled())
 			{
 				addMultiTargetsItem(c.getName());
 				aList.add(c);
@@ -888,13 +898,16 @@ public class MiningWindow extends JFrame implements ActionListener
 			}
 			case MULTI_NUMERIC :
 			{
-				//assuming multi = 2
-				Column aPrimaryColumn = itsTargetConcept.getPrimaryTarget();
-				Column aSecondaryColumn = itsTargetConcept.getSecondaryTarget();
-
-				jLabelTargetInfo.setText(" averages");
-				if (aPrimaryColumn != null && aSecondaryColumn != null)
-					jLabelTargetInfoText.setText("(" + String.valueOf(aPrimaryColumn.getAverage()) + ", " + String.valueOf(aSecondaryColumn.getAverage()) + ")");
+//				//assuming multi = 2
+//				Column aPrimaryColumn = itsTargetConcept.getPrimaryTarget();
+//				Column aSecondaryColumn = itsTargetConcept.getSecondaryTarget();
+//
+//				jLabelTargetInfo.setText(" averages");
+//				if (aPrimaryColumn != null && aSecondaryColumn != null)
+//					jLabelTargetInfoText.setText("(" + String.valueOf(aPrimaryColumn.getAverage()) + ", " + String.valueOf(aSecondaryColumn.getAverage()) + ")");
+//				break;
+				jLabelTargetInfo.setText(" # dimensions");
+				jLabelTargetInfoText.setText(String.valueOf(itsTargetConcept.getMultiTargets().size()));
 				break;
 			}
 			case SINGLE_ORDINAL :
@@ -1035,8 +1048,12 @@ public class MiningWindow extends JFrame implements ActionListener
 	{
 		TargetType aType = itsTargetConcept.getTargetType();
 		boolean isEnabled = TargetType.hasBaseModel(aType);
-		if (aType == TargetType.MULTI_LABEL && jListMultiTargets.getSelectedIndices().length == 0)
+		int aNrTargets = jListMultiTargets.getSelectedIndices().length;
+		if ((aType == TargetType.MULTI_LABEL) && (aNrTargets == 0))
 			isEnabled = false;
+		else if ((aType == TargetType.MULTI_NUMERIC) && aNrTargets != 2)
+			isEnabled = false;
+
 		jButtonBaseModel.setEnabled(isEnabled);
 	}
 
@@ -1264,7 +1281,7 @@ public class MiningWindow extends JFrame implements ActionListener
 		jLabelMiscField.setVisible(hasMiscField);
 		if (aTargetType == TargetType.SINGLE_NOMINAL)
 			jLabelMiscField.setText("target value");
-		else if (aTargetType == TargetType.DOUBLE_REGRESSION || aTargetType == TargetType.DOUBLE_CORRELATION || aTargetType == TargetType.MULTI_NUMERIC)
+		else if (aTargetType == TargetType.DOUBLE_REGRESSION || aTargetType == TargetType.DOUBLE_CORRELATION)// || aTargetType == TargetType.MULTI_NUMERIC)
 			jLabelMiscField.setText("<html><u>s</u>econdary target");
 		else
 			jLabelMiscField.setText("");
@@ -1290,7 +1307,7 @@ public class MiningWindow extends JFrame implements ActionListener
 		boolean hasMultiTargets = TargetType.hasMultiTargets(aTargetType);
 		jLabelMultiTargets.setVisible(hasMultiTargets);
 		jButtonMultiTargets.setVisible(hasMultiTargets);
-		// disable if no binary attributes
+		// disable if no attributes of appropriate type
 		// initTargetAttributeItems above populates jListMultiTargets
 		jButtonMultiTargets.setEnabled(jListMultiTargets.getSelectedIndices().length != 0);
 
@@ -1336,7 +1353,7 @@ public class MiningWindow extends JFrame implements ActionListener
 		TargetType aTargetType = itsTargetConcept.getTargetType();
 		if (aTargetType != TargetType.DOUBLE_REGRESSION &&
 			aTargetType != TargetType.DOUBLE_CORRELATION &&
-			aTargetType != TargetType.MULTI_NUMERIC &&
+			//aTargetType != TargetType.MULTI_NUMERIC &&
 			aTargetType != TargetType.SCAPE)
 			initTargetValues();
 
@@ -1366,11 +1383,12 @@ public class MiningWindow extends JFrame implements ActionListener
 				itsTargetConcept.setTargetValue(getMiscFieldName());
 				break;
 			}
-			case MULTI_NUMERIC :
-			{
-				itsTargetConcept.setSecondaryTarget(itsTable.getColumn(getMiscFieldName()));
+			case SINGLE_NUMERIC :
 				break;
-			}
+			case MULTI_NUMERIC :
+				break;
+			case SINGLE_ORDINAL :
+				throw new AssertionError(TargetType.SINGLE_ORDINAL);
 			case DOUBLE_REGRESSION :
 			{
 				itsTargetConcept.setSecondaryTarget(itsTable.getColumn(getMiscFieldName()));
@@ -1386,12 +1404,17 @@ public class MiningWindow extends JFrame implements ActionListener
 				itsTargetConcept.setSecondaryTarget(itsTable.getColumn(getMiscFieldName()));
 				break;
 			}
+			case MULTI_LABEL :
+				break;
 			case MULTI_BINARY_CLASSIFICATION :
 			{
 				itsTargetConcept.setTargetValue(getMiscFieldName());
 				break;
 			}
-			default : break;
+			case LABEL_RANKING :
+				break;
+			default :
+				throw new AssertionError(itsTargetConcept.getTargetType());
 		}
 		itsSearchParameters.setTargetConcept(itsTargetConcept);
 
@@ -1416,10 +1439,10 @@ public class MiningWindow extends JFrame implements ActionListener
 		if (aName != null)
 		{
 			itsSearchParameters.setNumericStrategy(aName);
-			boolean aBinning = (itsSearchParameters.getNumericStrategy() == NumericStrategy.NUMERIC_BEST_BINS ||
-								itsSearchParameters.getNumericStrategy() == NumericStrategy.NUMERIC_BINS);
+			NumericStrategy aStrategy = itsSearchParameters.getNumericStrategy();
+			boolean aBinning = (aStrategy == NumericStrategy.NUMERIC_BEST_BINS || aStrategy == NumericStrategy.NUMERIC_BINS);
 			jTextFieldNumberOfBins.setEnabled(aBinning); //disable nr bins?
-			boolean anIntervals = (itsSearchParameters.getNumericStrategy() == NumericStrategy.NUMERIC_INTERVALS);
+			boolean anIntervals = (aStrategy == NumericStrategy.NUMERIC_INTERVALS);
 			jComboBoxNumericOperators.setEnabled(!anIntervals); //disable numeric operators?
 		}
 	}
@@ -1440,6 +1463,9 @@ public class MiningWindow extends JFrame implements ActionListener
 
 	private void jButtonMultiTargetsActionPerformed()
 	{
+// FIXME MM
+// separate MULTI_LABEL from MULTI_NUMERIC code
+
 		// is modal, blocks all input to other windows until closed
 		new MultiTargetsWindow(jListMultiTargets, itsSearchParameters);
 
@@ -1487,21 +1513,29 @@ public class MiningWindow extends JFrame implements ActionListener
 			}
 			case MULTI_NUMERIC :
 			{
-				Column aPrimaryColumn = itsTargetConcept.getPrimaryTarget();
-				Column aSecondaryColumn = itsTargetConcept.getSecondaryTarget();
-				
-				final int aRows = aPrimaryColumn.size();
+				List<Column> aList = itsTargetConcept.getMultiTargets();
+				if (aList .size() != 2)
+					throw new AssertionError(aTargetType + " base model only available for 2 dimensions");
+
+// TODO MM use ProbabilityDensityFunction_ND
+				// compute base model
+				setBusy(true);
+				Column c1 = aList.get(0);
+				Column c2 = aList.get(1);
+				final int aRows = itsTable.getNrRows();
 				double[][] aData = new double[2][aRows];
 				double[] da = new double[aRows];
 				for (int i=0; i<aRows; i++)
-					da[i] = aPrimaryColumn.getFloat(i);
+					da[i] = c1.getFloat(i);
 				aData[0] = da;
 				da = new double[aRows];
 				for (int i=0; i<aRows; i++)
-					da[i] = aSecondaryColumn.getFloat(i);
+					da[i] = c2.getFloat(i);
 				aData[1] = da;
 				ProbabilityDensityFunction2_2D aPdf = new ProbabilityDensityFunction2_2D(aData);
-				new PDFWindow2D(aPdf, "all data", aPrimaryColumn.getName(), aSecondaryColumn.getName());
+				setBusy(false);
+
+				new PDFWindow2D(aPdf, "all data",c1.getName(), c2.getName());
 				break;
 			}
 			case SINGLE_ORDINAL :
@@ -1544,7 +1578,7 @@ public class MiningWindow extends JFrame implements ActionListener
 				else
 					aPositivePDF = new ProbabilityDensityFunction2(aPDF, aBinaries);
 				aPositivePDF.smooth();
-					
+
 				ProbabilityDensityFunction aNegativePDF;
 				// DEBUG
 				if (!ProbabilityDensityFunction.USE_ProbabilityDensityFunction2)
@@ -1552,7 +1586,7 @@ public class MiningWindow extends JFrame implements ActionListener
 				else
 					aNegativePDF = new ProbabilityDensityFunction2(aPDF, aNegativeBinaries);
 				aNegativePDF.smooth();
-					
+
 				new ModelWindow(aNumericTarget, aPositivePDF, aNegativePDF, itsTable.getName(), true);
 				break;
 			}
@@ -1677,6 +1711,12 @@ public class MiningWindow extends JFrame implements ActionListener
 
 				aQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), aNrRows, aStats[0], aStats[1], aPDF);
 				break;
+			}
+			case MULTI_NUMERIC :
+			{
+				// FIXME MM crash hard for now
+				JOptionPane.showMessageDialog(this, "Not implemented yet!", "Multi Numeric Error", JOptionPane.INFORMATION_MESSAGE);
+				return;
 			}
 			case DOUBLE_REGRESSION :
 			{
@@ -2213,8 +2253,8 @@ public class MiningWindow extends JFrame implements ActionListener
 		BROWSE(			"Browse...",		KeyEvent.VK_B,	true),
 		EXPLORE(		"Explore...",		KeyEvent.VK_E,	true),
 		META_DATA(		"Meta Data...",		KeyEvent.VK_D,	true),
-		SUBGROUP_DISCOVERY("Subgroup Discovery",	KeyEvent.VK_S,	true),
-		SUBGROUP_DISCOVERY_LOOP("SD Loop",	KeyEvent.VK_L,	true),
+		SUBGROUP_DISCOVERY(	"Subgroup Discovery",	KeyEvent.VK_S,	true),
+		SUBGROUP_DISCOVERY_LOOP("SD Loop",		KeyEvent.VK_L,	true),
 		CREATE_AUTORUN_FILE(	"Create Autorun File",	KeyEvent.VK_C,	true),
 		ADD_TO_AUTORUN_FILE(	"Add to Autorun File",	KeyEvent.VK_A,	true),
 		LOAD_SAMPLED_SUBGROUPS(	"Load Sampled Subgroups", KeyEvent.VK_L, true),
