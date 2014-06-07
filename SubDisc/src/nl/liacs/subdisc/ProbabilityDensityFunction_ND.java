@@ -266,6 +266,67 @@ System.out.println("grid row: " + i);
 		return cm;
 	}
 
+	// indexes for statistics
+	private static final int MEAN_D1 = 0;
+	private static final int MEAN_D2 = 1;
+	private static final int VAR_D1 = 2;
+	private static final int VAR_D2 = 3;
+	private static final int COV_1_2 = 4;
+	private static final int H = 5;
+	private static final int SIZE_N = 6;
+	private static final int NR_STATS = 7;
+	// single-pass, numerically stable, where cov_n = co-moment_n / n
+	// statistics for 2D, subgroup versus complement
+	// (isSample == true) uses unbiased n-1, (isSample == false) uses n
+	private static final double[][] stats(float[] theData, BitSet theBitSet, boolean isSample)
+	{
+		int D = 2;
+		int N = theData.length/D;
+
+		double[] sg_stats = new double[NR_STATS];
+		double[] co_stats = new double[NR_STATS];
+
+		// Welford (Knuth TAOCP volume 2, 3rd edition, page 232)
+		// en.wikipedia.org/wiki/Algorithms_for_calculating_variance
+		for (int i = 0, j = 0; i < N; ++i, ++j)
+		{
+			double[] stats = theBitSet.get(i) ? sg_stats : co_stats;
+			double x = theData[  j];
+			double y = theData[++j];			// NOTE increment
+			double n = stats[SIZE_N] += 1.0;		// n
+			double dx = x - stats[MEAN_D1];			// x_n - ux_n-1
+			double dy = y - stats[MEAN_D2];			// y_n - ux_n-1
+			stats[MEAN_D1] += (dx/n);			// ux_n = ux_n-1 + (x_n - ux_n-1)
+			stats[MEAN_D2] += (dy/n);			// uy_n = uy_n-1 + (y_n - uy_n-1)
+			stats[VAR_D1] += (dx * (x-stats[MEAN_D1]));	// varx_n = varx_n-1 + ((x_n - ux_n-1)*(x_n - ux_n))
+			stats[VAR_D2] += (dy * (y-stats[MEAN_D2]));	// vary_n = vary_n-1 + ((y_n - uy_n-1)*(y_n - uy_n))
+			stats[COV_1_2] = (((stats[COV_1_2] * (n-1.0)) + (dx*(y-stats[MEAN_D2]))) / n);
+			// covxy_n = [{covxy_n-1 * (n-1)} + {((n-1)/n) * ((x_n - ux_n-1) * (y_n - uy_n))}] / n
+		}
+
+		double sg_n = sg_stats[SIZE_N];
+		double co_n = co_stats[SIZE_N];
+
+		// bias corrections - too complicated within loop
+		double div = sg_n - (isSample ? 1.0 : 0.0);
+		sg_stats[VAR_D1] /= div;
+		sg_stats[VAR_D2] /= div;
+		if (isSample)
+			sg_stats[COV_1_2] *= (sg_n/div);
+		// for complement
+		div = co_n - (isSample ? 1.0 : 0.0);
+		co_stats[VAR_D1] /= div;
+		co_stats[VAR_D2] /= div;
+		if (isSample)
+			co_stats[COV_1_2] *= (co_n/div);
+
+		// compute (Silverman) h, for 2D: d_fac cancels out (see below)
+		sg_stats[H] = Math.pow(sg_n, (-1.0/6.0));
+		co_stats[H] = Math.pow(co_n, -(1.0/6.0));
+
+		return new double[][] { sg_stats, co_stats };
+	}
+
 	// Silverman's rule suggests using
 	// \sqrt{\mathbf{H}_{ii}} = \left(\frac{4}{d+2}\right)^{\frac{1}{d+4}} n^{\frac{-1}{d+4}} \sigma_i
 	// where \sigma_i is the standard deviation of the ith variable and \mathbf{H}_{ij} = 0, i\neq j.
