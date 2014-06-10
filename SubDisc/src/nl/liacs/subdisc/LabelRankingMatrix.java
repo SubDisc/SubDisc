@@ -27,9 +27,9 @@ public class LabelRankingMatrix
 
 		for (int i=0; i<itsSize; i++)
 			for (int j=0; j<itsSize; j++)
-				if (theRanking.getRank(i) > theRanking.getRank(j))
+				if (theRanking.getRank(i) < theRanking.getRank(j))
 					itsMatrix[i][j] = 1;
-				else if (theRanking.getRank(i) < theRanking.getRank(j))
+				else if (theRanking.getRank(i) > theRanking.getRank(j))
 					itsMatrix[i][j] = -1;
 				else
 					itsMatrix[i][j] = 0;
@@ -66,7 +66,23 @@ public class LabelRankingMatrix
 			for (int j=0; j<itsSize; j++)
 				itsMatrix[i][j] /= theValue;
 	}
-
+	
+	public float frobeniunsNorm(LabelRankingMatrix theMatrix)
+	{
+		double fNorm = 0;
+		for (int i=0; i<itsSize; i++)
+			for (int j=i+1; j<itsSize; j++)
+				fNorm += Math.pow(theMatrix.itsMatrix[i][j],2);
+		return (float) Math.sqrt(fNorm);
+	}
+	
+//	public float normDistance(LabelRankingMatrix theMatrix)
+//	{
+//		double aDistance = 0;
+//		subtract(theMatrix);
+//		return (float) Math.sqrt(aDistance);
+//	}
+	
 	public float normDistance(LabelRankingMatrix theMatrix)
 	{
 		double aDistance = 0;
@@ -80,7 +96,7 @@ public class LabelRankingMatrix
 	
 	public float wnormDistance(LabelRankingMatrix theMatrix)
 	{
-		return normDistance(theMatrix)*homogeneity(theMatrix);
+		return normDistance(theMatrix)*frobeniunsNorm(theMatrix);
 	}
 	
 	public float minDistance(LabelRankingMatrix theMatrix)
@@ -138,6 +154,21 @@ public class LabelRankingMatrix
 			}
 		return aDistance/count;
 	}
+	
+//	public float covDistance(LabelRankingMatrix theMatrix)
+//	{
+//		float aSum = 0;
+//		float aMax = -1f/0f;
+//		for (int i=0; i<itsSize; i++)
+//		{
+//			for (int j=i+1; j<itsSize; j++)
+//			{
+//				aMax = Math.max(aMax, Math.abs(itsMatrix[i][j] - theMatrix.itsMatrix[i][j]));
+//			}
+//			aSum += aMax;
+//		}
+//		return aSum/(itsSize-1);
+//	}
 	
 	public float covDistance(LabelRankingMatrix theMatrix)
 	{
