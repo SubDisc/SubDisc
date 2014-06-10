@@ -215,6 +215,7 @@ System.out.println("grid row: " + i);
 	{
 		final int d = x.length;
 		double result = 0.0f;
+		Arrays.fill(transpose, 0.0);
 
 		// (x-mu)
 		for (int i = 0; i < d; ++i)
@@ -321,7 +322,7 @@ System.out.println("grid row: " + i);
 			co_stats[COV_1_2] *= (co_n/div);
 
 		// compute (Silverman) h, for 2D: d_fac cancels out (see below)
-		sg_stats[H] = Math.pow(sg_n, (-1.0/6.0));
+		sg_stats[H] = Math.pow(sg_n, -(1.0/6.0));
 		co_stats[H] = Math.pow(co_n, -(1.0/6.0));
 
 		return new double[][] { sg_stats, co_stats };
@@ -365,8 +366,19 @@ System.out.println("grid row: " + i);
 		return ssds;
 	}
 
+	private static final float[][] createBandwidthMatrix(double[] stats)
+	{
+		double h = stats[H];
+		double h2 = h*h;
+		return new float[][] { {(float)(stats[VAR_D1] * h2), (float)(stats[COV_1_2] * h2)},
+					{(float)(stats[COV_1_2] * h2), (float)(stats[VAR_D2] * h2)} };
+	}
+
 	private static final float[][] inverse(float[][] theMatrix)
 	{
+		if (!isSquared(theMatrix))
+			throw new IllegalArgumentException("Not a squared matrix");
+
 		int d = theMatrix.length;
 
 		// 2D special case: 1/det(M) * [d,-b][-c,a]
@@ -380,9 +392,6 @@ System.out.println("grid row: " + i);
 			inv[1][1] = +theMatrix[0][0]/f;
 			return inv;
 		}
-
-		if (!isSquared(theMatrix))
-			throw new AssertionError("Not a squared matrix");
 
 		return toFloat(new Matrix(toDouble(theMatrix), d, d).inverse().getArray());
 	}
@@ -472,6 +481,11 @@ System.out.println("grid row: " + i);
 	{
 		if (theQM.TARGET_TYPE != TargetType.MULTI_NUMERIC)
 			throw new IllegalArgumentException(theQM + " != " + TargetType.MULTI_NUMERIC);
+		if (theSubgroup == null)
+			throw new IllegalArgumentException("theSubgroup can not be null");
+		if (theSubgroup.cardinality() == 0)
+			throw new IllegalArgumentException("theSubgroup can not be empty");
+
 		if (theQM == QM.L2)
 			return (float) L2(theSubgroup, toComplement);
 		else
@@ -494,8 +508,13 @@ System.out.println("grid row: " + i);
 	// NOTE when testing to data ALL statistics are recomputed for data
 	// for now, the assumption is that tests are subgroup versus complement
 	//
-	final float[][] getDensityDifference2D(BitSet theSubgroup, boolean toComplement, QM theQM)
+	final float[][] getDensityDifference2D_ORIG(BitSet theSubgroup, boolean toComplement, QM theQM)
 	{
+		assert (itsGrid.length == 2);
+		assert (itsData.length >= 2);
+		assert (theSubgroup != null);
+		assert (theSubgroup.cardinality() > 0);
+
 		double[] x_stats = itsGrid[0];
 		double[] y_stats = itsGrid[1];
 		double x_min = x_stats[MIN];
@@ -549,6 +568,8 @@ System.out.println("grid row: " + i);
 		double S_f = 1.0 / (2.0 * Math.PI * Math.sqrt(det(S_cm) * S_size));
 		double C_f = 1.0 / (2.0 * Math.PI * Math.sqrt(det(C_cm) * C_size));
 		float[] xy = new float[2]; // re-used
+
+////////////////////////////////////////////////////////////////////////////////
 debug("SG");
 debug(Integer.toString(theSubgroup.cardinality()));
 debug(Arrays.toString(S_cm[0]));
@@ -564,6 +585,15 @@ debug(Arrays.toString(C_cm[1]));
 debug(Arrays.toString(C_cm_inv[0]));
 debug(Arrays.toString(C_cm_inv[1]));
 debug(Double.toString(C_f));
+debug("ALT");
+debug(Arrays.toString(S_mu));
+debug(Arrays.toString(C_mu));
+double[][] stats = stats(itsData, theSubgroup, true);
+debug(Arrays.toString(stats[0]) + " " + Arrays.toString(stats[1]));
+float[][] sb = createBandwidthMatrix(stats[0]);
+float[][] cb = createBandwidthMatrix(stats[1]);
+debug(Arrays.toString(sb[0]) + " " + Arrays.toString(sb[1]));
+debug(Arrays.toString(cb[0]) + " " + Arrays.toString(cb[1]));
 Timer t = new Timer();
 		for (int i = 0; i < x_n; ++i)
 		{
@@ -575,7 +605,7 @@ Timer t = new Timer();
 			for (int j = 0; j < y_n; ++j)
 			{
 				xy[1] = (float) (y_min + (j*dy)); // y-coord
-				// test xy against each point in Subgroup data
+//				// test xy against each point in Subgroup data
 				double S_i = S_f * qf(xy, S_cm_inv, itsData, theSubgroup);
 				// subtract NotSubgroup data
 				double C_i = C_f * qf(xy, C_cm_inv, itsData, theNotSubgroup);
@@ -607,16 +637,131 @@ Timer t = new Timer();
 		return densityDifference;
 	}
 
+	/** toComplement boolean is ignored, always test against complement */
+	final float[][] getDensityDifference2D(BitSet theSubgroup, boolean toComplement, QM theQM)
+	{
+		assert (itsGrid.length == 2);
+		assert (itsData.length >= 2);
+		assert (theSubgroup != null);
+		assert (theSubgroup.cardinality() > 0);
+
+		double[] x_stats = itsGrid[0];
+		double[] y_stats = itsGrid[1];
+		double x_min = x_stats[MIN];
+		double y_min = y_stats[MIN];
+		double x_max = x_stats[MAX];
+		double y_max = y_stats[MAX];
+		int x_n = (int)x_stats[GRID_SIZE];
+		int y_n = (int)y_stats[GRID_SIZE];
+		double dx = (x_max-x_min)/x_n;
+		double dy = (y_max-y_min)/y_n;
+
+		int D = itsGrid.length;
+		int N = itsData.length/D;
+		// S = subgroup, C = complement or complete data
+		int S_size = theSubgroup.cardinality();
+		int C_size = N - (toComplement ? S_size : 0);
+
+		double[][] stats = stats(itsData, theSubgroup, true);
+		float[][] S_cm = createBandwidthMatrix(stats[0]);
+		float[][] C_cm = createBandwidthMatrix(stats[1]);
+		float[][] S_cm_inv = inverse(S_cm);
+		float[][] C_cm_inv = inverse(C_cm);
+		// for direct computation
+		double S_xvar_i = S_cm_inv[0][0];
+		double S_cov2_i = S_cm_inv[0][1] * 2.0; // 0.0 for diagonal H
+		double S_yvar_i = S_cm_inv[1][1];
+		double C_xvar_i = C_cm_inv[0][0];
+		double C_cov2_i = C_cm_inv[0][1] * 2.0; // 0.0 for diagonal H
+		double C_yvar_i = C_cm_inv[1][1];
+
+		boolean qm_only = (theQM != null);
+		float[][] densityDifference = qm_only ? null : new float[x_n][y_n];
+		double difference = 0.0;
+		// Kh = 1/n*sum(1/h*K(x/h)), 1/n*1/sqrt(2*PI)^k*|SIGMA|)
+		double S_f = 1.0 / (2.0 * Math.PI * Math.sqrt(det(S_cm) * S_size));
+		double C_f = 1.0 / (2.0 * Math.PI * Math.sqrt(det(C_cm) * C_size));
+
+////////////////////////////////////////////////////////////////////////////////
+debug("\nSG");
+debug("stats " + Arrays.toString(stats[0]));
+debug("cm    " + Arrays.toString(S_cm[0]) + "\n      " + Arrays.toString(S_cm[1]));
+debug("cm^-1 " + Arrays.toString(S_cm_inv[0]) + "\n      " + Arrays.toString(S_cm_inv[1]));
+debug("!SG");
+debug("stats " + Arrays.toString(stats[1]));
+debug("cm    " + Arrays.toString(C_cm[0]) + "\n      " + Arrays.toString(C_cm[1]));
+debug("cm^-1 " + Arrays.toString(C_cm_inv[0]) + "\n      " + Arrays.toString(C_cm_inv[1]));
+Timer t = new Timer();
+////////////////////////////////////////////////////////////////////////////////
+		for (int i = 0; i < x_n; ++i)
+		{
+			float[] r = qm_only ? null : new float[y_n];
+			if (!qm_only)
+				densityDifference[i] = r;
+
+			double x = (x_min + (i*dx)); // x-coord
+			for (int j = 0; j < y_n; ++j)
+			{
+				double y = (y_min + (j*dy)); // y-coord
+
+				double S_kde = 0.0;
+				double C_kde = 0.0;
+				for (int k = 0, m = 0; k < N; ++k, ++m)
+				{
+					double px = x - itsData[  m];
+					double py = y - itsData[++m]; // NOTE increment
+
+					// TODO MM CUTOFF checks go here
+
+					if (theSubgroup.get(k))
+						S_kde += Math.exp(-0.5 * ((px*px*S_xvar_i) + (px*py*S_cov2_i) + (py*py*S_yvar_i)));
+					// toComplement check would go here
+					else
+						C_kde += Math.exp(-0.5 * ((px*px*C_xvar_i) + (px*py*C_cov2_i) + (py*py*C_yvar_i)));
+				}
+				S_kde *= S_f;
+				C_kde *= C_f;
+
+				if (!qm_only)
+					r[i] = (float)(S_kde-C_kde);
+				else
+					difference += divergence(theQM, S_kde, C_kde, S_size, N);
+
+				// no need to continue
+				if (Double.isInfinite(difference))
+				{
+					debug(String.format("[%d,%d]=(%20.16f,%20.16f) %20.16f %20.16f", i, j, x, y, S_kde, C_kde));
+					debug("QM = " + difference);
+					debug(t.getElapsedTimeString());
+					return new float[][] { {(float)difference}, null };
+				}
+			}
+		}
+
+		if (qm_only)
+		{
+			debug("QM = " + difference);
+			debug(t.getElapsedTimeString());
+			return new float[][] { {(float)difference}, null };
+		}
+
+		debug(t.getElapsedTimeString());
+		return densityDifference;
+	}
+
 	/*
 	 * NOTE this code needs special cases for 0 and Infinity
 	 * for example 0 * Infinity = NaN
-	 * but actually, 0.0 is not 0.0
+	 * but for KL, P_i = 0.0 is not always 0.0
 	 * it is just the exp(-x) that returned 0.0
 	 * because |x| was to to large, the result is infinitesimally small
-	 * so we define 0.0*Infinite as Infinite
+	 * then P_i*Infinite should be defined as Infinite (not 0.0)
 	 */
 	private static final double divergence(QM theQM, double P_i, double Q_i, int theCoverage, int theNrRecords)
 	{
+		assert(theCoverage > 0);
+		assert(theNrRecords > 0);
+
 		switch(theQM)
 		{
 			case SQUARED_HELLINGER_2D :
@@ -625,12 +770,17 @@ Timer t = new Timer();
 				return (0.5 * (d*d));
 			}
 			case SQUARED_HELLINGER_WEIGHTED_2D :
-				return (divergence(QM.SQUARED_HELLINGER_2D, P_i, Q_i, 0, 0) * theCoverage) / theNrRecords;
+			{
+				// avoid possible 0 * Inf
+//				if (theCoverage == 0)
+//					return 0.0;
+				return (divergence(QM.SQUARED_HELLINGER_2D, P_i, Q_i, theCoverage, theNrRecords) * theCoverage) / theNrRecords;
+			}
 			case SQUARED_HELLINGER_WEIGHTED_ADJUSTED_2D :
 				// now weight SQUARED_HELLINGER
 				// magic number = maximum possible score
 				// it lies at (5/9, 4/27)
-				return divergence(QM.SQUARED_HELLINGER_WEIGHTED_2D, P_i, Q_i, 0, 0) / (4.0/27.0);
+				return divergence(QM.SQUARED_HELLINGER_WEIGHTED_2D, P_i, Q_i, theCoverage, theNrRecords) / (4.0/27.0);
 			case KULLBACK_LEIBLER_2D :
 			{
 				/*
@@ -649,15 +799,39 @@ Timer t = new Timer();
 				// NOTE the above is no longer true when testing
 				// against complement
 				// see javadoc comment
-				// (0/0)=NaN, log(NaN)=NaN, 0*NaN=NaN
-				if ((P_i == 0.0) && (Q_i == 0.0))
-					return 0.0;
+//				if (P_i == 0.0)
+//				{
+//					// (0/0)=NaN, log(NaN)=NaN, 0*NaN=NaN
+//					if (Q_i == 0.0)
+//						return Double.POSITIVE_INFINITY;
+//					// else
+//					// (0/x)=0, log(0)=-Inf, 0*-Inf=NaN
+//					return Double.POSITIVE_INFINITY;
+//				}
+//				else if (Q_i == 0.0) // and P_i != 0.0
+//				{
+//					// (x/0)=+Inf, log(+Inf)=+Inf, x*+Inf=+Inf|-Inf
+//					return P_i*Double.POSITIVE_INFINITY;
+//				}
+				// equivalent to the checks above
+				if (P_i == 0.0)
+					return Double.POSITIVE_INFINITY;
 				return P_i * Math.log(P_i/Q_i);
 			}
 			case KULLBACK_LEIBLER_WEIGHTED_2D :
-				return (divergence(QM.KULLBACK_LEIBLER_2D, P_i, Q_i, 0, 0) * theCoverage) / theNrRecords;
+			{
+				// avoid possible 0 * Inf
+//				if (theCoverage == 0)
+//					return 0.0;
+				return (divergence(QM.KULLBACK_LEIBLER_2D, P_i, Q_i, theCoverage, theNrRecords) * theCoverage) / theNrRecords;
+			}
 			case CWRACC_2D :
-				return (divergence(QM.CWRACC_UNWEIGHTED_2D, P_i, Q_i, 0, 0) * theCoverage) / theNrRecords;
+			{
+				// avoid possible 0 * Inf
+//				if (theCoverage == 0)
+//					return 0.0;
+				return (divergence(QM.CWRACC_UNWEIGHTED_2D, P_i, Q_i, theCoverage, theNrRecords) * theCoverage) / theNrRecords;
+			}
 			case CWRACC_UNWEIGHTED_2D :
 				return Math.abs(Q_i - P_i);
 			default :
@@ -818,20 +992,20 @@ Timer t = new Timer();
 
 	public static void main(String[] args)
 	{
-		File f = new File("/home/marvin/data/svn/SubgroupDiscovery/SubDisc/Regr_datasets/boston-housing.csv");
-		Table t = new DataLoaderTXT(f).getTable();
-		Column[] c = { t.getColumn(0), t.getColumn(13)};
-		ProbabilityDensityFunction_ND pdf = new ProbabilityDensityFunction_ND(c);
-		BitSet b = new BitSet(t.getNrRows());
-		b.set(0, t.getNrRows());
-//		// should return 0
-//		double d = pdf.L2(b, false);
-//		System.out.println("L2=" + d);
-		b.set(0, 50, false);
-		b.set(100, 150, false);
-		float[][] d = pdf.getDensityDifference2D(b, true, QM.KULLBACK_LEIBLER_2D);
+//		File f = new File("/home/marvin/data/svn/SubgroupDiscovery/SubDisc/Regr_datasets/boston-housing.csv");
+//		Table t = new DataLoaderTXT(f).getTable();
+//		Column[] c = { t.getColumn(0), t.getColumn(13)};
+//		ProbabilityDensityFunction_ND pdf = new ProbabilityDensityFunction_ND(c);
+//		BitSet b = new BitSet(t.getNrRows());
+//		b.set(0, t.getNrRows());
+////		// should return 0
+////		double d = pdf.L2(b, false);
+////		System.out.println("L2=" + d);
+//		b.set(0, 50, false);
+//		b.set(100, 150, false);
+//		float[][] d = pdf.getDensityDifference2D(b, true, QM.KULLBACK_LEIBLER_2D);
 
-		//check();
+		check();
 	}
 
 	private static final void check()
@@ -851,9 +1025,22 @@ Timer t = new Timer();
 		System.out.println(0.0 / Double.POSITIVE_INFINITY);
 		System.out.println(Double.POSITIVE_INFINITY / 0.0);
 		System.out.println(Double.POSITIVE_INFINITY / Double.POSITIVE_INFINITY);
-
+		System.out.println();
 		System.out.println(0.0 * Double.POSITIVE_INFINITY);
+		System.out.println(0.0 * Double.NEGATIVE_INFINITY);
 		System.out.println(Double.POSITIVE_INFINITY * Double.POSITIVE_INFINITY);
 		System.out.println(Double.POSITIVE_INFINITY * Double.NEGATIVE_INFINITY);
+		System.out.println();
+		System.out.println(1.0 * Double.POSITIVE_INFINITY);
+		System.out.println();
+		System.out.println(Double.POSITIVE_INFINITY - Double.POSITIVE_INFINITY);
+		System.out.println(Double.POSITIVE_INFINITY - Double.NEGATIVE_INFINITY);
+		System.out.println(Double.POSITIVE_INFINITY + Double.POSITIVE_INFINITY);
+		System.out.println(Double.POSITIVE_INFINITY + Double.NEGATIVE_INFINITY);
+		System.out.println();
+		System.out.println(Double.NEGATIVE_INFINITY - Double.POSITIVE_INFINITY);
+		System.out.println(Double.NEGATIVE_INFINITY - Double.NEGATIVE_INFINITY);
+		System.out.println(Double.NEGATIVE_INFINITY + Double.POSITIVE_INFINITY);
+		System.out.println(Double.NEGATIVE_INFINITY + Double.NEGATIVE_INFINITY);
 	}
 }
