@@ -32,18 +32,37 @@ public class LabelRankingMatrixWindow extends JFrame implements ActionListener
 			aMatrixPlot2 = new MatrixPlot(theLRM, "Subgroup Matrix");
 			LabelRankingMatrix aClone = (LabelRankingMatrix) theBaseLRM.clone();
 			aClone.subtract(theLRM);
+			aClone.divide(2f);
+			aClone.print();
+			
 			aMatrixPlot3 = new MatrixPlot(aClone, "Difference");
 			aCenterPanel.add(aMatrixPlot2);
 			aCenterPanel.add(aMatrixPlot3);
-		}
-		aCenterPanelM.add(aCenterPanel);
-		
-		if (theLRM != null)
-		{
+			
+			aCenterPanelM.add(aCenterPanel);
+
 			JPanel a2CenterPanel = new JPanel();
 			//a2CenterPanel.setLayout(new GridLayout(1, 3));
-			String aString = "<html>Pairwise Max: "+ theLRM.findMax()  + " (" + theLRM.pairwiseMax(theLRM) + ") <br>" ;
-			aString += "Most different label: "+ theLRM.findMaxLabel() + "</html>";
+			String aString = "<html>";
+			aString += "<table>";
+			aString += "<tr>";
+			aString += "<th>&nbsp;</th><th>Pairwise Max</th>" ;
+			aString += "</tr>";
+			
+			aString += "<tr>";
+			aString += "<td>Dataset</td><td>"+ theBaseLRM.findMax()  + " (" + theBaseLRM.pairwiseMax(theBaseLRM) + ") </td>" ;
+			aString += "</tr>";
+			aString += "<tr>";
+			aString += "<td>Subgroup</td><td>"+ theLRM.findMax()  + " (" + theLRM.pairwiseMax(theLRM) + ") </td>" ;
+			aString += "</tr>";
+			aString += "<tr>";
+			aString += "<td>Difference</td><td> "+ aClone.findMax() + " (" + aClone.pairwiseMax(aClone) + ") </td>";
+			aString += "</tr>";
+			
+			aString += "</table><br>";
+			
+			aString += "Most different label: "+ theLRM.findMaxLabel();
+			aString += "</html>";
 			JLabel two  = new JLabel(aString);
 			a2CenterPanel.add(two);
 			

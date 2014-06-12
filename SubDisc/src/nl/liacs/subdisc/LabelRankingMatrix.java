@@ -70,10 +70,14 @@ public class LabelRankingMatrix
 	public float frobeniunsNorm(LabelRankingMatrix theMatrix)
 	{
 		double fNorm = 0;
+		int count = 0;
 		for (int i=0; i<itsSize; i++)
 			for (int j=i+1; j<itsSize; j++)
+			{
 				fNorm += Math.pow(theMatrix.itsMatrix[i][j],2);
-		return (float) Math.sqrt(fNorm);
+				count += 1;
+			}
+		return (float) Math.sqrt(fNorm)/count;
 	}
 	
 //	public float normDistance(LabelRankingMatrix theMatrix)
@@ -86,12 +90,14 @@ public class LabelRankingMatrix
 	public float normDistance(LabelRankingMatrix theMatrix)
 	{
 		double aDistance = 0;
+		int count = 0;
 		for (int i=0; i<itsSize; i++)
 			for (int j=i+1; j<itsSize; j++)
 			{
 				aDistance += Math.pow((itsMatrix[i][j] - theMatrix.itsMatrix[i][j])/2,2);
+				count += 1;
 			}
-		return (float) Math.sqrt(aDistance);
+		return (float) Math.sqrt(aDistance)/count;
 	}
 	
 	public float wnormDistance(LabelRankingMatrix theMatrix)
@@ -110,7 +116,7 @@ public class LabelRankingMatrix
 			{
 				if (i!=j) aDistance += Math.pow((itsMatrix[i][j] - theMatrix.itsMatrix[i][j])/2, 2);
 			}
-			aDistance = (float) Math.sqrt(aDistance);
+			aDistance = (float) Math.sqrt(aDistance)/(itsSize-1);
 			aMin = Math.min(aMin, aDistance);
 		}
 		return aMin;
@@ -127,7 +133,7 @@ public class LabelRankingMatrix
 			{
 				if (i!=j) aDistance += Math.pow((itsMatrix[i][j] - theMatrix.itsMatrix[i][j])/2, 2);
 			}
-			aDistance = (float) Math.sqrt(aDistance);
+			aDistance = (float) Math.sqrt(aDistance)/(itsSize-1);
 			aMax = Math.max(aMax, aDistance);
 		}
 		return aMax;
@@ -138,36 +144,21 @@ public class LabelRankingMatrix
 		float aMax = -1f/0f;
 		for (int i=0; i<itsSize; i++)
 			for (int j=i+1; j<itsSize; j++)
-				aMax = Math.max(aMax, (itsMatrix[i][j] - theMatrix.itsMatrix[i][j])/2);
+				aMax = Math.max(aMax, Math.abs((itsMatrix[i][j] - theMatrix.itsMatrix[i][j])/2));
 		return aMax;
 	}
 	
-	public float avgDistance(LabelRankingMatrix theMatrix)
-	{
-		float aDistance = 0;
-		int count=0;
-		for (int i=0; i<itsSize; i++)
-			for (int j=i+1; j<itsSize; j++)
-			{
-				aDistance += Math.abs(itsMatrix[i][j] - theMatrix.itsMatrix[i][j]);
-				count += 1;
-			}
-		return aDistance/count;
-	}
-	
-//	public float covDistance(LabelRankingMatrix theMatrix)
+//	public float avgDistance(LabelRankingMatrix theMatrix)
 //	{
-//		float aSum = 0;
-//		float aMax = -1f/0f;
+//		float aDistance = 0;
+//		int count=0;
 //		for (int i=0; i<itsSize; i++)
-//		{
 //			for (int j=i+1; j<itsSize; j++)
 //			{
-//				aMax = Math.max(aMax, Math.abs(itsMatrix[i][j] - theMatrix.itsMatrix[i][j]));
+//				aDistance += Math.abs(itsMatrix[i][j] - theMatrix.itsMatrix[i][j]);
+//				count += 1;
 //			}
-//			aSum += aMax;
-//		}
-//		return aSum/(itsSize-1);
+//		return aDistance/count;
 //	}
 	
 	public float covDistance(LabelRankingMatrix theMatrix)
@@ -261,7 +252,7 @@ public class LabelRankingMatrix
 			for (int j=i+1; j<itsSize; j++) {
 				if (aFloat < Math.abs(itsMatrix[i][j])) {
 					roundedValue = Math.round(itsMatrix[i][j]*1000f)/1000f;
-					anOutput = new String(LabelRanking.getLetter(i) + ">" + LabelRanking.getLetter(j) + " -> " + roundedValue);
+					anOutput = new String(LabelRanking.getLetter(i) + ">" + LabelRanking.getLetter(j) + " " + roundedValue);
 					aFloat = Math.abs(itsMatrix[i][j]);
 				}
 			}
@@ -280,6 +271,7 @@ public class LabelRankingMatrix
 			for (int j=0; j<itsSize; j++) {
 				if (i!=j)	theLabelSum += Math.abs(itsMatrix[i][j]);
 			}
+			theLabelSum = theLabelSum/(itsSize-1);
 			if (aFloat < theLabelSum) {
 				roundedValue = Math.round(aFloat*1000f)/1000f;
 				anOutput = new String(LabelRanking.getLetter(i) + " (" + roundedValue + ")");
