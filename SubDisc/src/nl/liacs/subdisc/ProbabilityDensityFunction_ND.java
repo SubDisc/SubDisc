@@ -1,6 +1,5 @@
 package nl.liacs.subdisc;
 
-import java.io.*;
 import java.util.*;
 
 import Jama.*;
@@ -655,14 +654,15 @@ Timer t = new Timer();
 		int y_n = (int)y_stats[GRID_SIZE];
 		double dx = (x_max-x_min)/x_n;
 		double dy = (y_max-y_min)/y_n;
+		double dxdy = dx*dy;
 
 		int D = itsGrid.length;
 		int N = itsData.length/D;
-		// S = subgroup, C = complement or complete data
-		int S_size = theSubgroup.cardinality();
-		int C_size = N - (toComplement ? S_size : 0);
 
+		// S = subgroup, C = complement or complete data
 		double[][] stats = stats(itsData, theSubgroup, true);
+		int S_size = (int)stats[0][SIZE_N];
+		int C_size = (int)stats[1][SIZE_N];
 		float[][] S_cm = createBandwidthMatrix(stats[0]);
 		float[][] C_cm = createBandwidthMatrix(stats[1]);
 		float[][] S_cm_inv = inverse(S_cm);
@@ -679,8 +679,8 @@ Timer t = new Timer();
 		float[][] densityDifference = qm_only ? null : new float[x_n][y_n];
 		double difference = 0.0;
 		// Kh = 1/n*sum(1/h*K(x/h)), 1/n*1/sqrt(2*PI)^k*|SIGMA|)
-		double S_f = 1.0 / (2.0 * Math.PI * Math.sqrt(det(S_cm) * S_size));
-		double C_f = 1.0 / (2.0 * Math.PI * Math.sqrt(det(C_cm) * C_size));
+		double S_f = 1.0 / (2.0 * Math.PI * Math.sqrt(det(S_cm)) * S_size);
+		double C_f = 1.0 / (2.0 * Math.PI * Math.sqrt(det(C_cm)) * C_size);
 
 ////////////////////////////////////////////////////////////////////////////////
 debug("\nSG");
@@ -692,6 +692,8 @@ debug("stats " + Arrays.toString(stats[1]));
 debug("cm    " + Arrays.toString(C_cm[0]) + "\n      " + Arrays.toString(C_cm[1]));
 debug("cm^-1 " + Arrays.toString(C_cm_inv[0]) + "\n      " + Arrays.toString(C_cm_inv[1]));
 Timer t = new Timer();
+double S_integral = 0.0;
+double C_integral = 0.0;
 ////////////////////////////////////////////////////////////////////////////////
 		for (int i = 0; i < x_n; ++i)
 		{
@@ -719,9 +721,10 @@ Timer t = new Timer();
 					else
 						C_kde += Math.exp(-0.5 * ((px*px*C_xvar_i) + (px*py*C_cov2_i) + (py*py*C_yvar_i)));
 				}
-				S_kde *= S_f;
-				C_kde *= C_f;
-
+				S_kde *= (S_f * dxdy);
+				C_kde *= (C_f * dxdy);
+S_integral += S_kde;
+C_integral += C_kde;
 				if (!qm_only)
 					r[i] = (float)(S_kde-C_kde);
 				else
@@ -737,6 +740,9 @@ Timer t = new Timer();
 				}
 			}
 		}
+System.out.println("dxdy = " + dxdy);
+System.out.println("S_integral = " + S_integral);
+System.out.println("C_integral = " + C_integral);
 
 		if (qm_only)
 		{
