@@ -6,8 +6,8 @@ import Jama.*;
 
 public class ProbabilityDensityFunction_ND
 {
-	private static final double CUTOFF = 3.0; // |CUTOFF*SIGMA| = 0.0
-	private static final int SAMPLES = 101; // [-LIMIT:+LIMIT]
+	private static final double CUTOFF = 4.0; // |CUTOFF*SIGMA| = 0.0
+	private static final int SAMPLES = 201; // [-LIMIT:+LIMIT]
 	private static final int GRID_STATS = 3; // min, max, samples
 	private static final int MIN = 0;
 	private static final int MAX = 1;
@@ -679,8 +679,8 @@ Timer t = new Timer();
 		float[][] densityDifference = qm_only ? null : new float[x_n][y_n];
 		double difference = 0.0;
 		// Kh = 1/n*sum(1/h*K(x/h)), 1/n*1/sqrt(2*PI)^k*|SIGMA|)
-		double S_f = 1.0 / (2.0 * Math.PI * Math.sqrt(det(S_cm)) * S_size);
-		double C_f = 1.0 / (2.0 * Math.PI * Math.sqrt(det(C_cm)) * C_size);
+		double S_f = dxdy / (2.0 * Math.PI * Math.sqrt(det(S_cm)) * S_size);
+		double C_f = dxdy / (2.0 * Math.PI * Math.sqrt(det(C_cm)) * C_size);
 
 ////////////////////////////////////////////////////////////////////////////////
 debug("\nSG");
@@ -691,12 +691,18 @@ debug("!SG");
 debug("stats " + Arrays.toString(stats[1]));
 debug("cm    " + Arrays.toString(C_cm[0]) + "\n      " + Arrays.toString(C_cm[1]));
 debug("cm^-1 " + Arrays.toString(C_cm_inv[0]) + "\n      " + Arrays.toString(C_cm_inv[1]));
+debug("NOTE if ((#_xvar * #_yvar) < dxdy) then #_intregral < 1.0");
+debug(String.format("      dx=%f\t      dy=%f\t     dxdy=%f", dx, dy, dxdy));
+debug(String.format(" SG_xvar=%f\t SG_yvar=%f\txvar*yvar=%f", S_cm[0][0], S_cm[1][1], (S_cm[0][0]*S_cm[1][1])));
+debug(String.format("!SG_xvar=%f\t!SG_yvar=%f\txvar*yvar=%f", C_cm[0][0], C_cm[1][1], (C_cm[0][0]*C_cm[1][1])));
 Timer t = new Timer();
-double S_integral = 0.0;
-double C_integral = 0.0;
+double S_kde_integral = 0.0;
+double C_kde_integral = 0.0;
 ////////////////////////////////////////////////////////////////////////////////
 		for (int i = 0; i < x_n; ++i)
 		{
+if (i % 100 == 0)
+System.out.println("ROW:"+i);
 			float[] r = qm_only ? null : new float[y_n];
 			if (!qm_only)
 				densityDifference[i] = r;
@@ -711,7 +717,7 @@ double C_integral = 0.0;
 				for (int k = 0, m = 0; k < N; ++k, ++m)
 				{
 					double px = x - itsData[  m];
-					double py = y - itsData[++m]; // NOTE increment
+					double 	py = y - itsData[++m]; // NOTE increment
 
 					// TODO MM CUTOFF checks go here
 
@@ -721,10 +727,11 @@ double C_integral = 0.0;
 					else
 						C_kde += Math.exp(-0.5 * ((px*px*C_xvar_i) + (px*py*C_cov2_i) + (py*py*C_yvar_i)));
 				}
-				S_kde *= (S_f * dxdy);
-				C_kde *= (C_f * dxdy);
-S_integral += S_kde;
-C_integral += C_kde;
+				S_kde *= S_f;
+				C_kde *= C_f;
+				S_kde_integral += S_kde;
+				C_kde_integral += C_kde;
+
 				if (!qm_only)
 					r[i] = (float)(S_kde-C_kde);
 				else
@@ -740,9 +747,8 @@ C_integral += C_kde;
 				}
 			}
 		}
-System.out.println("dxdy = " + dxdy);
-System.out.println("S_integral = " + S_integral);
-System.out.println("C_integral = " + C_integral);
+System.out.println("S_kde_integral = " + S_kde_integral);
+System.out.println("C_kde_integral = " + C_kde_integral);
 
 		if (qm_only)
 		{
