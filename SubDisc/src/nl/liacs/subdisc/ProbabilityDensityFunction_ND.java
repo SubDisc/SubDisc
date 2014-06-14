@@ -6,17 +6,27 @@ import Jama.*;
 
 public class ProbabilityDensityFunction_ND
 {
-	private static final double CUTOFF = 4.0; // |CUTOFF*SIGMA| = 0.0
-	private static final int SAMPLES = 201; // [-LIMIT:+LIMIT]
+	private static final double CUTOFF = 3.0; // |CUTOFF*SIGMA| = 0.0
+	private static final int SAMPLES = 35; // [-LIMIT:+LIMIT]
 	private static final int GRID_STATS = 3; // min, max, samples
 	private static final int MIN = 0;
 	private static final int MAX = 1;
 	private static final int GRID_SIZE = 2;
+	// #_RESOLUTION is used like SAMPLES
+	// getDensityDifference2D() scales by (dxdy*X_R*Y_R)
+	// so with sqrt(2), (dxdy*X_R*Y_R) takes twice as long
+	// the larger the #_RESOLUTION the closer the integral is to 1.0
+	// but a #_RESOLUTION of 1 or sqrt(2) is good enough 
+	private static final double X_RESOLUTION = Math.sqrt(2.0);
+	private static final double Y_RESOLUTION = Math.sqrt(2.0);
 
 	// structured as: [ x1d1, x1d2, ..., x1dd, x2d1, x2d2, x2dd, ..., xndd ]
 	private final float[] itsData;
 	// structured as: [ d1[min,max,n], d2[min,max,n], ... , dd[min,max,n] ]
 	private final double[][] itsGrid;
+	// XXX MM - will replace itsGrid
+	// structured as: [ d1[min,max], d2[min,max], ... , dd[min,max] ]
+	private final double[][] itsLimits;
 
 	ProbabilityDensityFunction_ND(Column[] theColumns)
 	{
@@ -27,6 +37,7 @@ public class ProbabilityDensityFunction_ND
 	{
 		itsData = getData(theColumns);
 		itsGrid = getGrid(theColumns, theCutoff, theNrSamples);
+		itsLimits = getLimits(theColumns);
 	}
 
 	private static final float[] getData(Column[] theColumns)
@@ -85,6 +96,17 @@ public class ProbabilityDensityFunction_ND
 		stats[2] = n;
 
 		return stats;
+	}
+
+	private static final double[][] getLimits(Column[] theColumns)
+	{
+		double[][] limits = new double[theColumns.length][2];
+		for (int i = 0; i < theColumns.length; ++i)
+		{
+			Column c = theColumns[i];
+			limits[i] = new double[] { c.getMin(), c.getMax() };
+		}
+		return limits;
 	}
 
 	public final int getNrDimensions() { return itsGrid.length; }
@@ -499,145 +521,9 @@ System.out.println("grid row: " + i);
 	// true for subgroup versus complement, false for subgroup versus data
 	//
 	// if theQM != null this call returns just a single number
-	// it represents the difference according to theQM, is in float[0][0]
-	//
-	// most computations could be faster by looping over data only once
-	// by combining subgroup versus not subgroup statistics
-	// current implementation is simple alternative
-	// NOTE when testing to data ALL statistics are recomputed for data
-	// for now, the assumption is that tests are subgroup versus complement
-	//
-	final float[][] getDensityDifference2D_ORIG(BitSet theSubgroup, boolean toComplement, QM theQM)
-	{
-		assert (itsGrid.length == 2);
-		assert (itsData.length >= 2);
-		assert (theSubgroup != null);
-		assert (theSubgroup.cardinality() > 0);
-
-		double[] x_stats = itsGrid[0];
-		double[] y_stats = itsGrid[1];
-		double x_min = x_stats[MIN];
-		double y_min = y_stats[MIN];
-		double x_max = x_stats[MAX];
-		double y_max = y_stats[MAX];
-		int x_n = (int)x_stats[GRID_SIZE];
-		int y_n = (int)y_stats[GRID_SIZE];
-		double dx = (x_max-x_min)/x_n;
-		double dy = (y_max-y_min)/y_n;
-
-		int D = itsGrid.length;
-		int N = itsData.length/D;
-		// S = subgroup, C = complement or complete data
-		int S_size = theSubgroup.cardinality();
-		int C_size = N - (toComplement ? S_size : 0);
-
-		// create a BitSet for NotSubgroup
-		// very inefficient but simple
-		BitSet theNotSubgroup = new BitSet(N);
-		theNotSubgroup.set(0, N);
-		if (toComplement)
-			theNotSubgroup.xor(theSubgroup);
-
-		// mu vector and covariance matrix according to theBitSet
-		float[] S_mu = getMuVector(itsData, D, theSubgroup);
-		float[] C_mu = getMuVector(itsData, D, theNotSubgroup);
-//		if (toComplement)
-//		{
-//			double S_frac = S_size / N;
-//			double C_frac = C_size / N;
-//			C_mu = new float[S_mu.length];
-//			for (int i = 0; i < S_mu.length; ++i)
-//				C_mu[i] = (float)((itsMus[i]-(S_frac*S_mu[i]))/C_frac);
-//		}
-//		else
-//			C_mu = itsMus;
-
-		float[][] S_cm = getCovarianceMatrix(itsData, D, theSubgroup, S_mu);
-		float[][] C_cm = getCovarianceMatrix(itsData, D, theNotSubgroup, C_mu);
-		// inverse cm
-		float[][] S_cm_inv = inverse(S_cm);
-		float[][] C_cm_inv = inverse(C_cm);
-		if (!isSquared(S_cm_inv) || !isSquared(C_cm_inv))
-			throw new AssertionError("SIGMA^-1 is not a squared 2D matrix");
-
-		boolean qm_only = (theQM != null);
-		float[][] densityDifference = qm_only ? null : new float[x_n][y_n];
-		double difference = 0.0;
-		// Kh = 1/n*sum(1/h*K(x/h)), 1/n*1/sqrt(2*PI)^k*|SIGMA|)
-		double S_f = 1.0 / (2.0 * Math.PI * Math.sqrt(det(S_cm) * S_size));
-		double C_f = 1.0 / (2.0 * Math.PI * Math.sqrt(det(C_cm) * C_size));
-		float[] xy = new float[2]; // re-used
-
-////////////////////////////////////////////////////////////////////////////////
-debug("SG");
-debug(Integer.toString(theSubgroup.cardinality()));
-debug(Arrays.toString(S_cm[0]));
-debug(Arrays.toString(S_cm[1]));
-debug(Arrays.toString(S_cm_inv[0]));
-debug(Arrays.toString(S_cm_inv[1]));
-debug(Double.toString(S_f));
-debug("");
-debug("!SG");
-debug(Integer.toString(theNotSubgroup.cardinality()));
-debug(Arrays.toString(C_cm[0]));
-debug(Arrays.toString(C_cm[1]));
-debug(Arrays.toString(C_cm_inv[0]));
-debug(Arrays.toString(C_cm_inv[1]));
-debug(Double.toString(C_f));
-debug("ALT");
-debug(Arrays.toString(S_mu));
-debug(Arrays.toString(C_mu));
-double[][] stats = stats(itsData, theSubgroup, true);
-debug(Arrays.toString(stats[0]) + " " + Arrays.toString(stats[1]));
-float[][] sb = createBandwidthMatrix(stats[0]);
-float[][] cb = createBandwidthMatrix(stats[1]);
-debug(Arrays.toString(sb[0]) + " " + Arrays.toString(sb[1]));
-debug(Arrays.toString(cb[0]) + " " + Arrays.toString(cb[1]));
-Timer t = new Timer();
-		for (int i = 0; i < x_n; ++i)
-		{
-			float[] r = qm_only ? null : new float[y_n];
-			if (!qm_only)
-				densityDifference[i] = r;
-
-			xy[0] = (float) (x_min + (i*dx)); // x-coord
-			for (int j = 0; j < y_n; ++j)
-			{
-				xy[1] = (float) (y_min + (j*dy)); // y-coord
-//				// test xy against each point in Subgroup data
-				double S_i = S_f * qf(xy, S_cm_inv, itsData, theSubgroup);
-				// subtract NotSubgroup data
-				double C_i = C_f * qf(xy, C_cm_inv, itsData, theNotSubgroup);
-
-				if (!qm_only)
-					r[i] = (float)(S_i-C_i);
-				else
-					difference += divergence(theQM, S_i, C_i, S_size, N);
-
-				// no need to continue
-				if (Double.isInfinite(difference))
-				{
-					debug(i + " " + j + " " + Arrays.toString(xy) + " " + S_i + " " +  C_i);
-					debug("QM = " + difference);
-					debug(t.getElapsedTimeString());
-					return new float[][] { {(float)difference}, null };
-				}
-			}
-		}
-
-		if (qm_only)
-		{
-			debug("QM = " + difference);
-			debug(t.getElapsedTimeString() + "\n\n");
-			return new float[][] { {(float)difference}, null };
-		}
-
-		debug(t.getElapsedTimeString() + "\n\n");
-		return densityDifference;
-	}
-
+	// it represents the difference according to theQM, it is in float[0][0]
 	/** toComplement boolean is ignored, always test against complement */
-	final float[][] getDensityDifference2D(BitSet theSubgroup, boolean toComplement, QM theQM)
+	final float[][] getDensityDifference2D_FIXED_GRID(BitSet theSubgroup, boolean toComplement, QM theQM)
 	{
 		assert (itsGrid.length == 2);
 		assert (itsData.length >= 2);
@@ -718,6 +604,156 @@ System.out.println("ROW:"+i);
 				{
 					double px = x - itsData[  m];
 					double 	py = y - itsData[++m]; // NOTE increment
+
+					// TODO MM CUTOFF checks go here
+
+					if (theSubgroup.get(k))
+						S_kde += Math.exp(-0.5 * ((px*px*S_xvar_i) + (px*py*S_cov2_i) + (py*py*S_yvar_i)));
+					// toComplement check would go here
+					else
+						C_kde += Math.exp(-0.5 * ((px*px*C_xvar_i) + (px*py*C_cov2_i) + (py*py*C_yvar_i)));
+				}
+				S_kde *= S_f;
+				C_kde *= C_f;
+				S_kde_integral += S_kde;
+				C_kde_integral += C_kde;
+
+				if (!qm_only)
+					r[i] = (float)(S_kde-C_kde);
+				else
+					difference += divergence(theQM, S_kde, C_kde, S_size, N);
+
+				// no need to continue
+				if (Double.isInfinite(difference))
+				{
+					debug(String.format("[%d,%d]=(%20.16f,%20.16f) %20.16f %20.16f", i, j, x, y, S_kde, C_kde));
+					debug("QM = " + difference);
+					debug(t.getElapsedTimeString());
+					return new float[][] { {(float)difference}, null };
+				}
+			}
+		}
+System.out.println("S_kde_integral = " + S_kde_integral);
+System.out.println("C_kde_integral = " + C_kde_integral);
+
+		if (qm_only)
+		{
+			debug("QM = " + difference);
+			debug(t.getElapsedTimeString());
+			return new float[][] { {(float)difference}, null };
+		}
+
+		debug(t.getElapsedTimeString());
+		return densityDifference;
+	}
+
+	// GRID IS CREATED BASED ON SUBGROUP AND COMPLEMENT STATISTICS
+	final float[][] getDensityDifference2D(BitSet theSubgroup, boolean toComplement, QM theQM)
+	{
+		assert (itsGrid.length == 2);
+		assert (itsData.length >= 2);
+		assert (theSubgroup != null);
+		assert (theSubgroup.cardinality() > 0);
+
+		int D = itsGrid.length;
+		int N = itsData.length/D;
+
+		// S = subgroup, C = complement or complete data
+		double[][] stats = stats(itsData, theSubgroup, true);
+		int S_size = (int)stats[0][SIZE_N];
+		int C_size = (int)stats[1][SIZE_N];
+		float[][] S_cm = createBandwidthMatrix(stats[0]);
+		float[][] C_cm = createBandwidthMatrix(stats[1]);
+		float[][] S_cm_inv = inverse(S_cm);
+		float[][] C_cm_inv = inverse(C_cm);
+		// for direct computation
+		double S_xvar_i = S_cm_inv[0][0];
+		double S_cov2_i = S_cm_inv[0][1] * 2.0; // 0.0 for diagonal H
+		double S_yvar_i = S_cm_inv[1][1];
+		double C_xvar_i = C_cm_inv[0][0];
+		double C_cov2_i = C_cm_inv[0][1] * 2.0; // 0.0 for diagonal H
+		double C_yvar_i = C_cm_inv[1][1];
+
+// SETUP OF GRID - BASED ON SUBGROUP | COMPLEMENT STATISTICS
+// COULD ALL BE MOVED TO SEPARATE METHOD
+		// find smallest
+		// NOTE if ((#_xvar * #_yvar) < dxdy) then #_intregral < 1.0
+		double S_xvar = S_cm[0][0];
+		double S_yvar = S_cm[1][1];
+		double C_xvar = C_cm[0][0];
+		double C_yvar = C_cm[1][1];
+		double S_xsigma = Math.sqrt(S_xvar);
+		double S_ysigma = Math.sqrt(S_yvar);
+		double C_xsigma = Math.sqrt(C_xvar);
+		double C_ysigma = Math.sqrt(C_yvar);
+		// extend x range using largest #_xsigma
+		double x_ext = CUTOFF * Math.max(S_xsigma, C_xsigma);
+		double x_min = itsLimits[0][MIN] - x_ext;
+		double x_max = itsLimits[0][MAX] + x_ext;
+		// extend y range using largest #_ysigma
+		double y_ext = CUTOFF * Math.max(S_ysigma, C_ysigma);
+		double y_min = itsLimits[1][MIN] - y_ext;
+		double y_max = itsLimits[1][MAX] + y_ext;
+		// smallest #_#sigma determines integration step size
+		// NOTE the smaller d# is, the closer #_integral is to 1.0
+		// but O(n) becomes O(n*X_RESOLUTION*Y_RESOLUTION)
+		double dx = (Math.min(S_xsigma, C_xsigma) / X_RESOLUTION); 
+		double dy = (Math.min(S_ysigma, C_ysigma) / Y_RESOLUTION);
+		double dxdy = dx*dy;
+		// number of samples (needed for densityDifference[x_n][y_n])
+		double x_range = x_max-x_min;
+		int x_n = (int)Math.floor(x_range / dx);
+		double y_range = y_max-y_min;
+		int y_n = (int)Math.floor(y_range / dy);
+// SETUP OF GRID COMPLETE
+
+////////////////////////////////////////////////////////////////////////////////
+debug("\nSG");
+debug("stats " + Arrays.toString(stats[0]));
+debug("cm    " + Arrays.toString(S_cm[0]) + "\n      " + Arrays.toString(S_cm[1]));
+debug("cm^-1 " + Arrays.toString(S_cm_inv[0]) + "\n      " + Arrays.toString(S_cm_inv[1]));
+debug("!SG");
+debug("stats " + Arrays.toString(stats[1]));
+debug("cm    " + Arrays.toString(C_cm[0]) + "\n      " + Arrays.toString(C_cm[1]));
+debug("cm^-1 " + Arrays.toString(C_cm_inv[0]) + "\n      " + Arrays.toString(C_cm_inv[1]));
+debug("GRID");
+debug(String.format("x_min=%f x_max=%f x_range=%f dx=%f x_n=%d (X_RESOLUTION=%f)", x_min, x_max, x_range, dx, x_n, X_RESOLUTION));
+debug(String.format("y_min=%f y_max=%f y_range=%f dy=%f y_n=%d (Y_RESOLUTION=%f)", y_min, y_max, y_range, dy, y_n, Y_RESOLUTION));
+if ((S_xsigma * S_ysigma < dxdy) || (S_xsigma * C_ysigma < dxdy))
+	debug("ERROR");
+debug("NOTE if ((#_xsigma * #_ysigma) < dxdy) then #_intregral < 1.0");
+debug(String.format("        dx=%f\t        dy=%f\t         dxdy=%f", dx, dy, dxdy));
+debug(String.format(" SG_xsigma=%f\t SG_ysigma=%f\txsigma*ysigma=%f", S_xsigma, S_ysigma, (S_xsigma * S_ysigma)));
+debug(String.format("!SG_xsigma=%f\t!SG_ysigma=%f\txsigma*ysigma=%f", C_xsigma, C_ysigma, (C_xsigma * C_ysigma)));
+Timer t = new Timer();
+double S_kde_integral = 0.0;
+double C_kde_integral = 0.0;
+////////////////////////////////////////////////////////////////////////////////
+
+		boolean qm_only = (theQM != null);
+		float[][] densityDifference = qm_only ? null : new float[x_n][y_n];
+		double difference = 0.0;
+		// Kh = 1/n*sum(1/h*K(x/h)), 1/n*1/sqrt(2*PI)^k*|SIGMA|)
+		double S_f = dxdy / (2.0 * Math.PI * Math.sqrt(det(S_cm)) * S_size);
+		double C_f = dxdy / (2.0 * Math.PI * Math.sqrt(det(C_cm)) * C_size);
+
+		for (int i = 0; i < x_n; ++i)
+		{
+			float[] r = qm_only ? null : new float[y_n];
+			if (!qm_only)
+				densityDifference[i] = r;
+
+			double x = (x_min + (i*dx)); // x-coord
+			for (int j = 0; j < y_n; ++j)
+			{
+				double y = (y_min + (j*dy)); // y-coord
+
+				double S_kde = 0.0;
+				double C_kde = 0.0;
+				for (int k = 0, m = 0; k < N; ++k, ++m)
+				{
+					double px = x - itsData[  m];
+					double py = y - itsData[++m]; // NOTE increment
 
 					// TODO MM CUTOFF checks go here
 
