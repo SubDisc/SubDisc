@@ -27,7 +27,7 @@ public class TargetConcept implements XMLNodeInterface
 	// for double regression code:
 	private List<Column>	itsSecondaryTargets;
 	private List<Column>	itsTertiaryTargets;
-	private boolean	itsInterceptRelevance;
+	private boolean		itsInterceptRelevance;
 	private String		itsGlobalRegressionModel;
 
 	public TargetConcept()
@@ -161,12 +161,10 @@ public class TargetConcept implements XMLNodeInterface
 				return itsPrimaryTarget == theColumn;
 			case MULTI_NUMERIC :
 			{
-				//TODO when multi-numeric becomes more than 2, reinstate this code
-//				for (Column aColumn : itsMultiTargets)
-//					if (aColumn == theColumn)
-//						return true;
-//				return false;
-				return ((itsPrimaryTarget == theColumn) || (itsSecondaryTarget == theColumn));
+				for (Column aColumn : itsMultiTargets)
+					if (aColumn == theColumn)
+						return true;
+				return false;
 			}
 			case DOUBLE_REGRESSION :
 				return ((itsPrimaryTarget == theColumn) || (itsSecondaryTarget == theColumn));
