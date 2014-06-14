@@ -430,6 +430,14 @@ System.out.println("grid row: " + i);
 			return (float) new Matrix(toDouble(theMatrix)).det();
 	}
 
+	// NO CHECKS!!! assumes 2x2 Matrix covariance matrix ([0][1]==[1][0])
+	private static final boolean isDegenerate(float[][] theMatrix)
+	{
+		return ((theMatrix[0][0] == 0.0f) ||
+			(theMatrix[1][1] == 0.0f) ||
+			(Math.abs(theMatrix[0][1]) == 1.0f));
+	}
+
 	private static final boolean isSquared(float[][] theMatrix)
 	{
 		int r = theMatrix.length;
@@ -664,6 +672,18 @@ System.out.println("C_kde_integral = " + C_kde_integral);
 		int C_size = (int)stats[1][SIZE_N];
 		float[][] S_cm = createBandwidthMatrix(stats[0]);
 		float[][] C_cm = createBandwidthMatrix(stats[1]);
+		// can not invert degenerate matrix
+		if (isDegenerate(S_cm) || isDegenerate(C_cm))
+			
+		{
+			System.out.format("ERROR: degenerate covariance matrix: %n SG %s%n    %s%n!SG %s%n    %s%n",
+						Arrays.toString(S_cm[0]),
+						Arrays.toString(S_cm[1]),
+						Arrays.toString(C_cm[0]),
+						Arrays.toString(C_cm[1]));
+			return new float[][] { { 0.0f }, null };
+		}
+
 		float[][] S_cm_inv = inverse(S_cm);
 		float[][] C_cm_inv = inverse(C_cm);
 		// for direct computation
