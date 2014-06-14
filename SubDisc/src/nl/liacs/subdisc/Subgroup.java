@@ -168,7 +168,7 @@ public class Subgroup implements Comparable<Subgroup>
 		// sets conditions, depth, members, coverage, parentSet
 		//Subgroup aReturn = new Subgroup(itsConditions.copy(), (BitSet) itsMembers.clone(), itsParentSet);
 		// NOTE ConditionListA is immutable, so reuse is safe
-		Subgroup aReturn = new Subgroup(itsConditions, (BitSet) getMembers(), itsParentSet);
+		Subgroup aReturn = new Subgroup(itsConditions, getMembers(), itsParentSet);
 
 		aReturn.itsMeasureValue = itsMeasureValue;
 		// itsDAG = null;

@@ -171,11 +171,12 @@ public class LabelRankingMatrix
 			float theLabelMean2 = labelMean(itsMatrix, i);
 			for (int j=0; j<itsSize; j++)
 			{
-				if (i!=j)	aDistance += (theMatrix.itsMatrix[i][j] - theLabelMean)*(itsMatrix[i][j] - theLabelMean2);
+				if (i!=j)
+					aDistance += (theMatrix.itsMatrix[i][j] - theLabelMean)*(itsMatrix[i][j] - theLabelMean2);
 			}
 			aCovariance += -aDistance/(itsSize-2);
 		}
-		return (float) aCovariance/itsSize;
+		return aCovariance/itsSize;
 	}
 	
 	public float labelMean(float[][] theRankingMatrix, int label)
