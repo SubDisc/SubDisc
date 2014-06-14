@@ -674,9 +674,8 @@ System.out.println("C_kde_integral = " + C_kde_integral);
 		float[][] C_cm = createBandwidthMatrix(stats[1]);
 		// can not invert degenerate matrix
 		if (isDegenerate(S_cm) || isDegenerate(C_cm))
-			
 		{
-			System.out.format("ERROR: degenerate covariance matrix: %n SG %s%n    %s%n!SG %s%n    %s%n",
+			System.out.format("%nERROR: degenerate covariance matrix: %n SG %s%n    %s%n!SG %s%n    %s%n",
 						Arrays.toString(S_cm[0]),
 						Arrays.toString(S_cm[1]),
 						Arrays.toString(C_cm[0]),
@@ -696,16 +695,10 @@ System.out.println("C_kde_integral = " + C_kde_integral);
 
 // SETUP OF GRID - BASED ON SUBGROUP | COMPLEMENT STATISTICS
 // COULD ALL BE MOVED TO SEPARATE METHOD
-		// find smallest
-		// NOTE if ((#_xvar * #_yvar) < dxdy) then #_intregral < 1.0
-		double S_xvar = S_cm[0][0];
-		double S_yvar = S_cm[1][1];
-		double C_xvar = C_cm[0][0];
-		double C_yvar = C_cm[1][1];
-		double S_xsigma = Math.sqrt(S_xvar);
-		double S_ysigma = Math.sqrt(S_yvar);
-		double C_xsigma = Math.sqrt(C_xvar);
-		double C_ysigma = Math.sqrt(C_yvar);
+		double S_xsigma = Math.sqrt(S_cm[0][0]);
+		double S_ysigma = Math.sqrt(S_cm[1][1]);
+		double C_xsigma = Math.sqrt(C_cm[0][0]);
+		double C_ysigma = Math.sqrt(C_cm[1][1]);
 		// extend x range using largest #_xsigma
 		double x_ext = CUTOFF * Math.max(S_xsigma, C_xsigma);
 		double x_min = itsLimits[0][MIN] - x_ext;
@@ -739,7 +732,7 @@ debug("cm^-1 " + Arrays.toString(C_cm_inv[0]) + "\n      " + Arrays.toString(C_c
 debug("GRID");
 debug(String.format("x_min=%f x_max=%f x_range=%f dx=%f x_n=%d (X_RESOLUTION=%f)", x_min, x_max, x_range, dx, x_n, X_RESOLUTION));
 debug(String.format("y_min=%f y_max=%f y_range=%f dy=%f y_n=%d (Y_RESOLUTION=%f)", y_min, y_max, y_range, dy, y_n, Y_RESOLUTION));
-if ((S_xsigma * S_ysigma < dxdy) || (S_xsigma * C_ysigma < dxdy))
+if ((S_xsigma * S_ysigma < dxdy) || (C_xsigma * C_ysigma < dxdy))
 	debug("ERROR");
 debug("NOTE if ((#_xsigma * #_ysigma) < dxdy) then #_intregral < 1.0");
 debug(String.format("        dx=%f\t        dy=%f\t         dxdy=%f", dx, dy, dxdy));
