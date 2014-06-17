@@ -1,5 +1,6 @@
 package nl.liacs.subdisc;
 
+import java.io.*;
 import java.util.*;
 
 import Jama.*;
@@ -973,75 +974,158 @@ System.out.println("C_kde_integral = " + C_kde_integral);
 	}
 
 	// will load a huge frame stack
-	final double L2_(BitSet theSubgroup, boolean toComplement)
+	// massive code duplication - will be refactored some day
+	final double L2_(BitSet theSubgroup)
 	{
+		assert (itsGrid.length == 2);
+		assert (itsData.length >= 2);
+		assert (theSubgroup != null);
+		assert (theSubgroup.cardinality() > 0);
+
 		int D = itsGrid.length;
 		int N = itsData.length/D;
+
 		// S = subgroup, C = complement or complete data
-		int S_size = theSubgroup.cardinality();
-		int C_size = N - (toComplement ? S_size : 0);
+		double[][] stats = stats(itsData, theSubgroup, true);
+		int S_size = (int)stats[0][SIZE_N];
+		int C_size = (int)stats[1][SIZE_N];
+		float[][] S_cm = createBandwidthMatrix(stats[0]);
+		float[][] C_cm = createBandwidthMatrix(stats[1]);
 
-		// create a BitSet for NotSubgroup
-		// very inefficient but simple
-		BitSet theNotSubgroup = new BitSet(N);
-		theNotSubgroup.set(0, N);
-		if (toComplement)
-			theNotSubgroup.xor(theSubgroup);
-
-		// mu vector and covariance matrix according to theBitSet
-		float[] S_mu = getMuVector(itsData, D, theSubgroup);
-		float[] C_mu = getMuVector(itsData, D, theNotSubgroup);
-
-		float[][] S_cm = getCovarianceMatrix(itsData, D, theSubgroup, S_mu);
-		float[][] C_cm = getCovarianceMatrix(itsData, D, theNotSubgroup, C_mu);
-		// V1+V2
-		float[][] cm = new float[D][D];
+		// (V1+V2)
+		// f2 = f^2 for Subgroup
+		float[][] f2_cm = new float[D][D];
+		for (int i = 0; i < D; ++i)
+		{
+			float[] si = S_cm[i];
+			float[] cmi = new float[D];
+			f2_cm[i] = cmi;
+			for (int j = 0; j < D; ++j)
+				cmi[j] = (si[j] + si[j]);
+		}
+		// fg = f*g for (Subgroup*!Subgroup)
+		float[][] fg_cm = new float[D][D];
 		for (int i = 0; i < D; ++i)
 		{
 			float[] si = S_cm[i];
 			float[] ci = C_cm[i];
 			float[] cmi = new float[D];
-			cm[i] = cmi;
+			fg_cm[i] = cmi;
 			for (int j = 0; j < D; ++j)
 				cmi[j] = (si[j] + ci[j]);
 		}
-		// (V1+V2)^-1
-		float[][] cm_inv = inverse(cm);
-		if (!isSquared(cm_inv))
-			throw new AssertionError("SIGMA^-1 is not a squared 2D matrix");
-
-		double L2 = 0.0;
-		double f = (1.0 / (Math.pow(2.0 * Math.PI, D/2.0) * Math.sqrt(det(cm) * (S_size*C_size))));
-		float[] x = new float[D];
-		float[] diff = new float[D];
-		for (int i = theSubgroup.nextSetBit(0); i >= 0; i = theSubgroup.nextSetBit(i+1))
+		// g2 = g^2 for !Subgroup
+		float[][] g2_cm = new float[D][D];
+		for (int i = 0; i < D; ++i)
 		{
-			// load subgroup vector data
-			for(int j = 0, k = i*D; j < D; ++j, ++k)
+			float[] si = S_cm[i];
+			float[] ci = C_cm[i];
+			float[] cmi = new float[D];
+			g2_cm[i] = cmi;
+			for (int j = 0; j < D; ++j)
+				cmi[j] = (si[j] + ci[j]);
+		}
+//		// can not invert degenerate matrix
+//		if (isDegenerate(cm))
+//		{
+//			System.out.format("%nERROR: degenerate covariance matrix: %n CM %s%n    %s%n SG %s%n    %s%n!SG %s%n    %s%n",
+//						Arrays.toString(cm[0]),
+//						Arrays.toString(cm[1]),
+//						Arrays.toString(S_cm[0]),
+//						Arrays.toString(S_cm[1]),
+//						Arrays.toString(C_cm[0]),
+//						Arrays.toString(C_cm[1]));
+//			return 0.0;
+//		}
+		// (V1+V2)^-1
+		float[][] f2_cm_inv = inverse(f2_cm);
+		float[][] fg_cm_inv = inverse(fg_cm);
+		float[][] g2_cm_inv = inverse(g2_cm);
+
+
+		double f2 = 0.0;
+		double fg = 0.0;
+		double g2 = 0.0;
+		// L2 = f^2 - 2fg + g^2
+		double L2 = 0.0;
+
+		double f2_fac = (1.0 / (Math.pow(2.0 * Math.PI, D/2.0) * Math.sqrt(det(f2_cm) * (S_size*S_size))));
+		double fg_fac = (1.0 / (Math.pow(2.0 * Math.PI, D/2.0) * Math.sqrt(det(fg_cm) * (S_size*C_size))));
+		double g2_fac = (1.0 / (Math.pow(2.0 * Math.PI, D/2.0) * Math.sqrt(det(g2_cm) * (C_size*C_size))));
+
+		float[] x = new float[D]; // cache data vector outer loop
+		float[] diff = new float[D]; // tmp - will be re-used many times
+
+		for (int i = 0; i < N; ++i)
+		{
+			boolean inSG1 = theSubgroup.get(i);
+			for (int j = 0, k = i*D; j < D; ++j, ++k)
 				x[j] = itsData[k];
-			for (int j = theNotSubgroup.nextSetBit(0); j >= 0; j = theNotSubgroup.nextSetBit(j+1))
+
+			for (int j = 0; j < N; ++j)
 			{
-				// x - mu (here Subgroup-NotSubgroup)
-				for(int k = 0, m = j*D; j < D; ++j, ++m)
-					diff[k] = x[k]-itsData[m];
-				// alternative mahalanobis squared
-				// 1 running sum, no (temporary) array/matrix
-				// uses fact that cm is squared and symmetric
-				// loops over upper triangle only
+				boolean inSG2 = theSubgroup.get(j);
+				// diff = x-mu
+				for (int k = 0, m = j*D; k < D; ++k, ++m)
+					diff[k] = x[k] - itsData[m];
+
 				double M2 = 0.0;
-				for (int k = 0; k < D; ++k)
+				// f^2 -> subgroup only part
+				// diff = x-mu (here Subgroup[i]-Subgroup[j])
+				if (inSG1 && inSG2)
 				{
-					double p = diff[k];
-					float[] r = cm_inv[k];
-					M2 += (p * p * r[k]);
-					for (int m = 0; m < D; ++m)
-						M2 += (2.0 * p * diff[m] * r[m]);
+					// alternative mahalanobis squared
+					// 1 running sum, no (temporary) array/matrix
+					// uses fact that #_cm is squared and symmetric
+					// loops over upper triangle only
+					for (int k = 0; k < D; ++k)
+					{
+						double p = diff[k];
+						float[] r = f2_cm_inv[k];	// f2_cm_inv
+						M2 += (p * p * r[k]);
+						for (int m = 0; m < D; ++m)
+							M2 += (2.0 * p * diff[m] * r[m]);
+					}
+					f2 += Math.exp(-0.5 * M2);
 				}
-				L2 += Math.exp(-0.5 * M2);
+				// f*g or g*f - > final result requires (fg * 2)
+				// diff = x-mu (here Subgroup[i]-!Subgroup[j])
+				else if (inSG1 ^ inSG2)
+				{
+					for (int k = 0; k < D; ++k)
+					{
+						double p = diff[k];
+						float[] r = fg_cm_inv[k];	// fg_cm_inv
+						M2 += (p * p * r[k]);
+						for (int m = 0; m < D; ++m)
+							M2 += (2.0 * p * diff[m] * r[m]);
+					}
+					fg += Math.exp(-0.5 * M2);
+				}
+				// g^2 -> !subgroup only part
+				// diff = x-mu (here !Subgroup[i]-!Subgroup[j])
+				else // (!inSG1 && !inSG2)
+				{
+					for (int k = 0; k < D; ++k)
+					{
+						double p = diff[k];
+						float[] r = g2_cm_inv[k];	// g2_cm_inv
+						M2 += (p * p * r[k]);
+						for (int m = 0; m < D; ++m)
+							M2 += (2.0 * p * diff[m] * r[m]);
+					}
+					g2 += Math.exp(-0.5 * M2);
+				}
 			}
 		}
 
-		return f*L2;
+		f2 *= f2_fac;
+		fg *= fg_fac;
+		g2 *= g2_fac;
+		L2 = (f2 + (2.0*fg) + g2);
+debug(String.format("L2 = %f - (2 * %f) + %f = %f%n", f2, fg, g2, L2));
+
+		return L2;
 	}
 
 	private static final boolean DEBUG = true;
@@ -1053,20 +1137,19 @@ System.out.println("C_kde_integral = " + C_kde_integral);
 
 	public static void main(String[] args)
 	{
-//		File f = new File("/home/marvin/data/svn/SubgroupDiscovery/SubDisc/Regr_datasets/boston-housing.csv");
-//		Table t = new DataLoaderTXT(f).getTable();
-//		Column[] c = { t.getColumn(0), t.getColumn(13)};
-//		ProbabilityDensityFunction_ND pdf = new ProbabilityDensityFunction_ND(c);
-//		BitSet b = new BitSet(t.getNrRows());
-//		b.set(0, t.getNrRows());
-////		// should return 0
-////		double d = pdf.L2(b, false);
-////		System.out.println("L2=" + d);
-//		b.set(0, 50, false);
-//		b.set(100, 150, false);
+		//File f = new File("/home/marvin/data/svn/SubgroupDiscovery/SubDisc/Regr_datasets/boston-housing.csv");
+		File f = new File("/home/marvin/data/wrk/svn/subgroupDiscovery/SubDisc/Regr_datasets/boston-housing.csv");
+		Table t = new DataLoaderTXT(f).getTable();
+		Column[] c = { t.getColumn(0), t.getColumn(13)};
+		ProbabilityDensityFunction_ND pdf = new ProbabilityDensityFunction_ND(c);
+		BitSet b = new BitSet(t.getNrRows());
+		b.set(0, t.getNrRows());
+		b.set(0, 50, false);
+		b.set(100, 150, false);
+		double d = pdf.L2_(b);
 //		float[][] d = pdf.getDensityDifference2D(b, true, QM.KULLBACK_LEIBLER_2D);
 
-		check();
+//		check();
 	}
 
 	private static final void check()
