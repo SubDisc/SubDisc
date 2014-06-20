@@ -963,7 +963,7 @@ System.out.println("C_kde_integral = " + C_kde_integral);
 					double p = diff[k];
 					float[] r = cm_inv[k];
 					M2 += (p * p * r[k]);
-					for (int m = 0; m < D; ++m)
+					for (int m = k+1; m < D; ++m)
 						M2 += (2.0 * p * diff[m] * r[m]);
 				}
 				L2 += Math.exp(-0.5 * M2);
@@ -1083,7 +1083,7 @@ System.out.println("C_kde_integral = " + C_kde_integral);
 						double p = diff[k];
 						float[] r = f2_cm_inv[k];	// f2_cm_inv
 						M2 += (p * p * r[k]);
-						for (int m = 0; m < D; ++m)
+						for (int m = k+1; m < D; ++m)
 							M2 += (2.0 * p * diff[m] * r[m]);
 					}
 					f2 += Math.exp(-0.5 * M2);
@@ -1097,7 +1097,7 @@ System.out.println("C_kde_integral = " + C_kde_integral);
 						double p = diff[k];
 						float[] r = fg_cm_inv[k];	// fg_cm_inv
 						M2 += (p * p * r[k]);
-						for (int m = 0; m < D; ++m)
+						for (int m = k+1; m < D; ++m)
 							M2 += (2.0 * p * diff[m] * r[m]);
 					}
 					fg += Math.exp(-0.5 * M2);
@@ -1111,7 +1111,7 @@ System.out.println("C_kde_integral = " + C_kde_integral);
 						double p = diff[k];
 						float[] r = g2_cm_inv[k];	// g2_cm_inv
 						M2 += (p * p * r[k]);
-						for (int m = 0; m < D; ++m)
+						for (int m = k+1; m < D; ++m)
 							M2 += (2.0 * p * diff[m] * r[m]);
 					}
 					g2 += Math.exp(-0.5 * M2);
