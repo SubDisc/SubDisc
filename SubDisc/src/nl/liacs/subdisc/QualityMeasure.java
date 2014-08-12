@@ -1057,7 +1057,7 @@ public class QualityMeasure
 							nrEdits++;
 		return (float) nrEdits / (float) (itsNrNodes*(itsNrNodes-1)/2); // Actually n choose 2, but this boils down to the same...
 	}
-	
+
 	//SCAPE =======================================================
 
 	public QualityMeasure(QM theQualityMeasure, int theTotalCoverage, int theTotalTargetCoverage, Column theBinaryTarget, Column theNumericTarget)
@@ -1078,43 +1078,43 @@ public class QualityMeasure
 		itsTotalTargetCoverage = theTotalTargetCoverage;
 		itsBinaryTarget = theBinaryTarget;
 		itsNumericTarget = theNumericTarget;
-		
+
 		itsDescendingOrderingPermutation = generateOrderingPermutation();
-//		assert(generateOrderingPermutationTest());
+		assert(generateOrderingPermutationTest());
 
 		setAverageSubrankingLoss();
 	}
-	
+
 	/*
 	 * WD: The following additional constructor should not be necessary. However, Java is once again biting me;
 	 * in the mining window my quality measure is perfectly able to compute the overall subranking loss and displaying
 	 * it in the corresponding field, but when I want to incorporate it in quality measures in the SD process, its
 	 * value magically reverts to zero. Hence, I'm passing it through the SearchParameters.
 	 */
-	public QualityMeasure(QM theQualityMeasure, int theTotalCoverage, int theTotalTargetCoverage, Column theBinaryTarget, Column theNumericTarget, float theOverallSubrankingLoss)
-	{
-		if (theQualityMeasure == null)
-			throw new IllegalArgumentException("QualityMeasure: theQualityMeasure can not be null");
-		if (theTotalCoverage <= 0)
-			throw new IllegalArgumentException("QualityMeasure: theTotalCoverage must be > 0");
-		if (theTotalTargetCoverage <= 0)
-			throw new IllegalArgumentException("QualityMeasure: theTotalTargetCoverage must be > 0");
-		if (theBinaryTarget == null)
-			throw new IllegalArgumentException("QualityMeasure: theBinaryTarget can not be null");
-		if (theNumericTarget == null)
-			throw new IllegalArgumentException("QualityMeasure: theNumericTarget can not be null");
-
-		itsQualityMeasure = theQualityMeasure;
-		itsNrRecords = theTotalCoverage;
-		itsTotalTargetCoverage = theTotalTargetCoverage;
-		itsBinaryTarget = theBinaryTarget;
-		itsNumericTarget = theNumericTarget;
-		itsOverallSubrankingLoss = theOverallSubrankingLoss;
-		
-		itsDescendingOrderingPermutation = generateOrderingPermutation();
+//	public QualityMeasure(QM theQualityMeasure, int theTotalCoverage, int theTotalTargetCoverage, Column theBinaryTarget, Column theNumericTarget, float theOverallSubrankingLoss)
+//	{
+//		if (theQualityMeasure == null)
+//			throw new IllegalArgumentException("QualityMeasure: theQualityMeasure can not be null");
+//		if (theTotalCoverage <= 0)
+//			throw new IllegalArgumentException("QualityMeasure: theTotalCoverage must be > 0");
+//		if (theTotalTargetCoverage <= 0)
+//			throw new IllegalArgumentException("QualityMeasure: theTotalTargetCoverage must be > 0");
+//		if (theBinaryTarget == null)
+//			throw new IllegalArgumentException("QualityMeasure: theBinaryTarget can not be null");
+//		if (theNumericTarget == null)
+//			throw new IllegalArgumentException("QualityMeasure: theNumericTarget can not be null");
+//
+//		itsQualityMeasure = theQualityMeasure;
+//		itsNrRecords = theTotalCoverage;
+//		itsTotalTargetCoverage = theTotalTargetCoverage;
+//		itsBinaryTarget = theBinaryTarget;
+//		itsNumericTarget = theNumericTarget;
+//		itsOverallSubrankingLoss = theOverallSubrankingLoss;
+//
+//		itsDescendingOrderingPermutation = generateOrderingPermutation();
 //		assert(generateOrderingPermutationTest());
-	}
-	
+//	}
+
 	/*
 	 * Generates permutation that would order the values in the numeric target, using 
 	 * a custom-built Comparator. This ordering is used in the computation of the 
@@ -1126,12 +1126,12 @@ public class QualityMeasure
 		Float[] aFloatArray = convertToFloats(afloatArray);
 
 		ArrayIndexComparator comparator = new ArrayIndexComparator(aFloatArray);
-		
+
 		Integer[] anIntegerArray = comparator.createIndexArray();
 		Arrays.sort(anIntegerArray, comparator);
 		return convertToints(anIntegerArray);
 	}
-	
+
 	private Float[] convertToFloats(float[] thefloatArray)
 	{
 		Float[] aResult = new Float[itsNrRecords];
@@ -1139,7 +1139,7 @@ public class QualityMeasure
 			aResult[i] = (Float) thefloatArray[i];
 		return aResult;
 	}
-	
+
 	private int[] convertToints(Integer[] theIntegerArray)
 	{
 		int[] aResult = new int[itsNrRecords];
@@ -1154,9 +1154,9 @@ public class QualityMeasure
 		theWholeDataset.set(0, itsNrRecords);
 		itsOverallSubrankingLoss = calculate(theWholeDataset, itsNrRecords, itsTotalTargetCoverage);
 	}
-	
+
 	public float getOverallSubrankingLoss() { return itsOverallSubrankingLoss;	}
-	
+
 	public float calculate(BitSet theSubgroup, int theCoverage, int theTargetCoverage)
 	{
 		float aResult;
@@ -1212,7 +1212,7 @@ public class QualityMeasure
 		}
 		return aResult;
 	}
-	
+
 	/*
 	 * This is the worky version that ignores ties in the numeric attribute. I would like to keep
 	 * this available in comments for the time being, just in case that some reviewer doesn't like
@@ -1268,12 +1268,12 @@ public class QualityMeasure
 		int aPositiveLoopCount = 0;
 		int aNegativeLoopCount = 0;
 		float aTotalRankingLoss = 0.0f;
-		
+
 		// Statistics for tie breaking, maintaining the results that may still fall under ties in the numeric target
 		int aPositiveTiesCount = 0;
 		int aNegativeTiesCount = 0;
 		float aPreviousFloatValue = Float.MAX_VALUE;
-		
+
 		boolean aContinueLoop = true;
 		for (int i=0; aContinueLoop && i < itsNrRecords; i++)
 		{
@@ -1288,7 +1288,7 @@ public class QualityMeasure
 			 * Afterwards, store the new numeric target value, flush the temporary counters into the 
 			 * full loop counters, and reset the temporary counters to zero.
 			 */
-			
+
 			float aCurrentFloatValue = itsNumericTarget.getFloat(aCurrentIndex); 
 			if (aCurrentFloatValue < aPreviousFloatValue)
 			{
@@ -1313,7 +1313,7 @@ public class QualityMeasure
 					aTotalRankingLoss += (theNrPositives-aPositiveLoopCount)*aNrNegatives;
 				}
 			}
-			
+
 			/*
 			 * Run in descending order through the numeric target. If the record is not a member of the
 			 * subgroup, ignore it. If it is, check its binary target value. If it is positive, add
@@ -1334,7 +1334,7 @@ public class QualityMeasure
 				{
 					aNegativeTiesCount++;
 				}
-			}			
+			}
 		}
 		return aTotalRankingLoss / (float) theNrPositives;
 	}
@@ -1391,7 +1391,7 @@ public class QualityMeasure
 			// would indicate an error, as no two Pairs should have
 			// the same float AND index
 			int cmp = Float.compare(other.itsData, this.itsData);
-			return (cmp != 0) ? cmp : (other.itsIndex - this.itsIndex);
+			return (cmp != 0) ? cmp : (this.itsIndex - other.itsIndex);
 		}
 	}
 
@@ -1408,7 +1408,7 @@ public class QualityMeasure
 			float fx = itsNumericTarget.getFloat(x);
 			float fy = itsNumericTarget.getFloat(y);
 
-			System.out.format("%d=%f    %d=%f    (x==y)=%s    (fx==xy)=%s%n", x, fx, y, fy, (x==y), (fx==fy));
+			System.out.format("%d=%f    %d=%f    (x==y)=%s    (fx==fy)=%s%n", x, fx, y, fy, (x==y), (fx==fy));
 			if (fx!=fy)
 				concordant = false;
 		}
