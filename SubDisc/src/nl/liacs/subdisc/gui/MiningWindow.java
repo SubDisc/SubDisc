@@ -961,7 +961,7 @@ public class MiningWindow extends JFrame implements ActionListener
 				Column aBinaryTarget = itsTargetConcept.getPrimaryTarget();
 				Column aNumericTarget = itsTargetConcept.getSecondaryTarget();
 				itsPositiveCount = aBinaryTarget.getBinaries().cardinality();
-				
+
 				QualityMeasure aQM = new QualityMeasure(QM.SUBRANKING_LOSS, itsTable.getNrRows(), itsPositiveCount, aBinaryTarget, aNumericTarget);
 				float anOverallSubrankingLoss = aQM.getOverallSubrankingLoss();
 				itsSearchParameters.setOverallRankingLoss(anOverallSubrankingLoss);
@@ -1936,6 +1936,7 @@ public class MiningWindow extends JFrame implements ActionListener
 		itsSearchParameters.setBeta(SearchParameters.BETA_DEFAULT);
 */
 	}
+
 	/* FIELD METHODS OF CORTANA COMPONENTS */
 	// all setters take a String argument for now
 

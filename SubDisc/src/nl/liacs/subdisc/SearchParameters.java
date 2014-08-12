@@ -39,7 +39,7 @@ public class SearchParameters implements XMLNodeInterface
 	private float		itsBeta;
 	private boolean	itsPostProcessingDoAutoRun;
 	private int		itsPostProcessingCount;
-	
+
 	private float	itsOverallRankingLoss;
 
 	// TODO MM add to loadData() + autorun.dtd
@@ -134,16 +134,15 @@ public class SearchParameters implements XMLNodeInterface
 	public float getBeta()					{ return itsBeta; }
 	public void setBeta(float theBeta)			{ itsBeta = theBeta; }
 	public boolean getPostProcessingDoAutoRun()		{ return itsPostProcessingDoAutoRun; }
-	public void setPostProcessingDoAutoRun(boolean theAutoRunSetting) { itsPostProcessingDoAutoRun = theAutoRunSetting; }
+	public void setPostProcessingDoAutoRun(boolean theAutoRunSetting)	{ itsPostProcessingDoAutoRun = theAutoRunSetting; }
 	public int getPostProcessingCount()			{ return itsPostProcessingCount; }
 	public void setPostProcessingCount(int theNr)		{ itsPostProcessingCount = theNr; }
 //	public List<ConditionList> getBeamSeed()		{ return itsBeamSeed; }
 //	public void setBeamSeed(List<ConditionList> theBeamSeed) { itsBeamSeed = theBeamSeed; }
-	public List<ConditionListA> getBeamSeed()		{ return itsBeamSeed; }
-	public void setBeamSeed(List<ConditionListA> theBeamSeed) { itsBeamSeed = theBeamSeed; }
-	public float getOverallRankingLoss()					{ return itsOverallRankingLoss; }
-	public void setOverallRankingLoss(float theOverallRankingLoss)			{ itsOverallRankingLoss = theOverallRankingLoss; }
-
+	public List<ConditionListA> getBeamSeed()			{ return itsBeamSeed; }
+	public void setBeamSeed(List<ConditionListA> theBeamSeed)	{ itsBeamSeed = theBeamSeed; }
+	public float getOverallRankingLoss()				{ return itsOverallRankingLoss; }
+	public void setOverallRankingLoss(float theOverallRankingLoss)	{ itsOverallRankingLoss = theOverallRankingLoss; }
 
 	/**
 	 * Creates an {@link XMLNode XMLNode} representation of this
