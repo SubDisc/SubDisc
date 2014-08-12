@@ -35,7 +35,7 @@ public class QualityMeasure
 	private static Column itsBinaryTarget;
 	private static Column itsNumericTarget;
 	private static int[] itsDescendingOrderingPermutation;
-	private static float itsOverallSubrankingLoss;
+	private static float itsOverallSubrankingLoss = 0.0f; // MUST BE 0.0f at first call
 
 	//SINGLE_NOMINAL
 	public QualityMeasure(QM theMeasure, int theTotalCoverage, int theTotalTargetCoverage)
@@ -1148,6 +1148,7 @@ public class QualityMeasure
 		return aResult;
 	}
 
+	// relies on itsOverallSubrankingLoss being 0.0f on first call
 	private void setAverageSubrankingLoss()
 	{
 		BitSet theWholeDataset = new BitSet(itsNrRecords);
@@ -1155,47 +1156,23 @@ public class QualityMeasure
 		itsOverallSubrankingLoss = calculate(theWholeDataset, itsNrRecords, itsTotalTargetCoverage);
 	}
 
-	public float getOverallSubrankingLoss() { return itsOverallSubrankingLoss;	}
+	public float getOverallSubrankingLoss() { return itsOverallSubrankingLoss; }
 
 	public float calculate(BitSet theSubgroup, int theCoverage, int theTargetCoverage)
 	{
-		float aResult;
+		if (itsNrRecords <= 1)
+			return 0.0f;
+
 		switch (itsQualityMeasure)
 		{
 			case SUBRANKING_LOSS :
-			{
-				if (itsNrRecords <= 1)
-					aResult = 0.0f;
-				else
-					aResult = calculateSubrankingLoss(theSubgroup, theCoverage, theTargetCoverage);
-				break;
-			}
+				return calculateSubrankingLoss(theSubgroup, theCoverage, theTargetCoverage);
 			case NEGATIVE_SUBRANKING_LOSS :
-			{
-				if (itsNrRecords <= 1)
-					aResult = 0.0f;
-				else
-					aResult = -1.0f * calculateSubrankingLoss(theSubgroup, theCoverage, theTargetCoverage);
-				break;
-			}
+				return -calculateSubrankingLoss(theSubgroup, theCoverage, theTargetCoverage);
 			case RELATIVE_SUBRANKING_LOSS :
-			{
-				if (itsNrRecords <= 1)
-					aResult = 0.0f;
-				else
-				{
-					aResult = calculateSubrankingLoss(theSubgroup, theCoverage, theTargetCoverage) - itsOverallSubrankingLoss;
-				}
-				break;
-			}
+				return (calculateSubrankingLoss(theSubgroup, theCoverage, theTargetCoverage) - itsOverallSubrankingLoss);
 			case REVERSE_RELATIVE_SUBRANKING_LOSS :
-			{
-				if (itsNrRecords <= 1)
-					aResult = 0.0f;
-				else
-					aResult = itsOverallSubrankingLoss - calculateSubrankingLoss(theSubgroup, theCoverage, theTargetCoverage);
-				break;
-			}
+				return (itsOverallSubrankingLoss - calculateSubrankingLoss(theSubgroup, theCoverage, theTargetCoverage));
 			default :
 			{
 				/*
@@ -1210,7 +1187,6 @@ public class QualityMeasure
 					throw new IllegalArgumentException("Invalid QM: " + itsQualityMeasure);
 			}
 		}
-		return aResult;
 	}
 
 	/*
