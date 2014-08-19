@@ -16,7 +16,7 @@ import nl.liacs.histo.*;
 // for now - extend ProbabilityDensityFunction for easy drop-in testing
 public class ProbabilityDensityFunction2 extends ProbabilityDensityFunction
 {
-	// related to Gaussian | standard normal distrubution
+	// related to Gaussian | standard normal distribution
 	// kernel spans [-CUTOFF : CUTOFF], and consists of SAMPLES points
 	private static final double CUTOFF = 4.0;
 	private static final double SAMPLES = 1001;
@@ -28,7 +28,7 @@ public class ProbabilityDensityFunction2 extends ProbabilityDensityFunction
 	// related to density function
 	private final double itsLo;
 	private final double itsHi;
-	private final double itsH; // h
+	private double itsH; // h
 	private final double dx;
 	// do not not cache (large) x-grid, re-computation is fast enough
 	// private final float[] x_grid;
@@ -55,10 +55,13 @@ public class ProbabilityDensityFunction2 extends ProbabilityDensityFunction
 		itsLo = itsMin-(CUTOFF*itsH);
 		itsHi = itsMax+(CUTOFF*itsH);
 		double range = itsHi-itsLo;
+		itsH = Math.max(itsH, range/1000.0); //to avoid problem with Silverman returning 0
+
 		// s = sigmas covered by range
 		double s = range/itsH;
 		// 1 sigma=(samples/16)
 		int k = (int) ((Math.ceil(s) * SAMPLES) / (2.0 * CUTOFF));
+		k = Math.min(k, 1000); // k could grow unlimited, producing a negative array size
 		dx = range/k;
 System.out.format("h=%f lo=%f hi=%f range=%f s=%f k=%d dx=%f%n", itsH, itsLo, itsHi, range, s, k, dx);
 
@@ -104,6 +107,7 @@ System.out.format("h=%f lo=%f hi=%f range=%f s=%f k=%d dx=%f%n", itsH, itsLo, it
 
 		return density;
 	}
+
 	private final float[] getDensity(Column theData, BitSet theMembers, int n)
 	{
 		// cache these values first
