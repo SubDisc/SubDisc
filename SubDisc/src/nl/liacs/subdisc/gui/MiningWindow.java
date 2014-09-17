@@ -1028,12 +1028,12 @@ public class MiningWindow extends JFrame implements ActionListener
 		// if SINGLE_NOMINAL add INTERVALS, else remove it
 		if (itsTargetConcept.getTargetType() == TargetType.SINGLE_NOMINAL)
 		{
-			if (jComboBoxNumericStrategy.getItemCount() == NumericStrategy.getNrExcludingIntervals()) //is INTERVALS not present yet?
+			if (jComboBoxNumericStrategy.getItemCount() == NumericStrategy.getNormalValues().size()) //is INTERVALS not present yet?
 				jComboBoxNumericStrategy.addItem(NumericStrategy.NUMERIC_INTERVALS.GUI_TEXT);
 		}
 		else
 		{
-			// assumes first normal value is not INTERVALS
+			// index 0 assumes first normal value is not INTERVALS
 			if (NumericStrategy.NUMERIC_INTERVALS.GUI_TEXT == jComboBoxNumericStrategy.getSelectedItem())
 				jComboBoxNumericStrategy.setSelectedIndex(0);
 

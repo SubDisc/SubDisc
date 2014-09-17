@@ -7,11 +7,11 @@ import java.util.*;
  */
 public enum NumericStrategy implements EnumInterface
 {
-	NUMERIC_BEST_BINS("best-bins"),
-	NUMERIC_BINS("bins"),
-	NUMERIC_BEST("best"),
-	NUMERIC_ALL("all"),
-	NUMERIC_INTERVALS("intervals");
+	NUMERIC_BEST_BINS("best-bins", true),
+	NUMERIC_BINS("bins", true),
+	NUMERIC_BEST("best", true),
+	NUMERIC_ALL("all", true),
+	NUMERIC_INTERVALS("intervals", false); // only valid for SINGLE_NOMINAL
 
 	/**
 	 * For each NumericStrategy, this is the text that will be used in the GUI.
@@ -19,10 +19,24 @@ public enum NumericStrategy implements EnumInterface
 	 * toString() method.
 	 */
 	public final String GUI_TEXT;
+	private final boolean isNormalValue;
 
-	private NumericStrategy(String theGuiText)
+	private NumericStrategy(String theGuiText, boolean isNormalValue)
 	{
 		GUI_TEXT = theGuiText;
+		this.isNormalValue = isNormalValue;
+	}
+
+	// dynamically build single immutable instance of 'normal values'
+	// robust against code changes, as long a enum declarations are correct
+	private static final Set<NumericStrategy> NORMAL_VALUES;
+	static
+	{
+		Set<NumericStrategy> aSet = EnumSet.noneOf(NumericStrategy.class);
+		for (NumericStrategy n : NumericStrategy.values())
+			if (n.isNormalValue)
+				aSet.add(n);
+		NORMAL_VALUES = Collections.unmodifiableSet(aSet);
 	}
 
 	/**
@@ -53,15 +67,16 @@ public enum NumericStrategy implements EnumInterface
 		return NumericStrategy.getDefault();
 	}
 
-	public static ArrayList<NumericStrategy> getNormalValues()
+	/**
+	 * Returns an immutable Set of 'normal' NumericStrategy enums, it
+	 * contains the same elements as NumericStrategy.values(), except for
+	 * NUMERIC_INTERVALS.
+	 *
+	 * @return the default NumericStrategy.
+	 */
+	public static Set<NumericStrategy> getNormalValues()
 	{
-		ArrayList<NumericStrategy> aResult = new ArrayList<NumericStrategy>(4);
-		aResult.add(NUMERIC_BEST_BINS);
-		aResult.add(NUMERIC_BINS);
-		aResult.add(NUMERIC_BEST);
-		aResult.add(NUMERIC_ALL);
-		//no intervals!
-		return aResult;
+		return NORMAL_VALUES;
 	}
 
 	/**
@@ -80,6 +95,4 @@ public enum NumericStrategy implements EnumInterface
 	{
 		return GUI_TEXT;
 	}
-	
-	public static int getNrExcludingIntervals() { return 4; }
 }
