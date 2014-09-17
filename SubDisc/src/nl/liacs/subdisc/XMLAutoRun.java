@@ -17,17 +17,22 @@ public class XMLAutoRun
 	public XMLAutoRun(SearchParameters theSearchParameters, Table theTable, AutoRun theFileOption)
 	{
 		if (theSearchParameters == null || theTable == null)
+			throw new IllegalArgumentException("arguments can not be null");
+
+		File aFile = new FileHandler(FileType.XML).getFile();
+		if (aFile == null)
 			return;
-		else
-		{
-			File aFile = new FileHandler(FileType.XML).getFile();
 
-			if (aFile == null)
-				return;
-			else
-				buildDocument(aFile, theSearchParameters, theTable, theFileOption);
-		}
+		buildDocument(aFile, theSearchParameters, theTable, theFileOption);
+	}
 
+	/* Other constructor uses GUI for file-destination via FileHandler. */
+	public XMLAutoRun(SearchParameters theSearchParameters, Table theTable, File theOutputFile)
+	{
+		if (theSearchParameters == null || theTable == null || theOutputFile == null)
+			throw new IllegalArgumentException("XMLAutoRun<init>: arguments can not be null");
+
+		buildDocument(theOutputFile, theSearchParameters, theTable, AutoRun.CREATE);
 	}
 
 	private void buildDocument(File theFile, SearchParameters theSearchParameters, Table theTable, AutoRun theFileOption)
