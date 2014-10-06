@@ -960,13 +960,21 @@ public class MiningWindow extends JFrame implements ActionListener
 			{
 				Column aBinaryTarget = itsTargetConcept.getPrimaryTarget();
 				Column aNumericTarget = itsTargetConcept.getSecondaryTarget();
-				itsPositiveCount = aBinaryTarget.getBinaries().cardinality();
+				if ( aBinaryTarget == null || aNumericTarget == null)
+				{					
+					jLabelTargetInfo.setText(" overall average ranking loss");
+					jLabelTargetInfoText.setText("");
+				}
+				else
+				{
+					itsPositiveCount = aBinaryTarget.getBinaries().cardinality();
 
-				QualityMeasure aQM = new QualityMeasure(QM.SUBRANKING_LOSS, itsTable.getNrRows(), itsPositiveCount, aBinaryTarget, aNumericTarget);
-				float anOverallSubrankingLoss = aQM.getOverallSubrankingLoss();
-				itsSearchParameters.setOverallRankingLoss(anOverallSubrankingLoss);
-				jLabelTargetInfo.setText(" overall average ranking loss");
-				jLabelTargetInfoText.setText(Float.toString(anOverallSubrankingLoss));
+					QualityMeasure aQM = new QualityMeasure(QM.SUBRANKING_LOSS, itsTable.getNrRows(), itsPositiveCount, aBinaryTarget, aNumericTarget);
+					float anOverallSubrankingLoss = aQM.getOverallSubrankingLoss();
+					itsSearchParameters.setOverallRankingLoss(anOverallSubrankingLoss);
+					jLabelTargetInfo.setText(" overall average ranking loss");
+					jLabelTargetInfoText.setText(Float.toString(anOverallSubrankingLoss));
+				}
 				break;
 			}
 			case MULTI_LABEL :
