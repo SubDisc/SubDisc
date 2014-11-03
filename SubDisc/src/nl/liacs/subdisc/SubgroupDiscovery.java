@@ -8,6 +8,7 @@ import java.util.concurrent.atomic.*;
 import javax.swing.*;
 
 import nl.liacs.subdisc.ConditionListBuilder.ConditionListA;
+import nl.liacs.subdisc.ConvexHull.HullPoint;
 
 public class SubgroupDiscovery extends MiningAlgorithm
 {
@@ -709,7 +710,8 @@ System.out.println(aSubgroup + "\t" + aRefinement.getConditionBase());
 					ConvexHull [] aHulls = new ConvexHull[aRBICT.getNrBaseIntervals()];
 					int aPi = 0;
 					int aNi = 0;
-					for (int l = 0; l < aRBICT.getNrSplitPoints(); l++) {
+					for (int l = 0; l < aRBICT.getNrSplitPoints(); l++)
+					{
 						aPi += aRBICT.getPositiveCount(l);
 						aNi += aRBICT.getNegativeCount(l);
 						aHulls[l] = new ConvexHull(aNi, aPi, aRBICT.getSplitPoint(l), Float.NEGATIVE_INFINITY);
@@ -728,11 +730,11 @@ System.out.println(aSubgroup + "\t" + aRefinement.getConditionBase());
 									if (aSide == 1 && (i == 0 || i == aMinkDiff.getSize(aSide)-1) )
 										continue; // no need to check duplicate hull points
 									HullPoint aCandidate = aMinkDiff.getPoint(aSide, i);
-									double aQuality = itsQualityMeasure.calculate(aCandidate.itsY, aCandidate.itsX + aCandidate.itsY);
+									double aQuality = itsQualityMeasure.calculate(aCandidate.itsY, (aCandidate.itsX + aCandidate.itsY));
 									anEvalCounter++;
 									if (aQuality > aBestQuality) {
 										aBestQuality = aQuality;
-										aBestInterval = new Interval(aCandidate.itsLabel2, aCandidate.itsLabel1);
+										aBestInterval = new Interval(aCandidate.getLabel2(), aCandidate.itsLabel1);
 									}
 								}
 							}
@@ -1147,7 +1149,7 @@ System.out.println(aSubgroup + "\t" + aRefinement.getConditionBase());
 					theNewSubgroup.setLabelRankingMatrix(aLRM); //store the matrix for later reference
 				}
 				else //normal SINGLE_NOMINAL
-					aQuality = itsQualityMeasure.calculate(aCountHeadBody, aCoverage);
+					aQuality = (float) itsQualityMeasure.calculate(aCountHeadBody, aCoverage);
 
 				theNewSubgroup.setSecondaryStatistic(aCountHeadBody / (double) aCoverage); //relative occurence of positives in subgroup
 				theNewSubgroup.setTertiaryStatistic(aCountHeadBody); //count of positives in the subgroup

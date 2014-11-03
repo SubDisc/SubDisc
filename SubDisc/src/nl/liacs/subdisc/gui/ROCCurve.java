@@ -118,8 +118,8 @@ public class ROCCurve extends JPanel
 		int N = itsQualityMeasure.getNrRecords();
 		int p = itsQualityMeasure.getNrPositives();
 		int aResolution = 400;
-		float aMax = Math.max(itsQualityMeasure.calculate(p, p), itsQualityMeasure.calculate(p, N));
-		aMax = Math.max(aMax, itsQualityMeasure.calculate(0, N-p));
+		float aMax = (float) Math.max(itsQualityMeasure.calculate(p, p), itsQualityMeasure.calculate(p, N));
+		aMax = (float) Math.max(aMax, itsQualityMeasure.calculate(0, N-p));
 		for (int i=0; i<aResolution; i++)
 		{
 			float anX = i/(float)aResolution;
@@ -128,7 +128,10 @@ public class ROCCurve extends JPanel
 			{
 				float aY = -(j+1)/(float)aResolution;
 				float aPositives = -aY*p; //this can be fractional, even though the counts are always integer
-				int aValue = (int) (255*itsQualityMeasure.calculate(aPositives, aNegatives+aPositives)/aMax);
+// FIXME MM
+// casting from fractional float to int might not yield best pictures
+// calculate(x, y) requires (x >= 0) and (y > 0), this needs to be guaranteed
+				int aValue = (int) (255 * itsQualityMeasure.calculate((int)aPositives, (int)(aNegatives+aPositives)) / aMax);
 				boolean isNegative = (aValue<0);
 				if (isNegative)
 					aValue = -aValue;
