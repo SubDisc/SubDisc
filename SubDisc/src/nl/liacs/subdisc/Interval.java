@@ -16,6 +16,7 @@ public class Interval implements Comparable<Interval>
 		return (itsLower < theValue) && (theValue <= itsUpper);
 	}
 
+	@Override
 	public String toString()
 	{
 		String aLeft = (itsLower == Float.NEGATIVE_INFINITY) ? "-inf" : Float.toString(itsLower);
