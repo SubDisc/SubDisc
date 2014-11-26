@@ -37,6 +37,7 @@ public class RankComparator
 			bar(files[i], i, files.length, map);
 
 		print(files, map);
+		tau(files, map);
 	}
 
 	private static final void bar(File file, int index, int nrFiles, Map<String, int[]> map)
@@ -115,5 +116,55 @@ public class RankComparator
 			}
 			System.out.println();
 		}
+	}
+
+	private static final void tau(File[] files, Map<String, int[]> map)
+	{
+		int[][] rankings = createRankings(map.values());
+
+		for (int i = 1; i < files.length; ++i)
+		{
+			String s = files[i].getName();
+			for (int j = 0; j < i; ++j)
+			{
+				System.out.println(files[j]);
+				System.out.println(s);
+				System.out.println(tau(rankings[j], rankings[i]));
+				System.out.println();
+			}
+		}
+	}
+
+	private static final int[][] createRankings(Collection<int[]> input)
+	{
+		int r = input.iterator().next().length;
+		int n = input.size();
+		int[][] rankings = new int[r][n];
+
+		int row = -1;
+		for (Iterator<int[]> i = input.iterator(); i.hasNext(); )
+		{
+			++row;
+			int[] ia = i.next();
+			for (int j = 0; j < r; ++j)
+				rankings[j][row] = ia[j];
+		}
+
+		return rankings;
+	}
+
+	// simple O(n^2) version - O(n*log(n)) exists
+	// no checks what so ever - assumes no ties in rankings
+	// fails on rankings > 50.000 (d*d-1 overflows)
+	private static final double tau(int[] x, int[] y)
+	{
+		int d = x.length;
+
+		long n = 0;
+		for (int i = 1; i < d; ++i)
+			for (int j = 0; j < i; ++j)
+				n += ( Math.signum(x[i]-x[j]) * Math.signum(y[i]-y[j]) );
+
+		return n / ((d * (d-1)) / 2.0);
 	}
 }
