@@ -339,6 +339,81 @@ public class ResultWindow extends JFrame implements ActionListener
 			case MULTI_NUMERIC :
 			{
 				JOptionPane.showMessageDialog(this, "Not implemented yet!", "Multi Numeric Error", JOptionPane.INFORMATION_MESSAGE);
+System.out.println("PRINTING TO FILE");
+
+ProbabilityDensityFunction_ND aPdf = itsSubgroupDiscovery.itsPDF_ND;
+int[] aSelection = itsSubgroupTable.getSelectedRows();
+Iterator<Subgroup> anIterator = itsSubgroupSet.iterator();
+
+for (int i = 0, j = aSelection.length, k = 0; i < j; ++k)
+{
+	int aNext = aSelection[k];
+	while (i++ < aNext)
+		anIterator.next();
+	Subgroup aSubgroup = anIterator.next();
+	//float[][] grid = aPdf.getDensityDifference2D(aSubgroup.getMembers(), true, itsSearchParameters.getQualityMeasure());
+	float[][] grid = aPdf.getDensityDifference2D(aSubgroup.getMembers(), true, null);
+	//float[][] grid = aPdf.getDensity(aSubgroup.getMembers());
+	System.out.println("GRID CREATED FOR SUBGROUP: " + i);
+
+	BufferedWriter bw = null;
+	try
+	{
+		File f = new File(System.nanoTime() + "_" + i + ".dat");
+		System.out.println("GRID FILE: " + f.getAbsolutePath());
+		bw = new BufferedWriter(new FileWriter(f));
+
+		double[] stats = aPdf.lastDXDY;
+		double x_min = stats[0];
+		double y_min = stats[3];
+		double dx = stats[6];
+		double dy = stats[7];
+
+		// normalisation
+		float max = -Float.MAX_VALUE;
+		for (float[] row : grid)
+			for (float z : row)
+				if (z > max)
+					max = z;
+System.out.println(Arrays.toString(stats));
+System.out.println(max);
+
+		// x-y axis are swapped, simplifies loop a lot
+		for (int m = 0; m < grid.length; ++m)
+		{
+			float[] row = grid[m];
+
+			double x = x_min + (dx * m);
+			for (int n = 0; n < row.length; ++n)
+			{
+				double y = y_min + (dy * n);
+				double z = row[n]/max;
+				// NOTICE SWAP!!!
+				bw.write(y + "\t" + x + "\t" + z + "\n");
+			}
+			bw.write("\n"); // required by gnuplot at y-change
+		}
+	} catch (IOException e) {
+		// TODO MM
+		e.printStackTrace();
+	}
+	finally
+	{
+		if (bw != null)
+		try
+		{
+			bw.close();
+		}
+		catch (IOException e)
+		{
+			// TODO MM
+			e.printStackTrace();
+		}
+	}
+	System.out.println("GRID FILE CREATED FOR SUBGROUP: " + i);
+}
+
+System.out.println("DONE");
 				break;
 			}
 			case DOUBLE_CORRELATION :

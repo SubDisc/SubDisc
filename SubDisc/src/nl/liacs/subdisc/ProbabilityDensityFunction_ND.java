@@ -113,7 +113,7 @@ public class ProbabilityDensityFunction_ND
 	public final int getNrDimensions() { return itsGrid.length; }
 
 	// 2D version
-	final float[][] getDensity(BitSet theBitSet)
+	public final float[][] getDensity(BitSet theBitSet)
 	{
 		double[] x_stats = itsGrid[0];
 		double[] y_stats = itsGrid[1];
@@ -656,8 +656,9 @@ System.out.println("C_kde_integral = " + C_kde_integral);
 		return densityDifference;
 	}
 
+public double[] lastDXDY = null;
 	// GRID IS CREATED BASED ON SUBGROUP AND COMPLEMENT STATISTICS
-	final float[][] getDensityDifference2D(BitSet theSubgroup, boolean toComplement, QM theQM)
+	public final float[][] getDensityDifference2D(BitSet theSubgroup, boolean toComplement, QM theQM)
 	{
 		assert (itsGrid.length == 2);
 		assert (itsData.length >= 2);
@@ -721,6 +722,9 @@ System.out.println("C_kde_integral = " + C_kde_integral);
 		int y_n = (int)Math.floor(y_range / dy);
 // SETUP OF GRID COMPLETE
 
+// XXX TEMP
+lastDXDY = new double[] { x_min, x_max, x_n, y_min, y_max, y_n, dx, dy };
+
 ////////////////////////////////////////////////////////////////////////////////
 debug("\nSG");
 debug("stats " + Arrays.toString(stats[0]));
@@ -783,7 +787,7 @@ double C_kde_integral = 0.0;
 				C_kde_integral += C_kde;
 
 				if (!qm_only)
-					r[i] = (float)(S_kde-C_kde);
+					r[j] = (float)(S_kde-C_kde);
 				else
 					difference += divergence(theQM, S_kde, C_kde, S_size, N);
 

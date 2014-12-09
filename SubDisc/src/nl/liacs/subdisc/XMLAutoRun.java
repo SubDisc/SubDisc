@@ -10,6 +10,8 @@ import org.w3c.dom.*;
 
 public class XMLAutoRun
 {
+	public static final String RESULT_SET_DELIMITER = "\t";
+
 	private Document itsDocument;
 
 	public enum AutoRun { CREATE, ADD }

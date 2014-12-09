@@ -35,7 +35,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 	private RegressionMeasure itsBaseRM;	//DOUBLE_REGRESSION
 	private BinaryTable itsBinaryTable;	//MULTI_LABEL
 	private List<Column> itsTargets;	//MULTI_LABEL / MULTI_NUMERIC
-	private ProbabilityDensityFunction_ND itsPDF_ND; //MULTI_NUMERIC
+	public ProbabilityDensityFunction_ND itsPDF_ND; //MULTI_NUMERIC
 
 	private LocalKnowledge itsLocalKnowledge; //PROPENSITY SCORE BASED
 	private GlobalKnowledge itsGlobalKnowledge;//PROPENSITY SCORE BASED
@@ -1051,7 +1051,8 @@ System.out.println(aSubgroup + "\t" + aRefinement.getConditionBase());
 	 * this is related to the fixed max size and has the potential to break
 	 * invocation invariant results in multi-threaded settings
 	 */
-	private synchronized long check(Subgroup theSubgroup, int theOldCoverage)
+//	private synchronized long check(Subgroup theSubgroup, int theOldCoverage)
+	private long check(Subgroup theSubgroup, int theOldCoverage)
 	{
 		final long count = itsCandidateCount.getAndIncrement();
 		final int aNewCoverage = theSubgroup.getCoverage();
@@ -1060,7 +1061,7 @@ System.out.println(aSubgroup + "\t" + aRefinement.getConditionBase());
 		{
 			float aQuality = evaluateCandidate(theSubgroup);
 			theSubgroup.setMeasureValue(aQuality);
-
+synchronized(this) {
 			//if the quality is enough, or should be ignored, ...
 			if (ignoreQualityMinimum || aQuality > itsQualityMeasureMinimum)
 				//...and, the coverage is not too high
@@ -1068,7 +1069,7 @@ System.out.println(aSubgroup + "\t" + aRefinement.getConditionBase());
 					itsResult.add(theSubgroup);
 
 			itsCandidateQueue.add(new Candidate(theSubgroup));
-
+}
 			return count;
 		}
 
