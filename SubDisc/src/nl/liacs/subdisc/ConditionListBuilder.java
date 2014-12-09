@@ -46,8 +46,8 @@ public enum ConditionListBuilder
 //	}
 
 	/**
-	 * Returns a ConditionList the with as conjuncts all of the Conditions
-	 * in the supplied ConditionList, and the supplied Condition.
+	 * Returns a ConditionList with as conjuncts all of the Conditions in
+	 * the supplied ConditionList, and the supplied Condition.
 	 * 
 	 * The number of conjuncts in the returned ConditionList is equal to the
 	 * size of the supplied ConditionList plus one.
@@ -154,7 +154,6 @@ public enum ConditionListBuilder
 				throw new NullPointerException();
 
 			return (this == theConditionList) ? 0 : -1;
-
 		}
 
 		@Override
@@ -447,7 +446,6 @@ System.out.format("ERROR: duplicate conjuncts%n\t%s%n\t%s%n", theConditionList.t
 					throw new AssertionError();
 			}
 		}
-
 	}
 
 	/*
