@@ -955,7 +955,7 @@ System.out.println("C_kde_integral = " + C_kde_integral);
 			for (int j = theNotSubgroup.nextSetBit(0); j >= 0; j = theNotSubgroup.nextSetBit(j+1))
 			{
 				// x - mu (here Subgroup-NotSubgroup)
-				for(int k = 0, m = j*D; j < D; ++j, ++m)
+				for (int k = 0, m = j*D; k < D; ++k, ++m)
 					diff[k] = x[k]-itsData[m];
 				// alternative mahalanobis squared
 				// 1 running sum, no (temporary) array/matrix
