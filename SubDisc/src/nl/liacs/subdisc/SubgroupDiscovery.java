@@ -1345,7 +1345,7 @@ else
 
 				theNewSubgroup.setSecondaryStatistic(aCountHeadBody); //count of positives in the subgroup
 				theNewSubgroup.setTertiaryStatistic(aCoverage - aCountHeadBody); //count of negatives in the subgroup
-				
+
 				break;
 			}
 			case MULTI_LABEL :

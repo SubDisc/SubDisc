@@ -193,7 +193,7 @@ public class Validation
 				aPDF = new ProbabilityDensityFunction2(itsQualityMeasure.getProbabilityDensityFunction(), aMembers);
 			aPDF.smooth();
 
-			aQualities[i] = itsQualityMeasure.calculate(aMembers.cardinality(), aCounts[0], aCounts[1], aCounts[2], aCounts[3], aPDF);
+			aQualities[i] = itsQualityMeasure.calculate(aSubgroup.getCoverage(), aCounts[0], aCounts[1], aCounts[2], aCounts[3], aPDF);
 		}
 
 		return aQualities;
@@ -312,7 +312,7 @@ public class Validation
 		LabelRanking aLR = aTarget.getAverageRanking(null); //average ranking over entire dataset
 		LabelRankingMatrix aLRM = aTarget.getAverageRankingMatrix(null);
 		QualityMeasure aQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), itsTable.getNrRows(), aLR, aLRM);
-		
+
 		//temp<--
 		BufferedWriter br = null;
 		try
@@ -320,7 +320,7 @@ public class Validation
 		final File f  = new File("output.txt");
 		br = new BufferedWriter(new FileWriter(f));
 		//temp-->
-		
+
 		for (int i = 0; i < theNrRepetitions; ++i)
 		{
 			Subgroup aSubgroup;
@@ -331,11 +331,10 @@ public class Validation
 			else
 				aSubgroup = getValidSubgroup(theDepth, theMinimumCoverage, theRandom);
 
-			BitSet aMembers = aSubgroup.getMembers();
 			LabelRankingMatrix aSubgroupLRM = aTarget.getAverageRankingMatrix(aSubgroup);
-			aQualities[i] = aQualityMeasure.computeLabelRankingDistance(aMembers.cardinality(), aSubgroupLRM);
+			aQualities[i] = aQualityMeasure.computeLabelRankingDistance(aSubgroup.getCoverage(), aSubgroupLRM);
 			Log.logCommandLine("qual: " + aQualities[i]);
-			
+
 			//temp<--
 			br.write(aQualities[i] + "\r");
 			//temp-->
@@ -352,7 +351,7 @@ public class Validation
 			}
 		}
 		//temp-->
-		
+
 		return aQualities;
 	}
 

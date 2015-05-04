@@ -167,9 +167,10 @@ public class RegressionMeasure
 		itsXSquaredSum = 0;
 		itsYSquaredSum = 0;
 
-		itsData = new ArrayList<Point2D.Float>(theMembers.cardinality());
+		int aCoverage = theMembers.cardinality();
+		itsData = new ArrayList<Point2D.Float>(aCoverage);
 		itsComplementData =
-			new ArrayList<Point2D.Float>(itsBase.getSampleSize() - theMembers.cardinality()); //create empty one. will be filled after update()
+			new ArrayList<Point2D.Float>(itsBase.getSampleSize() - aCoverage); //create empty one. will be filled after update()
 
 		for (int i=0; i<itsBase.getSampleSize(); i++)
 		{
@@ -266,7 +267,7 @@ public class RegressionMeasure
 	public double calculate(Subgroup theNewSubgroup)
 	{
 		BitSet aMembers = theNewSubgroup.getMembers();
-		int aSampleSize = aMembers.cardinality();
+		int aSampleSize = theNewSubgroup.getCoverage();
 
 		//filter out rank deficient model that crash matrix multiplication library
 		if (aSampleSize<2)

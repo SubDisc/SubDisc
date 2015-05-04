@@ -416,10 +416,10 @@ System.out.println("DONE");
 
 				for (Subgroup s : aSelectedSubgroups)
 				{
-					BitSet aPositiveMembers = (BitSet) s.getMembers().clone();
+					BitSet aPositiveMembers = s.getMembers();
 					aPositiveMembers.and(aBinaries);
 
-					BitSet aNegativeMembers = (BitSet) s.getMembers().clone();
+					BitSet aNegativeMembers = s.getMembers();
 					BitSet aNonTarget = (BitSet) aBinaries.clone();
 					aNonTarget.flip(0,aNonTarget.length());
 					aNegativeMembers.and(aNonTarget);
