@@ -2,6 +2,7 @@ package nl.liacs.subdisc.gui;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.util.*;
 
 import javax.swing.*;
 
@@ -114,7 +115,6 @@ public class BasicJListWindow extends JDialog implements ActionListener {
 			itsJList.setSelectionInterval(0, itsJListSize - 1);
 		else if ("none".equals(anAction))
 			itsJList.clearSelection();
-// FIXME MM DOES NOT WORK AS IT SHOULD
 		else if ("invert".equals(anAction))
 		{
 			int[] aSelection = itsJList.getSelectedIndices();
@@ -126,7 +126,7 @@ public class BasicJListWindow extends JDialog implements ActionListener {
 				if (i == aSelection[j])
 					++j;
 				else
-					itsJList.setSelectedIndex(i);
+					itsJList.addSelectionInterval(i, i);
 			}
 			if (i < itsJListSize)
 				itsJList.addSelectionInterval(i, itsJListSize - 1);
