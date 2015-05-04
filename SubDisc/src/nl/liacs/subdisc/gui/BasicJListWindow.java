@@ -114,6 +114,7 @@ public class BasicJListWindow extends JDialog implements ActionListener {
 			itsJList.setSelectionInterval(0, itsJListSize - 1);
 		else if ("none".equals(anAction))
 			itsJList.clearSelection();
+// FIXME MM DOES NOT WORK AS IT SHOULD
 		else if ("invert".equals(anAction))
 		{
 			int[] aSelection = itsJList.getSelectedIndices();

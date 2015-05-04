@@ -898,16 +898,11 @@ public class MiningWindow extends JFrame implements ActionListener
 			}
 			case MULTI_NUMERIC :
 			{
-//				//assuming multi = 2
-//				Column aPrimaryColumn = itsTargetConcept.getPrimaryTarget();
-//				Column aSecondaryColumn = itsTargetConcept.getSecondaryTarget();
-//
-//				jLabelTargetInfo.setText(" averages");
-//				if (aPrimaryColumn != null && aSecondaryColumn != null)
-//					jLabelTargetInfoText.setText("(" + String.valueOf(aPrimaryColumn.getAverage()) + ", " + String.valueOf(aSecondaryColumn.getAverage()) + ")");
-//				break;
 				jLabelTargetInfo.setText(" # dimensions");
 				jLabelTargetInfoText.setText(String.valueOf(itsTargetConcept.getMultiTargets().size()));
+
+				// enable button only for 2D / 2 targets
+				enableBaseModelButtonCheck();
 				break;
 			}
 			case SINGLE_ORDINAL :
@@ -997,6 +992,8 @@ public class MiningWindow extends JFrame implements ActionListener
 				jLabelTargetInfoText.setText("none");
 				break;
 			}
+			default :
+				throw new AssertionError(aTargetType);
 		}
 	}
 
@@ -1268,8 +1265,13 @@ public class MiningWindow extends JFrame implements ActionListener
 	 *
 	 * initTargetInfo() sets the appropriate texts for jLabelTargetInfo and
 	 * jLabelTargetInfoText				-> based on TargetType
-	 *
+	 * 
 	 * After this all information should be up to date.
+	 * 
+	 * NOTE
+	 * jButtonMultiTargetsActionPerformed() also calls initTargetInfo()
+	 * for MULTI_NUMERIC this will enable of disable the BaseModel button
+	 * based on whether (number_selected_targets == 2)
 	 */
 	private void jComboBoxTargetTypeActionPerformed()
 	{
@@ -1471,18 +1473,29 @@ public class MiningWindow extends JFrame implements ActionListener
 
 	private void jButtonMultiTargetsActionPerformed()
 	{
-// FIXME MM
-// separate MULTI_LABEL from MULTI_NUMERIC code
-
-		// is modal, blocks all input to other windows until closed
-		new MultiTargetsWindow(jListMultiTargets, itsSearchParameters);
+		// modal, blocks all input to other windows until closed
+		switch (itsTargetConcept.getTargetType())
+		{
+			case MULTI_LABEL :
+			{
+				new MultiTargetsWindow(jListMultiTargets, itsSearchParameters);
+				break;
+			}
+			case MULTI_NUMERIC :
+			{
+				new MultiNumericTargetsWindow(jListMultiTargets);
+				break;
+			}
+			default :
+				throw new AssertionError(itsTargetConcept.getTargetType());
+		}
 
 		Object[] aSelection = jListMultiTargets.getSelectedValues();
-		int aNrBinary = aSelection.length;
-		List<Column> aList = new ArrayList<Column>(aNrBinary);
+		int aNrSelected = aSelection.length;
+		List<Column> aList = new ArrayList<Column>(aNrSelected);
 
 		// aSelection is in order and names always occur in itsColumns
-		for (int i = 0, j = 0; i < aNrBinary; ++j)
+		for (int i = 0, j = 0; i < aNrSelected; ++j)
 		{
 			if (aSelection[i].equals(itsTable.getColumn(j).getName()))
 			{

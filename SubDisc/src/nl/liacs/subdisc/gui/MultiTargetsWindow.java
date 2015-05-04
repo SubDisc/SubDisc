@@ -115,10 +115,15 @@ public class MultiTargetsWindow extends BasicJListWindow// implements ActionList
 			else
 				itsSearchParameters.setPostProcessingCount(aNrRepetitions);
 
-			if (aNrInvalid == 0)
+			int aNrSelected = itsJList.getSelectedIndices().length;
+			if ((aNrInvalid == 0) && (aNrSelected > 0))
 				dispose();
-			else
+
+			// can both be true
+			if (aNrInvalid != 0)
 				showErrorDialog(String.format(ERROR, aNrInvalid));
+			if (aNrSelected == 0)
+				showErrorDialog("At least 1 Column must be selected.");
 		}
 		catch (ParseException e)
 		{
