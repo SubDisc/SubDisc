@@ -187,12 +187,15 @@ public class ModelWindow extends JFrame implements ActionListener
 		itsJScrollPaneCenter.setViewportView(new ChartPanel(itsChart));
 
 		String aTitle;
+		String aType = isRegression ? "Regression" : "Correlation";
 		if (forSubgroup)
-			aTitle = new StringBuilder().append("Subgroup ").append(theSubgroup.getID()).append(isRegression ? ": Regression" : ": Correlation").toString();
+			aTitle = String.format("%s: %s", ResultWindow.createTitle(theSubgroup), aType);
 		else
-			aTitle = new StringBuilder().append("Base Model: ").append(isRegression ? "Regression" : "Correlation").append(" for entire dataset").toString();
+			aTitle = String.format("%s: %s for entire dataset", "Base Model", aType);
+
 		if (itsSample != null)
-			aTitle = aTitle + " (sampled)";
+			aTitle += " (sampled)";
+
 		setTitle(aTitle);
 		setIconImage(MiningWindow.ICON);
 		setLocation(50, 50);

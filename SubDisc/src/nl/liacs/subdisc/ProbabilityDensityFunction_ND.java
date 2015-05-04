@@ -950,7 +950,7 @@ System.out.println("C_kde_integral = " + C_kde_integral);
 		for (int i = theSubgroup.nextSetBit(0); i >= 0; i = theSubgroup.nextSetBit(i+1))
 		{
 			// load subgroup vector data
-			for(int j = 0, k = i*D; j < D; ++j, ++k)
+			for (int j = 0, k = i*D; j < D; ++j, ++k)
 				x[j] = itsData[k];
 			for (int j = theNotSubgroup.nextSetBit(0); j >= 0; j = theNotSubgroup.nextSetBit(j+1))
 			{

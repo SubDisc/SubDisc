@@ -291,14 +291,10 @@ public class ResultWindow extends JFrame implements ActionListener
 		}
 	}
 
-	/*
-	 * TODO use Subgroup.getID/getConditions() for title
-	 * Current naming relies on non-sortable columns
-	 */
 	private void jButtonShowModelActionPerformed()
 	{
-		int[] aSelectionIndex = itsSubgroupTable.getSelectedRows();
-		if (aSelectionIndex.length == 0)
+		Subgroup[] aSelectedSubgroups = getSelectedSubgroups();
+		if (aSelectedSubgroups.length == 0)
 			return;
 
 		switch (itsSearchParameters.getTargetType())
@@ -314,26 +310,17 @@ public class ResultWindow extends JFrame implements ActionListener
 					aPDF = new ProbabilityDensityFunction2(aTarget);
 				aPDF.smooth();
 
-				int[] aSelection = itsSubgroupTable.getSelectedRows();
-				Iterator<Subgroup> anIterator = itsSubgroupSet.iterator();
-
-				for (int i = 0, j = aSelection.length, k = 0; i < j; ++k)
+				for (Subgroup s : aSelectedSubgroups)
 				{
-					int aNext = aSelection[k];
-					while (i++ < aNext)
-						anIterator.next();
-					Subgroup aSubgroup = anIterator.next();
-
 					ProbabilityDensityFunction aSubgroupPDF;
 					// DEBUG
 					if (!ProbabilityDensityFunction.USE_ProbabilityDensityFunction2)
-						aSubgroupPDF = new ProbabilityDensityFunction(aPDF, aSubgroup.getMembers());
+						aSubgroupPDF = new ProbabilityDensityFunction(aPDF, s.getMembers());
 					else
-						aSubgroupPDF = new ProbabilityDensityFunction2(aPDF, aSubgroup.getMembers());
+						aSubgroupPDF = new ProbabilityDensityFunction2(aPDF, s.getMembers());
 					aSubgroupPDF.smooth();
-					new ModelWindow(aTarget, aPDF, aSubgroupPDF, "Subgroup " + aSubgroup.getID(), false);
+					new ModelWindow(aTarget, aPDF, aSubgroupPDF, createTitle(s), false);
 				}
-
 				break;
 			}
 			case MULTI_NUMERIC :
@@ -342,24 +329,17 @@ public class ResultWindow extends JFrame implements ActionListener
 System.out.println("PRINTING TO FILE");
 
 ProbabilityDensityFunction_ND aPdf = itsSubgroupDiscovery.itsPDF_ND;
-int[] aSelection = itsSubgroupTable.getSelectedRows();
-Iterator<Subgroup> anIterator = itsSubgroupSet.iterator();
 
-for (int i = 0, j = aSelection.length, k = 0; i < j; ++k)
+for (Subgroup s : aSelectedSubgroups)
 {
-	int aNext = aSelection[k];
-	while (i++ < aNext)
-		anIterator.next();
-	Subgroup aSubgroup = anIterator.next();
-	//float[][] grid = aPdf.getDensityDifference2D(aSubgroup.getMembers(), true, itsSearchParameters.getQualityMeasure());
-	float[][] grid = aPdf.getDensityDifference2D(aSubgroup.getMembers(), true, null);
-	//float[][] grid = aPdf.getDensity(aSubgroup.getMembers());
-	System.out.println("GRID CREATED FOR SUBGROUP: " + i);
+	int anID = s.getID();
+	float[][] grid = aPdf.getDensityDifference2D(s.getMembers(), true, null);
+	System.out.println("GRID CREATED FOR SUBGROUP: " + anID);
 
 	BufferedWriter bw = null;
 	try
 	{
-		File f = new File(System.nanoTime() + "_" + i + ".dat");
+		File f = new File(System.nanoTime() + "_" + anID + ".dat");
 		System.out.println("GRID FILE: " + f.getAbsolutePath());
 		bw = new BufferedWriter(new FileWriter(f));
 
@@ -410,7 +390,7 @@ System.out.println(max);
 			e.printStackTrace();
 		}
 	}
-	System.out.println("GRID FILE CREATED FOR SUBGROUP: " + i);
+	System.out.println("GRID FILE CREATED FOR SUBGROUP: " + anID);
 }
 
 System.out.println("DONE");
@@ -418,7 +398,7 @@ System.out.println("DONE");
 			}
 			case DOUBLE_CORRELATION :
 			{
-				modelWindowHelper(TargetType.DOUBLE_CORRELATION);
+				modelWindowHelper(TargetType.DOUBLE_CORRELATION, aSelectedSubgroups);
 				break;
 			}
 			case SCAPE :
@@ -434,20 +414,12 @@ System.out.println("DONE");
 					aPDF = new ProbabilityDensityFunction2(aNumericTarget);
 				aPDF.smooth();
 
-				int[] aSelection = itsSubgroupTable.getSelectedRows();
-				Iterator<Subgroup> anIterator = itsSubgroupSet.iterator();
-
-				for (int i = 0, j = aSelection.length, k = 0; i < j; ++k)
+				for (Subgroup s : aSelectedSubgroups)
 				{
-					int aNext = aSelection[k];
-					while (i++ < aNext)
-						anIterator.next();
-					Subgroup aSubgroup = anIterator.next();
-
-					BitSet aPositiveMembers = (BitSet) aSubgroup.getMembers().clone();
+					BitSet aPositiveMembers = (BitSet) s.getMembers().clone();
 					aPositiveMembers.and(aBinaries);
 
-					BitSet aNegativeMembers = (BitSet) aSubgroup.getMembers().clone();
+					BitSet aNegativeMembers = (BitSet) s.getMembers().clone();
 					BitSet aNonTarget = (BitSet) aBinaries.clone();
 					aNonTarget.flip(0,aNonTarget.length());
 					aNegativeMembers.and(aNonTarget);
@@ -459,7 +431,7 @@ System.out.println("DONE");
 					else
 						aPositivePDF = new ProbabilityDensityFunction2(aPDF, aPositiveMembers);
 					aPositivePDF.smooth();
-					
+
 					ProbabilityDensityFunction aNegativePDF;
 					// DEBUG
 					if (!ProbabilityDensityFunction.USE_ProbabilityDensityFunction2)
@@ -467,8 +439,8 @@ System.out.println("DONE");
 					else
 						aNegativePDF = new ProbabilityDensityFunction2(aPDF, aNegativeMembers);
 					aNegativePDF.smooth();
-					
-					new ModelWindow(aNumericTarget, aPositivePDF, aNegativePDF, "Subgroup " + aSubgroup.getID(), true);
+
+					new ModelWindow(aNumericTarget, aPositivePDF, aNegativePDF, createTitle(s), true);
 				}
 				break;
 			}
@@ -478,6 +450,8 @@ System.out.println("DONE");
 				 * TODO inefficient loop
 				 * use convertViewToModel(i) to select correct s, then use s.ID
 				 */
+				// FIXME MM CLEANUP: use getSelectedSubgroups()
+				int[] aSelectionIndex = itsSubgroupTable.getSelectedRows();
 				int i = 0;
 				while (i < aSelectionIndex.length)
 				{
@@ -500,21 +474,19 @@ System.out.println("DONE");
 			}
 			case DOUBLE_REGRESSION :
 			{
-				modelWindowHelper(TargetType.DOUBLE_REGRESSION);
+				modelWindowHelper(TargetType.DOUBLE_REGRESSION, aSelectedSubgroups);
 				break;
 			}
 			case LABEL_RANKING :
 			{
-				int aSelection = itsSubgroupTable.getSelectedRow();
-				Iterator<Subgroup> anIterator = itsSubgroupSet.iterator();
-				int i = 0;
-				while (i++ < aSelection)
-					anIterator.next();
-				Subgroup aSubgroup = anIterator.next();
-				LabelRankingMatrix aLRM = aSubgroup.getLabelRankingMatrix();
-				aLRM.print();
-				new LabelRankingMatrixWindow(itsQualityMeasure.getBaseLabelRankingMatrix(), aLRM,
-					" (" + aSubgroup.toString() + ")   " + aSubgroup.getLabelRanking().getRanking());
+				for (Subgroup s : aSelectedSubgroups)
+				{
+					LabelRankingMatrix aLRM = s.getLabelRankingMatrix();
+					aLRM.print();
+					new LabelRankingMatrixWindow(itsQualityMeasure.getBaseLabelRankingMatrix(),
+									aLRM,
+									createTitle(s) + "   " + s.getLabelRanking().getRanking());
+				}
 				break;
 			}
 			default :
@@ -522,32 +494,28 @@ System.out.println("DONE");
 		}
 	}
 
-	private void modelWindowHelper(TargetType theTargetType)
+	private void modelWindowHelper(TargetType theTargetType, Subgroup[] theSubgroups)
 	{
+		assert (theSubgroups.length != 0);
+		assert (theTargetType == TargetType.DOUBLE_CORRELATION || theTargetType == TargetType.DOUBLE_REGRESSION);
+
 		final TargetConcept aTargetConcept = itsSearchParameters.getTargetConcept();
 		final boolean isRegressionSetting = (theTargetType == TargetType.DOUBLE_REGRESSION);
 		RegressionMeasure aRM = null;
 
-		int[] aSelection = itsSubgroupTable.getSelectedRows();
-		Iterator<Subgroup> anIterator = itsSubgroupSet.iterator();
-
-		for (int i = 0, j = aSelection.length, k = 0; i < j; ++k)
+		for (Subgroup s : theSubgroups)
 		{
-			int aNext = aSelection[k];
-			while (i++ < aNext)
-				anIterator.next();
-			Subgroup aSubgroup = anIterator.next();
-
 			if (isRegressionSetting)
 			{
-				aRM = new RegressionMeasure(itsRegressionMeasureBase, aSubgroup.getMembers());
+				aRM = new RegressionMeasure(itsRegressionMeasureBase, s.getMembers());
 				aRM.getEvaluationMeasureValue();
 			}
 
-			new ModelWindow(itsTable, aTargetConcept.getPrimaryTarget(),
+			new ModelWindow(itsTable,
+					aTargetConcept.getPrimaryTarget(),
 					aTargetConcept.getSecondaryTarget(),
 					aRM,
-					aSubgroup);
+					s);
 		}
 	}
 
@@ -579,19 +547,8 @@ System.out.println("DONE");
 
 	private void jButtonBrowseSubgroupsActionPerformed()
 	{
-		if (itsSubgroupSet.isEmpty())
-			return;
-
-		int[] aSelection = itsSubgroupTable.getSelectedRows();
-		Iterator<Subgroup> anIterator = itsSubgroupSet.iterator();
-
-		for (int i = 0, j = aSelection.length, k = 0; i < j; ++k)
-		{
-			int aNext = aSelection[k];
-			while (i++ < aNext)
-				anIterator.next();
-			new BrowseWindow(itsTable, anIterator.next());
-		}
+		for (Subgroup s : getSelectedSubgroups())
+			new BrowseWindow(itsTable, s);
 	}
 
 	private void jButtonDeleteSubgroupsActionPerformed()
@@ -719,6 +676,47 @@ System.out.println("DONE");
 			this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 		else
 			this.setCursor(Cursor.getDefaultCursor());
+	}
+
+	// loop over itsSubgroupSet instead of using .toArray() and then select
+	// required items --- itsSubgroupSet can be very large
+	// the selection is probably small
+	// TODO MM convertViewToModel(i) would allow sorting of result table
+	private Subgroup[] getSelectedSubgroups()
+	{
+		int[] aSelectedRows = itsSubgroupTable.getSelectedRows();
+		Subgroup[] aSelectedSubgroups = new Subgroup[aSelectedRows.length];
+		Iterator<Subgroup> anIterator = itsSubgroupSet.iterator();
+
+		for (int i = 0, j = aSelectedRows.length, k = 0; k < j; ++i, ++k)
+		{
+			int aNext = aSelectedRows[k];
+			while (i != aNext)
+			{
+				anIterator.next();
+				++i;
+			}
+			aSelectedSubgroups[k] = anIterator.next();
+		}
+
+		return aSelectedSubgroups;
+	}
+
+	/**
+	 * Creates a title for model windows, based on subgroup id and 
+	 * description.
+	 * 
+	 * @param theSubgroup from which to derive the title.
+	 * 
+	 * @return the title to be used for a model window.
+	 * 
+	 * @throws IllegalArgumentException if the argument is {@code null}.
+	 */
+	static final String createTitle(Subgroup theSubgroup)
+	{
+		return String.format("Subgroup %d (%s)",
+					theSubgroup.getID(),
+					theSubgroup.toString());
 	}
 
 	private JPanel jPanelSouth;
