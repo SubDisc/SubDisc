@@ -19,16 +19,7 @@ public class RankComparator
 	 */
 	public static void main(String[] args)
 	{
-		String p1 = "/home/marvin/0_housing/housing";
-		String p2 = "sales_price-lot_size";
-		String p3 = "mincov27-maxcov0.95-depth_first-bins8-geq.txt";
-		String p4 = "";
-
-		foo(new String[] {
-			p1+"-h2-"+p2+"-d2-"+p3+p4,
-			p1+"-ssdc-"+p2+"-d2-"+p3+p4
-		});
-		//foo(args);
+		foo(args);
 	}
 
 	private static final void foo(String[] files)
