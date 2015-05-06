@@ -301,209 +301,153 @@ public class ResultWindow extends JFrame implements ActionListener
 		{
 			case SINGLE_NUMERIC :
 			{
-				Column aTarget = itsSearchParameters.getTargetConcept().getPrimaryTarget();
-				ProbabilityDensityFunction aPDF;
-				// DEBUG
-				if (!ProbabilityDensityFunction.USE_ProbabilityDensityFunction2)
-					aPDF = new ProbabilityDensityFunction(aTarget);
-				else
-					aPDF = new ProbabilityDensityFunction2(aTarget);
-				aPDF.smooth();
-
-				for (Subgroup s : aSelectedSubgroups)
-				{
-					ProbabilityDensityFunction aSubgroupPDF;
-					// DEBUG
-					if (!ProbabilityDensityFunction.USE_ProbabilityDensityFunction2)
-						aSubgroupPDF = new ProbabilityDensityFunction(aPDF, s.getMembers());
-					else
-						aSubgroupPDF = new ProbabilityDensityFunction2(aPDF, s.getMembers());
-					aSubgroupPDF.smooth();
-					new ModelWindow(aTarget, aPDF, aSubgroupPDF, createTitle(s), false);
-				}
+				showModelWindowSingleNumeric(aSelectedSubgroups);
 				break;
 			}
 			case MULTI_NUMERIC :
 			{
-				JOptionPane.showMessageDialog(this, "Not implemented yet!", "Multi Numeric Error", JOptionPane.INFORMATION_MESSAGE);
-System.out.println("PRINTING TO FILE");
-
-ProbabilityDensityFunction_ND aPdf = itsSubgroupDiscovery.itsPDF_ND;
-
-for (Subgroup s : aSelectedSubgroups)
-{
-	int anID = s.getID();
-	float[][] grid = aPdf.getDensityDifference2D(s.getMembers(), true, null);
-	System.out.println("GRID CREATED FOR SUBGROUP: " + anID);
-
-	BufferedWriter bw = null;
-	try
-	{
-		File f = new File(System.nanoTime() + "_" + anID + ".dat");
-		System.out.println("GRID FILE: " + f.getAbsolutePath());
-		bw = new BufferedWriter(new FileWriter(f));
-
-		double[] stats = aPdf.lastDXDY;
-		double x_min = stats[0];
-		double y_min = stats[3];
-		double dx = stats[6];
-		double dy = stats[7];
-
-		// normalisation
-		float max = -Float.MAX_VALUE;
-		for (float[] row : grid)
-			for (float z : row)
-				if (z > max)
-					max = z;
-System.out.println(Arrays.toString(stats));
-System.out.println(max);
-
-		// x-y axis are swapped, simplifies loop a lot
-		for (int m = 0; m < grid.length; ++m)
-		{
-			float[] row = grid[m];
-
-			double x = x_min + (dx * m);
-			for (int n = 0; n < row.length; ++n)
-			{
-				double y = y_min + (dy * n);
-				double z = row[n]/max;
-				// NOTICE SWAP!!!
-				bw.write(y + "\t" + x + "\t" + z + "\n");
-			}
-			bw.write("\n"); // required by gnuplot at y-change
-		}
-	} catch (IOException e) {
-		// TODO MM
-		e.printStackTrace();
-	}
-	finally
-	{
-		if (bw != null)
-		try
-		{
-			bw.close();
-		}
-		catch (IOException e)
-		{
-			// TODO MM
-			e.printStackTrace();
-		}
-	}
-	System.out.println("GRID FILE CREATED FOR SUBGROUP: " + anID);
-}
-
-System.out.println("DONE");
-				break;
-			}
-			case DOUBLE_CORRELATION :
-			{
-				modelWindowHelper(TargetType.DOUBLE_CORRELATION, aSelectedSubgroups);
-				break;
-			}
-			case SCAPE :
-			{
-				Column aBinaryTarget = itsSearchParameters.getTargetConcept().getPrimaryTarget();
-				Column aNumericTarget = itsSearchParameters.getTargetConcept().getSecondaryTarget();
-				BitSet aBinaries = aBinaryTarget.getBinaries();
-				ProbabilityDensityFunction aPDF;
-				// DEBUG
-				if (!ProbabilityDensityFunction.USE_ProbabilityDensityFunction2)
-					aPDF = new ProbabilityDensityFunction(aNumericTarget);
-				else
-					aPDF = new ProbabilityDensityFunction2(aNumericTarget);
-				aPDF.smooth();
-
-				for (Subgroup s : aSelectedSubgroups)
-				{
-					BitSet aPositiveMembers = s.getMembers();
-					aPositiveMembers.and(aBinaries);
-
-					BitSet aNegativeMembers = s.getMembers();
-					BitSet aNonTarget = (BitSet) aBinaries.clone();
-					aNonTarget.flip(0,aNonTarget.length());
-					aNegativeMembers.and(aNonTarget);
-
-					ProbabilityDensityFunction aPositivePDF;
-					// DEBUG
-					if (!ProbabilityDensityFunction.USE_ProbabilityDensityFunction2)
-						aPositivePDF = new ProbabilityDensityFunction(aPDF, aPositiveMembers);
-					else
-						aPositivePDF = new ProbabilityDensityFunction2(aPDF, aPositiveMembers);
-					aPositivePDF.smooth();
-
-					ProbabilityDensityFunction aNegativePDF;
-					// DEBUG
-					if (!ProbabilityDensityFunction.USE_ProbabilityDensityFunction2)
-						aNegativePDF = new ProbabilityDensityFunction(aPDF, aNegativeMembers);
-					else
-						aNegativePDF = new ProbabilityDensityFunction2(aPDF, aNegativeMembers);
-					aNegativePDF.smooth();
-
-					new ModelWindow(aNumericTarget, aPositivePDF, aNegativePDF, createTitle(s), true);
-				}
-				break;
-			}
-			case MULTI_LABEL :
-			{
-				/*
-				 * TODO inefficient loop
-				 * use convertViewToModel(i) to select correct s, then use s.ID
-				 */
-				// FIXME MM CLEANUP: use getSelectedSubgroups()
-				int[] aSelectionIndex = itsSubgroupTable.getSelectedRows();
-				int i = 0;
-				while (i < aSelectionIndex.length)
-				{
-					Log.logCommandLine("subgroup " + (aSelectionIndex[i]+1));
-					int aCount = 0;
-					for (Subgroup s : itsSubgroupSet)
-					{
-						if (aCount == aSelectionIndex[i])
-							new ModelWindow(s.getDAG(), 1000, 800)
-								.setTitle("Subgroup " +
-									Integer.toString(aSelectionIndex[i]+1) +
-									": induced Bayesian Network");
-
-						aCount++;
-					}
-
-					i++;
-				}
+				//JOptionPane.showMessageDialog(this, "Not implemented yet!", "Multi Numeric Error", JOptionPane.INFORMATION_MESSAGE);
+				// else Show Model button should not be  enabled
+				assert (itsSearchParameters.getTargetConcept().getMultiTargets().size() == 2);
+				showModelWindowMultiNumeric(aSelectedSubgroups);
 				break;
 			}
 			case DOUBLE_REGRESSION :
 			{
-				modelWindowHelper(TargetType.DOUBLE_REGRESSION, aSelectedSubgroups);
+				showModelWindowDoubleCorrelationDoubleRegression(TargetType.DOUBLE_REGRESSION, aSelectedSubgroups);
+				break;
+			}
+			case DOUBLE_CORRELATION :
+			{
+				showModelWindowDoubleCorrelationDoubleRegression(TargetType.DOUBLE_CORRELATION, aSelectedSubgroups);
+				break;
+			}
+			case SCAPE :
+			{
+				showModelWindowScape(aSelectedSubgroups);
+				break;
+			}
+			case MULTI_LABEL :
+			{
+				showModelWindowMultiLabel(aSelectedSubgroups);
 				break;
 			}
 			case LABEL_RANKING :
 			{
-				for (Subgroup s : aSelectedSubgroups)
-				{
-					LabelRankingMatrix aLRM = s.getLabelRankingMatrix();
-					aLRM.print();
-					new LabelRankingMatrixWindow(itsQualityMeasure.getBaseLabelRankingMatrix(),
-									aLRM,
-									createTitle(s) + "   " + s.getLabelRanking().getRanking());
-				}
+				showModelWindowLabelRanking(aSelectedSubgroups);
 				break;
 			}
 			default :
-				break;
+				throw new AssertionError(itsSearchParameters.getTargetType());
 		}
 	}
 
-	private void modelWindowHelper(TargetType theTargetType, Subgroup[] theSubgroups)
+	private final void showModelWindowSingleNumeric(Subgroup[] theSelectedSubgroups)
 	{
-		assert (theSubgroups.length != 0);
+		Column aTarget = itsSearchParameters.getTargetConcept().getPrimaryTarget();
+		ProbabilityDensityFunction aPDF;
+		// DEBUG
+		if (!ProbabilityDensityFunction.USE_ProbabilityDensityFunction2)
+			aPDF = new ProbabilityDensityFunction(aTarget);
+		else
+			aPDF = new ProbabilityDensityFunction2(aTarget);
+		aPDF.smooth();
+
+		for (Subgroup s : theSelectedSubgroups)
+		{
+			ProbabilityDensityFunction aSubgroupPDF;
+			// DEBUG
+			if (!ProbabilityDensityFunction.USE_ProbabilityDensityFunction2)
+				aSubgroupPDF = new ProbabilityDensityFunction(aPDF, s.getMembers());
+			else
+				aSubgroupPDF = new ProbabilityDensityFunction2(aPDF, s.getMembers());
+			aSubgroupPDF.smooth();
+			new ModelWindow(aTarget, aPDF, aSubgroupPDF, createTitle(s), false);
+		}
+	}
+
+	private final void showModelWindowMultiNumeric(Subgroup[] theSelectedSubgroups)
+	{
+		System.out.println("PRINTING TO FILE");
+
+		ProbabilityDensityFunction_ND aPdf = itsSubgroupDiscovery.itsPDF_ND;
+
+		for (Subgroup s : theSelectedSubgroups)
+		{
+			int anID = s.getID();
+			float[][] grid = aPdf.getDensityDifference2D(s.getMembers(), true, null);
+			System.out.println("GRID CREATED FOR SUBGROUP: " + anID);
+
+			BufferedWriter bw = null;
+			try
+			{
+				File f = new File(System.nanoTime() + "_" + anID + ".dat");
+				System.out.println("GRID FILE: " + f.getAbsolutePath());
+				bw = new BufferedWriter(new FileWriter(f));
+
+				double[] stats = aPdf.lastDXDY;
+				double x_min = stats[0];
+				double y_min = stats[3];
+				double dx = stats[6];
+				double dy = stats[7];
+
+				// normalisation
+				float max = -Float.MAX_VALUE;
+				for (float[] row : grid)
+					for (float z : row)
+						if (z > max)
+							max = z;
+				System.out.println(Arrays.toString(stats));
+				System.out.println(max);
+
+				// x-y axis are swapped, simplifies loop a lot
+				for (int m = 0; m < grid.length; ++m)
+				{
+					float[] row = grid[m];
+
+					double x = x_min + (dx * m);
+					for (int n = 0; n < row.length; ++n)
+					{
+						double y = y_min + (dy * n);
+						double z = row[n]/max;
+						// NOTICE SWAP!!!
+						bw.write(y + "\t" + x + "\t" + z + "\n");
+					}
+					bw.write("\n"); // required by gnuplot at y-change
+				}
+			} catch (IOException e) {
+				// TODO MM
+				e.printStackTrace();
+			}
+			finally
+			{
+				if (bw != null)
+				try
+				{
+					bw.close();
+				}
+				catch (IOException e)
+				{
+					// TODO MM
+					e.printStackTrace();
+				}
+			}
+			System.out.println("GRID FILE CREATED FOR SUBGROUP: " + anID);
+		}
+
+		System.out.println("DONE");
+	}
+
+	private final void showModelWindowDoubleCorrelationDoubleRegression(TargetType theTargetType, Subgroup[] theSelectedSubgroups)
+	{
+		// isRegressionSetting relies on binary choice
 		assert (theTargetType == TargetType.DOUBLE_CORRELATION || theTargetType == TargetType.DOUBLE_REGRESSION);
 
 		final TargetConcept aTargetConcept = itsSearchParameters.getTargetConcept();
 		final boolean isRegressionSetting = (theTargetType == TargetType.DOUBLE_REGRESSION);
 		RegressionMeasure aRM = null;
 
-		for (Subgroup s : theSubgroups)
+		for (Subgroup s : theSelectedSubgroups)
 		{
 			if (isRegressionSetting)
 			{
@@ -516,6 +460,90 @@ System.out.println("DONE");
 					aTargetConcept.getSecondaryTarget(),
 					aRM,
 					s);
+		}
+	}
+
+	private final void showModelWindowScape(Subgroup[] theSelectedSubgroups)
+	{
+		Column aBinaryTarget = itsSearchParameters.getTargetConcept().getPrimaryTarget();
+		Column aNumericTarget = itsSearchParameters.getTargetConcept().getSecondaryTarget();
+		BitSet aBinaries = aBinaryTarget.getBinaries();
+		ProbabilityDensityFunction aPDF;
+		// DEBUG
+		if (!ProbabilityDensityFunction.USE_ProbabilityDensityFunction2)
+			aPDF = new ProbabilityDensityFunction(aNumericTarget);
+		else
+			aPDF = new ProbabilityDensityFunction2(aNumericTarget);
+		aPDF.smooth();
+
+		for (Subgroup s : theSelectedSubgroups)
+		{
+			BitSet aPositiveMembers = s.getMembers();
+			aPositiveMembers.and(aBinaries);
+
+			BitSet aNegativeMembers = s.getMembers();
+			BitSet aNonTarget = (BitSet) aBinaries.clone();
+			aNonTarget.flip(0,aNonTarget.length());
+			aNegativeMembers.and(aNonTarget);
+
+			ProbabilityDensityFunction aPositivePDF;
+			// DEBUG
+			if (!ProbabilityDensityFunction.USE_ProbabilityDensityFunction2)
+				aPositivePDF = new ProbabilityDensityFunction(aPDF, aPositiveMembers);
+			else
+				aPositivePDF = new ProbabilityDensityFunction2(aPDF, aPositiveMembers);
+			aPositivePDF.smooth();
+
+			ProbabilityDensityFunction aNegativePDF;
+			// DEBUG
+			if (!ProbabilityDensityFunction.USE_ProbabilityDensityFunction2)
+				aNegativePDF = new ProbabilityDensityFunction(aPDF, aNegativeMembers);
+			else
+				aNegativePDF = new ProbabilityDensityFunction2(aPDF, aNegativeMembers);
+			aNegativePDF.smooth();
+
+			new ModelWindow(aNumericTarget, aPositivePDF, aNegativePDF, createTitle(s), true);
+		}
+	}
+
+	/*
+	 * TODO inefficient loop
+	 * use convertViewToModel(i) to select correct s, then use s.ID
+	 */
+	// FIXME MM CLEANUP: use getSelectedSubgroups()
+	// when ResultWindow sorting is re-enabled the use of i-indices fails
+	private final void showModelWindowMultiLabel(Subgroup[] theSelectedSubgroups)
+	{
+		int[] aSelectionIndex = itsSubgroupTable.getSelectedRows();
+		int i = 0;
+		while (i < aSelectionIndex.length)
+		{
+			Log.logCommandLine("subgroup " + (aSelectionIndex[i]+1));
+			int aCount = 0;
+			for (Subgroup s : itsSubgroupSet)
+			{
+				if (aCount == aSelectionIndex[i])
+					new ModelWindow(s.getDAG(), 1000, 800)
+						.setTitle("Subgroup " +
+							Integer.toString(aSelectionIndex[i]+1) +
+							": induced Bayesian Network");
+
+				aCount++;
+			}
+
+			i++;
+		}
+	}
+
+	private void showModelWindowLabelRanking(Subgroup[] theSelectedSubgroups)
+	{
+		for (Subgroup s : theSelectedSubgroups)
+		{
+			LabelRankingMatrix aLRM = s.getLabelRankingMatrix();
+			aLRM.print();
+			new LabelRankingMatrixWindow(itsQualityMeasure.getBaseLabelRankingMatrix(),
+							aLRM,
+							createTitle(s) + "   " + s.getLabelRanking().getRanking());
 		}
 	}
 
