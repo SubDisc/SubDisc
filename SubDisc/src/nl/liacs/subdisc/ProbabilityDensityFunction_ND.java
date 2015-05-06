@@ -522,7 +522,8 @@ System.out.println("grid row: " + i);
 		{
 			if (itsGrid.length != 2)
 				throw new IllegalArgumentException(theQM + " only implemented for 2D");
-			return getDensityDifference2D(theSubgroup, toComplement, theQM)[0][0];
+			//return getDensityDifference2D(theSubgroup, toComplement, theQM)[0][0];
+			return getDensityDifference2D(theSubgroup, toComplement, theQM)[0][0][0];
 		}
 	}
 
@@ -655,7 +656,11 @@ System.out.println("C_kde_integral = " + C_kde_integral);
 		debug(t.getElapsedTimeString());
 		return densityDifference;
 	}
-
+/*
+ * XXX MM
+ * COPY OF ORIGINAL CODE
+ * UPDATE OF CODE TO RETURN NOT ONLY DENSITY_DIFFERENCE BUT ALSO THE
+ * SUBGROUP PDF AND THE COMPLEMENT|DATA PDF IS MOMENTOUS
 public double[] lastDXDY = null;
 	// GRID IS CREATED BASED ON SUBGROUP AND COMPLEMENT STATISTICS
 	public final float[][] getDensityDifference2D(BitSet theSubgroup, boolean toComplement, QM theQM)
@@ -813,6 +818,178 @@ System.out.println("C_kde_integral = " + C_kde_integral);
 
 		debug(t.getElapsedTimeString());
 		return densityDifference;
+	}
+*/
+	public double[] lastDXDY = null;
+	// GRID IS CREATED BASED ON SUBGROUP AND COMPLEMENT STATISTICS
+	public final float[][][] getDensityDifference2D(BitSet theSubgroup, boolean toComplement, QM theQM)
+	{
+		assert (itsGrid.length == 2);
+		assert (itsData.length >= 2);
+		assert (theSubgroup != null);
+		assert (theSubgroup.cardinality() > 0);
+
+		int D = itsGrid.length;
+		int N = itsData.length/D;
+
+		// S = subgroup, C = complement or complete data
+		double[][] stats = stats(itsData, theSubgroup, true);
+		int S_size = (int)stats[0][SIZE_N];
+		int C_size = (int)stats[1][SIZE_N];
+		float[][] S_cm = createBandwidthMatrix(stats[0]);
+		float[][] C_cm = createBandwidthMatrix(stats[1]);
+		// can not invert degenerate matrix
+		if (isDegenerate(S_cm) || isDegenerate(C_cm))
+		{
+			System.out.format("%nERROR: degenerate covariance matrix: %n SG %s%n    %s%n!SG %s%n    %s%n",
+						Arrays.toString(S_cm[0]),
+						Arrays.toString(S_cm[1]),
+						Arrays.toString(C_cm[0]),
+						Arrays.toString(C_cm[1]));
+			return new float[][][] {{ { 0.0f }, null, null }};
+		}
+
+		float[][] S_cm_inv = inverse(S_cm);
+		float[][] C_cm_inv = inverse(C_cm);
+		// for direct computation
+		double S_xvar_i = S_cm_inv[0][0];
+		double S_cov2_i = S_cm_inv[0][1] * 2.0; // 0.0 for diagonal H
+		double S_yvar_i = S_cm_inv[1][1];
+		double C_xvar_i = C_cm_inv[0][0];
+		double C_cov2_i = C_cm_inv[0][1] * 2.0; // 0.0 for diagonal H
+		double C_yvar_i = C_cm_inv[1][1];
+
+// SETUP OF GRID - BASED ON SUBGROUP | COMPLEMENT STATISTICS
+// COULD ALL BE MOVED TO SEPARATE METHOD
+		double S_xsigma = Math.sqrt(S_cm[0][0]);
+		double S_ysigma = Math.sqrt(S_cm[1][1]);
+		double C_xsigma = Math.sqrt(C_cm[0][0]);
+		double C_ysigma = Math.sqrt(C_cm[1][1]);
+		// extend x range using largest #_xsigma
+		double x_ext = CUTOFF * Math.max(S_xsigma, C_xsigma);
+		double x_min = itsLimits[0][MIN] - x_ext;
+		double x_max = itsLimits[0][MAX] + x_ext;
+		// extend y range using largest #_ysigma
+		double y_ext = CUTOFF * Math.max(S_ysigma, C_ysigma);
+		double y_min = itsLimits[1][MIN] - y_ext;
+		double y_max = itsLimits[1][MAX] + y_ext;
+		// smallest #_#sigma determines integration step size
+		// NOTE the smaller d# is, the closer #_integral is to 1.0
+		// but O(n) becomes O(n*X_RESOLUTION*Y_RESOLUTION)
+		double dx = (Math.min(S_xsigma, C_xsigma) / X_RESOLUTION); 
+		double dy = (Math.min(S_ysigma, C_ysigma) / Y_RESOLUTION);
+		double dxdy = dx*dy;
+		// number of samples (needed for densityDifference[x_n][y_n])
+		double x_range = x_max-x_min;
+		int x_n = (int)Math.floor(x_range / dx);
+		double y_range = y_max-y_min;
+		int y_n = (int)Math.floor(y_range / dy);
+// SETUP OF GRID COMPLETE
+
+// XXX TEMP
+lastDXDY = new double[] { x_min, x_max, x_n, y_min, y_max, y_n, dx, dy };
+
+////////////////////////////////////////////////////////////////////////////////
+debug("\nSG");
+debug("stats " + Arrays.toString(stats[0]));
+debug("cm    " + Arrays.toString(S_cm[0]) + "\n      " + Arrays.toString(S_cm[1]));
+debug("cm^-1 " + Arrays.toString(S_cm_inv[0]) + "\n      " + Arrays.toString(S_cm_inv[1]));
+debug("!SG");
+debug("stats " + Arrays.toString(stats[1]));
+debug("cm    " + Arrays.toString(C_cm[0]) + "\n      " + Arrays.toString(C_cm[1]));
+debug("cm^-1 " + Arrays.toString(C_cm_inv[0]) + "\n      " + Arrays.toString(C_cm_inv[1]));
+debug("GRID");
+debug(String.format("x_min=%f x_max=%f x_range=%f dx=%f x_n=%d (X_RESOLUTION=%f)", x_min, x_max, x_range, dx, x_n, X_RESOLUTION));
+debug(String.format("y_min=%f y_max=%f y_range=%f dy=%f y_n=%d (Y_RESOLUTION=%f)", y_min, y_max, y_range, dy, y_n, Y_RESOLUTION));
+if ((S_xsigma * S_ysigma < dxdy) || (C_xsigma * C_ysigma < dxdy))
+	debug("ERROR");
+debug("NOTE if ((#_xsigma * #_ysigma) < dxdy) then #_intregral < 1.0");
+debug(String.format("        dx=%f\t        dy=%f\t         dxdy=%f", dx, dy, dxdy));
+debug(String.format(" SG_xsigma=%f\t SG_ysigma=%f\txsigma*ysigma=%f", S_xsigma, S_ysigma, (S_xsigma * S_ysigma)));
+debug(String.format("!SG_xsigma=%f\t!SG_ysigma=%f\txsigma*ysigma=%f", C_xsigma, C_ysigma, (C_xsigma * C_ysigma)));
+Timer t = new Timer();
+double S_kde_integral = 0.0;
+double C_kde_integral = 0.0;
+////////////////////////////////////////////////////////////////////////////////
+
+		boolean qm_only = (theQM != null);
+		float[][] aPDFSubgroup = qm_only ? null : new float[x_n][y_n];
+		float[][] aPDFComplement = qm_only ? null : new float[x_n][y_n];
+		float[][] aPDFDifference = qm_only ? null : new float[x_n][y_n];
+		double difference = 0.0;
+		// Kh = 1/n*sum(1/h*K(x/h)), 1/n*1/sqrt(2*PI)^k*|SIGMA|)
+		double S_f = dxdy / (2.0 * Math.PI * Math.sqrt(det(S_cm)) * S_size);
+		double C_f = dxdy / (2.0 * Math.PI * Math.sqrt(det(C_cm)) * C_size);
+
+		for (int i = 0; i < x_n; ++i)
+		{
+			float[] aRowSubgroup = qm_only ? null : new float[y_n];
+			float[] aRowComplement = qm_only ? null : new float[y_n];
+			float[] aRowDifference = qm_only ? null : new float[y_n];
+
+			if (!qm_only)
+			{
+				aPDFSubgroup[i] = aRowSubgroup;
+				aPDFComplement[i] = aRowComplement;
+				aPDFDifference[i] = aRowDifference;
+			}
+
+			double x = (x_min + (i*dx)); // x-coord
+			for (int j = 0; j < y_n; ++j)
+			{
+				double y = (y_min + (j*dy)); // y-coord
+
+				double S_kde = 0.0;
+				double C_kde = 0.0;
+				for (int k = 0, m = 0; k < N; ++k, ++m)
+				{
+					double px = x - itsData[  m];
+					double py = y - itsData[++m]; // NOTE increment
+
+					// TODO MM CUTOFF checks go here
+
+					if (theSubgroup.get(k))
+						S_kde += Math.exp(-0.5 * ((px*px*S_xvar_i) + (px*py*S_cov2_i) + (py*py*S_yvar_i)));
+					// toComplement check would go here
+					else
+						C_kde += Math.exp(-0.5 * ((px*px*C_xvar_i) + (px*py*C_cov2_i) + (py*py*C_yvar_i)));
+				}
+				S_kde *= S_f;
+				C_kde *= C_f;
+				S_kde_integral += S_kde;
+				C_kde_integral += C_kde;
+
+				if (!qm_only)
+				{
+					aRowSubgroup[j] = (float) S_kde;
+					aRowComplement[j] = (float) C_kde;
+					aRowDifference[j] = (float)(S_kde-C_kde);
+				}
+				else
+					difference += divergence(theQM, S_kde, C_kde, S_size, N);
+
+				// no need to continue
+				if (Double.isInfinite(difference))
+				{
+					debug(String.format("[%d,%d]=(%20.16f,%20.16f) %20.16f %20.16f", i, j, x, y, S_kde, C_kde));
+					debug("QM = " + difference);
+					debug(t.getElapsedTimeString());
+					return new float[][][] {{ {(float)difference}, null, null }};
+				}
+			}
+		}
+System.out.println("S_kde_integral = " + S_kde_integral);
+System.out.println("C_kde_integral = " + C_kde_integral);
+
+		if (qm_only)
+		{
+			debug("QM = " + difference);
+			debug(t.getElapsedTimeString());
+			return new float[][][] {{ {(float)difference}, null, null }};
+		}
+
+		debug(t.getElapsedTimeString());
+		return new float[][][] { aPDFSubgroup, aPDFComplement, aPDFDifference };
 	}
 
 	/*

@@ -375,7 +375,8 @@ public class ResultWindow extends JFrame implements ActionListener
 		for (Subgroup s : theSelectedSubgroups)
 		{
 			int anID = s.getID();
-			float[][] grid = aPdf.getDensityDifference2D(s.getMembers(), true, null);
+			// FIXME MM hard coded [2]={ PDF_SG, PDF_COMP, PDF_DIFF}
+			float[][] grid = aPdf.getDensityDifference2D(s.getMembers(), true, null)[2];
 			System.out.println("GRID CREATED FOR SUBGROUP: " + anID);
 
 			BufferedWriter bw = null;
