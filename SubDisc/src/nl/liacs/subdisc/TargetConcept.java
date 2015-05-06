@@ -17,6 +17,9 @@ public class TargetConcept implements XMLNodeInterface
 
 	// when adding/removing members be sure to update addNodeTo() and loadNode()
 	// itsMembers
+// FIXME MM
+// itsNrTargetAttributes is a very confusing member, and it is never used in code
+// either implement it such that it makes sense or remove it altogether
 	private int		itsNrTargetAttributes = 1;	// always 1 in current code
 	private TargetType	itsTargetType;
 	private Column		itsPrimaryTarget;
