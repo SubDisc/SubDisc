@@ -1539,6 +1539,7 @@ public class MiningWindow extends JFrame implements ActionListener
 					throw new AssertionError(aTargetType + " base model only available for 2 dimensions");
 
 // TODO MM use ProbabilityDensityFunction_ND
+// CODE IS ALSO USED IN ResultWindow showModel()
 				// compute base model
 				setBusy(true);
 				Column c1 = aList.get(0);

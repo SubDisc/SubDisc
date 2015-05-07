@@ -6,6 +6,7 @@ import java.awt.print.*;
 import java.io.*;
 import java.text.*;
 import java.util.*;
+import java.util.List;
 
 import javax.swing.*;
 
@@ -306,9 +307,13 @@ public class ResultWindow extends JFrame implements ActionListener
 			}
 			case MULTI_NUMERIC :
 			{
-				//JOptionPane.showMessageDialog(this, "Not implemented yet!", "Multi Numeric Error", JOptionPane.INFORMATION_MESSAGE);
+				int nrTargets = itsSearchParameters.getTargetConcept().getMultiTargets().size();
+
 				// else Show Model button should not be  enabled
-				assert (itsSearchParameters.getTargetConcept().getMultiTargets().size() == 2);
+				assert (nrTargets == 2);
+
+				
+				//JOptionPane.showMessageDialog(this, "Not implemented yet!", "Multi Numeric Error", JOptionPane.INFORMATION_MESSAGE);
 				showModelWindowMultiNumeric(aSelectedSubgroups);
 				break;
 			}
@@ -368,6 +373,37 @@ public class ResultWindow extends JFrame implements ActionListener
 
 	private final void showModelWindowMultiNumeric(Subgroup[] theSelectedSubgroups)
 	{
+		List<Column> aList = itsSearchParameters.getTargetConcept().getMultiTargets();
+
+		// compute base model
+		setBusy(true);
+		Column c1 = aList.get(0);
+		Column c2 = aList.get(1);
+
+		for (Subgroup s : theSelectedSubgroups)
+		{
+			final int aRows = itsTable.getNrRows();
+			double[] c1data = new double[aRows];
+			double[] c2data = new double[aRows];
+			double[][] aData = { c1data, c2data };
+
+			BitSet aMembers = s.getMembers();
+			for (int i = aMembers.nextSetBit(0); i >= 0; i = aMembers.nextSetBit(i+1))
+			{
+				c1data[i] = c1.getFloat(i);
+				c2data[i] = c2.getFloat(i);
+			}
+
+			ProbabilityDensityFunction2_2D aPdf_ = new ProbabilityDensityFunction2_2D(aData);
+			setBusy(false);
+	
+			new PDFWindow2D(aPdf_, "all data",c1.getName(), c2.getName());
+		}
+
+		if (true)
+			return;
+// CODE BELOW WRITES VARIOUS GRIDS TO FILE
+// THIS WILL BE CLEANED UP SOME DAY
 		System.out.println("PRINTING TO FILE");
 
 		ProbabilityDensityFunction_ND aPdf = itsSubgroupDiscovery.itsPDF_ND;
