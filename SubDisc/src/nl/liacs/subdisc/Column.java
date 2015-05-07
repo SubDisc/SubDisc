@@ -502,9 +502,20 @@ public class Column implements XMLNodeInterface
 		return (BitSet) itsBinaries.clone();
 	}
 
+	/**
+	 * Return a copy of the float values of this Column if this Column is
+	 * of type {@link AttributeType#NUMERIC}.
+	 *
+	 * @return a float[], with the same values as this Column.
+	 *
+	 * @param theBinary the value to append to this Column.
+	 * 
+	 * @throws NullPointerException if this Column is not of type
+	 * {@link AttributeType#NUMERIC}.
+	 */
 	public float[] getFloats() throws NullPointerException
 	{
-		return itsFloatz;
+		return Arrays.copyOf(itsFloatz, itsFloatz.length);
 	}
 
 	private boolean isOutOfBounds(int theIndex)
