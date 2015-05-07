@@ -18,6 +18,7 @@ import org.jfree.data.xy.*;
 public class ModelWindow extends JFrame implements ActionListener
 {
 	private static final long serialVersionUID = 1L;
+	static final String BASE_MODEL_TEXT = "Base Model (all data)";
 
 	private JScrollPane itsJScrollPaneCenter = new JScrollPane();
 	private BitSet itsSample = null;
@@ -31,7 +32,7 @@ public class ModelWindow extends JFrame implements ActionListener
 
 	// SINGLE_NUMERIC: show distribution over numeric target and Subgroup =====================================
 	// SCAPE: show distribution of numeric target, for positives and negatives in binary target ===============
-	public ModelWindow(Column theDomain, ProbabilityDensityFunction theDatasetPDF, ProbabilityDensityFunction theSubgroupPDF, String theName, boolean isScapeSetting)
+	public ModelWindow(Column theDomain, ProbabilityDensityFunction theDatasetPDF, ProbabilityDensityFunction theSubgroupPDF, String theTitle, boolean isScapeSetting)
 	{
 		initComponents();
 
@@ -101,10 +102,7 @@ public class ModelWindow extends JFrame implements ActionListener
 
 		itsJScrollPaneCenter.setViewportView(new ChartPanel(aChart));
 
-		if (!addSubgroup)
-			setTitle("Base Model: Numeric Distribution for " + theName);
-		else
-			setTitle(theName + ": Numeric Distribution");
+		setTitle(theTitle + ": Numeric Distribution");
 		setIconImage(MiningWindow.ICON);
 		setLocation(50, 50);
 		setSize(GUI.WINDOW_DEFAULT_SIZE);
@@ -186,15 +184,10 @@ public class ModelWindow extends JFrame implements ActionListener
 
 		itsJScrollPaneCenter.setViewportView(new ChartPanel(itsChart));
 
-		String aTitle;
+		String aWho = forSubgroup ? ResultWindow.createTitle(theSubgroup) : BASE_MODEL_TEXT;
 		String aType = isRegression ? "Regression" : "Correlation";
-		if (forSubgroup)
-			aTitle = String.format("%s: %s", ResultWindow.createTitle(theSubgroup), aType);
-		else
-			aTitle = String.format("%s: %s for entire dataset", "Base Model", aType);
-
-		if (itsSample != null)
-			aTitle += " (sampled)";
+		String aSample = (itsSample == null) ? "" : " (sampled)";
+		String aTitle = String.format("%s: %s%s", aWho, aType, aSample);
 
 		setTitle(aTitle);
 		setIconImage(MiningWindow.ICON);
@@ -248,7 +241,7 @@ public class ModelWindow extends JFrame implements ActionListener
 		aDAGView.drawDAG();
 		itsJScrollPaneCenter.setViewportView(aDAGView);
 
-		setTitle("Base Model: Bayesian Network for entire dataset");
+		setTitle(BASE_MODEL_TEXT + ": Bayesian Network");
 		setIconImage(MiningWindow.ICON);
 		setLocation(0, 0);
 		setSize(theDAGWidth, theDAGHeight);

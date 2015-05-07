@@ -1529,35 +1529,27 @@ public class MiningWindow extends JFrame implements ActionListener
 				else
 					aPDF = new ProbabilityDensityFunction2(aTarget);
 				aPDF.smooth();
-				new ModelWindow(aTarget, aPDF, null, itsTable.getName(), false);
+				new ModelWindow(aTarget, aPDF, null, ModelWindow.BASE_MODEL_TEXT, false);
 				break;
 			}
 			case MULTI_NUMERIC :
 			{
+// TODO MM use ProbabilityDensityFunction_ND
+// CODE IS ALSO USED IN ResultWindow showModel()
 				List<Column> aList = itsTargetConcept.getMultiTargets();
 				if (aList .size() != 2)
 					throw new AssertionError(aTargetType + " base model only available for 2 dimensions");
 
-// TODO MM use ProbabilityDensityFunction_ND
-// CODE IS ALSO USED IN ResultWindow showModel()
+				int aNrRows = itsTable.getNrRows();
+				BitSet aMembers = new BitSet(aNrRows);
+				aMembers.set(0, aNrRows);
+
 				// compute base model
 				setBusy(true);
-				Column c1 = aList.get(0);
-				Column c2 = aList.get(1);
-				final int aRows = itsTable.getNrRows();
-				double[][] aData = new double[2][aRows];
-				double[] da = new double[aRows];
-				for (int i=0; i<aRows; i++)
-					da[i] = c1.getFloat(i);
-				aData[0] = da;
-				da = new double[aRows];
-				for (int i=0; i<aRows; i++)
-					da[i] = c2.getFloat(i);
-				aData[1] = da;
-				ProbabilityDensityFunction2_2D aPdf = new ProbabilityDensityFunction2_2D(aData);
+				ProbabilityDensityFunction2_2D aPdf = new ProbabilityDensityFunction2_2D(aList, aMembers);
 				setBusy(false);
 
-				new PDFWindow2D(aPdf, "all data",c1.getName(), c2.getName());
+				new PDFWindow2D(aPdf, ModelWindow.BASE_MODEL_TEXT, aList.get(0).getName(), aList.get(1).getName());
 				break;
 			}
 			case SINGLE_ORDINAL :
@@ -1609,7 +1601,7 @@ public class MiningWindow extends JFrame implements ActionListener
 					aNegativePDF = new ProbabilityDensityFunction2(aPDF, aNegativeBinaries);
 				aNegativePDF.smooth();
 
-				new ModelWindow(aNumericTarget, aPositivePDF, aNegativePDF, itsTable.getName(), true);
+				new ModelWindow(aNumericTarget, aPositivePDF, aNegativePDF, ModelWindow.BASE_MODEL_TEXT, true);
 				break;
 			}
 			case MULTI_LABEL :

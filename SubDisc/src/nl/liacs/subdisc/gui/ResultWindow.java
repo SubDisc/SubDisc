@@ -307,13 +307,7 @@ public class ResultWindow extends JFrame implements ActionListener
 			}
 			case MULTI_NUMERIC :
 			{
-				int nrTargets = itsSearchParameters.getTargetConcept().getMultiTargets().size();
-
-				// else Show Model button should not be  enabled
-				assert (nrTargets == 2);
-
-				
-				//JOptionPane.showMessageDialog(this, "Not implemented yet!", "Multi Numeric Error", JOptionPane.INFORMATION_MESSAGE);
+				// FIXME MM ShowModel only for 2D targets
 				showModelWindowMultiNumeric(aSelectedSubgroups);
 				break;
 			}
@@ -373,106 +367,118 @@ public class ResultWindow extends JFrame implements ActionListener
 
 	private final void showModelWindowMultiNumeric(Subgroup[] theSelectedSubgroups)
 	{
+// TODO MM use ProbabilityDensityFunction_ND
+// CODE IS ALSO USED IN MiningWindow showModel()
 		List<Column> aList = itsSearchParameters.getTargetConcept().getMultiTargets();
+		if (aList .size() != 2)
+			throw new AssertionError(TargetType.MULTI_NUMERIC + " base model only available for 2 dimensions");
 
-		// compute base model
-		setBusy(true);
-		Column c1 = aList.get(0);
-		Column c2 = aList.get(1);
-
+		// compute model for each subgroup
 		for (Subgroup s : theSelectedSubgroups)
 		{
-			final int aRows = itsTable.getNrRows();
-			double[] c1data = new double[aRows];
-			double[] c2data = new double[aRows];
-			double[][] aData = { c1data, c2data };
-
-			BitSet aMembers = s.getMembers();
-			for (int i = aMembers.nextSetBit(0); i >= 0; i = aMembers.nextSetBit(i+1))
-			{
-				c1data[i] = c1.getFloat(i);
-				c2data[i] = c2.getFloat(i);
-			}
-
-			ProbabilityDensityFunction2_2D aPdf_ = new ProbabilityDensityFunction2_2D(aData);
+			setBusy(true);
+			ProbabilityDensityFunction2_2D aPdf = new ProbabilityDensityFunction2_2D(aList, s.getMembers());
 			setBusy(false);
-	
-			new PDFWindow2D(aPdf_, "all data",c1.getName(), c2.getName());
-		}
 
-		if (true)
-			return;
-// CODE BELOW WRITES VARIOUS GRIDS TO FILE
-// THIS WILL BE CLEANED UP SOME DAY
-		System.out.println("PRINTING TO FILE");
+			new PDFWindow2D(aPdf, createTitle(s), aList.get(0).getName(), aList.get(1).getName());
+		}
 
 		ProbabilityDensityFunction_ND aPdf = itsSubgroupDiscovery.itsPDF_ND;
 
 		for (Subgroup s : theSelectedSubgroups)
-		{
-			int anID = s.getID();
-			// FIXME MM hard coded [2]={ PDF_SG, PDF_COMP, PDF_DIFF}
-			float[][] grid = aPdf.getDensityDifference2D(s.getMembers(), true, null)[2];
-			System.out.println("GRID CREATED FOR SUBGROUP: " + anID);
+			writePdfs(aPdf, s);
+	}
 
-			BufferedWriter bw = null;
+	private static final void writePdfs(ProbabilityDensityFunction_ND thePDFData, Subgroup theSubgroup)
+	{
+		Log.logCommandLine("writing pdf grid files for: " + createTitle(theSubgroup));
+
+		// { PDF_SG, PDF_COMP, PDF_DIFF}
+		float[][][] grids = thePDFData.getDensityDifference2D(theSubgroup.getMembers(), true, null);
+		double[] stats = Arrays.copyOf(thePDFData.lastDXDY, thePDFData.lastDXDY.length);
+
+		// avoids overwriting + keeps 3 grids together in file browsers
+		String s = String.format("%s_%s_%s%s", System.nanoTime(), "%s", theSubgroup.getID(), ".dat");
+		String info = createTitle(theSubgroup);
+		float aMax = writePdfGetMax(grids);
+		writePdf(grids[0], stats, aMax, String.format(s, "subgroup"), info);
+		writePdf(grids[1], stats, aMax, String.format(s, "complement"), info);
+		writePdf(grids[2], stats, aMax, String.format(s, "difference"), info);
+	}
+
+	/*
+	 * finds the MAX_VALUE over all 3 grids of SG | COMPL | DIFF
+	 * this will be used as normalisation factor such that all plots will
+	 * be on the same (pdf) scale
+	 */
+	private static final float writePdfGetMax(float[][][] theGrids)
+	{
+		float max = -Float.MAX_VALUE;
+
+		for (float[][] theGrid : theGrids)
+			for (float[] row : theGrid)
+				for (float z : row)
+					if (z > max)
+						max = z;
+
+		return max;
+	}
+
+	private static final void writePdf(float[][] theGrid, double[] theStats, float theNormaliser, String theFileName, String theSubgroupInfo)
+	{
+		BufferedWriter bw = null;
+		try
+		{
+			File f = new File(theFileName);
+			bw = new BufferedWriter(new FileWriter(f));
+			Log.logCommandLine("writing: " + f.getAbsolutePath());
+
+			double x_min = theStats[0];
+			double y_min = theStats[3];
+			double dx = theStats[6];
+			double dy = theStats[7];
+
+			bw.write("# " + theSubgroupInfo + "\n");
+			bw.write("# stats " + Arrays.toString(theStats) + "\n");
+			bw.write("# normalisation " + Double.toString(theNormaliser) + "\n");
+			bw.write("# y\tx\tz\n");	// NOTICE SWAP!!!
+
+			// x-y axis are swapped, simplifies loop a lot
+			for (int i = 0; i < theGrid.length; ++i)
+			{
+				float[] row = theGrid[i];
+
+				double x = x_min + (dx * i);
+				for (int j = 0; j < row.length; ++j)
+				{
+					double y = y_min + (dy * j);
+					double z = row[j]/theNormaliser;
+					// NOTICE SWAP!!!
+					bw.write(y + "\t" + x + "\t" + z + "\n");
+				}
+				bw.write("\n"); // required by gnuplot at y-change
+			}
+
+			Log.logCommandLine("Done\n");
+		}
+		catch (IOException e)
+		{
+			// TODO MM
+			e.printStackTrace();
+		}
+		finally
+		{
+			if (bw != null)
 			try
 			{
-				File f = new File(System.nanoTime() + "_" + anID + ".dat");
-				System.out.println("GRID FILE: " + f.getAbsolutePath());
-				bw = new BufferedWriter(new FileWriter(f));
-
-				double[] stats = aPdf.lastDXDY;
-				double x_min = stats[0];
-				double y_min = stats[3];
-				double dx = stats[6];
-				double dy = stats[7];
-
-				// normalisation
-				float max = -Float.MAX_VALUE;
-				for (float[] row : grid)
-					for (float z : row)
-						if (z > max)
-							max = z;
-				System.out.println(Arrays.toString(stats));
-				System.out.println(max);
-
-				// x-y axis are swapped, simplifies loop a lot
-				for (int m = 0; m < grid.length; ++m)
-				{
-					float[] row = grid[m];
-
-					double x = x_min + (dx * m);
-					for (int n = 0; n < row.length; ++n)
-					{
-						double y = y_min + (dy * n);
-						double z = row[n]/max;
-						// NOTICE SWAP!!!
-						bw.write(y + "\t" + x + "\t" + z + "\n");
-					}
-					bw.write("\n"); // required by gnuplot at y-change
-				}
-			} catch (IOException e) {
+				bw.close();
+			}
+			catch (IOException e)
+			{
 				// TODO MM
 				e.printStackTrace();
 			}
-			finally
-			{
-				if (bw != null)
-				try
-				{
-					bw.close();
-				}
-				catch (IOException e)
-				{
-					// TODO MM
-					e.printStackTrace();
-				}
-			}
-			System.out.println("GRID FILE CREATED FOR SUBGROUP: " + anID);
 		}
-
-		System.out.println("DONE");
 	}
 
 	private final void showModelWindowDoubleCorrelationDoubleRegression(TargetType theTargetType, Subgroup[] theSelectedSubgroups)

@@ -1,5 +1,7 @@
 package nl.liacs.subdisc;
 
+import java.util.*;
+
 import nl.liacs.histo.*;
 import Jama.*;
 
@@ -36,10 +38,22 @@ public class ProbabilityDensityFunction2_2D
 	 * hs[dimension]
 	 * std_devs[dimension]
 	 */
-	public ProbabilityDensityFunction2_2D(double[][] data)
+	public ProbabilityDensityFunction2_2D(List<Column> theData, BitSet theMembers)
 	{
-		// no checks for now
-		this.data = data;
+		// no parameter checks for now
+
+		// not worth creating indexes[] for just 2 runs over theMembers
+//		int[] anIndexes = new int[theMembers.cardinality()];
+//		for (int i = theMembers.nextSetBit(0), j = 0; i >= 0; i = theMembers.nextSetBit(i+1), ++j)
+//			anIndexes[j] = i;
+
+		int aSize = theMembers.cardinality();
+		this.data = new double[][]{ new double[aSize], new double[aSize] };
+
+		for (int i = 0, j = theData.size(); i < j; ++i)
+			for (int k = theMembers.nextSetBit(0), m = 0; k >= 0; k = theMembers.nextSetBit(k+1), ++m)
+				data[i][m] = theData.get(i).getFloat(k);
+
 		for (int i=0; i<data[0].length; i++)
 		{
 			if (this.data[0][i] < itsMinX)
@@ -51,7 +65,7 @@ public class ProbabilityDensityFunction2_2D
 			if (this.data[1][i] > itsMaxY)
 				itsMaxY = this.data[1][i];
 		}
-		
+
 		this.hs = ProbabilityDensityFunctionMV.h_silverman(this.data);
 		this.std_devs = computeStdDevs(this.data);
 		this.grids = computeGrids(this.data, this.hs, this.std_devs, -1);
@@ -74,7 +88,6 @@ public class ProbabilityDensityFunction2_2D
 	public final double getMaxDensity() 
 	{
 		double aMax = 0;
-		
 		for (int i=0; i<getSizeX(); i++) 
 			for (int j=0; j<getSizeY(); j++)
 				if (density[i][j] > aMax)
@@ -124,7 +137,7 @@ public class ProbabilityDensityFunction2_2D
 		// s = sigmas covered by range
 		double s = range/h;
 		// 1 sigma=(samples/(2*CUTOFF))
-		
+
 		if (isFirstDimension)
 		{
 			itsLowX = g_min;
@@ -135,10 +148,10 @@ public class ProbabilityDensityFunction2_2D
 			itsLowY = g_min;
 			itsHighY = g_max;
 		}
-		
+
 		int k = (int) ((Math.ceil(s) * SAMPLES) / (2.0 * CUTOFF));
 		k = Math.min(k, 128); //AK: maximum on k, to avoid overly large matrices
-		
+
 		System.out.format("%f %f %f %f %f %d %n", g_min, g_max, range, h, s, k);
 		return k;
 	}
@@ -399,7 +412,8 @@ public class ProbabilityDensityFunction2_2D
 		double[] x_data = { 0.62, 0.50, 0.70, 0.51, 0.32 };
 		double[] y_data = { 0.51, 0.32, 0.51, 0.62, 0.41 };
 		double[][] data = new double[][] { x_data, y_data };
-		ProbabilityDensityFunction2_2D pdf = new ProbabilityDensityFunction2_2D(data);
+		// disabled -- use old constructor, modify to use List<Column>
+//		ProbabilityDensityFunction2_2D pdf = new ProbabilityDensityFunction2_2D(data);
 		System.out.println("START PLOT");
 //		new TMPW(pdf.density, "");
 
