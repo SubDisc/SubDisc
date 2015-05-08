@@ -54,6 +54,7 @@ public class ProbabilityDensityFunction2_2D
 			for (int k = theMembers.nextSetBit(0), m = 0; k >= 0; k = theMembers.nextSetBit(k+1), ++m)
 				data[i][m] = theData.get(i).getFloat(k);
 
+		// TODO MM use cached Column.getMin(), Column.getMax()
 		for (int i=0; i<data[0].length; i++)
 		{
 			if (this.data[0][i] < itsMinX)

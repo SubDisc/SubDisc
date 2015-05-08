@@ -40,7 +40,7 @@ public class PDFPlot extends JPanel
 			itsLines.moveTo(0.0f, -i/(float)itsPDF.getSizeY());
 			itsLines.lineTo(-0.01f, -i/(float)itsPDF.getSizeY());
 		}
-		
+
 		//bounding box
 		double aScaleX = itsPDF.getHighX() - itsPDF.getLowX();
 		double aScaleY = itsPDF.getHighY() - itsPDF.getLowY();
@@ -88,7 +88,7 @@ public class PDFPlot extends JPanel
 		aGraphic.setColor(Color.black);
 		aGraphic.setStroke(new BasicStroke(1.0f/aSize));
 		aGraphic.draw(itsLines);
-		
+
 //		Log.logCommandLine("X: (" + itsPDF.getMinX() + ", " + itsPDF.getMaxX() + ")" + " (" + itsPDF.getLowX() + ", " + itsPDF.getHighX() + ")");
 //		Log.logCommandLine("Y: (" + itsPDF.getMinY() + ", " + itsPDF.getMaxY() + ")" + " (" + itsPDF.getLowY() + ", " + itsPDF.getHighY() + ")");
 

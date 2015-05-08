@@ -14,8 +14,6 @@ import java.awt.event.*;
 import javax.swing.*;
 import javax.swing.border.*;
 
-import nl.liacs.subdisc.gui.MiningWindow.*;
-
 public class GUI
 {
 	public static final Color RED = new Color(255, 150, 166);
