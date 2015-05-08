@@ -12,6 +12,7 @@ import javax.swing.*;
 
 import nl.liacs.subdisc.*;
 import nl.liacs.subdisc.FileHandler.Action;
+import nl.liacs.subdisc.Timer;
 
 public class ResultWindow extends JFrame implements ActionListener
 {
@@ -365,45 +366,90 @@ public class ResultWindow extends JFrame implements ActionListener
 		}
 	}
 
+//	private final void showModelWindowMultiNumeric(Subgroup[] theSelectedSubgroups)
+//	{
+//// CODE IS ALSO USED IN MiningWindow showModel()
+//		List<Column> aList = itsSearchParameters.getTargetConcept().getMultiTargets();
+//		if (aList .size() != 2)
+//			throw new AssertionError(TargetType.MULTI_NUMERIC + " base model only available for 2 dimensions");
+//
+//Timer t1 = new Timer();
+//		// compute model for each subgroup
+//		for (Subgroup s : theSelectedSubgroups)
+//		{
+//			setBusy(true);
+//			ProbabilityDensityFunction2_2D aPdf = new ProbabilityDensityFunction2_2D(aList, s.getMembers());
+//System.out.println("OLD: " + t1.getElapsedTimeString());
+//
+//Timer t2 = new Timer();
+//float[][][] grids = itsSubgroupDiscovery.itsPDF_ND.getDensityDifference2D(s.getMembers(), true, null);
+//System.out.println("NEW: "+ t2.getElapsedTimeString());
+//			setBusy(false);
+//
+//			new PDFWindow2D(aPdf, createTitle(s), aList.get(0).getName(), aList.get(1).getName());
+//		}
+//
+//		// DEBUG -- DO NOT WRITE OUT FILES
+//		if (true)
+//			return;
+//
+//		ProbabilityDensityFunction_ND aPdf = itsSubgroupDiscovery.itsPDF_ND;
+//
+//		for (Subgroup s : theSelectedSubgroups)
+//			writePdfs(aPdf, s);
+//	}
+
 	private final void showModelWindowMultiNumeric(Subgroup[] theSelectedSubgroups)
 	{
-// TODO MM use ProbabilityDensityFunction_ND
 // CODE IS ALSO USED IN MiningWindow showModel()
 		List<Column> aList = itsSearchParameters.getTargetConcept().getMultiTargets();
 		if (aList .size() != 2)
 			throw new AssertionError(TargetType.MULTI_NUMERIC + " base model only available for 2 dimensions");
 
-		// compute model for each subgroup
+		ProbabilityDensityFunction_ND aPdf = itsSubgroupDiscovery.itsPDF_ND;
+		double[][] aLimits = aPdf.getLimits();
+
 		for (Subgroup s : theSelectedSubgroups)
 		{
 			setBusy(true);
-			ProbabilityDensityFunction2_2D aPdf = new ProbabilityDensityFunction2_2D(aList, s.getMembers());
+			// TODO MM synchronized to ensure the stats obtained are
+			// for the retrieved grid
+			// this part of the code is not multi-threaded (yet)
+			// the code in ProbabilityDensityFunction_ND is clumsy
+			// and error prone and will be cleaned one day
+			float[][][] aGrids;
+			double[] aStats;
+			synchronized (aPdf)
+			{
+				// { PDF_SG, PDF_COMP, PDF_DIFF}
+				aGrids = aPdf.getDensityDifference2D(s.getMembers(), true, null);
+				aStats = aPdf.lastDXDY;
+			}
 			setBusy(false);
 
-			new PDFWindow2D(aPdf, createTitle(s), aList.get(0).getName(), aList.get(1).getName());
+			normaliseGrids(aGrids);
+
+			new PDFWindow2D(aGrids, aStats, aLimits, createTitle(s), aList.get(0).getName(), aList.get(1).getName());
+
+			// DEBUG -- DO NOT WRITE OUT FILES
+			if (true)
+				return;
+
+			writePdfs(s, aGrids, aStats);
 		}
-
-		ProbabilityDensityFunction_ND aPdf = itsSubgroupDiscovery.itsPDF_ND;
-
-		for (Subgroup s : theSelectedSubgroups)
-			writePdfs(aPdf, s);
 	}
 
-	private static final void writePdfs(ProbabilityDensityFunction_ND thePDFData, Subgroup theSubgroup)
+	private static final float normaliseGrids(float[][][] theGrids)
 	{
-		Log.logCommandLine("writing pdf grid files for: " + createTitle(theSubgroup));
+		float aMax = normaliseGridsGetMax(theGrids);
 
-		// { PDF_SG, PDF_COMP, PDF_DIFF}
-		float[][][] grids = thePDFData.getDensityDifference2D(theSubgroup.getMembers(), true, null);
-		double[] stats = Arrays.copyOf(thePDFData.lastDXDY, thePDFData.lastDXDY.length);
+		for (float[][] theGrid : theGrids)
+			for (float[] row : theGrid)
+				for (int i = 0, j = row.length; i < j; ++i)
+					row[i] /= aMax;
 
-		// avoids overwriting + keeps 3 grids together in file browsers
-		String s = String.format("%s_%s_%s%s", System.nanoTime(), "%s", theSubgroup.getID(), ".dat");
-		String info = createTitle(theSubgroup);
-		float aMax = writePdfGetMax(grids);
-		writePdf(grids[0], stats, aMax, String.format(s, "subgroup"), info);
-		writePdf(grids[1], stats, aMax, String.format(s, "complement"), info);
-		writePdf(grids[2], stats, aMax, String.format(s, "difference"), info);
+		// normaliser will be written out to .dat files
+		return aMax;
 	}
 
 	/*
@@ -411,7 +457,7 @@ public class ResultWindow extends JFrame implements ActionListener
 	 * this will be used as normalisation factor such that all plots will
 	 * be on the same (pdf) scale
 	 */
-	private static final float writePdfGetMax(float[][][] theGrids)
+	private static final float normaliseGridsGetMax(float[][][] theGrids)
 	{
 		float max = -Float.MAX_VALUE;
 
@@ -422,6 +468,20 @@ public class ResultWindow extends JFrame implements ActionListener
 						max = z;
 
 		return max;
+	}
+
+	private static final void writePdfs(Subgroup theSubgroup, float[][][] theGrids, double[] theStats)
+	{
+		Log.logCommandLine("writing pdf grid files for: " + createTitle(theSubgroup));
+
+		// avoids overwriting + keeps 3 grids together in file browsers
+		String s = String.format("%s_%s_%s%s", System.nanoTime(), "%s", theSubgroup.getID(), ".dat");
+		String info = createTitle(theSubgroup);
+//		float aMax = writePdfGetMax(theGrids);
+float aMax = 1.0f; // TODO MM REMOVE -- normalisation is done using normalise()
+		writePdf(theGrids[0], theStats, aMax, String.format(s, "subgroup"), info);
+		writePdf(theGrids[1], theStats, aMax, String.format(s, "complement"), info);
+		writePdf(theGrids[2], theStats, aMax, String.format(s, "difference"), info);
 	}
 
 	private static final void writePdf(float[][] theGrid, double[] theStats, float theNormaliser, String theFileName, String theSubgroupInfo)
