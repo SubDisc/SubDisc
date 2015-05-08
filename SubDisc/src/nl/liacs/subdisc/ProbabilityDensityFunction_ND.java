@@ -110,6 +110,11 @@ public class ProbabilityDensityFunction_ND
 		return limits;
 	}
 
+	public final double[][] getLimits()
+	{
+		return Arrays.copyOf(itsLimits, itsLimits.length);
+	}
+
 	public final int getNrDimensions() { return itsGrid.length; }
 
 	// 2D version
