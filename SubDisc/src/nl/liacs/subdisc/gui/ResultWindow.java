@@ -427,15 +427,14 @@ public class ResultWindow extends JFrame implements ActionListener
 			}
 			setBusy(false);
 
-			normaliseGrids(aGrids);
+			float aNormaliser = normaliseGrids(aGrids);
 
-			new PDFWindow2D(aGrids, aStats, aLimits, createTitle(s), aList.get(0).getName(), aList.get(1).getName());
+			new PDFWindow2D(aGrids, aStats, aLimits, createTitle(s), aList.get(1).getName(), aList.get(0).getName());
 
 			// DEBUG -- DO NOT WRITE OUT FILES
-			if (true)
-				return;
+			if (false) return;
 
-			writePdfs(s, aGrids, aStats);
+			writePdfs(s, aGrids, aStats, aNormaliser, aList.get(0).getName(), aList.get(1).getName());
 		}
 	}
 
@@ -470,18 +469,20 @@ public class ResultWindow extends JFrame implements ActionListener
 		return max;
 	}
 
-	private static final void writePdfs(Subgroup theSubgroup, float[][][] theGrids, double[] theStats)
+	private static final void writePdfs(Subgroup theSubgroup, float[][][] theGrids, double[] theStats, float theNormaliser, String aX, String aY)
 	{
 		Log.logCommandLine("writing pdf grid files for: " + createTitle(theSubgroup));
 
 		// avoids overwriting + keeps 3 grids together in file browsers
 		String s = String.format("%s_%s_%s%s", System.nanoTime(), "%s", theSubgroup.getID(), ".dat");
 		String info = createTitle(theSubgroup);
-//		float aMax = writePdfGetMax(theGrids);
-float aMax = 1.0f; // TODO MM REMOVE -- normalisation is done using normalise()
-		writePdf(theGrids[0], theStats, aMax, String.format(s, "subgroup"), info);
-		writePdf(theGrids[1], theStats, aMax, String.format(s, "complement"), info);
-		writePdf(theGrids[2], theStats, aMax, String.format(s, "difference"), info);
+
+		writePdf(theGrids[0], theStats, theNormaliser, String.format(s, "subgroup"), info);
+		writeGnuplotScript(String.format(s, "subgroup"), aX, aY);
+		writePdf(theGrids[1], theStats, theNormaliser, String.format(s, "complement"), info);
+		writeGnuplotScript(String.format(s, "complement"), aX, aY);
+		writePdf(theGrids[2], theStats, theNormaliser, String.format(s, "difference"), info);
+		writeGnuplotScript(String.format(s, "difference"), aX, aY);
 	}
 
 	private static final void writePdf(float[][] theGrid, double[] theStats, float theNormaliser, String theFileName, String theSubgroupInfo)
@@ -512,13 +513,45 @@ float aMax = 1.0f; // TODO MM REMOVE -- normalisation is done using normalise()
 				for (int j = 0; j < row.length; ++j)
 				{
 					double y = y_min + (dy * j);
-					double z = row[j]/theNormaliser;
+					double z = row[j];
 					// NOTICE SWAP!!!
 					bw.write(y + "\t" + x + "\t" + z + "\n");
 				}
 				bw.write("\n"); // required by gnuplot at y-change
 			}
 
+			Log.logCommandLine("Done\n");
+		}
+		catch (IOException e)
+		{
+			// TODO MM
+			e.printStackTrace();
+		}
+		finally
+		{
+			if (bw != null)
+			try
+			{
+				bw.close();
+			}
+			catch (IOException e)
+			{
+				// TODO MM
+				e.printStackTrace();
+			}
+		}
+	}
+
+	private static final void writeGnuplotScript(String theDataFile, String aX, String aY)
+	{
+		BufferedWriter bw = null;
+		try
+		{
+			File f = new File(theDataFile + ".gp");
+			bw = new BufferedWriter(new FileWriter(f));
+			Log.logCommandLine("writing: " + f.getAbsolutePath());
+			// NOTICE SWAP OF X AND Y
+			bw.write(String.format(Gnuplot.PLOT_CODE_PDF_2D, theDataFile, aY, aX));
 			Log.logCommandLine("Done\n");
 		}
 		catch (IOException e)

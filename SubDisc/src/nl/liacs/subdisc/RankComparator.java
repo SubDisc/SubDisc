@@ -10,6 +10,7 @@ public class RankComparator
 	private static final int RANK_INDEX = 0;
 	private static final int COVERAGE_INDEX = 2;
 	private static final int DESCRIPTION_INDEX = RESULT_NUMBER_OF_COLUMNS-1;
+	private static final String COMMENT = "#";
 
 	/**
 	 * Parses standard Cortana result files, listing the rank for each
@@ -98,7 +99,7 @@ public class RankComparator
 	private static final void print(File[] files, Map<String, int[]> map)
 	{
 		// header
-		System.out.print("condition" + DELIMITER + "size");
+		System.out.print(COMMENT + "condition" + DELIMITER + "size");
 		for (File f : files)
 		{
 			System.out.print(DELIMITER);
@@ -127,10 +128,10 @@ public class RankComparator
 			String s = files[i].getName();
 			for (int j = 0; j < i; ++j)
 			{
-				System.out.println(files[j]);
-				System.out.println(s);
-				System.out.println(tau(rankings[j], rankings[i]));
 				System.out.println();
+				System.out.println(COMMENT + files[j]);
+				System.out.println(COMMENT + s);
+				System.out.println(COMMENT + tau(rankings[j], rankings[i]));
 			}
 		}
 	}

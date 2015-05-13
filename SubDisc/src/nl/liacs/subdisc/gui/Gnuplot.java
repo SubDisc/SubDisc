@@ -277,4 +277,49 @@ public class Gnuplot
 		"#platform-independent way of restoring terminal by push/pop\n" +
 		"set terminal pop\n" +
 		"#set size 1,1\n\n";
+
+	// YES again...
+	// takes 3 String parameters in order: data_file_name, x_label, y_label
+	public static final String PLOT_CODE_PDF_2D =
+		"##### PUT THE NAME OF THE VARIABLES HERE #####\n" +
+		"DATA_FILE='%s'\n" +	// parameter for data file name
+		"X_LABEL='%s'\n" +	// parameter for xlabel
+		"Y_LABEL='%s'\n" +	// parameter for ylabel
+		"\n" +
+		"##### DO NOT CHANGE ANYTING BELOW #####\n" +
+		"PWD=\"`pwd`/\"\n" +
+		"INPUT_FILE = PWD.DATA_FILE\n" +
+		"\n" +
+		"set terminal postscript eps enhanced 'Helvetica' 14\n" +
+		"set output INPUT_FILE.'.eps'\n" +
+		"\n" +
+		"#set encoding iso_8859_1\n" +
+		"#set title 'PDF'\n" +
+		"\n" +
+		"#set key spacing 1 when outputting to .(e)ps\n" +
+		"set key spacing 1\n" +
+		"set xlabel X_LABEL\n" +
+		"set ylabel Y_LABEL\n" +
+		"set zlabel 'KDE'\n" +
+		"#unset xtics\n" +
+		"#unset ytics\n" +
+		"set ztics\n" +
+		"unset colorbox\n" +
+		"set hidden3d\n" +
+		"set view 60,30,.8\n" +
+		"\n" +
+		"set zrange [-1:1]\n" + 
+		"set isosamples 2000\n" +
+		"set pm3d\n" +
+		"unset surface\n" +
+		"#set view map\n" +
+		"set contour\n" +
+		"#set key outside\n" +
+		"#set nokey\n" +
+		"unset key\n" +
+		"splot INPUT_FILE using 1:2:3 with line\n" +
+		"\n" +
+		"set output\n" +
+		"#platform-independent way of restoring terminal by push/pop\n" +
+		"set terminal pop\n\n";
 }
