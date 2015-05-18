@@ -280,6 +280,7 @@ public class Gnuplot
 
 	// YES again...
 	// takes 3 String parameters in order: data_file_name, x_label, y_label
+	// where data_file_name is the name of the file that holds the grid data
 	public static final String PLOT_CODE_PDF_2D =
 		"##### PUT THE NAME OF THE VARIABLES HERE #####\n" +
 		"DATA_FILE='%s'\n" +	// parameter for data file name
@@ -288,38 +289,95 @@ public class Gnuplot
 		"\n" +
 		"##### DO NOT CHANGE ANYTING BELOW #####\n" +
 		"PWD=\"`pwd`/\"\n" +
-		"INPUT_FILE = PWD.DATA_FILE\n" +
+		"INPUT_FILE=PWD.DATA_FILE\n" +
+		"TITLE=sprintf(\"PDF for: %%s versus %%s.\", X_LABEL, Y_LABEL)\n" +
 		"\n" +
 		"set terminal postscript eps enhanced 'Helvetica' 14\n" +
 		"set output INPUT_FILE.'.eps'\n" +
 		"\n" +
 		"#set encoding iso_8859_1\n" +
-		"#set title 'PDF'\n" +
+		"#set title TITLE\n" +
 		"\n" +
-		"#set key spacing 1 when outputting to .(e)ps\n" +
+		"# set key spacing 1 when outputting to .(e)ps\n" +
 		"set key spacing 1\n" +
 		"set xlabel X_LABEL\n" +
 		"set ylabel Y_LABEL\n" +
 		"set zlabel 'KDE'\n" +
-		"#unset xtics\n" +
-		"#unset ytics\n" +
+		"\n" +
+		"set xtics\n" +
+		"set ytics\n" +
 		"set ztics\n" +
-		"unset colorbox\n" +
-		"set hidden3d\n" +
-		"set view 60,30,.8\n" +
 		"\n" +
 		"set zrange [-1:1]\n" + 
-		"set isosamples 2000\n" +
+		"\n" +
+		"set view 60,30,.8\n" +
+		"unset colorbox\n" +
+		"set hidden3d\n" +
+		"\n" +
 		"set pm3d\n" +
 		"unset surface\n" +
-		"#set view map\n" +
 		"set contour\n" +
-		"#set key outside\n" +
-		"#set nokey\n" +
+		"\n" +
 		"unset key\n" +
+		"\n" +
 		"splot INPUT_FILE using 1:2:3 with line\n" +
 		"\n" +
 		"set output\n" +
-		"#platform-independent way of restoring terminal by push/pop\n" +
+		"# platform-independent way of restoring terminal by push/pop\n" +
+		"set terminal pop\n\n";
+
+	// YES once more...
+	// takes 3 String parameters in order: data_file_name, x_label, y_label
+	public static final String PLOT_CODE_PDF_2D_HEATMAP =
+		"##### PUT THE NAME OF THE VARIABLES HERE #####\n" +
+		"DATA_FILE='%s'\n" +	// parameter for data file name
+		"X_LABEL='%s'\n" +	// parameter for xlabel
+		"Y_LABEL='%s'\n" +	// parameter for ylabel
+		"\n" +
+		"##### DO NOT CHANGE ANYTING BELOW #####\n" +
+		"PWD=\"`pwd`/\"\n" +
+		"INPUT_FILE=PWD.DATA_FILE\n" +
+		"TITLE=sprintf(\"Heatmap for: %%s versus %%s.\", X_LABEL, Y_LABEL)\n" +
+		"\n" +
+		"set terminal postscript eps enhanced 'Helvetica' 14\n" +
+		"set output INPUT_FILE.'.heatmap.eps'\n" +
+		"\n" +
+		"#set encoding iso_8859_1\n" +
+		"#set title TITLE\n" +
+		"\n" +
+		"# set key spacing 1 when outputting to .(e)ps\n" +
+		"set key spacing 1\n" +
+		"set xlabel X_LABEL\n" +
+		"set ylabel Y_LABEL\n" +
+		"set cblabel 'KDE'\n" +
+		"\n" +
+		"set xtics scale 0,0\n" +
+		"set ytics scale 0,0\n" +
+		"#set nocbtics\n" +
+		"\n" +
+		"#set style data lines\n" +
+		"# range to large for most settings - picture will be single color only\n" +
+		"#set cbrange [ -1.0 : 1.0 ] noreverse nowriteback\n" +
+		"\n" +
+		"#set view map scale 1\n" +
+		"set view map\n" +
+		"set colorbox\n" +
+		"unset contour\n" +
+		"\n" +
+		"# use splot and pm3d to allow for smoothing in eps\n" +
+		"set pm3d map\n" +
+		"# set the level of smoothing (0,0 lets gnuplot decide)\n" +
+		"set pm3d interpolate 0,0\n" +
+		"\n" +
+		"# palette useful only for color terminals (svg) - red/green instead of default\n" +
+		"#set palette rgbformulae -7, 2, -7\n" +
+		"\n" +
+		"unset key\n" +
+		"\n" +
+		"# smoothed image - for pixelated image use 'splot INPUT_FILE with image'\n" +
+		"splot INPUT_FILE\n" +
+		"\n" +
+		"set output\n" +
+		"# platform-independent way of restoring terminal by push/pop\n" +
 		"set terminal pop\n\n";
 }

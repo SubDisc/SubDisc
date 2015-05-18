@@ -478,11 +478,14 @@ public class ResultWindow extends JFrame implements ActionListener
 		String info = createTitle(theSubgroup);
 
 		writePdf(theGrids[0], theStats, theNormaliser, String.format(s, "subgroup"), info);
-		writeGnuplotScript(String.format(s, "subgroup"), aX, aY);
+		writeGnuplotScript(String.format(s, "subgroup"), aX, aY, false);
+		writeGnuplotScript(String.format(s, "subgroup"), aX, aY, true);
 		writePdf(theGrids[1], theStats, theNormaliser, String.format(s, "complement"), info);
-		writeGnuplotScript(String.format(s, "complement"), aX, aY);
+		writeGnuplotScript(String.format(s, "complement"), aX, aY, false);
+		writeGnuplotScript(String.format(s, "complement"), aX, aY, true);
 		writePdf(theGrids[2], theStats, theNormaliser, String.format(s, "difference"), info);
-		writeGnuplotScript(String.format(s, "difference"), aX, aY);
+		writeGnuplotScript(String.format(s, "difference"), aX, aY, false);
+		writeGnuplotScript(String.format(s, "difference"), aX, aY, true);
 	}
 
 	private static final void writePdf(float[][] theGrid, double[] theStats, float theNormaliser, String theFileName, String theSubgroupInfo)
@@ -542,16 +545,20 @@ public class ResultWindow extends JFrame implements ActionListener
 		}
 	}
 
-	private static final void writeGnuplotScript(String theDataFile, String aX, String aY)
+	private static final void writeGnuplotScript(String theDataFile, String aX, String aY, boolean isHeatMap)
 	{
 		BufferedWriter bw = null;
 		try
 		{
-			File f = new File(theDataFile + ".gp");
+			String ext = (isHeatMap) ? ".heatmap.gp" : ".gp";
+			File f = new File(theDataFile + ext);
 			bw = new BufferedWriter(new FileWriter(f));
 			Log.logCommandLine("writing: " + f.getAbsolutePath());
 			// NOTICE SWAP OF X AND Y
-			bw.write(String.format(Gnuplot.PLOT_CODE_PDF_2D, theDataFile, aY, aX));
+			if (isHeatMap)
+				bw.write(String.format(Gnuplot.PLOT_CODE_PDF_2D_HEATMAP, theDataFile, aY, aX));
+			else
+				bw.write(String.format(Gnuplot.PLOT_CODE_PDF_2D, theDataFile, aY, aX));
 			Log.logCommandLine("Done\n");
 		}
 		catch (IOException e)
