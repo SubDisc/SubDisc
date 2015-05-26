@@ -550,15 +550,15 @@ public class ResultWindow extends JFrame implements ActionListener
 		BufferedWriter bw = null;
 		try
 		{
-			String ext = (isHeatMap) ? ".heatmap.gp" : ".gp";
+			String ext = isHeatMap ? ".heatmap.gp" : ".gp";
 			File f = new File(theDataFile + ext);
 			bw = new BufferedWriter(new FileWriter(f));
 			Log.logCommandLine("writing: " + f.getAbsolutePath());
+			String script = isHeatMap ?
+					Gnuplot.PLOT_CODE_PDF_2D_HEATMAP :
+					Gnuplot.PLOT_CODE_PDF_2D;
 			// NOTICE SWAP OF X AND Y
-			if (isHeatMap)
-				bw.write(String.format(Gnuplot.PLOT_CODE_PDF_2D_HEATMAP, theDataFile, aY, aX));
-			else
-				bw.write(String.format(Gnuplot.PLOT_CODE_PDF_2D, theDataFile, aY, aX));
+			bw.write(String.format(script, theDataFile, aY, aX));
 			Log.logCommandLine("Done\n");
 		}
 		catch (IOException e)
