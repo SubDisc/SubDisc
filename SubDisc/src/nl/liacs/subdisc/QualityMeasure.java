@@ -1047,6 +1047,12 @@ public class QualityMeasure
 			// normal H^2 for continuous PDFs
 			case SQUARED_HELLINGER :
 			{
+				if (SubgroupDiscovery.TEMPORARY_CODE)
+				{
+					aReturn = (float) ((ProbabilityMassFunction_ND) thePDF).itsScore;
+					break;
+				}
+
 				double aTotalSquaredDifference = 0.0;
 				for (int i = 0, j = itsPDF.size(); i < j; ++i)
 				{
@@ -1173,7 +1179,6 @@ public class QualityMeasure
 				aReturn = (float) aTotalDifference;
 				break;
 			}
-
 			default :
 			{
 				/*

@@ -12,6 +12,8 @@ import nl.liacs.subdisc.ConvexHull.HullPoint;
 
 public class SubgroupDiscovery extends MiningAlgorithm
 {
+	static final boolean TEMPORARY_CODE = false;
+
 	private final Table itsTable;
 	private final int itsNrRows;		// itsTable.getNrRows()
 	private final int itsMinimumCoverage;	// itsSearchParameters.getMinimumCoverage();
@@ -160,12 +162,22 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		aBitSet.set(0, itsNrRows);
 		float[] aCounts = itsNumericTarget.getStatistics(aBitSet, false);
 		ProbabilityDensityFunction aPDF;
+if (!TEMPORARY_CODE)
+{
 		// DEBUG
 		if (!ProbabilityDensityFunction.USE_ProbabilityDensityFunction2)
 			aPDF = new ProbabilityDensityFunction(itsNumericTarget);
 		else
 			aPDF = new ProbabilityDensityFunction2(itsNumericTarget);
 		aPDF.smooth();
+}
+else
+{
+// DEBUG -- works for 1D only
+int theNrSplitPoints = 10;
+boolean useEqualWidth = true;
+aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, theNrSplitPoints, useEqualWidth);
+}
 
 		itsQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), itsNrRows, aCounts[0], aCounts[1], aPDF);
 		itsQualityMeasureMinimum = itsSearchParameters.getQualityMeasureMinimum();
@@ -1158,6 +1170,8 @@ synchronized(this) {
 			}
 			case SINGLE_NUMERIC :
 			{
+if (!TEMPORARY_CODE)
+{
 				final BitSet aMembers = theNewSubgroup.getMembers();
 
 				// what needs to be calculated for this QM
@@ -1180,6 +1194,17 @@ else
 				theNewSubgroup.setSecondaryStatistic(aCounts[0]/(double)theNewSubgroup.getCoverage()); //average
 				theNewSubgroup.setTertiaryStatistic(Math.sqrt(aCounts[1]/(double)theNewSubgroup.getCoverage())); // standard deviation
 				break;
+}
+else
+{
+	final BitSet aMembers = theNewSubgroup.getMembers();
+
+	ProbabilityMassFunction_ND aPMF = new ProbabilityMassFunction_ND((ProbabilityMassFunction_ND) itsQualityMeasure.getProbabilityDensityFunction(), aMembers);
+	aQuality = itsQualityMeasure.calculate(-1, -1, -1, -1, -1, aPMF);
+	theNewSubgroup.setSecondaryStatistic(theNewSubgroup.getCoverage());
+	theNewSubgroup.setTertiaryStatistic(itsTable.getNrRows()-theNewSubgroup.getCoverage());
+	break;
+}
 			}
 			case MULTI_NUMERIC :
 			{
