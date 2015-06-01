@@ -33,6 +33,8 @@ public class ProbabilityMassFunction_ND extends ProbabilityDensityFunction
 		itsBinIndexes = bin(itsBounds, itsData);
 //		itsSplitPointsCounts = foo(itsSplitPoints, theColumn);
 		itsScore = Double.NaN;
+
+		histo(itsBounds, itsBinIndexes);
 	}
 
 	// HACK
@@ -169,6 +171,20 @@ System.out.format("PMF(p_i)=%f\tPMF(q_i)=%f%n", sumPi, sumQi);
 			aPMF[i] = (aCounts[i] / d);
 
 		return aPMF;
+	}
+
+	private static final void histo(float[] theBounds, int[] theBinIndexes)
+	{
+		int[] aCounts = new int[theBounds.length];
+
+		for (int i : theBinIndexes)
+			++aCounts[i];
+
+		System.out.println("\nPMF histogram:");
+		System.out.println("BOUND (<=)\tCOUNT\tRELATIVE");
+		float n = theBinIndexes.length;
+		for (int i = 0; i < theBounds.length; ++i)
+			System.out.format("%f\t%d\t%f%n", theBounds[i], aCounts[i], aCounts[i]/n);
 	}
 
 	public static void main(String[] args)
