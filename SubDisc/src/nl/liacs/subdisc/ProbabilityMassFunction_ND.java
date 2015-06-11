@@ -148,7 +148,6 @@ double sumQi = 0.0;
 sumPi += p_i;
 sumQi += q_i;
 		}
-System.out.format("PMF(p_i)=%f\tPMF(q_i)=%f%n", sumPi, sumQi);
 
 		return (1.0 / Math.sqrt(2.0)) * Math.sqrt(aSum);
 	}
