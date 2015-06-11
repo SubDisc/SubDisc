@@ -46,6 +46,11 @@ public class Process
 					caucHeavy(theTable, theFold, theBitSet, theSearchParameters, showWindows, theNrThreads);
 					return null;
 				}
+				else if (SubgroupDiscovery.TEMPORARY_CODE)
+				{
+					temporaryCode(theTable, theSearchParameters);
+					return null;
+				}
 				else
 				{
 					//recompute this number, as we may be dealing with cross-validation here, and hence a different value
@@ -401,5 +406,68 @@ public class Process
 			System.out.println(aTemp);
 		}
 		new CAUCWindow(theTarget, theStatistics);
+	}
+
+	private static final void temporaryCode(Table theTable, SearchParameters theSearchParameters)
+	{
+		TargetConcept aTargetConcept = theSearchParameters.getTargetConcept();
+		assert aTargetConcept.getTargetType() == TargetType.SINGLE_NUMERIC;
+
+		Column aTarget = aTargetConcept.getPrimaryTarget();
+
+		// compute h using Silverman
+		float h = ProbabilityDensityFunction_ND.h_silverman(1, theTable.getNrRows());
+		float aMax = aTarget.getMax();
+		float aMin = aTarget.getMin();
+		float aRange = aMax - aMin;
+		int aNrBins = (int) Math.ceil(aRange / h);
+
+		// XXX 4 is just a magic number, nrSplits is 1 less than nrBins
+		int aMaxNrSplitPoints = (4 * aNrBins) - 1;
+		System.out.println("\nrange / h = bins ( ceil(bins) )");
+		System.out.format("%f / %f = %f ( %d )%n", aRange, h, aRange/h, aNrBins);
+
+		long aTime = System.nanoTime();
+		String aPath = String.format("%s_%d", theTable.getName(), aTime);
+
+		// XXX atargetAverage could be a dummy value
+		float aTargetAverage = aTarget.getAverage();
+
+		// run everything for Equal Height and Equal Width
+		for (int i = 1; i <= aMaxNrSplitPoints; ++i)
+		{
+			temporaryCodeHelper(theTable, theSearchParameters, aTargetAverage, i, false, aPath);
+			temporaryCodeHelper(theTable, theSearchParameters, aTargetAverage, i, true, aPath);
+		}
+
+		// also run the original code once
+		SubgroupDiscovery.TEMPORARY_CODE = false;
+		SubgroupDiscovery aSubgroupDiscovery = new SubgroupDiscovery(theSearchParameters, theTable, aTargetAverage, null);
+		aSubgroupDiscovery.mine(System.currentTimeMillis(), 1);
+
+		String aFileName = String.format("%s_%s.txt", aPath, "ORIG");
+		System.out.println("\nwriting: " + aFileName);
+
+		XMLAutoRun.save(aSubgroupDiscovery.getResult(), aFileName, theSearchParameters.getTargetConcept().getTargetType());
+
+		System.out.println("Done");
+	}
+
+	private static final void temporaryCodeHelper(Table theTable, SearchParameters theSearchParameters, float theTargetAverage, int theNrSplitPoints, boolean useEqualWidth, String thePath)
+	{
+		SubgroupDiscovery.TEMPORARY_CODE = true;
+		SubgroupDiscovery.TEMPORARY_CODE_NR_SPLIT_POINTS = theNrSplitPoints;
+		SubgroupDiscovery.TEMPORARY_CODE_USE_EQUAL_WIDTH = useEqualWidth;
+
+		String aDiscretisationType = useEqualWidth ? "EW" : "EH";
+		System.out.format("%nrunning: %s %d%n", aDiscretisationType, theNrSplitPoints);
+
+		SubgroupDiscovery aSubgroupDiscovery = new SubgroupDiscovery(theSearchParameters, theTable, theTargetAverage, null);
+		aSubgroupDiscovery.mine(System.currentTimeMillis(), 1);
+
+		String aFileName = String.format("%s_%s_%d.txt", thePath, aDiscretisationType, theNrSplitPoints);
+		System.out.println("\nwriting: " + aFileName);
+
+		XMLAutoRun.save(aSubgroupDiscovery.getResult(), aFileName, theSearchParameters.getTargetConcept().getTargetType());
 	}
 }

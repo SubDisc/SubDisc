@@ -358,7 +358,7 @@ System.out.println("grid row: " + i);
 	// Silverman's rule suggests using
 	// \sqrt{\mathbf{H}_{ii}} = \left(\frac{4}{d+2}\right)^{\frac{1}{d+4}} n^{\frac{-1}{d+4}} \sigma_i
 	// where \sigma_i is the standard deviation of the ith variable and \mathbf{H}_{ij} = 0, i\neq j.
-	private static float h_silverman(int theNrDimensions, int theDataSize)
+	static float h_silverman(int theNrDimensions, int theDataSize)
 	{
 		// constants
 		int d = theNrDimensions;
