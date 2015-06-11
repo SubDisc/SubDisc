@@ -41,6 +41,9 @@ public class ResultTableModel extends AbstractTableModel
 	// used by XMLAutoRun.save() to retrieve correct column name
 	public static String getColumnName(int theColumnIndex, TargetType theTargetType)
 	{
+		assert ((theColumnIndex >= 0) && (theColumnIndex < COLUMN_COUNT));
+		assert (theTargetType != null);
+
 		switch(theColumnIndex)
 		{
 			case 0 : return "Nr.";
@@ -83,7 +86,7 @@ public class ResultTableModel extends AbstractTableModel
 			}
 			case 6 : return "p-Value";
 			case 7 : return "Conditions";
-			default : return "";
+			default : throw new AssertionError(theColumnIndex);
 		}
 	}
 
