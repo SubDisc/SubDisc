@@ -465,7 +465,7 @@ public class Process
 		SubgroupDiscovery aSubgroupDiscovery = new SubgroupDiscovery(theSearchParameters, theTable, theTargetAverage, null);
 		aSubgroupDiscovery.mine(System.currentTimeMillis(), 1);
 
-		String aFileName = String.format("%s_%s_%d.txt", thePath, aDiscretisationType, theNrSplitPoints);
+		String aFileName = String.format("%s_%s_%05d.txt", thePath, aDiscretisationType, theNrSplitPoints);
 		System.out.println("\nwriting: " + aFileName);
 
 		XMLAutoRun.save(aSubgroupDiscovery.getResult(), aFileName, theSearchParameters.getTargetConcept().getTargetType());
