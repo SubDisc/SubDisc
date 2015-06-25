@@ -450,6 +450,7 @@ public class Process
 
 		XMLAutoRun.save(aSubgroupDiscovery.getResult(), aFileName, theSearchParameters.getTargetConcept().getTargetType());
 
+		SubgroupDiscovery.TEMPORARY_CODE = true;
 		System.out.println("Done");
 	}
 
