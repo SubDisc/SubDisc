@@ -30,8 +30,86 @@ public class ModelWindow extends JFrame implements ActionListener
 	private Subgroup itsSubgroup;
 	private JFreeChart itsChart = null;
 
-	// SINGLE_NUMERIC: show distribution over numeric target and Subgroup =====================================
-	// SCAPE: show distribution of numeric target, for positives and negatives in binary target ===============
+//	// SINGLE_NUMERIC: show distribution over numeric target and Subgroup =====================================
+//	// SCAPE: show distribution of numeric target, for positives and negatives in binary target ===============
+//	public ModelWindow(Column theDomain, ProbabilityDensityFunction theDatasetPDF, ProbabilityDensityFunction theSubgroupPDF, String theTitle, boolean isScapeSetting)
+//	{
+//		initComponents();
+//
+//		final boolean addSubgroup = (theSubgroupPDF != null);
+//
+//		XYSeries aDatasetSeries;
+//		XYSeries aSubgroupSeries;
+//		if (!isScapeSetting)
+//		{
+//			aDatasetSeries = new XYSeries("dataset");
+//			aSubgroupSeries = addSubgroup ? new XYSeries("subgroup") : null;
+//		}
+//		else
+//		{
+//			aDatasetSeries = new XYSeries("positives");
+//			aSubgroupSeries = addSubgroup ? new XYSeries("negatives") : null;
+//		}
+//		for (int i = 0, j = theDatasetPDF.size(); i < j; ++i)
+//		{
+//			aDatasetSeries.add(theDatasetPDF.getMiddle(i), theDatasetPDF.getDensity(i));
+//			if (addSubgroup)
+//			{
+////				float aScale = theSubgroupPDF.getAbsoluteCount()/(float)theDatasetPDF.getAbsoluteCount();
+//				float aScale = 1;
+//				aSubgroupSeries.add(theSubgroupPDF.getMiddle(i), theSubgroupPDF.getDensity(i)*aScale);
+//			}
+//		}
+//		XYSeriesCollection aDataCollection;
+//		if (addSubgroup) // if there is a subgroup, add that one first. Otherwise just add the dataset first
+//		{
+//			aDataCollection = new XYSeriesCollection(aSubgroupSeries);
+//			aDataCollection.addSeries(aDatasetSeries);
+//		}
+//		else
+//			aDataCollection = new XYSeriesCollection(aDatasetSeries);
+//
+//		JFreeChart aChart =
+//			ChartFactory.createXYLineChart("", theDomain.getName(), "density", aDataCollection, PlotOrientation.VERTICAL, false, true, false);
+//		aChart.setAntiAlias(true);
+//		XYPlot aPlot = aChart.getXYPlot();
+//		aPlot.setBackgroundPaint(Color.white);
+//		aPlot.setDomainGridlinePaint(Color.gray);
+//		aPlot.setRangeGridlinePaint(Color.gray);
+//		Paint aDatasetPaint = Color.black;
+//		Paint aSubgroupPaint = Color.lightGray;
+//		float aDatasetWidth = 1.5f;
+//		float aSubgroupWidth = 2.5f;
+//		if (isScapeSetting)
+//		{
+//			aDatasetPaint = Color.red;
+//			aSubgroupPaint = Color.blue;
+//			aDatasetWidth = 2.5f;
+//		}
+//		if (addSubgroup)
+//		{
+//			aPlot.getRenderer().setSeriesPaint(1, aSubgroupPaint);
+//			aPlot.getRenderer().setSeriesStroke(1, new BasicStroke(aSubgroupWidth));
+//			aPlot.getRenderer().setSeriesPaint(0, aDatasetPaint); //subgroup
+//			aPlot.getRenderer().setSeriesStroke(0, new BasicStroke(aDatasetWidth)); //subgroup
+//			aChart.addLegend(new LegendTitle(aPlot));
+//		}
+//		else
+//		{
+//			aPlot.getRenderer().setSeriesPaint(0, aDatasetPaint);
+//			aPlot.getRenderer().setSeriesStroke(0, new BasicStroke(aSubgroupWidth));
+//		}
+//
+//		itsJScrollPaneCenter.setViewportView(new ChartPanel(aChart));
+//
+//		setTitle(theTitle + ": Numeric Distribution");
+//		setIconImage(MiningWindow.ICON);
+//		setLocation(50, 50);
+//		setSize(GUI.WINDOW_DEFAULT_SIZE);
+//		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+//		setVisible(true);
+//	}
+	// FIXME MM same as above --- but with temporary histogram hacked in
 	public ModelWindow(Column theDomain, ProbabilityDensityFunction theDatasetPDF, ProbabilityDensityFunction theSubgroupPDF, String theTitle, boolean isScapeSetting)
 	{
 		initComponents();
@@ -42,7 +120,7 @@ public class ModelWindow extends JFrame implements ActionListener
 		XYSeries aSubgroupSeries;
 		if (!isScapeSetting)
 		{
-			aDatasetSeries = new XYSeries("dataset");
+			aDatasetSeries = new XYSeries("complement");	// XXX MM complement not dataset
 			aSubgroupSeries = addSubgroup ? new XYSeries("subgroup") : null;
 		}
 		else

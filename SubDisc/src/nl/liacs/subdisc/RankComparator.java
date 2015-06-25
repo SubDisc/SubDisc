@@ -11,16 +11,21 @@ public class RankComparator
 	private static final int COVERAGE_INDEX = 2;
 	private static final int DESCRIPTION_INDEX = RESULT_NUMBER_OF_COLUMNS-1;
 	private static final String COMMENT = "#";
+	private static BufferedWriter OUT;
 
 	/**
 	 * Parses standard Cortana result files, listing the rank for each
 	 * subgroup description in each of the result files.
 	 *
 	 * @param args The paths of the files to compare.
+	 * @throws IOException 
 	 */
-	public static void main(String[] args)
+	public static void main(String[] args) throws IOException
 	{
+		OUT = new BufferedWriter(new FileWriter(System.nanoTime() + ".csv"));
 		foo(args);
+		//temporaryCode("/home/marvin/data/wrk/svn/SubgroupDiscovery/SubDisc/0_MULTI_NUMERIC_2015/discretisation_loop_runs_NEW_KDE_SG_VS_COMPLEMENT/communities/");
+		OUT.close();
 	}
 
 	private static final void foo(String[] files)
@@ -99,23 +104,23 @@ public class RankComparator
 	private static final void print(File[] files, Map<String, int[]> map)
 	{
 		// header
-		System.out.print(COMMENT + "condition" + DELIMITER + "size");
+		out(COMMENT + "condition" + DELIMITER + "size");
 		for (File f : files)
 		{
-			System.out.print(DELIMITER);
-			System.out.print(f.getName());
+			out(DELIMITER);
+			out(f.getName());
 		}
-		System.out.println();
+		out("\n");
 		// conditions + corresponding ranks in input files
 		for (Entry<String, int[]> e : map.entrySet())
 		{
-			System.out.print(e.getKey());
+			out(e.getKey());
 			for (int i : e.getValue())
 			{
-				System.out.print(DELIMITER);
-				System.out.print(i);
+				out(DELIMITER);
+				out(Integer.toString(i));
 			}
-			System.out.println();
+			out("\n");
 		}
 	}
 
@@ -128,10 +133,10 @@ public class RankComparator
 			String s = files[i].getName();
 			for (int j = 0; j < i; ++j)
 			{
-				System.out.println();
-				System.out.println(COMMENT + files[j]);
-				System.out.println(COMMENT + s);
-				System.out.println(COMMENT + tau(rankings[j], rankings[i]));
+				out("\n");
+				out(COMMENT + files[j] + "\n");
+				out(COMMENT + s + "\n");
+				out(COMMENT + tau(rankings[j], rankings[i]) + "\n");
 			}
 		}
 	}
@@ -167,5 +172,59 @@ public class RankComparator
 				n += ( Math.signum(x[i]-x[j]) * Math.signum(y[i]-y[j]) );
 
 		return n / ((d * (d-1)) / 2.0);
+	}
+
+	static final void temporaryCode(String theDirectory)
+	{
+		// foo
+		File aDir = new File(theDirectory);
+		List<File> aList = new ArrayList<File>(Arrays.asList(aDir.listFiles()));
+		for (int i = aList.size()-1; i >= 0; --i)
+			if (!aList.get(i).getName().endsWith(".txt"))
+				aList.remove(i);
+ 
+		// sort of helpful helps but not entirely
+		Collections.sort(aList);
+
+		// listFiles could use a FileName(Extension)Filter
+		Map<String, int[]> aMap = new TreeMap<String, int[]>();
+		for (int i = 0; i < aList.size(); ++i)
+			bar(aList.get(i), i, aList.size(), aMap);
+
+		print(aList.toArray(new File[0]), aMap);
+
+		// special tau
+		int[][] rankings = createRankings(aMap.values());
+
+		int origFile = -1;
+		for (int i = 0; i < aList.size(); ++i)
+		{
+			if (aList.get(i).getName().contains("_ORIG.txt"))
+			{
+				origFile = i;
+				break;
+			}
+		}
+		if (origFile == -1)
+			throw new IllegalArgumentException("NO *_ORIG.txt file found");
+		String origName = aList.get(origFile).getName();
+		int[] origRanking = rankings[origFile];
+
+		for (int i = 0; i < aList.size(); ++i)
+		{
+			if (i == origFile)
+				continue;
+			out("\n");
+			out(COMMENT + aList.get(i).getName() + "\n");
+			out(COMMENT + origName + "\n");
+			out(COMMENT + tau(rankings[i], origRanking) + "\n");
+		}
+	}
+
+	// lazy
+	private static final void out(String s)
+	{
+		try { OUT.write(s);}
+		catch (IOException e) {}
 	}
 }

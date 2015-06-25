@@ -9,6 +9,9 @@ import java.util.*;
  */
 public class QualityMeasure
 {
+	// temporary PDF related code --- leave at false in svn
+	private static final boolean TEMPORARY_CODE_SG_VS_COMPLEMENT = true;
+
 	private final QM itsQualityMeasure;
 	private final int itsNrRecords;
 
@@ -1056,7 +1059,7 @@ public class QualityMeasure
 				double aTotalSquaredDifference = 0.0;
 				for (int i = 0, j = itsPDF.size(); i < j; ++i)
 				{
-					float aDensity = itsPDF.getDensity(i);
+					float aDensity = (TEMPORARY_CODE_SG_VS_COMPLEMENT ? ((ProbabilityDensityFunction2) thePDF).getComplementDensity(i) : itsPDF.getDensity(i));
 					float aDensitySubgroup = thePDF.getDensity(i);
 					double aDifference = Math.sqrt(aDensity) - Math.sqrt(aDensitySubgroup);
 					aTotalSquaredDifference += (aDifference * aDifference);

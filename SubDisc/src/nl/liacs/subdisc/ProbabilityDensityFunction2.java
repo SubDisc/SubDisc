@@ -72,6 +72,7 @@ System.out.format("h=%f lo=%f hi=%f range=%f s=%f k=%d dx=%f%n", itsH, itsLo, it
 		itsDensity = getDensity(itsData, b, k+1);
 	}
 
+	private float[] itsComplementDensity; // FIXME MM --- HACK
 	// create for subgroup, relative to existing PDF (use same Column data)
 	public ProbabilityDensityFunction2(ProbabilityDensityFunction thePDF, BitSet theMembers)
 	{
@@ -86,6 +87,11 @@ System.out.format("h=%f lo=%f hi=%f range=%f s=%f k=%d dx=%f%n", itsH, itsLo, it
 		itsLo = aPDF.itsLo;
 		dx = aPDF.dx;
 		itsDensity = aPDF.getDensity(aPDF.itsData, theMembers, aPDF.itsDensity.length);
+
+		BitSet aComplement = (BitSet) theMembers.clone();
+		// DO NOT USE theMembers.size()
+		aComplement.flip(0, itsData.size());
+		itsComplementDensity = aPDF.getDensity(aPDF.itsData, aComplement, aPDF.itsDensity.length);
 	}
 
 	// TODO MM rounding error might cause: itsLo+(n*dx) < itsHi
@@ -150,6 +156,8 @@ System.out.println("E[bins, density]="+Vec.expected_value(bins, density_d));
 
 	// as for ProbabilityDensityHistogram - all @Override
 	@Override public float getDensity(int theIndex) { return itsDensity[theIndex]; }
+	// FIXME MM --- HACK
+	public float getComplementDensity(int theIndex) { return itsComplementDensity[theIndex]; }
 	@Override public float getMiddle(int theIndex) { return (float)(itsLo + (theIndex + 0.5f)*dx); }
 	@Override public int size() { return itsDensity.length; }
 	// NOTE all original code calls smooth() just once
