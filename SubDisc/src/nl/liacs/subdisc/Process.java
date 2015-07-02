@@ -430,7 +430,7 @@ public class Process
 		long aTime = System.nanoTime();
 		String aPath = String.format("%s_%d", theTable.getName(), aTime);
 
-		// XXX atargetAverage could be a dummy value
+		// XXX aTargetAverage could be a dummy value
 		float aTargetAverage = aTarget.getAverage();
 
 		// run everything for Equal Height and Equal Width

@@ -23,8 +23,12 @@ public class RankComparator
 	public static void main(String[] args) throws IOException
 	{
 		OUT = new BufferedWriter(new FileWriter(System.nanoTime() + ".csv"));
+//		args = new String[] {
+//				"/home/marvin/data/wrk/svn/SubgroupDiscovery/publications/MultiNumeric/ecmlpkdd2015_journal/experiments/discretisation_loop_runs_NEW_KDE_SG_VS_COMPLEMENT/waterqual_all_targets/waterqual.arff_260804118589660_EH_00021.txt",
+//				"/home/marvin/data/wrk/svn/SubgroupDiscovery/publications/MultiNumeric/ecmlpkdd2015_journal/experiments/discretisation_loop_runs_NEW_KDE_SG_VS_COMPLEMENT/waterqual_all_targets/waterqual.arff_260804118589660_ORIG.txt",
+//		};
 		foo(args);
-		//temporaryCode("/home/marvin/data/wrk/svn/SubgroupDiscovery/SubDisc/0_MULTI_NUMERIC_2015/discretisation_loop_runs_NEW_KDE_SG_VS_COMPLEMENT/communities/");
+		//temporaryCode("/home/marvin/data/wrk/svn/SubgroupDiscovery/SubDisc/0_MULTI_NUMERIC_2015/boston_housing_kde_vs_eh/d1/");
 		OUT.close();
 	}
 
