@@ -13,7 +13,7 @@ import nl.liacs.subdisc.ConvexHull.HullPoint;
 public class SubgroupDiscovery extends MiningAlgorithm
 {
 	// leave TEMPORARY_CODE at false in svn
-	static boolean TEMPORARY_CODE = true;
+	static boolean TEMPORARY_CODE = false;
 	static int TEMPORARY_CODE_NR_SPLIT_POINTS = 10;
 	static boolean TEMPORARY_CODE_USE_EQUAL_WIDTH = false;
 
@@ -1182,6 +1182,8 @@ if (!TEMPORARY_CODE)
 				ProbabilityDensityFunction aPDF = null;
 				if (aRequiredStats.contains(Stat.PDF))
 				{
+// FIXME MM TEMP
+System.out.format("#Subgroup: '%s' (size = %d)%n", theNewSubgroup, theNewSubgroup.getCoverage());
 // DEBUG
 if (!ProbabilityDensityFunction.USE_ProbabilityDensityFunction2)
 	aPDF = new ProbabilityDensityFunction(itsQualityMeasure.getProbabilityDensityFunction(), aMembers);
@@ -1199,6 +1201,8 @@ else
 {
 	final BitSet aMembers = theNewSubgroup.getMembers();
 
+// FIXME MM TEMP
+System.out.format("#Subgroup: '%s' (size = %d)%n", theNewSubgroup, theNewSubgroup.getCoverage());
 	ProbabilityMassFunction_ND aPMF = new ProbabilityMassFunction_ND((ProbabilityMassFunction_ND) itsQualityMeasure.getProbabilityDensityFunction(), aMembers);
 	aQuality = itsQualityMeasure.calculate(-1, -1, -1, -1, -1, aPMF);
 	theNewSubgroup.setSecondaryStatistic(theNewSubgroup.getCoverage());

@@ -92,6 +92,12 @@ System.out.format("h=%f lo=%f hi=%f range=%f s=%f k=%d dx=%f%n", itsH, itsLo, it
 		// DO NOT USE theMembers.size()
 		aComplement.flip(0, itsData.size());
 		itsComplementDensity = aPDF.getDensity(aPDF.itsData, aComplement, aPDF.itsDensity.length);
+// FIXME MM TEMP
+System.out.println("#PDFs for: " + itsData.getName());
+System.out.println("#X\tSUBGROUP\tCOMPLEMENT");
+for (int i = 0; i < itsDensity.length; ++i)
+	System.out.println(itsLo + (i * dx)  + "\t" + itsDensity[i] + "\t" + itsComplementDensity[i]);
+System.out.println();
 	}
 
 	// TODO MM rounding error might cause: itsLo+(n*dx) < itsHi
@@ -131,7 +137,7 @@ System.out.format("h=%f lo=%f hi=%f range=%f s=%f k=%d dx=%f%n", itsH, itsLo, it
 			for (int j = 0; j < d_h.length; ++j)
 			{
 				double diff = d_h[j] - mu_h;
-				// hack - should find start i before this loop
+				// TODO MM should find start i before this loop
 				// and break as soon as diff > CUTOFF
 				if (Math.abs(diff) < CUTOFF)
 					density[i] += Gaussian.phi(diff);

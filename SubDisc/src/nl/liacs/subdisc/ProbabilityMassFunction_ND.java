@@ -47,7 +47,7 @@ public class ProbabilityMassFunction_ND extends ProbabilityDensityFunction
 		itsMax = Float.NaN;
 		itsBounds = null;
 		itsBinIndexes = null;
-		itsScore = qm(theMembers, theParent.itsBinIndexes, theParent.itsBounds.length);
+		itsScore = qm(theMembers, theParent.itsBounds, theParent.itsBinIndexes);
 	}
 
 	private static final float[] ew(int theNrSplitPoints, float theMin, float theMax)
@@ -109,11 +109,12 @@ public class ProbabilityMassFunction_ND extends ProbabilityDensityFunction
 	}
 
 	// not the fastest, but sufficient
-	private static final double qm(BitSet theMembers, int[] theBinIndexes, int theNrBounds)
+	private static final double qm(BitSet theMembers, float[] theBounds, int[] theBinIndexes)
 	{
+		int aNrBounds = theBounds.length;
 		// first get counts for subgroup and complement for each bin
-		int[] aCountsSubgroup = new int[theNrBounds];
-		int[] aCountsComplement = new int[theNrBounds];
+		int[] aCountsSubgroup = new int[aNrBounds];
+		int[] aCountsComplement = new int[aNrBounds];
 
 		for (int i = 0, j = theBinIndexes.length; i < j; ++i)
 		{
@@ -128,12 +129,18 @@ public class ProbabilityMassFunction_ND extends ProbabilityDensityFunction
 		double sg = theMembers.cardinality();
 		double co = theBinIndexes.length - sg;
 
+// FIXME MM TEMP
+System.out.println("#BOUND(<=)\tSUBGROUP\tCOMPLEMENT");
+for (int i = 0, j = aNrBounds; i < j; ++i)
+	System.out.format("%f\t%f\t%f%n", theBounds[i], aCountsSubgroup[i]/sg, aCountsComplement[i]/co);
+System.out.println();
+
 // FOR DEBUGGING
 double sumPi = 0.0;
 double sumQi = 0.0;
 		// H(P,Q)= 1/sqrt(2) * sqrt( sum_i_k ([sqrt(p_i)-sqrt(q_i)]^2) )
 		double aSum = 0.0;
-		for (int i = 0; i < theNrBounds; ++i)
+		for (int i = 0; i < aNrBounds; ++i)
 		{
 			double p_i = aCountsSubgroup[i]/sg;
 			double q_i = aCountsComplement[i]/co;
@@ -148,6 +155,7 @@ double sumQi = 0.0;
 sumPi += p_i;
 sumQi += q_i;
 		}
+System.out.format("#SUMS:\tsumPi=%f\tsumQi=%f%n", sumPi, sumQi);
 
 		return (1.0 / Math.sqrt(2.0)) * Math.sqrt(aSum);
 	}
