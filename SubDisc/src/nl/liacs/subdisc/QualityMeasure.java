@@ -153,7 +153,7 @@ public class QualityMeasure
 	 * 
 	 * IllegalArgumentExceptions will be thrown when:</br>
 	 * (theCountHeadBody < 0),</br>
-	 * (theCoverage <= 0),</br>
+	 * (theCoverage < 0),</br>
 	 * (theCountHeadBody > theCoverage),</br>
 	 * (theCountHeadBody > theTotalTargetCoverage for this QualityMeasure),</br>
 	 * (theCoverage > theTotalCoverage for this QualityMeasure).
@@ -178,8 +178,8 @@ public class QualityMeasure
 		// public method use IllegalArgumentException instead of asserts
 		if (theCountHeadBody < 0)
 			throw new IllegalArgumentException("QualityMeasure: theCountHeadBody < 0");
-		if (theCoverage <= 0)
-			throw new IllegalArgumentException("QualityMeasure: theCoverage <= 0");
+		if (theCoverage < 0)
+			throw new IllegalArgumentException("QualityMeasure: theCoverage < 0"); //the coverage can be zero, not lower
 		if (theCountHeadBody > theCoverage)
 			throw new IllegalArgumentException("QualityMeasure: theCountHeadBody > theCoverage");
 		if (theCountHeadBody > itsTotalTargetCoverage)
