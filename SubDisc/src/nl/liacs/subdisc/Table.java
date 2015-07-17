@@ -2,7 +2,7 @@ package nl.liacs.subdisc;
 
 import java.io.*;
 import java.util.*;
-
+import java.sql.*;
 import javax.swing.*;
 
 import nl.liacs.subdisc.ConditionListBuilder.ConditionListA;
@@ -91,6 +91,36 @@ public class Table implements XMLNodeInterface
 		 * loading actual data from itsSource
 		 */
 		new FileHandler(new File(theXMLFileDirectory + "/" + itsSource), this);
+	}
+
+	// PSR database
+	public Table(ResultSet theSet, String theName) throws SQLException
+	{
+		itsName = theName;
+		itsSource = new String("PSR");
+		itsNrColumns = theSet.getMetaData().getColumnCount();
+		itsColumns.ensureCapacity(itsNrColumns);
+		itsNrRows = 0;
+
+		for (int i=0; i<itsNrColumns; i++)
+		{
+			System.out.println(theSet.getMetaData().getColumnName(i+1));
+			itsColumns.add(new Column(
+				theSet.getMetaData().getColumnName(i+1),
+				theSet.getMetaData().getColumnName(i+1),	//short name
+				AttributeType.NOMINAL,				//make everything NOMINAL for the moment
+				i,						//index
+				0)); 						//number of rows unknown at this point
+		}
+
+		while (theSet.next())
+		{
+			for (int i=0; i<itsNrColumns; i++)
+			{
+				getColumn(i).add(theSet.getString(i+1));
+			}
+			itsNrRows++;
+		}
 	}
 
 	/*

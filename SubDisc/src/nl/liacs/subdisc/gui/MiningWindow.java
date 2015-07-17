@@ -6,6 +6,7 @@ import java.io.*;
 import java.text.*;
 import java.util.*;
 import java.util.List;
+import java.sql.*;
 
 import javax.swing.*;
 import javax.swing.UIManager.LookAndFeelInfo;
@@ -23,6 +24,7 @@ public class MiningWindow extends JFrame implements ActionListener
 	public static final Image ICON = new ImageIcon(Toolkit.getDefaultToolkit().getImage(MiningWindow.class.getResource("/icon.jpg"))).getImage();
 
 	private Table itsTable;
+	private DatabaseConnection itsDBC;
 
 	// target info
 	private int itsPositiveCount; // nominal target
@@ -95,6 +97,9 @@ public class MiningWindow extends JFrame implements ActionListener
 		jMenuFile = initMenu(STD.FILE);
 
 		jMenuItemOpenFile = initMenuItem(STD.OPEN_FILE);
+		jMenuFile.add(jMenuItemOpenFile);
+
+		jMenuItemOpenFile = initMenuItem(STD.LOAD_DATABASE_TABLE);
 		jMenuFile.add(jMenuItemOpenFile);
 
 		jMenuItemBrowse = initMenuItem(STD.BROWSE);
@@ -1109,6 +1114,43 @@ public class MiningWindow extends JFrame implements ActionListener
 				initGuiComponentsFromFile();
 			}
 
+			jMenuItemRemoveEnrichmentSource.setEnabled(false);
+		}
+	}
+
+
+	private void jMenuItemLoadDatabaseTableActionPerformed()
+	{
+		try
+		{
+			itsDBC = new DatabaseConnection("com.mysql.jdbc.Driver", "jdbc:mysql://localhost:3306/psr", "localhost", "psr", "root", "");
+			itsDBC.openConnection();
+
+			ArrayList<String> aTables = itsDBC.getTableViewNames();
+			String aTable = (String) JOptionPane.showInputDialog(null, "Choose season", "Season selection", JOptionPane.QUESTION_MESSAGE,
+				null, // Use default icon
+        			aTables.toArray(), 
+				aTables.toArray()[0]); // Initial choice
+			System.out.println("selected table: " + aTable);
+
+			//load table
+			SelectStatement aStatement = new SelectStatement();
+			aStatement.addSelectClause("*");
+			aStatement.addFromClause(aTable);
+			ResultSet aSet = itsDBC.executeStatement(aStatement.toString(), true, false);
+			itsTable = new Table(aSet, aTable);
+			//TODO update GUI?
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+		}
+		if (itsTable != null)
+		{
+			removeAllMultiTargetsItems();
+			removeAllMultiRegressionTargetsItems();
+			enableTableDependentComponents(true);
+			initGuiComponents();
 			jMenuItemRemoveEnrichmentSource.setEnabled(false);
 		}
 	}
@@ -2264,7 +2306,8 @@ public class MiningWindow extends JFrame implements ActionListener
 		// ENUM			GUI_TEXT		MNEMONIC	ACCELERATOR
 		// MENU
 		FILE(			"File",			KeyEvent.VK_F,	false),
-		OPEN_FILE(		"Open File",		KeyEvent.VK_O,	true),
+		OPEN_FILE(		"Open File...",		KeyEvent.VK_O,	true),
+		LOAD_DATABASE_TABLE(	"Load PSR Table",	KeyEvent.VK_Q,	true),
 		BROWSE(			"Browse...",		KeyEvent.VK_B,	true),
 		EXPLORE(		"Explore...",		KeyEvent.VK_E,	true),
 		META_DATA(		"Meta Data...",		KeyEvent.VK_D,	true),
@@ -2316,6 +2359,8 @@ public class MiningWindow extends JFrame implements ActionListener
 		// to be replaced by Java 7 String switch someday
 		if (STD.OPEN_FILE.GUI_TEXT.equals(aCommand))
 			jMenuItemOpenFileActionPerformed();
+		if (STD.LOAD_DATABASE_TABLE.GUI_TEXT.equals(aCommand))
+			jMenuItemLoadDatabaseTableActionPerformed();
 		else if (STD.BROWSE.GUI_TEXT.equals(aCommand))
 			browseActionPerformed();
 		else if (STD.EXPLORE.GUI_TEXT.equals(aCommand))
