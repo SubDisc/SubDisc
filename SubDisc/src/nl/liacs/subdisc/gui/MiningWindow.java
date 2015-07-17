@@ -1127,11 +1127,11 @@ public class MiningWindow extends JFrame implements ActionListener
 			itsDBC.openConnection();
 
 			ArrayList<String> aTables = itsDBC.getTableViewNames();
-			String aTable = (String) JOptionPane.showInputDialog(null, "Choose season", "Season selection", JOptionPane.QUESTION_MESSAGE,
+			String aTable = (String) JOptionPane.showInputDialog(null, "Choose table", "Table selection", JOptionPane.QUESTION_MESSAGE,
 				null, // Use default icon
         			aTables.toArray(), 
 				aTables.toArray()[0]); // Initial choice
-			System.out.println("selected table: " + aTable);
+			System.out.println("selected table (or view): " + aTable);
 
 			//load table
 			SelectStatement aStatement = new SelectStatement();

@@ -228,7 +228,7 @@ public class DatabaseConnection
 		while (aResultSet.next())
 		{
 			aTables.add(aResultSet.getString(3));
-			System.out.println("Table: " + aResultSet.getString(3));
+			//System.out.println("Table: " + aResultSet.getString(3));
 		}
 		return aTables;
 	}
