@@ -104,20 +104,25 @@ public class Table implements XMLNodeInterface
 
 		for (int i=0; i<itsNrColumns; i++)
 		{
-			System.out.println(theSet.getMetaData().getColumnName(i+1));
+			ResultSetMetaData aMD = theSet.getMetaData();
+			System.out.println(aMD.getColumnName(i+1) + ", " + aMD.getColumnTypeName(i+1));
 			itsColumns.add(new Column(
-				theSet.getMetaData().getColumnName(i+1),
-				theSet.getMetaData().getColumnName(i+1),	//short name
-				AttributeType.NOMINAL,				//make everything NOMINAL for the moment
-				i,						//index
-				0)); 						//number of rows unknown at this point
+				aMD.getColumnName(i+1),
+				aMD.getColumnName(i+1),	//short name
+				(aMD.getColumnTypeName(i+1).contains("CHAR") || aMD.getColumnTypeName(i+1).contains("DATE")) ? AttributeType.NOMINAL : AttributeType.NUMERIC,
+				i,
+				0)); //number of rows unknown at this point
 		}
 
 		while (theSet.next())
 		{
 			for (int i=0; i<itsNrColumns; i++)
 			{
-				getColumn(i).add(theSet.getString(i+1));
+				Column aColumn = getColumn(i);
+				if (aColumn.getType() == AttributeType.NOMINAL)
+					aColumn.add(theSet.getString(i+1));
+				else
+					aColumn.add(theSet.getFloat(i+1));
 			}
 			itsNrRows++;
 		}
