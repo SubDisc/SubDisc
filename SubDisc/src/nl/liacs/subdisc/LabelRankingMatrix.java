@@ -25,6 +25,7 @@ public class LabelRankingMatrix
 		itsSize = theRanking.getSize();
 
 		itsMatrix = new float[itsSize][itsSize];
+		modeMatrix = new int[3][itsSize][itsSize];
 
 		for (int i=0; i<itsSize; i++)
 			for (int j=0; j<itsSize; j++)

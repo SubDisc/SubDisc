@@ -2418,8 +2418,8 @@ public class Column implements XMLNodeInterface
 				int[][][] aModeMatrix = aRankingMatrix.getModeMatrix();
 				
 				for (int s=0; s<3; s++)
-					for (int i=0; i<itsSize; i++)
-						for (int j=0; j<itsSize; j++)
+					for (int i=0; i<rankSize; i++)
+						for (int j=0; j<rankSize; j++)
 							theModeMatrix[s][i][j] += aModeMatrix[s][i][j];
 				
 			}
