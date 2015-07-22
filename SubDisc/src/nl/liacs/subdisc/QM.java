@@ -78,6 +78,7 @@ public enum QM implements EnumInterface
 
 	// LABEL_RANKING
 	LRnorm			("LRM Norm",				"0.0",	TargetType.LABEL_RANKING),
+	LRnormMedian	("LRM Norm Median",			"0.0",	TargetType.LABEL_RANKING),
 	LRwnorm			("LRM Norm & homog",		"0.0",	TargetType.LABEL_RANKING),
 	LRmin			("Labelwise Minimum",		"0.0",	TargetType.LABEL_RANKING),
 	LRlabelwise		("Labelwise Maximization",	"0.0",	TargetType.LABEL_RANKING),

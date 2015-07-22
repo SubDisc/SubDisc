@@ -1,7 +1,9 @@
 package nl.liacs.subdisc;
 
 import java.util.*;
+
 import nl.liacs.subdisc.gui.*;
+
 import org.w3c.dom.*;
 
 /**
@@ -2342,7 +2344,7 @@ public class Column implements XMLNodeInterface
 	/**
 	 * Returns the average label ranking, as a LabelRankingMatrix
 	 */
-	public LabelRankingMatrix getAverageRankingMatrix(Subgroup theSubgroup)
+	public LabelRankingMatrix getAverageRankingMatrix0(Subgroup theSubgroup)
 	{
 		if (itsType != AttributeType.NOMINAL)
 		{
@@ -2370,10 +2372,78 @@ public class Column implements XMLNodeInterface
 				aCount++;
 			}
 		aResult.divide(aCount); //divide by zero is not possible, as subgroups always have members
-
+		
 		return aResult;
 	}
 
+	public LabelRankingMatrix getAverageRankingMatrix(Subgroup theSubgroup)
+	{
+		if (itsType != AttributeType.NOMINAL)
+		{
+			logMessage("getAverageRankingMatrix", getTypeError("NOMINAL"));
+			return null;
+		}
+
+		//take the size of the first example as the total number of labels
+//		LabelRankingMatrix aResult = new LabelRankingMatrix(itsNominals.get(0).length());
+//		LabelRankingMatrix aResult = new LabelRankingMatrix(itsDistinctValues.get(itsNominalz[0]).replace(">","").length());
+//		LabelRankingMatrix minusOnesMat = onesMat;
+//		LabelRankingMatrix zerosMat = onesMat;
+		// equivalent to below, as itsNominalz[0] should always be 0
+		//LabelRankingMatrix aResult = new LabelRankingMatrix(itsDistinctValues.get(0).length());
+		//int aCount = 0;
+
+		BitSet aMembers = (theSubgroup == null) ? null : theSubgroup.getMembers();
+		//summation of rankings
+		
+		int rankSize = itsDistinctValues.get(itsNominalz[0]).replace(">","").length();
+		LabelRankingMatrix LRmode = new LabelRankingMatrix(rankSize);
+		
+		
+		
+		int[][][] theModeMatrix = new int[3][rankSize][rankSize];
+		for (int s=0; s<3; s++)
+			for (int i=0; i<rankSize; i++)
+				for (int j=0; j<rankSize; j++)
+					theModeMatrix[s][i][j] = 0;
+		
+		for (int k=0; k<itsSize; ++k)
+			if (aMembers == null || aMembers.get(k)) //part of the subgroup?
+			{
+//				String aValue = itsNominals.get(i);
+				String aValue = itsDistinctValues.get(itsNominalz[k]);
+				LabelRanking aRanking = new LabelRanking(aValue);
+				LabelRankingMatrix aRankingMatrix = new LabelRankingMatrix(aRanking); //translate to LRM
+				
+				int[][][] aModeMatrix = aRankingMatrix.getModeMatrix();
+				
+				for (int s=0; s<3; s++)
+					for (int i=0; i<itsSize; i++)
+						for (int j=0; j<itsSize; j++)
+							theModeMatrix[s][i][j] += aModeMatrix[s][i][j];
+				
+			}
+		
+		for (int i=0; i<rankSize; i++)
+			for (int j=0; j<rankSize; j++) {
+				if (theModeMatrix[0][i][j] > theModeMatrix[1][i][j]){
+					if (theModeMatrix[0][i][j] >  theModeMatrix[2][i][j])
+						LRmode.itsMatrix[i][j] = 1;
+					else
+						LRmode.itsMatrix[i][j] = -1;
+				} else {
+					if (theModeMatrix[1][i][j] >  theModeMatrix[2][i][j])
+						LRmode.itsMatrix[i][j] = 0;
+					else
+						LRmode.itsMatrix[i][j] = -1;
+				}
+			}
+		
+		return LRmode;
+	}
+	
+
+	
 	/**
 	 * Returns the number of times the value supplied as parameter occurs in
 	 * the Column. This method only works on Columns of type

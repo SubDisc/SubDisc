@@ -9,7 +9,8 @@ public class LabelRankingMatrix
 	//...
 
 	private int itsSize; //number of labels
-	private float[][] itsMatrix; //the actual values.
+	public float[][] itsMatrix; //the actual values.
+	private int[][][] modeMatrix;
 
 	public LabelRankingMatrix(int theSize)
 	{
@@ -27,12 +28,23 @@ public class LabelRankingMatrix
 
 		for (int i=0; i<itsSize; i++)
 			for (int j=0; j<itsSize; j++)
-				if (theRanking.getRank(i) < theRanking.getRank(j))
+				if (theRanking.getRank(i) < theRanking.getRank(j)) {
 					itsMatrix[i][j] = 1;
-				else if (theRanking.getRank(i) > theRanking.getRank(j))
+					modeMatrix[0][i][j] = 0;
+					modeMatrix[1][i][j] = 0;
+					modeMatrix[2][i][j] = 1;
+				} else if (theRanking.getRank(i) > theRanking.getRank(j)) {
 					itsMatrix[i][j] = -1;
-				else
+					modeMatrix[0][i][j] = 1;
+					modeMatrix[1][i][j] = 0;
+					modeMatrix[2][i][j] = 0;
+				} else {
 					itsMatrix[i][j] = 0;
+					modeMatrix[0][i][j] = 0;
+					modeMatrix[1][i][j] = 1;
+					modeMatrix[2][i][j] = 0;
+				}
+		
 	}
 
 	public Object clone()
@@ -52,6 +64,57 @@ public class LabelRankingMatrix
 			for (int j=0; j<itsSize; j++)
 				itsMatrix[i][j] += theMatrix.itsMatrix[i][j];
 	}
+	
+//	public void modeMatricesOld(LabelRankingMatrix OnesMatrix, LabelRankingMatrix MinusOnesMatrix, LabelRankingMatrix zerosMatrix)
+//	{
+//		for (int i=0; i<itsSize; i++)
+//			for (int j=0; j<itsSize; j++) {
+//				if (theMatrix.itsMatrix[i][j] == 1)
+//					OnesMatrix[i][j] += 1;
+//				else if (theMatrix.itsMatrix[i][j] == -1)
+//					MinusOnesMatrix[i][j] += 1;
+//				else
+//					zerosMatrix[i][j] += 1;
+//			}
+//	}
+	
+//	public void modeMatrices(LabelRankingMatrix theMatrix)
+//	{	
+//		for (int i=0; i<itsSize; i++)
+//			for (int j=0; j<itsSize; j++) {
+//				if (theMatrix.itsMatrix[i][j] == 1)
+//					modeMatrix[2][i][j] += 1;
+//				else if (theMatrix.itsMatrix[i][j] == -1)
+//					modeMatrix[0][i][j] += 1;
+//				else
+//					modeMatrix[1][i][j] += 1;
+//			}
+//	}
+	
+	public int[][][] getModeMatrix()
+	{	
+		return modeMatrix;
+	}
+	
+//	public LabelRankingMatrix computeMode(int[][][] theModeMatrix)
+//	{	
+//		LabelRankingMatrix LRmode = new LabelRankingMatrix(itsSize);
+//		for (int i=0; i<itsSize; i++)
+//			for (int j=0; j<itsSize; j++) {
+//				if (theModeMatrix[0][i][j] > theModeMatrix[1][i][j]){
+//					if (theModeMatrix[0][i][j] >  theModeMatrix[2][i][j])
+//						LRmode.itsMatrix[i][j] = 1;
+//					else
+//						LRmode.itsMatrix[i][j] = -1;
+//				} else {
+//					if (theModeMatrix[1][i][j] >  theModeMatrix[2][i][j])
+//						LRmode.itsMatrix[i][j] = 0;
+//					else
+//						LRmode.itsMatrix[i][j] = -1;
+//				}
+//			}
+//		return LRmode;
+//	}
 
 	public void subtract(LabelRankingMatrix theMatrix)
 	{
@@ -88,6 +151,19 @@ public class LabelRankingMatrix
 //	}
 	
 	public float normDistance(LabelRankingMatrix theMatrix)
+	{
+		double aDistance = 0;
+		int count = 0;
+		for (int i=0; i<itsSize; i++)
+			for (int j=i+1; j<itsSize; j++)
+			{
+				aDistance += Math.pow((itsMatrix[i][j] - theMatrix.itsMatrix[i][j])/2,2);
+				count += 1;
+			}
+		return (float) Math.sqrt(aDistance)/count;
+	}
+	
+	public float normDistanceMedian(LabelRankingMatrix theMatrix)
 	{
 		double aDistance = 0;
 		int count = 0;

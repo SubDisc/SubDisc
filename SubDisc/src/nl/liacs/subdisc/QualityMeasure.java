@@ -877,6 +877,8 @@ public class QualityMeasure
 		float aDistance = 0.0f;
 		if (itsQualityMeasure == QM.LRnorm)
 			aDistance = itsAverageRankingMatrix.normDistance(theSubgroupRankingMatrix);
+		else if (itsQualityMeasure == QM.LRnormMedian)
+			aDistance = itsAverageRankingMatrix.normDistanceMedian(theSubgroupRankingMatrix);
 		else if (itsQualityMeasure == QM.LRwnorm)
 			aDistance = itsAverageRankingMatrix.wnormDistance(theSubgroupRankingMatrix);
 		else if (itsQualityMeasure == QM.LRmin)
