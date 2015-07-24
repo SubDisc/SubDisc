@@ -164,7 +164,7 @@ public class LabelRankingMatrix
 		return (float) Math.sqrt(aDistance)/count;
 	}
 	
-	public float normDistanceMedian(LabelRankingMatrix theMatrix)
+	public float normDistanceMode(LabelRankingMatrix theMatrix)
 	{
 		double aDistance = 0;
 		int count = 0;

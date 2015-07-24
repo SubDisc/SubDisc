@@ -2428,14 +2428,14 @@ public class Column implements XMLNodeInterface
 			for (int j=0; j<rankSize; j++) {
 				if (theModeMatrix[0][i][j] > theModeMatrix[1][i][j]){
 					if (theModeMatrix[0][i][j] >  theModeMatrix[2][i][j])
-						LRmode.itsMatrix[i][j] = 1;
-					else
 						LRmode.itsMatrix[i][j] = -1;
+					else
+						LRmode.itsMatrix[i][j] = 1;
 				} else {
 					if (theModeMatrix[1][i][j] >  theModeMatrix[2][i][j])
 						LRmode.itsMatrix[i][j] = 0;
 					else
-						LRmode.itsMatrix[i][j] = -1;
+						LRmode.itsMatrix[i][j] = 1;
 				}
 			}
 		
