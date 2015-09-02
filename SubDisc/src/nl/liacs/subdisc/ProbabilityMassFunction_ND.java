@@ -14,7 +14,7 @@ public class ProbabilityMassFunction_ND extends ProbabilityDensityFunction
 	// itsBinIndexes stores the index of (<= bin) for each itsData[i]
 	private final int[] itsBinIndexes;
 
-	// does not make any real sense
+	// does not make any real sense for base PMF, will contain qm for child
 	final double itsScore;
 
 	ProbabilityMassFunction_ND(Column theColumn, int theNrSplitPoints, boolean useEqualWidth)

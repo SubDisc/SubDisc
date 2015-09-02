@@ -10,7 +10,7 @@ import java.util.*;
 public class QualityMeasure
 {
 	// temporary PDF related code --- leave at false in svn
-	private static final boolean TEMPORARY_CODE_SG_VS_COMPLEMENT = true;
+	private static final boolean TEMPORARY_CODE_SG_VS_COMPLEMENT = false;
 
 	private final QM itsQualityMeasure;
 	private final int itsNrRecords;
