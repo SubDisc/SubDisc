@@ -440,7 +440,12 @@ public class HistogramWindow extends JFrame implements ActionListener, ChangeLis
 
 		for (Entry<?, Integer> ae : itsAMap.entrySet())
 			for (Entry<?, Integer> te : itsTMap.entrySet())
-				dataset.addValue(counts[ae.getValue()][te.getValue()], te.getKey().toString(), ae.getKey().toString());
+			{
+				if (ae.getValue() < itsAMap.size() && te.getValue() < itsTMap.size())
+					dataset.addValue(counts[ae.getValue()][te.getValue()], te.getKey().toString(), ae.getKey().toString());
+				else
+					System.out.println("data outside matrix! ignoring");
+			}
 
 		return dataset;
 	}

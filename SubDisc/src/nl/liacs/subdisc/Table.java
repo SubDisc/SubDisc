@@ -114,6 +114,7 @@ public class Table implements XMLNodeInterface
 				0)); //number of rows unknown at this point
 		}
 
+		boolean isThereNULLs = false;
 		while (theSet.next())
 		{
 			for (int i=0; i<itsNrColumns; i++)
@@ -123,9 +124,16 @@ public class Table implements XMLNodeInterface
 					aColumn.add(theSet.getString(i+1));
 				else
 					aColumn.add(theSet.getFloat(i+1));
+				if (theSet.wasNull())
+				{
+					System.out.println("NULL value encountered in column " + aColumn.getName());
+					isThereNULLs = true;
+				}
 			}
 			itsNrRows++;
 		}
+		if (isThereNULLs)
+			JOptionPane.showMessageDialog(null, "The were NULL values in one or more columns.", "NULL values encountered", JOptionPane.INFORMATION_MESSAGE);
 	}
 
 	/*
