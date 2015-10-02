@@ -890,9 +890,11 @@ public class QualityMeasure
 		else if (itsQualityMeasure == QM.LRcov)
 			aDistance = itsAverageRankingMatrix.covDistance(theSubgroupRankingMatrix);
 
+		//aDistance = (float) Math.pow(aDistance,2);
 		float aPercentage = (float) theSupport/itsNrRecords;
 		float aSize = (float) Math.sqrt(aPercentage);
-		return  aSize * aDistance;
+		//float aSize = (float) Math.sqrt(theSupport);
+		return aSize * aDistance;
 	}
 
 

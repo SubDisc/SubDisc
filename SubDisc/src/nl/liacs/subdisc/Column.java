@@ -2344,7 +2344,7 @@ public class Column implements XMLNodeInterface
 	/**
 	 * Returns the average label ranking, as a LabelRankingMatrix
 	 */
-	public LabelRankingMatrix getAverageRankingMatrix0(Subgroup theSubgroup)
+	public LabelRankingMatrix getAverageRankingMatrix(Subgroup theSubgroup)
 	{
 		if (itsType != AttributeType.NOMINAL)
 		{
@@ -2376,7 +2376,7 @@ public class Column implements XMLNodeInterface
 		return aResult;
 	}
 
-	public LabelRankingMatrix getAverageRankingMatrix(Subgroup theSubgroup)
+	public LabelRankingMatrix getAverageRankingMatrix0(Subgroup theSubgroup)
 	{
 		if (itsType != AttributeType.NOMINAL)
 		{
