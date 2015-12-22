@@ -14,7 +14,7 @@ public final class RendererNumber extends DefaultTableCellRenderer
 
 	static
 	{
-		FORMATTER  = NumberFormat.getNumberInstance();
+		FORMATTER = NumberFormat.getNumberInstance();
 		FORMATTER.setMaximumFractionDigits(6);
 	}
 

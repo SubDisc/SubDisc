@@ -1014,13 +1014,22 @@ public class QualityMeasure
 				break;
 			}
 			//ORDINAL
+			// MM note AUC = U / n1*n2
+			//         where U = (theSum-aSequenceSum)
+			//               n1 = theCoverage
+			//               n2 = aComplementCoverage
+			// U is Mann-Whitney U
 			case AUC :
 			{
 				float aComplementCoverage = itsNrRecords - theCoverage;
 				float aSequenceSum = theCoverage*(theCoverage+1.0f)/2.0f; //sum of all positive ranks, assuming ideal case
 				aReturn = 1.0f + (aSequenceSum-theSum)/(theCoverage*aComplementCoverage);
+				//aReturn = (theSum-aSequenceSum)/(theCoverage*aComplementCoverage);
 				break;
 			}
+			// MM the name of this statistic is confusing
+			// this is the Wilcoxon rank sum test
+			// it is equivalent to the Mann-Whithey U test
 			case WMW_RANKS :
 			{
 				float aComplementCoverage = itsNrRecords - theCoverage;

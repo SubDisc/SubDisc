@@ -2240,6 +2240,16 @@ public class Column implements XMLNodeInterface
 		final float[] aSplitPoints = new float[theNrSplits];
 		final int size = theBitSet.cardinality();
 
+		// FIXME MM
+		// (size == 0) check is incorrect
+		// it would return an array of 0's
+		// and then 0 would be considered to be a bin boundary
+		// more generally the code below leads to awkward results when
+		// (theNrSplits > theBitSet.cardinality())
+		// as the aSplitPoints[] will be populated with 0's
+		// for every index >= theBitSet.cardinality(), the values will
+		// not be set to anything else
+
 		// prevent crash in aSplitPoints populating loop
 		if (size == 0)
 			return aSplitPoints;
