@@ -120,7 +120,7 @@ public class ModelWindow extends JFrame implements ActionListener
 		XYSeries aSubgroupSeries;
 		if (!isScapeSetting)
 		{
-			aDatasetSeries = new XYSeries("complement");	// XXX MM complement not dataset
+			aDatasetSeries = new XYSeries("data");	// XXX MM sometimes complement not dataset
 			aSubgroupSeries = addSubgroup ? new XYSeries("subgroup") : null;
 		}
 		else
