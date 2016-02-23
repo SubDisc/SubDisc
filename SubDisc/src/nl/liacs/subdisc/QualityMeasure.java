@@ -930,6 +930,14 @@ public class QualityMeasure
 		switch (itsQualityMeasure)
 		{
 			//NUMERIC
+			case R_SQUARED : //TODO
+			{
+				if (itsNrRecords <= 1)
+					aReturn = 0.0f;
+				else
+					aReturn = (float) ((Math.sqrt(theCoverage) * ((theSum/theCoverage) - itsTotalAverage)) / itsTotalSampleStandardDeviation);
+				break;
+			}
 			case Z_SCORE :
 			{
 				if (itsNrRecords <= 1)

@@ -32,6 +32,7 @@ public enum QM implements EnumInterface
 
 	// SINGLE_NUMERIC quality measures
 	// NOTE when adding a new SINGLE_NUMERIC QM -> add it to requiredStats()
+	R_SQUARED		("R-Squared",		"0.0",	TargetType.SINGLE_NUMERIC),
 	Z_SCORE			("Z-Score",		"1.0",	TargetType.SINGLE_NUMERIC),
 	INVERSE_Z_SCORE		("Inverse Z-Score",	"1.0",	TargetType.SINGLE_NUMERIC),
 	ABS_Z_SCORE		("Abs Z-Score",		"1.0",	TargetType.SINGLE_NUMERIC),
@@ -195,6 +196,7 @@ public enum QM implements EnumInterface
 		switch(theQM)
 		{
 			// SINGLE_NUMERIC
+			case R_SQUARED :	return SUM_SSD;
 			case Z_SCORE :		return SUM;
 			case INVERSE_Z_SCORE :	return SUM;
 			case ABS_Z_SCORE :	return SUM;

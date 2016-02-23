@@ -1880,24 +1880,20 @@ public class Column implements XMLNodeInterface
 	 * @see java.util.BitSet
 	 */
 	//public float[] getStatistics(BitSet theBitSet, Set<Stat> theRequiredStats)
-	public float[] getStatistics(BitSet theBitSet, boolean getMedianAndMedianAD)
+	public Statistics getStatistics(BitSet theBitSet, boolean getMedianAndMedianAD)
 	{
 		if (!isValidCall("getStatistics", theBitSet))
-			return new float[]{ Float.NaN, Float.NaN, Float.NaN, Float.NaN };
+			return new Statistics();
 		// not all methods below are safe for divide by 0
 		else if (theBitSet.cardinality() == 0)
-			return new float[]{ Float.NaN, Float.NaN, Float.NaN, Float.NaN };
+			return new Statistics();
 
-		// sum, sumSquaredDeviations, median, medianAbsoluteDeveviation
-		final float[] aResult = new float[4];
+		final Statistics aResult;
 		// if (!MMAD) do not store and sort the values, else do
 		if (!getMedianAndMedianAD)
 		{
-			// this code path does no make copies of the data
-			aResult[0] = computeSum(theBitSet);
-			aResult[1] = computeSumSquaredDeviations(aResult[0], theBitSet);
-			aResult[2] = Float.NaN;
-			aResult[3] = Float.NaN;
+			float aSum = computeSum(theBitSet);
+			aResult = new Statistics(aSum, computeSumSquaredDeviations(aSum, theBitSet));
 		}
 		else
 		{
@@ -1908,11 +1904,9 @@ public class Column implements XMLNodeInterface
 			for (int i = theBitSet.nextSetBit(0), j = -1; i >= 0; i = theBitSet.nextSetBit(i + 1))
 				aSum += (aValues[++j] = itsFloatz[i]);
 			Arrays.sort(aValues);
+			float aMedian = computeMedian(aValues);
 
-			aResult[0] = aSum;
-			aResult[1] = computeSumSquaredDeviations(aSum, aValues);
-			aResult[2] = computeMedian(aValues);
-			aResult[3] = computeMedianAbsoluteDeviations(aResult[2], aValues);
+			aResult = new Statistics(aSum, computeSumSquaredDeviations(aSum, aValues), aMedian, computeMedianAbsoluteDeviations(aMedian, aValues));
 		}
 		return aResult;
 	}

@@ -163,7 +163,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 
 		BitSet aBitSet = new BitSet();
 		aBitSet.set(0, itsNrRows);
-		float[] aCounts = itsNumericTarget.getStatistics(aBitSet, false);
+		Statistics aStatistics = itsNumericTarget.getStatistics(aBitSet, false); // no median
 		ProbabilityDensityFunction aPDF;
 if (!TEMPORARY_CODE)
 {
@@ -179,7 +179,7 @@ else
 aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_POINTS, TEMPORARY_CODE_USE_EQUAL_WIDTH);
 }
 
-		itsQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), itsNrRows, aCounts[0], aCounts[1], aPDF);
+		itsQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), itsNrRows, aStatistics.getSum(), aStatistics.getSumSquaredDeviations(), aPDF);
 		itsQualityMeasureMinimum = itsSearchParameters.getQualityMeasureMinimum();
 
 		itsResult = new SubgroupSet(itsSearchParameters.getMaximumSubgroups(), itsNrRows);
@@ -1177,8 +1177,7 @@ if (!TEMPORARY_CODE)
 				// what needs to be calculated for this QM
 				// NOTE requiredStats could be a final SubgroupDiscovery.class member
 				Set<Stat> aRequiredStats = QM.requiredStats(itsSearchParameters.getQualityMeasure());
-				//float[] aCounts = itsNumericTarget.getStatistics(aMembers, aRequiredStats);
-				float[] aCounts = itsNumericTarget.getStatistics(aMembers, itsSearchParameters.getQualityMeasure() == QM.MMAD);
+				Statistics aStatistics = itsNumericTarget.getStatistics(aMembers, itsSearchParameters.getQualityMeasure() == QM.MMAD);
 				ProbabilityDensityFunction aPDF = null;
 				if (aRequiredStats.contains(Stat.PDF))
 				{
@@ -1192,9 +1191,15 @@ else
 					aPDF.smooth();
 				}
 
-				aQuality = itsQualityMeasure.calculate(theNewSubgroup.getCoverage(), aCounts[0], aCounts[1], aCounts[2], aCounts[3], aPDF);
-				theNewSubgroup.setSecondaryStatistic(aCounts[0]/(double)theNewSubgroup.getCoverage()); //average
-				theNewSubgroup.setTertiaryStatistic(Math.sqrt(aCounts[1]/(double)theNewSubgroup.getCoverage())); // standard deviation
+				aQuality = itsQualityMeasure.calculate(
+					theNewSubgroup.getCoverage(), 
+					aStatistics.getSum(),
+					aStatistics.getSumSquaredDeviations(),
+					aStatistics.getMedian(),
+					aStatistics.getMedianAbsoluteDeviations(),
+					aPDF);
+				theNewSubgroup.setSecondaryStatistic(aStatistics.getSum()/(double)theNewSubgroup.getCoverage()); 		 // average
+				theNewSubgroup.setTertiaryStatistic(Math.sqrt(aStatistics.getSumSquaredDeviations()/(double)theNewSubgroup.getCoverage())); // standard deviation
 				break;
 }
 else
