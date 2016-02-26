@@ -163,7 +163,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 
 		BitSet aBitSet = new BitSet();
 		aBitSet.set(0, itsNrRows);
-		Statistics aStatistics = itsNumericTarget.getStatistics(aBitSet, false); // no median
+		Statistics aStatistics = itsNumericTarget.getStatistics(aBitSet, false, true); // no median, yes complement
 		ProbabilityDensityFunction aPDF;
 if (!TEMPORARY_CODE)
 {
@@ -179,7 +179,12 @@ else
 aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_POINTS, TEMPORARY_CODE_USE_EQUAL_WIDTH);
 }
 
-		itsQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), itsNrRows, aStatistics.getSum(), aStatistics.getSumSquaredDeviations(), aPDF);
+		itsQualityMeasure = new QualityMeasure(
+			itsSearchParameters.getQualityMeasure(),
+			itsNrRows,
+			aStatistics.getSubgroupSum(),
+			aStatistics.getSubgroupSumSquaredDeviations(),
+			aPDF);
 		itsQualityMeasureMinimum = itsSearchParameters.getQualityMeasureMinimum();
 
 		itsResult = new SubgroupSet(itsSearchParameters.getMaximumSubgroups(), itsNrRows);
@@ -1177,8 +1182,8 @@ if (!TEMPORARY_CODE)
 				// what needs to be calculated for this QM
 				// NOTE requiredStats could be a final SubgroupDiscovery.class member
 				Set<Stat> aRequiredStats = QM.requiredStats(itsSearchParameters.getQualityMeasure());
-				//Statistics aStatistics = itsNumericTarget.getStatistics(aMembers, aRequiredStats); // TODO MM - implement better solution than == MMAD check
-				Statistics aStatistics = itsNumericTarget.getStatistics(aMembers, itsSearchParameters.getQualityMeasure() == QM.MMAD);
+				//Statistics aStatistics = itsNumericTarget.getStatistics(aMembers, aRequiredStats); // TODO MM - implement better solution than below two checks
+				Statistics aStatistics = itsNumericTarget.getStatistics(aMembers, itsSearchParameters.getQualityMeasure() == QM.MMAD, true);
 				ProbabilityDensityFunction aPDF = null;
 				if (aRequiredStats.contains(Stat.PDF))
 				{
@@ -1192,15 +1197,9 @@ else
 					aPDF.smooth();
 				}
 
-				aQuality = itsQualityMeasure.calculate(
-					theNewSubgroup.getCoverage(), 
-					aStatistics.getSum(),
-					aStatistics.getSumSquaredDeviations(),
-					aStatistics.getMedian(),
-					aStatistics.getMedianAbsoluteDeviations(),
-					aPDF);
-				theNewSubgroup.setSecondaryStatistic(aStatistics.getSum()/(double)theNewSubgroup.getCoverage()); 		 // average
-				theNewSubgroup.setTertiaryStatistic(Math.sqrt(aStatistics.getSumSquaredDeviations()/(double)theNewSubgroup.getCoverage())); // standard deviation
+				aQuality = itsQualityMeasure.calculate(aStatistics, aPDF);
+				theNewSubgroup.setSecondaryStatistic(aStatistics.getSubgroupAverage());
+				theNewSubgroup.setTertiaryStatistic(aStatistics.getSubgroupStandardDeviation());
 				break;
 }
 else
@@ -1210,7 +1209,7 @@ else
 // FIXME MM TEMP
 System.out.format("#Subgroup: '%s' (size = %d)%n", theNewSubgroup, theNewSubgroup.getCoverage());
 	ProbabilityMassFunction_ND aPMF = new ProbabilityMassFunction_ND((ProbabilityMassFunction_ND) itsQualityMeasure.getProbabilityDensityFunction(), aMembers);
-	aQuality = itsQualityMeasure.calculate(-1, -1, -1, -1, -1, aPMF);
+	aQuality = itsQualityMeasure.calculate(new Statistics(theNewSubgroup.getCoverage(), -1, -1, -1, -1), aPMF);
 	theNewSubgroup.setSecondaryStatistic(theNewSubgroup.getCoverage());
 	theNewSubgroup.setTertiaryStatistic(itsTable.getNrRows()-theNewSubgroup.getCoverage());
 	break;

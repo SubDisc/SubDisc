@@ -183,7 +183,7 @@ public class Validation
 
 			BitSet aMembers = aSubgroup.getMembers();
 
-			Statistics aStatistics = aTarget.getStatistics(aMembers, itsSearchParameters.getQualityMeasure() == QM.MMAD);
+			Statistics aStatistics = aTarget.getStatistics(aMembers, itsSearchParameters.getQualityMeasure() == QM.MMAD, true);
 
 			ProbabilityDensityFunction aPDF = null;
 			// DEBUG
@@ -193,13 +193,7 @@ public class Validation
 				aPDF = new ProbabilityDensityFunction2(itsQualityMeasure.getProbabilityDensityFunction(), aMembers);
 			aPDF.smooth();
 
-			aQualities[i] = itsQualityMeasure.calculate(
-				aSubgroup.getCoverage(), 
-				aStatistics.getSum(), 
-				aStatistics.getSumSquaredDeviations(),
-				aStatistics.getMedian(),
-				aStatistics.getMedianAbsoluteDeviations(),
-				aPDF);
+			aQualities[i] = itsQualityMeasure.calculate(aStatistics, aPDF);
 		}
 
 		return aQualities;

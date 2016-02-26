@@ -24,7 +24,8 @@ public class QualityMeasure
 
 	//SINGLE_NUMERIC and SINGLE_ORDINAL
 	private float itsTotalAverage = Float.NaN;
-	private double itsTotalSampleStandardDeviation = Float.NaN;
+	private float itsTotalStandardDeviation = Float.NaN;
+	private float itsTotalSSD = Float.NaN;
 	private ProbabilityDensityFunction itsPDF; // pdf for entire dataset
 
 	//Bayesian
@@ -102,10 +103,8 @@ public class QualityMeasure
 		itsQualityMeasure = theMeasure;
 		itsNrRecords = theTotalCoverage;
 		itsTotalAverage = theTotalSum/itsNrRecords;
-		if (itsNrRecords > 1)
-			itsTotalSampleStandardDeviation = Math.sqrt(theTotalSSD/(itsNrRecords-1));
-		else
-			itsTotalSampleStandardDeviation = 0.0f;
+		itsTotalSSD = theTotalSSD;
+		itsTotalStandardDeviation = (float)Math.sqrt(theTotalSSD/itsNrRecords);
 		itsPDF = theDataPDF;
 	}
 
@@ -911,11 +910,7 @@ public class QualityMeasure
 	/**
 	 * Calculates the quality for a sample, or {@link Subgroup}.
 	 *
-	 * @param theCoverage the number of members in the sample
-	 * @param theSum the sum for the sample
-	 * @param theSSD the sum of squared deviations for the sample
-	 * @param theMedian the median for the sample
-	 * @param theMedianAD the median average deviation for the sample
+	 * @param Statistics the necessary statistics
 	 * @param thePDF the ProbabilityDensityFunction for the sample
 	 *
 	 * @return the quality
@@ -924,18 +919,27 @@ public class QualityMeasure
 	 * @see Column#getStatistics(java.util.BitSet, java.util.Set)
 	 * @see ProbabilityDensityFunction
 	 */
-	public float calculate(int theCoverage, float theSum, float theSSD, float theMedian, float theMedianAD, ProbabilityDensityFunction thePDF)
+	public float calculate(Statistics theStatistics, ProbabilityDensityFunction thePDF)
 	{
+		int aCoverage  = theStatistics.getCoverage();
+		float aSum = theStatistics.getSubgroupSum();
+		float anSSD = theStatistics.getSubgroupSumSquaredDeviations();
+		float aMedian = theStatistics.getMedian();
+		float aMedianAD = theStatistics.getMedianAbsoluteDeviations();
+
 		float aReturn = Float.NEGATIVE_INFINITY;
 		switch (itsQualityMeasure)
 		{
 			//NUMERIC
-			case R_SQUARED : //TODO
+			case EXPLAINED_VARIANCE :
 			{
 				if (itsNrRecords <= 1)
 					aReturn = 0.0f;
 				else
-					aReturn = (float) ((Math.sqrt(theCoverage) * ((theSum/theCoverage) - itsTotalAverage)) / itsTotalSampleStandardDeviation);
+				{
+					aReturn = 1f - (theStatistics.getSubgroupSumSquaredDeviations() + 
+							theStatistics.getComplementSumSquaredDeviations())/itsTotalSSD;
+				}
 				break;
 			}
 			case Z_SCORE :
@@ -943,7 +947,7 @@ public class QualityMeasure
 				if (itsNrRecords <= 1)
 					aReturn = 0.0f;
 				else
-					aReturn = (float) ((Math.sqrt(theCoverage) * ((theSum/theCoverage) - itsTotalAverage)) / itsTotalSampleStandardDeviation);
+					aReturn = (float) ((Math.sqrt(aCoverage) * ((aSum/aCoverage) - itsTotalAverage)) / itsTotalStandardDeviation);
 				break;
 			}
 			case INVERSE_Z_SCORE :
@@ -951,7 +955,7 @@ public class QualityMeasure
 				if (itsNrRecords <= 1)
 					aReturn = 0.0f;
 				else
-					aReturn = (float) -((Math.sqrt(theCoverage) * ((theSum/theCoverage) - itsTotalAverage)) / itsTotalSampleStandardDeviation);
+					aReturn = (float) -((Math.sqrt(aCoverage) * ((aSum/aCoverage) - itsTotalAverage)) / itsTotalStandardDeviation);
 				break;
 			}
 			case ABS_Z_SCORE :
@@ -959,80 +963,80 @@ public class QualityMeasure
 				if (itsNrRecords <= 1)
 					aReturn = 0.0f;
 				else
-					aReturn = (float) (Math.abs((Math.sqrt(theCoverage) * (theSum/theCoverage - itsTotalAverage)) / itsTotalSampleStandardDeviation));
+					aReturn = (float) (Math.abs((Math.sqrt(aCoverage) * (aSum/aCoverage - itsTotalAverage)) / itsTotalStandardDeviation));
 				break;
 			}
 			case AVERAGE :
 			{
-				aReturn = theSum/theCoverage;
+				aReturn = aSum/aCoverage;
 				break;
 			}
 			case INVERSE_AVERAGE :
 			{
-				aReturn = -theSum/theCoverage;
+				aReturn = -aSum/aCoverage;
 				break;
 			}
 			case QM_SUM :
 			{
-				aReturn = theSum;
+				aReturn = aSum;
 				break;
 			}
 			case INVERSE_SUM :
 			{
-				aReturn = -theSum;
+				aReturn = -aSum;
 				break;
 			}
 			case MEAN_TEST :
 			{
-				aReturn = (float) (Math.sqrt(theCoverage) * ((theSum/theCoverage) - itsTotalAverage));
+				aReturn = (float) (Math.sqrt(aCoverage) * ((aSum/aCoverage) - itsTotalAverage));
 				break;
 			}
 			case INVERSE_MEAN_TEST :
 			{
-				aReturn = (float) -(Math.sqrt(theCoverage) * ((theSum/theCoverage) - itsTotalAverage));
+				aReturn = (float) -(Math.sqrt(aCoverage) * ((aSum/aCoverage) - itsTotalAverage));
 				break;
 			}
 			case ABS_MEAN_TEST :
 			{
-				aReturn = (float) (Math.abs(Math.sqrt(theCoverage) * ((theSum/theCoverage) - itsTotalAverage)));
+				aReturn = (float) (Math.abs(Math.sqrt(aCoverage) * ((aSum/aCoverage) - itsTotalAverage)));
 				break;
 			}
 			case T_TEST :
 			{
-				if(theCoverage <= 2)
+				if(aCoverage <= 2)
 					aReturn = 0.0f;
 				else
-					aReturn = (float) ((Math.sqrt(theCoverage) * ((theSum/theCoverage) - itsTotalAverage)) / Math.sqrt(theSSD/(theCoverage-1)));
+					aReturn = (float) ((Math.sqrt(aCoverage) * ((aSum/aCoverage) - itsTotalAverage)) / Math.sqrt(anSSD/(aCoverage-1)));
 				break;
 			}
 			case INVERSE_T_TEST :
 			{
-				if(theCoverage <= 2)
+				if(aCoverage <= 2)
 					aReturn = 0.0f;
 				else
-					aReturn = (float) -((Math.sqrt(theCoverage) * ((theSum/theCoverage) - itsTotalAverage)) / Math.sqrt(theSSD/(theCoverage-1)));
+					aReturn = (float) -((Math.sqrt(aCoverage) * ((aSum/aCoverage) - itsTotalAverage)) / Math.sqrt(anSSD/(aCoverage-1)));
 				break;
 			}
 			case ABS_T_TEST :
 			{
-				if(theCoverage <= 2)
+				if(aCoverage <= 2)
 					aReturn = 0;
 				else
-					aReturn = (float) (Math.abs((Math.sqrt(theCoverage) * (theSum/theCoverage - itsTotalAverage)) / Math.sqrt(theSSD/(theCoverage-1))));
+					aReturn = (float) (Math.abs((Math.sqrt(aCoverage) * (aSum/aCoverage - itsTotalAverage)) / Math.sqrt(anSSD/(aCoverage-1))));
 				break;
 			}
 			//ORDINAL
 			// MM note AUC = U / n1*n2
-			//         where U = (theSum-aSequenceSum)
-			//               n1 = theCoverage
+			//         where U = (aSum-aSequenceSum)
+			//               n1 = aCoverage
 			//               n2 = aComplementCoverage
 			// U is Mann-Whitney U
 			case AUC :
 			{
-				float aComplementCoverage = itsNrRecords - theCoverage;
-				float aSequenceSum = theCoverage*(theCoverage+1.0f)/2.0f; //sum of all positive ranks, assuming ideal case
-				aReturn = 1.0f + (aSequenceSum-theSum)/(theCoverage*aComplementCoverage);
-				//aReturn = (theSum-aSequenceSum)/(theCoverage*aComplementCoverage);
+				float aComplementCoverage = itsNrRecords - aCoverage;
+				float aSequenceSum = aCoverage*(aCoverage+1.0f)/2.0f; //sum of all positive ranks, assuming ideal case
+				aReturn = 1.0f + (aSequenceSum-aSum)/(aCoverage*aComplementCoverage);
+				//aReturn = (aSum-aSequenceSum)/(aCoverage*aComplementCoverage);
 				break;
 			}
 			// MM the name of this statistic is confusing
@@ -1040,31 +1044,31 @@ public class QualityMeasure
 			// it is equivalent to the Mann-Whithey U test
 			case WMW_RANKS :
 			{
-				float aComplementCoverage = itsNrRecords - theCoverage;
-				float aMean = (theCoverage*(theCoverage+aComplementCoverage+1))/2.0f;
-				float aStDev = (float) Math.sqrt((theCoverage*aComplementCoverage*(theCoverage+aComplementCoverage+1))/12.0f);
-				aReturn = (theSum-aMean)/aStDev;
+				float aComplementCoverage = itsNrRecords - aCoverage;
+				float aMean = (aCoverage*(aCoverage+aComplementCoverage+1))/2.0f;
+				float aStDev = (float) Math.sqrt((aCoverage*aComplementCoverage*(aCoverage+aComplementCoverage+1))/12.0f);
+				aReturn = (aSum-aMean)/aStDev;
 				break;
 			}
 			case INVERSE_WMW_RANKS :
 			{
-				float aComplementCoverage = itsNrRecords - theCoverage;
-				float aMean = (theCoverage*(theCoverage+aComplementCoverage+1))/2.0f;
-				float aStDev = (float) Math.sqrt((theCoverage*aComplementCoverage*(theCoverage+aComplementCoverage+1))/12.0f);
-				aReturn = -((theSum-aMean)/aStDev);
+				float aComplementCoverage = itsNrRecords - aCoverage;
+				float aMean = (aCoverage*(aCoverage+aComplementCoverage+1))/2.0f;
+				float aStDev = (float) Math.sqrt((aCoverage*aComplementCoverage*(aCoverage+aComplementCoverage+1))/12.0f);
+				aReturn = -((aSum-aMean)/aStDev);
 				break;
 			}
 			case ABS_WMW_RANKS :
 			{
-				float aComplementCoverage = itsNrRecords - theCoverage;
-				float aMean = (theCoverage*(theCoverage+aComplementCoverage+1))/2.0f;
-				float aStDev = (float) Math.sqrt((theCoverage*aComplementCoverage*(theCoverage+aComplementCoverage+1))/12.0f);
-				aReturn = Math.abs((theSum-aMean)/aStDev);
+				float aComplementCoverage = itsNrRecords - aCoverage;
+				float aMean = (aCoverage*(aCoverage+aComplementCoverage+1))/2.0f;
+				float aStDev = (float) Math.sqrt((aCoverage*aComplementCoverage*(aCoverage+aComplementCoverage+1))/12.0f);
+				aReturn = Math.abs((aSum-aMean)/aStDev);
 				break;
 			}
 			case MMAD :
 			{
-				aReturn = (theCoverage/(2.0f*theMedian+theMedianAD));
+				aReturn = (aCoverage/(2.0f*aMedian+aMedianAD));
 				break;
 			}
 			// DISTRIBUTION
@@ -1102,7 +1106,7 @@ public class QualityMeasure
 					//Log.logCommandLine("difference in PDF: " + aTotalSquaredDifference);
 				}
 				Log.logCommandLine("difference in PDF: " + aTotalSquaredDifference);
-				aReturn = (float) ((0.5 * (aTotalSquaredDifference * theCoverage)) / itsNrRecords);
+				aReturn = (float) ((0.5 * (aTotalSquaredDifference * aCoverage)) / itsNrRecords);
 				break;
 			}
 			case SQUARED_HELLINGER_WEIGHTED_ADJUSTED :
@@ -1118,12 +1122,12 @@ public class QualityMeasure
 					//Log.logCommandLine("difference in PDF: " + aTotalSquaredDifference);
 				}
 				Log.logCommandLine("difference in PDF: " + aTotalSquaredDifference);
-				aReturn = (float) ((0.5 * (aTotalSquaredDifference * theCoverage)) / itsNrRecords);
+				aReturn = (float) ((0.5 * (aTotalSquaredDifference * aCoverage)) / itsNrRecords);
 
 				// now weight SQUARED_HELLINGER
 				// magic number = maximum possible score
 				// it lies at (5/9, 4/27)
-//				aReturn = (float) (aTotalSquaredDifference * (theCoverage / (2.0 * itsNrRecords)));
+//				aReturn = (float) (aTotalSquaredDifference * (aCoverage / (2.0 * itsNrRecords)));
 				aReturn = (float) (aReturn / (4.0/27.0));
 				break;
 			}
@@ -1172,7 +1176,7 @@ public class QualityMeasure
 						continue;
 					aTotalDivergence += (aDensitySubgroup * Math.log(aDensitySubgroup/aDensity));
 				}
-				aReturn = (float) ((aTotalDivergence * theCoverage) / itsNrRecords);
+				aReturn = (float) ((aTotalDivergence * aCoverage) / itsNrRecords);
 				break;
 			}
 			case CWRACC :
@@ -1187,7 +1191,7 @@ public class QualityMeasure
 					aTotalDifference += Math.abs(aDensity - aDensitySubgroup);
 				}
 				Log.logCommandLine("difference in PDF: " + aTotalDifference);
-				aReturn = (float) ((aTotalDifference * theCoverage) / itsNrRecords);
+				aReturn = (float) ((aTotalDifference * aCoverage) / itsNrRecords);
 				break;
 			}
 			case CWRACC_UNWEIGHTED :

@@ -32,7 +32,7 @@ public enum QM implements EnumInterface
 
 	// SINGLE_NUMERIC quality measures
 	// NOTE when adding a new SINGLE_NUMERIC QM -> add it to requiredStats()
-	R_SQUARED		("R-Squared",		"0.0",	TargetType.SINGLE_NUMERIC),
+	EXPLAINED_VARIANCE	("Explained Variance",	"0.0",	TargetType.SINGLE_NUMERIC),
 	Z_SCORE			("Z-Score",		"1.0",	TargetType.SINGLE_NUMERIC),
 	INVERSE_Z_SCORE		("Inverse Z-Score",	"1.0",	TargetType.SINGLE_NUMERIC),
 	ABS_Z_SCORE		("Abs Z-Score",		"1.0",	TargetType.SINGLE_NUMERIC),
@@ -170,6 +170,7 @@ public enum QM implements EnumInterface
 	// EnumSet < 65 items are internally represented as a single long
 	private static final Set<Stat> SUM = Collections.unmodifiableSet(EnumSet.of(Stat.SUM));
 	private static final Set<Stat> SUM_SSD = Collections.unmodifiableSet(EnumSet.of(Stat.SUM, Stat.SSD));
+	private static final Set<Stat> SUM_SSD_COMPL = Collections.unmodifiableSet(EnumSet.of(Stat.SUM, Stat.SSD, Stat.COMPL));
 	private static final Set<Stat> MEDIAN_MAD = Collections.unmodifiableSet(EnumSet.of(Stat.MEDIAN, Stat.MAD));
 	private static final Set<Stat> PDF = Collections.unmodifiableSet(EnumSet.of(Stat.PDF));
 
@@ -196,7 +197,7 @@ public enum QM implements EnumInterface
 		switch(theQM)
 		{
 			// SINGLE_NUMERIC
-			case R_SQUARED :	return SUM_SSD;
+			case EXPLAINED_VARIANCE :	return SUM_SSD_COMPL;
 			case Z_SCORE :		return SUM;
 			case INVERSE_Z_SCORE :	return SUM;
 			case ABS_Z_SCORE :	return SUM;

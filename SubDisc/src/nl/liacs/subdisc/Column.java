@@ -1879,8 +1879,7 @@ public class Column implements XMLNodeInterface
 	 * @see Subgroup
 	 * @see java.util.BitSet
 	 */
-	//public float[] getStatistics(BitSet theBitSet, Set<Stat> theRequiredStats)
-	public Statistics getStatistics(BitSet theBitSet, boolean getMedianAndMedianAD)
+	public Statistics getStatistics(BitSet theBitSet, boolean getMedianAndMedianAD, boolean addComplement)
 	{
 		if (!isValidCall("getStatistics", theBitSet))
 			return new Statistics();
@@ -1893,7 +1892,7 @@ public class Column implements XMLNodeInterface
 		if (!getMedianAndMedianAD)
 		{
 			float aSum = computeSum(theBitSet);
-			aResult = new Statistics(aSum, computeSumSquaredDeviations(aSum, theBitSet));
+			aResult = new Statistics(theBitSet.cardinality(), aSum, computeSumSquaredDeviations(aSum, theBitSet));
 		}
 		else
 		{
@@ -1906,9 +1905,32 @@ public class Column implements XMLNodeInterface
 			Arrays.sort(aValues);
 			float aMedian = computeMedian(aValues);
 
-			aResult = new Statistics(aSum, computeSumSquaredDeviations(aSum, aValues), aMedian, computeMedianAbsoluteDeviations(aMedian, aValues));
+			aResult = new Statistics(
+				theBitSet.cardinality(), 
+				aSum, 
+				computeSumSquaredDeviations(aSum, aValues), 
+				aMedian, 
+				computeMedianAbsoluteDeviations(aMedian, aValues));
+		}
+
+		if (addComplement)
+		{
+			BitSet aComplement = (BitSet) theBitSet.clone();
+			aComplement.flip(0, itsSize);
+			float aComplementSum = computeSum(aComplement);
+			aResult.addComplement(aComplement.cardinality(), aComplementSum, computeSumSquaredDeviations(aComplementSum, aComplement));
+			aResult.addDatasetSSD(computeSumSquaredDeviations(aResult.getAverage()));
 		}
 		return aResult;
+	}
+
+	// for all data, not just subgroup
+	private float computeSum()
+	{
+		float aSum = 0.0f;
+		for (int i=0; i<itsSize; i++)
+			aSum += itsFloatz[i];
+		return aSum;
 	}
 
 	private float computeSum(BitSet theBitSet)
@@ -1927,6 +1949,15 @@ public class Column implements XMLNodeInterface
 		float aSum = 0.0f;
 		for (int i = theBitSet.nextSetBit(0); i >= 0; i = theBitSet.nextSetBit(i + 1))
 			aSum += Math.pow((itsFloatz[i]-aMean), 2);
+		return aSum;
+	}
+
+	// for all data, not just subgroup
+	private float computeSumSquaredDeviations(float theMean)
+	{
+		float aSum = 0.0f;
+		for (int i=0; i<itsSize; i++)
+			aSum += Math.pow((itsFloatz[i]-theMean), 2);
 		return aSum;
 	}
 

@@ -1754,7 +1754,7 @@ public class MiningWindow extends JFrame implements ActionListener
 				// get Column sum and sum of squared deviations
 				BitSet b = new BitSet(aNrRows);
 				b.set(0, aNrRows);
-				Statistics aStatistics = aTarget.getStatistics(b, false);
+				Statistics aStatistics = aTarget.getStatistics(b, false, true);
 
 				// get smoothed PDF with default number of bins
 				ProbabilityDensityFunction aPDF;
@@ -1765,7 +1765,12 @@ public class MiningWindow extends JFrame implements ActionListener
 					aPDF = new ProbabilityDensityFunction2(aTarget);
 				aPDF.smooth();
 
-				aQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), aNrRows, aStatistics.getSum(), aStatistics.getSumSquaredDeviations(), aPDF);
+				aQualityMeasure = new QualityMeasure(
+					itsSearchParameters.getQualityMeasure(), 
+					aNrRows,
+					aStatistics.getSubgroupSum(),
+					aStatistics.getSubgroupSumSquaredDeviations(),
+					aPDF);
 				break;
 			}
 			case MULTI_NUMERIC :
