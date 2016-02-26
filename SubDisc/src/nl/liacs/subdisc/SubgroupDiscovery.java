@@ -1177,6 +1177,7 @@ if (!TEMPORARY_CODE)
 				// what needs to be calculated for this QM
 				// NOTE requiredStats could be a final SubgroupDiscovery.class member
 				Set<Stat> aRequiredStats = QM.requiredStats(itsSearchParameters.getQualityMeasure());
+				//Statistics aStatistics = itsNumericTarget.getStatistics(aMembers, aRequiredStats); // TODO MM - implement better solution than == MMAD check
 				Statistics aStatistics = itsNumericTarget.getStatistics(aMembers, itsSearchParameters.getQualityMeasure() == QM.MMAD);
 				ProbabilityDensityFunction aPDF = null;
 				if (aRequiredStats.contains(Stat.PDF))
