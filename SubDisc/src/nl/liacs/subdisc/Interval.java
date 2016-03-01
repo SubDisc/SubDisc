@@ -32,6 +32,6 @@ public class Interval implements Comparable<Interval>
 
 		// NOTE considers 0.0 to be greater than -0.0
 		int cmp = Float.compare(itsLower, theInterval.itsLower);
-		return (cmp != 0) ? cmp : Float.compare(itsLower, theInterval.itsLower);
+		return (cmp != 0) ? cmp : Float.compare(itsUpper, theInterval.itsUpper);
 	}
 }
