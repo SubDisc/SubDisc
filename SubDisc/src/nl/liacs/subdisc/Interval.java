@@ -8,6 +8,14 @@ public class Interval implements Comparable<Interval>
 	// TODO MM check itsLower <= itsUpper
 	public Interval(float theLower, float theUpper)
 	{
+		if (Float.isNaN(theLower))
+			throw new IllegalArgumentException("Interval<init>: theLower can not be NaN.");
+		if (Float.isNaN(theUpper))
+			throw new IllegalArgumentException("Interval<init>: theUpper can not be NaN.");
+		// -0.0 < 0.0, also NaN is > than anything else, but dealt with
+		if (Float.compare(theLower, theUpper) > 0)
+			throw new IllegalArgumentException("Interval<init>: the theLower must be <= theUpper.");
+
 		itsLower = theLower;
 		itsUpper = theUpper;
 	}
