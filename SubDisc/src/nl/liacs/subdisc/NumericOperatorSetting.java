@@ -34,7 +34,7 @@ public enum NumericOperatorSetting implements EnumInterface
 		}
 	},
 	NUMERIC_GEQ("<html>&#8805;</html>")
-		{
+	{
 		@Override
 		EnumSet<Operator> getOperators()
 		{

@@ -14,7 +14,7 @@ import java.util.*;
  * recreated the RefinementList over and over again.
  * In the process, many invalid Conditions were created,and renounced.
  * This code does not create invalid Conditions.
- * A RefinementList need not be recreates and rechecked for each Candidate.
+ * A RefinementList need not be recreated and rechecked for each Candidate.
  * 
  * The copy() is not even needed at all, but fits better in current code.
  * No base Condition is ever used directly, only the refined derivatives are.
