@@ -2219,7 +2219,8 @@ public class Column implements XMLNodeInterface
 	 * Returns the split-points for Columns of
 	 * {@link AttributeType} {@link AttributeType#NUMERIC} and
 	 * {@link AttributeType#ORDINAL}, this method is used for the creation
-	 * of equal-width bins ({@link NumericStrategy#NUMERIC_BINS}).
+	 * of equal-height bins ({@link NumericStrategy#NUMERIC_BINS} and
+	 * {@link NumericStrategy#NUMERIC_BESTBINS}).
 	 *
 	 * The bits set in the BitSet supplied as argument indicate which values
 	 * of the Column should be used for the creation of the split-points.
@@ -2288,6 +2289,98 @@ public class Column implements XMLNodeInterface
 		// N.B. Order matters to prevent integer division from yielding zero.
 		for (int j=0; j<theNrSplits; j++)
 			aSplitPoints[j] = aDomain[size*(j+1)/(theNrSplits+1)];
+
+		return aSplitPoints;
+	}
+
+	/**
+	 * Returns the consecutive Intervals for Columns of
+	 * {@link AttributeType} {@link AttributeType#NUMERIC} and
+	 * {@link AttributeType#ORDINAL}, this method is used for the creation
+	 * of equal-height bounded intervals
+	 * ({@link NumericStrategy#NUMERIC_VIKAMINE_CONSECUTIVE_ALL} and
+	 * {@link NumericStrategy#NUMERIC_VIKAMINE_CONSECUTIVE_BEST}).
+	 *
+	 * The bits set in the BitSet supplied as argument indicate which values
+	 * of the Column should be used for the creation of the Intervals.
+	 * When the BitSet represents the members of a {@link Subgroup}, this
+	 * method returns the Intervals relevant to that Subgroup.
+	 *
+	 * The resulting Interval[] has the size of the supplied theNrSplits
+	 * parameter plus 1. If
+	 * {@link java.util.BitSet#cardinality() theBitSet.cardinality()} is
+	 * {@code 0}, the {@code Interval[theNrSplits+1]} will contain only
+	 * {@code null}'s.
+	 * If the BitSet is {@code null} a {@code new float[0]} is returned.
+	 *
+	 * When the Column is not of {@link AttributeType}
+	 * {@link AttributeType#NUMERIC} or {@link AttributeType#ORDINAL} a
+	 * {@code new Interval[0]} will be returned.
+	 *
+	 * @param theBitSet the BitSet indicating what values of this Column to
+	 * use for the creation of the Intervals.
+	 *
+	 * @param theNrSplits the number of split-point between Intervals.
+	 *
+	 * @return an Interval[], holding the (possibly non-distinct) Intervals.
+	 *
+	 * @throws IllegalArgumentException when theNrSplits < 0.
+	 *
+	 * @see AttributeType
+	 * @see Subgroup
+	 * @see NumericStrategy
+	 * @see java.util.BitSet
+	 */
+	public Interval[] getSplitPointsBounded(BitSet theBitSet, int theNrSplits) throws IllegalArgumentException
+	{
+		if (!isValidCall("getSplitPointsBounded", theBitSet))
+			return new Interval[0];
+
+		if (theNrSplits < 0)
+			throw new IllegalArgumentException(theNrSplits + " (theNrSplits) < 0");
+		// valid, but useless
+		if (theNrSplits == 0)
+			return new Interval[0];
+
+		Interval[] aSplitPoints = new Interval[theNrSplits+1];
+		final int size = theBitSet.cardinality();
+
+		// FIXME MM
+		// (size == 0) check is incorrect
+		// it would return an array of 0's
+		// and then 0 would be considered to be a bin boundary
+		// more generally the code below leads to awkward results when
+		// (theNrSplits > theBitSet.cardinality())
+		// as the aSplitPoints[] will be populated with 0's
+		// for every index >= theBitSet.cardinality(), the values will
+		// not be set to anything else
+
+		// prevent crash in aSplitPoints populating loop
+		if (size == 0)
+			return aSplitPoints;
+
+		float[] aDomain = new float[size];
+		for (int i = theBitSet.nextSetBit(0), j = -1; i >= 0; i = theBitSet.nextSetBit(i + 1))
+			aDomain[++j] = itsFloatz[i];
+
+		Arrays.sort(aDomain);
+
+		// N.B. Order matters to prevent integer division from yielding zero.
+		float lower = Float.NEGATIVE_INFINITY;
+		float upper = Float.NaN; // theNrSplits is never 0 at this point
+		for (int j=0; j<theNrSplits; j++)
+		{
+			// as before
+			upper = aDomain[size*(j+1)/(theNrSplits+1)];
+
+			// add Interval
+			aSplitPoints[j] = new Interval(lower, upper);
+
+			// set lower for next iteration
+			lower = upper;
+		}
+		// add the final Interval - could be set in loop using if-check
+		aSplitPoints[aSplitPoints.length-1] = new Interval(lower, Float.POSITIVE_INFINITY);
 
 		return aSplitPoints;
 	}

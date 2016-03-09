@@ -105,12 +105,13 @@ public class SearchParameters implements XMLNodeInterface
 	}
 	public void setNominalSets(boolean theValue) {itsNominalSets = theValue;}
 
+	// FIXME MM - itsNumericStrategy should be set to 'in' when applicable
 	public NumericOperatorSetting getNumericOperatorSetting()
 	{
-		if (itsNumericStrategy == NumericStrategy.NUMERIC_INTERVALS) //intervals automatically imply "in"
-			return NumericOperatorSetting.NUMERIC_INTERVALS;
-		else
+		if (itsNumericStrategy.isForHalfInterval())
 			return itsNumericOperatorSetting;
+		else
+			return NumericOperatorSetting.NUMERIC_INTERVALS;
 	}
 	public void setNumericOperators(String theNumericOperatorsName)
 	{

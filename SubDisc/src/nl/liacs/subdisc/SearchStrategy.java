@@ -5,12 +5,12 @@ package nl.liacs.subdisc;
  */
 public enum SearchStrategy implements EnumInterface
 {
-	BEAM("beam"),
-	ROC_BEAM("ROC beam"),
-	COVER_BASED_BEAM_SELECTION("cover-based beam selection"),
-	BEST_FIRST("best first"),
-	DEPTH_FIRST("depth first"),
-	BREADTH_FIRST("breadth first");
+	BEAM("beam", true, true),
+	ROC_BEAM("ROC beam", true, false),
+	COVER_BASED_BEAM_SELECTION("cover-based beam selection", true, true),
+	BEST_FIRST("best first", false, false),
+	DEPTH_FIRST("depth first", false, false),
+	BREADTH_FIRST("breadth first",false, false);
 
 	/**
 	 * For each SearchStrategy, this is the text that will be used in the
@@ -19,10 +19,15 @@ public enum SearchStrategy implements EnumInterface
 	 * {@link #toString()} method.
 	 */
 	public final String GUI_TEXT;
+	// enforce implementation for new NumericOperatorSettings
+	private final boolean isBeam;
+	private final boolean requiresSearchWidthParameter;
 
-	private SearchStrategy(String theGuiText)
+	private SearchStrategy(String theGuiText, boolean isBeam, boolean requiresSearchWidthParameter)
 	{
 		GUI_TEXT = theGuiText;
+		this.isBeam = isBeam;
+		this.requiresSearchWidthParameter = requiresSearchWidthParameter;
 	}
 
 	/**
@@ -64,17 +69,34 @@ public enum SearchStrategy implements EnumInterface
 		return SearchStrategy.BEAM;
 	}
 
+	/**
+	 * Indicates whether this SearchStrategy uses a candidate beam.
+	 * 
+	 * @return Is this SearchStrategy a beam strategy.
+	 */
+	public final boolean isBeam()
+	{
+		return isBeam;
+	}
+
+	/**
+	 * Indicates whether this SearchStrategy requires a search width
+	 * parameter.
+	 * 
+	 * In general, beam strategies require a search width parameter, whereas
+	 * exhaustive search strategies do not.
+	 * 
+	 * @return Does this SearchStrategy requires a search width parameter.
+	 */
+	public final boolean requiresSearchWidthParameter()
+	{
+		return requiresSearchWidthParameter;
+	}
+
 	// uses Javadoc from EnumInterface
 	@Override
 	public String toString()
 	{
 		return GUI_TEXT;
-	}
-
-	public boolean isBeam()
-	{
-		return ((this == SearchStrategy.BEAM) ||
-			(this == SearchStrategy.ROC_BEAM) ||
-			(this == SearchStrategy.COVER_BASED_BEAM_SELECTION));
 	}
 }

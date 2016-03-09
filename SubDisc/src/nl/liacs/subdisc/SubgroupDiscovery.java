@@ -486,6 +486,12 @@ System.out.println(aSubgroup + "\t" + aRefinement.getConditionBase());
 	 * RefinementList are always the same
 	 * supply a cached version of theMembers, as Subgroup.getMembers()
 	 * creates a clone on each call
+	 * 
+	 * TODO MM - for *_BEST strategies, in case of ties, multiple subgroups
+	 * attaining the best score, this implementation retains only the first
+	 * instead it could retain all best scoring subgroups
+	 * 
+	 * TODO MM - spit this method into smaller chunks
 	 */
 	private void evaluateNumericRefinements(BitSet theMembers, Refinement theRefinement)
 	{
@@ -503,280 +509,399 @@ System.out.println(aSubgroup + "\t" + aRefinement.getConditionBase());
 		{
 			case NUMERIC_ALL :
 			{
-				float[] aSplitPoints = theRefinement.getConditionBase().getColumn().getUniqueNumericDomain(theMembers);
-				for (float aSplit : aSplitPoints)
-				{
-					if (itsFilter != null)
-						if (!itsFilter.isUseful(aList, new Condition(aConditionBase, aSplit)))
-							continue;
-
-					Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(aSplit);
-					//addToBuffer(aNewSubgroup);
-					checkAndLog(aNewSubgroup, anOldCoverage);
-				}
+				numericHalfIntervals(theMembers, theRefinement);
 				break;
 			}
-			case NUMERIC_BEST_BINS :
+			// NUMERIC_BEST is like NUMERIC_ALL, but uses only best scoring subgroup
+			case NUMERIC_BEST :
 			{
-				//this is the crucial translation from nr bins to nr splitpoint
-				int aNrSplitPoints = itsSearchParameters.getNrBins() - 1;
-				/*
-				 * (aNrSplitPoints == 0) or (nrBins == 1) would
-				 * result in adding a Condition that selects all
-				 * data for the Condition.Column
-				 * combined with the existing Conditions, this
-				 * yields a ConditionList that selects the exact
-				 * same Subgroup extension
-				 * this is considered useless, as it does not
-				 * decrease the size of the Subgroup
-				 */
-				if (aNrSplitPoints == 0)
-					break;
-
-				float aMax = Float.NEGATIVE_INFINITY;
-				Subgroup aBestSubgroup = null;
-				Subgroup aNewSubgroup = null;
-
-				float[] aSplitPoints = theRefinement.getConditionBase().getColumn().getSplitPoints(theMembers, aNrSplitPoints);
-				boolean first = true;
-				for (int j=0; j<aNrSplitPoints; j++)
-				{
-					if (first || aSplitPoints[j] != aSplitPoints[j-1])
-					{
-						if (itsFilter != null)
-							if (!itsFilter.isUseful(aList, new Condition(aConditionBase, aSplitPoints[j])))
-								continue;
-
-						aNewSubgroup = theRefinement.getRefinedSubgroup(aSplitPoints[j]);
-						final int aNewCoverage = aNewSubgroup.getCoverage();
-						if (aNewCoverage >= itsMinimumCoverage && aNewCoverage <= itsMaximumCoverage && aNewCoverage < anOldCoverage)
-						{
-							float aQuality = evaluateCandidate(aNewSubgroup);
-							if (aQuality > aMax)
-							{
-								aMax = aQuality;
-								aNewSubgroup.setMeasureValue(aQuality);
-								aBestSubgroup = aNewSubgroup;
-							}
-						}
-					}
-					first = false;
-				}
-				if (aBestSubgroup != null)
-					checkAndLog(aBestSubgroup, anOldCoverage);
+				numericHalfIntervals(theMembers, theRefinement);
 				break;
 			}
 			case NUMERIC_BINS :
 			{
-				//this is the crucial translation from nr bins to nr splitpoint
-				// code does nothing if aNrSplitPoints == 0
-				int aNrSplitPoints = itsSearchParameters.getNrBins() - 1;
-
-				float[] aSplitPoints = theRefinement.getConditionBase().getColumn().getSplitPoints(theMembers, aNrSplitPoints);
-				boolean first = true;
-				for (int j=0; j<aNrSplitPoints; j++)
-				{
-					if (first || aSplitPoints[j] != aSplitPoints[j-1])
-					{
-						if (itsFilter != null)
-							if (!itsFilter.isUseful(aList, new Condition(aConditionBase, aSplitPoints[j])))
-								continue;
-
-						Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(aSplitPoints[j]);
-						//addToBuffer(aNewSubgroup);
-						checkAndLog(aNewSubgroup, anOldCoverage);
-					}
-					first = false;
-				}
-
-//				// NOTE every comparison returns false on NaN
-//				float last = Float.NaN;
-//				for (float aSplit : aSplitPoints)
-//				{
-//					if (aSplit != last)
-//					{
-//						last = aSplit;
-//						Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(Float.toString(last));
-//						//addToBuffer(aNewSubgroup);
-//						checkAndLog(aNewSubgroup, anOldCoverage);
-//					}
-//				}
+				numericHalfIntervals(theMembers, theRefinement);
 				break;
 			}
-			case NUMERIC_BEST :
+			// NUMERIC_BEST_BINS is like NUMERIC_BINS, but uses only best scoring subgroup
+			case NUMERIC_BEST_BINS :
 			{
-				float[] aSplitPoints = theRefinement.getConditionBase().getColumn().getUniqueNumericDomain(theMembers);
-				float aMax = Float.NEGATIVE_INFINITY;
-				Subgroup aBestSubgroup = null;
-				Subgroup aNewSubgroup;
-				for (float aSplit : aSplitPoints)
-				{
-					if (itsFilter != null)
-						if (!itsFilter.isUseful(aList, new Condition(aConditionBase, aSplit)))
-							continue;
-
-					aNewSubgroup = theRefinement.getRefinedSubgroup(aSplit);
-
-					final int aNewCoverage = aNewSubgroup.getCoverage();
-					if (aNewCoverage >= itsMinimumCoverage && aNewCoverage <= itsMaximumCoverage && aNewCoverage < anOldCoverage)
-					{
-						float aQuality = evaluateCandidate(aNewSubgroup);
-						if (aQuality > aMax)
-						{
-							aMax = aQuality;
-							aNewSubgroup.setMeasureValue(aQuality);
-							aBestSubgroup = aNewSubgroup;
-						}
-					}
-				}
-				//add best
-				if (aBestSubgroup!=null) //at least one threshold found that has enough quality and coverage
-					//addToBuffer(aBestSubgroup);
-					// unnecessarily re-evaluates result
-					checkAndLog(aBestSubgroup, anOldCoverage);
-
+				numericHalfIntervals(theMembers, theRefinement);
 				break;
 			}
 			case NUMERIC_INTERVALS :
 			{
-				float[] aSplitPoints = theRefinement.getConditionBase().getColumn().getUniqueNumericDomain(theMembers);
-				// FIXME MM Subgroup -> theMembers
-				RealBaseIntervalCrossTable aRBICT = new RealBaseIntervalCrossTable(aSplitPoints, theRefinement.getConditionBase().getColumn(), theRefinement.getSubgroup(), itsBinaryTarget);
-
-				// prune splitpoints for which adjacent base intervals have equal class distribution
-				// TODO: check whether this preprocessing reduces *total* computation time
-				aRBICT.aggregateIntervals();
-				if (aRBICT.getNrSplitPoints() == 0)
-				{
-					break; // no specialization improves quality
-				}
-
-				double aBestQuality = Double.NEGATIVE_INFINITY;
-				Interval aBestInterval = new Interval(Float.NEGATIVE_INFINITY, Float.POSITIVE_INFINITY);
-
-				if (false && itsSearchParameters.getQualityMeasure() == QM.WRACC)
-				{
-					long aPg = (long)itsQualityMeasure.getNrPositives();
-					long aNg = (long)itsQualityMeasure.getNrRecords() - aPg;
-					int aPr = aRBICT.getPositiveCount();
-					int aNr = aRBICT.getNegativeCount();
-					int aPl = aPr;
-					int aNl = aNr;
-
-					long aMaxH = aPr * aNg - aNr * aPg;
-					float aBestLHS = Float.NEGATIVE_INFINITY;
-
-					for (int i = 0; i < aRBICT.getNrBaseIntervals(); i++)
-					{
-						long anH = aPr * aNg - aNr * aPg;
-						if (anH > aMaxH)
-						{
-							aMaxH = anH;
-							aBestLHS = aRBICT.getSplitPoint(i - 1);
-							aPl = aPr;
-							aNl = aNr;
-						}
-						aPr -= aRBICT.getPositiveCount(i);
-						aNr -= aRBICT.getNegativeCount(i);
-						double aQuality = itsQualityMeasure.calculate(aPl - aPr, aPl + aNl - aPr - aNr);
-						if (aQuality > aBestQuality) {
-							aBestQuality = aQuality;
-							if (i == aRBICT.getNrSplitPoints())
-								aBestInterval = new Interval(aBestLHS, Float.POSITIVE_INFINITY);
-							else
-								aBestInterval = new Interval(aBestLHS, aRBICT.getSplitPoint(i));
-						}
-					}
-				}
-				else // not WRAcc
-				{
-					// brute force method, keep for now for testing purposes
-					/*
-					aSplitPoints = aRBICT.getSplitPoints();
-					for (int i=0; i<aSplitPoints.length; i++)
-					{
-						Interval aNewInterval = new Interval(aSplitPoints[i], Float.POSITIVE_INFINITY);
-						Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(aNewInterval);
-						double aQuality = evaluateCandidate(aNewSubgroup);
-						if (aQuality > aBestQuality) {
-							aBestQuality = aQuality;
-							aBestInterval = aNewInterval;
-						}
-						aNewInterval = new Interval(Float.NEGATIVE_INFINITY, aSplitPoints[i]);
-						aNewSubgroup = theRefinement.getRefinedSubgroup(aNewInterval);
-						aQuality = evaluateCandidate(aNewSubgroup);
-						if (aQuality > aBestQuality) {
-							aBestQuality = aQuality;
-							aBestInterval = aNewInterval;
-						}
-						for (int j=i+1; j<aSplitPoints.length; j++)
-						{
-							aNewInterval = new Interval(aSplitPoints[i], aSplitPoints[j]);
-							aNewSubgroup = theRefinement.getRefinedSubgroup(aNewInterval);
-							aQuality = evaluateCandidate(aNewSubgroup);
-							if (aQuality > aBestQuality) {
-								aBestQuality = aQuality;
-								aBestInterval = aNewInterval;
-							}
-						}
-					}*/
-
-					// the linear algo
-					@SuppressWarnings("unused")
-					int anEvalCounter = 0; // debug counter
-					ConvexHull [] aHulls = new ConvexHull[aRBICT.getNrBaseIntervals()];
-					int aPi = 0;
-					int aNi = 0;
-					for (int l = 0; l < aRBICT.getNrSplitPoints(); l++)
-					{
-						aPi += aRBICT.getPositiveCount(l);
-						aNi += aRBICT.getNegativeCount(l);
-						aHulls[l] = new ConvexHull(aNi, aPi, aRBICT.getSplitPoint(l), Float.NEGATIVE_INFINITY);
-					}
-					aHulls[aRBICT.getNrBaseIntervals()-1] = new ConvexHull(aRBICT.getNegativeCount(), aRBICT.getPositiveCount(), Float.POSITIVE_INFINITY, Float.NEGATIVE_INFINITY);
-
-					for (int k = aRBICT.getNrBaseIntervals(); k > 1; k = (k+1)/2)
-					{
-						for (int l = 0; l+1 < k; l += 2)
-						{
-							ConvexHull aMinkDiff = aHulls[l].minkowskiDifference(aHulls[l+1], true);
-							for (int aSide = 0; aSide < 2; aSide++)
-							{
-								for (int i = 0; i < aMinkDiff.getSize(aSide); i++)
-								{
-									if (aSide == 1 && (i == 0 || i == aMinkDiff.getSize(aSide)-1) )
-										continue; // no need to check duplicate hull points
-									HullPoint aCandidate = aMinkDiff.getPoint(aSide, i);
-									double aQuality = itsQualityMeasure.calculate(aCandidate.itsY, (aCandidate.itsX + aCandidate.itsY));
-									anEvalCounter++;
-									if (aQuality > aBestQuality) {
-										aBestQuality = aQuality;
-										aBestInterval = new Interval(aCandidate.getLabel2(), aCandidate.itsLabel1);
-									}
-								}
-							}
-						}
-
-						for (int l = 0; l+1 < k; l += 2)
-							aHulls[l/2] = aHulls[l].concatenate(aHulls[l+1]);
-						if (k % 2 == 1)
-							aHulls[k/2] = aHulls[k-1];
-					}
-
-					//Log.logCommandLine("Evalutations: " + anEvalCounter);
-				}
-
-				Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(aBestInterval);
-				checkAndLog(aNewSubgroup, anOldCoverage);
-
+				numericIntervals(theMembers, theRefinement);
 				break;
 			}
+			case NUMERIC_VIKAMINE_CONSECUTIVE_ALL :
+			{
+				numericConsecutiveBins(theMembers, theRefinement);
+				break;
+			}
+			// NUMERIC_VIKAMINE_CONSECUTIVE_BEST is like NUMERIC_VIKAMINE_CONSECUTIVE_ALL, but uses only best scoring subgroup
+			case NUMERIC_VIKAMINE_CONSECUTIVE_BEST :
+			{
+				numericConsecutiveBins(theMembers, theRefinement);
+				break;
+			}
+//			case NUMERIC_VIKAMINE_CARTESIAN_ALL :
+//			{
+//				throw new AssertionError(itsSearchParameters.getNumericStrategy() + " not implemented");
+//			}
+//			case NUMERIC_VIKAMINE_CARTESIAN_BEST :
+//			{
+//				throw new AssertionError(itsSearchParameters.getNumericStrategy() + " not implemented");
+//			}
 			default :
 			{
 				Log.logCommandLine("SubgroupDiscovery.evaluateNumericRefinements(): unknown Numeric Strategy: " +
 							itsSearchParameters.getNumericStrategy());
 				break;
 			}
+		}
+	}
+
+	private final void numericHalfIntervals(BitSet theMembers, Refinement theRefinement)
+	{
+		NumericStrategy aNumericStrategy = itsSearchParameters.getNumericStrategy();
+		assert (aNumericStrategy == NumericStrategy.NUMERIC_ALL || aNumericStrategy == NumericStrategy.NUMERIC_BEST ||
+			aNumericStrategy == NumericStrategy.NUMERIC_BINS || aNumericStrategy == NumericStrategy.NUMERIC_BEST_BINS);
+		// might require update when more strategies are added
+		boolean isAllStrategy = (aNumericStrategy == NumericStrategy.NUMERIC_ALL || aNumericStrategy == NumericStrategy.NUMERIC_BINS);
+
+		Subgroup anOldSubgroup = theRefinement.getSubgroup();
+		// faster than theMembers.cardinality()
+		// useless call, coverage never changes, could be parameter
+		final int anOldCoverage = anOldSubgroup.getCoverage();
+		assert (theMembers.cardinality() == anOldCoverage);
+
+		// see comment at evaluateNominalBinaryRefinement()
+		ConditionBase aConditionBase = theRefinement.getConditionBase();
+		ConditionListA aList = anOldSubgroup.getConditions();
+
+		float[] aSplitPoints = getDomain(theMembers, aNumericStrategy, aConditionBase.getColumn(), itsSearchParameters.getNrBins());
+
+		Subgroup aBestSubgroup = null;
+		for (float aSplitPoint : aSplitPoints)
+		{
+			if (!isUseful(itsFilter, aList, new Condition(aConditionBase, aSplitPoint)))
+				continue;
+
+			Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(aSplitPoint);
+
+			if (isAllStrategy)
+			{
+				//addToBuffer(aNewSubgroup);
+				checkAndLog(aNewSubgroup, anOldCoverage);
+			}
+			else
+			{
+				// more clear than using else-if
+				if (isValidAndBest(aNewSubgroup, anOldCoverage, aBestSubgroup))
+					aBestSubgroup = aNewSubgroup;
+			}
+		}
+
+		// if-check not strictly necessary, but more clear
+		if (!isAllStrategy)
+			bestAdd(aBestSubgroup, anOldCoverage);
+	}
+
+	private void numericIntervals(BitSet theMembers, Refinement theRefinement)
+	{
+		NumericStrategy aNumericStrategy = itsSearchParameters.getNumericStrategy();
+		assert (aNumericStrategy == NumericStrategy.NUMERIC_INTERVALS);
+
+		Subgroup anOldSubgroup = theRefinement.getSubgroup();
+		// faster than theMembers.cardinality()
+		// useless call, coverage never changes, could be parameter
+		final int anOldCoverage = anOldSubgroup.getCoverage();
+		assert (theMembers.cardinality() == anOldCoverage);
+
+		// see comment at evaluateNominalBinaryRefinement()
+		ConditionBase aConditionBase = theRefinement.getConditionBase();
+		Column aColumn = aConditionBase.getColumn();
+
+		float[] aSplitPoints = getDomain(theMembers, aNumericStrategy, aColumn, itsSearchParameters.getNrBins());
+
+		// FIXME MM Subgroup -> theMembers
+		RealBaseIntervalCrossTable aRBICT = new RealBaseIntervalCrossTable(aSplitPoints, aColumn, theRefinement.getSubgroup(), itsBinaryTarget);
+
+		// prune splitpoints for which adjacent base intervals have equal class distribution
+		// TODO: check whether this preprocessing reduces *total* computation time
+		aRBICT.aggregateIntervals();
+		if (aRBICT.getNrSplitPoints() == 0)
+			return; // no specialization improves quality
+
+		double aBestQuality = Double.NEGATIVE_INFINITY;
+		Interval aBestInterval = new Interval(Float.NEGATIVE_INFINITY, Float.POSITIVE_INFINITY);
+
+		if (false && itsSearchParameters.getQualityMeasure() == QM.WRACC)
+		{
+			long aPg = (long)itsQualityMeasure.getNrPositives();
+			long aNg = (long)itsQualityMeasure.getNrRecords() - aPg;
+			int aPr = aRBICT.getPositiveCount();
+			int aNr = aRBICT.getNegativeCount();
+			int aPl = aPr;
+			int aNl = aNr;
+
+			long aMaxH = aPr * aNg - aNr * aPg;
+			float aBestLHS = Float.NEGATIVE_INFINITY;
+
+			for (int i = 0; i < aRBICT.getNrBaseIntervals(); i++)
+			{
+				long anH = aPr * aNg - aNr * aPg;
+				if (anH > aMaxH)
+				{
+					aMaxH = anH;
+					aBestLHS = aRBICT.getSplitPoint(i - 1);
+					aPl = aPr;
+					aNl = aNr;
+				}
+				aPr -= aRBICT.getPositiveCount(i);
+				aNr -= aRBICT.getNegativeCount(i);
+				double aQuality = itsQualityMeasure.calculate(aPl - aPr, aPl + aNl - aPr - aNr);
+				if (aQuality > aBestQuality) {
+					aBestQuality = aQuality;
+					if (i == aRBICT.getNrSplitPoints())
+						aBestInterval = new Interval(aBestLHS, Float.POSITIVE_INFINITY);
+					else
+						aBestInterval = new Interval(aBestLHS, aRBICT.getSplitPoint(i));
+				}
+			}
+		}
+		else // not WRAcc
+		{
+			// brute force method, keep for now for testing purposes
+			/*
+			aSplitPoints = aRBICT.getSplitPoints();
+			for (int i=0; i<aSplitPoints.length; i++)
+			{
+				Interval aNewInterval = new Interval(aSplitPoints[i], Float.POSITIVE_INFINITY);
+				Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(aNewInterval);
+				double aQuality = evaluateCandidate(aNewSubgroup);
+				if (aQuality > aBestQuality) {
+					aBestQuality = aQuality;
+					aBestInterval = aNewInterval;
+				}
+				aNewInterval = new Interval(Float.NEGATIVE_INFINITY, aSplitPoints[i]);
+				aNewSubgroup = theRefinement.getRefinedSubgroup(aNewInterval);
+				aQuality = evaluateCandidate(aNewSubgroup);
+				if (aQuality > aBestQuality) {
+					aBestQuality = aQuality;
+					aBestInterval = aNewInterval;
+				}
+				for (int j=i+1; j<aSplitPoints.length; j++)
+				{
+					aNewInterval = new Interval(aSplitPoints[i], aSplitPoints[j]);
+					aNewSubgroup = theRefinement.getRefinedSubgroup(aNewInterval);
+					aQuality = evaluateCandidate(aNewSubgroup);
+					if (aQuality > aBestQuality) {
+						aBestQuality = aQuality;
+						aBestInterval = aNewInterval;
+					}
+				}
+			}*/
+
+			// the linear algo
+			@SuppressWarnings("unused")
+			int anEvalCounter = 0; // debug counter
+			ConvexHull [] aHulls = new ConvexHull[aRBICT.getNrBaseIntervals()];
+			int aPi = 0;
+			int aNi = 0;
+			for (int l = 0; l < aRBICT.getNrSplitPoints(); l++)
+			{
+				aPi += aRBICT.getPositiveCount(l);
+				aNi += aRBICT.getNegativeCount(l);
+				aHulls[l] = new ConvexHull(aNi, aPi, aRBICT.getSplitPoint(l), Float.NEGATIVE_INFINITY);
+			}
+			aHulls[aRBICT.getNrBaseIntervals()-1] = new ConvexHull(aRBICT.getNegativeCount(), aRBICT.getPositiveCount(), Float.POSITIVE_INFINITY, Float.NEGATIVE_INFINITY);
+
+			for (int k = aRBICT.getNrBaseIntervals(); k > 1; k = (k+1)/2)
+			{
+				for (int l = 0; l+1 < k; l += 2)
+				{
+					ConvexHull aMinkDiff = aHulls[l].minkowskiDifference(aHulls[l+1], true);
+					for (int aSide = 0; aSide < 2; aSide++)
+					{
+						for (int i = 0; i < aMinkDiff.getSize(aSide); i++)
+						{
+							if (aSide == 1 && (i == 0 || i == aMinkDiff.getSize(aSide)-1) )
+								continue; // no need to check duplicate hull points
+							HullPoint aCandidate = aMinkDiff.getPoint(aSide, i);
+							double aQuality = itsQualityMeasure.calculate(aCandidate.itsY, (aCandidate.itsX + aCandidate.itsY));
+							anEvalCounter++;
+							if (aQuality > aBestQuality) {
+								aBestQuality = aQuality;
+								aBestInterval = new Interval(aCandidate.getLabel2(), aCandidate.itsLabel1);
+							}
+						}
+					}
+				}
+
+				for (int l = 0; l+1 < k; l += 2)
+					aHulls[l/2] = aHulls[l].concatenate(aHulls[l+1]);
+				if (k % 2 == 1)
+					aHulls[k/2] = aHulls[k-1];
+			}
+
+			//Log.logCommandLine("Evalutations: " + anEvalCounter);
+		}
+
+		Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(aBestInterval);
+		checkAndLog(aNewSubgroup, anOldCoverage);
+	}
+
+	private void numericConsecutiveBins(BitSet theMembers, Refinement theRefinement)
+	{
+		NumericStrategy aNumericStrategy = itsSearchParameters.getNumericStrategy();
+		assert (aNumericStrategy == NumericStrategy.NUMERIC_VIKAMINE_CONSECUTIVE_ALL || aNumericStrategy == NumericStrategy.NUMERIC_VIKAMINE_CONSECUTIVE_BEST);
+		// might require update when more strategies are added
+		boolean isAllStrategy = (aNumericStrategy == NumericStrategy.NUMERIC_VIKAMINE_CONSECUTIVE_ALL);
+
+		Subgroup anOldSubgroup = theRefinement.getSubgroup();
+		// faster than theMembers.cardinality()
+		// useless call, coverage never changes, could be parameter
+		final int anOldCoverage = anOldSubgroup.getCoverage();
+		assert (theMembers.cardinality() == anOldCoverage);
+
+		// see comment at evaluateNominalBinaryRefinement()
+		ConditionBase aConditionBase = theRefinement.getConditionBase();
+		ConditionListA aList = anOldSubgroup.getConditions();
+
+		// this is the crucial translation from nr bins to nr splitpoints
+		int aNrSplitPoints = itsSearchParameters.getNrBins() - 1;
+		// useless, Column.getSplitPointsBounded() would return an empty array
+		if (aNrSplitPoints <= 0)
+			return;
+		Interval[] anIntervals = aConditionBase.getColumn().getSplitPointsBounded(theMembers, aNrSplitPoints);
+
+		Subgroup aBestSubgroup = null;
+		for (int i = 0; i < anIntervals.length; ++i)
+		{
+			Interval anInterval = anIntervals[i];
+
+			// catch invalid input
+			if (anInterval == null)
+				continue;
+			// catch duplicates
+			if ((i > 0) && (anInterval.compareTo(anIntervals[i-1]) == 0))
+				continue;
+
+			if (itsFilter != null)
+				if (!itsFilter.isUseful(aList, new Condition(aConditionBase, anInterval)))
+					continue;
+
+			Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(anInterval);
+
+			if (isAllStrategy)
+			{
+				//addToBuffer(aNewSubgroup);
+				checkAndLog(aNewSubgroup, anOldCoverage);
+			}
+			else
+			{
+				// more clear than using else-if
+				if (isValidAndBest(aNewSubgroup, anOldCoverage, aBestSubgroup))
+					aBestSubgroup = aNewSubgroup;
+			}
+		}
+
+		// if-check not strictly necessary, but more clear
+		if (!isAllStrategy)
+			bestAdd(aBestSubgroup, anOldCoverage);
+	}
+
+	private static final float[] getDomain(BitSet theMembers, NumericStrategy theNumericStrategy, Column theColumn, int theNrBins)
+	{
+		switch (theNumericStrategy)
+		{
+			case NUMERIC_ALL :
+			{
+				return theColumn.getUniqueNumericDomain(theMembers);
+			}
+			case NUMERIC_BEST :
+			{
+				return theColumn.getUniqueNumericDomain(theMembers);
+			}
+			case NUMERIC_BINS :
+			{
+				return getUniqueSplitPoints(theMembers, theColumn, theNrBins);
+			}
+			case NUMERIC_BEST_BINS :
+			{
+				return getUniqueSplitPoints(theMembers, theColumn, theNrBins);
+			}
+			case NUMERIC_INTERVALS :
+			{
+				return theColumn.getUniqueNumericDomain(theMembers);
+			}
+			default :
+			{
+				throw new AssertionError("invalid Numeric Strategy: " + theNumericStrategy);
+			}
+		}
+	}
+
+	// TODO MM - hack: functionality should be in theColumn.getSplitPoints()
+	private static final float[] getUniqueSplitPoints(BitSet theMembers, Column theColumn, int theNrBins)
+	{
+		// this is the crucial translation from nrBins to nrSplitpoints
+		int aNrSplitPoints = theNrBins - 1;
+
+		float[] aSplitPoints = theColumn.getSplitPoints(theMembers, aNrSplitPoints);
+
+		// ultra lazy implementation
+		// First create TreeSet<Float>, then copy to float[], not ideal,
+		// but I lack the inspiration to write a RB-tree for floats
+		Set<Float> aUniqueValues = new TreeSet<Float>();
+		for (float f : aSplitPoints)
+			aUniqueValues.add(f);
+
+		float[] aResult = new float[aUniqueValues.size()];
+		int i = -1;
+		for (Float f : aUniqueValues)
+			aResult[++i] = f.floatValue();
+
+		return aResult;
+	}
+
+	private static final boolean isUseful(Filter theFilter, ConditionListA theConditionList, Condition theCondition)
+	{
+		return ((theFilter == null) || theFilter.isUseful(theConditionList, theCondition));
+	}
+
+	private final boolean isValidAndBest(Subgroup theNewSubgroup, int theOldCoverage, Subgroup theBestSubgroup)
+	{
+		final int aNewCoverage = theNewSubgroup.getCoverage();
+
+		// is theNewSubgroup valid
+		if (aNewCoverage >= itsMinimumCoverage && aNewCoverage <= itsMaximumCoverage && aNewCoverage < theOldCoverage)
+		{
+			float aQuality = evaluateCandidate(theNewSubgroup);
+
+			// is theNewSubgroup better than theBestSubgroup
+			if ((theBestSubgroup == null) || (aQuality > theBestSubgroup.getMeasureValue()))
+			{
+				theNewSubgroup.setMeasureValue(aQuality);
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	private final void bestAdd(Subgroup theBestSubgroup, int theOldCoverage)
+	{
+		// always (aBestSubgroup == null) when (isAllStrategy == true)
+		// when (theBestSubgroup != null), at least one subgroup with
+		// valid coverage was found
+		if (theBestSubgroup != null)
+		{
+			//addToBuffer(aBestSubgroup);
+			// unnecessarily re-evaluates result
+			checkAndLog(theBestSubgroup, theOldCoverage);
 		}
 	}
 

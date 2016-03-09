@@ -49,6 +49,12 @@ public class CandidateQueue
 		if (itsMaxDepth <= 0)
 			throw new IllegalArgumentException("search depth must be > 0");
 
+		// TODO MM - check (itsMaximumQueueSize > 0)
+		if (itsSearchStrategy.requiresSearchWidthParameter())
+			itsMaximumQueueSize = theSearchParameters.getSearchStrategyWidth();
+		else
+			itsMaximumQueueSize = Integer.MAX_VALUE;
+
 		// all SearchStrategies use itsQueue
 		// most use Candidate's natural ordering (no Comparator)
 		// (though CandidateComparatorBestFirst has same behaviour)
@@ -59,7 +65,6 @@ public class CandidateQueue
 			case BEAM :
 				itsQueue = new TreeSet<Candidate>();
 				itsNextQueue = new TreeSet<Candidate>();
-				itsMaximumQueueSize = theSearchParameters.getSearchStrategyWidth();
 				break;
 			case ROC_BEAM :
 			{
@@ -67,7 +72,6 @@ public class CandidateQueue
 				itsNextQueueConvexHullROC = new ConvexHullROCNaive();
 				itsNextQueueROCList = new ROCList();
 				itsNextQueueROCBeam = new ConvexHullROC(true);
-				itsMaximumQueueSize = Integer.MAX_VALUE;
 				break;
 			}
 			case COVER_BASED_BEAM_SELECTION :
@@ -75,19 +79,15 @@ public class CandidateQueue
 				// initialise now, avoids NullPointerException later
 				itsNextQueue = new TreeSet<Candidate>();
 				itsTempQueue = new TreeSet<Candidate>();
-				itsMaximumQueueSize = theSearchParameters.getSearchStrategyWidth();
 				break;
 			case BEST_FIRST :
 				itsQueue = new TreeSet<Candidate>();
-				itsMaximumQueueSize = Integer.MAX_VALUE;
 				break;
 			case DEPTH_FIRST :
 				itsQueue = new TreeSet<Candidate>(Candidate.getComparator(itsSearchStrategy));
-				itsMaximumQueueSize = Integer.MAX_VALUE;
 				break;
 			case BREADTH_FIRST :
 				itsQueue = new TreeSet<Candidate>(Candidate.getComparator(itsSearchStrategy));
-				itsMaximumQueueSize = Integer.MAX_VALUE;
 				break;
 			// unknown SearchStrategy / null - no AssertionError as
 			// this is a public constructor

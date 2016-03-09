@@ -7,11 +7,23 @@ import java.util.*;
  */
 public enum NumericStrategy implements EnumInterface
 {
-	NUMERIC_BEST_BINS("best-bins", true),
-	NUMERIC_BINS("bins", true),
-	NUMERIC_BEST("best", true),
-	NUMERIC_ALL("all", true),
-	NUMERIC_INTERVALS("intervals", false); // only valid for SINGLE_NOMINAL
+	NUMERIC_BEST_BINS("best-bins", true, true, true),
+	NUMERIC_BINS("bins", true, true, true),
+	NUMERIC_BEST("best", true, false, true),
+	NUMERIC_ALL("all", true, false, true),
+	NUMERIC_INTERVALS("intervals", false, false, false), // only valid for SINGLE_NOMINAL
+	// XXX MM - temporary code
+	// vm = VikaMine style bounded intervals, instead of half intervals
+	//
+	// consecutive = creates nrBins consecutive equal height intervals
+	// cartesian = creates nrBins^2 intervals
+	//
+	// all = allow all candidates through
+	// best = allow only best scoring candidate through
+	NUMERIC_VIKAMINE_CONSECUTIVE_ALL("vm-consecutive-all", true, true, false),
+	NUMERIC_VIKAMINE_CONSECUTIVE_BEST("vm-consecutive-best", true, true, false);
+//	NUMERIC_VIKAMINE_CARTESIAN_ALL("vm-cartesian-all", true, true, false),
+//	NUMERIC_VIKAMINE_CARTESIAN_BEST("vm-cartesian-best", true, true, false);
 
 	/**
 	 * For each NumericStrategy, this is the text that will be used in the GUI.
@@ -20,11 +32,15 @@ public enum NumericStrategy implements EnumInterface
 	 */
 	public final String GUI_TEXT;
 	private final boolean isNormalValue;
+	private final boolean isDiscretiser;
+	private final boolean isForHalfInterval;
 
-	private NumericStrategy(String theGuiText, boolean isNormalValue)
+	private NumericStrategy(String theGuiText, boolean isNormalValue, boolean isDiscretiser, boolean isForHalfInterval)
 	{
 		GUI_TEXT = theGuiText;
 		this.isNormalValue = isNormalValue;
+		this.isDiscretiser = isDiscretiser;
+		this.isForHalfInterval = isForHalfInterval;
 	}
 
 	// dynamically build single immutable instance of 'normal values'
@@ -87,6 +103,30 @@ public enum NumericStrategy implements EnumInterface
 	public static NumericStrategy getDefault()
 	{
 		return NumericStrategy.NUMERIC_BEST_BINS;
+	}
+
+	/**
+	 * Indicates whether this NumericStrategy discretises the input domain.
+	 * 
+	 * If so, not all values of the input domain are used, but only a
+	 * limited number of them.
+	 *
+	 * @return Is this NumericStrategy a discretiser.
+	 */
+	public boolean isDiscretiser()
+	{
+		return isDiscretiser;
+	}
+
+	/**
+	 * Indicates whether this NumericStrategy creates half-intervals or
+	 * bounded intervals.
+	 *
+	 * @return Does this NumericStrategy create half-intervals.
+	 */
+	public boolean isForHalfInterval()
+	{
+		return isForHalfInterval;
 	}
 
 	// uses Javadoc from EnumInterface

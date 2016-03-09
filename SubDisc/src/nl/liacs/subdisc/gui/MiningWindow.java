@@ -3,10 +3,10 @@ package nl.liacs.subdisc.gui;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
+import java.sql.*;
 import java.text.*;
 import java.util.*;
 import java.util.List;
-import java.sql.*;
 
 import javax.swing.*;
 import javax.swing.UIManager.LookAndFeelInfo;
@@ -53,6 +53,8 @@ public class MiningWindow extends JFrame implements ActionListener
 	}
 
 	// loaded from XML
+	// FIXME MM - ComboBoxes are not disabled correctly
+	// for example when loading depth_first, search_width should be disabled
 	public MiningWindow(Table theTable, SearchParameters theSearchParameters)
 	{
 		if (theTable != null)
@@ -183,6 +185,7 @@ public class MiningWindow extends JFrame implements ActionListener
 		jButtonBrowse = new JButton();
 		jButtonExplore = new JButton();
 		jButtonMetaData = new JButton();
+		jButtonDiscretiseData = new JButton();
 
 		jPanelDataSet.setLayout(new BorderLayout(40, 0));
 		jPanelDataSet.setBorder(GUI.buildBorder("Dataset"));
@@ -245,6 +248,9 @@ public class MiningWindow extends JFrame implements ActionListener
 
 		jButtonMetaData = initButton(STD.META_DATA);
 		aButtonPanel.add(jButtonMetaData);
+
+		jButtonDiscretiseData = initButton(STD.DISCRETISE);
+//		aButtonPanel.add(jButtonDiscretiseData);
 
 		jPanelDataSetButtons.add(aButtonPanel);
 
@@ -675,6 +681,7 @@ public class MiningWindow extends JFrame implements ActionListener
 						jButtonBrowse,
 						jButtonExplore,
 						jButtonMetaData,
+						jButtonDiscretiseData,
 						jButtonCrossValidate,
 						jButtonSubgroupDiscovery,
 						jButtonSubgroupDiscoveryLoop,
@@ -1126,11 +1133,14 @@ public class MiningWindow extends JFrame implements ActionListener
 			itsDBC = new DatabaseConnection("com.mysql.jdbc.Driver", "jdbc:mysql://localhost:3306/psr", "localhost", "psr", "root", "");
 			itsDBC.openConnection();
 
-			ArrayList<String> aTables = itsDBC.getTableViewNames();
-			String aTable = (String) JOptionPane.showInputDialog(null, "Choose table", "Table selection", JOptionPane.QUESTION_MESSAGE,
-				null, // Use default icon
-        			aTables.toArray(), 
-				aTables.toArray()[0]); // Initial choice
+			List<String> aTables = itsDBC.getTableViewNames();
+			String aTable = (String) JOptionPane.showInputDialog(null,
+										"Choose table",
+										"Table selection",
+										JOptionPane.QUESTION_MESSAGE,
+										null, // Use default icon
+										aTables.toArray(),
+										aTables.get(0)); // Initial choice
 			System.out.println("selected table (or view): " + aTable);
 
 			//load table
@@ -1480,7 +1490,7 @@ public class MiningWindow extends JFrame implements ActionListener
 		if (aName != null)
 		{
 			itsSearchParameters.setSearchStrategy(aName);
-			jTextFieldStrategyWidth.setEnabled(!SearchStrategy.BEST_FIRST.GUI_TEXT.equalsIgnoreCase(aName));
+			jTextFieldStrategyWidth.setEnabled(itsSearchParameters.getSearchStrategy().requiresSearchWidthParameter());
 		}
 	}
 
@@ -1492,10 +1502,8 @@ public class MiningWindow extends JFrame implements ActionListener
 		{
 			itsSearchParameters.setNumericStrategy(aName);
 			NumericStrategy aStrategy = itsSearchParameters.getNumericStrategy();
-			boolean aBinning = (aStrategy == NumericStrategy.NUMERIC_BEST_BINS || aStrategy == NumericStrategy.NUMERIC_BINS);
-			jTextFieldNumberOfBins.setEnabled(aBinning); //disable nr bins?
-			boolean anIntervals = (aStrategy == NumericStrategy.NUMERIC_INTERVALS);
-			jComboBoxNumericOperators.setEnabled(!anIntervals); //disable numeric operators?
+			jTextFieldNumberOfBins.setEnabled(aStrategy.isDiscretiser()); //disable nr bins?
+			jComboBoxNumericOperators.setEnabled(aStrategy.isForHalfInterval()); //disable numeric operators?
 		}
 	}
 
@@ -1766,11 +1774,11 @@ public class MiningWindow extends JFrame implements ActionListener
 				aPDF.smooth();
 
 				aQualityMeasure = new QualityMeasure(
-					itsSearchParameters.getQualityMeasure(), 
-					aNrRows,
-					aStatistics.getSubgroupSum(),
-					aStatistics.getSubgroupSumSquaredDeviations(),
-					aPDF);
+						itsSearchParameters.getQualityMeasure(), 
+						aNrRows,
+						aStatistics.getSubgroupSum(),
+						aStatistics.getSubgroupSumSquaredDeviations(),
+						aPDF);
 				break;
 			}
 			case MULTI_NUMERIC :
@@ -1930,6 +1938,78 @@ public class MiningWindow extends JFrame implements ActionListener
 				Log.logCommandLine("File writer error: " + e.getMessage());
 			}
 		setBusy(false);
+	}
+
+	private void jButtonDiscretiseActionPerformed()
+	{
+//		// could come from a Dialog window, but for now this is fine
+//		int[] bins = { 4, 8, 16, 32, 64, 128, 256, 512, 1024 };
+//		for (int b : bins)
+//			jButtonDiscretiseActionPerformed(b);
+//
+//		// Vikamine default is 3 bins, Cortana default is 8 bins
+//		for (int i = 2; i <= 2; ++i)
+//			NumericRanges.foo(itsTable, itsTargetConcept.getPrimaryTarget(), i);
+	}
+
+	// lazy code - build new Table and re-use Table.toFile()
+	private void jButtonDiscretiseActionPerformed(int bins)
+	{
+//		int aNrSplits = bins-1;
+//		int aNrRows = itsTable.getNrRows();
+//
+//		// create a BitSet that select the whole Table
+//		BitSet bs = new BitSet(aNrRows);
+//		bs.set(0, aNrRows);
+//
+//		File file = new File(String.format("%s.%d.csv", itsTable.getSource(), bins));
+//		String name = itsTable.getName() + "." + bins; 
+//		Table t = new Table(file, name, aNrRows, itsTable.getNrColumns());
+//		List<Column> cs = t.getColumns();
+//
+//		for (Column c : itsTable.getColumns())
+//		{
+//			if (c.getType() != AttributeType.NUMERIC)
+//				cs.add(c);
+//			else
+//			{
+//				float[] bounds = null;
+//				if (c.getCardinality() <= bins)
+//					bounds = c.getUniqueNumericDomain(bs);
+//				else
+//				{
+//					bounds = c.getSplitPoints(bs, aNrSplits);
+//
+//					// lazy method to remove possible duplicates
+//					Set<Float> set = new TreeSet<Float>();
+//					for (float f : bounds)
+//						set.add(Float.valueOf(f));
+//					// reuse bounds
+//					bounds = new float[set.size() + 1];
+//					int index = -1;
+//					for (Float f : set)
+//						bounds[++index] = f;
+//					bounds[++index] = c.getMax();
+//				}
+//
+//				int size = c.size();
+//				assert (aNrRows == size);
+//				Column nc = new Column(c.getName(), c.getShort(), c.getType(), c.getIndex(), size);
+//
+//				for (int i = 0; i < size; ++i)
+//				{
+//					float f = c.getFloat(i);
+//					int b = Arrays.binarySearch(bounds, f);
+//					nc.add(bounds[b < 0 ? ~b : b]);
+//				}
+//
+//				cs.add(nc);
+//			}
+//		}
+//
+//		t.toFile(file);
+//
+//		System.out.println("discretised bins: " + bins);
 	}
 
 	private void setupSearchParameters()
@@ -2154,6 +2234,7 @@ public class MiningWindow extends JFrame implements ActionListener
 	private JButton jButtonBrowse;
 	private JButton jButtonExplore;
 	private JButton jButtonMetaData;
+	private JButton jButtonDiscretiseData;
 
 	// TARGET CONCEPT
 	private JPanel jPanelTargetConcept;
@@ -2333,6 +2414,8 @@ public class MiningWindow extends JFrame implements ActionListener
 		SECONDARY_TERTIARY_TARGETS("Secondary/Tertiary Targets", KeyEvent.VK_Y, false),
 		TARGETS_AND_SETTINGS(	"Targets and Settings",	KeyEvent.VK_T,	false),
 		BASE_MODEL(		"Base Model",		KeyEvent.VK_M,	false),
+		// TMP
+		DISCRETISE(		"Discretise",		KeyEvent.VK_Z,	false),
 		// MINING
 		CROSS_VALIDATE(		"Cross-Validate",	KeyEvent.VK_V,	false),
 		COMPUTE_THRESHOLD(	"Compute Threshold",	KeyEvent.VK_P,	false);
@@ -2424,5 +2507,8 @@ public class MiningWindow extends JFrame implements ActionListener
 			jButtonCrossValidateActionPerformed();
 		else if (STD.COMPUTE_THRESHOLD.GUI_TEXT.equals(aCommand))
 			jButtonComputeThresholdActionPerformed();
+
+		else if (STD.DISCRETISE.GUI_TEXT.equals(aCommand))
+			jButtonDiscretiseActionPerformed();
 	}
 }
