@@ -82,7 +82,7 @@ public enum TargetType implements EnumInterface
 		{
 			case SINGLE_NOMINAL		: return true;
 			case SINGLE_NUMERIC		: return true;
-			case MULTI_NUMERIC		: return false;
+			case MULTI_NUMERIC		: return true;
 			case SINGLE_ORDINAL		: return false;
 			case DOUBLE_REGRESSION		: return true;
 			case DOUBLE_CORRELATION		: return true;
