@@ -459,8 +459,11 @@ public class QualityMeasure
 			}
 			case BINOMIAL:
 			{
-				returnValue = Math.sqrt(B/N) * (HB/B - H/N);
-				break;
+                if (B == 0)
+                    returnValue = 0;
+                else
+                    returnValue = Math.sqrt(B/N) * (HB/B - H/N);
+                break;
 			}
 			case JACCARD:
 			{
@@ -474,7 +477,10 @@ public class QualityMeasure
 			}
 			case ACCURACY:
 			{
-				returnValue = HB / B;
+                if (B == 0)
+                    returnValue = 0;
+                else
+                    returnValue = HB / B;
 				break;
 			}
 			case SPECIFICITY:
@@ -522,7 +528,10 @@ public class QualityMeasure
 			}
 			case PURITY:
 			{
-				returnValue = HB / B;
+                if (B == 0)
+                    returnValue = 0;
+                else
+                    returnValue = HB / B;
 				if (returnValue < 0.5)
 					returnValue = 1.0 - returnValue;
 				break;
@@ -534,7 +543,10 @@ public class QualityMeasure
 			}
 			case LIFT:
 			{
-				returnValue = (HB * N) / (B * H);
+                if (B == 0)
+                    returnValue = 0;
+                else
+                    returnValue = (HB * N) / (B * H);
 				// alternative has 3 divisions, but TTC/N is constant and could be cached
 				// returnValue = (theCountHeadBody / theCoverage) / (theTotalTargetCoverage / theTotalCoverage);
 				break;
@@ -605,21 +617,24 @@ public class QualityMeasure
 
 	private static final double calculateChiSquared(double totalSupport, double headSupport, double bodySupport, double headBodySupport)
 	{
+        if (bodySupport == totalSupport || bodySupport == 0)
+            return 0.0;
+        
 		//HEADBODY
 		double Eij = calculateExpectency(totalSupport, bodySupport, headSupport);
 		double quality = calculatePowerTwo(headBodySupport - Eij) / Eij;
 
 		//HEADNOTBODY
 		Eij = calculateExpectency(totalSupport, (totalSupport - bodySupport), headSupport);
-		quality += (calculatePowerTwo(headSupport - headBodySupport - Eij)) / Eij;
+        quality += (calculatePowerTwo(headSupport - headBodySupport - Eij)) / Eij;
 
 		//NOTHEADBODY
 		Eij = calculateExpectency(totalSupport, (totalSupport - headSupport), bodySupport);
-		quality += (calculatePowerTwo(bodySupport - headBodySupport - Eij)) / Eij;
+        quality += (calculatePowerTwo(bodySupport - headBodySupport - Eij)) / Eij;
 
 		//NOTHEADNOTBODY
 		Eij = calculateExpectency(totalSupport, (totalSupport - bodySupport), (totalSupport - headSupport));
-		quality += (calculatePowerTwo((totalSupport - headSupport - bodySupport + headBodySupport) - Eij)) / Eij;
+        quality += (calculatePowerTwo((totalSupport - headSupport - bodySupport + headBodySupport) - Eij)) / Eij;
 
 		return quality;
 	}
