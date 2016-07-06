@@ -36,6 +36,7 @@ public class FileLoaderARFF implements FileLoaderInterface
 						Pattern.CASE_INSENSITIVE);
 		}
 
+		// FIXME MM - returns true if KEYWORD occurs anywhere in String
 		boolean atStartOfLine(String theString)
 		{
 			return text.matcher(theString).find();
@@ -112,7 +113,7 @@ public class FileLoaderARFF implements FileLoaderInterface
 			while ((aLine = aReader.readLine()) != null)
 			{
 				aLineNr++;
-				aLine.trim();
+
 				if (Keyword.COMMENT.atStartOfLine(aLine) || aLine.isEmpty())
 					continue;
 
@@ -201,6 +202,7 @@ public class FileLoaderARFF implements FileLoaderInterface
 								.add(parseAttribute(aLine.substring(aMatcher.end()), anAttributeIndex++));
 					}
 				}
+
 				else if (Keyword.DATA.atStartOfLine(aLine))
 				{
 					if (!relationFound)
@@ -223,9 +225,10 @@ public class FileLoaderARFF implements FileLoaderInterface
 					else
 						dataFound = true;
 				}
+
 				else if (dataFound)
 				{
-					loadData(aLine, itsNrDataRows);
+					loadData(aLine.trim(), itsNrDataRows);
 					itsNrDataRows++;
 				}
 //				else
@@ -322,33 +325,57 @@ public class FileLoaderARFF implements FileLoaderInterface
 	}
 
 	// TODO checking of declared nominal classes for @attributes { class1, class2, ..} declarations
-	private void loadData(String theString, int theLine)
+	private void loadData(String theLine, int theLineNr)
 	{
+		// String argument should not start with whitespace
+		assert (!Character.isWhitespace(theLine.charAt(0)));
+
 		String aCell;
 		boolean isBad = false;
-		for (int i = 0, j = itsTable.getColumns().size(); i < j; i++)
-		{
-			Column aColumn = itsTable.getColumns().get(i);
-			int offset = 0;
 
-			if (theString.trim().startsWith("\'"))
+		for (Column c : itsTable.getColumns())
+		{
+			// XXX MM - ugly hack for now
+			// NOTE trim() only makes a copy if required
+			theLine = theLine.trim();
+
+			if (theLine.startsWith("\'"))
 			{
-				aCell = removeOuterQuotes(theString);
-				offset = 2;
+				aCell = removeOuterQuotes(theLine);
+
+				// use offset, there might be ',' within quotes
+				// ',' need not be directly after closing quote
+				// +2 for quotes
+				int idx = theLine.indexOf(',', aCell.length()+2);
+				if (idx >= 0)
+					// remove "'aCell'\\s*,"
+					theLine = theLine.substring(idx+1);
+				else
+					theLine = theLine.substring(aCell.length()+2);
 			}
 			else
-				aCell= theString.split(",\\s*", 2)[0];
+			{
+				// just find first "," and trim if needed
+				int idx = theLine.indexOf(",");
+				if (idx >= 0)
+					aCell = theLine.substring(0, idx).trim();
+				else
+					aCell = theLine.trim();
 
-			theString = theString.substring(aCell.length() + offset)
-						.replaceFirst(",\\s*", "");
+				if (idx >= 0)
+					// remove "aCell\\s*,"
+					theLine = theLine.substring(idx+1);
+				else
+					theLine = theLine.substring(aCell.length());
+			}
 
 			if (aCell.equals("?"))
 			{
-				aColumn.setMissing(itsNrDataRows);
-				addMissingToColumn(aColumn);
+				c.setMissing(itsNrDataRows);
+				addMissingToColumn(c);
 			}
 			else
-				isBad |= !addValueToColumn(aColumn, aCell, theLine);
+				isBad |= !addValueToColumn(c, aCell, theLineNr);
 		}
 
 		// empty numeric cell (missing value) or parseFloat(cell) failed
@@ -359,9 +386,9 @@ public class FileLoaderARFF implements FileLoaderInterface
 			itsNrBadRows++;
 		}
 
-		if (!theString.isEmpty())
-			if (!Keyword.COMMENT.atStartOfLine(theString))
-				Log.logCommandLine("FileLoaderARFF: many arguments at line:\n\t " + theString);
+		if (!theLine.isEmpty())
+			if (!Keyword.COMMENT.atStartOfLine(theLine))
+				Log.logCommandLine("FileLoaderARFF: many arguments at line:\n\t " + theLine);
 				// TODO criticalError(toManyArgumentsError);
 	}
 
@@ -403,14 +430,19 @@ public class FileLoaderARFF implements FileLoaderInterface
 			}
 			case BINARY :
 			{
-				// TODO any other value is accepted as 'false'
 				// TODO this will fail on AutoRun loading files where
-				// isValidBinaryTrueValue(theCell) does not hold
+				// isValidBinaryValue(theCell) does not hold
 				// ie. data with 2 values, set to BINARY by user
+				if (!AttributeType.isValidBinaryValue(theCell))
+					throw new IllegalArgumentException(getClass().getSimpleName() + ": invalid BINARY value: " + theCell);
 				theColumn.add(AttributeType.isValidBinaryTrueValue(theCell));
 				break;
 			}
-			default : break;	// TODO unknown AttributeType warning
+			default :
+			{
+				String.format(getClass().getSimpleName() + ": unknown AttributeType '%s'", theColumn.getType());
+				throw new AssertionError(theColumn.getType());
+			}
 		}
 		return true;
 	}
@@ -454,7 +486,11 @@ public class FileLoaderARFF implements FileLoaderInterface
 					theColumn.add(AttributeType.isValidBinaryTrueValue(AttributeType.BINARY.DEFAULT_MISSING_VALUE));
 				break;
 			}
-			default : break; // TODO unknown AttributeType warning
+			default :
+			{
+				String.format(getClass().getSimpleName() + ": unknown AttributeType '%s'", theColumn.getType());
+				throw new AssertionError(theColumn.getType());
+			}
 		}
 	}
 
