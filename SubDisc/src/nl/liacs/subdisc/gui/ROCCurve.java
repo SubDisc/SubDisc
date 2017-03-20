@@ -18,6 +18,7 @@ public class ROCCurve extends JPanel
 	private GeneralPath itsLines;
 	private List<Arc2D> itsPoints;
 	private String itsAreaUnderCurve;
+    private float itsSize;
 	private float itsXMin, itsXMax, itsYMin, itsYMax;
 	private float itsXStart, itsYStart, itsXEnd, itsYEnd;
 	private int itsMin, itsMax;
@@ -106,13 +107,14 @@ public class ROCCurve extends JPanel
 	{
 		int aWidth = getWidth();
 		int aHeight = getHeight();
-		float aSize = Math.min(aWidth, aHeight)*0.85f;
+		itsSize = Math.max(260f, Math.min(aWidth, aHeight)*0.85f);
+        AffineTransform aTransform = new AffineTransform();
+        aTransform.translate(0.15*itsSize, 1.05*itsSize);
+        aTransform.scale(itsSize, itsSize);
 
 		super.paintComponent(theGraphic);
 		Graphics2D aGraphic = (Graphics2D)theGraphic;
-		aGraphic.scale(aSize, aSize);
-		aGraphic.translate(0.15, 1.05);
-		aGraphic.setStroke(new BasicStroke(3.0f/aSize));
+		aGraphic.setStroke(new BasicStroke(3.0f));
 
 		//isometrics
 		int N = itsQualityMeasure.getNrRecords();
@@ -142,7 +144,7 @@ public class ROCCurve extends JPanel
 					aGraphic.setColor(new Color(255, 255-aValue, 255-aValue)); //red
 				else
 					aGraphic.setColor(new Color(255-aValue, 255, 255-aValue)); //green
-				aGraphic.fill(new Rectangle2D.Double(anX, aY, 1/(float)aResolution, 1/(float)aResolution));
+				aGraphic.fill(new Rectangle2D.Double((anX+0.15)*itsSize, (aY+1.05)*itsSize, itsSize/aResolution, itsSize/aResolution));
 			}
 		}
 
@@ -150,41 +152,41 @@ public class ROCCurve extends JPanel
 
 		if (itsPoints != null)
 			for(Arc2D aPoint : itsPoints)
-				aGraphic.draw(aPoint);
-
-		aGraphic.setStroke(new BasicStroke(2.0f/aSize));
+                    aGraphic.draw(aTransform.createTransformedShape(aPoint));
+        
+		aGraphic.setStroke(new BasicStroke(2.0f));
 		aGraphic.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
 									RenderingHints.VALUE_ANTIALIAS_ON);
-		aGraphic.draw(itsCurve);
-		aGraphic.setStroke(new BasicStroke(1.0f/aSize));
-		aGraphic.draw(itsLines);
+		aGraphic.draw(aTransform.createTransformedShape(itsCurve));
+		aGraphic.setStroke(new BasicStroke(1.0f));
+		aGraphic.draw(aTransform.createTransformedShape(itsLines));
 
 		Font aFont = new Font("SansSerif", Font.PLAIN, 11);
-		Font aNewFont = aFont.deriveFont(11.0f/aSize);
+		Font aNewFont = aFont.deriveFont(11.0f);
 		aGraphic.setFont(aNewFont);
-		aGraphic.drawString("(0,0)", -0.05f, 0.04f);
-		aGraphic.drawString("FPR", 0.44f, 0.08f);
-		aGraphic.drawString("TPR", -0.1f, -0.44f);
+		aGraphic.drawString("(0,0)", (-0.05f+0.15f)*itsSize, (0.04f+1.05f)*itsSize);
+		aGraphic.drawString("FPR", (0.44f+0.15f)*itsSize, (0.08f+1.05f)*itsSize);
+		aGraphic.drawString("TPR", (-0.1f+0.15f)*itsSize, (-0.44f+1.05f)*itsSize);
 
 		//scales
 		NumberFormat aFormatter = NumberFormat.getNumberInstance();
 		aFormatter.setMaximumFractionDigits(1);
 		for(int i=1; i<11; i++)
 		{
-			aGraphic.drawString(aFormatter.format(i*0.1f), i*0.1f, 0.04f);
-			aGraphic.drawString(aFormatter.format(i*0.1f), -0.07f, i*-0.1f);
+			aGraphic.drawString(aFormatter.format(i*0.1f), (i*0.1f+0.15f)*itsSize, (0.04f+1.05f)*itsSize);
+			aGraphic.drawString(aFormatter.format(i*0.1f), (-0.07f+0.15f)*itsSize, (i*-0.1f+1.05f)*itsSize);
 		}
 
 		//qualities
 		aFormatter.setMaximumFractionDigits(4);
 		aFont = new Font("SansSerif", Font.PLAIN, 10);
-		aNewFont = aFont.deriveFont(10.0f/aSize);
+		aNewFont = aFont.deriveFont(10.0f);
 		aGraphic.setFont(aNewFont);
-		aGraphic.drawString(aFormatter.format(itsQualityMeasure.getROCHeaven()), 0.02f, -0.96f);
-		aGraphic.drawString(aFormatter.format(itsQualityMeasure.getROCHell()), 0.9f, -0.02f);
+		aGraphic.drawString(aFormatter.format(itsQualityMeasure.getROCHeaven()), (0.02f+0.15f)*itsSize, (-0.96f+1.05f)*itsSize);
+		aGraphic.drawString(aFormatter.format(itsQualityMeasure.getROCHell()), (0.9f+0.15f)*itsSize, (-0.02f+1.05f)*itsSize);
 
 		//min and max support
-		aGraphic.drawString(Integer.toString(itsMin), itsXMin, -0.03f);
-		aGraphic.drawString(Integer.toString(itsMax), itsXEnd+0.01f, -Math.max(itsYEnd, 0.03f));
+		aGraphic.drawString(Integer.toString(itsMin), (itsXMin+0.15f)*itsSize, (-0.03f+1.05f)*itsSize);
+		aGraphic.drawString(Integer.toString(itsMax), (itsXEnd+0.01f+0.15f)*itsSize, (-Math.max(itsYEnd, 0.03f)+1.05f)*itsSize);
 	}
 }
