@@ -1,5 +1,7 @@
 package nl.liacs.subdisc.postprocess;
 
+import java.util.*;
+
 public class Mean
 {
 	final String itsFile;
@@ -39,6 +41,41 @@ public class Mean
 			return false;
 
 		return true;
+	}
+
+	static final Set<String> distinctDatasets(List<Mean> theMeans)
+	{
+		Set<String> aSet = new TreeSet<String>();
+
+		for (Mean m : theMeans)
+			aSet.add(m.itsDataset);
+
+		return aSet;
+	}
+	static final Set<String> distinctDepths(List<Mean> theMeans)
+	{
+		return getDistinct(theMeans, true);
+	}
+	static final Set<String> distinctTopKs(List<Mean> theMeans)
+	{
+		return getDistinct(theMeans, false);
+	}
+
+	private static final Set<String> getDistinct(List<Mean> theMeans, boolean isDepth)
+	{
+		// Integers for numeric ordering
+		Set<Integer> aSet = new TreeSet<Integer>();
+
+		for (Mean m : theMeans)
+			aSet.add(isDepth ? m.itsDepth : m.itsTopK);
+
+		// Set promises unique items
+		// LinkedHashSet promises predictable ordering
+		Set<String> aResult = new LinkedHashSet<String>(aSet.size());
+		for (Integer i : aSet)
+			aResult.add(i.toString());
+
+		return aResult;
 	}
 
 	// sorting logic

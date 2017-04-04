@@ -30,18 +30,26 @@ public class Main
 
 		List<Mean> aMeans = getMeans(aPath, new int[]{ 1, 10 , 100 });
 
-		MeanTable aMeanTable = new MeanTable(aMeans);
-		aMeanTable.write(getFile(out + "mean-table-long-"));
+		// use null for no relative computation (relative to self)
+		Map<Mean, Mean> pMap = pivot(aMeans, "dhea", 0);
+		Map<Map.Entry<Mean, Mean>, Double> rMap = relative(pMap);
 
-		List<MeanAggregate> anAggregates = aMeanTable.getAggregate();
-		MeanAggregateTable aMeanAggregateTable = new MeanAggregateTable(anAggregates);
-		aMeanAggregateTable.write(getFile(out + "mean-table-long-aggregate-"));
+		Table aTable = toTable(rMap);
 
-		Table aTable = getTable(aMeans);
-		aTable.toFile(getFile(out + aTable.getName() + "-"));
+//		MeanTable aMeanTable = new MeanTable(aMeans);
+//		aMeanTable.write(getFile(out + "mean-table-long-"));
+//
+//		List<MeanAggregate> anAggregates = aMeanTable.getAggregate();
+//		MeanAggregateTable aMeanAggregateTable = new MeanAggregateTable(anAggregates);
+//		aMeanAggregateTable.write(getFile(out + "mean-table-long-aggregate-"));
 
-		Table anAggregate = aggregate(aTable);
-		anAggregate.toFile(getFile(out + anAggregate.getName() + "-"));
+		
+//
+//		Table aTable = getTable(aMeans);
+//		aTable.toFile(getFile(out + aTable.getName() + "-"));
+//
+//		Table anAggregate = aggregate(aTable);
+//		anAggregate.toFile(getFile(out + anAggregate.getName() + "-"));
 	}
 
 	private static final List<Mean> getMeans(String thePath, int[] theTopKs)
@@ -210,6 +218,101 @@ public class Main
 		}
 	}
 
+	private static final List<Set<Mean>> group(List<Mean> theMeans)
+	{
+		List<Set<Mean>> aList = new ArrayList<Set<Mean>>();
+
+		OUTER:
+		for (Mean m : theMeans)
+		{
+			for (Set<Mean> set : aList)
+			{
+				// next() is safe, sets are non-empty by design
+				if (set.iterator().next().canAggregate(m))
+				{
+					set.add(m);
+					continue OUTER;
+				}
+			}
+
+			// no comparable Means found, create new set
+			Set<Mean> aSet = new LinkedHashSet<Mean>();
+			aSet.add(m);
+			aList.add(aSet);
+		}
+
+		return aList;
+	}
+
+	private static final Map<Mean, Mean> pivot(List<Mean> theMeans, String thePivotStrategy, int thePivotNrBins)
+	{
+		Map<Mean, Mean> aMap = new LinkedHashMap<Mean, Mean>();
+
+		// special case
+		if (thePivotStrategy == null)
+		{
+			for (Mean m : theMeans)
+				aMap.put(m, m);
+
+			return aMap;
+		}
+
+		Set<Mean> thePivots = filterMeans(theMeans, thePivotStrategy, thePivotNrBins);
+
+		OUTER:
+		for (Mean m : theMeans)
+		{
+			for (Mean n : thePivots)
+			{
+				if (pivotCompatible(m, n))
+				{
+					aMap.put(m, n);
+					continue OUTER;
+				}
+			}
+
+			throw new AssertionError();
+		}
+
+		return aMap;
+	}
+
+	private static final Set<Mean> filterMeans(List<Mean> theMeans, String theStrategy, int theNrBins)
+	{
+		Set<Mean> aMeans = new HashSet<Mean>();
+
+		for (Mean m : theMeans)
+			if ((m.itsStrategy.equals(theStrategy)) && (m.itsNrBins == theNrBins))
+				aMeans.add(m);
+
+		return aMeans;
+	}
+
+	private static final boolean pivotCompatible(Mean theMean, Mean thePivotMean)
+	{
+		return ((theMean.itsDataset.equals(thePivotMean.itsDataset)) &&
+			(theMean.itsDepth == thePivotMean.itsDepth) &&
+			(theMean.itsTopK == thePivotMean.itsTopK));
+	}
+
+	private static final Map<Map.Entry<Mean, Mean>, Double> relative(Map<Mean, Mean> thePivotMap)
+	{
+		Map<Map.Entry<Mean, Mean>, Double> aMap = new LinkedHashMap<Map.Entry<Mean, Mean>, Double>();
+
+		for (Map.Entry<Mean, Mean> e : thePivotMap.entrySet())
+			aMap.put(e, e.getKey().itsMean / e.getValue().itsMean);
+
+		return aMap;
+	}
+
+	private static final void toTable(Map<Map.Entry<Mean, Mean>, Double> theMap)
+	{
+		for (Map.Entry<Map.Entry<Mean, Mean>, Double> e : theMap.entrySet())
+		{
+			
+		}
+	}
+
 	private static final Table aggregate(Table theTable)
 	{
 		// new Table is like old
@@ -250,7 +353,7 @@ public class Main
 
 						if (COLUMN_NAME_DATASET.equals(o.getName()))
 						{
-							n.add(MeanAggregateTable.COMMENT + v);
+							n.add(MeanTable.COMMENT + v);
 							continue;
 						}
 

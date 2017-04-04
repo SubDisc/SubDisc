@@ -5,15 +5,17 @@ import java.util.*;
 
 public class MeanTable
 {
+	public static final String COMMENT = "#";
+
 	private static final String[] COLUMNS =
 	{
 		"result-file",
 		"result-file-size",
 		"dataset",
-		//"datasetIndex",
+		"datasetIndex",
 		"depth",
 		"topK",
-		//"topKIndex",
+		"topKIndex",
 		"strategy",
 		"nr-bins",
 		"mean"
@@ -31,21 +33,28 @@ public class MeanTable
 	{
 		try (BufferedWriter br = new BufferedWriter(new FileWriter(theFile)))
 		{
+			// obtain distinct datasets and topks for indexes
+			List<String> aDatasets = new ArrayList<String>(Mean.distinctDatasets(itsMeans));
+			List<String> aTopKs = new ArrayList<String>(Mean.distinctTopKs(itsMeans));
+
 			Object[] oa = new Object[COLUMNS.length];
 
 			// write header
-			br.write(String.format(FMT, (Object[]) COLUMNS));
+			br.write(COMMENT + String.format(FMT, (Object[]) COLUMNS));
 			// write data for all means
 			for (Mean m : itsMeans)
 			{
-				oa[0] = m.itsFile;
-				oa[1] = m.itsResultFileSize;
-				oa[2] = m.itsDataset;
-				oa[3] = m.itsDepth;
-				oa[4] = m.itsTopK;
-				oa[5] = m.itsStrategy;
-				oa[6] = m.itsNrBins;
-				oa[7] = m.itsMean;
+				int i = 0;
+				oa[i++] = m.itsFile;
+				oa[i++] = m.itsResultFileSize;
+				oa[i++] = m.itsDataset;
+				oa[i++] = aDatasets.indexOf(m.itsDataset);
+				oa[i++] = m.itsDepth;
+				oa[i++] = m.itsTopK;
+				oa[i++] = aTopKs.indexOf(Integer.toString(m.itsTopK));
+				oa[i++] = m.itsStrategy;
+				oa[i++] = m.itsNrBins;
+				oa[i++] = m.itsMean;
 
 				br.write(String.format(FMT, oa));
 			}
