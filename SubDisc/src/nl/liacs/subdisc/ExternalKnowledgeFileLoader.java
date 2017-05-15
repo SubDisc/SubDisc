@@ -93,6 +93,14 @@ public class ExternalKnowledgeFileLoader
 			knowledgeToConditions(linesGlobal, externalInfoGlobal, theTable);
 	}
 
+	public static List<ConditionList> knowledgeToConditions(Table theTable, List<String> theKnowledge) 
+	{
+		// JvR: Function used in OpenML Evaluation engine :)
+		List<ConditionList> result = new ArrayList<ConditionList>();
+		knowledgeToConditions(theKnowledge, result, theTable);
+		return result;
+	}
+
 	private static void knowledgeToConditions(List<String> theKnowledge, List<ConditionList> theConditionLists, Table theTable)
 	{
 		for (String aLine : theKnowledge)
