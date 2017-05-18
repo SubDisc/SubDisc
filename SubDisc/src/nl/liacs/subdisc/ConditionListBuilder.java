@@ -629,4 +629,21 @@ System.out.format("ERROR: duplicate conjuncts%n\t%s%n\t%s%n", theConditionList.t
 
 		return sb.toString();
 	}
+
+	// used for testing results obtained in multi-threaded experiments
+	static final String toCanonicalOrder(ConditionListA theConditionList)
+	{
+		int aSize = theConditionList.size();
+		Condition[] aConditions = new Condition[aSize];
+
+		// get() return Conditions in search order
+		for (int i = 0; i < aSize; ++i)
+			aConditions[i] = theConditionList.get(i);
+
+		// put Conditions in canonical order
+		Arrays.sort(aConditions);
+
+		// abuses method for simple implementation
+		return toString(aConditions);
+	}
 }

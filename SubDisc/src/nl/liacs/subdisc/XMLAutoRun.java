@@ -10,6 +10,10 @@ import org.w3c.dom.*;
 
 public class XMLAutoRun
 {
+	// leave false in svn - write result with Conditions in canonical order
+	// this makes results invocation invariant
+	private static final boolean IS_MULTI_THREAD_TEST = false;
+
 	public static final String RESULT_SET_DELIMITER = "\t";
 
 	private Document itsDocument;
@@ -208,7 +212,7 @@ public class XMLAutoRun
 
 		try
 		{
-			String aDelimiter = "\t";
+			String aDelimiter = RESULT_SET_DELIMITER;
 			aWriter = new BufferedWriter(new FileWriter(theFileName));
 
 			aWriter.write(ResultTableModel.getColumnName(0, theTargetType));
@@ -239,8 +243,10 @@ public class XMLAutoRun
 				aWriter.write(aDelimiter);
 				aWriter.write(String.valueOf(aSubgroup.getPValue()));
 				aWriter.write(aDelimiter);
-				aWriter.write(aSubgroup.getConditions().toString());
-				//aWriter.write(aSubgroup.getConditions().toNaturalOrderString());	// TODO for testing only
+				if (IS_MULTI_THREAD_TEST)
+					aWriter.write(ConditionListBuilder.toCanonicalOrder(aSubgroup.getConditions()));
+				else
+					aWriter.write(aSubgroup.getConditions().toString());
 				aWriter.write("\n");
 			}
 		}
