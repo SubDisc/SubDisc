@@ -459,11 +459,11 @@ public class QualityMeasure
 			}
 			case BINOMIAL:
 			{
-                if (B == 0)
-                    returnValue = 0;
-                else
-                    returnValue = Math.sqrt(B/N) * (HB/B - H/N);
-                break;
+				if (B == 0)
+					returnValue = 0;
+				else
+					returnValue = Math.sqrt(B/N) * (HB/B - H/N);
+				break;
 			}
 			case JACCARD:
 			{
@@ -477,10 +477,10 @@ public class QualityMeasure
 			}
 			case ACCURACY:
 			{
-                if (B == 0)
-                    returnValue = 0;
-                else
-                    returnValue = HB / B;
+				if (B == 0)
+					returnValue = 0;
+				else
+					returnValue = HB / B;
 				break;
 			}
 			case SPECIFICITY:
@@ -528,10 +528,10 @@ public class QualityMeasure
 			}
 			case PURITY:
 			{
-                if (B == 0)
-                    returnValue = 0;
-                else
-                    returnValue = HB / B;
+				if (B == 0)
+					returnValue = 0;
+				else
+					returnValue = HB / B;
 				if (returnValue < 0.5)
 					returnValue = 1.0 - returnValue;
 				break;
@@ -543,10 +543,10 @@ public class QualityMeasure
 			}
 			case LIFT:
 			{
-                if (B == 0)
-                    returnValue = 0;
-                else
-                    returnValue = (HB * N) / (B * H);
+				if (B == 0)
+					returnValue = 0;
+				else
+					returnValue = (HB * N) / (B * H);
 				// alternative has 3 divisions, but TTC/N is constant and could be cached
 				// returnValue = (theCountHeadBody / theCoverage) / (theTotalTargetCoverage / theTotalCoverage);
 				break;
