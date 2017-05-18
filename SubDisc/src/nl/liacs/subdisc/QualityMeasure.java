@@ -152,7 +152,7 @@ public class QualityMeasure
 	 * 
 	 * IllegalArgumentExceptions will be thrown when:</br>
 	 * (theCountHeadBody < 0),</br>
-	 * (theCoverage < 0),</br>
+	 * (theCoverage <= 0),</br>
 	 * (theCountHeadBody > theCoverage),</br>
 	 * (theCountHeadBody > theTotalTargetCoverage for this QualityMeasure),</br>
 	 * (theCoverage > theTotalCoverage for this QualityMeasure).
@@ -174,11 +174,19 @@ public class QualityMeasure
 //	}
 	public double calculate(int theCountHeadBody, int theCoverage)
 	{
-		// public method use IllegalArgumentException instead of asserts
+		// public method: IllegalArgumentExceptions instead of asserts
+		// NOTE
+		// getROCHeaven() / getROCHell() would fail some checks
+		// they are special cases, not related to data mining
+		// therefore they can call calculate(QM, N, TTC, HB, B) directly
+
+		// 0 positives in subgroup is allowed, selecting all positives
+		// or all negatives would be valued equally by a symmetric QM
 		if (theCountHeadBody < 0)
 			throw new IllegalArgumentException("QualityMeasure: theCountHeadBody < 0");
-		if (theCoverage < 0)
-			throw new IllegalArgumentException("QualityMeasure: theCoverage < 0"); //the coverage can be zero, not lower
+		// 0 is not allowed, it would indicate an empty subgroup
+		if (theCoverage <= 0)
+			throw new IllegalArgumentException("QualityMeasure: theCoverage <= 0");
 		if (theCountHeadBody > theCoverage)
 			throw new IllegalArgumentException("QualityMeasure: theCountHeadBody > theCoverage");
 		if (theCountHeadBody > itsTotalTargetCoverage)
@@ -860,13 +868,18 @@ public class QualityMeasure
 	//get quality of upper left corner
 	public final double getROCHeaven()
 	{
-		return calculate(itsTotalTargetCoverage, itsTotalTargetCoverage);
+		// do not call public method:
+		// calculate(itsTotalTargetCoverage, itsTotalTargetCoverage)
+		// the extra checks (for externally supplied data) would fail
+		// instead, call calculate(QM, N, TTC, HB, B) directly
+		return calculate(itsQualityMeasure, itsNrRecords, itsTotalTargetCoverage, itsTotalTargetCoverage, itsTotalTargetCoverage);
 	}
 
 	//lower right corner
 	public final double getROCHell()
 	{
-		return calculate(0, itsNrRecords - itsTotalTargetCoverage);
+		// see comment at {@link getROCHeaven())
+		return calculate(itsQualityMeasure, itsNrRecords, itsTotalTargetCoverage, 0, itsNrRecords - itsTotalTargetCoverage);
 	}
 
 	//returns the average label ranking of the entire dataset, which this QM uses to compare rankings of subgroups to
