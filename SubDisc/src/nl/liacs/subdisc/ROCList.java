@@ -2,6 +2,10 @@ package nl.liacs.subdisc;
 
 import java.util.*;
 
+/*
+ * TODO MM
+ * ROCList is an ArrayList<SubgroupROCPoint> that forms the convex hull.
+ */
 public class ROCList extends ArrayList<SubgroupROCPoint>
 {
 	private static final long serialVersionUID = 1L;
@@ -11,7 +15,7 @@ public class ROCList extends ArrayList<SubgroupROCPoint>
 
 	public ROCList(SubgroupSet theSubgroupSet)
 	{
-		for(Subgroup s : theSubgroupSet)
+		for (Subgroup s : theSubgroupSet)
 			add(new SubgroupROCPoint(s));
 	}
 
