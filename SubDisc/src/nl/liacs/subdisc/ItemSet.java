@@ -216,5 +216,6 @@ public class ItemSet extends BitSet
 	}
 
 	public double getJointEntropy() { return itsJointEntropy; }
+	// FIXME MM private / remove
 	public void setJointEntropy(double theJointEntropy) { itsJointEntropy = theJointEntropy; }
 }
