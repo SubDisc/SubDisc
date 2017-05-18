@@ -8,7 +8,8 @@ public enum QM implements EnumInterface
 	// ENUM		GUI text	default measure minimum	TargetType
 
 	// SINGLE_NOMINAL quality measures
-	CORTANA_QUALITY	("Cortana Quality",	"0.1",	TargetType.SINGLE_NOMINAL),
+	// NOTE when adding a new SINGLE_NOMINAL QM -> add it to getDefinition()
+	CORTANA_QUALITY		("Cortana Quality",	"0.1",	TargetType.SINGLE_NOMINAL),
 	WRACC			("WRAcc",		"0.02",	TargetType.SINGLE_NOMINAL),
 	MUTUAL_INFORMATION	("Mutual Information",	"0.01",	TargetType.SINGLE_NOMINAL),
 	ABSWRACC		("Abs WRAcc",		"0.02",	TargetType.SINGLE_NOMINAL),
@@ -54,7 +55,7 @@ public enum QM implements EnumInterface
 	CWRACC					("CWRAcc",				"0.0",	TargetType.SINGLE_NUMERIC),
 	CWRACC_UNWEIGHTED			("CWRAcc Unweighted",			"0.0",	TargetType.SINGLE_NUMERIC),
 
-	// MULTI_NUMERIC
+	// MULTI_NUMERIC quality measures
 	SQUARED_HELLINGER_2D			("Squared Hellinger distance 2D",		"0.0",	TargetType.MULTI_NUMERIC),
 	SQUARED_HELLINGER_WEIGHTED_2D		("Weighted Squared Hellinger distance 2D",	"0.0",	TargetType.MULTI_NUMERIC),
 	SQUARED_HELLINGER_WEIGHTED_ADJUSTED_2D	("Adjusted Squared Hellinger distance 2D",	"0.0",	TargetType.MULTI_NUMERIC),
@@ -76,18 +77,16 @@ public enum QM implements EnumInterface
 	WEED			("Wtd Ent Edit Dist",	"0",	TargetType.MULTI_LABEL),
 	EDIT_DISTANCE		("Edit Distance",	"0",	TargetType.MULTI_LABEL),
 
-
-	// LABEL_RANKING
-	LRnorm			("LRM Norm",				"0.0",	TargetType.LABEL_RANKING),
-	LRnormMode		("LRM Norm Mode",			"0.0",	TargetType.LABEL_RANKING),
+	// LABEL_RANKING quality measures
+	LRnorm			("LRM Norm",			"0.0",	TargetType.LABEL_RANKING),
+	LRnormMode		("LRM Norm Mode",		"0.0",	TargetType.LABEL_RANKING),
 	LRwnorm			("LRM Norm & homog",		"0.0",	TargetType.LABEL_RANKING),
 	LRmin			("Labelwise Minimum",		"0.0",	TargetType.LABEL_RANKING),
 	LRlabelwise		("Labelwise Maximization",	"0.0",	TargetType.LABEL_RANKING),
 	LRpairwise		("Pairwise Maximization",	"0.0",	TargetType.LABEL_RANKING),
-	LRcov			("Covariance",				"0.0",	TargetType.LABEL_RANKING),
-	
+	LRcov			("Covariance",			"0.0",	TargetType.LABEL_RANKING),
 
-	// DOUBLE_CORRELATION  quality measures
+	// DOUBLE_CORRELATION quality measures
 	CORRELATION_R		("r",			"0.2",	TargetType.DOUBLE_CORRELATION),
 	CORRELATION_R_NEG	("Negative r",		"0.2",	TargetType.DOUBLE_CORRELATION),
 	CORRELATION_R_NEG_SQ	("Neg Sqr r",		"0.2",	TargetType.DOUBLE_CORRELATION),
@@ -97,27 +96,33 @@ public enum QM implements EnumInterface
 	CORRELATION_ENTROPY	("Wtd Ent Distance",	"0.0",	TargetType.DOUBLE_CORRELATION),
 	ADAPTED_WRACC		("Adapted WRAcc",	"0.0",	TargetType.DOUBLE_CORRELATION),
 	COSTS_WRACC		("Costs WRAcc",		"0.0",	TargetType.DOUBLE_CORRELATION),
-	CWTPD			("CWTPD", 		"0.0", 	TargetType.DOUBLE_CORRELATION),
-	TMCC			("TMCC", 		"0.0", 	TargetType.DOUBLE_CORRELATION),
-	MCC			("MCC", 		"0.0", 	TargetType.DOUBLE_CORRELATION),
-	PDC			("PDC", 		"0.0", 	TargetType.DOUBLE_CORRELATION),
-	MVPDC			("MVPDC", 		"0.0", 	TargetType.DOUBLE_CORRELATION),
+	CWTPD			("CWTPD",		"0.0",	TargetType.DOUBLE_CORRELATION),
+	TMCC			("TMCC",		"0.0",	TargetType.DOUBLE_CORRELATION),
+	MCC			("MCC",			"0.0",	TargetType.DOUBLE_CORRELATION),
+	PDC			("PDC",			"0.0",	TargetType.DOUBLE_CORRELATION),
+	MVPDC			("MVPDC",		"0.0",	TargetType.DOUBLE_CORRELATION),
 
 	// DOUBLE_REGRESSION quality measures
 	REGRESSION_SSD_COMPLEMENT	("Sign. of Slope Diff. (complement)",	"0.0",	TargetType.DOUBLE_REGRESSION),
 	REGRESSION_SSD_DATASET		("Sign. of Slope Diff. (dataset)",	"0.0",	TargetType.DOUBLE_REGRESSION),
-	REGRESSION_FLATNESS		("Flatness", 				"0.0",	TargetType.DOUBLE_REGRESSION),
+	REGRESSION_FLATNESS		("Flatness",				"0.0",	TargetType.DOUBLE_REGRESSION),
 	REGRESSION_SSD_4		("Sign. of Slope Diff. 4",		"0.0",	TargetType.DOUBLE_REGRESSION),
 	COOKS_DISTANCE			("Cook's Distance",			"0.0",	TargetType.DOUBLE_REGRESSION),
 
 	// SCAPE quality measures
-	SUBRANKING_LOSS ("Subranking loss", "0.0", TargetType.SCAPE),
-	NEGATIVE_SUBRANKING_LOSS ("Negative subranking loss", "-8243721.5", TargetType.SCAPE), //WD: I needed something fierce, so here's Ernie's favorite number, but negative.
-	RELATIVE_SUBRANKING_LOSS ("Relative subranking loss", "0.0", TargetType.SCAPE),
-	REVERSE_RELATIVE_SUBRANKING_LOSS ("Reverse relative subranking loss", "0.0", TargetType.SCAPE); //WD: This is relative to the ranking loss in the overall dataset, so only positive values are interesting. Hence, here, 0 will do as minimum.
+	SUBRANKING_LOSS				("Subranking loss",			"0.0",		TargetType.SCAPE),
+	NEGATIVE_SUBRANKING_LOSS		("Negative subranking loss",		"-8243721.5",	TargetType.SCAPE), // #1
+	RELATIVE_SUBRANKING_LOSS		("Relative subranking loss",		"0.0",		TargetType.SCAPE),
+	REVERSE_RELATIVE_SUBRANKING_LOSS	("Reverse relative subranking loss",	"0.0",		TargetType.SCAPE); // #2
+	// WD:
+	// #1. I needed something fierce, so here's Ernie's favorite number, but negative.
+	// #2. This is relative to the ranking loss in the overall dataset, so only positive values are interesting.
+	//     Hence, here, 0 will do as minimum.
 
-	// to enforce implementation of SINGLE_NUMERIC and SINGLE_ORDINAL QMs
-	static { requiredStatsTest(); };
+	// to enforce implementation of:
+	// getDefinition(QM) for SINGLE_NOMINAL QMs
+	// requiredStats(QM) for SINGLE_NUMERIC and SINGLE_ORDINAL QMs
+	static { getDefinitionTest(); requiredStatsTest(); };
 
 	public final String GUI_TEXT;
 	public final String MEASURE_DEFAULT;
@@ -166,6 +171,82 @@ public enum QM implements EnumInterface
 		return null;
 	}
 
+	/**
+	 * Returns a String with the definition for the supplied QM parameter,
+	 * in a format that can be used in a GnuPlot script.
+	 *
+	 * Note that some definitions call functions defined in:
+	 * {@link ROCCurveWindow#getGnuPlotString()}.
+	 *
+	 * @param theQM the {@link TargetType#SINGLE_NOMINAL} QM for which to
+	 * obtain the GnuPlot definition String.
+	 *
+	 * @return a String
+	 *
+	 * @see ROCCurveWindow#getGnuPlotString())
+	 */
+	public static String getDefinition(QM theQM)
+	{
+		// create 'QM(x,y) = ' -> replace space and dash by underscore
+		// throws NullPointerException if theQM == null
+		String s = theQM.GUI_TEXT.replaceAll(" ", "_").replaceAll("-", "_") + "(x,y) = ";
+
+		switch (theQM)
+		{
+			case CORTANA_QUALITY	: return s + "WRAcc(x,y) / ((p/N)-((p/N)*(p/N)))";
+			case WRACC		: return s + "(pos(y)/N)-(p/N)*(aCountBody(x,y)/N)";
+			case MUTUAL_INFORMATION	: return s +
+							" mi( (pos(y)/N)                        , (aTotalTargetCoverageNotBody(y)/N), (aCountNotHeadBody(x,y)/N)         ) +" +
+							" mi( (aCountNotHeadBody(x,y)/N)        , (aCountNotHeadNotBody(x)/N)       , (pos(y)/N)                         ) +" +
+							" mi( (aTotalTargetCoverageNotBody(y)/N), (pos(y)/N)                        , (aCountNotHeadNotBody(x)/N)        ) +" +
+							" mi( (aCountNotHeadNotBody(x)/N)       , (aCountNotHeadBody(x,y)/N)        , (aTotalTargetCoverageNotBody(y)/N) )";
+			case ABSWRACC		: return s + "abs(WRAcc(x,y))";
+			case CHI_SQUARED	: return s + 
+							" sqr(pos(y) - e11(N,aCountBody(x,y),p)) / e11(N,aCountBody(x,y),p) +" +
+							" sqr(p - pos(y) - e01(N,aCountBody(x,y),p)) / e01(N,aCountBody(x,y),p) +" +
+							" sqr(aCountBody(x,y) - pos(y) - e10(N,aCountBody(x,y),p)) / e10(N,aCountBody(x,y),p) +" +
+							" sqr(N - p - aCountBody(x,y) + pos(y) - e00(N,aCountBody(x,y),p)) / e00(N,aCountBody(x,y),p)";
+			case INFORMATION_GAIN	: return s + "1 - 0.5*(x+y)*H(x/(x+y)) - 0.5*(2-x-y)*H((1-x)/(2-x-y))";
+			case BINOMIAL		: return s + "sqrt(aCountBody(x,y)/N) * (pos(y)/aCountBody(x,y) - p/N)";
+			case ACCURACY		: return s + "pos(y)/aCountBody(x,y)";
+			case PURITY		: return s + "max(pos(y)/aCountBody(x,y), 1.0-pos(y)/aCountBody(x,y))";
+			case JACCARD		: return s + "pos(y)/(aCountBody(x,y) + aTotalTargetCoverageNotBody(y))";
+			case COVERAGE		: return s + "aCountBody(x,y)";
+			case SPECIFICITY	: return s + "aCountNotHeadNotBody(x)/(N - p)";
+			case SENSITIVITY	: return s + "pos(y)/p";
+			case LAPLACE		: return s + "(pos(y)+1)/(aCountBody(x,y)+2)";
+			case F_MEASURE		: return s + "pos(y)/(p+aCountBody(x,y))";
+			case G_MEASURE		: return s + "pos(y)/(aCountNotHeadBody(x,y)+p)";
+			case CORRELATION	: return s + "(pos(y)*n - p*aCountNotHeadBody(x,y)) / sqrt(p*n*aCountBody(x,y)*(N-aCountBody(x,y)))";
+			// TODO MM
+			case PROP_SCORE_WRACC	: return s + "1/0 # TODO";
+			case PROP_SCORE_RATIO	: return s + "1/0 # TODO";
+			case BAYESIAN_SCORE	: return s + "1/0 # TODO";
+			case LIFT		: return s + "(pos(y) * N) / (aCountBody(x,y) * p)";
+			default :
+			{
+				// throws NullPointerException if theQM == null
+				if (theQM.TARGET_TYPE == TargetType.SINGLE_NOMINAL)
+					throw new AssertionError("QM.getDefinition() not implemented for: " + theQM);
+				else
+					throw new IllegalArgumentException(
+						String.format("%s not for %s", theQM, TargetType.SINGLE_NOMINAL));
+			}
+		}
+	}
+
+	/*
+	 * throws an AssertionError(QM) if a SINGLE_NOMINAL QM is not completely
+	 * implemented (missing case in getDefinition(QM))
+	 */
+	private static final void getDefinitionTest()
+	{
+		for (QM qm : QM.values())
+			if (qm.TARGET_TYPE == TargetType.SINGLE_NOMINAL)
+				getDefinition(qm);
+
+	}
+
 	// NOTE EnumSets are modifiable like any other set, prevent this
 	// EnumSet < 65 items are internally represented as a single long
 	private static final Set<Stat> SUM = Collections.unmodifiableSet(EnumSet.of(Stat.SUM));
@@ -183,14 +264,16 @@ public enum QM implements EnumInterface
 	 * also be added here.
 	 */
 	/**
+	 * Returns a set with the {@link Stat} enums that are required for
+	 * computations using the supplied QM parameter.
 	 *
+	 * @param theQM the {@link TargetType#SINGLE_NUMERIC} QM for which to
+	 * obtain the Set<Stat> enums.
 	 *
-	 * @param theQM the single numeric QM for which to query the Stat types.
-	 *
-	 * @return a Set
+	 * @return a Set<Stat>
 	 *
 	 * @see Stat
-	 * @see Column#getStatistics(BitSet, Set)
+	 * @see SubgroupDiscovery#evaluateCandidate(Subgroup)
 	 */
 	public static Set<Stat> requiredStats(QM theQM)
 	{
@@ -198,32 +281,32 @@ public enum QM implements EnumInterface
 		{
 			// SINGLE_NUMERIC
 			case EXPLAINED_VARIANCE :	return SUM_SSD_COMPL;
-			case Z_SCORE :		return SUM;
-			case INVERSE_Z_SCORE :	return SUM;
-			case ABS_Z_SCORE :	return SUM;
-			case AVERAGE :		return SUM;
-			case INVERSE_AVERAGE :	return SUM;
-			case QM_SUM :		return SUM;
-			case INVERSE_SUM :	return SUM;
-			case MEAN_TEST :	return SUM;
-			case INVERSE_MEAN_TEST :return SUM;
-			case ABS_MEAN_TEST :	return SUM;
-			case T_TEST :		return SUM_SSD;
-			case INVERSE_T_TEST :	return SUM_SSD;
-			case ABS_T_TEST :	return SUM_SSD;
-			case SQUARED_HELLINGER :		return PDF;
-			case SQUARED_HELLINGER_WEIGHTED :	return PDF;
+			case Z_SCORE :			return SUM;
+			case INVERSE_Z_SCORE :		return SUM;
+			case ABS_Z_SCORE :		return SUM;
+			case AVERAGE :			return SUM;
+			case INVERSE_AVERAGE :		return SUM;
+			case QM_SUM :			return SUM;
+			case INVERSE_SUM :		return SUM;
+			case MEAN_TEST :		return SUM;
+			case INVERSE_MEAN_TEST :	return SUM;
+			case ABS_MEAN_TEST :		return SUM;
+			case T_TEST :			return SUM_SSD;
+			case INVERSE_T_TEST :		return SUM_SSD;
+			case ABS_T_TEST :		return SUM_SSD;
+			case SQUARED_HELLINGER :			return PDF;
+			case SQUARED_HELLINGER_WEIGHTED :		return PDF;
 			case SQUARED_HELLINGER_WEIGHTED_ADJUSTED :	return PDF;
-			case KULLBACK_LEIBLER :			return PDF;
-			case KULLBACK_LEIBLER_WEIGHTED :	return PDF;
-			case CWRACC :		return PDF;
-			case CWRACC_UNWEIGHTED : return PDF;
+			case KULLBACK_LEIBLER :				return PDF;
+			case KULLBACK_LEIBLER_WEIGHTED :		return PDF;
+			case CWRACC :					return PDF;
+			case CWRACC_UNWEIGHTED : 			return PDF;
 			// SINGLE_ORDINAL
-			case AUC :		return SUM;
-			case WMW_RANKS :	return SUM;
-			case INVERSE_WMW_RANKS :return SUM;
-			case ABS_WMW_RANKS :	return SUM;
-			case MMAD :		return MEDIAN_MAD;
+			case AUC :			return SUM;
+			case WMW_RANKS :		return SUM;
+			case INVERSE_WMW_RANKS :	return SUM;
+			case ABS_WMW_RANKS :		return SUM;
+			case MMAD :			return MEDIAN_MAD;
 			default :
 			{
 				// throws NullPointerException if theQM == null
@@ -243,7 +326,7 @@ public enum QM implements EnumInterface
 
 	/*
 	 * throws an AssertionError(QM) if a SINGLE_NUMERIC or SINGLE_ORDINAL
-	 * QM is completely implemented
+	 * QM is not completely implemented (missing case in requiredStats(QM))
 	 */
 	private static void requiredStatsTest()
 	{
