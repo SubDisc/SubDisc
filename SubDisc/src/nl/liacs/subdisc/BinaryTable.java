@@ -37,8 +37,10 @@ public class BinaryTable
 
 	//this assumes that theTargets is an ArrayList<BitSet>
 	// internal use only: #selectColumns(ItemSet) and #selectRows(BitSet)
-	private BinaryTable(ArrayList<BitSet> theTargets, int theNrRecords)
+	private BinaryTable(List<BitSet> theTargets, int theNrRecords)
 	{
+		assert (theTargets instanceof ArrayList);
+
 		itsColumns = theTargets;
 		itsNrRecords = theNrRecords;
 	}
@@ -55,7 +57,7 @@ public class BinaryTable
 
 	public BinaryTable selectColumns(ItemSet theItemSet)
 	{
-		ArrayList<BitSet> aNewTargets = new ArrayList<BitSet>(theItemSet.getItemCount());
+		List<BitSet> aNewTargets = new ArrayList<BitSet>(theItemSet.getItemCount());
 
 		for (int i = 0; i < theItemSet.getDimensions(); i++)
 			if (theItemSet.get(i))
@@ -67,21 +69,20 @@ public class BinaryTable
 	public BinaryTable selectRows(BitSet theMembers)
 	{
 		int aNrMembers = theMembers.cardinality();
-		ArrayList<BitSet> aNewTargets = new ArrayList<BitSet>(getNrColumns());
+		List<BitSet> aNewTargets = new ArrayList<BitSet>(getNrColumns());
 
 		// single loop to get all indices of all set bits
-//		final int[] setBits = new int[aNrMembers];
+//		int[] setBits = new int[aNrMembers];
 //		for (int i = theMembers.nextSetBit(0), j = -1; i >=0; i = theMembers.nextSetBit(i+1))
 //			setBits[++j] = i;
 //	
 //		for (BitSet aColumn : itsColumns)
 //		{
-//			// create BitSet with same bits set as theMembers
-//			BitSet aSmallerTarget = (BitSet) theMembers.clone();
-//			// clear bits at indices that are not set for aColumn
-//			for (int i = 0, j = setBits.length; i < j; ++i)
-//				if (!aColumn.get(setBits[i]))
-//					aSmallerTarget.clear(i);
+//			BitSet aSmallerTarget = new BitSet(aNrMembers);
+//			// set bits only when set in both theMembers and aColumn
+//			for (int i = 0, j = setBits.length, k = -1; i < j; ++i)
+//				if (aColumn.get(setBits[i]))
+//					aSmallerTarget.set(++k);
 //	
 //			aNewTargets.add(aSmallerTarget);
 //		}
