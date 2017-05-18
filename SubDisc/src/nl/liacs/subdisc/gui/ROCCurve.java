@@ -108,9 +108,9 @@ public class ROCCurve extends JPanel
 		int aWidth = getWidth();
 		int aHeight = getHeight();
 		itsSize = Math.max(260f, Math.min(aWidth, aHeight)*0.85f);
-        AffineTransform aTransform = new AffineTransform();
-        aTransform.translate(0.15*itsSize, 1.05*itsSize);
-        aTransform.scale(itsSize, itsSize);
+		AffineTransform aTransform = new AffineTransform();
+		aTransform.translate(0.15*itsSize, 1.05*itsSize);
+		aTransform.scale(itsSize, itsSize);
 
 		super.paintComponent(theGraphic);
 		Graphics2D aGraphic = (Graphics2D)theGraphic;
@@ -133,7 +133,8 @@ public class ROCCurve extends JPanel
 // FIXME MM
 // casting from fractional float to int might not yield best pictures
 // calculate(x, y) requires (x >= 0) and (y > 0), this needs to be guaranteed
-				int aValue = (int) (255 * itsQualityMeasure.calculate((int)aPositives, (int)(aNegatives+aPositives)) / aMax);
+				//int aValue = (int) (255 * itsQualityMeasure.calculate((int)aPositives, (int)(aNegatives+aPositives)) / aMax);
+				int aValue = (int) (255 * itsQualityMeasure.calculate((int)aPositives, Math.max(1, (int)(aNegatives+aPositives))) / aMax);
 				boolean isNegative = (aValue<0);
 				if (isNegative)
 					aValue = -aValue;
@@ -152,11 +153,10 @@ public class ROCCurve extends JPanel
 
 		if (itsPoints != null)
 			for(Arc2D aPoint : itsPoints)
-                    aGraphic.draw(aTransform.createTransformedShape(aPoint));
-        
+				aGraphic.draw(aTransform.createTransformedShape(aPoint));
+
 		aGraphic.setStroke(new BasicStroke(2.0f));
-		aGraphic.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-									RenderingHints.VALUE_ANTIALIAS_ON);
+		aGraphic.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 		aGraphic.draw(aTransform.createTransformedShape(itsCurve));
 		aGraphic.setStroke(new BasicStroke(1.0f));
 		aGraphic.draw(aTransform.createTransformedShape(itsLines));
