@@ -3,6 +3,8 @@ package nl.liacs.subdisc.gui;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
+import java.text.*;
+import java.util.*;
 
 import javax.swing.*;
 
@@ -82,108 +84,137 @@ public class ROCCurveWindow extends JFrame implements ActionListener
 		}
 	}
 
-	// FIXME MM this hangs for large SubgroupSets, use StringBuilder not +
 	private String getGnuPlotString()
 	{
-		double anX, aY;
-		float aSize = 0.001f;
-		String aContent = "set xlabel \"fpr\";set ylabel \"tpr\";set xrange [0:1];set yrange [0:1];set xtics 0.1; set ytics 0.1;\n";
-		aContent += "N = " + itsSubgroupSet.getTotalCoverage() + ".0\n";
-		aContent += "p = " + itsSubgroupSet.getTotalTargetCoverage() + ".0\n";
-		aContent += "n = N-p\n";
-		aContent += "pos(y) = y*p\n"; //number of positives covered by subgroup
-		aContent += "neg(x) = x*(N-p)\n"; //number of negatives covered by subgroup
-		aContent += "aTotalTargetCoverageNotBody(y) = p-pos(y)\n";
-		aContent += "aCountNotHeadNotBody(x) = N-(p+neg(x))\n";
-		aContent += "aCountBody(x,y) = neg(x)+pos(y)\n";
-		aContent += "aCountNotHeadBody(x,y) = aCountBody(x,y) - pos(y)\n";
-		aContent += "sqr(x) = x*x\n";
-		aContent += "max(x,y) = x>y?x:y\n";
-		aContent += "expect(x,y,z) = x*(y/x)*(z/x)\n";
-		aContent += "e11(x,y,z) = expect(x,y,z)\n";
-		aContent += "e01(x,y,z) = expect(x,x-y,z)\n";
-		aContent += "e10(x,y,z) = expect(x,y,x-z)\n";
-		aContent += "e00(x,y,z) = expect(x,x-y,x-z)\n";
-		aContent += "lg(x) = log(x)/log(2); H(x) = -x*lg(x)-(1-x)*lg(1-x)\n";
+		// Formatter to print all non-zero decimal digits, always use .
+		// 340 = DecimalFormat.DOUBLE_FRACTION_DIGITS
+		DecimalFormat aDF = new DecimalFormat("0", DecimalFormatSymbols.getInstance(Locale.ENGLISH));
+		aDF.setMaximumFractionDigits(340);
 
-		aContent += "WRAcc(x,y) = (pos(y)/N)-(p/N)*(aCountBody(x,y)/N)\n";
-		aContent += "absWRAcc(x,y) = abs((pos(y)/N)-(p/N)*(aCountBody(x,y)/N))\n";
-		aContent += "Chi2(x,y) = sqr(pos(y) - e11(N,aCountBody(x,y),p)) / e11(N,aCountBody(x,y),p) +";
-		aContent += 		   " sqr(p - pos(y) - e01(N,aCountBody(x,y),p)) / e01(N,aCountBody(x,y),p) +";
-		aContent += 		   " sqr(aCountBody(x,y) - pos(y) - e10(N,aCountBody(x,y),p)) / e10(N,aCountBody(x,y),p) +";
-		aContent += 		   " sqr(N - p - aCountBody(x,y) + pos(y) - e00(N,aCountBody(x,y),p)) / e00(N,aCountBody(x,y),p); \n";
-		aContent += "IG(x,y) = 1 - 0.5*(x+y)*H(x/(x+y)) - 0.5*(2-x-y)*H((1-x)/(2-x-y))\n";
-		aContent += "Binomial(x,y) = sqrt(aCountBody(x,y)/N) * (pos(y)/aCountBody(x,y) - p/N)\n";
-		aContent += "Jaccard(x,y) = pos(y)/(aCountBody(x,y) + aTotalTargetCoverageNotBody(y))\n";
-		aContent += "Coverage(x,y) = aCountBody(x,y)\n";
-		aContent += "Accuracy(x,y) = pos(y)/aCountBody(x,y)\n";
-		aContent += "Specificity(x,y) = aCountNotHeadNotBody(x)/(N - p)\n";
-		aContent += "Sensitivity(x,y) = pos(y)/p\n";
-		aContent += "Laplace(x,y) = (pos(y)+1)/(aCountBody(x,y)+2)\n";
-		aContent += "F_measure(x,y) = pos(y)/(p+aCountBody(x,y))\n";
-		aContent += "G_measure(x,y) = pos(y)/(aCountNotHeadBody(x,y)+p)\n";
-		aContent += "Correlation(x,y) = (pos(y)*n - p*aCountNotHeadBody(x,y)) / sqrt(p*n*aCountBody(x,y)*(N-aCountBody(x,y)))\n";
-		aContent += "Purity(x,y) = max(pos(y)/aCountBody(x,y), 1.0-pos(y)/aCountBody(x,y))\n";
-		aContent += "\n";
+		double aSize = 0.001;
+		String sz = aDF.format(aSize);
 
-		//subgroups
+		String aFmtSG = "set object circle at %s, %s, %d size " + sz + " fc rgb \"black\"\n";
+		String aFmtHull = "set arrow from %s, %s, %d to %s, %s, %d nohead lt 1 lw 2 lc rgb \"black\"\n";
+		String aFmtPlot = "splot %s(x,y) lt 3 lw 0.5\n";
+
+		ROCList anROCList = itsSubgroupSet.getROCList();
+		String auc = aDF.format(anROCList.getAreaUnderCurve()).replace(".", "p");
+		String aFmtFile = "roc-%s-auc"+ auc + ".eps";
+
+		int init = (itsSubgroupSet.size() * 87) + (anROCList.size() * 128) + 500;
+		StringBuilder sb = new StringBuilder(init);
+		// general plot settings
+		sb.append("# general plot settings\n");
+		sb.append("set xlabel \"fpr\"\n");
+		sb.append("set ylabel \"tpr\"\n");
+		sb.append("set xrange [0:1]\n");
+		sb.append("set yrange [0:1]\n");
+		sb.append("set xtics 0.1\n");
+		sb.append("set ytics 0.1\n");
+		sb.append("\n");
+		// basic functions for Quality Measures
+		sb.append("# basic functions for Quality Measures\n");
+		sb.append("N = " + itsSubgroupSet.getTotalCoverage() + ".0\n");
+		sb.append("p = " + itsSubgroupSet.getTotalTargetCoverage() + ".0\n");
+		sb.append("n = N-p\n");
+		sb.append("pos(y) = y*p\n");     //number of positives covered by subgroup
+		sb.append("neg(x) = x*(N-p)\n"); //number of negatives covered by subgroup
+		sb.append("aTotalTargetCoverageNotBody(y) = p-pos(y)\n");
+		sb.append("aCountNotHeadNotBody(x) = N-(p+neg(x))\n");
+		sb.append("aCountBody(x,y) = neg(x)+pos(y)\n");
+		sb.append("aCountNotHeadBody(x,y) = aCountBody(x,y) - pos(y)\n");
+		sb.append("sqr(x) = x*x\n");
+		sb.append("max(x,y) = x>y?x:y\n");
+		sb.append("expect(x,y,z) = x*(y/x)*(z/x)\n");
+		sb.append("e11(x,y,z) = expect(x,y,z)\n");
+		sb.append("e01(x,y,z) = expect(x,x-y,z)\n");
+		sb.append("e10(x,y,z) = expect(x,y,x-z)\n");
+		sb.append("e00(x,y,z) = expect(x,x-y,x-z)\n");
+		sb.append("lg(x) = log(x)/log(2)\n");
+		sb.append("H(x) = -x*lg(x)-(1-x)*lg(1-x)\n");
+		sb.append("mi(x,y,z) = x*log(x/((x+y)*(x+z)))\n");
+		sb.append("\n");
+		// QM.getQualityMeasures(TargetType.SINGLE_NOMINAL)
+		// TODO MM
+		// not all nominal QMs are implemented, add comment in QM
+		sb.append("# definitions of implmented Quality Measures\n");
+		for (QM q : QM.getQualityMeasures(TargetType.SINGLE_NOMINAL))
+			sb.append(QM.getDefinition(q) + "\n");
+		sb.append("\n");
+
+		// a point for every subgroup
+		// NOTE
+		// for image, only unique x,y points are needed
+		// but adding every Subgroup serves as 'documentation'
+		sb.append("# a point for every subgroup\n");
 		for (Subgroup aSubgroup : itsSubgroupSet)
 		{
-			anX = aSubgroup.getFalsePositiveRate();
-			aY = aSubgroup.getTruePositiveRate();
-			aContent += "set object circle at " + anX + "," + aY + " size " + aSize + " fc rgb \"black\"\n";
-		}
+			double anX = aSubgroup.getFalsePositiveRate();
+			double aY  = aSubgroup.getTruePositiveRate();
+			int aZ  = aSubgroup.getID();
 
-		//subgroups
-		anX = 0.0;
-		aY = 0.0;
-		for (SubgroupROCPoint aPoint : itsSubgroupSet.getROCList())
+			sb.append(String.format(aFmtSG, aDF.format(anX), aDF.format(aY), aZ));
+		}
+		sb.append("\n");
+
+		// points/lines for subgroups on the convex hull
+		sb.append("# points/lines for subgroups on the convex hull\n");
+		double anOldX = 0.0;
+		double anOldY = 0.0;
+		int anOldZ = 0;
+		for (SubgroupROCPoint aPoint : anROCList)
 		{
 			double aNewX = aPoint.getFPR();
 			double aNewY = aPoint.getTPR();
-			aContent += "set arrow from " + anX + "," + aY + " to " + aNewX + "," + aNewY + " nohead lt 1 lw 2 lc rgb \"black\"\n";
-			anX = aNewX;
-			aY = aNewY;
+			int aNewZ = aPoint.ID;
+
+			sb.append(String.format(aFmtHull,
+						aDF.format(anOldX), aDF.format(anOldY), anOldZ,
+						aDF.format(aNewX), aDF.format(aNewY), aNewZ));
+
+			anOldX = aNewX;
+			anOldY = aNewY;
+			anOldZ = aNewZ;
 		}
-		aContent += "set arrow from " + anX + "," + aY + " to 1,1 nohead lt 1 lw 2 lc rgb \"black\"\n";
+		sb.append(String.format(aFmtHull,
+					aDF.format(anOldX), aDF.format(anOldY), anOldZ,
+					aDF.format(1.0), aDF.format(1.0), 0));
+		sb.append("\n");
 
-		aContent += "set isosamples 100; set contour; set cntrparam cubicspline; set cntrparam order 5; set cntrparam points 20; set cntrparam levels 20; unset clabel; set view map; unset surface;\n";
-
+		// Quality Measure isometrics
+		sb.append("# Quality Measure isometrics\n");
+		sb.append("# if the 'splot' command below does not generate any output\n");
+		sb.append("# check that the function it calls is included in the\n");
+		sb.append("# list of Quality Measure function definitions above\n");
+		// name conversion should be same as in QM.getDefinition(QM)
 		final QM aQM = itsSearchParameters.getQualityMeasure();
-		switch (aQM)
-		{
-			case WRACC : aContent += "splot WRAcc(x,y) lt 3 lw 0.5;\n"; break;
-			case ABSWRACC : aContent += "splot absWRAcc(x,y) lt 3 lw 0.5;\n"; break;
-			case CHI_SQUARED : aContent += "splot Chi2(x,y) lt 3 lw 0.5;\n"; break;
-			case INFORMATION_GAIN : aContent += "splot IG(x,y) lt 3 lw 0.5;\n"; break;
-			case BINOMIAL : aContent += "splot Binomial(x,y) lt 3 lw 0.5;\n"; break;
-			case ACCURACY : aContent += "splot Accuracy(x,y) lt 3 lw 0.5;\n"; break;
-			case PURITY : aContent += "splot Purity(x,y) lt 3 lw 0.5;\n"; break;
-			case JACCARD : aContent += "splot Jaccard(x,y) lt 3 lw 0.5;\n"; break;
-			case COVERAGE : aContent += "splot Coverage(x,y) lt 3 lw 0.5;\n"; break;
-			case SPECIFICITY : aContent += "splot Specificity(x,y) lt 3 lw 0.5;\n"; break;
-			case SENSITIVITY : aContent += "splot Sensitivity(x,y) lt 3 lw 0.5;\n"; break;
-			case LAPLACE : aContent += "splot Laplace(x,y) lt 3 lw 0.5;\n"; break;
-			case F_MEASURE : aContent += "splot F_measure(x,y) lt 3 lw 0.5;\n"; break;
-			case G_MEASURE : aContent += "splot G_measure(x,y) lt 3 lw 0.5;\n"; break;
-			case CORRELATION : aContent += "splot Correlation(x,y) lt 3 lw 0.5;\n"; break;
-			default :
-			{
-				// not all NOMINAL QMs are implemented
-				/*
-				 * if the QM is valid for this TargetType
-				 * 	it is not implemented here
-				 * else
-				 * 	this method should not have been called
-				 */
-//				if (QM.getQualityMeasures(TargetType.SINGLE_NOMINAL).contains(aQM))
-//					throw new AssertionError(aQM);
-//				else
-//					throw new IllegalArgumentException("Invalid argument: " + aQM);
-			}
-		}
-		aContent += "set terminal postscript eps size 5,5; set output \'roc.eps\'; replot;\n";
-		aContent += "set output; set terminal pop; set size 1,1;\n";
-		return aContent;
+		String s = aQM.GUI_TEXT.replaceAll(" ", "_").replaceAll("-", "_");
+		sb.append(String.format(aFmtPlot, s));
+		sb.append("\n");
+
+		// settings for Quality Measure isometrics
+		sb.append("# settings for Quality Measure isometrics\n");
+		sb.append("set isosamples 100\n");
+		sb.append("set contour\n");
+		sb.append("set cntrparam cubicspline\n");
+		sb.append("set cntrparam order 5\n");
+		sb.append("set cntrparam points 20\n");
+		sb.append("set cntrparam levels 20\n");
+		sb.append("unset clabel\n");
+		sb.append("set view map\n");
+		sb.append("unset surface\n");
+		sb.append("\n");
+
+		// replot does not work when QM is unimplemented / splot failed
+		sb.append("set terminal postscript eps size 5,5\n");
+		sb.append("set output \"" + String.format(aFmtFile, s) + "\"\n");
+		sb.append("replot\n");
+		sb.append("set output\n");
+		sb.append("set terminal pop\n");
+		sb.append("set size 1,1\n");
+		sb.append("\n");
+
+		return sb.toString();
 	}
 }
