@@ -193,18 +193,18 @@ public class Subgroup implements Comparable<Subgroup>
 		itsMembersLock.lock();
 		try
 		{
-			Column c = theCondition.getColumn();
-
 			if (itsMembers != null)
 			{
-				// update itsMemebrs based on new Condition
+				Column c = theCondition.getColumn();
+
+				// update itsMembers based on new theCondition
 				itsMembers = c.evaluate(itsMembers, theCondition);
 				itsCoverage = itsMembers.cardinality();
 			}
 			else
 			{
-				// NOTE itsConditions must include new Condition
-				// set itsMemebrs and itsCoverage
+				// NOTE itsConditions must include theCondition
+				// to properly set itsMembers and itsCoverage
 				getMembersUnsafe();
 			}
 		}
@@ -239,7 +239,7 @@ public class Subgroup implements Comparable<Subgroup>
 				for (int i = 0, j = itsConditions.size(); i < j; ++i)
 				{
 					Condition c = itsConditions.get(i);
-					b.and(c.getColumn().evaluate(b, c));
+					b = c.getColumn().evaluate(b, c);
 				}
 
 				// only assign to itsMembers when aBitSet is in
