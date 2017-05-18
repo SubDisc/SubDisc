@@ -39,12 +39,6 @@ public class Table implements XMLNodeInterface
 
 	public ArrayList<Column> getColumns() { return itsColumns; };
 
-	// Empty table, meant for creating a copy with a subset of data. See select().
-	public Table(String theTableName)
-	{
-		itsName = theTableName;
-	}
-
 	// FileLoaderARFF
 	public Table(File theSource, String theTableName)
 	{
@@ -52,6 +46,7 @@ public class Table implements XMLNodeInterface
 		itsName = theTableName;
 	}
 
+	// select() / NumericRanges.foo() / MiningWindow.jButtonDiscretiseActionPerformed
 	public Table(File theSource, String theTableName, int theNrRows, int theNrColumns)
 	{
 		itsSource = theSource.getName();
@@ -454,17 +449,15 @@ public class Table implements XMLNodeInterface
 	 */
 	public Table select(BitSet theSet)
 	{
-		Table aResult = new Table(itsName);
-		aResult.itsSource = itsSource;
-		aResult.itsNrColumns = itsNrColumns;
-		aResult.itsNrRows = theSet.cardinality();
-
-		aResult.itsDomains = this.itsDomains;
-		aResult.itsDomainIndices = this.itsDomainIndices;
+		Table aResult = new Table(new File(itsSource), itsName, theSet.cardinality(), itsNrColumns);
 
 		//copy each column, while leaving out some of the data
 		for (Column aColumn : itsColumns)
 			aResult.itsColumns.add(aColumn.select(theSet));
+
+		aResult.itsRandomNumber = itsRandomNumber;
+		aResult.itsDomains = itsDomains;
+		aResult.itsDomainIndices = itsDomainIndices;
 
 		aResult.update();
 
@@ -651,7 +644,7 @@ public class Table implements XMLNodeInterface
 	}
 
 	// as above, but writes whole Table (no row inclusion test)
-	private void toFile(File theFile)
+	public void toFile(File theFile)
 	{
 		BufferedWriter aWriter = null;
 
