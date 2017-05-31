@@ -422,7 +422,6 @@ public class QualityMeasure
 				double p_HnB = HnB / N;
 				double p_nHnB = nHnB / N;
 
-				// TODO MM check return value is not NaN
 				returnValue =
 				(
 					mi(p_HB, p_HnB, p_nHB) +
@@ -430,6 +429,7 @@ public class QualityMeasure
 					mi(p_HnB, p_HB, p_nHnB) +
 					mi(p_nHnB, p_nHB, p_HnB)
 				);
+                /*
 				System.out.println("*********************************************************");
 				System.out.println("   N = " + N);
 				System.out.println("   H = " + H);
@@ -443,6 +443,7 @@ public class QualityMeasure
 				System.out.println("   MI= " + returnValue);
 				System.out.println("WRACC= " + calculate(QM.WRACC, theTotalCoverage, theTotalTargetCoverage, theCountHeadBody, theCoverage));
 				System.out.println("*********************************************************");
+                */
 				break;
 			}
 			case CORTANA_QUALITY:
@@ -528,7 +529,7 @@ public class QualityMeasure
 				returnValue = (HB*nH - H*nHB) / Math.sqrt(H*nH*B*(N-B));
 				// handle divide by zero when (N==H) or (N==B)
 				// this case is not checked for by the
-				// SINGLE NOMMINAL constructor
+				// SINGLE NOMINAL constructor
 				// as it would be a valid setting (but useless)
 				if (Double.isNaN(returnValue))
 					returnValue = 0.0; // by definition?
@@ -586,10 +587,8 @@ public class QualityMeasure
 		// by definition 0*log(x) = 0 (NOTE 0*Infinity would return NaN)
 		if (a == 0.0)
 			return 0.0;
-		// x/0=Infinity (0/0 = NaN, but caught above)
-		if (b == 0.0 || c == 0.0)
-			return Double.POSITIVE_INFINITY;
-		return(a * Math.log(a / ((a+b) * (a+c))));
+        // (a+b)*(a+c) is never 0 (when b=>0 and c>=0), since a!=0
+		return (a * Math.log(a / ((a+b)*(a+c))));
 	}
 
 	public static float calculatePropensityBased(QM theMeasure, int theCountHeadBody, int theCoverage, int theTotalCount, double theCountHeadPropensityScore)
