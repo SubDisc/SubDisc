@@ -42,6 +42,7 @@ public class QualityMeasure
 	private static float itsOverallSubrankingLoss = 0.0f; // MUST BE 0.0f at first call
 
 	//SINGLE_NOMINAL
+	// TODO MM also used by DOUBLE_CORRELATION and DOUBLE_REGRESSION
 	public QualityMeasure(QM theMeasure, int theTotalCoverage, int theTotalTargetCoverage)
 	{
 		if (theMeasure == null)
@@ -50,10 +51,13 @@ public class QualityMeasure
 //			throw new IllegalArgumentException("QualityMeasure: not a SINGLE_NOMINAL measure");
 		if (theMeasure.TARGET_TYPE == TargetType.LABEL_RANKING)
 			throw new IllegalArgumentException("QualityMeasure: use LabelRanking relevant constructor");
+		// N > 0
 		if (theTotalCoverage <= 0)
 			throw new IllegalArgumentException("QualityMeasure: theTotalCoverage must be > 0");
+		// H > 0
 		if (theTotalTargetCoverage <= 0)
 			throw new IllegalArgumentException("QualityMeasure: theTotalTargetCoverage must be > 0");
+		// H <= N
 		if (theTotalCoverage < theTotalTargetCoverage)
 			throw new IllegalArgumentException("QualityMeasure: theTotalCoverage < theTotalTargetCoverage");
 
@@ -172,27 +176,51 @@ public class QualityMeasure
 //		else
 //			return aResult;
 //	}
+	/*
+	 * the following conditions must hold (lower and upper bounds)
+	 * N > 0    : can not have empty data
+	 * N <= MAX : can not have data size > MAX_ARRAY_SIZE (JVM specific)
+	 * H > 0    : can not have data with 0 target records
+	 * H <= N   : can not have more target records than data size
+	 * B > 0    : can not have empty subgroup
+	 * B <= N   : can not have subgroup size bigger than data size
+	 * HB >= 0  : can not have negative subgroup size #
+	 * HB >= B-(N-H) <--> HB >= B-!H <--> (B-HB) <= (N-H)
+	 *          : a subgroup size > !H selects at least X positives
+	 *            where X = B-(N-H) = B-!H
+	 * HB <= H  : can not have more positives then target records 
+	 * HB <= B  : can not have more positives then subgroup size
+	 *
+	 * # 0 positives in subgroup is allowed, selecting all positives
+	 *   or all negatives would be valued equally by a symmetric QM
+	 *
+	 * NOTE
+	 * getROCHell() would fail check 'B > 0'
+	 * it is a special case, not related to data mining
+	 * therefore it can call calculate(QM, N, H, HB, B) directly
+	 */
 	public double calculate(int theCountHeadBody, int theCoverage)
 	{
-		// public method: IllegalArgumentExceptions instead of asserts
-		// NOTE
-		// getROCHeaven() / getROCHell() would fail some checks
-		// they are special cases, not related to data mining
-		// therefore they can call calculate(QM, N, TTC, HB, B) directly
+		// checked by constructor, N and H are constant/ fixed: asserts
+		assert (itsNrRecords > 0);
+		//assert (itsNrRecords <= Integer.MAX_VALUE-8); // JVM specific
+		assert (itsTotalTargetCoverage > 0);
+		assert (itsTotalTargetCoverage <= itsNrRecords);
 
-		// 0 positives in subgroup is allowed, selecting all positives
-		// or all negatives would be valued equally by a symmetric QM
-		if (theCountHeadBody < 0)
-			throw new IllegalArgumentException("QualityMeasure: theCountHeadBody < 0");
-		// 0 is not allowed, it would indicate an empty subgroup
+		// HB and B are free parameters for this public method
+		// so use IllegalArgumentExceptions instead of asserts
 		if (theCoverage <= 0)
 			throw new IllegalArgumentException("QualityMeasure: theCoverage <= 0");
-		if (theCountHeadBody > theCoverage)
-			throw new IllegalArgumentException("QualityMeasure: theCountHeadBody > theCoverage");
-		if (theCountHeadBody > itsTotalTargetCoverage)
-			throw new IllegalArgumentException("QualityMeasure: theCountHeadBody > itsTotalTargetCoverage");
 		if (theCoverage > itsNrRecords)
 			throw new IllegalArgumentException("QualityMeasure: theCoverage > itsNrRecords");
+		if (theCountHeadBody < 0)
+			throw new IllegalArgumentException("QualityMeasure: theCountHeadBody < 0");
+		if (theCountHeadBody < (theCoverage - (itsNrRecords - itsTotalTargetCoverage)))
+			throw new IllegalArgumentException("QualityMeasure: theCountHeadBody < theCoverage - (itsNrRecords - itsTotalTargetCoverage)");
+		if (theCountHeadBody > itsTotalTargetCoverage)
+			throw new IllegalArgumentException("QualityMeasure: theCountHeadBody > itsTotalTargetCoverage");
+		if (theCountHeadBody > theCoverage)
+			throw new IllegalArgumentException("QualityMeasure: theCountHeadBody > theCoverage");
 
 		return calculate(itsQualityMeasure, itsNrRecords, itsTotalTargetCoverage, theCountHeadBody, theCoverage);
 	}
@@ -379,15 +407,17 @@ public class QualityMeasure
 	{
 		// should be checked by constructor
 		assert (!(theMeasure == null));
-		assert (!(theTotalCoverage <= 0));
-		assert (!(theTotalTargetCoverage <= 0));
-		assert (!(theTotalCoverage < theTotalTargetCoverage));
+		assert (theTotalCoverage > 0);
+		//assert (theTotalCoverage <= Integer.MAX_VALUE-8); // JVM specific
+		assert (theTotalTargetCoverage > 0);
+		assert (theTotalTargetCoverage <= theTotalCoverage);
 		// should be checked by calculate(int, int)
-		assert (!(theCountHeadBody < 0));
-		assert (!(theCoverage <= 0));
-		assert (!(theCountHeadBody > theCoverage));
-		assert (!(theCountHeadBody > theTotalTargetCoverage));
-		assert (!(theCoverage > theTotalCoverage));
+		//assert (theCoverage > 0); // TODO MM disabled for getROCHell()
+		assert (theCoverage <= theTotalCoverage);
+		assert (theCountHeadBody >= 0);
+		assert (theCountHeadBody >= (theCoverage - (theTotalCoverage - theTotalTargetCoverage)));
+		assert (theCountHeadBody <= theTotalTargetCoverage);
+		assert (theCountHeadBody <= theCoverage);
 
 		// redefine, use double instead of float, see comment above
 		double N = theTotalCoverage;		// constant
@@ -415,6 +445,7 @@ public class QualityMeasure
 				returnValue = Math.abs((HB/N) - (H/N) * (B/N));
 				break;
 			}
+			// TODO MM check return value is not NaN
 			case MUTUAL_INFORMATION:
 			{
 				double p_HB = HB / N;
@@ -429,7 +460,7 @@ public class QualityMeasure
 					mi(p_HnB, p_HB, p_nHnB) +
 					mi(p_nHnB, p_nHB, p_HnB)
 				);
-                /*
+				/*
 				System.out.println("*********************************************************");
 				System.out.println("   N = " + N);
 				System.out.println("   H = " + H);
@@ -443,7 +474,7 @@ public class QualityMeasure
 				System.out.println("   MI= " + returnValue);
 				System.out.println("WRACC= " + calculate(QM.WRACC, theTotalCoverage, theTotalTargetCoverage, theCountHeadBody, theCoverage));
 				System.out.println("*********************************************************");
-                */
+				*/
 				break;
 			}
 			case CORTANA_QUALITY:
@@ -469,7 +500,7 @@ public class QualityMeasure
 			case BINOMIAL:
 			{
 				if (B == 0)
-					returnValue = 0;
+					returnValue = 0.0;
 				else
 					returnValue = Math.sqrt(B/N) * (HB/B - H/N);
 				break;
@@ -487,7 +518,7 @@ public class QualityMeasure
 			case ACCURACY:
 			{
 				if (B == 0)
-					returnValue = 0;
+					returnValue = 0.0;
 				else
 					returnValue = HB / B;
 				break;
@@ -497,7 +528,7 @@ public class QualityMeasure
 				returnValue = nHnB / (N - H);
 				// handle divide by zero when (N==H)
 				// this case is not checked for by the
-				// SINGLE NOMMINAL constructor
+				// SINGLE NOMINAL constructor
 				// as it would be a valid setting (but useless)
 				if (Double.isNaN(returnValue))
 					returnValue = 0.0; // by definition?
@@ -538,7 +569,7 @@ public class QualityMeasure
 			case PURITY:
 			{
 				if (B == 0)
-					returnValue = 0;
+					returnValue = 0.0;
 				else
 					returnValue = HB / B;
 				if (returnValue < 0.5)
@@ -553,10 +584,10 @@ public class QualityMeasure
 			case LIFT:
 			{
 				if (B == 0)
-					returnValue = 0;
+					returnValue = 0.0;
 				else
 					returnValue = (HB * N) / (B * H);
-				// alternative has 3 divisions, but TTC/N is constant and could be cached
+				// alternative has 3 divisions, but H/N is constant and could be cached
 				// returnValue = (theCountHeadBody / theCoverage) / (theTotalTargetCoverage / theTotalCoverage);
 				break;
 			}
@@ -587,7 +618,7 @@ public class QualityMeasure
 		// by definition 0*log(x) = 0 (NOTE 0*Infinity would return NaN)
 		if (a == 0.0)
 			return 0.0;
-        // (a+b)*(a+c) is never 0 (when b=>0 and c>=0), since a!=0
+		// (a+b)*(a+c) is never 0 (when b=>0 and c>=0), since a!=0
 		return (a * Math.log(a / ((a+b)*(a+c))));
 	}
 
@@ -867,17 +898,18 @@ public class QualityMeasure
 	//get quality of upper left corner
 	public final double getROCHeaven()
 	{
-		// do not call public method:
-		// calculate(itsTotalTargetCoverage, itsTotalTargetCoverage)
-		// the extra checks (for externally supplied data) would fail
-		// instead, call calculate(QM, N, TTC, HB, B) directly
-		return calculate(itsQualityMeasure, itsNrRecords, itsTotalTargetCoverage, itsTotalTargetCoverage, itsTotalTargetCoverage);
+		return calculate(itsTotalTargetCoverage, itsTotalTargetCoverage);
 	}
 
 	//lower right corner
 	public final double getROCHell()
 	{
-		// see comment at {@link getROCHeaven())
+		// do not call public method:
+		// calculate(0, itsNrRecords - itsTotalTargetCoverage)
+		// check 'B > 0' for externally supplied data could fail
+		// in this case, B = (itsNrRecords - itsTotalTargetCoverage)
+		// so when (itsNrRecords == itsTotalTargetCoverage), then B = 0
+		// instead, call calculate(QM, N, H, HB, B) directly
 		return calculate(itsQualityMeasure, itsNrRecords, itsTotalTargetCoverage, 0, itsNrRecords - itsTotalTargetCoverage);
 	}
 
@@ -963,10 +995,7 @@ public class QualityMeasure
 				if (itsNrRecords <= 1)
 					aReturn = 0.0f;
 				else
-				{
-					aReturn = 1f - (theStatistics.getSubgroupSumSquaredDeviations() + 
-							theStatistics.getComplementSumSquaredDeviations())/itsTotalSSD;
-				}
+					aReturn = 1.0f - ((anSSD + theStatistics.getComplementSumSquaredDeviations()) / itsTotalSSD);
 				break;
 			}
 			case Z_SCORE :
@@ -1047,7 +1076,7 @@ public class QualityMeasure
 			case ABS_T_TEST :
 			{
 				if(aCoverage <= 2)
-					aReturn = 0;
+					aReturn = 0.0f;
 				else
 					aReturn = (float) (Math.abs((Math.sqrt(aCoverage) * (aSum/aCoverage - itsTotalAverage)) / Math.sqrt(anSSD/(aCoverage-1))));
 				break;
