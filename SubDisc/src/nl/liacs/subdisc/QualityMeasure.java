@@ -479,6 +479,7 @@ public class QualityMeasure
 			}
 			case CORTANA_QUALITY:
 			{
+				// FIXME MM if(H=N)->aMaxWRAcc=0->divide_by_zero
 				double aQuotient = H/N;
 				double aWRAcc = (HB/N) - (aQuotient * (B/N));
 				double aMaxWRAcc = aQuotient - (aQuotient*aQuotient);
@@ -515,6 +516,9 @@ public class QualityMeasure
 				returnValue = B;
 				break;
 			}
+			// XXX this is generally called PRECISION
+			// PRECISION = TP / (TP+FP)            = HB / B
+			// ACCURACY  = (TP+TN) / (TP+FP+FN+TN) = (HB+nHnB) / N
 			case ACCURACY:
 			{
 				if (B == 0)
@@ -534,6 +538,7 @@ public class QualityMeasure
 					returnValue = 0.0; // by definition?
 				break;
 			}
+			// XXX also called RECALL
 			case SENSITIVITY:
 			{
 				returnValue = HB / H;
