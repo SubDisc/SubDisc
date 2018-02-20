@@ -92,12 +92,16 @@ System.out.format("h=%f lo=%f hi=%f range=%f s=%f k=%d dx=%f%n", itsH, itsLo, it
 		// DO NOT USE theMembers.size()
 		aComplement.flip(0, itsData.size());
 		itsComplementDensity = aPDF.getDensity(aPDF.itsData, aComplement, aPDF.itsDensity.length);
-// FIXME MM TEMP
+
+// FIXME MM TEMP - USED TO PRINT SUBGROUP VERSUS DATASET/COMPLEMENT FOR GNUPLOT
+boolean vsData = false;
 System.out.println("#PDFs for: " + itsData.getName());
-System.out.println("#X\tSUBGROUP\tCOMPLEMENT");
+System.out.println("#X\tSUBGROUP\t" + (vsData ? "DATASET" : "COMPLEMENT"));
+float[] anOther = vsData ? aPDF.itsDensity : itsComplementDensity;
 for (int i = 0; i < itsDensity.length; ++i)
-	System.out.println(itsLo + (i * dx)  + "\t" + itsDensity[i] + "\t" + itsComplementDensity[i]);
+	System.out.println(itsLo + (i * dx)  + "\t" + itsDensity[i] + "\t" + anOther[i]);
 System.out.println();
+
 	}
 
 	// TODO MM rounding error might cause: itsLo+(n*dx) < itsHi
