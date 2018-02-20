@@ -295,7 +295,11 @@ public class FileLoaderARFF implements FileLoaderInterface
 		else
 			aName = theLine.split("\\s", 2)[0];
 
-		theLine = theLine.replaceFirst("\\'?" + aName + "\\'?", "").trim();
+// FIXME MM
+// REGEX fails when attribute name contains special characters like '*' or '+'
+// quick hack, remove aName (not quotes), then find first space (BOL has none)
+//		theLine = theLine.replaceFirst("\\'?" + aName + "\\'?", "").trim();
+		theLine = theLine.trim().replace(aName, "").split("\\s", 2)[1].trim();
 
 		// (aName, theLine) HACK for NominalAttribute
 		return new Column(aName, null, declaredType(aName, theLine), theIndex, Column.DEFAULT_INIT_SIZE);
@@ -327,6 +331,8 @@ public class FileLoaderARFF implements FileLoaderInterface
 	// TODO checking of declared nominal classes for @attributes { class1, class2, ..} declarations
 	private void loadData(String theLine, int theLineNr)
 	{
+String s = new String(theLine);
+
 		// String argument should not start with whitespace
 		assert (!Character.isWhitespace(theLine.charAt(0)));
 
@@ -388,7 +394,7 @@ public class FileLoaderARFF implements FileLoaderInterface
 
 		if (!theLine.isEmpty())
 			if (!Keyword.COMMENT.atStartOfLine(theLine))
-				Log.logCommandLine("FileLoaderARFF: many arguments at line:\n\t " + theLine);
+				Log.logCommandLine("FileLoaderARFF: many arguments at line " + theLineNr + ":\n\t" + theLine + "\n\t" + s);
 				// TODO criticalError(toManyArgumentsError);
 	}
 
