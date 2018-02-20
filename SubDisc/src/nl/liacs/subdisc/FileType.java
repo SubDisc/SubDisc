@@ -13,7 +13,7 @@ public enum FileType
 		@Override
 		public List<String> getExtensions()
 		{
-			return Arrays.asList(new String[] {".txt", ".text", ".csv", ".tsv" });
+			return Arrays.asList(new String[] { ".txt", ".text", ".csv", ".tsv" });
 		}
 	},
 	ARFF("ARFF Files")
@@ -37,7 +37,7 @@ public enum FileType
 		@Override
 		public List<String> getExtensions()
 		{
-			return Collections.singletonList(".plt");
+			return Arrays.asList(new String[] {".gp", ".plt"});
 		}
 	},
 	ALL_DATA_FILES("Data Files")
