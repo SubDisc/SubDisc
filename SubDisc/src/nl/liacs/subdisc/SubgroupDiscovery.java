@@ -2,6 +2,7 @@ package nl.liacs.subdisc;
 
 import java.io.*;
 import java.util.*;
+import java.util.Map.Entry;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 
@@ -13,6 +14,7 @@ import nl.liacs.subdisc.ConvexHull.HullPoint;
 public class SubgroupDiscovery extends MiningAlgorithm
 {
 	// leave TEMPORARY_CODE at false in svn
+	// when true, creates PMF instead of PDF in single numeric H^2 setting
 	static boolean TEMPORARY_CODE = false;
 	static int TEMPORARY_CODE_NR_SPLIT_POINTS = -1;
 	static boolean TEMPORARY_CODE_USE_EQUAL_WIDTH = false;
@@ -490,8 +492,6 @@ System.out.println(aSubgroup + "\t" + aRefinement.getConditionBase());
 	 * TODO MM - for *_BEST strategies, in case of ties, multiple subgroups
 	 * attaining the best score, this implementation retains only the first
 	 * instead it could retain all best scoring subgroups
-	 * 
-	 * TODO MM - spit this method into smaller chunks
 	 */
 	private void evaluateNumericRefinements(BitSet theMembers, Refinement theRefinement)
 	{
@@ -499,11 +499,6 @@ System.out.println(aSubgroup + "\t" + aRefinement.getConditionBase());
 		// useless call, coverage never changes, could be parameter
 		final int anOldCoverage = theRefinement.getSubgroup().getCoverage();
 		assert (theMembers.cardinality() == anOldCoverage);
-
-		// see comment at evaluateNominalBinaryRefinement()
-		ConditionBase aConditionBase = theRefinement.getConditionBase();
-		//ConditionList aList = theRefinement.getSubgroup().getConditions();
-		ConditionListA aList = theRefinement.getSubgroup().getConditions();
 
 		switch (itsSearchParameters.getNumericStrategy())
 		{
@@ -581,6 +576,17 @@ System.out.println(aSubgroup + "\t" + aRefinement.getConditionBase());
 		ConditionListA aList = anOldSubgroup.getConditions();
 
 		float[] aSplitPoints = getDomain(theMembers, aNumericStrategy, aConditionBase.getColumn(), itsSearchParameters.getNrBins());
+// TODO MM
+// domain map contain using <value, count> nodes, useful for unique values and
+// for histogram/KDE creation (latter can multiply result for 1 point by count)
+//		SortedMap<Float, Integer> map = getDomainMap(theMembers, aNumericStrategy, aConditionBase.getColumn(), itsSearchParameters.getNrBins());
+//Float[] fa = map.keySet().toArray(new Float[0]);
+//Integer[] ia = map.values().toArray(new Integer[0]);
+//System.out.println(Arrays.toString(aSplitPoints));
+//System.out.println(Arrays.toString(fa));
+//System.out.println(Arrays.toString(ia));
+//		filterDomain(map, aConditionBase.getOperator(), itsSearchParameters.getMinimumCoverage());
+//		Float[] aSplitPointsMap = map.keySet().toArray(new Float[0]);
 
 		Subgroup aBestSubgroup = null;
 		for (float aSplitPoint : aSplitPoints)
@@ -844,6 +850,39 @@ System.out.println(aSubgroup + "\t" + aRefinement.getConditionBase());
 		}
 	}
 
+	// FIXME MM - Column.getSplitPointsMap() is not implemented yet
+	private static final SortedMap<Float, Integer> getDomainMap(BitSet theMembers, NumericStrategy theNumericStrategy, Column theColumn, int theNrBins)
+	{
+		switch (theNumericStrategy)
+		{
+			case NUMERIC_ALL :
+			{
+				return theColumn.getUniqueNumericDomainMap(theMembers);
+			}
+			case NUMERIC_BEST :
+			{
+				return theColumn.getUniqueNumericDomainMap(theMembers);
+			}
+			case NUMERIC_BINS :
+			{
+				return theColumn.getSplitPointsMap(theMembers, theNrBins);
+			}
+			case NUMERIC_BEST_BINS :
+			{
+				return theColumn.getSplitPointsMap(theMembers, theNrBins);
+			}
+			case NUMERIC_INTERVALS :
+			{
+				throw new AssertionError("NUMERIC_STRATEGY NOT IMPLEMENTED: " + theNumericStrategy);
+				//return theColumn.getUniqueNumericDomainMap(theMembers);
+			}
+			default :
+			{
+				throw new AssertionError("invalid Numeric Strategy: " + theNumericStrategy);
+			}
+		}
+	}
+
 	// TODO MM - hack: functionality should be in theColumn.getSplitPoints()
 	private static final float[] getUniqueSplitPoints(BitSet theMembers, Column theColumn, int theNrBins)
 	{
@@ -866,6 +905,115 @@ System.out.println(aSubgroup + "\t" + aRefinement.getConditionBase());
 
 		return aResult;
 	}
+
+
+	private final void filterDomain(SortedMap<Float, Integer> theSplitPoints, Operator theOperator, int theMinimumCoverage)
+	{
+int pre = theSplitPoints.size();
+		Iterator<Entry<Float, Integer>> it = theSplitPoints.entrySet().iterator();
+
+		// switch in for-loop is expensive, so check Operator only once
+		switch (theOperator)
+		{
+			case EQUALS :
+			{
+				while (it.hasNext())
+				{
+					if (it.next().getValue() < theMinimumCoverage)
+						it.remove();
+				}
+//				for (Iterator i = theSplitPoints.entrySet().iterator(); i.hasNext(); )
+//				{
+//					if (it.next().getValue() < theMinimumCoverage)
+//						it.remove();
+//				}
+				break;
+			}
+			case LESS_THAN_OR_EQUAL :
+			{
+				int sum = 0;
+
+				while (it.hasNext())
+				{
+					if ((sum += it.next().getValue()) < theMinimumCoverage)
+						it.remove();
+					else
+						break;
+				}
+
+				break;
+			}
+			case GREATER_THAN_OR_EQUAL :
+			{
+				// 2n; loop over Set in reverse would make it n
+				// current implementation is horrible
+
+				int sum = 0;
+
+				while (it.hasNext())
+					sum += it.next().getValue();
+
+				// faster then through else below
+				if (sum < theMinimumCoverage)
+				{
+					// avoid ConcurrentModificationException
+					it = null;
+					theSplitPoints.clear();
+				}
+				else
+				{
+					it = theSplitPoints.entrySet().iterator();
+
+					while (it.hasNext())
+					{
+						Entry<Float, Integer> e = it.next();
+
+						if (sum >= theMinimumCoverage)
+							sum -= e.getValue();
+						else
+							it.remove();
+						// could remove tail at once
+						// but code will change anyway
+					}
+				}
+
+				break;
+				//throw new AssertionError("NOT IMPLEMENTED YET: " + theOperator);
+			}
+			case BETWEEN :
+			{
+				// perhaps no filtering needed in this setting
+				// Interval code might take care of it itself
+				// need to check code
+				// Interval might be using values that can never
+				// lead to a valid Subgroup
+				// happens when Interval covers to few items
+				int sum = 0;
+
+				while (it.hasNext())
+				{
+					if ((sum += it.next().getValue()) > theMinimumCoverage)
+						break; // could return
+				}
+
+				if (sum < theMinimumCoverage)
+				{
+					// avoid ConcurrentModificationException
+					it = null;
+					theSplitPoints.clear();
+				}
+
+				//break;
+				throw new AssertionError("NOT IMPLEMENTED YET: " + theOperator);
+			}
+			default :
+				throw new AssertionError("invalid Operator: " + theOperator);
+		}
+int post = theSplitPoints.size();
+int reduced = pre-post;
+System.out.format("PRE: %d\tPOST: %d\tREDUCED: %d%nTOTAL_FILTERED: %d%n", pre, post, reduced, TOTAL_FILTERED.addAndGet(reduced));
+	}
+AtomicInteger TOTAL_FILTERED = new AtomicInteger(0);
 
 	private static final boolean isUseful(Filter theFilter, ConditionListA theConditionList, Condition theCondition)
 	{
@@ -1035,7 +1183,7 @@ System.out.println(aSubgroup + "\t" + aRefinement.getConditionBase());
 			{
 				final ValueSet aBestSubset = new ValueSet(aDomainBestSubSet);
 				Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(aBestSubset);
-				valueSetCheckAndLog(aBestSubset, aNewSubgroup, anOldCoverage);
+				valueSetCheckAndLog(aNewSubgroup, anOldCoverage);
 			}
 		}
 		else //regular single-value conditions
@@ -1108,68 +1256,77 @@ System.out.println(aSubgroup + "\t" + aRefinement.getConditionBase());
 		}
 	}
 
-	/*
-	 * itsCandidateCount is unlikely to overflow, so this is safe enough
-	 * else it just denies the 2^63-th Candidate to be logged
-	 */
-	private static final long DO_NOT_LOG = -1L;
-
-	/*
-	 * keep output together using synchronized method
-	 * NOTE other threads calling this method are stalled for a while when
-	 * checkAndLog().check() needs to resize itsCandidateQueue/ itsResult
-	 *
-	 * NOTE that in case of ties on the itsCandidateQueue/ itsResult
-	 * max_size boundary this may effect the final search result
-	 * this is related to to the fixed max size and has the potential to
-	 * break invocation invariant results in multi-threaded settings
-	 */
-	private final synchronized void valueSetCheckAndLog(ValueSet theBestSubset, Subgroup theNewSubgroup, int theOldCoverage)
+//	/*
+//	 * keep output together using synchronized method
+//	 * NOTE other threads calling this method are stalled for a while when
+//	 * checkAndLog().check() needs to resize itsCandidateQueue/ itsResult
+//	 *
+//	 * NOTE that in case of ties on the itsCandidateQueue/ itsResult
+//	 * max_size boundary this may effect the final search result
+//	 * this is related to to the fixed max size and has the potential to
+//	 * break invocation invariant results in multi-threaded settings
+//	 */
+//	// FIXME MM - since whole method is synchronised, evaluateCandidate()
+//	// call in checkAndLog() is also, severely slowing down multi-threaded
+//	// execution, especially when the models are computationally expensive
+//	// there seems not need for a separate method for ValueSets when the
+//	// printing of (ignored) values is omitted
+//	private final synchronized void valueSetCheckAndLog(ValueSet theBestSubset, Subgroup theNewSubgroup, int theOldCoverage)
+//	{
+//		boolean isValid = checkAndLog(theNewSubgroup, theOldCoverage);
+//
+//		// required? - prevents multi-threaded evaluateCandidate()
+//		String pre = isValid ? "  values: " : "ignored subgroup with values: ";
+//
+//		Log.logCommandLine(pre + theBestSubset.toString());
+//	}
+	private final void valueSetCheckAndLog(Subgroup theNewSubgroup, int theOldCoverage)
 	{
-		final long count = checkAndLog(theNewSubgroup, theOldCoverage);
+		boolean isValid = checkAndLog(theNewSubgroup, theOldCoverage);
 
-		final String values = theBestSubset.toString();
-		final StringBuilder sb = new StringBuilder(values.length());
-		if (count == DO_NOT_LOG)
-			sb.append("ignored subgroup with values: ");
-		else
-			sb.append("  values: ");
-		sb.append(values);
-
-		Log.logCommandLine(sb.toString());
+		// if (isValid), checkAndLog() already printed the Subgroup
+		// for historic reasons, the ignored Subgroup is printed anyway
+		if (!isValid)
+			Log.logCommandLine("ignored subgroup: " + theNewSubgroup.getConditions().toString());
 	}
 
-	/*
-	 * SubgroupsSet's add() method is thread save.
-	 * CandidateQueue's add() method is thread save.
-	 * itsCandidateCount is Atomic (synchronized by nature).
-	 *
-	 * but they must be executed as a single unit, so synchronized check()
-	 */
-	private long checkAndLog(Subgroup theSubgroup, int theOldCoverage)
+	// this method increments itsCandidateCount
+	private final boolean checkAndLog(Subgroup theSubgroup, int theOldCoverage)
 	{
-		// synchronized method
-		final long count = check(theSubgroup, theOldCoverage);
-		// unsynchronized, ok as long a count represents n-th check call
-		if (count != DO_NOT_LOG)
+		boolean isValid = check(theSubgroup, theOldCoverage);
+
+		// incrementing after expensive check() makes subgroup numbers
+		// in log 'closer to being consecutive' when multi-threading
+		// a synchronized block with itsCandidateCount.getAndIncrement()
+		// and logCandidateAddition() would yield consecutive numbers
+		// but is slower and does not yield useful practical benefits
+		long count = itsCandidateCount.getAndIncrement();
+
+		if (isValid)
 			logCandidateAddition(theSubgroup, count);
 
-		return count;
+		return isValid;
 	}
 
 	/*
-	 * whole method must be executed as a logical unit
-	 * the contents of itsResult and itsCandidateQueue would become
-	 * undefined in a multi-threaded scenario:
+	 * REQUIREMENT 1
+	 * additions to itsResult and itsCandidateQueue need to be performed as
+	 * a logical unit, else their contents would become undefined in the
+	 * following multi-threaded scenario:
 	 *
 	 * Thread 1 itsResult.add()
 	 * Thread 2 itsResult.add()
 	 * Thread 2 itsCandidateQueue.add()
 	 * Thread 1 itsCandidateQueue.add()
 	 *
-	 * both itsResults and itsCandidateQueue are trimmed if the have a max
+	 * both itsResults and itsCandidateQueue are trimmed if they have a max
 	 * capacity and a candidate may end up in the one, but not in the other
+	 * 
+	 * REQUIREMENT 2
+	 * evaluateCandidate() is expensive for complex models and should not be
+	 * executed in a synchonized block
 	 *
+	 * REQUIREMENT 3
 	 * additionally the value of itsCandidateCount.getAndIncrement() should
 	 * indicate the n-th call to this method, so the n-th checked Candidate
 	 * and the subgroup.nr should be this value also
@@ -1178,59 +1335,156 @@ System.out.println(aSubgroup + "\t" + aRefinement.getConditionBase());
 	 * but to keep the scope of the synchronized method small (synchronized
 	 * blocks execute many times slower) the logging is not done in the
 	 * synchronized method, but guarantees to use to the correct value
+	 * FIXME MM
+	 * if fact, this makes no sense at all in a multi-threaded environment
+	 * because of the unpredictable order in which Subgroups generated from
+	 * ('thread local') refinements arrive at check(), the count for any
+	 * Subgroup is unpredictable anyway
+	 * so coupling the check()-count to the subgroup number reported in the
+	 * log does not guarantee invocation invariant logs, where a subgroup
+	 * has the same number over consecutive identical experiments
+	 * for a single thread, the behaviour will hold regardless, so no extra
+	 * care is required
+	 * TL;DR count + subgroup number will be decoupled / unsynchronised
 	 *
-	 * technically the synchronisation need only range from right before:
-	 * if (ignoreQualityMinimum || aQuality > itsQualityMeasureMinimum))
-	 * to right after:
-	 * itsCandidateQueue.add(new Candidate(theSubgroup));
-	 * but count (sort of) promises that a Candidate with a lower count will
-	 * be completely handled (added to the queues) before a Candidate with
-	 * a higher count
-	 * this is related to the (legacy) code using fixed max_sizes for queues
+	 * technically synchronisation needs only execute the addition to the
+	 * result and candidate set as a logical block
 	 *
-	 * NOTE that in case of ties on the itsCandidateQueue/ itsResult
+	 * NOTE that in case of ties on the itsResult / itsCandidateQueue
 	 * max_size boundary this may effect the final search result
 	 * this is related to the fixed max size and has the potential to break
 	 * invocation invariant results in multi-threaded settings
+	 * FIXME MM
+	 * this is probably no longer true for beam strategies, that move from
+	 * one level to the next, when all candidates on the first are evaluated
+	 * the new ConditionListA compares Conditions in canonical, so
+	 * regardless of the order in which they are inserted in to 
+	 * itsResult / itsCandidateQueue, these constructs will always be
+	 * ordered in the same way before moving to the next level / when an
+	 * experiment completes without time constraints
+	 * non-beam searches do not have a max size for itsCandidateQueue, so
+	 * they do no suffer from this problem anyway
+	 * (NOTE when a search is stopped because of max_time all bets are of)
 	 */
-//	private synchronized long check(Subgroup theSubgroup, int theOldCoverage)
-	private long check(Subgroup theSubgroup, int theOldCoverage)
+	private final Object itsCheckLock = new Object();
+	private boolean check(Subgroup theSubgroup, int theOldCoverage)
 	{
-		final long count = itsCandidateCount.getAndIncrement();
-		final int aNewCoverage = theSubgroup.getCoverage();
+		int aNewCoverage = theSubgroup.getCoverage();
+		boolean isValid = (aNewCoverage < theOldCoverage && aNewCoverage >= itsMinimumCoverage);
 
-		if (aNewCoverage < theOldCoverage && aNewCoverage >= itsMinimumCoverage)
+		if (isValid)
 		{
 			float aQuality = evaluateCandidate(theSubgroup);
 			theSubgroup.setMeasureValue(aQuality);
-synchronized(this) {
-			//if the quality is enough, or should be ignored, ...
-			if (ignoreQualityMinimum || aQuality > itsQualityMeasureMinimum)
-				//...and, the coverage is not too high
-				if (aNewCoverage <= itsMaximumCoverage)
+
+			Candidate aCandidate = new Candidate(theSubgroup);
+
+			boolean aResultAddition = false;
+			// if quality should be ignored or is enough
+			// and the coverage is not too high
+			if ((ignoreQualityMinimum || aQuality > itsQualityMeasureMinimum) && (aNewCoverage <= itsMaximumCoverage))
+				aResultAddition = true;
+
+			// all logic is performed outside of synchronized block
+			// to keep it as small as possible
+			synchronized (itsCheckLock)
+			{
+				if (aResultAddition)
 					itsResult.add(theSubgroup);
 
-			itsCandidateQueue.add(new Candidate(theSubgroup));
-}
-			return count;
+				itsCandidateQueue.add(aCandidate);
+			}
 		}
 
-		return DO_NOT_LOG;
+		return isValid;
 	}
+
+//	private long check(Subgroup theSubgroup, int theOldCoverage)
+//	{
+//		final long count = itsCandidateCount.getAndIncrement();
+//		final int aNewCoverage = theSubgroup.getCoverage();
+//
+//		Subgroup addToResults = null;
+//		Subgroup addToCandidates = null;
+//		boolean isValidCandidate = (aNewCoverage < theOldCoverage && aNewCoverage >= itsMinimumCoverage);
+//
+//		if (isValidCandidate)
+//		{
+//			// evaluations for complex models are expensive
+//			// so this should not be done in a synchronised block
+//			float aQuality = evaluateCandidate(theSubgroup);
+//			theSubgroup.setMeasureValue(aQuality);
+//
+//			// if the quality should be ignored, or is good enough
+//			// and the coverage is not too high
+//			if ((ignoreQualityMinimum || aQuality > itsQualityMeasureMinimum) && (aNewCoverage <= itsMaximumCoverage))
+//				addToResults = theSubgroup;
+//
+//			// always add to candidates
+//			addToCandidates = theSubgroup;
+//		}
+//
+//		// a synchronised call
+//		addToResultsAndCandidates(count, addToResults, addToCandidates);
+//
+//		// only log addition 
+//		return isValidCandidate ? count : DO_NOT_LOG;
+//	}
+
+//	// unsynchronized member field, should only be used by this method
+//	// alternatively, a Concurrent Collection could be used that would
+//	// allow each thread to insert a new item in the waiting list
+//	// and a separate thread would be notified upon each insertion
+//	// that thread would be responsible for checking the head of the list
+//	// and insert into the result and candidate list
+//	// but then a lock on the collection MUST be obtained before executing
+//	// the [firstEntry() + pollFirstEntry()] checks as a single logical call
+//	// to avoid TOCTOU bugs (time-of-check-time-of-use)
+//	private long itsLastCount = itsCandidateCount.get()-1L; // same start point
+//	private final TreeMap<Long, Subgroup[]> itsWaitingList = new TreeMap<Long, Subgroup[]>();
+//	private synchronized void addToResultsAndCandidates(long theCount, Subgroup addToResults, Subgroup addToCandidates)
+//	{
+//		if (theCount == (itsLastCount+1L))
+//		{
+//			if (addToResults != null)
+//				itsResult.add(addToResults);
+//			if (addToCandidates != null)
+//				itsCandidateQueue.add(new Candidate(addToCandidates));
+//			itsLastCount = theCount;
+//
+//			// synchronized methods use reentrant locks
+//			// so no other thread can modify itsWaintingList
+//			Entry<Long, Subgroup[]> e = itsWaitingList.firstEntry();
+//			if (e != null)
+//			{
+//				// recursively check if next item can be processed now
+//				if (e.getKey() == (itsLastCount+1L))
+//				{
+//					e = itsWaitingList.pollFirstEntry();
+//					addToResultsAndCandidates(e.getKey(), e.getValue()[0], e.getValue()[1]);
+//				}
+//			}
+//		}
+//		else
+//			itsWaitingList.put(theCount, new Subgroup[] { addToResults, addToCandidates });
+//	}
 
 	// because of multi-theading consecutive log calls should be grouped
 	// else logs from other threads could end up in between
 	private void logCandidateAddition(Subgroup theSubgroup, long count)
 	{
-		StringBuffer sb = new StringBuffer(200);
+		String aCandidate = theSubgroup.getConditions().toString();
+
+		StringBuilder sb = new StringBuilder(aCandidate.length() + 100);
 		sb.append("candidate ");
-		sb.append(theSubgroup.getConditions());
+		sb.append(aCandidate);
 		sb.append(" size: ");
 		sb.append(theSubgroup.getCoverage());
+		sb.append("\n  subgroup nr. ");
+		sb.append(count);
+		sb.append("; quality ");
+		sb.append(theSubgroup.getMeasureValue());
 
-		sb.append(String.format("%n  subgroup nr. %d; quality %s",
-					count,
-					Double.toString(theSubgroup.getMeasureValue())));
 		Log.logCommandLine(sb.toString());
 	}
 
@@ -1916,7 +2170,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		public Test(Candidate theCandidate, int theSearchDepth, long theEndTime, Semaphore theSemaphore, ConditionBaseSet theConditionBaseSet)
 		{
 			itsCandidate = theCandidate;
-			itsSearchDepth= theSearchDepth;
+			itsSearchDepth = theSearchDepth;
 			itsEndTime = theEndTime;
 			itsSemaphore = theSemaphore;
 			itsConditionBaseSet = theConditionBaseSet;
@@ -2203,7 +2457,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	 * test assumption that NUMERIC_ALL is the only NumericOperatorSetting
 	 * that may cause redundancy of the form:
 	 * [ (C >= x)  ^ (C <= x) ^ ... ] -> which selects [ (C = x)  ^ ... ]
-	 * for DEPTH_FIRST-NUMERIC_ALL (C = x) is created on depth=1
+	 * for DEPTH_FIRST-NUMERIC_ALL (C = x) is created on depth = 1
 	 * and combined with every relevant other Condition
 	 */
 	private static final boolean numericAll()
