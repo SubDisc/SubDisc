@@ -4,6 +4,7 @@ import java.util.*;
 
 import javax.swing.*;
 
+import nl.liacs.histo.*;
 import nl.liacs.subdisc.gui.*;
 
 public class Process
@@ -417,6 +418,7 @@ public class Process
 
 		// compute h using Silverman
 		float h = ProbabilityDensityFunction_ND.h_silverman(1, theTable.getNrRows());
+		// FIXME h still needs to be multiplied by the std_dev, use Vec
 		float aMax = aTarget.getMax();
 		float aMin = aTarget.getMin();
 		float aRange = aMax - aMin;
@@ -433,6 +435,7 @@ public class Process
 		// XXX aTargetAverage could be a dummy value
 		float aTargetAverage = aTarget.getAverage();
 
+//		aMaxNrSplitPoints = 75;
 		// run everything for Equal Height and Equal Width
 		for (int i = 1; i <= aMaxNrSplitPoints; ++i)
 		{
