@@ -180,7 +180,7 @@ public class QualityMeasure
 	 * the following conditions must hold (lower and upper bounds)
 	 * N > 0    : can not have empty data
 	 * N <= MAX : can not have data size > MAX_ARRAY_SIZE (JVM specific)
-	 * H > 0    : can not have data with 0 target records
+	 * H > 0    : can not have data with 0 target records	// FIXME MM change to H >= 0
 	 * H <= N   : can not have more target records than data size
 	 * B > 0    : can not have empty subgroup
 	 * B <= N   : can not have subgroup size bigger than data size
@@ -405,6 +405,8 @@ public class QualityMeasure
 	 */
 	private static final double calculate(QM theMeasure, int theTotalCoverage, int theTotalTargetCoverage, int theCountHeadBody, int theCoverage)
 	{
+		// FIXME MM if (H==N) -> return 0.0; (or QM specific value)
+
 		// should be checked by constructor
 		assert (!(theMeasure == null));
 		assert (theTotalCoverage > 0);
