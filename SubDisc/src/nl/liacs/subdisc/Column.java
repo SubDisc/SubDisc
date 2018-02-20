@@ -2215,6 +2215,25 @@ public class Column implements XMLNodeInterface
 		return aResult;
 	}
 
+	public SortedMap<Float, Integer> getUniqueNumericDomainMap(BitSet theBitSet)
+	{
+		if (!isValidCall("getUniqueNumericDomain", theBitSet))
+			return null;
+
+		SortedMap<Float, Integer> aUniqueValues = new TreeMap<Float, Integer>();
+		for (int i = theBitSet.nextSetBit(0); i >= 0; i = theBitSet.nextSetBit(i + 1))
+		{
+			Float f = Float.valueOf(itsFloatz[i]);
+			Integer aCount = aUniqueValues.get(f);
+			if (aCount == null)
+				aCount = Integer.valueOf(0);
+
+			aUniqueValues.put(f, Integer.valueOf(aCount+1));
+		}
+
+		return aUniqueValues;
+	}
+
 	/**
 	 * Returns the split-points for Columns of
 	 * {@link AttributeType} {@link AttributeType#NUMERIC} and
@@ -2291,6 +2310,49 @@ public class Column implements XMLNodeInterface
 			aSplitPoints[j] = aDomain[size*(j+1)/(theNrSplits+1)];
 
 		return aSplitPoints;
+	}
+
+	// FIXME MM - implement
+	public SortedMap<Float, Integer> getSplitPointsMap(BitSet theBitSet, int theNrSplits) throws IllegalArgumentException
+	{
+		if (!isValidCall("getSplitPoints", theBitSet))
+			return new TreeMap<Float, Integer>();
+
+		if (theNrSplits < 0)
+			throw new IllegalArgumentException(theNrSplits + " (theNrSplits) < 0");
+		// valid, but useless
+		if (theNrSplits == 0)
+			return new TreeMap<Float, Integer>();
+
+//		final float[] aSplitPoints = new float[theNrSplits];
+//		final int size = theBitSet.cardinality();
+//
+//		// FIXME MM
+//		// (size == 0) check is incorrect
+//		// it would return an array of 0's
+//		// and then 0 would be considered to be a bin boundary
+//		// more generally the code below leads to awkward results when
+//		// (theNrSplits > theBitSet.cardinality())
+//		// as the aSplitPoints[] will be populated with 0's
+//		// for every index >= theBitSet.cardinality(), the values will
+//		// not be set to anything else
+//
+//		// prevent crash in aSplitPoints populating loop
+//		if (size == 0)
+//			return aSplitPoints;
+//
+//		float[] aDomain = new float[size];
+//		for (int i = theBitSet.nextSetBit(0), j = -1; i >= 0; i = theBitSet.nextSetBit(i + 1))
+//			aDomain[++j] = itsFloatz[i];
+//
+//		Arrays.sort(aDomain);
+//
+//		// N.B. Order matters to prevent integer division from yielding zero.
+//		for (int j=0; j<theNrSplits; j++)
+//			aSplitPoints[j] = aDomain[size*(j+1)/(theNrSplits+1)];
+//
+		return null;
+		//return aSplitPoints;
 	}
 
 	/**
