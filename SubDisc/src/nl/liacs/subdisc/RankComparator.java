@@ -26,6 +26,8 @@ public class RankComparator
 		args = new String[] {
 				"/home/marvin/data/wrk/svn/SubgroupDiscovery/publications/MultiNumeric/ecmlpkdd2015_journal/experiments/auction/2D_Nbid_Price/d1/all/auction-Nbid-Price-H2-d1-mincov61-maxcov0p95-all-leq_geq.txt",
 				"/home/marvin/data/wrk/svn/SubgroupDiscovery/publications/MultiNumeric/ecmlpkdd2015_journal/experiments/auction/2D_Nbid_Price/d1/all/auction-Nbid-Price-L2-d1-mincov61-maxcov0p95-all-leq_geq.txt",
+//				"/home/marvin/data/wrk/svn/SubgroupDiscovery/SubDisc/0_MultiNumeric_experiments/discretisation_loop_runs_NEW_KDE_SG_VS_COMPLEMENT/communities/crimepredict_1400856196467922_EH_00001.txt",
+//				"/home/marvin/data/wrk/svn/SubgroupDiscovery/SubDisc/0_MultiNumeric_experiments/discretisation_loop_runs_NEW_KDE_SG_VS_COMPLEMENT/communities/crimepredict_1400856196467922_EH_00002.txt",
 		};
 		foo(args);
 		//temporaryCode("/home/marvin/data/wrk/svn/SubgroupDiscovery/SubDisc/0_MULTI_NUMERIC_2015/boston_housing_kde_vs_eh/d1/");
