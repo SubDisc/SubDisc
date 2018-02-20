@@ -643,6 +643,8 @@ public class Table implements XMLNodeInterface
 		}
 	}
 
+	// FIXME MM - leave false in svn, quick hack, should be cleaned up
+	private static final boolean QUOTE_ALL_VALUES = false;
 	// as above, but writes whole Table (no row inclusion test)
 	public void toFile(File theFile)
 	{
@@ -653,13 +655,16 @@ public class Table implements XMLNodeInterface
 			aWriter = new BufferedWriter(new FileWriter(theFile));
 			int aNrColumnsMinusOne = itsNrColumns - 1;
 
+			// writes nothing when no quotes needed
+			aWriter.write(QUOTE_ALL_VALUES ? "\'" : "");
+
 			for (int i = 0; i < aNrColumnsMinusOne; ++i)
 			{
 				aWriter.write(itsColumns.get(i).getName());
-				aWriter.write(",");
+				aWriter.write(QUOTE_ALL_VALUES ? "\',\'" : ",");
 			}
 			aWriter.write(itsColumns.get(aNrColumnsMinusOne).getName());
-			aWriter.write("\n");
+			aWriter.write(QUOTE_ALL_VALUES ? "\'\n" : "\n");
 
 			// lookup columnTypes only once
 			AttributeType[] aTypes = new AttributeType[itsNrColumns];
@@ -668,6 +673,8 @@ public class Table implements XMLNodeInterface
 
 			for (int i = 0, j = itsNrRows; i < j; ++i)
 			{
+				// writes nothing when no quotes needed
+				aWriter.write(QUOTE_ALL_VALUES ? "\'" : "");
 				for (int k = 0; k < aNrColumnsMinusOne; ++k)
 				{
 					switch(aTypes[k])
@@ -678,7 +685,7 @@ public class Table implements XMLNodeInterface
 						case BINARY : aWriter.write(itsColumns.get(k).getBinary(i) ? "1" : "0"); break;
 						default : Log.logCommandLine("Unknown AttributeType: " + aTypes[k]); break;
 					}
-					aWriter.write(",");
+					aWriter.write(QUOTE_ALL_VALUES ? "\',\'" : ",");
 				}
 				switch(aTypes[aNrColumnsMinusOne])
 				{
@@ -688,7 +695,7 @@ public class Table implements XMLNodeInterface
 					case BINARY : aWriter.write(itsColumns.get(aNrColumnsMinusOne).getBinary(i) ? "1" : "0"); break;
 					default : Log.logCommandLine("Unknown AttributeType: " + aTypes[aNrColumnsMinusOne]); break;
 				}
-				aWriter.write("\n");
+				aWriter.write(QUOTE_ALL_VALUES ? "\'\n" : "\n");
 			}
 			aWriter.write("\n");
 		}
