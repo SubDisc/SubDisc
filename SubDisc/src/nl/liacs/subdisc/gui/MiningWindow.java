@@ -1942,74 +1942,76 @@ public class MiningWindow extends JFrame implements ActionListener
 
 	private void jButtonDiscretiseActionPerformed()
 	{
-//		// could come from a Dialog window, but for now this is fine
-//		int[] bins = { 4, 8, 16, 32, 64, 128, 256, 512, 1024 };
-//		for (int b : bins)
-//			jButtonDiscretiseActionPerformed(b);
-//
-//		// Vikamine default is 3 bins, Cortana default is 8 bins
-//		for (int i = 2; i <= 2; ++i)
-//			NumericRanges.foo(itsTable, itsTargetConcept.getPrimaryTarget(), i);
+		// could come from a Dialog window, but for now this is fine
+		int[] half_interval_bins = { 2, 3, 4, 5, 6, 7, 8, 9, 10, 16, 32, 64, 128, 256, 512, 1024 };
+		for (int b : half_interval_bins)
+			jButtonDiscretiseActionPerformed(b);
+
+		// Vikamine default is 3 bins, Cortana default is 8 bins
+		// NOTE with minimum support = 10%, more than 10 bins is useless
+		int[] full_interval_bins = { 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+		for (int b : full_interval_bins)
+			nl.liacs.discretisation.NumericRanges.foo(itsTable, itsTargetConcept.getPrimaryTarget(), b);
 	}
 
 	// lazy code - build new Table and re-use Table.toFile()
 	private void jButtonDiscretiseActionPerformed(int bins)
 	{
-//		int aNrSplits = bins-1;
-//		int aNrRows = itsTable.getNrRows();
-//
-//		// create a BitSet that select the whole Table
-//		BitSet bs = new BitSet(aNrRows);
-//		bs.set(0, aNrRows);
-//
-//		File file = new File(String.format("%s.%d.csv", itsTable.getSource(), bins));
-//		String name = itsTable.getName() + "." + bins; 
-//		Table t = new Table(file, name, aNrRows, itsTable.getNrColumns());
-//		List<Column> cs = t.getColumns();
-//
-//		for (Column c : itsTable.getColumns())
-//		{
-//			if (c.getType() != AttributeType.NUMERIC)
-//				cs.add(c);
-//			else
-//			{
-//				float[] bounds = null;
-//				if (c.getCardinality() <= bins)
-//					bounds = c.getUniqueNumericDomain(bs);
-//				else
-//				{
-//					bounds = c.getSplitPoints(bs, aNrSplits);
-//
-//					// lazy method to remove possible duplicates
-//					Set<Float> set = new TreeSet<Float>();
-//					for (float f : bounds)
-//						set.add(Float.valueOf(f));
-//					// reuse bounds
-//					bounds = new float[set.size() + 1];
-//					int index = -1;
-//					for (Float f : set)
-//						bounds[++index] = f;
-//					bounds[++index] = c.getMax();
-//				}
-//
-//				int size = c.size();
-//				assert (aNrRows == size);
-//				Column nc = new Column(c.getName(), c.getShort(), c.getType(), c.getIndex(), size);
-//
-//				for (int i = 0; i < size; ++i)
-//				{
-//					float f = c.getFloat(i);
-//					int b = Arrays.binarySearch(bounds, f);
-//					nc.add(bounds[b < 0 ? ~b : b]);
-//				}
-//
-//				cs.add(nc);
-//			}
-//		}
-//
-//		t.toFile(file);
-//
-//		System.out.println("discretised bins: " + bins);
+		int aNrSplits = bins-1;
+		int aNrRows = itsTable.getNrRows();
+
+		// create a BitSet that select the whole Table
+		BitSet bs = new BitSet(aNrRows);
+		bs.set(0, aNrRows);
+
+		String name = String.format("%s.h%04d", itsTable.getSource(), bins);
+		File file = new File(name + ".csv");
+		Table t = new Table(file, name, aNrRows, itsTable.getNrColumns());
+		List<Column> cs = t.getColumns();
+
+		for (Column c : itsTable.getColumns())
+		{
+			if (c.getType() != AttributeType.NUMERIC)
+				cs.add(c);
+			else
+			{
+				float[] bounds = null;
+				if (c.getCardinality() <= bins)
+					bounds = c.getUniqueNumericDomain(bs);
+				else
+				{
+					bounds = c.getSplitPoints(bs, aNrSplits);
+
+					// lazy method to remove possible duplicates
+					Set<Float> set = new TreeSet<Float>();
+					for (float f : bounds)
+						set.add(Float.valueOf(f));
+					// reuse bounds
+					bounds = new float[set.size() + 1];
+					int index = -1;
+					for (Float f : set)
+						bounds[++index] = f;
+					bounds[++index] = c.getMax();
+				}
+
+				int size = c.size();
+				assert (aNrRows == size);
+				Column nc = new Column(c.getName(), c.getShort(), c.getType(), c.getIndex(), size);
+
+				for (int i = 0; i < size; ++i)
+				{
+					float f = c.getFloat(i);
+					int b = Arrays.binarySearch(bounds, f);
+					nc.add(bounds[b < 0 ? ~b : b]);
+				}
+
+				cs.add(nc);
+			}
+		}
+
+		t.toFile(file);
+
+		System.out.println(file.getAbsolutePath());
 	}
 
 	private void setupSearchParameters()
