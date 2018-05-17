@@ -116,11 +116,15 @@ public class Candidate implements Comparable<Candidate>
 			// however it can be made to work by ordering the
 			// Candidates coming from depth=0
 			cmp = x.itsSubgroup.getConditions().compareTo(y.itsSubgroup.getConditions());
+
 			// for two distinct Candidates the ConditionLists should
 			// never ever be equal in the DEPTH_FIRST setting
-			assert (cmp != 0);
-			return cmp;
+			// however, the current implementation does not restrict
+			// itself to only forward search space exploration
+			// for any depth it does N*N instead of N*N/2
+//			assert (cmp != 0);
 
+			return cmp;
 		}
 	}
 
