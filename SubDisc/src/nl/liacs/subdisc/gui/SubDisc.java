@@ -6,7 +6,6 @@ import java.util.*;
 import java.util.List;
 
 import nl.liacs.subdisc.*;
-import nl.liacs.subdisc.FileHandler.Action;
 
 public class SubDisc
 {
@@ -31,12 +30,12 @@ public class SubDisc
 	 */
 	private static final String[] JARS = {
 		// for drawing
-		"jfreechart-1.0.14.jar",
-		"jcommon-1.0.17.jar",
+		"jfreechart-1.0.17.jar",
+		"jcommon-1.0.21.jar",
 		// for propensity score, Rob
 		"weka.jar",
 		// for Cook's distance only
-		"Jama-1.0.2.jar",
+		"Jama-1.0.3.jar",
 		// for KNIME
 //		"knime-core.jar",
 //		"org.eclipse.osgi_3.6.1.R36x_v20100806.jar",
