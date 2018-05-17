@@ -104,51 +104,38 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		itsNrRows = itsTable.getNrRows();
 		itsMainWindow = theMainWindow;
 		TargetConcept aTC = itsSearchParameters.getTargetConcept();
-
 		itsMinimumCoverage = itsSearchParameters.getMinimumCoverage();
 		itsMaximumCoverage = (int) (itsNrRows * itsSearchParameters.getMaximumCoverageFraction());
-
-		//TODO: this special case can be deleted? It should be in a new constructor by now
-		if (itsSearchParameters.getQualityMeasure().TARGET_TYPE == TargetType.LABEL_RANKING) //label ranking?
-		{
-			itsTargetRankings = aTC.getPrimaryTarget();
-			LabelRanking aLR = itsTargetRankings.getAverageRanking(null); //average ranking over entire dataset
-			LabelRankingMatrix aLRM = itsTargetRankings.getAverageRankingMatrix(null); //average ranking over entire dataset
-			itsQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), itsNrRows, aLR, aLRM);
-		}
-		else
-			itsQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), itsNrRows, theNrPositive);
+		itsQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), itsNrRows, theNrPositive);
 		itsQualityMeasureMinimum = itsSearchParameters.getQualityMeasureMinimum();
 
-		if (itsSearchParameters.getQualityMeasure().TARGET_TYPE != TargetType.LABEL_RANKING)
+		Column aTarget = aTC.getPrimaryTarget();
+		ConditionBase aConditionBase = new ConditionBase(aTarget, Operator.EQUALS);
+		String aValue = aTC.getTargetValue();
+		Condition aCondition;
+		switch (aTarget.getType())
 		{
-			Column aTarget = aTC.getPrimaryTarget();
-			ConditionBase aConditionBase = new ConditionBase(aTarget, Operator.EQUALS);
-			String aValue = aTC.getTargetValue();
-			Condition aCondition;
-			switch (aTarget.getType())
-			{
-				case NOMINAL :
-					aCondition = new Condition(aConditionBase, aValue);
-					break;
-				case NUMERIC :
-					throw new AssertionError(AttributeType.NUMERIC);
-				case ORDINAL :
-					throw new AssertionError(AttributeType.ORDINAL);
-				case BINARY :
-					if (!AttributeType.isValidBinaryValue(aValue))
-						throw new IllegalArgumentException(aValue + " is not a valid BINARY value");
-					aCondition = new Condition(aConditionBase, AttributeType.isValidBinaryTrueValue(aValue));
-					break;
-				default :
-					throw new AssertionError(aTarget.getType());
-			}
-
-			itsBinaryTarget = aTC.getPrimaryTarget().evaluate(aCondition);
-			itsResult = new SubgroupSet(itsSearchParameters.getMaximumSubgroups(), itsNrRows, itsBinaryTarget);
+			case NOMINAL :
+				aCondition = new Condition(aConditionBase, aValue);
+				break;
+			case NUMERIC :
+				throw new AssertionError(AttributeType.NUMERIC);
+			case ORDINAL :
+				throw new AssertionError(AttributeType.ORDINAL);
+			case BINARY :
+				if (!AttributeType.isValidBinaryValue(aValue))
+					throw new IllegalArgumentException(aValue + " is not a valid BINARY value");
+				aCondition = new Condition(aConditionBase, AttributeType.isValidBinaryTrueValue(aValue));
+				break;
+			default :
+				throw new AssertionError(aTarget.getType());
 		}
-		else
-			itsResult = new SubgroupSet(itsSearchParameters.getMaximumSubgroups(), itsNrRows);
+
+		itsBinaryTarget = aTC.getPrimaryTarget().evaluate(aCondition);
+// TODO MM - evaluate(aBitSet, aCondition), evaluate(aCondition) is deprecated
+//		BitSet aBitSet = getAllDataBitSet(itsNrRows);
+//		itsBinaryTarget = aTC.getPrimaryTarget().evaluate(aBitSet, aCondition);
+		itsResult = new SubgroupSet(itsSearchParameters.getMaximumSubgroups(), itsNrRows, itsBinaryTarget);
 	}
 
 	//SINGLE_NUMERIC, float > signature differs from multi-label constructor
@@ -163,8 +150,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 		TargetConcept aTC = itsSearchParameters.getTargetConcept();
 		itsNumericTarget = aTC.getPrimaryTarget();
 
-		BitSet aBitSet = new BitSet();
-		aBitSet.set(0, itsNrRows);
+		BitSet aBitSet = getAllDataBitSet(itsNrRows);
 		Statistics aStatistics = itsNumericTarget.getStatistics(aBitSet, false, true); // no median, yes complement
 		ProbabilityDensityFunction aPDF;
 if (!TEMPORARY_CODE)
@@ -343,6 +329,14 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 		itsResult = new SubgroupSet(itsSearchParameters.getMaximumSubgroups(), itsNrRows);
 	}
 
+	// XXX MM - preferably store this somewhere
+	static final BitSet getAllDataBitSet(int theNrRows)
+	{
+		BitSet aBitSet = new BitSet(theNrRows);
+		aBitSet.set(0, theNrRows);
+		return aBitSet;
+	}
+
 	/*
 	 * Only the top result is used in this setting. Maximum coverage and
 	 * binary target constructor parameters are not needed.
@@ -377,8 +371,7 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 		logExperimentSettings(aConditions);
 
 		//make subgroup to start with, containing all elements
-		BitSet aBitSet = new BitSet(itsNrRows);
-		aBitSet.set(0, itsNrRows);
+		BitSet aBitSet = getAllDataBitSet(itsNrRows);
 		Subgroup aStart = new Subgroup(ConditionListBuilder.emptyList(), aBitSet, itsResult);
 
 		itsCandidateQueue = new CandidateQueue(itsSearchParameters, new Candidate(aStart));
@@ -503,60 +496,42 @@ System.out.println(aSubgroup + "\t" + aRefinement.getConditionBase());
 		switch (itsSearchParameters.getNumericStrategy())
 		{
 			case NUMERIC_ALL :
-			{
 				numericHalfIntervals(theMembers, theRefinement);
 				break;
-			}
 			// NUMERIC_BEST is like NUMERIC_ALL, but uses only best scoring subgroup
 			case NUMERIC_BEST :
-			{
 				numericHalfIntervals(theMembers, theRefinement);
 				break;
-			}
 			case NUMERIC_BINS :
-			{
 				numericHalfIntervals(theMembers, theRefinement);
 				break;
-			}
 			// NUMERIC_BEST_BINS is like NUMERIC_BINS, but uses only best scoring subgroup
 			case NUMERIC_BEST_BINS :
-			{
 				numericHalfIntervals(theMembers, theRefinement);
 				break;
-			}
 			case NUMERIC_INTERVALS :
-			{
 				numericIntervals(theMembers, theRefinement);
 				break;
-			}
 			case NUMERIC_VIKAMINE_CONSECUTIVE_ALL :
-			{
 				numericConsecutiveBins(theMembers, theRefinement);
 				break;
-			}
 			// NUMERIC_VIKAMINE_CONSECUTIVE_BEST is like NUMERIC_VIKAMINE_CONSECUTIVE_ALL, but uses only best scoring subgroup
 			case NUMERIC_VIKAMINE_CONSECUTIVE_BEST :
-			{
 				numericConsecutiveBins(theMembers, theRefinement);
 				break;
-			}
 //			case NUMERIC_VIKAMINE_CARTESIAN_ALL :
-//			{
 //				throw new AssertionError(itsSearchParameters.getNumericStrategy() + " not implemented");
-//			}
 //			case NUMERIC_VIKAMINE_CARTESIAN_BEST :
-//			{
 //				throw new AssertionError(itsSearchParameters.getNumericStrategy() + " not implemented");
-//			}
 			default :
-			{
 				Log.logCommandLine("SubgroupDiscovery.evaluateNumericRefinements(): unknown Numeric Strategy: " +
 							itsSearchParameters.getNumericStrategy());
 				break;
-			}
 		}
 	}
 
+// FIXME MM - DEBUG ONLY
+AtomicInteger TOTAL_FILTERED = new AtomicInteger(0);
 	private final void numericHalfIntervals(BitSet theMembers, Refinement theRefinement)
 	{
 		NumericStrategy aNumericStrategy = itsSearchParameters.getNumericStrategy();
@@ -587,8 +562,22 @@ System.out.println(aSubgroup + "\t" + aRefinement.getConditionBase());
 //System.out.println(Arrays.toString(ia));
 //		filterDomain(map, aConditionBase.getOperator(), itsSearchParameters.getMinimumCoverage());
 //		Float[] aSplitPointsMap = map.keySet().toArray(new Float[0]);
+//
+// TODO MM - like above (above is the svn version, decide what to use later)
+//Set<Float> aSplitPoints = getDomain(theMembers, aNumericStrategy, aConditionBase.getColumn(), itsSearchParameters.getNrBins());
+//NavigableMap<Float, Integer> map = getDomainMap(theMembers, aNumericStrategy, aConditionBase.getColumn(), itsSearchParameters.getNrBins());
+//assert(aSplitPoints.length == map.size());
+//int pre = map.size();
+//System.out.println(aConditionBase.getOperator());
+//System.out.println(map);
+//filterDomain(map, aConditionBase.getOperator(), itsSearchParameters.getMinimumCoverage());
+//System.out.println(map);
+//int post = map.size();
+//int reduced = pre-post;
+//System.out.format("PRE: %d\tPOST: %d\tREDUCED: %d%nTOTAL_FILTERED: %d%n%n", pre, post, reduced, TOTAL_FILTERED.addAndGet(reduced));
 
 		Subgroup aBestSubgroup = null;
+//		for (float aSplitPoint : map.keySet())
 		for (float aSplitPoint : aSplitPoints)
 		{
 			if (!isUseful(itsFilter, aList, new Condition(aConditionBase, aSplitPoint)))
@@ -823,117 +812,74 @@ System.out.println(aSubgroup + "\t" + aRefinement.getConditionBase());
 	{
 		switch (theNumericStrategy)
 		{
-			case NUMERIC_ALL :
-			{
-				return theColumn.getUniqueNumericDomain(theMembers);
-			}
-			case NUMERIC_BEST :
-			{
-				return theColumn.getUniqueNumericDomain(theMembers);
-			}
-			case NUMERIC_BINS :
-			{
-				return getUniqueSplitPoints(theMembers, theColumn, theNrBins);
-			}
-			case NUMERIC_BEST_BINS :
-			{
-				return getUniqueSplitPoints(theMembers, theColumn, theNrBins);
-			}
-			case NUMERIC_INTERVALS :
-			{
-				return theColumn.getUniqueNumericDomain(theMembers);
-			}
+			case NUMERIC_ALL	: return theColumn.getUniqueNumericDomain(theMembers);
+			case NUMERIC_BEST	: return theColumn.getUniqueNumericDomain(theMembers);
+			case NUMERIC_BINS	: return getUniqueSplitPoints(theMembers, theColumn, theNrBins);
+			case NUMERIC_BEST_BINS	: return getUniqueSplitPoints(theMembers, theColumn, theNrBins);
+			case NUMERIC_INTERVALS	: return theColumn.getUniqueNumericDomain(theMembers);
 			default :
-			{
 				throw new AssertionError("invalid Numeric Strategy: " + theNumericStrategy);
-			}
 		}
 	}
 
 	// FIXME MM - Column.getSplitPointsMap() is not implemented yet
-	private static final SortedMap<Float, Integer> getDomainMap(BitSet theMembers, NumericStrategy theNumericStrategy, Column theColumn, int theNrBins)
+	private static final NavigableMap<Float, Integer> getDomainMap(BitSet theMembers, NumericStrategy theNumericStrategy, Column theColumn, int theNrBins)
 	{
 		switch (theNumericStrategy)
 		{
-			case NUMERIC_ALL :
-			{
-				return theColumn.getUniqueNumericDomainMap(theMembers);
-			}
-			case NUMERIC_BEST :
-			{
-				return theColumn.getUniqueNumericDomainMap(theMembers);
-			}
-			case NUMERIC_BINS :
-			{
-				return theColumn.getSplitPointsMap(theMembers, theNrBins);
-			}
-			case NUMERIC_BEST_BINS :
-			{
-				return theColumn.getSplitPointsMap(theMembers, theNrBins);
-			}
-			case NUMERIC_INTERVALS :
+			case NUMERIC_ALL	: return theColumn.getUniqueNumericDomainMap(theMembers);
+			case NUMERIC_BEST	: return theColumn.getUniqueNumericDomainMap(theMembers);
+			case NUMERIC_BINS	: return theColumn.getSplitPointsMap(theMembers, theNrBins);
+			case NUMERIC_BEST_BINS	: return theColumn.getSplitPointsMap(theMembers, theNrBins);
+			case NUMERIC_INTERVALS	:
 			{
 				throw new AssertionError("NUMERIC_STRATEGY NOT IMPLEMENTED: " + theNumericStrategy);
 				//return theColumn.getUniqueNumericDomainMap(theMembers);
 			}
 			default :
-			{
 				throw new AssertionError("invalid Numeric Strategy: " + theNumericStrategy);
-			}
 		}
 	}
 
 	// TODO MM - hack: functionality should be in theColumn.getSplitPoints()
 	private static final float[] getUniqueSplitPoints(BitSet theMembers, Column theColumn, int theNrBins)
 	{
+		if (theNrBins <= 1)
+			return new float[0];
+
 		// this is the crucial translation from nrBins to nrSplitpoints
 		int aNrSplitPoints = theNrBins - 1;
 
 		float[] aSplitPoints = theColumn.getSplitPoints(theMembers, aNrSplitPoints);
 
-		// ultra lazy implementation
-		// First create TreeSet<Float>, then copy to float[], not ideal,
-		// but I lack the inspiration to write a RB-tree for floats
-		Set<Float> aUniqueValues = new TreeSet<Float>();
-		for (float f : aSplitPoints)
-			aUniqueValues.add(f);
+		int aLast = 0;
+		for (int i = 1, j = aSplitPoints.length; i < j; ++i)
+			if (aSplitPoints[aLast] != aSplitPoints[i])
+				aSplitPoints[++aLast] = aSplitPoints[i];
 
-		float[] aResult = new float[aUniqueValues.size()];
-		int i = -1;
-		for (Float f : aUniqueValues)
-			aResult[++i] = f.floatValue();
+		aSplitPoints = Arrays.copyOf(aSplitPoints, ++aLast);
 
-		return aResult;
+		return aSplitPoints;
 	}
 
-
-	private final void filterDomain(SortedMap<Float, Integer> theSplitPoints, Operator theOperator, int theMinimumCoverage)
+	private final void filterDomain(NavigableMap<Float, Integer> theSplitPoints, Operator theOperator, int theMinimumCoverage)
 	{
-int pre = theSplitPoints.size();
-		Iterator<Entry<Float, Integer>> it = theSplitPoints.entrySet().iterator();
-
 		// switch in for-loop is expensive, so check Operator only once
 		switch (theOperator)
 		{
 			case EQUALS :
 			{
-				while (it.hasNext())
-				{
+				for (Iterator<Entry<Float, Integer>> it = theSplitPoints.entrySet().iterator(); it.hasNext(); )
 					if (it.next().getValue() < theMinimumCoverage)
 						it.remove();
-				}
-//				for (Iterator i = theSplitPoints.entrySet().iterator(); i.hasNext(); )
-//				{
-//					if (it.next().getValue() < theMinimumCoverage)
-//						it.remove();
-//				}
+
 				break;
 			}
 			case LESS_THAN_OR_EQUAL :
 			{
 				int sum = 0;
 
-				while (it.hasNext())
+				for (Iterator<Entry<Float, Integer>> it = theSplitPoints.entrySet().iterator(); it.hasNext(); )
 				{
 					if ((sum += it.next().getValue()) < theMinimumCoverage)
 						it.remove();
@@ -945,43 +891,12 @@ int pre = theSplitPoints.size();
 			}
 			case GREATER_THAN_OR_EQUAL :
 			{
-				// 2n; loop over Set in reverse would make it n
-				// current implementation is horrible
-
-				int sum = 0;
-
-				while (it.hasNext())
-					sum += it.next().getValue();
-
-				// faster then through else below
-				if (sum < theMinimumCoverage)
-				{
-					// avoid ConcurrentModificationException
-					it = null;
-					theSplitPoints.clear();
-				}
-				else
-				{
-					it = theSplitPoints.entrySet().iterator();
-
-					while (it.hasNext())
-					{
-						Entry<Float, Integer> e = it.next();
-
-						if (sum >= theMinimumCoverage)
-							sum -= e.getValue();
-						else
-							it.remove();
-						// could remove tail at once
-						// but code will change anyway
-					}
-				}
-
+				filterDomain(theSplitPoints.descendingMap(), Operator.LESS_THAN_OR_EQUAL, theMinimumCoverage);
 				break;
-				//throw new AssertionError("NOT IMPLEMENTED YET: " + theOperator);
 			}
 			case BETWEEN :
 			{
+				// FIXME MM
 				// perhaps no filtering needed in this setting
 				// Interval code might take care of it itself
 				// need to check code
@@ -990,30 +905,20 @@ int pre = theSplitPoints.size();
 				// happens when Interval covers to few items
 				int sum = 0;
 
-				while (it.hasNext())
-				{
+				for (Iterator<Entry<Float, Integer>> it = theSplitPoints.entrySet().iterator(); it.hasNext(); )
 					if ((sum += it.next().getValue()) > theMinimumCoverage)
 						break; // could return
-				}
 
 				if (sum < theMinimumCoverage)
-				{
-					// avoid ConcurrentModificationException
-					it = null;
 					theSplitPoints.clear();
-				}
 
-				//break;
 				throw new AssertionError("NOT IMPLEMENTED YET: " + theOperator);
+				//break;
 			}
 			default :
 				throw new AssertionError("invalid Operator: " + theOperator);
 		}
-int post = theSplitPoints.size();
-int reduced = pre-post;
-System.out.format("PRE: %d\tPOST: %d\tREDUCED: %d%nTOTAL_FILTERED: %d%n", pre, post, reduced, TOTAL_FILTERED.addAndGet(reduced));
 	}
-AtomicInteger TOTAL_FILTERED = new AtomicInteger(0);
 
 	private static final boolean isUseful(Filter theFilter, ConditionListA theConditionList, Condition theCondition)
 	{
@@ -1197,7 +1102,7 @@ AtomicInteger TOTAL_FILTERED = new AtomicInteger(0);
 // the final code can be based on isUseful(Refinement, aValue)
 // using Refinement.Subgroup.ConditionList, Refinement.ConditionBase, and aValue
 // but at least Refinement.getRefinedSubgroup(aValue) is not called (expensive)
-// it creates a copy of the Subgroup (members-bitset) and ConditionList
+// it creates a copy of the Subgroup (members-BitSet) and ConditionList
 // and performs a full table scan to add the new Condition
 // as the new Subgroup would not decrease in size / or became empty it was not
 // logged as a Candidate (though it does increment itsNrCandidates)
@@ -1245,7 +1150,7 @@ AtomicInteger TOTAL_FILTERED = new AtomicInteger(0);
 							if (!itsFilter.isUseful(aList, new Condition(aConditionBase, aValue)))
 								continue;
 
-						aNewSubgroup = theRefinement.getRefinedSubgroup(aValue.equals("1"));
+						aNewSubgroup = theRefinement.getRefinedSubgroup(aValue.equals(AttributeType.DEFAULT_BINARY_TRUE_STRING));
 						checkAndLog(aNewSubgroup, anOldCoverage);
 					}
 					break;
@@ -1501,6 +1406,8 @@ AtomicInteger TOTAL_FILTERED = new AtomicInteger(0);
 				// NOTE aMembers is a clone so this is safe
 				aMembers.and(itsBinaryTarget);
 				final int aCountHeadBody = aMembers.cardinality();
+// FIXME MM - hold: functional change + needs testing / profiling
+//				final int aCountHeadBody = theNewSubgroup.countCommon(itsBinaryTarget);
 				final QM aMeasure = itsSearchParameters.getQualityMeasure();
 
 				//Rob
@@ -1538,13 +1445,17 @@ AtomicInteger TOTAL_FILTERED = new AtomicInteger(0);
 				}
 
 				//TODO: is this special case still needed?
-				else if ( QM.getQualityMeasures(TargetType.LABEL_RANKING).contains(aMeasure) )
-				{
-					LabelRankingMatrix aLRM = itsTargetRankings.getAverageRankingMatrix(theNewSubgroup);
-					aQuality = itsQualityMeasure.computeLabelRankingDistance(aCoverage, aLRM);
-					theNewSubgroup.setLabelRanking(itsTargetRankings.getAverageRanking(theNewSubgroup)); //store the average ranking for later reference
-					theNewSubgroup.setLabelRankingMatrix(aLRM); //store the matrix for later reference
-				}
+				// FIXME MM - this creates a new set FOR EVERY
+				// tested nominal Subgroup, killing performance
+				// also LABEL_RANKING is a separate TargetType
+				// see case below
+//				else if ( QM.getQualityMeasures(TargetType.LABEL_RANKING).contains(aMeasure) )
+//				{
+//					LabelRankingMatrix aLRM = itsTargetRankings.getAverageRankingMatrix(theNewSubgroup);
+//					aQuality = itsQualityMeasure.computeLabelRankingDistance(aCoverage, aLRM);
+//					theNewSubgroup.setLabelRanking(itsTargetRankings.getAverageRanking(theNewSubgroup)); //store the average ranking for later reference
+//					theNewSubgroup.setLabelRankingMatrix(aLRM); //store the matrix for later reference
+//				}
 				else //normal SINGLE_NOMINAL
 					aQuality = (float) itsQualityMeasure.calculate(aCountHeadBody, aCoverage);
 
@@ -1753,6 +1664,8 @@ System.out.format("#Subgroup: '%s' (size = %d)%n", theNewSubgroup, theNewSubgrou
 				// NOTE aMembers is a clone so this is safe
 				aMembers.and(itsPrimaryColumn.getBinaries());
 				int aCountHeadBody = aMembers.cardinality();
+// FIXME MM - hold: functional change
+//				int aCountHeadBody = theNewSubgroup.countCommon(itsPrimaryColumn.getBinaries());
 
 				aQuality = itsQualityMeasure.calculate(theNewSubgroup.getMembers(), aCoverage, aCountHeadBody);
 
@@ -1781,7 +1694,7 @@ System.out.format("#Subgroup: '%s' (size = %d)%n", theNewSubgroup, theNewSubgrou
 				//theNewSubgroup.setTertiaryStatistic(aCountHeadBody); //count of positives in the subgroup
 				break;
 			}
-			default : break;
+			default : throw new AssertionError(itsSearchParameters.getTargetType());
 		}
 		return aQuality;
 	}
@@ -1963,8 +1876,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		logExperimentSettings(aConditions);
 
 		// make subgroup to start with, containing all elements
-		BitSet aBitSet = new BitSet(itsNrRows);
-		aBitSet.set(0, itsNrRows);
+		BitSet aBitSet = getAllDataBitSet(itsNrRows);
 		Subgroup aStart = new Subgroup(ConditionListBuilder.emptyList(), aBitSet, itsResult);
 
 		if (itsSearchParameters.getBeamSeed() == null)
@@ -2066,9 +1978,15 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 
 			if (aCandidate != null)
 			{
+				Subgroup aSubgroup = aCandidate.getSubgroup();
+
+				// Candidate should not be in CandidateQueue 
+				assert (aSubgroup.getDepth() < aSearchDepth);
+
 				if (mainWindowNotNull)
-					setTitle(aCandidate);
-				es.execute(new Test(aCandidate, aSearchDepth, theEndTime, s, aConditions));
+					setTitle(aSubgroup);
+
+				es.execute(new Test(aSubgroup, aSearchDepth, theEndTime, s, aConditions));
 			}
 			// queue was empty, but other threads were running, they
 			// may be in the process of adding new Candidates
@@ -2128,6 +2046,8 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		// in MULTI_LABEL, order may have changed
 		// in COVER_BASED_BEAM_SELECTION, subgroups may have been removed
 		itsResult.setIDs(); //assign 1 to n to subgroups, for future reference in subsets
+// XXX MM : debug info not useful for general use
+//Log.logCommandLine(String.format("CANDIDATES: %s\tFILTERED: %s\tRATIO:%f", itsCandidateCount.toString(), TOTAL_FILTERED.toString(), (TOTAL_FILTERED.doubleValue()/(itsCandidateCount.doubleValue()+TOTAL_FILTERED.doubleValue()))));
 	}
 
 	// to throttle GUI update, assumes setTitle() is called by 1 Thread only
@@ -2136,18 +2056,17 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	private long itsThen = 0L;
 
 	// NOTE itsCandidateCount and currently refined subgroup are unrelated
-	private final void setTitle(Candidate aCandidate)
+	private final void setTitle(Subgroup theSubgroup)
 	{
 		long now = System.nanoTime();
 		if (now - itsThen < INTERVAL)
 			return;
 		itsThen = now;
 
-		final Subgroup aSubgroup = aCandidate.getSubgroup();
-		final String aCurrent = aSubgroup.toString();
+		String aCurrent = theSubgroup.toString();
 
-		final StringBuilder sb = new StringBuilder(aCurrent.length() + 32);
-		sb.append("d=").append(Integer.toString(aSubgroup.getDepth()+1))
+		StringBuilder sb = new StringBuilder(aCurrent.length() + 32);
+		sb.append("d=").append(Integer.toString(theSubgroup.getDepth()+1))
 		.append(", cands=").append(itsCandidateCount.get())
 		.append(", refining ").append(aCurrent);
 
@@ -2161,15 +2080,18 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	 */
 	private class Test implements Runnable
 	{
-		private final Candidate itsCandidate;
+		private final Subgroup itsSubgroup;
 		private final int itsSearchDepth;
 		private final long itsEndTime;
 		private final Semaphore itsSemaphore;
 		private final ConditionBaseSet itsConditionBaseSet;
 
-		public Test(Candidate theCandidate, int theSearchDepth, long theEndTime, Semaphore theSemaphore, ConditionBaseSet theConditionBaseSet)
+		// XXX MM - theSearchDepth parameter will be removed
+		public Test(Subgroup theSubgroup, int theSearchDepth, long theEndTime, Semaphore theSemaphore, ConditionBaseSet theConditionBaseSet)
 		{
-			itsCandidate = theCandidate;
+			assert (theSubgroup.getDepth() < theSearchDepth);
+
+			itsSubgroup = theSubgroup;
 			itsSearchDepth = theSearchDepth;
 			itsEndTime = theEndTime;
 			itsSemaphore = theSemaphore;
@@ -2179,14 +2101,13 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		@Override
 		public void run()
 		{
-			Subgroup aSubgroup = itsCandidate.getSubgroup();
-
-			if (aSubgroup.getDepth() < itsSearchDepth)
+			// XXX MM - can be removed, check by Constructor
+			// in the meantime getDepth() should not have changed
+			if (itsSubgroup.getDepth() < itsSearchDepth)
 			{
-//				RefinementList aRefinementList = new RefinementList(aSubgroup, itsTable, itsSearchParameters);
-				RefinementList aRefinementList = new RefinementList(aSubgroup, itsConditionBaseSet);
+				RefinementList aRefinementList = new RefinementList(itsSubgroup, itsConditionBaseSet);
 				// .getMembers() creates expensive clone, reuse
-				final BitSet aMembers = aSubgroup.getMembers();
+				final BitSet aMembers = itsSubgroup.getMembers();
 
 				for (int i = 0, j = aRefinementList.size(); i < j; i++)
 				{
@@ -2265,7 +2186,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		 *
 		 * EQUALS tests needed on
 		 * NOMINAL: when Operator = EQUALS (thus not in set-valued mode)
-		 * NUMERIC: when NominalOperatorSetting.IncludesEquals() == true
+		 * NUMERIC: when NominalOperatorSetting.includesEquals() == true
 		 * BINARY : when Operator = EQUALS (always true in current code)
 		 */
 		private final boolean isNominalEqualsTestRequired;
@@ -2457,7 +2378,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	 * test assumption that NUMERIC_ALL is the only NumericOperatorSetting
 	 * that may cause redundancy of the form:
 	 * [ (C >= x)  ^ (C <= x) ^ ... ] -> which selects [ (C = x)  ^ ... ]
-	 * for DEPTH_FIRST-NUMERIC_ALL (C = x) is created on depth = 1
+	 * for DEPTH_FIRST-NUMERIC_ALL (C = x) is created on depth=1
 	 * and combined with every relevant other Condition
 	 */
 	private static final boolean numericAll()
