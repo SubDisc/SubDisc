@@ -6,8 +6,6 @@ import java.util.*;
  * NOTE As it stands, this class has deadlock potential.
  * Always obtain lock in fixed order: itsQueue -> itsNextQueue -> itsTempQueue.
  * 
- * TODO There is no need to store itsNextQueue items when max_depth is reached.
- * 
  * TODO Queue classes in Concurrency framework allow for better concurrency. Eg.
  * Higher concurrency through non-locking algorithms and compareAndSwap methods.
  * 
@@ -28,6 +26,7 @@ import java.util.*;
 public class CandidateQueue
 {
 	private final SearchStrategy itsSearchStrategy;
+	private final boolean isBeamSearchStrategy;
 	private final int itsMaxDepth;
 	private TreeSet<Candidate> itsQueue;
 	private TreeSet<Candidate> itsNextQueue;
@@ -45,6 +44,7 @@ public class CandidateQueue
 			throw new IllegalArgumentException("arguments can not be null");
 
 		itsSearchStrategy = theSearchParameters.getSearchStrategy();
+		isBeamSearchStrategy = itsSearchStrategy.isBeam();
 		itsMaxDepth = theSearchParameters.getSearchDepth();
 		if (itsMaxDepth <= 0)
 			throw new IllegalArgumentException("search depth must be > 0");
@@ -211,7 +211,7 @@ if (Process.ROC_BEAM_TEST)
 	{
 		synchronized (itsQueue)
 		{
-			if (itsSearchStrategy.isBeam() && itsQueue.size() == 0)
+			if (isBeamSearchStrategy && itsQueue.size() == 0)
 				moveToNextLevel();
 
 			return itsQueue.pollFirst();
@@ -334,41 +334,53 @@ itsNextQueueConvexHullROC.debug();
 	 */
 	public int size()
 	{
-		synchronized (itsQueue)
+		// do not use synchronized block on itsQueue and then place
+		// switch inside it, keep lock as short as possible
+		switch (itsSearchStrategy)
 		{
-			final int qs = itsQueue.size();
-
-			switch(itsSearchStrategy)
+			case BEAM :
 			{
-				case BEAM :
+				synchronized (itsQueue)
 				{
+					int qs = itsQueue.size();
 					synchronized (itsNextQueue)
 					{
 						return qs + itsNextQueue.size();
 					}
 				}
-				case ROC_BEAM :
+			}
+			case ROC_BEAM :
+			{
+				synchronized (itsQueue)
 				{
+					int qs = itsQueue.size();
 					synchronized (itsNextQueueConvexHullROC)
 					{
 						return qs + itsNextQueueConvexHullROC.size();
 					}
 				}
-				case COVER_BASED_BEAM_SELECTION :
+			}
+			case COVER_BASED_BEAM_SELECTION :
+			{
+				synchronized (itsQueue)
 				{
+					int qs = itsQueue.size();
 					synchronized (itsTempQueue)
 					{
 						return qs + itsTempQueue.size();
 					}
 				}
-				// do not use fall-through
-				case BEST_FIRST : return qs;
-				case DEPTH_FIRST : return qs;
-				case BREADTH_FIRST : return qs;
-				// should never happen
-				default :
-					throw new AssertionError(itsSearchStrategy.toString());
 			}
+			// do not use fall-through
+			case BEST_FIRST :
+				synchronized (itsQueue) { return itsQueue.size(); }
+			case DEPTH_FIRST :
+				synchronized (itsQueue) { return itsQueue.size(); }
+			case BREADTH_FIRST :
+				synchronized (itsQueue) { return itsQueue.size(); }
+			// should never happen
+			default :
+				throw new AssertionError(itsSearchStrategy.toString());
 		}
 	}
 
