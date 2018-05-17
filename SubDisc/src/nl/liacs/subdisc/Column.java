@@ -29,21 +29,17 @@ public class Column implements XMLNodeInterface
 
 	// when adding/removing members be sure to update addNodeTo() and loadNode()
 	private float[] itsFloatz;
-//	private List<String> itsNominals;
+	// three structures for fast contains() and get() test
+	// itsDistinctValues and itsDistinctValuesMap should have the same data
+	// but ordered and unordered , respectively
+	// itsNominalz as int[] allows for (int == int) comparison instead of
+	// String.equals()
+	// storage tradeoff lies around (n == 16c, plus some implementation type
+	// dependent storage requirement)
+	// XXX MM - merge itsDistinctValues and itsDistinctValuesMap
 	private int[] itsNominalz;
 	private BitSet itsBinaries;
-	// TODO new needs field tests (eg. when switching AttributeTypes)
-	// store only references to unique Strings, not individual Strings
-	// List is not the most ideal interface, bi-directional map or
-	// itsNominals storing Integer indices would be better/ faster/ leaner
 	private List<String> itsDistinctValues;
-	// for supporting a quicker contains() and get() test
-	// Should have the same contents as itsDistinctValues, but unordered.
-	// TODO MM see above
-	// will be merged with itsDistinctValues, itsNominals will become int[]
-	// this allows for (int == int) comparison instead of String.equals()
-	// storage tradeoff lies around (n == 16c, plus some implementation type
-	// dependent storage requirement
 	private Map<String, Integer> itsDistinctValuesMap;
 
 	private String itsMissingValue;
@@ -152,7 +148,6 @@ public class Column implements XMLNodeInterface
 		{
 			case NOMINAL :
 			{
-//				itsNominals = new ArrayList<String>(theNrRows);
 				itsNominalz = new int[theNrRows];
 				itsDistinctValues = new ArrayList<String>();
 				itsDistinctValuesMap = new HashMap<String, Integer>(MAP_DEFAULT_INIT_SIZE);
@@ -206,6 +201,8 @@ public class Column implements XMLNodeInterface
 				itsMissingValue = aSetting.getTextContent();
 			else if ("enabled".equalsIgnoreCase(aNodeName))
 				isEnabled = Boolean.valueOf(aSetting.getTextContent());
+			else
+				throw new AssertionError("unknown Node: " + aNodeName);
 		}
 		setupColumn(DEFAULT_INIT_SIZE);
 	}
@@ -234,7 +231,6 @@ public class Column implements XMLNodeInterface
 	{
 		Column aCopy = new Column(itsName, itsShort, itsType, itsIndex, itsSize);
 		aCopy.itsFloatz = itsFloatz;
-//		aCopy.itsNominals = itsNominals;
 		aCopy.itsNominalz = itsNominalz;
 		aCopy.itsBinaries = itsBinaries;
 		aCopy.itsDistinctValues = itsDistinctValues;
@@ -298,15 +294,12 @@ public class Column implements XMLNodeInterface
 		aColumn.isEnabled = this.isEnabled;
 		aColumn.itsTargetStatus = this.itsTargetStatus;
 
-		switch(itsType)
+		switch (itsType)
 		{
 			case NOMINAL :
 			{
-//				aColumn.itsNominals = new ArrayList<String>(aColumnSize);
 				aColumn.itsNominalz = new int[aColumnSize];
 				//preferred way to loop over BitSet (itsSize for safety)
-//				for (int i = theSet.nextSetBit(0); i >= 0 && i < itsSize; i = theSet.nextSetBit(i + 1))
-//					aColumn.itsNominals.add(getNominal(i));
 				for (int i = theSet.nextSetBit(0), j = -1; i >= 0 && i < itsSize; i = theSet.nextSetBit(i + 1))
 					aColumn.itsNominalz[++j] = this.itsNominalz[i];
 				break;
@@ -350,27 +343,6 @@ public class Column implements XMLNodeInterface
 	 *
 	 * @param theNominal the value to append to this Column.
 	 */
-//	public void add(String theNominal)
-//	{
-//		if (theNominal == null)
-//			throw new NullPointerException();
-//
-//		Integer i = itsDistinctValuesMap.get(theNominal);
-//		if (i == null)
-//		{
-//			// String constructor trims of baggage
-//			theNominal = new String(theNominal);
-//			int size = itsDistinctValues.size();
-//			// keep identical sets of values
-//			itsDistinctValues.add(theNominal);
-//			itsDistinctValuesMap.put(theNominal, size);
-//			itsNominals.add(theNominal);
-//		}
-//		else
-//			itsNominals.add(itsDistinctValues.get(i));
-//
-//		++itsSize;
-//	}
 	public void add(String theNominal)
 	{
 		if (theNominal == null)
@@ -433,8 +405,6 @@ public class Column implements XMLNodeInterface
 	 */
 	public void close()
 	{
-//		if (itsNominals != null)
-//			((ArrayList<String>) itsNominals).trimToSize();
 		if ((itsNominalz != null) && (itsNominalz.length > itsSize))
 			itsNominalz = Arrays.copyOf(itsNominalz, itsSize);
 		if (itsDistinctValues != null)
@@ -463,7 +433,6 @@ public class Column implements XMLNodeInterface
 	public int getIndex() { return itsIndex; }	// is never set for MRML
 	public String getNominal(int theIndex)
 	{
-		//return isOutOfBounds(theIndex) ? "" : itsNominals.get(theIndex);
 		return isOutOfBounds(theIndex) ? "" : itsDistinctValues.get(itsNominalz[theIndex]);
 	}
 	public float getFloat(int theIndex)
@@ -575,10 +544,6 @@ public class Column implements XMLNodeInterface
 		switch (itsType)
 		{
 			case NOMINAL :
-//				List<String> aNominals = new ArrayList<String>(thePermutation.length);
-//				for (int i : thePermutation)
-//					aNominals.add(itsNominals.get(i));
-//				itsNominals = aNominals;
 				int[] aNominalz = new int[thePermutation.length];
 				for (int i = 0, j = thePermutation.length; i < j; ++i)
 					aNominalz[i] = itsNominalz[thePermutation[i]];
@@ -613,7 +578,6 @@ public class Column implements XMLNodeInterface
 
 		switch(itsType)
 		{
-//			case NOMINAL : Log.logCommandLine(itsNominals.toString()); break;
 			case NOMINAL : Log.logCommandLine(Arrays.toString(itsNominalz)); break;
 			case NUMERIC : Log.logCommandLine(Arrays.toString(itsFloatz)); break;
 			case ORDINAL : throw new AssertionError(itsType);
@@ -674,7 +638,6 @@ public class Column implements XMLNodeInterface
 		// warning (itsCardinality * 2) without overflow check is unsafe
 		// besides HashMap constructor always uses next power of 2
 		itsDistinctValuesMap = new HashMap<String, Integer>(itsCardinality);
-//		itsNominals = new ArrayList<String>(itsSize);
 		itsNominalz = new int[itsSize];
 		itsSize = 0;
 
@@ -773,7 +736,6 @@ public class Column implements XMLNodeInterface
 		// relies on itsCardinality to be set at this time
 		itsDistinctValues = new ArrayList<String>(itsCardinality);
 		itsDistinctValuesMap = new HashMap<String, Integer>(itsCardinality);
-//		itsNominals = new ArrayList<String>(itsSize);
 		itsNominalz = new int[itsSize];
 		itsMissingValue = AttributeType.NOMINAL.DEFAULT_MISSING_VALUE;
 
@@ -848,7 +810,6 @@ public class Column implements XMLNodeInterface
 					// complicates cardinality logic
 					try
 					{
-//						itsFloatz[i] = Float.valueOf(itsNominals.get(i));
 						itsFloatz[i] = Float.valueOf(itsDistinctValues.get(itsNominalz[i]));
 					}
 					catch (NumberFormatException e)
@@ -867,7 +828,6 @@ public class Column implements XMLNodeInterface
 				 */
 				itsDistinctValues = null;
 				itsDistinctValuesMap = null;
-//				itsNominals = null;
 				itsNominalz = null;
 
 				if (itsMissing.cardinality() == 0 && !isValidValue(theNewType, itsMissingValue))
@@ -1275,8 +1235,6 @@ public class Column implements XMLNodeInterface
 
 				itsMissingValue = theNewValue;
 				updateCardinality(itsDistinctValues);
-//				for (int i = itsMissing.nextSetBit(0); i >= 0; i = itsMissing.nextSetBit(i + 1))
-//					itsNominals.set(i, itsMissingValue);
 				return true;
 			}
 			case NUMERIC :
@@ -1586,6 +1544,8 @@ public class Column implements XMLNodeInterface
 	 *
 	 * @see Condition
 	 */
+	// XXX MM - should be replaced by evaluate(BitSet, Condition)
+	@Deprecated
 	public BitSet evaluate(Condition theCondition) throws IllegalArgumentException
 	{
 		// XXX evaluation logic is deeply flawed, this hack is needed
@@ -1601,9 +1561,6 @@ public class Column implements XMLNodeInterface
 		{
 			case NOMINAL :
 			{
-//				for (int i = 0, j = itsSize; i < j; ++i)
-//					if (theCondition.evaluate(itsNominals.get(i)))
-//						aSet.set(i);
 				for (int i = 0, j = itsSize; i < j; ++i)
 					if (theCondition.evaluate(itsDistinctValues.get(itsNominalz[i])))
 						aSet.set(i);
@@ -1743,10 +1700,6 @@ public class Column implements XMLNodeInterface
 
 	private BitSet nominalElementOf(BitSet theMembers, ValueSet theValueSet, BitSet theResult)
 	{
-//		for (int i = theMembers.nextSetBit(0); i >= 0; i = theMembers.nextSetBit(i + 1))
-//			if (theValueSet.contains(itsNominals.get(i)))
-//				theResult.set(i);
-
 		for (int i = theMembers.nextSetBit(0); i >= 0; i = theMembers.nextSetBit(i + 1))
 			if (theValueSet.contains(itsDistinctValues.get(itsNominalz[i])))
 				theResult.set(i);
@@ -1772,9 +1725,6 @@ public class Column implements XMLNodeInterface
 	 */
 	private BitSet nominalEquals(BitSet theMembers, String theValue, BitSet theResult)
 	{
-//		for (int i = theMembers.nextSetBit(0); i >= 0; i = theMembers.nextSetBit(i + 1))
-//			if (itsNominals.get(i).equals(theValue))
-//				theResult.set(i);
 		int v = itsDistinctValuesMap.get(theValue);
 		for (int i = theMembers.nextSetBit(0); i >= 0; i = theMembers.nextSetBit(i + 1))
 			if (itsNominalz[i] == v)
@@ -1884,109 +1834,112 @@ public class Column implements XMLNodeInterface
 		if (!isValidCall("getStatistics", theBitSet))
 			return new Statistics();
 		// not all methods below are safe for divide by 0
-		else if (theBitSet.cardinality() == 0)
+		int aNrMembers = theBitSet.cardinality();
+		if (aNrMembers == 0)
 			return new Statistics();
 
 		final Statistics aResult;
 		// if (!MMAD) do not store and sort the values, else do
 		if (!getMedianAndMedianAD)
 		{
-			float aSum = computeSum(theBitSet);
-			aResult = new Statistics(theBitSet.cardinality(), aSum, computeSumSquaredDeviations(aSum, theBitSet));
+			float aSum = computeSum(theBitSet, itsFloatz);
+			aResult = new Statistics(aNrMembers, aSum, computeSumSquaredDeviations(aSum, aNrMembers, theBitSet, itsFloatz));
 		}
 		else
 		{
 			// this code path needs a copy of the data for median
 			// get relevant values and do summing in single loop
 			float aSum = 0.0f;
-			float[] aValues = new float[theBitSet.cardinality()];
+			float[] aValues = new float[aNrMembers];
 			for (int i = theBitSet.nextSetBit(0), j = -1; i >= 0; i = theBitSet.nextSetBit(i + 1))
 				aSum += (aValues[++j] = itsFloatz[i]);
 			Arrays.sort(aValues);
 			float aMedian = computeMedian(aValues);
 
-			aResult = new Statistics(
-				theBitSet.cardinality(), 
-				aSum, 
-				computeSumSquaredDeviations(aSum, aValues), 
-				aMedian, 
+			aResult = new Statistics(aNrMembers,
+				aSum,
+				computeSumSquaredDeviations(aSum, aValues),
+				aMedian,
 				computeMedianAbsoluteDeviations(aMedian, aValues));
 		}
 
 		if (addComplement)
 		{
+			// XXX MM - do not clone(), use clear bits in theBitSet
 			BitSet aComplement = (BitSet) theBitSet.clone();
 			aComplement.flip(0, itsSize);
-			float aComplementSum = computeSum(aComplement);
-			aResult.addComplement(aComplement.cardinality(), aComplementSum, computeSumSquaredDeviations(aComplementSum, aComplement));
+			int aNrComplementMembers = (itsSize - aNrMembers);
+			assert (aNrComplementMembers == aComplement.cardinality());
+			float aComplementSum = computeSum(aComplement, itsFloatz);
+			aResult.addComplement(aNrComplementMembers, aComplementSum, computeSumSquaredDeviations(aComplementSum, aNrComplementMembers, aComplement, itsFloatz));
+
 			aResult.addDatasetSSD(computeSumSquaredDeviations(aResult.getAverage()));
+			// XXX MM - computeSumSquaredDeviations(sum, float[])
+			//aResult.addDatasetSSD(computeSumSquaredDeviations((aResult.getSubgroupSum() + aComplementSum), itsFloatz));
 		}
+
 		return aResult;
 	}
 
-	// for all data, not just subgroup
-	private float computeSum()
-	{
-		float aSum = 0.0f;
-		for (int i=0; i<itsSize; i++)
-			aSum += itsFloatz[i];
-		return aSum;
-	}
-
-	private float computeSum(BitSet theBitSet)
+	private static final float computeSum(BitSet theBitSet, float[] theFloats)
 	{
 		float aSum = 0.0f;
 		for (int i = theBitSet.nextSetBit(0); i >= 0; i = theBitSet.nextSetBit(i + 1))
-			aSum += itsFloatz[i];
+			aSum += theFloats[i];
 		return aSum;
 	}
 
 	// always called after computeSum for !MMAD
 	// not safe for divide by 0 (theBitSet.cardinality() == 0)
-	private float computeSumSquaredDeviations(float theSum, BitSet theBitSet)
+	// uses theNrMembers, as theBitSet.cardinality() is expensive
+	private static final float computeSumSquaredDeviations(float theSum, int theNrMembers, BitSet theBitSet, float[] theFloats)
 	{
-		float aMean = theSum / theBitSet.cardinality();
+		assert (theNrMembers == theBitSet.cardinality());
+
+		float aMean = theSum / theNrMembers;
 		float aSum = 0.0f;
 		for (int i = theBitSet.nextSetBit(0); i >= 0; i = theBitSet.nextSetBit(i + 1))
-			aSum += Math.pow((itsFloatz[i]-aMean), 2);
+			aSum += squared(theFloats[i] - aMean);
 		return aSum;
 	}
 
 	// for all data, not just subgroup
+	// XXX MM only used by one method, merge with code below
+	@Deprecated
 	private float computeSumSquaredDeviations(float theMean)
 	{
 		float aSum = 0.0f;
-		for (int i=0; i<itsSize; i++)
-			aSum += Math.pow((itsFloatz[i]-theMean), 2);
+		for (float f : itsFloatz)
+			aSum += squared(f - theMean);
 		return aSum;
 	}
 
 	// always called after computeSum for MMAD
-	// not safe for divide by 0 (theSortedValues.length == 0)
-	private float computeSumSquaredDeviations(float theSum, float[] theSortedValues)
+	// not safe for divide by 0 (theFloats.length == 0)
+	private static final float computeSumSquaredDeviations(float theSum, float[] theFloats)
 	{
-		float aMean = theSum / theSortedValues.length;
+		float aMean = theSum / theFloats.length;
 		float aSum = 0.0f;
-		for (float f : theSortedValues)
-			aSum += Math.pow((f-aMean), 2);
+		for (float f : theFloats)
+			aSum += squared(f - aMean);
 		return aSum;
 	}
 
 	// always called after computeSumSquaredDeviations for MMAD
 	// throws indexOutOfBoundsException if (theSortedValues.length == 0)
-	private float computeMedian(float[] theSortedValue)
+	private static final float computeMedian(float[] theSortedValues)
 	{
-		int aLength = theSortedValue.length;
+		int aLength = theSortedValues.length;
 		// even, bit check (even numbers end with 0 as last bit)
 		if ((aLength & 1) == 0)
-			return (theSortedValue[(aLength/2)-1] + theSortedValue[aLength/2]) / 2;
+			return (theSortedValues[(aLength/2)-1] + theSortedValues[aLength/2]) / 2;
 		else
-			return theSortedValue[aLength/2];
+			return theSortedValues[aLength/2];
 	}
 
 	// always called after computeMedian for MMAD
 	// may re-throw computeMedian()'s indexOutOfBoundsException
-	private float computeMedianAbsoluteDeviations(float theMedian, float[] theSortedValues)
+	private static final float computeMedianAbsoluteDeviations(float theMedian, float[] theSortedValues)
 	{
 		// compute absolute deviations of the elements in the subgroup
 		// store these in the original array for efficiency
@@ -1996,6 +1949,11 @@ public class Column implements XMLNodeInterface
 		//compute the MAD: the median of absolute deviations
 		Arrays.sort(theSortedValues);
 		return computeMedian(theSortedValues);
+	}
+
+	private static final float squared(float theFloat)
+	{
+		return (theFloat * theFloat);
 	}
 
 	/**
@@ -2113,24 +2071,25 @@ public class Column implements XMLNodeInterface
 			case NOMINAL :
 			{
 				// abort when all distinct values are added
-//				for (int i = theBitSet.nextSetBit(0); i >= 0 && i < itsSize; i = theBitSet.nextSetBit(i + 1))
-//					if (aUniqueValues.add(itsNominals.get(i)))
-//						if (aUniqueValues.size() == itsCardinality)
-//							break;
 				for (int i = theBitSet.nextSetBit(0); i >= 0 && i < itsSize; i = theBitSet.nextSetBit(i + 1))
 					if (aUniqueValues.add(itsDistinctValues.get(itsNominalz[i])))
 						if (aUniqueValues.size() == itsCardinality)
 							break;
 				break;
+
+// TODO MM - profile, could use the same strategy as getUniqueNumericDomain
+//return getUniqueNominalDomain(theBitSet);
 			}
 			case BINARY :
 			{
 				// abort when all distinct values are added
 				for (int i = theBitSet.nextSetBit(0); i >= 0 && i < itsSize; i = theBitSet.nextSetBit(i + 1))
-					if (aUniqueValues.add(itsBinaries.get(i) ? "1" : "0"))
+					if (aUniqueValues.add(itsBinaries.get(i) ? AttributeType.DEFAULT_BINARY_TRUE_STRING : AttributeType.DEFAULT_BINARY_FALSE_STRING))
 						if (aUniqueValues.size() == itsCardinality)
 							break;
 				break;
+// TODO MM - profile, could use the same strategy as getUniqueNumericDomain
+//return getUniqueBinaryDomain(theBitSet, itsCardinality, itsBinaries);
 			}
 			default :
 			{
@@ -2188,47 +2147,58 @@ public class Column implements XMLNodeInterface
 		int i = -1;
 		for (Float f : aUniqueValues)
 			aResult[++i] = f.floatValue();
-/*
-		// FIXME MM use only this alternative
-		int aNrMembers = theBitSet.cardinality();
-		float[] aResult2 = new float[aNrMembers];
-		for (int ii = 0, j = theBitSet.nextSetBit(0); j >= 0; j = theBitSet.nextSetBit(j + 1), ++ii)
-			aResult2[ii] = itsFloatz[j];
 
-		// sort
-		Arrays.sort(aResult2);
+// TODO MM - profile
+//		// float[] to retrieve all data, call Arrays.sort(), then filter
+//		// a TreeSet would sort and filter automatically
+//		// but test have shown that in the majority of configurations
+//		// the current alternative is faster (and uses less memory)
+//		// only when itsCaridinality is very low (<100) the following is
+//		// faster: retrieve and filter data using HashSet, convert to
+//		// float[], Arrays.sort(float[])
+//		int aNrMembers = theBitSet.cardinality();
+//		float[] aResult2 = new float[aNrMembers];
+//
+//		for (int k = 0, j = theBitSet.nextSetBit(0); j >= 0; j = theBitSet.nextSetBit(j + 1), ++k)
+//			aResult2[k] = itsFloatz[j];
+//
+//		// sort
+//		Arrays.sort(aResult2);
+//
+//		// filter duplicates, assume high cardinality
+//		// use upper bound on number of distinct values that can be
+//		// found, but on Column.init (itsCardinality == 0)
+//		int anUpper = (itsCardinality == 0) ? aNrMembers : Math.min(aNrMembers, itsCardinality);
+//		int aLast = 0;
+//		for (int k = 1; k < aNrMembers && aLast < anUpper-1; ++k)
+//			if (aResult2[k] != aResult2[aLast])
+//				aResult2[++aLast] = aResult2[k];
+//
+//		// truncate everything after last unique value
+//		// copy could be avoided using a sentinel that signals end of
+//		// input, but then returned array would not contain only unique
+//		// values and external code would need to check for sentinel
+//		//return Arrays.copyOf(aResult, aLast+1);
+//
+//		System.out.println("EQUALS: " + (Arrays.equals(aResult, Arrays.copyOf(aResult2, aLast+1))));
 
-		// filter duplicates, assume high cardinality
-		int j = 0;
-		// for tighter bound, but on Column.init (itsCardinality == 0)
-		int min = (itsCardinality == 0) ?
-					aNrMembers-1 :
-					Math.min(aNrMembers, itsCardinality)-1;
-		// k < aNrMembers not needed, j < min could be (--min != 0)
-		for (int k = 1; k < aNrMembers && j < min; ++k)
-			if (aResult2[k] != aResult2[j])
-				aResult2[++j] = aResult2[k];
-		// truncate everything after last unique value
-		aResult2 = Arrays.copyOf(aResult2, j+1);
-		assert (Arrays.equals(aResult, aResult2));
-*/
 		return aResult;
 	}
 
-	public SortedMap<Float, Integer> getUniqueNumericDomainMap(BitSet theBitSet)
+	public NavigableMap<Float, Integer> getUniqueNumericDomainMap(BitSet theBitSet)
 	{
-		if (!isValidCall("getUniqueNumericDomain", theBitSet))
+		if (!isValidCall("getUniqueNumericDomainMap", theBitSet))
 			return null;
 
-		SortedMap<Float, Integer> aUniqueValues = new TreeMap<Float, Integer>();
+		NavigableMap<Float, Integer> aUniqueValues = new TreeMap<Float, Integer>();
 		for (int i = theBitSet.nextSetBit(0); i >= 0; i = theBitSet.nextSetBit(i + 1))
 		{
-			Float f = Float.valueOf(itsFloatz[i]);
+			Float f = itsFloatz[i];
 			Integer aCount = aUniqueValues.get(f);
 			if (aCount == null)
-				aCount = Integer.valueOf(0);
-
-			aUniqueValues.put(f, Integer.valueOf(aCount+1));
+				aUniqueValues.put(f, 1);
+			else
+				aUniqueValues.put(f, aCount+1);
 		}
 
 		return aUniqueValues;
@@ -2313,46 +2283,16 @@ public class Column implements XMLNodeInterface
 	}
 
 	// FIXME MM - implement
-	public SortedMap<Float, Integer> getSplitPointsMap(BitSet theBitSet, int theNrSplits) throws IllegalArgumentException
+	public NavigableMap<Float, Integer> getSplitPointsMap(BitSet theBitSet, int theNrSplits) throws IllegalArgumentException
 	{
-		if (!isValidCall("getSplitPoints", theBitSet))
-			return new TreeMap<Float, Integer>();
-
-		if (theNrSplits < 0)
-			throw new IllegalArgumentException(theNrSplits + " (theNrSplits) < 0");
-		// valid, but useless
-		if (theNrSplits == 0)
-			return new TreeMap<Float, Integer>();
-
-//		final float[] aSplitPoints = new float[theNrSplits];
-//		final int size = theBitSet.cardinality();
-//
-//		// FIXME MM
-//		// (size == 0) check is incorrect
-//		// it would return an array of 0's
-//		// and then 0 would be considered to be a bin boundary
-//		// more generally the code below leads to awkward results when
-//		// (theNrSplits > theBitSet.cardinality())
-//		// as the aSplitPoints[] will be populated with 0's
-//		// for every index >= theBitSet.cardinality(), the values will
-//		// not be set to anything else
-//
-//		// prevent crash in aSplitPoints populating loop
-//		if (size == 0)
-//			return aSplitPoints;
-//
-//		float[] aDomain = new float[size];
-//		for (int i = theBitSet.nextSetBit(0), j = -1; i >= 0; i = theBitSet.nextSetBit(i + 1))
-//			aDomain[++j] = itsFloatz[i];
-//
-//		Arrays.sort(aDomain);
-//
-//		// N.B. Order matters to prevent integer division from yielding zero.
-//		for (int j=0; j<theNrSplits; j++)
-//			aSplitPoints[j] = aDomain[size*(j+1)/(theNrSplits+1)];
-//
-		return null;
-		//return aSplitPoints;
+		// FIXME MM
+		// code needs to take into account the Condition.Operator
+		// EQUALS: (theNrSplits *  <value, count>)
+		// LEQ|GEQ: when returning (theNrSplits *  <value, count>) info
+		//     is missing, for LEQ count should be sum of all previous
+		//     counts for each next <value, sum_till_now>
+		//     for GEQ the count reduces with each ascending value
+		throw new IllegalArgumentException("NOT IMPLEMENTED YET");
 	}
 
 	/**
@@ -2483,15 +2423,15 @@ public class Column implements XMLNodeInterface
 			logMessage("getAverageRanking", getTypeError("NOMINAL"));
 			return null;
 		}
-		
+
 		LabelRanking aResult = new LabelRanking(itsDistinctValues.get(itsNominalz[0]));
 		int aSize = aResult.getSize(); //number of labels
 		int[] aTotalRanks = new int[aSize];
-		Arrays.fill(aTotalRanks, 0);
 
 		BitSet aMembers = (theSubgroup == null) ? null : theSubgroup.getMembers();
 		//summation of rankings (not necessary to divide by aSize, when you just look at the order)
 		for (int i=0; i<itsSize; ++i)
+		{
 			if (aMembers == null || aMembers.get(i)) //part of the subgroup?
 			{
 				String aValue = itsDistinctValues.get(itsNominalz[i]);
@@ -2499,11 +2439,10 @@ public class Column implements XMLNodeInterface
 				for (int j=0; j<aSize; j++)
 					aTotalRanks[j] += aRanking.getRank(j);
 			}
+		}
 
 		//make copy that can be sorted
-		int[] aRanks = new int[aSize];
-		for (int i=0; i<aSize; i++)
-			aRanks[i] = aTotalRanks[i];
+		int[] aRanks = Arrays.copyOf(aTotalRanks, aSize);
 		Arrays.sort(aRanks);
 
 		//translate average ranks to a ranking
@@ -2514,12 +2453,14 @@ public class Column implements XMLNodeInterface
 			int aLast = -1;
 			//look up rank for this average
 			for (int j=0; j<aSize; j++)
+			{
 				if (aLookup == aRanks[j])
 				{
 					if (aFirst >= 0)
 						aLast = j;
 					aFirst = j;
 				}
+			}
 			//TODO: properly deal with ties in the ranking
 			aResult.setRank(i, aFirst);
 		}
@@ -2543,7 +2484,6 @@ public class Column implements XMLNodeInterface
 		}
 
 		//take the size of the first example as the total number of labels
-//		LabelRankingMatrix aResult = new LabelRankingMatrix(itsNominals.get(0).length());
 		LabelRankingMatrix aResult = new LabelRankingMatrix(itsDistinctValues.get(itsNominalz[0]).replace(">","").length());
 		// equivalent to below, as itsNominalz[0] should always be 0
 		//LabelRankingMatrix aResult = new LabelRankingMatrix(itsDistinctValues.get(0).length());
@@ -2552,17 +2492,19 @@ public class Column implements XMLNodeInterface
 		BitSet aMembers = (theSubgroup == null) ? null : theSubgroup.getMembers();
 		//summation of rankings
 		for (int i=0; i<itsSize; ++i)
+		{
 			if (aMembers == null || aMembers.get(i)) //part of the subgroup?
 			{
-//				String aValue = itsNominals.get(i);
 				String aValue = itsDistinctValues.get(itsNominalz[i]);
 				LabelRanking aRanking = new LabelRanking(aValue);
 				LabelRankingMatrix aRankingMatrix = new LabelRankingMatrix(aRanking); //translate to LRM
 				aResult.add(aRankingMatrix);
 				aCount++;
 			}
-		aResult.divide(aCount); //divide by zero is not possible, as subgroups always have members
-		
+		}
+		//divide by zero is not possible, subgroups always have members
+		aResult.divide(aCount);
+
 		return aResult;
 	}
 
@@ -2585,55 +2527,57 @@ public class Column implements XMLNodeInterface
 
 		BitSet aMembers = (theSubgroup == null) ? null : theSubgroup.getMembers();
 		//summation of rankings
-		
+
 		int rankSize = itsDistinctValues.get(itsNominalz[0]).replace(">","").length();
 		LabelRankingMatrix LRmode = new LabelRankingMatrix(rankSize);
-		
-		
-		
+
 		int[][][] theModeMatrix = new int[3][rankSize][rankSize];
 		for (int s=0; s<3; s++)
 			for (int i=0; i<rankSize; i++)
 				for (int j=0; j<rankSize; j++)
 					theModeMatrix[s][i][j] = 0;
-		
+
 		for (int k=0; k<itsSize; ++k)
+		{
 			if (aMembers == null || aMembers.get(k)) //part of the subgroup?
 			{
-//				String aValue = itsNominals.get(i);
 				String aValue = itsDistinctValues.get(itsNominalz[k]);
 				LabelRanking aRanking = new LabelRanking(aValue);
 				LabelRankingMatrix aRankingMatrix = new LabelRankingMatrix(aRanking); //translate to LRM
-				
+
 				int[][][] aModeMatrix = aRankingMatrix.getModeMatrix();
-				
+
 				for (int s=0; s<3; s++)
 					for (int i=0; i<rankSize; i++)
 						for (int j=0; j<rankSize; j++)
 							theModeMatrix[s][i][j] += aModeMatrix[s][i][j];
-				
 			}
-		
+		}
+
 		for (int i=0; i<rankSize; i++)
-			for (int j=0; j<rankSize; j++) {
-				if (theModeMatrix[0][i][j] > theModeMatrix[1][i][j]){
+		{
+			for (int j=0; j<rankSize; j++)
+			{
+				if (theModeMatrix[0][i][j] > theModeMatrix[1][i][j])
+				{
 					if (theModeMatrix[0][i][j] >  theModeMatrix[2][i][j])
 						LRmode.itsMatrix[i][j] = -1;
 					else
 						LRmode.itsMatrix[i][j] = 1;
-				} else {
+				}
+				else
+				{
 					if (theModeMatrix[1][i][j] >  theModeMatrix[2][i][j])
 						LRmode.itsMatrix[i][j] = 0;
 					else
 						LRmode.itsMatrix[i][j] = 1;
 				}
 			}
-		
+		}
+
 		return LRmode;
 	}
-	
 
-	
 	/**
 	 * Returns the number of times the value supplied as parameter occurs in
 	 * the Column. This method only works on Columns of type
@@ -2641,8 +2585,9 @@ public class Column implements XMLNodeInterface
 	 * {@link AttributeType#BINARY}.
 	 * <p>
 	 * For Columns of {@link AttributeType} {@link AttributeType#BINARY},
-	 * use the String "1" for {@code true}, all other values are considered
-	 * to represent {@code false}.
+	 * use the String {@link AttributeType#DEFAULT_BINARY_TRUE_STRING} for
+	 * {@code true}, all other values are considered to represent
+	 * {@code false}.
 	 *
 	 * @param theValue the value to count the number of occurrences for.
 	 *
@@ -2661,9 +2606,6 @@ public class Column implements XMLNodeInterface
 			case NOMINAL :
 			{
 				int aResult = 0;
-//				for (String s : itsNominals)
-//					if (s.equals(theValue))
-//						++aResult;
 				Integer v = itsDistinctValuesMap.get(theValue);
 				if (v == null)
 				{
@@ -2680,9 +2622,9 @@ public class Column implements XMLNodeInterface
 			}
 			case BINARY :
 			{
-				return "1".equals(theValue) ?
-						itsBinaries.cardinality() :
-						itsSize - itsBinaries.cardinality();
+				return AttributeType.DEFAULT_BINARY_TRUE_STRING.equals(theValue) ?
+					itsBinaries.cardinality() :
+					itsSize - itsBinaries.cardinality();
 			}
 			default :
 			{
