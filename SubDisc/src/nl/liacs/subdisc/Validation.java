@@ -141,6 +141,11 @@ public class Validation
 		}
 
 		BitSet aBinaryTarget = aTarget.evaluate(aCondition);
+// TODO MM - use evaluate(BitSet, Condition), evaluate(Condition) is @Deprecated 
+//		BitSet b = new BitSet(itsTable.getNrRows());
+//		b.set(0, itsTable.getNrRows());
+//		b = aTarget.evaluate(b, aCondition);
+//		assert (aBinaryTarget.equals(b));
 
 		for (int i = 0; i < theNrRepetitions; ++i)
 		{
@@ -528,15 +533,13 @@ public class Validation
 			{
 				// back up column that will be swap randomized
 				Column aPrimaryCopy = itsTargetConcept.getPrimaryTarget().copy();
-				int aPositiveCount =
-					itsTargetConcept.getPrimaryTarget().countValues(itsTargetConcept.getTargetValue());
 
 				// generate swap randomized random results
 				for (int i = 0, j = theNrRepetitions; i < j; ++i)
 				{
 					// swapRandomization should be performed before creating new SubgroupDiscovery
 					itsTable.swapRandomizeTarget(itsTargetConcept);
-					i = runSRSD(new SubgroupDiscovery(itsSearchParameters, itsTable, aPositiveCount, null), aQualities, i);
+					i = runSRSD(new SubgroupDiscovery(itsSearchParameters, null, itsTable), aQualities, i);
 				}
 
 				// restore column that was swap randomized

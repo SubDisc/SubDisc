@@ -18,28 +18,30 @@ public class QualityMeasure
 	//SINGLE_NOMINAL and SCAPE
 	private int itsTotalTargetCoverage;
 
-	//Label ranking (SINGLE_NOMINAL)
-	private LabelRanking itsAverageRanking = null;
-	private LabelRankingMatrix itsAverageRankingMatrix = null;
-
 	//SINGLE_NUMERIC and SINGLE_ORDINAL
 	private float itsTotalAverage = Float.NaN;
 	private float itsTotalStandardDeviation = Float.NaN;
 	private float itsTotalSSD = Float.NaN;
 	private ProbabilityDensityFunction itsPDF; // pdf for entire dataset
 
-	//Bayesian
+	// XXX MM - why are these static fields
+	//MULTI_LABEL (Bayesian)
 	private DAG itsDAG;
 	private static int itsNrNodes;
 	private static float itsAlpha;
 	private static float itsBeta;
 	private static boolean[][] itsVStructures;
 
+	// XXX MM - why are these static fields
 	//SCAPE
 	private static Column itsBinaryTarget;
 	private static Column itsNumericTarget;
 	private static int[] itsDescendingOrderingPermutation;
 	private static float itsOverallSubrankingLoss = 0.0f; // MUST BE 0.0f at first call
+
+	//LABEL_RANKING
+	private LabelRanking itsAverageRanking = null;
+	private LabelRankingMatrix itsAverageRankingMatrix = null;
 
 	//SINGLE_NOMINAL
 	// TODO MM also used by DOUBLE_CORRELATION and DOUBLE_REGRESSION
@@ -49,8 +51,11 @@ public class QualityMeasure
 			throw new IllegalArgumentException("QualityMeasure: theMeasure can not be null");
 //		if (!QM.getQualityMeasures(TargetType.SINGLE_NOMINAL).contains(theMeasure))
 //			throw new IllegalArgumentException("QualityMeasure: not a SINGLE_NOMINAL measure");
-		if (theMeasure.TARGET_TYPE == TargetType.LABEL_RANKING)
-			throw new IllegalArgumentException("QualityMeasure: use LabelRanking relevant constructor");
+		// TODO MM - DOUBLE_CORRELATION + DOUBLE_CORRELATION constructor
+		if (!QM.getQualityMeasures(TargetType.SINGLE_NOMINAL).contains(theMeasure) &&
+				!QM.getQualityMeasures(TargetType.DOUBLE_CORRELATION).contains(theMeasure) &&
+				!QM.getQualityMeasures(TargetType.DOUBLE_REGRESSION).contains(theMeasure))
+			throw new IllegalArgumentException("QualityMeasure: not a SINGLE_NOMINAL, DOUBLE_CORRELATION or DOUBLE_REGRESSION measure");
 		// N > 0
 		if (theTotalCoverage <= 0)
 			throw new IllegalArgumentException("QualityMeasure: theTotalCoverage must be > 0");
@@ -64,28 +69,6 @@ public class QualityMeasure
 		itsQualityMeasure = theMeasure;
 		itsNrRecords = theTotalCoverage;
 		itsTotalTargetCoverage = theTotalTargetCoverage;
-	}
-
-	//label ranking
-	public QualityMeasure(QM theMeasure, int theTotalCoverage, LabelRanking theAverageRanking, LabelRankingMatrix theAverageRankingMatrix)
-	{
-		if (theMeasure == null)
-			throw new IllegalArgumentException("QualityMeasure: theMeasure can not be null");
-		if (!QM.getQualityMeasures(TargetType.LABEL_RANKING).contains(theMeasure))
-			throw new IllegalArgumentException("QualityMeasure: not a LabelRanking measure");
-		if (theTotalCoverage <= 0)
-			throw new IllegalArgumentException("QualityMeasure: theCoverage must be > 0");
-		if (theAverageRanking == null)
-			throw new IllegalArgumentException("QualityMeasure: theAverageRanking can not be null");
-		if (theAverageRankingMatrix == null)
-			throw new IllegalArgumentException("QualityMeasure: theAverageRankingMatrix can not be null");
-
-		itsQualityMeasure = theMeasure;
-		itsNrRecords = theTotalCoverage;
-		itsAverageRanking = theAverageRanking;
-		itsAverageRankingMatrix = theAverageRankingMatrix;
-		Log.logCommandLine("average ranking of entire dataset:");
-		itsAverageRankingMatrix.print();
 	}
 
 	//SINGLE_NUMERIC
@@ -110,6 +93,28 @@ public class QualityMeasure
 		itsTotalSSD = theTotalSSD;
 		itsTotalStandardDeviation = (float)Math.sqrt(theTotalSSD/itsNrRecords);
 		itsPDF = theDataPDF;
+	}
+
+	//LABEL_RANKING
+	public QualityMeasure(QM theMeasure, int theTotalCoverage, LabelRanking theAverageRanking, LabelRankingMatrix theAverageRankingMatrix)
+	{
+		if (theMeasure == null)
+			throw new IllegalArgumentException("QualityMeasure: theMeasure can not be null");
+		if (!QM.getQualityMeasures(TargetType.LABEL_RANKING).contains(theMeasure))
+			throw new IllegalArgumentException("QualityMeasure: not a LabelRanking measure");
+		if (theTotalCoverage <= 0)
+			throw new IllegalArgumentException("QualityMeasure: theTotalCoverage must be > 0");
+		if (theAverageRanking == null)
+			throw new IllegalArgumentException("QualityMeasure: theAverageRanking can not be null");
+		if (theAverageRankingMatrix == null)
+			throw new IllegalArgumentException("QualityMeasure: theAverageRankingMatrix can not be null");
+
+		itsQualityMeasure = theMeasure;
+		itsNrRecords = theTotalCoverage;
+		itsAverageRanking = theAverageRanking;
+		itsAverageRankingMatrix = theAverageRankingMatrix;
+		Log.logCommandLine("average ranking of entire dataset:");
+		itsAverageRankingMatrix.print();
 	}
 
 	public ProbabilityDensityFunction getProbabilityDensityFunction()
@@ -631,6 +636,8 @@ public class QualityMeasure
 
 	public static float calculatePropensityBased(QM theMeasure, int theCountHeadBody, int theCoverage, int theTotalCount, double theCountHeadPropensityScore)
 	{
+		// XXX MM - argument check
+
 		float aCountHeadBody = (float) theCountHeadBody;
 		float aCoverage = (float) theCoverage;
 		float aTotalCount = (float) theTotalCount;
@@ -653,6 +660,7 @@ public class QualityMeasure
 			}
 			default :
 			{
+				// XXX MM - see argument check
 				throw new IllegalArgumentException(QM.class.getSimpleName() + " invalid: " + theMeasure);
 			}
 		}
@@ -662,24 +670,24 @@ public class QualityMeasure
 
 	private static final double calculateChiSquared(double totalSupport, double headSupport, double bodySupport, double headBodySupport)
 	{
-        if (bodySupport == totalSupport || bodySupport == 0)
-            return 0.0;
-        
+		if ((bodySupport == totalSupport) || (bodySupport == 0.0))
+			return 0.0;
+
 		//HEADBODY
 		double Eij = calculateExpectency(totalSupport, bodySupport, headSupport);
 		double quality = calculatePowerTwo(headBodySupport - Eij) / Eij;
 
 		//HEADNOTBODY
 		Eij = calculateExpectency(totalSupport, (totalSupport - bodySupport), headSupport);
-        quality += (calculatePowerTwo(headSupport - headBodySupport - Eij)) / Eij;
+		quality += (calculatePowerTwo(headSupport - headBodySupport - Eij)) / Eij;
 
 		//NOTHEADBODY
 		Eij = calculateExpectency(totalSupport, (totalSupport - headSupport), bodySupport);
-        quality += (calculatePowerTwo(bodySupport - headBodySupport - Eij)) / Eij;
+		quality += (calculatePowerTwo(bodySupport - headBodySupport - Eij)) / Eij;
 
 		//NOTHEADNOTBODY
 		Eij = calculateExpectency(totalSupport, (totalSupport - bodySupport), (totalSupport - headSupport));
-        quality += (calculatePowerTwo((totalSupport - headSupport - bodySupport + headBodySupport) - Eij)) / Eij;
+		quality += (calculatePowerTwo((totalSupport - headSupport - bodySupport + headBodySupport) - Eij)) / Eij;
 
 		return quality;
 	}
@@ -699,18 +707,18 @@ public class QualityMeasure
 	 */
 	private static final double lg(double p)
 	{
-		return Math.log(p) / Math.log(2);
+		return Math.log(p) / Math.log(2.0);
 	}
 
-	public static final double calculateEntropy(double bodySupport, double headBodySupport)
+	static final double calculateEntropy(double bodySupport, double headBodySupport)
 	{
-		if (bodySupport == 0)
+		if (bodySupport == 0.0)
 			return 0.0; //special case that should never occur
 
-		if (headBodySupport==0.0 || bodySupport==headBodySupport)
+		if ((headBodySupport == 0.0) || (bodySupport == headBodySupport))
 			return 0.0; // by definition
 
-		double pj = headBodySupport/bodySupport;
+		double pj = headBodySupport / bodySupport;
 		return -1.0*pj*lg(pj) - (1.0-pj)*lg(1.0-pj);
 	}
 
@@ -727,9 +735,9 @@ public class QualityMeasure
 		if (bodySupport == 0.0)
 			return 0.0; //special case that should never occur
 
-		double Phb = headBodySupport/bodySupport; //P(H|B)
-		double Pnhb = (bodySupport - headBodySupport)/bodySupport; //P(H|B)
-		if (Phb == 0.0 || Pnhb == 0.0)
+		double Phb = headBodySupport / bodySupport; //P(H|B)
+		double Pnhb = (bodySupport - headBodySupport) / bodySupport; //P(H|B)
+		if ((Phb == 0.0) || (Pnhb == 0.0))
 			return 0.0; //by definition
 
 		return -1.0*Phb*lg(Phb) - Pnhb*lg(Pnhb);
@@ -737,9 +745,9 @@ public class QualityMeasure
 
 	private static final double calculateInformationGain(double totalSupport, double headSupport, double bodySupport, double headBodySupport)
 	{
-		double aFraction = bodySupport/totalSupport;
-		double aNotBodySupport = totalSupport-bodySupport;
-		double aHeadNotBodySupport = headSupport-headBodySupport;
+		double aFraction = bodySupport / totalSupport;
+		double aNotBodySupport = totalSupport - bodySupport;
+		double aHeadNotBodySupport = headSupport - headBodySupport;
 
 		return calculateEntropy(totalSupport, headSupport)
 			- (aFraction * calculateConditionalEntropy(bodySupport, headBodySupport)) //inside the subgroup
@@ -940,20 +948,57 @@ public class QualityMeasure
 		//theSubgroupRankingMatrix.print();
 
 		float aDistance = 0.0f;
-		if (itsQualityMeasure == QM.LRnorm)
-			aDistance = itsAverageRankingMatrix.normDistance(theSubgroupRankingMatrix);
-		else if (itsQualityMeasure == QM.LRnormMode)
-			aDistance = itsAverageRankingMatrix.normDistanceMode(theSubgroupRankingMatrix);
-		else if (itsQualityMeasure == QM.LRwnorm)
-			aDistance = itsAverageRankingMatrix.wnormDistance(theSubgroupRankingMatrix);
-		else if (itsQualityMeasure == QM.LRmin)
-			aDistance = itsAverageRankingMatrix.minDistance(theSubgroupRankingMatrix);
-		else if (itsQualityMeasure == QM.LRlabelwise)
-			aDistance = itsAverageRankingMatrix.labelwiseMax(theSubgroupRankingMatrix);
-		else if (itsQualityMeasure == QM.LRpairwise)
-			aDistance = itsAverageRankingMatrix.pairwiseMax(theSubgroupRankingMatrix);
-		else if (itsQualityMeasure == QM.LRcov)
-			aDistance = itsAverageRankingMatrix.covDistance(theSubgroupRankingMatrix);
+		switch (itsQualityMeasure)
+		{
+			case LR_NORM :
+			{
+				aDistance = itsAverageRankingMatrix.normDistance(theSubgroupRankingMatrix);
+				break;
+			}
+			case LR_NORM_MODE :
+			{
+				aDistance = itsAverageRankingMatrix.normDistanceMode(theSubgroupRankingMatrix);
+				break;
+			}
+			case LR_WNORM :
+			{
+				aDistance = itsAverageRankingMatrix.wnormDistance(theSubgroupRankingMatrix);
+				break;
+			}
+			case LR_LABELWISE_MIN :
+			{
+				aDistance = itsAverageRankingMatrix.minDistance(theSubgroupRankingMatrix);
+				break;
+			}
+			case LR_LABELWISE_MAX :
+			{
+				aDistance = itsAverageRankingMatrix.labelwiseMax(theSubgroupRankingMatrix);
+				break;
+			}
+			case LR_PAIRWISE_MAX :
+			{
+				aDistance = itsAverageRankingMatrix.pairwiseMax(theSubgroupRankingMatrix);
+				break;
+			}
+			case LR_COVARIANCE :
+			{
+				aDistance = itsAverageRankingMatrix.covDistance(theSubgroupRankingMatrix);
+				break;
+			}
+			default :
+			{
+				/*
+				 * if the QM is valid for this TargetType
+				 * 	it is not implemented here
+				 * else
+				 * 	this method should not have been called
+				 */
+				if (QM.getQualityMeasures(TargetType.LABEL_RANKING).contains(itsQualityMeasure))
+					throw new AssertionError(itsQualityMeasure);
+				else
+					throw new IllegalArgumentException("Invalid argument: " + itsQualityMeasure);
+			}
+		}
 
 		//aDistance = (float) Math.pow(aDistance,2);
 		float aPercentage = (float) theSupport/itsNrRecords;
@@ -1290,7 +1335,7 @@ public class QualityMeasure
 	}
 
 
-	//Bayesian ==============================================================
+	//MULTI_LABEL (Bayesian) ===============================================
 
 	public QualityMeasure(SearchParameters theSearchParameters, DAG theDAG, int theTotalCoverage)
 	{

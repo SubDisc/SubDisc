@@ -77,14 +77,14 @@ public enum QM implements EnumInterface
 	WEED			("Wtd Ent Edit Dist",	"0",	TargetType.MULTI_LABEL),
 	EDIT_DISTANCE		("Edit Distance",	"0",	TargetType.MULTI_LABEL),
 
-	// LABEL_RANKING quality measures
-	LRnorm			("LRM Norm",			"0.0",	TargetType.LABEL_RANKING),
-	LRnormMode		("LRM Norm Mode",		"0.0",	TargetType.LABEL_RANKING),
-	LRwnorm			("LRM Norm & homog",		"0.0",	TargetType.LABEL_RANKING),
-	LRmin			("Labelwise Minimum",		"0.0",	TargetType.LABEL_RANKING),
-	LRlabelwise		("Labelwise Maximization",	"0.0",	TargetType.LABEL_RANKING),
-	LRpairwise		("Pairwise Maximization",	"0.0",	TargetType.LABEL_RANKING),
-	LRcov			("Covariance",			"0.0",	TargetType.LABEL_RANKING),
+	// LABEL_RANKING
+	LR_NORM			("LRM Norm",			"0.0",	TargetType.LABEL_RANKING),
+	LR_NORM_MODE		("LRM Norm Mode",		"0.0",	TargetType.LABEL_RANKING),
+	LR_WNORM		("LRM Norm & homog",		"0.0",	TargetType.LABEL_RANKING),
+	LR_LABELWISE_MIN	("Labelwise Minimum",		"0.0",	TargetType.LABEL_RANKING),
+	LR_LABELWISE_MAX	("Labelwise Maximization",	"0.0",	TargetType.LABEL_RANKING),
+	LR_PAIRWISE_MAX		("Pairwise Maximization",	"0.0",	TargetType.LABEL_RANKING),
+	LR_COVARIANCE		("Covariance",			"0.0",	TargetType.LABEL_RANKING),
 
 	// DOUBLE_CORRELATION quality measures
 	CORRELATION_R		("r",			"0.2",	TargetType.DOUBLE_CORRELATION),
