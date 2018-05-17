@@ -631,7 +631,6 @@ public class MiningWindow extends JFrame implements ActionListener
 		{
 			jLabelTargetTableName.setText(itsTable.getName());
 			jLabelNrExamplesNr.setText(String.valueOf(itsTable.getNrRows()));
-
 			int[][] aCounts = itsTable.getTypeCounts();
 			int[] aTotals = { itsTable.getNrColumns(), 0 };
 			for (int[] ia : aCounts)
@@ -886,10 +885,12 @@ public class MiningWindow extends JFrame implements ActionListener
 			case SINGLE_NOMINAL :
 			{
 				String aTarget = getTargetAttributeName();
-				if (aTarget == null) //initTargetInfo might be called before item is actually selected
+				String aMiscFieldName = getMiscFieldName();
+				//initTargetInfo might be called before item is actually selected
+				if (aTarget == null || aMiscFieldName == null)
 					return;
 				itsPositiveCount =
-					itsTable.getColumn(aTarget).countValues(getMiscFieldName());
+					itsTable.getColumn(aTarget).countValues(aMiscFieldName);
 				float aPercentage = (itsPositiveCount * 100) / (float) itsTable.getNrRows();
 				NumberFormat aFormatter = NumberFormat.getNumberInstance();
 				aFormatter.setMaximumFractionDigits(2);
@@ -1081,7 +1082,6 @@ public class MiningWindow extends JFrame implements ActionListener
 		// hack on hack, prevent resetting of primary target/measure minimum
 		String aPrimaryTarget = getTargetAttributeName();
 		String aMeasureMinimum = jTextFieldQualityMeasureMinimum.getText();
-
 		initGuiComponentsDataSet();
 		jComboBoxTargetTypeActionPerformed();	// update hack
 		setTargetAttribute(aPrimaryTarget);
@@ -1124,7 +1124,6 @@ public class MiningWindow extends JFrame implements ActionListener
 			jMenuItemRemoveEnrichmentSource.setEnabled(false);
 		}
 	}
-
 
 	private void jMenuItemLoadDatabaseTableActionPerformed()
 	{
@@ -1991,6 +1990,8 @@ public class MiningWindow extends JFrame implements ActionListener
 					int index = -1;
 					for (Float f : set)
 						bounds[++index] = f;
+// FIXME MM
+// MAX SHOULD NOT BE INCLUDED, INSTEAD ONLY THE SPLITPOINTS ARE REQUIRED
 					bounds[++index] = c.getMax();
 				}
 
