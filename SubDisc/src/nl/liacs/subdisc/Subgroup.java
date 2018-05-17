@@ -69,8 +69,8 @@ public class Subgroup implements Comparable<Subgroup>
 	 * The {@link BitSet} can not be {@code null} and at least 1 bit must be
 	 * set, each set bit represents a member of this Subgroup.
 	 * <p>
-	 * the {@link ConditionList} and {@link SubgroupSet} argument can not be
-	 * {@code null}.
+	 * the {@link ConditionListA} and {@link SubgroupSet} argument can not
+	 * be {@code null}.
 	 *
 	 * @param theConditions the ConditionList for this Subgroup.
 	 * @param theMembers the BitSet representing members of this Subgroup.
@@ -87,7 +87,6 @@ public class Subgroup implements Comparable<Subgroup>
 		if (theMembers.length() == 0)
 			throw new IllegalArgumentException("Subgroups must have members");
 
-		//itsConditions = (theConditions == null ? new ConditionList(0) : theConditions);
 		itsConditions = theConditions;
 
 		constructorMembersInit(theMembers);
@@ -122,6 +121,48 @@ public class Subgroup implements Comparable<Subgroup>
 
 		// final, needs to be set
 		itsParentSet = null;
+	}
+
+	// XXX MM - NOTE
+	// in the original Subgroup.copy() code itsMeasureValue,
+	// itsSecondaryStatistic and itsTertiaryStatistic were copied
+	// however, right after obtaining a new Subgroup through copy(), a
+	// Condition was added to it
+	// from that point on, these measures, plus itsMembers and itsCoverage
+	// become invalid, and should be re-evaluated
+	// TODO inspect code if copying is needed
+	// at least itsMeasureValue is used by CandidateQueue to order Subgroups
+	// maybe more code relies on these values set to something/anything
+	//
+	// private constructor, do not use outside class, no argument checks
+	// used for getRefinedSubgroup()
+	private Subgroup(Subgroup theSubgroup, Condition theCondition)
+	{
+		// constructorMembersInit() creates itsMembers based on this
+		itsConditions = ConditionListBuilder.createList(theSubgroup.itsConditions, theCondition);
+		// itsID		ignored
+		// itsMembers		set through constructorMembersInit below
+		// itsCoverage		set through constructorMembersInit below
+		// itsDag		ignored
+		// itsLabelRanking	ignored
+		// itsLabelRankingMatrix ignored
+		itsMeasureValue		= theSubgroup.itsMeasureValue;		// see NOTE
+		itsSecondaryStatistic	= theSubgroup.itsSecondaryStatistic;	// see NOTE
+		itsTertiaryStatistic	= theSubgroup.itsTertiaryStatistic;	// see NOTE
+		itsParentSet		= theSubgroup.itsParentSet; 
+		// isPValueComputed	ignored
+		// itsPValue		ignored
+		// itsRegressionModel	ignored
+
+		// set itsMembers and itsCoverage based on new Condition
+		// evaluate() should not modify input, else use getMembers()
+		int check = theSubgroup.itsCoverage;
+		Column c = theCondition.getColumn();
+		BitSet aParentBitSet = theSubgroup.getMembersUnsafe();
+
+		constructorMembersInit(c.evaluate(aParentBitSet, theCondition));
+
+		assert (aParentBitSet.cardinality() == check);
 	}
 
 	private void constructorMembersInit(BitSet theMembers)
@@ -163,6 +204,14 @@ public class Subgroup implements Comparable<Subgroup>
 	// see remarks for ConditionList/ Condition, which are not true complete
 	// deep-copies, but in current code this is no problem
 	// itsMembers is deep-copied
+	//
+	// XXX MM - method is called only by Refinement.getRefinedSubgroup()
+	// with the purpose to get a copy, and then call addCondition() on it
+	// (a method that is also only called by getRefinedSubgroup())
+	// creating Subgroup.getRefinedSubgroup(Condition) is cleaner and avoids
+	// the existence of two duplicate Subgroups
+	// additionally, the itsMembers issue is solved
+	@Deprecated
 	public Subgroup copy()
 	{
 		// sets conditions, depth, members, coverage, parentSet
@@ -180,6 +229,7 @@ public class Subgroup implements Comparable<Subgroup>
 	}
 
 	// see comment at copy(), mining could be much faster
+	@Deprecated
 	public void addCondition(Condition theCondition)
 	{
 		if (theCondition == null)
@@ -214,9 +264,13 @@ public class Subgroup implements Comparable<Subgroup>
 		}
 	}
 
-	public String toString()
+	// FIXME MM - safe, clean code, to replace copy() and addCondition()
+	public Subgroup getRefinedSubgroup(Condition theCondition)
 	{
-		return itsConditions.toString();
+		if (theCondition == null)
+			throw new IllegalArgumentException("arguments can not be null");
+
+		return new Subgroup(this, theCondition);
 	}
 
 	// private, for use within this class only, do no expose members
@@ -232,6 +286,7 @@ public class Subgroup implements Comparable<Subgroup>
 			{
 				// the default Constructor ensures SubgroupSet
 				int size = itsParentSet.getTotalCoverage();
+				// XXX MM - SubgroupDiscovery.getAllDataBitSet()
 				BitSet b = new BitSet(size);
 				b.set(0, size);
 
@@ -246,7 +301,8 @@ public class Subgroup implements Comparable<Subgroup>
 				// its final state, avoid intermediate non-null
 				// state of itsMembers
 				itsMembers = b;
-				itsCoverage = itsMembers.cardinality();
+				// coverage should not have changed
+				assert (itsCoverage == itsMembers.cardinality());
 			}
 
 			// within lock, so no other Thread can null itsMembers
@@ -325,42 +381,6 @@ public class Subgroup implements Comparable<Subgroup>
 
 	public int getDepth() { return itsConditions.size(); }
 
-	/*
-	 * Compare two Subgroups based on (in order) measureValue, coverage,
-	 * ConditionList.
-	 * 
-	 * Per Comparable Javadoc compareTo(null) throws a NullPointerException.
-	 * 
-	 * Do not use this compareTo() for the CAUC(Heavy) setting of Process.
-	 * itsMeasureValue will vary for Subgroups with the same ConditionList
-	 * (because the target for each run is different).
-	 * 
-	 * NOTE Map interface expects compareTo and equals to be consistent.
-	 * (non-Javadoc)
-	 * @see java.lang.Comparable#compareTo(java.lang.Object)
-	 * 
-	 * throws NullPointerException if theSubgroup is null.
-	 */
-	@Override
-	public int compareTo(Subgroup theSubgroup)
-	{
-		if (this == theSubgroup)
-			return 0;
-
-		// Subgroups that score better come first
-		int cmp = Double.compare(this.itsMeasureValue, theSubgroup.itsMeasureValue);
-		if (cmp != 0)
-			return -cmp;
-
-		// Subgroups that are larger come first
-		cmp = this.itsCoverage - theSubgroup.itsCoverage;
-		if (cmp != 0)
-			return -cmp;
-
-		// equal score and coverage, compare ConditionLists
-		return this.itsConditions.compareTo(theSubgroup.itsConditions);
-	}
-
 	/**
 	 * NOTE For now this equals implementation is only used for the ROCList
 	 * HashSet implementation.
@@ -422,6 +442,40 @@ public class Subgroup implements Comparable<Subgroup>
 		return 31*itsMembers.hashCode() + hashCode;
 	}
 */
+
+	final int countCommon(BitSet theBitSet)
+	{
+		if (theBitSet == null)
+			throw new IllegalArgumentException("arguments can not be null");
+
+		itsMembersLock.lock();
+		// throughout countCommon() itsMembers must not be modified
+		try { return countCommon(getMembersUnsafe(), theBitSet); }
+		finally { itsMembersLock.unlock(); }
+	}
+
+	private static final int countCommon(BitSet a, BitSet b)
+	{
+		int aCount = 0;
+
+		for (int ai = a.nextSetBit(0), bi = b.nextSetBit(0); ((ai >= 0) && (bi >= 0)); /* increments inside loop */)
+		{
+			if (ai < bi)
+				ai = a.nextSetBit(bi);
+			else if (ai > bi)
+				bi = b.nextSetBit(ai);
+			else
+			{
+				// equal index set, increment, find new indexes
+				++aCount;
+				ai = a.nextSetBit(ai + 1);
+				bi = b.nextSetBit(bi + 1);
+			}
+		}
+
+		return aCount;
+	}
+
 	// used to determine TP/FP
 	public SubgroupSet getParentSet()
 	{
@@ -443,6 +497,7 @@ public class Subgroup implements Comparable<Subgroup>
 		if (tmp == null)
 			return 0.0;
 
+		// TODO MM - USE countCommon(tmp, getMembersUnsafe())
 		tmp.and(getMembersUnsafe());
 		// NOTE now tmp.cardinality() = aHeadBody
 
@@ -471,6 +526,7 @@ public class Subgroup implements Comparable<Subgroup>
 		if (tmp == null)
 			return 0.0;
 
+		// TODO MM - USE countCommon(tmp, getMembersUnsafe())
 		tmp.and(getMembersUnsafe());
 		// NOTE now tmp.cardinality() = aHeadBody
 
@@ -515,11 +571,50 @@ public class Subgroup implements Comparable<Subgroup>
 		itsPValue = aP/aLength;
 	}
 
-	public void renouncePValue()
-	{
-		isPValueComputed = false;
-	}
+	public void renouncePValue() { isPValueComputed = false; }
 
 	public String getRegressionModel() { return itsRegressionModel; }
 	public void setRegressionModel(String theModel) { itsRegressionModel = theModel; }
+
+	/*
+	 * Compare two Subgroups based on (in order) measureValue, coverage,
+	 * ConditionList.
+	 * 
+	 * Per Comparable Javadoc compareTo(null) throws a NullPointerException.
+	 * 
+	 * Do not use this compareTo() for the CAUC(Heavy) setting of Process.
+	 * itsMeasureValue will vary for Subgroups with the same ConditionList
+	 * (because the target for each run is different).
+	 * 
+	 * NOTE Map interface expects compareTo and equals to be consistent.
+	 * (non-Javadoc)
+	 * @see java.lang.Comparable#compareTo(java.lang.Object)
+	 * 
+	 * throws NullPointerException if theSubgroup is null.
+	 */
+	@Override
+	public int compareTo(Subgroup theSubgroup)
+	{
+		if (this == theSubgroup)
+			return 0;
+
+		// Subgroups that score better come first
+		int cmp = Double.compare(this.itsMeasureValue, theSubgroup.itsMeasureValue);
+		if (cmp != 0)
+			return -cmp;
+
+		// Subgroups that are larger come first
+		cmp = this.itsCoverage - theSubgroup.itsCoverage;
+		if (cmp != 0)
+			return -cmp;
+
+		// equal score and coverage, compare ConditionLists
+		return this.itsConditions.compareTo(theSubgroup.itsConditions);
+	}
+
+	@Override
+	public String toString()
+	{
+		return itsConditions.toString();
+	}
 }
