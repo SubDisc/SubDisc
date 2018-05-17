@@ -235,7 +235,7 @@ public enum ConditionListBuilder
 			if (cmp == 0)
 				//throw new IllegalArgumentException();
 // FIXME MM throw exception when SubgroupDiscovery.Filter is enabled
-System.out.format("ERROR: duplicate conjuncts%n\t%s%n\t%s%n", theConditionList.toString(), theCondition.toString());
+System.out.format("ERROR ConditionList2: duplicate conjuncts%n\t%s%n\t%s%n", theConditionList.toString(), theCondition.toString());
 
 			isInSearchOrder = (cmp < 0);
 			itsFirst = isInSearchOrder ? c : theCondition;
@@ -314,7 +314,7 @@ System.out.format("ERROR: duplicate conjuncts%n\t%s%n\t%s%n", theConditionList.t
 			if (i == 0 || j == 0)
 //				throw new IllegalArgumentException();
 // FIXME MM throw exception when SubgroupDiscovery.Filter is enabled
-System.out.format("ERROR: duplicate conjuncts%n\t%s%n\t%s%n", theConditionList.toString(), theCondition.toString());
+System.out.format("ERROR ConditionList3: duplicate conjuncts%n\t%s%n\t%s%n", theConditionList.toString(), theCondition.toString());
 			if (i < 0)
 			{
 				itsFirst = theCondition;
@@ -493,7 +493,7 @@ System.out.format("ERROR: duplicate conjuncts%n\t%s%n\t%s%n", theConditionList.t
 				else if (cmp == 0)
 //					throw new IllegalArgumentException();
 // FIXME MM throw exception when SubgroupDiscovery.Filter is enabled
-System.out.format("ERROR: duplicate conjuncts%n\t%s%n\t%s%n", theConditionList.toString(), theCondition.toString());
+System.out.format("ERROR ConditionListN-N: duplicate conjuncts%n\t%s%n\t%s%n", theConditionList.toString(), theCondition.toString());
 				else // (cmp > 0)
 				{
 					itsCanonicalOrder[i] = c;
@@ -531,7 +531,7 @@ System.out.format("ERROR: duplicate conjuncts%n\t%s%n\t%s%n", theConditionList.t
 			if (i == 0 || j == 0 || k == 0)
 //				throw new IllegalArgumentException();
 // FIXME MM throw exception when SubgroupDiscovery.Filter is enabled
-System.out.format("ERROR: duplicate conjuncts%n\t%s%n\t%s%n", theConditionList.toString(), theCondition.toString());
+System.out.format("ERROR ConditionListN-3: duplicate conjuncts%n\t%s%n\t%s%n", theConditionList.toString(), theCondition.toString());
 
 			if (i < 0)
 				itsCanonicalOrder = new Condition[] {c, x, y, z};
@@ -636,7 +636,7 @@ System.out.format("ERROR: duplicate conjuncts%n\t%s%n\t%s%n", theConditionList.t
 		int aSize = theConditionList.size();
 		Condition[] aConditions = new Condition[aSize];
 
-		// get() return Conditions in search order
+		// get() returns Conditions in search order
 		for (int i = 0; i < aSize; ++i)
 			aConditions[i] = theConditionList.get(i);
 
