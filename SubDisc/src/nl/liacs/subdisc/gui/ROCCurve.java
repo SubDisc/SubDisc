@@ -18,7 +18,7 @@ public class ROCCurve extends JPanel
 	private GeneralPath itsLines;
 	private List<Arc2D> itsPoints;
 	private String itsAreaUnderCurve;
-    private float itsSize;
+	private float itsSize;
 	private float itsXMin, itsXMax, itsYMin, itsYMax;
 	private float itsXStart, itsYStart, itsXEnd, itsYEnd;
 	private int itsMin, itsMax;
