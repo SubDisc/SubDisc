@@ -10,6 +10,19 @@ import java.util.*;
  * A Set<String> natively avoids duplicates.
  * Having it is a member avoids the need to Override every method that could
  * modify the ValueSet after its creation.
+ * 
+ * TODO MM
+ * itsValues needs only be sorted for compare()/getSmallest() and toString()
+ * for contains(String) this is not required
+ * a (Linked)HashSet would give O(1) lookup cost
+ * a sorted List<String> would give O(log(n)), just as the current TreeSet
+ * but at a lower memory cost
+ * a String[] would be even more memory efficient
+ * 
+ * sorted String[] will probably be faster than all other alternatives
+ * as the size of ValueSets will not be to big in most cases
+ * 
+ * compareTo() should do intersection/retainAll() on a List, instead of HashSet 
  */
 /**
  * ValueSets are sorted sets that hold a number of <code>String</code> values.
@@ -46,7 +59,7 @@ public class ValueSet implements Comparable<ValueSet>
 	public boolean contains(String theValue)
 	{
 		return itsValues.contains(theValue);
-	};
+	}
 
 	/*
 	 * NOTE that there is no real logic in testing just ValueSets, as there

@@ -65,7 +65,7 @@ public class LabelRankingMatrix
 			for (int j=0; j<itsSize; j++)
 				itsMatrix[i][j] += theMatrix.itsMatrix[i][j];
 	}
-	
+
 //	public void modeMatricesOld(LabelRankingMatrix OnesMatrix, LabelRankingMatrix MinusOnesMatrix, LabelRankingMatrix zerosMatrix)
 //	{
 //		for (int i=0; i<itsSize; i++)
@@ -78,7 +78,7 @@ public class LabelRankingMatrix
 //					zerosMatrix[i][j] += 1;
 //			}
 //	}
-	
+
 //	public void modeMatrices(LabelRankingMatrix theMatrix)
 //	{	
 //		for (int i=0; i<itsSize; i++)
@@ -91,12 +91,12 @@ public class LabelRankingMatrix
 //					modeMatrix[1][i][j] += 1;
 //			}
 //	}
-	
+
 	public int[][][] getModeMatrix()
-	{	
+	{
 		return modeMatrix;
 	}
-	
+
 //	public LabelRankingMatrix computeMode(int[][][] theModeMatrix)
 //	{	
 //		LabelRankingMatrix LRmode = new LabelRankingMatrix(itsSize);
@@ -130,7 +130,7 @@ public class LabelRankingMatrix
 			for (int j=0; j<itsSize; j++)
 				itsMatrix[i][j] /= theValue;
 	}
-	
+
 	public float frobeniunsNorm(LabelRankingMatrix theMatrix)
 	{
 		double fNorm = 0;
@@ -143,14 +143,14 @@ public class LabelRankingMatrix
 			}
 		return (float) Math.sqrt(fNorm)/count;
 	}
-	
+
 //	public float normDistance(LabelRankingMatrix theMatrix)
 //	{
 //		double aDistance = 0;
 //		subtract(theMatrix);
 //		return (float) Math.sqrt(aDistance);
 //	}
-	
+
 	public float normDistance(LabelRankingMatrix theMatrix)
 	{
 		double aDistance = 0;
@@ -175,7 +175,7 @@ public class LabelRankingMatrix
 			}
 		return (float) aDistance;
 	}
-	
+
 	public float normDistanceMode(LabelRankingMatrix theMatrix)
 	{
 		double aDistance = 0;
@@ -188,15 +188,19 @@ public class LabelRankingMatrix
 			}
 		return (float) Math.sqrt(aDistance)/count;
 	}
-	
+
 	public float wnormDistance(LabelRankingMatrix theMatrix)
 	{
 		return normDistance(theMatrix)*frobeniunsNorm(theMatrix);
 	}
-	
+
 	public float minDistance(LabelRankingMatrix theMatrix)
 	{
-		
+		// XXX MM
+		// aMin = 1f/0f is just  Float.POSITIVE_INFINITY
+		// NOTE aMin will always be (>= 0.0f) when (itsSize > 0)
+		// because it is set to Math.min(aMin, aDistance), where
+		// aDistance is initiated to 0.0f
 		float aMin = 1f/0f;
 		for (int i=0; i<itsSize; i++)
 		{
@@ -210,10 +214,10 @@ public class LabelRankingMatrix
 		}
 		return aMin;
 	}
-	
+
 	public float labelwiseMax(LabelRankingMatrix theMatrix)
 	{
-		
+		// XXX MM - see minDistance
 		float aMax = -1f/0f;
 		for (int i=0; i<itsSize; i++)
 		{
@@ -230,7 +234,7 @@ public class LabelRankingMatrix
 	//Temporary function for tests:
 	public float labelwiseMax0(LabelRankingMatrix theMatrix)
 	{
-		
+		// XXX MM - see minDistance, aMin always (>= 1.0)
 		float aMax = -1f/0f;
 		for (int i=0; i<itsSize; i++)
 		{
@@ -247,6 +251,7 @@ public class LabelRankingMatrix
 	//Temporary function for tests:
 	public float labelwiseCov(LabelRankingMatrix theMatrix)
 	{
+		// XXX MM - see minDistance
 		float aMax = -1f/0f;
 		float aCovariance = 0;
 		for (int i=0; i<itsSize; i++)
@@ -264,16 +269,17 @@ public class LabelRankingMatrix
 		}
 		return aMax;
 	}
-	
+
 	public float pairwiseMax(LabelRankingMatrix theMatrix)
 	{
+		// XXX MM - see minDistance
 		float aMax = -1f/0f;
 		for (int i=0; i<itsSize; i++)
 			for (int j=i+1; j<itsSize; j++)
 				aMax = Math.max(aMax, Math.abs((itsMatrix[i][j] - theMatrix.itsMatrix[i][j])/2));
 		return aMax;
 	}
-	
+
 //	public float avgDistance(LabelRankingMatrix theMatrix)
 //	{
 //		float aDistance = 0;
@@ -286,7 +292,7 @@ public class LabelRankingMatrix
 //			}
 //		return aDistance/count;
 //	}
-	
+
 	public float covDistance(LabelRankingMatrix theMatrix)
 	{
 		float aCovariance = 0;
@@ -304,13 +310,13 @@ public class LabelRankingMatrix
 		}
 		return aCovariance/itsSize;
 	}
-	
+
 	public float labelMean(float[][] theRankingMatrix, int label)
 	{
-		 float sum = 0;
-		 for (int i = 0; i < itsSize; i++)
+		float sum = 0;
+		for (int i = 0; i < itsSize; i++)
 			 sum += theRankingMatrix[label][i];
-		 return sum / (itsSize-1);
+		return sum / (itsSize-1);
 	}
 
 	public float homogeneity(LabelRankingMatrix theMatrix)
@@ -367,13 +373,16 @@ public class LabelRankingMatrix
 //		Log.logCommandLine(anOutputPrint);
 //		Log.logCommandLine("  ================================");
 //	}
-	
-	String anOutput;
+
 	public String findMax()
 	{
-		float aFloat = 0;
-		float roundedValue;
+		float aFloat = 0.0f;
+		float roundedValue = 0.0f;
+		String anOutput = null;
 
+		// XXX MM
+		// loop creates many useless expensive Strings
+		// just store the best i and j, and create 1 string after loop
 		for (int i=0; i<itsSize; i++)
 		{
 			for (int j=i+1; j<itsSize; j++) {
@@ -386,12 +395,15 @@ public class LabelRankingMatrix
 		}
 		return anOutput;
 	}
-	
+
 	public String findMaxLabel()
 	{
+		// XXX MM - see minDistance
 		float aFloat = -1f/0f;
-		float roundedValue;
-		
+		float roundedValue = 0.0f;
+		String anOutput = null;
+
+		// XXX MM - see findMax
 		for (int i=0; i<itsSize; i++)
 		{
 			float theLabelSum = 0;

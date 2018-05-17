@@ -52,9 +52,7 @@ public class ErrorLog
 		if (theThrowable != null)
 		{
 			anError = (" " + Error.getErrorDescription(theThrowable));
-			aMessage =
-				(theThrowable.getMessage() == null ? "" :
-													theThrowable.getMessage());
+			aMessage = (theThrowable.getMessage() == null ? "" : theThrowable.getMessage());
 			if (aMessage.length() > 0)
 				aMessage += "/n";
 		}

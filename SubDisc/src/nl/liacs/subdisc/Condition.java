@@ -257,6 +257,7 @@ public class Condition implements Comparable<Condition>
 	{
 		if (itsColumn.getType() != AttributeType.BINARY)
 			throw new IllegalArgumentException();
+
 		return itsBinaryValue == theValue;
 	}
 	// this justifies the '==' check above, '!=' is not a valid operator

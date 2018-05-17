@@ -5,7 +5,6 @@ public class Interval implements Comparable<Interval>
 	private final float itsLower;
 	private final float itsUpper;
 
-	// TODO MM check itsLower <= itsUpper
 	public Interval(float theLower, float theUpper)
 	{
 		if (Float.isNaN(theLower))

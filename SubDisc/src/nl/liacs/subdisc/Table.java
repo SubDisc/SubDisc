@@ -361,6 +361,13 @@ public class Table implements XMLNodeInterface
 		for (int i = 1, j =  theList.size(); i < j; ++i)
 			aSet.and(theList.get(i).getColumn().evaluate(theList.get(i)));
 
+		// XXX MM - reassign b, size decreases faster, no need for and()
+//		BitSet b = new BitSet(itsNrRows);
+//		b.set(0, itsNrRows);
+//		for (int i = 0, j =  theList.size(); i < j; ++i)
+//			b = theList.get(i).getColumn().evaluate(b, theList.get(i));
+//		assert (aSet.equals(b));
+
 		return aSet;
 	}
 

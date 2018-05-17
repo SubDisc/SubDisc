@@ -29,7 +29,7 @@ public class SearchParameters implements XMLNodeInterface
 
 	private SearchStrategy	itsSearchStrategy;
 	private int		itsSearchStrategyWidth;
-	private boolean	itsNominalSets;
+	private boolean		itsNominalSets;
 	private NumericOperatorSetting itsNumericOperatorSetting;
 	private NumericStrategy	itsNumericStrategy;
 	private int		itsNrBins;
@@ -37,10 +37,10 @@ public class SearchParameters implements XMLNodeInterface
 
 	private float		itsAlpha;
 	private float		itsBeta;
-	private boolean	itsPostProcessingDoAutoRun;
+	private boolean		itsPostProcessingDoAutoRun;
 	private int		itsPostProcessingCount;
 
-	private float	itsOverallRankingLoss;
+	private float		itsOverallRankingLoss;
 
 	// TODO MM add to loadData() + autorun.dtd
 	//private List<ConditionList> itsBeamSeed;
