@@ -59,10 +59,6 @@ public class Refinement
 		assert (theSubgroup != null);
 		assert (theCondition != null);
 
-		// see remarks at Subgroup.copy about deep-copy
-		Subgroup aRefinedSubgroup = theSubgroup.copy();
-		aRefinedSubgroup.addCondition(theCondition);
-
-		return aRefinedSubgroup;
+		return theSubgroup.getRefinedSubgroup(theCondition);
 	}
 }
