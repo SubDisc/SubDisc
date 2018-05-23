@@ -30,6 +30,7 @@ public class RankComparator
 //				"/home/marvin/data/wrk/svn/SubgroupDiscovery/SubDisc/0_MultiNumeric_experiments/discretisation_loop_runs_NEW_KDE_SG_VS_COMPLEMENT/communities/crimepredict_1400856196467922_EH_00002.txt",
 		};
 		foo(args);
+		// this code is used for MultiNumeric kde versus pmf tau scores
 		//temporaryCode("/home/marvin/data/wrk/svn/SubgroupDiscovery/SubDisc/0_MULTI_NUMERIC_2015/boston_housing_kde_vs_eh/d1/");
 		OUT.close();
 	}
