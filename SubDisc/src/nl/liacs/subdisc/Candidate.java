@@ -123,6 +123,20 @@ public class Candidate implements Comparable<Candidate>
 			// itself to only forward search space exploration
 			// for any depth it does N*N instead of N*N/2
 //			assert (cmp != 0);
+			// FIXME MM
+			// below is a hack
+			// the assertion above is disabled
+			// the current search algorithm would yield both
+			// 'A and B' and 'B and A' (instead of just the first)
+			// ConditionListA.compareTo() considers the two equal,
+			// so: cmp = 0
+			// this is desired behaviour, but makes the assert fail
+			// the assert below is not based on canonical ordering
+			// but on search order
+			// for two distinct Candidates, the two Strings should
+			// never be the same
+			assert (x.itsSubgroup.getConditions().toString().compareTo(
+				y.itsSubgroup.getConditions().toString()) != 0);
 
 			return cmp;
 		}
