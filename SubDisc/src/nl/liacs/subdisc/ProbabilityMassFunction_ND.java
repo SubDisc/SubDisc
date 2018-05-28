@@ -67,14 +67,31 @@ public class ProbabilityMassFunction_ND extends ProbabilityDensityFunction
 		int aSize = theColumn.size();
 		BitSet aBitSet = new BitSet(aSize);
 		aBitSet.set(0, aSize);
-		// use existing code to get split points
-		float[] aSplits = theColumn.getSplitPoints(aBitSet, theNrSplitPoints);
 
-		// add theColumn.getMax() to aSplits as last right boundary
-		float[] aBounds = Arrays.copyOf(aSplits, theNrSplitPoints+1);
-		aBounds[aBounds.length-1] = theColumn.getMax();
+		// to use new getUniqueSplitPoints() - set to true
+		// else old getSplitPoints() is used (note that it is flawed)
+		Column.USE_NEW_BINNING = true;
+		float[] bounds = theColumn.getUniqueSplitPoints(aBitSet, theNrSplitPoints, Operator.LESS_THAN_OR_EQUAL);
+		Column.USE_NEW_BINNING = false;
 
-		return aBounds;
+		// nrBounds <= theNrSplitPoints
+		int nrBounds = bounds.length;
+
+		// TODO MM - deal with this
+		if (nrBounds == 0)
+			throw new AssertionError("FIX eh()");
+
+		// aBitSet selects all data, so theColumn.getMax() is correct
+		// add max to bounds only if it is not in there
+		float max = theColumn.getMax();
+		if (bounds[nrBounds-1] != max)
+		{
+			// reuse bounds 
+			bounds = Arrays.copyOf(bounds, nrBounds + 1);
+			bounds[nrBounds] = max; 
+		}
+
+		return bounds;
 	}
 
 	private static final int[] bin(float[] theSplitPoints, float[] theData)
@@ -83,10 +100,8 @@ public class ProbabilityMassFunction_ND extends ProbabilityDensityFunction
 
 		for (int i = 0, j = theData.length; i < j; ++i)
 		{
-			int anIndex = Arrays.binarySearch(theSplitPoints, theData[i]);
-			if (anIndex < 0)
-				anIndex = ~anIndex;
-			aBinIndexes[i] = anIndex;
+			int idx = Arrays.binarySearch(theSplitPoints, theData[i]);
+			aBinIndexes[i] = (idx < 0 ? ~idx : idx);
 		}
 
 		return aBinIndexes;
@@ -192,9 +207,5 @@ System.out.format("#SUMS:\tsumPi=%f\tsumQi=%f%n", sumPi, sumQi);
 		float n = theBinIndexes.length;
 		for (int i = 0; i < theBounds.length; ++i)
 			System.out.format("%f\t%d\t%f%n", theBounds[i], aCounts[i], aCounts[i]/n);
-	}
-
-	public static void main(String[] args)
-	{
 	}
 }
