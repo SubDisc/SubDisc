@@ -1953,6 +1953,21 @@ public class MiningWindow extends JFrame implements ActionListener
 			nl.liacs.discretisation.NumericRanges.foo(itsTable, itsTargetConcept.getPrimaryTarget(), b);
 	}
 
+	// the number of values in a column should be (at most) equal to 'bins'
+	// the getSplitPoints() code returns bins-1 split points
+	// the old getSplitPoints() returned inclusive lower bounds for each bin
+	// except for the first bin (which would be Column.getMinValue())
+	//
+	// the code below uses binary-search on the split points
+	// the old getSplitPoints() can not be used, it is incorrect
+	// instead, use the new getSplitPoints(BitSet, int, LEQ)
+	// it returns bounds that are usable with the binary search
+	// (be sure to first add the Column.getMaxValue() to the bounds)
+	//
+	// the discretised new Column will contain (at most) 'bins' values
+	// these values are the (inclusive) upper bounds of the bin a value
+	// would fall in
+	//
 	// lazy code - build new Table and re-use Table.toFile()
 	private void jButtonDiscretiseActionPerformed(int bins)
 	{
@@ -1974,27 +1989,51 @@ public class MiningWindow extends JFrame implements ActionListener
 				cs.add(c);
 			else
 			{
-				float[] bounds = null;
-				if (c.getCardinality() <= bins)
-					bounds = c.getUniqueNumericDomain(bs);
-				else
-				{
-					bounds = c.getSplitPoints(bs, aNrSplits);
+				// use new getUniqueSplitPoints()
+				Column.USE_NEW_BINNING = true;
+				float[] bounds = c.getUniqueSplitPoints(bs, aNrSplits, Operator.LESS_THAN_OR_EQUAL);
+				Column.USE_NEW_BINNING = false;
 
-					// lazy method to remove possible duplicates
-					Set<Float> set = new TreeSet<Float>();
-					for (float f : bounds)
-						set.add(Float.valueOf(f));
-					// reuse bounds
-					bounds = new float[set.size() + 1];
-					int index = -1;
-					for (Float f : set)
-						bounds[++index] = f;
-// FIXME MM
-// MAX SHOULD NOT BE INCLUDED, INSTEAD ONLY THE SPLITPOINTS ARE REQUIRED
-					bounds[++index] = c.getMax();
+				// nrBounds <= 'bins'
+				int nrBounds = bounds.length;
+
+				// TODO MM - deal with this
+				if (nrBounds == 0)
+					throw new AssertionError("FIX jButtonDiscretiseActionPerformed()");
+
+				// binary search needs all upper bounds
+				// bs selects all data, so c.getMax() is correct
+				// add max to bounds only if it is not in there
+				float max = c.getMax();
+				if (bounds[nrBounds-1] != max)
+				{
+					// reuse bounds 
+					bounds = Arrays.copyOf(bounds, nrBounds + 1);
+					bounds[nrBounds] = max; 
 				}
 
+// MM - OLD CODE DO NOT USE, CALLS INCORRECT OLD getSplitPoints()
+//				float[] bounds = null;
+//				if (c.getCardinality() <= bins)
+//					bounds = c.getUniqueNumericDomain(bs);
+//				else
+//				{
+//					bounds = c.getSplitPoints(bs, aNrSplits);
+//
+//					// lazy method to remove possible duplicates
+//					Set<Float> set = new TreeSet<Float>();
+//					for (float f : bounds)
+//						set.add(Float.valueOf(f));
+//					// reuse bounds
+//					bounds = new float[set.size() + 1];
+//					int index = -1;
+//					for (Float f : set)
+//						bounds[++index] = f;
+//// FIXME MM
+//// MAX SHOULD NOT BE INCLUDED, INSTEAD ONLY THE SPLITPOINTS ARE REQUIRED
+//					bounds[++index] = c.getMax();
+//				}
+//
 				int size = c.size();
 				assert (aNrRows == size);
 				Column nc = new Column(c.getName(), c.getShort(), c.getType(), c.getIndex(), size);
