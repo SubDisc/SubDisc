@@ -2327,8 +2327,8 @@ public class Column implements XMLNodeInterface
 	}
 
 	// used by getUniqueSplitPoints()
-	// TODO MM - also use this in getUniqueNumericDomain()
-	private static final float[] getUniqueValues(float[] theArray)
+	// TODO MM - also use this in getSplitPoints(), getUniqueNumericDomain()
+	static final float[] getUniqueValues(float[] theArray)
 	{
 		int aLast = 0;
 		for (int i = 1, j = theArray.length; i < j; ++i)

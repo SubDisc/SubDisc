@@ -550,7 +550,11 @@ AtomicInteger TOTAL_FILTERED = new AtomicInteger(0);
 		ConditionBase aConditionBase = theRefinement.getConditionBase();
 		ConditionListA aList = anOldSubgroup.getConditions();
 
-		float[] aSplitPoints = getDomain(theMembers, aNumericStrategy, aConditionBase.getColumn(), itsSearchParameters.getNrBins());
+		// FIXME MM
+		// temporary hack for better getSplitPoints(), see getDomain()
+		Column aColumn = aConditionBase.getColumn();
+		Operator anOperator = aConditionBase.getOperator();
+		float[] aSplitPoints = getDomain(theMembers, aNumericStrategy, aColumn, itsSearchParameters.getNrBins(), anOperator);
 // TODO MM
 // domain map contain using <value, count> nodes, useful for unique values and
 // for histogram/KDE creation (latter can multiply result for 1 point by count)
@@ -618,7 +622,7 @@ AtomicInteger TOTAL_FILTERED = new AtomicInteger(0);
 		ConditionBase aConditionBase = theRefinement.getConditionBase();
 		Column aColumn = aConditionBase.getColumn();
 
-		float[] aSplitPoints = getDomain(theMembers, aNumericStrategy, aColumn, itsSearchParameters.getNrBins());
+		float[] aSplitPoints = getDomain(theMembers, aNumericStrategy, aColumn, itsSearchParameters.getNrBins(), null);
 
 		// FIXME MM Subgroup -> theMembers
 		RealBaseIntervalCrossTable aRBICT = new RealBaseIntervalCrossTable(aSplitPoints, aColumn, theRefinement.getSubgroup(), itsBinaryTarget);
@@ -808,14 +812,16 @@ AtomicInteger TOTAL_FILTERED = new AtomicInteger(0);
 			bestAdd(aBestSubgroup, anOldCoverage);
 	}
 
-	private static final float[] getDomain(BitSet theMembers, NumericStrategy theNumericStrategy, Column theColumn, int theNrBins)
+	private static final float[] getDomain(BitSet theMembers, NumericStrategy theNumericStrategy, Column theColumn, int theNrBins, Operator theOperator)
 	{
 		switch (theNumericStrategy)
 		{
 			case NUMERIC_ALL	: return theColumn.getUniqueNumericDomain(theMembers);
 			case NUMERIC_BEST	: return theColumn.getUniqueNumericDomain(theMembers);
-			case NUMERIC_BINS	: return getUniqueSplitPoints(theMembers, theColumn, theNrBins);
-			case NUMERIC_BEST_BINS	: return getUniqueSplitPoints(theMembers, theColumn, theNrBins);
+			case NUMERIC_BINS	: return getUniqueSplitPoints(theMembers, theColumn, theNrBins-1, theOperator);
+			case NUMERIC_BEST_BINS	: return getUniqueSplitPoints(theMembers, theColumn, theNrBins-1, theOperator);
+//			case NUMERIC_BINS	: return theColumn.getUniqueSplitPoints(theMembers, theNrBins-1, theOperator);
+//			case NUMERIC_BEST_BINS	: return theColumn.getUniqueSplitPoints(theMembers, theNrBins-1, theOperator);
 			case NUMERIC_INTERVALS	: return theColumn.getUniqueNumericDomain(theMembers);
 			default :
 				throw new AssertionError("invalid Numeric Strategy: " + theNumericStrategy);
@@ -841,25 +847,16 @@ AtomicInteger TOTAL_FILTERED = new AtomicInteger(0);
 		}
 	}
 
-	// TODO MM - hack: functionality should be in theColumn.getSplitPoints()
-	private static final float[] getUniqueSplitPoints(BitSet theMembers, Column theColumn, int theNrBins)
+	// see comment theColumn.getUniqueSplitPoints()
+	private static final float[] getUniqueSplitPoints(BitSet theMembers, Column theColumn, int theNrBins, Operator theOperator)
 	{
-		if (theNrBins <= 1)
-			return new float[0];
+		float[] aSplitPoints = theColumn.getUniqueSplitPoints(theMembers, theNrBins-1, theOperator);
 
-		// this is the crucial translation from nrBins to nrSplitpoints
-		int aNrSplitPoints = theNrBins - 1;
-
-		float[] aSplitPoints = theColumn.getSplitPoints(theMembers, aNrSplitPoints);
-
-		int aLast = 0;
-		for (int i = 1, j = aSplitPoints.length; i < j; ++i)
-			if (aSplitPoints[aLast] != aSplitPoints[i])
-				aSplitPoints[++aLast] = aSplitPoints[i];
-
-		aSplitPoints = Arrays.copyOf(aSplitPoints, ++aLast);
-
-		return aSplitPoints;
+		// if new code is run, aSplitPoints is already filtered
+		if (Column.USE_NEW_BINNING)
+			return aSplitPoints;
+		else
+			return Column.getUniqueValues(aSplitPoints);
 	}
 
 	private final void filterDomain(NavigableMap<Float, Integer> theSplitPoints, Operator theOperator, int theMinimumCoverage)
