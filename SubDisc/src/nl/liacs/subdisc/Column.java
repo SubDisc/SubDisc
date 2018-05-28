@@ -2204,6 +2204,140 @@ public class Column implements XMLNodeInterface
 		return aUniqueValues;
 	}
 
+	// FIXME MM - temporary hack for better bins
+	// for GEQ: the old code is correct
+	// for LEQ: the old code is incorrect
+	//          each split point would always select (1/bins) too much data
+	//
+	// new code returns expected bin boundaries
+	// for GEQ, behaves as old code
+	// for LEQ, same code as GEQ, just loop over selected domain backwards
+	//
+	// examples of what happens in old code:
+	//
+	// data = [1,2,3,4] ; bins = 2 -> split-points { 3 }
+	//                    >= 3 -> 50% is correct
+	//                    <= 3 -> 75% is incorrect (1/bins) too much
+	//                         -> should be <= 2
+	//
+	// data = [1,2,3,4] ; bins = 4 -> split-points { 2,3,4 }
+	//                    >= 2 -> 75% is correct
+	//                    >= 3 -> 50% is correct
+	//                    >= 4 -> 25% is correct
+	//
+	//                    <= 2 ->  50% is incorrect (1/b) too much -> (<= 1)
+	//                    <= 3 ->  75% is incorrect (1/b) too much -> (<= 2)
+	//                    <= 4 -> 100% is incorrect (1/b) too much -> (<= 3)
+	//                         -> 100% is useless anyway
+	//
+	// leave false in svn - set to true by code that needs it
+	public static boolean USE_NEW_BINNING = false;
+	public float[] getUniqueSplitPoints(BitSet theBitSet, int theNrSplits, Operator theOperator) throws IllegalArgumentException
+	{
+		if (!USE_NEW_BINNING)
+			return getSplitPoints(theBitSet, theNrSplits);
+
+		// should never happen when (USE_NEW_BINNING == true)
+		if (theOperator != Operator.LESS_THAN_OR_EQUAL && theOperator != Operator.GREATER_THAN_OR_EQUAL)
+			throw new AssertionError("FIX new getSplitPoints()");
+
+// MM - COPY OF OLD CODE STARTS HERE
+		if (!isValidCall("getSplitPoints", theBitSet))
+			return new float[0];
+
+		if (theNrSplits < 0)
+			throw new IllegalArgumentException(theNrSplits + " (theNrSplits) < 0");
+		// valid, but useless
+		if (theNrSplits == 0)
+			return new float[0];
+
+		int size = theBitSet.cardinality();
+
+		// new - removed error in old code, see comment there
+		// prevent crash in aSplitPoints populating loop
+		if (size == 0)
+			return new float[0];
+
+		float[] aDomain = new float[size];
+		for (int i = theBitSet.nextSetBit(0), j = -1; i >= 0; i = theBitSet.nextSetBit(i + 1))
+			aDomain[++j] = itsFloatz[i];
+
+		Arrays.sort(aDomain);
+
+		// new - for LEQ, reverse sorted domain, then run old code on it
+		if (theOperator == Operator.LESS_THAN_OR_EQUAL)
+			reverse(aDomain);
+
+		float[] aSplitPoints = new float[theNrSplits];
+
+		// the (old) code below basically determines a step size:
+		// (size / (theNrSplits+1)) it is equivalent to (size / nrBins)
+		// and selects indexes using x*step_size, with x = 1..(nrBins-1)
+		// selected indexes are always [ >= 0 ; < size ]
+		// NOTE can cause integer overflow on large data
+//		// N.B. Order matters to prevent integer division from yielding zero.
+//		for (int j=0; j<theNrSplits; j++)
+//			aSplitPoints[j] = aDomain[size*(j+1)/(theNrSplits+1)];
+
+		// as above - but safe
+		// avoid integer overflow
+		//   theNrSplits + 1 : could overflow int -> use long nrBins
+		//   (i+1)           : safe as i < theNrSplits (i+1 <= MAX_INT)
+		//   size * (i+1)    : could overflow int
+		//   size_L * (i+1)  : safe as (MAX_INT * MAX_INT) < MAX_LONG
+		//
+		// range for nrBins:
+		//   (theNrSplits > 0) is checked above, so nrBins >= 2
+		//
+		// range for i:
+		//   i     = [ 0 ; (theNrSplits-1) ] = [ 0 ; (nrBins-2) ]
+		//   (i+1) = [ 1 ; (nrBins-1) ]
+		//
+		// aDomain[ idx ] is within int range, so safe to casts:
+		//   idx = [ (size / nrBins)  ; ((size * (nrBins-1)) / nrBins) ]
+		//   idx = [ (size / nrBins)  ;  (size * ((nrBins-1) / nrBins) ]
+		//   idx = [ >= 0 && <=size/2 ; < size (as nrBins_factor < 1)  ]
+		long nrBins = theNrSplits + 1;
+		long size_L = size;
+		for (int i = 0; i < theNrSplits; ++i)
+			aSplitPoints[i] = aDomain[(int) ((size_L * (i+1)) / nrBins)];
+
+		// remove duplicates, re-assign to aSplitPoints
+		aSplitPoints = getUniqueValues(aSplitPoints);
+
+		// new - not strictly needed, but return data in ascending order
+		if (theOperator == Operator.LESS_THAN_OR_EQUAL)
+			reverse(aSplitPoints);
+
+		return aSplitPoints;
+	}
+
+	private static final void reverse(float[] theArray)
+	{
+		// generates null pointer exception on null input
+		int size = theArray.length;
+
+		// does nothing on sizes 0 and 1 (does not enter loop) 
+		for (int i = 0, j = size - 1; i < size / 2; ++i, --j)
+		{
+			float aTemp = theArray[i];
+			theArray[i] = theArray[j];
+			theArray[j] = aTemp;
+		}
+	}
+
+	// used by getUniqueSplitPoints()
+	// TODO MM - also use this in getUniqueNumericDomain()
+	private static final float[] getUniqueValues(float[] theArray)
+	{
+		int aLast = 0;
+		for (int i = 1, j = theArray.length; i < j; ++i)
+			if (theArray[aLast] != theArray[i])
+				theArray[++aLast] = theArray[i];
+
+		return Arrays.copyOf(theArray, ++aLast);
+	}
+
 	/**
 	 * Returns the split-points for Columns of
 	 * {@link AttributeType} {@link AttributeType#NUMERIC} and
@@ -2241,6 +2375,8 @@ public class Column implements XMLNodeInterface
 	 * @see NumericStrategy
 	 * @see java.util.BitSet
 	 */
+	// instead, use new getSplitPoints(BitSet, int, Operator)
+	@Deprecated
 	public float[] getSplitPoints(BitSet theBitSet, int theNrSplits) throws IllegalArgumentException
 	{
 		if (!isValidCall("getSplitPoints", theBitSet))
