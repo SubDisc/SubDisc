@@ -843,9 +843,9 @@ AtomicInteger TOTAL_FILTERED = new AtomicInteger(0);
 	}
 
 	// see comment theColumn.getUniqueSplitPoints()
-	private static final float[] getUniqueSplitPoints(BitSet theMembers, Column theColumn, int theNrBins, Operator theOperator)
+	private static final float[] getUniqueSplitPoints(BitSet theMembers, Column theColumn, int theNrSplits, Operator theOperator)
 	{
-		float[] aSplitPoints = theColumn.getUniqueSplitPoints(theMembers, theNrBins-1, theOperator);
+		float[] aSplitPoints = theColumn.getUniqueSplitPoints(theMembers, theNrSplits, theOperator);
 
 		// if new code is run, aSplitPoints is already filtered
 		if (Column.USE_NEW_BINNING)
