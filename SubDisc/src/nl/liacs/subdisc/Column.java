@@ -2231,7 +2231,7 @@ public class Column implements XMLNodeInterface
 	//                         -> 100% is useless anyway
 	//
 	// leave false in svn - set to true by code that needs it
-	public static boolean USE_NEW_BINNING = true;
+	public static boolean USE_NEW_BINNING = false;
 	public float[] getUniqueSplitPoints(BitSet theBitSet, int theNrSplits, Operator theOperator) throws IllegalArgumentException
 	{
 		if (!USE_NEW_BINNING)
