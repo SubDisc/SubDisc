@@ -2460,7 +2460,7 @@ public class Column implements XMLNodeInterface
 	 *
 	 * @param theNrSplits the number of split-point between Intervals.
 	 *
-	 * @return an Interval[], holding the (possibly non-distinct) Intervals.
+	 * @return a SortedSet<Interval>, holding the Intervals.
 	 *
 	 * @throws IllegalArgumentException when theNrSplits < 0.
 	 *
@@ -2469,58 +2469,39 @@ public class Column implements XMLNodeInterface
 	 * @see NumericStrategy
 	 * @see java.util.BitSet
 	 */
-	public Interval[] getSplitPointsBounded(BitSet theBitSet, int theNrSplits) throws IllegalArgumentException
+	public SortedSet<Interval> getUniqueSplitPointsBounded(BitSet theBitSet, int theNrSplits) throws IllegalArgumentException
 	{
 		if (!isValidCall("getSplitPointsBounded", theBitSet))
-			return new Interval[0];
+			return Collections.emptySortedSet();
 
 		if (theNrSplits < 0)
 			throw new IllegalArgumentException(theNrSplits + " (theNrSplits) < 0");
 		// valid, but useless
 		if (theNrSplits == 0)
-			return new Interval[0];
+			return Collections.emptySortedSet();
 
-		Interval[] aSplitPoints = new Interval[theNrSplits+1];
-		final int size = theBitSet.cardinality();
+		// TODO use same procedure as pre-discretisation in MiningWindow
+		boolean anOrig = Column.USE_NEW_BINNING ;
+		Column.USE_NEW_BINNING = true;
+		float[] aBounds = getUniqueSplitPoints(theBitSet, theNrSplits, Operator.LESS_THAN_OR_EQUAL);
+		Column.USE_NEW_BINNING = anOrig;
 
-		// FIXME MM
-		// (size == 0) check is incorrect
-		// it would return an array of 0's
-		// and then 0 would be considered to be a bin boundary
-		// more generally the code below leads to awkward results when
-		// (theNrSplits > theBitSet.cardinality())
-		// as the aSplitPoints[] will be populated with 0's
-		// for every index >= theBitSet.cardinality(), the values will
-		// not be set to anything else
+		int aNrBounds = aBounds.length;
+		if (aNrBounds == 0)
+			return Collections.emptySortedSet();
 
-		// prevent crash in aSplitPoints populating loop
-		if (size == 0)
-			return aSplitPoints;
-
-		float[] aDomain = new float[size];
-		for (int i = theBitSet.nextSetBit(0), j = -1; i >= 0; i = theBitSet.nextSetBit(i + 1))
-			aDomain[++j] = itsFloatz[i];
-
-		Arrays.sort(aDomain);
-
-		// N.B. Order matters to prevent integer division from yielding zero.
-		float lower = Float.NEGATIVE_INFINITY;
-		float upper = Float.NaN; // theNrSplits is never 0 at this point
-		for (int j=0; j<theNrSplits; j++)
+		if (aBounds[aNrBounds - 1] != Float.POSITIVE_INFINITY)
 		{
-			// as before
-			upper = aDomain[size*(j+1)/(theNrSplits+1)];
-
-			// add Interval
-			aSplitPoints[j] = new Interval(lower, upper);
-
-			// set lower for next iteration
-			lower = upper;
+			aBounds = Arrays.copyOf(aBounds, aNrBounds + 1);
+			aBounds[aNrBounds] = Float.POSITIVE_INFINITY;
+			++aNrBounds;
 		}
-		// add the final Interval - could be set in loop using if-check
-		aSplitPoints[aSplitPoints.length-1] = new Interval(lower, Float.POSITIVE_INFINITY);
 
-		return aSplitPoints;
+		SortedSet<Interval> set = new TreeSet<Interval>();
+		for (int i = 0; i < aNrBounds; ++i)
+			set.add(new Interval(i == 0 ? Float.NEGATIVE_INFINITY : aBounds[i-1], aBounds[i]));
+
+		return set;
 	}
 
 	/**

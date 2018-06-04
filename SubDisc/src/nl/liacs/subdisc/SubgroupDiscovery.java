@@ -774,18 +774,13 @@ AtomicInteger TOTAL_FILTERED = new AtomicInteger(0);
 		// useless, Column.getSplitPointsBounded() would return an empty array
 		if (aNrSplitPoints <= 0)
 			return;
-		Interval[] anIntervals = aConditionBase.getColumn().getSplitPointsBounded(theMembers, aNrSplitPoints);
+		SortedSet<Interval> anIntervals = aConditionBase.getColumn().getUniqueSplitPointsBounded(theMembers, aNrSplitPoints);
 
 		Subgroup aBestSubgroup = null;
-		for (int i = 0; i < anIntervals.length; ++i)
+		for (Interval anInterval : anIntervals)
 		{
-			Interval anInterval = anIntervals[i];
-
 			// catch invalid input
 			if (anInterval == null)
-				continue;
-			// catch duplicates
-			if ((i > 0) && (anInterval.compareTo(anIntervals[i-1]) == 0))
 				continue;
 
 			if (itsFilter != null)
