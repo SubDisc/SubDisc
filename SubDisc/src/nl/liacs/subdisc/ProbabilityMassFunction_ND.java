@@ -70,9 +70,10 @@ public class ProbabilityMassFunction_ND extends ProbabilityDensityFunction
 
 		// to use new getUniqueSplitPoints() - set to true
 		// else old getSplitPoints() is used (note that it is flawed)
+		boolean orig = Column.USE_NEW_BINNING ;
 		Column.USE_NEW_BINNING = true;
 		float[] bounds = theColumn.getUniqueSplitPoints(aBitSet, theNrSplitPoints, Operator.LESS_THAN_OR_EQUAL);
-		Column.USE_NEW_BINNING = false;
+		Column.USE_NEW_BINNING = orig;
 
 		// nrBounds <= theNrSplitPoints
 		int nrBounds = bounds.length;
