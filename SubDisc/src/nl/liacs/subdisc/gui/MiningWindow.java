@@ -250,6 +250,7 @@ public class MiningWindow extends JFrame implements ActionListener
 		aButtonPanel.add(jButtonMetaData);
 
 		jButtonDiscretiseData = initButton(STD.DISCRETISE);
+// XXX - IN SVN, DO NOT ADD DISCRETISE BUTTON
 //		aButtonPanel.add(jButtonDiscretiseData);
 
 		jPanelDataSetButtons.add(aButtonPanel);
@@ -1990,11 +1991,12 @@ public class MiningWindow extends JFrame implements ActionListener
 			else
 			{
 				// use new getUniqueSplitPoints()
+				boolean orig = Column.USE_NEW_BINNING ;
 				Column.USE_NEW_BINNING = true;
 				float[] bounds = c.getUniqueSplitPoints(bs, aNrSplits, Operator.LESS_THAN_OR_EQUAL);
-				Column.USE_NEW_BINNING = false;
+				Column.USE_NEW_BINNING = orig;
 
-				// nrBounds <= 'bins'
+				// nrBounds <= aNrSplits
 				int nrBounds = bounds.length;
 
 				// TODO MM - deal with this
