@@ -1979,7 +1979,7 @@ public class MiningWindow extends JFrame implements ActionListener
 		BitSet bs = new BitSet(aNrRows);
 		bs.set(0, aNrRows);
 
-		String name = String.format("%s.h%04d", itsTable.getSource(), bins);
+		String name = String.format("%s.b%04d", itsTable.getSource(), bins);
 		File file = new File(name + ".csv");
 		Table t = new Table(file, name, aNrRows, itsTable.getNrColumns());
 		List<Column> cs = t.getColumns();
