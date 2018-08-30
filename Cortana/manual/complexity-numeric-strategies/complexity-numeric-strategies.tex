@@ -1,0 +1,241 @@
+\documentclass[a4paper]{article}
+
+\usepackage[a4paper,width=150mm,top=25mm,bottom=25mm]{geometry}
+\usepackage{amsmath}
+\usepackage{placeins}
+
+\newcommand{\cortana}[1]{\emph{#1}}
+\newcommand{\all}{\cortana{all}}
+\newcommand{\best}{\cortana{best}}
+\newcommand{\bins}{\cortana{bins}}
+\newcommand{\bestbins}{\cortana{bestbins}}
+%
+\newcommand{\ai}{$a_i$}
+\newcommand{\Ai}{$A_i$}
+\newcommand{\Ci}{$A_i^c$}
+\newcommand{\oi}{$o_i$}
+\newcommand{\D}{D}
+\newcommand{\uu}{$U$}
+\newcommand{\uc}{$U_c$}
+\newcommand{\bw}{$\omega$}
+\newcommand{\bb}[1]{$\beta^{\text{#1}}$}
+%
+\newcommand{\co}[1]{$\mathcal{O}($#1$)$}
+\newcommand{\X}{$\times$} % look better than $cdot$
+
+
+
+\begin{document}
+
+\title{Complexity analysis for Cortana's numeric strategies}
+\author{Marvin Meeng}
+\date{}
+\maketitle
+
+This document presents a complexity analysis for Cortana's numeric strategies, for exhaustive depth-first search and heuristic level-wise beam search.
+Cortana offers four options for its `\emph{numeric strategy}' parameter: \all{}, \best{}, \bins{}, and \bestbins{}.
+These are actually combinations of the Granularity options fine and coarse, and Selection Strategy options all and best, presented elsewhere\footnote{Meeng and Knobbe; A Systematic Analysis of Strategies for Dealing with Numeric Data in Subgroup Discovery.}.
+The table below shows a summary of the analysis.
+More detailed analyses, and a list of symbols, can be found thereafter.
+The summary shows that, when used in a beam setting, the numeric strategies \all{} and \best{} have the same worst-case complexity.
+The same is true for \bins{} and \bestbins{}.
+
+So, when performing experiments in a beam setting, complexity arguments become irrelevant when considering \all{} and \best{}, or \bins{} and \bestbins{}.
+This leaves only a saturation argument as justification for the use of \best{} and \bestbins{}.
+
+\begin{table}[!h]
+\centering
+\begin{tabular}{l|ll|ll}
+cortana     & granularity & selection & depth-first            & level-wise beam\\
+            &             & strategy  &                        & \\
+\hline
+\all{}      & fine        & all       & \co{\uu{}$^\D$}        & \co{\uu{}($D$\bw$-$\bw+1)}\\
+\best{}     & fine        & best      & \co{\uu \bb{$\D${-}1}} & \co{\uu{}($D$\bw$-$\bw+1)}\\
+\bins{}     & coarse      & all       & \co{\uc{}$^\D$}        & \co{\uc{}($D$\bw$-$\bw+1)}\\
+\bestbins{} & coarse      & best      & \co{\uc \bb{$\D${-}1}} & \co{\uc{}($D$\bw$-$\bw+1)}\\
+\end{tabular}
+\end{table}
+
+
+
+\section*{\centerline{Introduction}}
+
+Below, a complexity analysis is first performed for the Selection Strategy and Granularity options separately.
+Thereafter, the analysis for the options offered by Cortana is presented.
+The table below lists the symbols used.
+For the heuristics Selection Strategy best, Granularity coarse, and all beam searches, the number of candidates tested on a certain depth-level differs from the number of candidates that is retained for the next level.
+The number of candidates tested at each depth level is given by `at d*'.
+For Selection Strategy all+depth-first, and Granularity fine+depth-first, `$\D$=*' show the \emph{total} number of candidates for a search up to and including depth-level $\D$.
+
+\begin{table}[!h]
+\centering
+\begin{tabular}{ll}
+symbol & description\\
+\hline
+a      & description attribute\\
+c      & number of cut points (number of bins{-}1)\\
+d      & depth-level\\
+m      & number of description attributes\\
+$\D$   & maximum search depth\\
+\Ai    & cardinality of \ai\\
+\Ci    & coarse cardinality of \ai (\Ai for nominal, c for numeric)\\
+\oi    & number of operators for \ai (usually 1 (=) or 2 ($\leq, \geq$)\\
+\hline
+\uu    & $\sum_{i=1}^m$ (\oi{}\X{}\Ai), number of (single conjunct) descriptions\\
+\uc    & $\sum_{i=1}^m$ (\oi{}\X{}\Ci), number of (single conjunct) descriptions for coarse\\
+\bw    & beam width\\
+\bb{}  & $\sum_{i=1}^m$ (\oi), total number of \emph{selected} candidates for best (\oi{} per \ai)\\
+\end{tabular}
+\end{table}
+
+\paragraph{NOTE: U}
+\uu{} can be larger than the set of (valid) depth-1 subgroups.
+\uu{} includes descriptions that cover more records than might be allowed for a subgroup because of a maximum coverage constraint.
+On the other hand, all descriptions that cover less records than is required by a minimum coverage constraint, should be purged from \uu{} beforehand.
+The same holds for \uc{}.
+
+
+
+\section*{\centerline{Selection Strategy}}
+
+\paragraph{Summary} Selection Strategy options all and best have the same computational complexity with respect to the number of refinements that are tested for a \emph{single} candidate.
+This is because to determine the best refinement, all refinements need to be tested.
+In an exhaustive search, option all would be computationally much more demanding than option best, as at higher depths all refinements will be considered for further processing.
+In contrast, the complexity for beam search is essentially the same for the two options, irrespective of search depth.
+So, when performing a beam search, the best heuristic does not reduce the search space, but is likely to perform worse, as it selects only one candidate per attribute.
+Therefore, its use would be hard to justify.
+
+\begin{table}[!h]
+\centering
+\begin{tabular}{lll}
+selection & depth-first                           & level-wise beam\\
+strategy  &                                       & \\
+\hline
+all       & $\D$=1: \uu                           & at d1: \uu\\
+          & $\D$=2: \uu \uu                       & at d2: \uu \bw\\
+          & $\D$=3: \uu \uu \uu                   & at d3: \uu \bw\\
+          &                                       & \co{\uu{} + $\sum_{d=2}^\D$ (\uu \bw)}\\
+          &                                       & \co{\uu{} + $\D${-}1(\uu \bw)}\\
+          & \co{\uu{}$^\D$}                       & \co{\uu{}($D$\bw$-$\bw+1)}\\
+\hline
+best      & at d1: \uu                            & at d1: \uu\\
+          & at d2: \uu \bb{}                      & at d2: \uu{}\X{}\,min(\bb{}, \bw)\\
+          & at d3: \uu \bb{2}                     & at d3: \uu{}\X{}\,min(\bb{2}, \bw)\\
+          & \co{$\sum_{d=1}^\D$ (\uu \bb{d{-}1})} & \co{$\sum_{d=1}^\D$ (\uu{}\X{}\,min(\bb{d{-}1}, \bw))}\\
+          & \co{\uu \bb{$\D${-}1}}                & \co{\uu{}($D$\bw$-$\bw+1)}\\
+\hline
+\end{tabular}
+\end{table}
+
+\paragraph{best+beam \& all+beam}
+For beam searches, best has the same worst-case complexity as all.
+When \bb{} is large, \bb{} $\geq$ \bw, only the top-\bw{} of the \bb{} candidates will available at the next search level.
+This situation occurs when the number of attributes is large, or the beam is small.
+
+\paragraph{best+beam}
+For beam searches, when \bb{} is small, the number of selected candidates up to a certain depth-level might be smaller than the beam size (\bb{d-1} $<$ \bw{}).
+In this case, less then \bw{} candidates will be available.
+This situation occurs when the number of attributes is small, or the beam is large, and it continues until \bb{d-1} $\geq$ \bw{}.
+With increasing search depth, it becomes ever more unlikely, as \bb{d-1} grows fast.
+
+\paragraph{best+beam \& best+depth-first}
+Related to the situation described above, when \bb{} is small, best+depth-first and best+beam have the same complexity.
+This situation occurs when the number of attributes is small, or the beam is large, and it continues until \bb{d-1} $\geq$ \bw{}.
+
+\paragraph{all}
+The situation where \uu{}$^{d-1}$ $<$ \bw{} is unlikely and ignored, reasoning would be as above.
+
+\FloatBarrier
+
+
+
+\section*{\centerline{Granularity}}
+
+\begin{table}[!h]
+\centering
+\begin{tabular}{lll}
+granularity & depth-first         & level-wise beam\\
+\hline
+fine        & $\D$=1: \uu         & at d1: \uu\\
+            & $\D$=2: \uu \uu     & at d2: \uu \bw\\
+            & $\D$=3: \uu \uu \uu & at d3: \uu \bw\\
+            &                     & \co{\uu{} + $\sum_{d=2}^\D$ (\uu \bw)}\\
+            &                     & \co{\uu{} + $\D${-}1(\uu \bw)}\\
+            & \co{\uu{}$^\D$}     & \co{\uu{}($D$\bw$-$\bw+1)}\\
+\hline
+coarse      & $\D$=1: \uc         & at d1: \uc\\
+            & $\D$=2: \uc \uc     & at d2: \uc \bw\\
+            & $\D$=3: \uc \uc \uc & at d3: \uc \bw\\
+            &                     & \co{\uc{} + $\sum_{d=2}^\D$ (\uc \bw)}\\
+            &                     & \co{\uc{} + $\D${-}1(\uc \bw)}\\
+            & \co{\uc{}$^\D$}     & \co{\uc{}($D$\bw$-$\bw+1)}\\
+\end{tabular}
+\end{table}
+
+\paragraph{Summary}
+Granularity option fine and Selection Strategy option all have the same complexity.
+The analysis for coarse is proceeds the same as for the previous analyses.
+The only difference is the use of the reduced set of base conditions, or single conjunct descriptions, \uc{} instead of \uu{}.
+
+\paragraph{pre-discretisation and dynamic discretisation}
+For fine and coarse, the complexity for pre-discretisation and dynamic discretisation is identical.
+For fine this is obvious, so consider coarse.
+With pre-discretisation, the search-phase domain of an attribute consists of c values of the original domain of the attribute, and is determined beforehand.
+Every candidate, at every search depth, then uses all relevant of the c values of this search-phase domain.
+With dynamic discretisation, the search-phase domain consists of all original values, and from these, each candidate selects the c values that are most suitable for it.
+So the \emph{number} of values is identical for the two scenarios.
+%Determining the boundaries for each tested candidate has a cost, but when the data is sorted beforehand, complexity is linear in $n$, the size of the candidate, to establish the domain.
+
+\paragraph{coarse}
+The analysis below ignores the possibility \uc{}$^{d-1}$ $<$ \bw{}, it is unlikely, reasoning is as before.
+
+\FloatBarrier
+
+
+
+\section*{\centerline{Cortana's numeric strategies: all, best, bins, bestbins}}
+
+\paragraph{Summary}
+Results for \all{} and \best{} are the same as those for Selection Strategy all and best, and use the base set \uu{}.
+So here, \all{} and \best{} have the same complexity in the beam setting.
+Results for \bins{} and \bestbins{} are based on Granularity option coarse, and use the base set \uc{}.
+In fact, \bins{} is the same as coarse.
+Obviously, \bestbins{} is a mixture of \best{} and \bins{}, or Selection Strategy option best and Granularity option coarse.
+Worst-case complexity for \bins{} en \bestbins{} is identical in the beam setting.
+
+\begin{table}[!h]
+\centering
+\begin{tabular}{lll}
+numeric     & depth-first                          & level-wise beam\\
+strategy    &                                      & \\
+\hline
+\all{}      & $\D$=1: \uu                          & at d1: \uu\\
+            & $\D$=2: \uu \uu                      & at d2: \uu \bw\\
+            & $\D$=3: \uu \uu \uu                  & at d3: \uu \bw\\
+            &                                      & \co{\uu{} + $\sum_{d=2}^\D$(\uu \bw)}\\
+            &                                      & \co{\uu{} + $\D${-}1(\uu \bw)}\\
+            & \co{\uu{}$^\D$}                      & \co{\uu{}($D$\bw$-$\bw+1)}\\
+\hline
+\best{}     & at d1: \uu                           & at d1: \uu\\
+            & at d2: \uu \bb{}                     & at d2: \uu{}\X{}\,min(\bb{}, \bw)\\
+            & at d3: \uu \bb{2}                    & at d3: \uu{}\X{}\,min(\bb{2}, \bw)\\
+            & \co{$\sum_{d=1}^\D$(\uu \bb{d{-}1})} & \co{$\sum_{d=1}^\D$(\uu{}\X{}\,min(\bb{d{-}1}, \bw))}\\
+            & \co{\uu \bb{$\D${-}1}}               & \co{\uu{}($D$\bw$-$\bw+1)}\\
+\hline
+\bins{}     & $\D$=1: \uc                          & at d1: \uc\\
+            & $\D$=2: \uc \uc                      & at d2: \uc \bw\\
+            & $\D$=3: \uc \uc \uc                  & at d3: \uc \bw\\
+            &                                      & \co{\uc{} + $\sum_{d=2}^\D$(\uc \bw)}\\
+            &                                      & \co{\uc{} + $\D${-}1(\uc \bw)}\\
+            & \co{\uc{}$^\D$}                      & \co{\uc{}($D$\bw$-$\bw+1)}\\
+\hline
+\bestbins{} & at d1: \uc                           & at d1: \uc\\
+            & at d2: \uc \bb{}                     & at d2: \uc{}\X{}\,min(\bb{}, \bw)\\
+            & at d3: \uc \bb{2}                    & at d2: \uc{}\X{}\,min(\bb{2}, \bw)\\
+            & \co{$\sum_{d=1}^\D$(\uc \bb{d{-}1})} & \co{$\sum_{d=1}^\D$(\uc{}\X{}\,min(\bb{d{-}1}, \bw))}\\
+            & \co{\uc \bb{$\D${-}1}}               & \co{\uc{}($D$\bw$-$\bw+1)}\\
+\end{tabular}
+\end{table}
+
+\end{document}
+

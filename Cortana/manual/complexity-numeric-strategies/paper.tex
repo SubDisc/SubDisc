@@ -1,0 +1,1980 @@
+\documentclass[smallextended]{svjour3}
+
+%\usepackage{wfonts}
+\usepackage{fullpage,epigraph}
+\usepackage{color}
+\usepackage[parfill]{parskip}
+\usepackage[british]{babel}
+\usepackage[bookmarks=false,colorlinks=true, citecolor=blue]{hyperref}
+\usepackage{cite}
+%\usepackage{amsfonts,amsmath,amssymb,amsthm}
+\usepackage{amsfonts,amsmath,amssymb}
+\usepackage[ruled, vlined, linesnumbered, nofillcomment]{algorithm2e}
+\providecommand{\DontPrintSemicolon}{\dontprintsemicolon}
+%\usepackage{algorithm}
+%\usepackage{algorithmic}
+%\usepackage{algpseudocode}
+%\newtheorem{definition}{Definition}
+\usepackage{numprint}
+\usepackage{textcomp}
+\usepackage{xfrac}
+\usepackage{url}
+\usepackage{verbatim}
+\usepackage{import}
+%\usepackage{rotating}
+\usepackage{pdflscape}
+\usepackage{multirow}
+\usepackage{tablefootnote}
+\usepackage{threeparttable}
+%\usepackage{bm}
+% debug
+%\usepackage{showframe}
+%\usepackage[showframe]{geometry}
+%\usepackage[export]{adjustbox}
+
+%% new tex versions no longer need this
+%\ifx\pdfoutput\undefined
+%% we are running LaTeX, not pdflatex
+%\usepackage{graphicx}
+%\else
+%% we are running pdflatex, so convert .eps files to .pdf
+%% pdflatex --shell-escape filename
+%\usepackage[pdftex]{graphicx}
+%\usepackage{epstopdf}
+%\fi
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% FOR EASY SWITCH BETWEEN 'WORKING' AND 'RELEASE' VERSION COMMENT THESE COMMANDS
+% THE SECONDS OPTION 'REMOVES' ALL COMMENTS FROM THE PDF
+% DO NOT INLINE COMMENTS --- PUT THEM ON A SEPARATE LINE
+%
+\newcommand{\todo}[1]{\textcolor{red}{[TODO: #1]}}
+\newcommand{\marvin}[1]{\textcolor{blue}{[#1]}}
+\newcommand{\arno}[1]{\textcolor{green}{[#1]}}
+
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% USING THESE COMMANDS MAKES IT TRIVIAL TO CHANGE FROM ONE STYLE TO ANOTHER
+% EG. CHANGE \dataset{\emph} TO \dataset{\textbf} TO PRINT NAMES IN BOLDFACE
+
+% qoutes, emphasis, and other default renderings
+\newcommand{\attribute}{\emph}
+\newcommand{\dataset}{\emph}
+\newcommand{\subgroup}[1]{\mbox{`$#1$'}}
+\newcommand{\qm}{\emph}
+\newcommand{\op}[1]{`$#1$'}
+% symbols - variables
+\newcommand{\ds}[1]{\mathcal{D}_{#1}}
+\newcommand{\extension}[1]{\mathcal{E}_{#1}}
+\newcommand{\intension}{I}
+\newcommand{\absz}{$\lvert$$z$-score$\rvert$}
+\newcommand{\hs}{H}
+\newcommand{\bw}{W} % beam-width
+\newcommand{\bb}{C} % best-width (number of best candidates, based on oi per ai)
+\newcommand{\dm}{D} % max-depth
+% symbols - dimensions
+\newcommand{\dimension}{\emph}
+\newcommand{\parameter}{\emph}
+\newcommand{\dyndis}{\parameter{dynamic discretisation}}
+\newcommand{\predis}{\parameter{pre-discretisation}}
+\newcommand{\binaries}{\parameter{binaries}}
+\newcommand{\nominal}{\parameter{nominal}}
+\newcommand{\fine}{\parameter{fine}}
+\newcommand{\coarse}{\parameter{coarse}}
+\newcommand{\all}{\parameter{all}}
+\newcommand{\best}{\parameter{best}}
+% strategy names - these are used in the imported tex tables
+\newcommand{\dbfa}[1]{1-dbfa}
+\newcommand{\dbfb}[1]{2-dbfb}
+\newcommand{\dbca}[1]{\ifthenelse{\equal{#1}{0}}{3-dbca}{3-dbca\textsuperscript{#1}}}
+\newcommand{\dbcb}[1]{\ifthenelse{\equal{#1}{0}}{4-dbcb}{4-dbcb\textsuperscript{#1}}}
+\newcommand{\dnca}[1]{\ifthenelse{\equal{#1}{0}}{7-dnca}{7-dnca\textsuperscript{#1}}}
+\newcommand{\dncb}[1]{\ifthenelse{\equal{#1}{0}}{8-dncb}{8-dncb\textsuperscript{#1}}}
+\newcommand{\pbfa}[1]{\ifthenelse{\equal{#1}{0}}{9-pbfa}{9-pbfa\textsuperscript{#1}}}
+\newcommand{\pbfb}[1]{\ifthenelse{\equal{#1}{0}}{10-pbfb}{10-pbfb\textsuperscript{#1}}}
+\newcommand{\pnca}[1]{\ifthenelse{\equal{#1}{0}}{15-pnca}{15-pnca\textsuperscript{#1}}}
+\newcommand{\dnfb}[1]{17-dnfb} % could change this to 17-mamp
+% old commands
+\newcommand{\sd}{SD}
+\newcommand{\emm}{EMM}
+\newcommand{\eh}{\textsc{EqualHeightBinning}}
+% MW-U tables commands
+\newcommand{\lmix}{$<$}                   % left wins overall, but mixed results, right wins some
+\newcommand{\lall}{$\vartriangleleft$}    % left wins all
+\newcommand{\lasi}{$\blacktriangleleft$}  % left wins all, and all results are significant
+\newcommand{\draw}{$=$}                   % left wins as often as right
+\newcommand{\same}{$=$}                   % same score for all results ($\equiv$)
+\newcommand{\rmix}{$>$}                   % right wins overall, but mixed results, left wins some
+\newcommand{\rall}{$\vartriangleright$}   % right wins all
+\newcommand{\rasi}{$\blacktriangleright$} % right wins all, and all results are significant
+\newcommand{\rb}[2]{#1 vs. #2} % ignore, redefined in MW-U table files
+
+%\newcommand{}{}
+%
+% KEEP TRACK OF USED SYMBOLS
+%
+% generally,
+%  \mathcal{x} is used for sets
+%  single capital character is used for size
+%
+% b = bin
+% B = number of bins
+% \mathcal{B} = set of bin boundaries         --- contains at most B-1 boundaries
+% N = data size
+% \mathcal{D} = dataset (used to be \Omega)
+% \vec{r} = record                            --- !!! vec{r} = record, r = refinement !!!
+% n = subgroup size
+% n^c = complement size
+% \mathbb{A} = unrestricted domain of description attributes (descriptors)
+% \mathcal{A} = set of unique values of a_i
+% A = number of description attributes        --- equal to m
+% a_i = description attribute
+% a_i^j = j-th attribute value of a_i
+% E = subgroup extension                      --- this is a set, should use \mathcal{E}
+% \vec{a}_i^{E_j} = vector of values of a_i covered by E_j
+% \mathcal{A}_i^{E_j} = set of unique values of a_i covered by E_j
+% s = subgroup
+% \mathcal{S} = set of subgroups (candidates in Cortana speak)
+% \mathcal{O} = set of all numeric operators  --- not used, would clash with Big O
+% O = number of operators
+% o = operator from description language
+% d = search depth
+% p = parameter (search constraint)
+% \mathcal{P} = set of search constraints
+% \mathcal{R} = set of Refinements
+% R = number of refinements                   --- not used?
+% r = refinement
+% \mathcal{F} = result set
+% F = size of result set
+% v_y = value in \mathcal{A}_i^{E_j} (also v_1 and v_2)
+% H = size of set of hypothesis
+% T = number of best-scoring hypothesis       --- not used, always 1 in Cortana
+% T = cardinality of target
+% W = beam width
+% C = number of best (sum_{i=1}^m (number of operators for a_i))
+% D = maximum search depth
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% k = top-k
+% U = Mann-Whitney U
+% \Sigma = rank sum for Mann Whitney U        --- !!! \mathcal{R} = set of Refinements, R would denote its size !!!
+% z = Mann-Whitney U z-score
+% mu_U = mean for Mann-Whitney U
+% \sigma_U = standard deviation for Mann-Whitney U
+%
+%
+%%% UNUSED %%%
+% I = subgroup intension
+% \mathcal{I} description language
+%      d=1: $\bigcup\limits_{i=1}^A (a_i \times \mathbb{O} \times \mathbb{A_i})
+%           \mathcal{C} = set of all basic conjuncts, C = size of set of ...
+%      d=2: $bigcup\limits_{i_1}^C (bigcup\limits{j=1}^C(c_i \wedge c_j))
+%      \mathcal{C^+} = all basic conjuncts + \emptyset
+%
+% \mathbb{R} = set of reals
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% SPELLINGS
+%
+% dataset, not data set
+% result set, not resultset
+% Subgroup Discovery once, then \sd{}
+% Exceptional Model Mining once, then \emm{}
+% Section, not Sec.
+% Figure, not Fig.
+% Equation, not Eq.
+% Algorithm, not Alg.
+% 'i.e. ', not 'i.e.,' (UK vs. US)
+% 'e.g. ', not 'e.g.,' (UK vs. US)
+% rule of thumb, not rule-of-thumb
+% bin boundaries, not bin-boundaries
+% multidimensional, not multi-dimensional
+% description language/generator/..., not pattern language/generator/...
+% cut points, not cutpoints
+% modelling, not modeling
+% controlling, not controling
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% MISC
+%
+% point types for plots
+% top-1 (*), 10 (x), 100 (+), all (o)
+% all (*), best( x), bins (+), bestbins (o)
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+\begin{document}
+
+\title{A Systematic Analysis of Strategies for Dealing with Numeric Data in Subgroup Discovery}
+\author{Marvin Meeng, Arno Knobbe}
+\date{}
+\maketitle
+
+
+
+\begin{abstract}
+Subgroup Discovery algorithms make various choices when it comes to dealing with numeric description attributes.
+One such choice concerns, the operators of, the description language.
+For example, one can use any of the following operators when dealing with numeric data: \op{<}, \op{>}, \op{\leq}, \op{\geq} and \op{\in}.
+The first four would create subgroup descriptions using half-intervals like \subgroup{attribute \geq boundary}.
+The last would create subgroup descriptions involving bounded intervals like \subgroup{attribute \in [x;y]}.
+
+Next to deciding what operators to use, one also needs to decide how to deal with the numeric values in the domain of the description attributes.
+One choice would be to consider every unique value in the domain of the description attribute under consideration.
+For the first four operators listed above, for a single attribute, this would potentially lead to $N$ different descriptions per operator, where $N$ is the size of the dataset.
+For the \op{\in} operator, the number of different descriptions is quadratic in $N$.
+Typically, when dealing with numeric description attributes, Subgroup Discovery algorithms do not consider every unique value in the domain.
+The search space often becomes prohibitively large when all such values are allowed, especially when the search depth is larger than $1$, i.e.\@ allowing for combinations of descriptions.
+Therefore, most algorithms build descriptions using only a selected number of values from a numeric description attribute.
+Just how to make this selection is the focus of this work.
+Various strategies are compared and experimentally evaluated.
+One set of experiments will compare between dynamic and pre-experiment discretisation of numeric attributes.
+Another set of experiments investigates the effect of a number of strategies that control which subgroup descriptions are formed for numeric description attributes.
+\todo{this is an old abstract, the setup of the paper and experiments changed considerably}
+\end{abstract}
+
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Introduction}
+\label{section:introduction}
+
+In this work, a number of dimensions are identified over which Subgroup Discovery (\sd{}) algorithms can vary in their treatment of numeric attributes.
+Although one could examine the effect of choices made for each of these dimensions in isolation, such an analysis would miss interactions between them.
+So, besides analysing the effects of various parameter choices within individual dimensions, this work also offers a systematic analysis of the combined effects of these choices over all examined dimensions, as is relevant in real-world analyses.
+
+Table \ref{table:dimensions} gives an overview of the different strategies that are examined in this work.
+Each line in the table is considered to be a separate strategy, and differs from all others in at least one parameter choice for one of the dimensions discussed below.
+The dimensions are \dimension{discretisation moment}, \dimension{interval type}, \dimension{granularity} and \dimension{selection strategy}, and the options for each are listed in the respective columns.
+Of these dimensions, the first three are related to \emph{hypothesis generation}, whereas the last relates to \emph{hypothesis selection}.
+Strategies are referred to by a combination of a number and an acronym formed from the first character of their values for the aforementioned dimensions.
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Dimensions}
+\label{section:dimensions}
+
+In \sd{}, subgroup descriptions are generated that select a subset of the data, and these so-called subgroups are then evaluated using some quality measure of choice.
+So, one could consider subgroup descriptions to be hypotheses, that are subsequently tested, to determine if they are valid and useful given a number of further search constraints.
+When dealing with numeric description attributes, how to generate these hypotheses is open to a number of choices that can be set by the analyst.
+Below, the dimensions related to hypothesis generation that are examined in this work are described in more detail.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\paragraph{Discretisation Moment}
+\sd{} deals with numeric data by setting conditions on the included values, typically by requiring values to be above or below a certain threshold.
+In realistic, non-trivial data, the continuous domains will be extensive, and a subset of reasonable cut points will need to be selected in order for the \sd{} process to be remain tractable (discretisation).
+When selecting cut points, there is the choice of selecting and fixing the cut points \emph{prior} to analysis (\predis{}) or dynamically determining suitable cut points whenever a numeric attribute is encountered \emph{during} the search process (\dyndis{}).
+The dimension that distinguishes these two options is referred to as \dimension{discretisation moment}.
+
+\paragraph{Interval Type}
+The term \dimension{interval type} refers to the way in which a set of cut points is treated to produce candidate subgroups.
+In the context of discretisation, it is customary to take $B{-}1$ cut points, and create a single nominal feature to represent in which of the $B$ intervals (bins) the numeric value falls.
+Subgroups are then formed by setting the derived feature to one of these values.
+Although this approach is common, it is definitely not the only option, and in fact has fundamental limitations (detailed in Section \ref{section:interval-type} and \ref{section:granularity}).
+The alternative is to (conceptually) translate the $B{-}1$ cut points into $B{-}1$ binary features, each corresponding to a binary split on the respective cut point.
+The two values for the interval type, \nominal{} and \binaries{}, now correspond to the two approaches described here.
+
+\paragraph{Granularity}
+The term \dimension{granularity} is used to describe how (many) hypotheses are generated given a numeric input domain, and the possible choices are \fine{} and \coarse{}.
+In case of \fine{}, every value from the input domain is used to generate a hypothesis.
+For \coarse{}, only a selected number of values from the input domain is used to generate a hypothesis.
+For the latter process, discretisation or `binning' techniques can be used.
+Here the main advantages and drawbacks result from the trade-off between exploration precision and execution time.
+
+\paragraph{Selection Strategy}
+The dimensions above all relate to hypothesis generation, influencing which candidate subgroups are generated and evaluated by the pattern generator.
+Besides these \emph{hypothesis generation} dimensions, there will also be a \emph{hypothesis selection} dimension to an \sd{} algorithm.
+
+Hypothesis selection refers to the process used to include generated hypotheses into the final result set and/or use them at a later stage in the search process.
+On the set of all valid generated hypotheses, that is, those that did not violate any search constraints, either of two selection strategies can be applied, \all{} and \best{}.
+The \all{} strategy does not filter out any of the generated hypotheses, meaning that all valid hypotheses will be included in the result set, and/or will be available for the remainder of the search process.
+In contrast, the \best{} strategy allows only the best of all valid hypotheses for a given numeric attribute to continue.
+
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Dimensions Table}
+\label{section:dimensions-table}
+
+Table \ref{table:dimensions} presents an overview of the different strategies that are examined in this work.
+Each line in the table is considered to be a separate strategy, and differs from all others in at least one parameter choice for one of the dimensions introduced above.
+Since the possible choices for each of the four dimensions described above is binary, this leaves a combined total of sixteen strategies.
+To these sixteen, one extra strategy is added, as it does not properly fit within the framework of dimensions described above.
+However, a number of strategies is considered to be not useful.
+
+For example, in a \nominal{} setting, consecutive bounded intervals are created, and when this is done for each unique value in the input domain, as per the \fine{} setting, this would result in single value intervals.
+In general, this would lead to uninformative subgroup descriptions, that are hard to generalise and that single out only very limited fraction of the data.
+As this is unaffected by the parameter settings for both the dimensions \dimension{discretisation moment} and \dimension{selection strategy}, all four strategies combining \nominal{} and \fine{} are omitted from the experiments below.
+
+\import{./res/}{table-dimensions.tex}
+
+Also not included are strategies involving the combination \predis{}, \binaries{} and \coarse{}.
+The reasoning here is that the static discretisation of \predis{} reduces the cardinality of the data, and therefore the number of possible cut points, before the search process commences.
+If the cardinality is then further reduced in a \coarse{} setting, the result is a reduction that could have been established by a more coarse discretisation to begin with.
+
+The final omission is the strategy combining \predis{}, \nominal{}, \coarse{} and \best{}.
+There are no fundamental issues preventing an implementation of this strategy.
+However, to make more clear why this strategy is not implemented, it is worth considering the \all{} variant first.
+The origin for this strategy can be found in the work by Atzm\"{u}ller et al.\@ \cite{atzmueller:2012:vikamine}.
+The proposed algorithm takes a numeric attribute as input, and considering its domain and a discretisation algorithm, outputs a number of bounded intervals.
+The numeric values in the original numeric attribute are then replaced by the interval to which they belong.
+This essentially transforms a numeric attribute into a nominal one, at least from the perspective of a search algorithm, where each interval is now treated as a nominal class label.
+Customarily, no filtering is applied to subgroup descriptions generated from the same nominal attribute, and this holds also for the aforementioned algorithm.
+% NOTE: dssd does not filter, it just selects using a different concept of best (not based on solely on score, but diversity also)
+% CHECK: Lavrac/Flach CN2-SD could be an exception that does have a selection strategy
+Since the original introduction of this strategy omits a reductionist \dimension{selection strategy}, all nominal labels, bounded intervals in this case, are used to form subgroup descriptions that are included in the result set or feature as candidates later in the search process.
+Consequently, no \best{} variant of this strategy is included.
+
+Finally, an extra strategy is added.
+It has its origin in the work of Mampaey et al.\@ \cite{mampaey:2012,mampaey:2015}, and is relevant only in the context of classification target settings.
+For nominal description attributes, this strategy creates nominal value sets, containing those class labels that maximise the quality score for the classification target (see Section \ref{section:pattern-language} for an example).
+For numeric description attributes, intervals are created.
+This strategy could be considered `optimal', at least with respect to a search depth of 1, and is therefore included in the experiments.
+But, as it is only relevant in a classification target setting, and deviates from the other strategies, it is mentioned separately.
+%The work of Mampaey et al.\@ \cite{mampaey:2012,mampaey:2015} describes the use of their \textsc{BestInterval} algorithm, for both classification and regression tasks.
+%This work only considers the former, as no implementation of the algorithm is available for the latter.
+% NOTE this strategy it is NOT dynamic, the interval is computed only once, and remains fixed after that, also it could be established before mining starts
+
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Preliminaries}
+\label{section:preliminaries}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Data}
+\label{section:data}
+
+Throughout this work, a dataset $\ds{}$ is assumed to be a bag of $N$ \emph{records} $\vec{r} \in \ds{}$ of the form:
+\begin{displaymath}
+\vec{r} = \left(a_1, \ldots, a_m, t \right),
+\end{displaymath} with $m$ a positive integer from $\mathbb{Z}^+$.
+Here $a_1, \ldots, a_m$ constitute the \emph{descriptive attributes} or \emph{descriptors} of $\vec{r}$, and $t$ is the \emph{target attribute} or \emph{target} of $\vec{r}$.
+In general, descriptors can be taken from an unrestricted domain $\mathbb{A}$, and $\mathcal{A}_i$ denotes the (unique values in the) domain connected to $a_i$.
+However, domain restrictions might be imposed in (subsets of) the experiments presented in Section \ref{section:experimental-setup} below.
+In roughly half of the experiments a nominal attribute serves as target, and of its domain of class labels, one is used as target value.
+Targets in the remaining experiments are formed by continuous numeric attributes, taken from $\mathbb{R}$, no target value is used in such a setting.
+
+Before moving to the definition of subgroups, it is stressed that a distinction should be made between the intensional and extensional part of a subgroup \cite{meeng:2014}.
+Informally, the intensional part of a subgroup is its description, and the extension consists of the actual records that make up the subgroup.
+\sd{} is about descriptions, and not unlike in redescription mining \cite{galbrun:2018}, different descriptions for the exact same extension can all represent new knowledge and valuable insights.
+
+More formally, \emph{descriptions} are functions $\intension{}: \mathbb{A}^m \to \left\{0,1\right\}$.
+A description $\intension{}$ \emph{covers} a record $\vec{r}^{\,i}$ if and only if $\intension{} \left(a_1^i, \ldots ,a_m^i\right) = 1$.
+Typically, the \emph{pattern language} $\mathcal{\intension{}}$ in \sd{} is that of (conjunctions of) conditions on descriptive attributes of the general form \subgroup{a_i\ operator\ value}.
+Examples would include \subgroup{Smokes = false} and \subgroup{Color = brown \wedge Length \geq 1.76}.
+Often a maximum number of conjuncts in such descriptions is enforced through a parameter of the \sd{} algorithm called search depth, designated by $d$, where, for instance, a search depth of $2$ would allow for descriptions of at most two conjuncts.
+
+In a sense, one could say a subgroup description \emph{precedes} a subgroup extension, in that it is through the description that a subset of records is selected from the dataset.
+Definition \ref{definition:extension} expresses this relation.
+
+\begin{definition}{(Extension)}
+\label{definition:extension}
+An extension $\extension{\intension{}}$ corresponding to a description $\intension{}$ is the bag of records $\extension{\intension{}} \subseteq \ds{}$ that $\intension{}$ covers:
+\begin{displaymath}
+  \extension{\intension{}}=\left\{\vec{r}^{\,i} \in \ds{}\ \middle|\ \intension{}\left(a_1^i, \ldots, a_m^i\right) = 1\right\}.
+\end{displaymath}
+\end{definition}
+
+From now on the subscript $\intension{}$ is omitted if no confusion can arise, and a subgroup extension is referred to simply as $\extension{}$.
+Further, $\vec{a}_i^{\extension{}}$ denotes the selection of (indexed) values, or vector, of $a_i$ included in $\extension{}$, and $\mathcal{A}_i^{\extension{}}$ denotes the set of unique values in this selection.
+Sizes of $\vec{a}_i^{\extension{}}$ and $\mathcal{A}_i^{\extension{}}$ are equal if and only if $\vec{a}_i^{\extension{}}$ does not contain any duplicate values.
+Analogously, $\mathcal{A}_i^{\extension{}} \subseteq \mathcal{A}_i$, where, if the size of $\mathcal{A}_i$ is equal to $N$, equality holds only when $\extension{}=\ds{}$.
+
+The explicit differentiation of the intensional and extensional facets of a subgroup is required in some \sd{} algorithms \cite{leeuwen:2012}.
+However, for the remainder of this work, $s$ denotes a subgroup, conjointly encompassing its intension and extension, and only when compelled to for sake of clarity are referrals made to either of these individual aspects.
+For any particular subgroup $s$, $n$ denotes its size, i.e.\@ the number of records in that subgroup: $n=|s|$.
+% NOTE complement is not used in this paper
+%The complement of a subgroup is denoted by $s^c$, its size is denoted $n^c$.
+%Hence, $s^c = \ds{} \backslash s$, and $n^c = N-n$.
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Subgroup Discovery Algorithm}
+\label{section:subgroup-discovery-algorithm}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsubsection{Pattern Language}
+\label{section:pattern-language}
+
+A critical component of any \sd{} algorithm is the pattern language used to generate subgroup descriptions.
+The most straightforward descriptions are constituted by a single condition on a descriptive attribute.
+They are of the general form \subgroup{a_i\ operator\ value}.
+But even for these most basic descriptions a number of choices need to be made.
+First, which attributes, or attribute types, are to be considered, and how are they dealt with.
+In part this is connected to the second choice, what operators are to be include in the pattern language.
+Common attribute types are binary, nominal, ordinal and numeric, though binary could be considered a specific instance of the nominal type.
+Some operators are valid, or useful, only for some types, and not others.
+For example, for nominal attributes the operators \op{<} and \op{>} would not make much sense, whereas \op{=}, and possibly \op{\neq}, would.
+Considering ordinal and numeric attributes, possible operators include \op{<}, \op{>}, \op{\leq} and \op{\geq}, negations of any of these are equivalent to one of the aforementioned examples.
+Even for the third part of a condition, the value, multiple alternatives are available.
+Most \sd{} algorithms would only have singular values occurring here, like `red' or `3.14'.
+However, some allow for internal disjunctions \cite{kloesgen:1999,atzmueller:2006} or sets of values \cite{mampaey:2012,mampaey:2015}.
+For nominal attributes, `\{red, green, blue\}' could be such a value set.
+For ordinal and numeric attributes, the value could now be a set of values, or an interval.
+With the introduction of sets, \op{\in} became a useful additional operator.
+
+Generally, pattern languages also offer means of constructing more complex descriptions by combining multiple conditions.
+Customarily, conditions are combined through conjunctions (ignoring the special case of internal disjunctions).
+Conjunctions are favoured over disjunctions, as their use results in a more predictable search lattice.
+That is, when extending a description through the addition of a new conjunct, the size of the subset of records covered by the original description serves as upper bound for the new selection.
+Moreover, endorsing only conjunctions that create strict subsets will enforce that subgroup size is strictly decreasing.
+Although this behaviour could be valued as merely attractive, this property can also be exploited to optimise search space exploration \cite{atzmueller:2009:ismis,boley:2017,grosskreutz:2009,lemmerich:2012}.
+
+In this work, the following choices concerning the pattern language are made.
+Attributes of the binary type are dealt with exactly like their nominal counterpart, and ordinal attributes are ignored altogether.
+Conditions involving a nominal attribute use the \op{=} operator, the operators used for numeric attributes differ per context.
+The operators \op{\leq} and \op{\geq} are used for `single value' conditions in the context of \binaries{}, creating half-intervals.
+The \op{\in} operator is applied in the \nominal{} contexts, indicating that a value lies within an \emph{interval}.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsubsection{Bins}
+\label{section:bins}
+
+As alluded to in Section \ref{section:dimensions}, the \coarse{} strategy employs a discretisation, or binning, technique.
+In the context of this work, all discretisation is performed using the \eh{} algorithm presented as Algorithm \ref{algorithm:equal-height-binning} below.
+
+\eh{} takes a few parameters.
+First, a vector of values that form the current input domain, and its size, $\vec{a}_i^{\extension{j}}$ and $n$, respectively.
+Next, parameter $B$, the number of desired bins.
+Finally, in the \binaries{} setting, an operator $o$ is also supplied (either \op{\leq} or \op{\geq}).
+All values in the domain under consideration will then be put into bins in such a way that each bin contains (approximately) the same number of values.
+This might fail for a number of reasons.
+First, if $n/B$ does not produce an integer, not all bins will be assigned the same number of values.
+Second, in case of duplicate values, a bin boundary to either the left or right of this value might leave the respective bins with too few or too much values.
+Also, when requesting more bins than there are values in the input domain, $B > n$, some bins will be empty.
+Customarily, $B$ is treated as a maximum, and an algorithm could return less than $B$ bins.
+
+The bin boundaries are chosen from the unique values present in the domain considered ($\mathcal{A}_i^{\extension{j}}$).
+That is, when a subgroup selects a subset of the data, only values that occur in that subset can serve as bin boundaries returned in set $\mathcal{B}$.
+For reasons of interpretability of subgroup descriptions, the use of values not present in the numeric domain is discouraged.
+Moreover, it is only occurring values one can make certain claims about.
+For example, for a description expressing a `less or equal than some bound'-condition, one can give the exact number of values less or equal than that bound, and assign some quality score based on it.
+Considering all values in the data domain, for the one immediately following the aforementioned bound, a similar procedure is valid.
+However, assigning any statistic to any value between these two occurring data values would not be based on the available data.
+Note also that, for reasons of interpretability, the use of the operators \op{<} and \op{>} is discouraged.
+Conditions sporting these operators do not express a precise bound, potentially inducing confusion.
+For example, `$> 1$' could mean `$\geq 1.001$', `$\geq 88.3$', `$\geq \numprint{9999}$', and many others, and its interpretations requires inspecting the (unique) data domain.
+
+Finally, the \texttt{Sort} operation on line \ref{eh:sort} yields values in ascending order for \op{\geq}, and descending order for \op{\leq}.
+The algorithm performs binning differently for \op{\leq} and \op{\geq}, as these are not complementary operators, and therefore bin boundaries obtained for one might not be suitable for the other.
+Though listed separately here, sorting of the data can be done before performing an experiment, reducing computational demands during the search.
+Further note that, as $\mathcal{B}$ is a set, the returned bin boundaries are unique, even if input vector $\vec{a}_i^{\extension{j}}$ contains duplicates.
+
+\begin{algorithm}
+\caption{\textsc{EqualHeightBinning}($\vec{a}_i^{\extension{j}}$, $n$, $B$, $o$)}
+\label{algorithm:equal-height-binning}
+\DontPrintSemicolon
+\SetKwInOut{Input}{input}\SetKwInOut{Output}{output}
+% variables
+\SetKwData{Vector}{$\vec{a}_i^{\extension{j}}$}
+\SetKwData{SubgroupSize}{$n$}
+\SetKwData{NumberOfBins}{$B$}
+\SetKwData{Operator}{$o$}
+\SetKwData{BinBoundaries}{$\mathcal{B}$}
+\SetKwData{EmptySet}{$\varnothing$}
+\SetKwData{Bin}{$b$}
+\SetKwData{Index}{$x$}
+% functions
+\SetKwFunction{Sort}{Sort}
+%
+	\Input{\Vector (vector of values of $a_i$ covered by $\extension{j}$),
+		size of subgroup \SubgroupSize,
+		number of bins \NumberOfBins,
+		operator \Operator}
+	\Output{set of bin boundaries \BinBoundaries}
+%	\Blankline
+	\Vector $\leftarrow$ \Sort{\Vector, \Operator} {\label{eh:sort}}\;
+	\BinBoundaries $\leftarrow$ \EmptySet\;
+	\For {$\Bin=1$ \KwTo \NumberOfBins-1}{
+		\Index $\leftarrow$ $\SubgroupSize \Bin$/\NumberOfBins\;
+		\BinBoundaries $\leftarrow$ \BinBoundaries $\cup$ $\Vector[\Index]$\;
+	}
+	\Return \BinBoundaries
+\end{algorithm}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsubsection{Beams}
+\label{section:beams}
+
+A level-wise search is performed using a beam of size 100, allowing for some trade-off of search space exploration and focus on promising candidates.
+\todo{see Appendix Items to Discuss: beam is tricky}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsubsection{Quality Measure}
+\label{section:quality-measure}
+
+A \emph{quality measure} objectively evaluates a candidate description in a given dataset.
+For each description $\intension{}$ in the description language $\mathcal{\intension{}}$, a quality measure is a function that quantifies how exceptional the subgroup $s$ is.
+Note that the definition of a quality measure is description-oriented, as in some cases one might want to factor in the complexity of the description into the final result \cite{leeuwen:2012}.
+When only the subgroup extension is required, it can be obtained by means of the intension.
+
+\begin{definition}{(Quality Measure)}
+\label{definition:quality-measure}
+  A \emph{quality measure} is a function $\varphi_{\ds{}}: \mathcal{\intension{}} \to \mathbb{R}$ that assigns a unique numeric value to a description $\intension{}$, given a dataset $\ds{}$.
+\end{definition}
+
+In principle, \sd{} algorithms aim to discover subgroups that score high on a quality measure.
+However, it is common practice to also impose additional {\em constraints} on subgroups that are found by \sd{} algorithms.
+Usually these constraints include lower bounds on the quality of the description ($\varphi_{\ds{}}(\intension{}) \geq p_1$) and the size of the induced subgroup ($\left|\extension{\intension{}}\right| \geq p_2$).
+More constraints may be imposed as the question at hand requires.
+For example, domain experts may request an upper bound on the complexity of the description, which can be controlled through the aforementioned search depth parameter $d$.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\subsection{Pseudo-code Subgroup Discovery Algorithm}
+%\label{section:pseudo-code-subgroup-discovery-algorithm}
+The pseudo-code presented in Algorithm \ref{algorithm:subgroup-discovery-algorithm} describes a very generic \sd{} algorithm.
+The main line of interest is line \ref{sd:sc}, \texttt{$\text{SelectCandidate}(\mathcal{P}, \mathcal{S})$}, as it is at this point in the \sd{} algorithm that selection strategies will show their differing effect.
+One should assume that the set of search constraints $\mathcal{P}$ holds any required parameters (like the selection strategy used, or the number of bins).
+As some strategies do not just simply consider every, or the first candidate in $\mathcal{S}$, the selection function can be more involved than just obtaining $s$ through a simple $\mathcal{S} \setminus {s}$ operation.
+Also, for the different selection strategies, not only the subgroup descriptions generated and evaluated will differ, but the fashion in which results from these evaluations are used will do as well.
+%For each of the selection strategies given above, the effects are described in more detail below.
+
+Further, to accommodate for different search space exploration strategies within a single generic algorithm, \texttt{GenerateRefinements$(s, \ds{}, \mathcal{P})$} on line \ref{sd:gr} should be assumed to adapts its behaviour accordingly.
+For a level-wise search, refinements, which should be considered to be subgroups themselves, are created only for the current search level, and relevant refinements are then added to the set of candidates $\mathcal{S}$ to serve as seeds for the next level.
+For a depth-first search, all refinements are created at once, an no candidate (beam) set is used.
+Refinements are created by adding a conjunct to the description of a candidate subgroup (seed).
+
+Finally, the addition of a subgroup to the final result set $\mathcal{F}$ (line \ref{sd:ar}) and candidate set $\mathcal{S}$ (line \ref{sd:ac}) is performed by specialised functions, that check against search constraints, and take care of trimming, re-ordering, or other post-processing of these sets, if required.
+Noteworthy in this last respect is that, through its canonical representation of descriptions, Cortana \cite{meeng:2011:cortana}, the \sd{} tool used for the experiments, does not require a separate post-processing procedure, like \texttt{RemoveDuplicates} in \cite{leeuwen:2012}, to remove equivalent descriptions like \subgroup{C_1 \wedge C_2} and \subgroup{C_2 \wedge C_1}.%\footnote{A refinement generator could prevent such cases, but in a multi-threaded environment this can be complicated.}.
+
+\begin{algorithm}
+\caption{\textsc{SubgroupDiscovery}($\ds{}$, $\varphi_{\ds{}}$, $\mathcal{P}$))}
+\label{algorithm:subgroup-discovery-algorithm}
+\DontPrintSemicolon
+\SetKwInOut{Input}{input}
+\SetKwInOut{Output}{output}
+% variables
+\SetKwData{Dataset}{$\ds{}$}
+\SetKwData{SearchConstraints}{$\mathcal{P}$}
+%\SetKwData{QualityMeasure}{$\varphi_{\ds{}}$} % defined as function below
+\SetKwData{ResultSet}{$\mathcal{F}$}
+\SetKwData{CandidateSet}{$\mathcal{S}$}
+\SetKwData{Subgroup}{$s$}
+\SetKwData{Quality}{${score}$}
+\SetKwData{RefinementSet}{$\mathcal{R}$}
+\SetKwData{Refinement}{$r$}
+\SetKwData{EmptySet}{$\varnothing$}
+% functions
+\SetKwFunction{QualityMeasure}{$\varphi_{\ds{}}$}
+\SetKwFunction{SelectCandidate}{SelectCandidate}
+\SetKwFunction{GenerateRefinements}{GenerateRefinements}
+\SetKwFunction{AddToResultSet}{AddToResultSet}
+\SetKwFunction{AddToCandidateSet}{AddToCandidateSet}
+%
+	\Input{dataset \Dataset,
+		quality measure \QualityMeasure,
+		search constraints \SearchConstraints}
+	\Output{final result set \ResultSet}
+%	\BlankLine
+	\ResultSet $\leftarrow$ \EmptySet,
+	\CandidateSet $\leftarrow$ \EmptySet                                                                             \;%\tcp*[r]{candidate set \CandidateSet}
+	\emph{subgroup with empty description \intension{} = \EmptySet, i.e.\@ no conditions}\;
+	\Subgroup $\leftarrow$ \Dataset                                                                                  \;%\tcp*[r]{subgroup with empty description \intension{} = \EmptySet, i.e.\@ no restrictions}
+	\CandidateSet $\leftarrow$ \CandidateSet $\cup$ \Subgroup\;
+	\While {\CandidateSet $\neq$ \EmptySet} {
+%		\tcp{selection strategy determines seed for refinement generation}
+		\Subgroup $\leftarrow$ \SelectCandidate{\SearchConstraints, \CandidateSet}                {\label{sd:sc}} \;%\tcp*[r]{selection strategy determines seed for refinement generation}
+		\CandidateSet $\leftarrow$ \CandidateSet $\setminus$ \Subgroup\;
+		\RefinementSet $\leftarrow$ \EmptySet\;
+% assume generateRefinements() uses \SearchConstraints to generate only relevant, valid subgroups, this is unlike Cortana
+		\RefinementSet $\leftarrow$ \GenerateRefinements{\Subgroup, \Dataset, \SearchConstraints} {\label{sd:gr}} \;%\tcp*[r]{for level-wise searches: generate valid refinements for \par\hspace{178pt} current depth level only, then adds $r$ to \CandidateSet;\par\hspace{178pt} for depth-first search: generate valid refinements for all \par\hspace{178pt} depth levels at once, nothing is added to |CandidateSet$}
+		\ForEach {\Refinement $\in$ \RefinementSet} {
+			\Quality $\leftarrow$ \QualityMeasure{\Refinement}\;
+%			\tcp{add only accordant subgroups, post-process \ResultSet if needed}
+			\AddToResultSet{\SearchConstraints, \ResultSet, \Refinement, \Quality}            {\label{sd:ar}} \;%\tcp*[r]{add only accordant subgroups, post-process \ResultSet if needed}
+%			\tcp{as above, but for \CandidateSet; only for level-wise searches}
+			\AddToCandidateSet{\SearchConstraints, \CandidateSet, \Refinement, \Quality}      {\label{sd:ac}} \;%\tcp*[r]{as above, but for \CandidateSet; only for level-wise searches}
+		}
+	}
+	\Return \ResultSet
+\end{algorithm}
+
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Discretisation Moment}
+\label{section:discretisation-moment}
+
+For the dimension \dimension{discretisation moment}, the options \predis{} and \dyndis{} control at what point of the data mining exercise the discretisation is employed.
+
+In a \predis{} setting, the discretisation takes place \emph{before} the actual search commences.
+This means that for any relevant attribute, all bin boundaries are determined prior to the actual discovery.
+The pre-discretisation could be achieved by modifying the data such that actual values are changed, or store the binning information for later use in the experiment.
+Obviously, storing data created by pre-discretisation makes it readily available for later (repeated) experiments.
+
+Dynamic discretisation is performed \emph{during} the actual search space traversal.
+Consequently, it has the benefit of optionally incorporating information available only while the mining is in progress.
+That is, when generating new refinements based on subgroup $s_j$ with extension $\extension{j}$, the dynamic nature allows it to establish, for any attribute $a_i$, the exact numeric domain $\mathcal{A}_i^{\extension{j}}$ relevant to $s_j$.
+Although not guaranteed, in general the size of $\mathcal{A}_i^{\extension{j}}$ is smaller than the size of $\mathcal{A}_i$.
+Consequently, this enables the description generator to create fewer refinements, by using only values that are sensible in the context of $s_j$.
+
+An example of when \dyndis{} is useful, is when the description generator creates refinements for every value in $\mathcal{A}_i^{\extension{}}$, as would be the case in the \fine{} setting for dimension \dimension{granularity} (Section \ref{section:granularity}).
+Moreover, with each refinement, subgroups become smaller, further reducing the domain and hence the number of refinements created for each subgroup.
+The other setting for dimension \dimension{granularity}, \coarse{}, uses discretisation to obtain the cut points used in subgroup descriptions.
+From \predis{} to \dyndis{}, there is not so much a reduction in the number of refinements, but an increase in focus of the discretisation step.
+As the interval covered by the values $\mathcal{A}_i^{\extension{}}$ is likely to be smaller than that covered by $\mathcal{A}_i$, the range over which bins are formed is smaller also.
+Thus, with the number of bins $B$ remaining unchanged, these bins will span ever smaller intervals, increasing the focus further at each higher depth of the search.
+% NOTE ignore the extreme scenario below, it holds only for the lower and upper most bin, as these are the only ones that span 1/B-th of the original interval.
+%In an extreme scenario, this could mean that discretisation using $B$ bins on an interval yields a subinterval that spans $1/B$-th of the original, and that this subinterval in turn produces a sub-subinterval spanning $1/B$-th of it.
+%This sub-subinterval now spans $1/B^2$, that is $1/B^d$, of the original interval, where $d$ refers to the search depth at which this discretisation is performed.
+
+Obviously, the benefit of incorporating extra information comes at the price of increased computation.
+For each subgroup to be refined, an extra effort needs to be made to determine $\mathcal{A}_i^{\extension{}}$, and, if required, bin boundaries.
+Fortunately, these operations can be performed in $\mathcal{O}(n)$, that is, time linear to the size of the subgroup under consideration.
+
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Interval Type}
+\label{section:interval-type}
+
+The \dimension{interval type} dimension is connected to the fashion in which intervals are derived from a set of cut points.
+This work considers two types of approaches, \binaries{} and \nominal{}.
+The \binaries{} variant creates a (virtual) binary feature for each cut point, corresponding to the two open-ended intervals defined by the cut point.
+The \nominal{} variant instead creates a single nominal feature that has $B$ possible values, each corresponding to one of the intervals defined by the $B{-}1$ cut points.
+As introduced in Section \ref{section:pattern-language}, the choice for either of these brings along a change in the pattern language used to create subgroup descriptions.
+
+As an advantage of the \binaries{} approach, one could list its flexibility.
+The intervals created for each cut point are overlapping.
+For the numeric domain corresponding to the data or subgroup under consideration, the portion covered by the first interval is roughly $1/B$, for the next it is $2/B$, and so forth.
+Thus, a split can yield a selection as large or small as is appropriate for the modelling task at hand.
+Furthermore, increasing $B$ results in both smaller and larger intervals, and thus subgroups, to be created.
+
+Although the intervals give the impression of being open-ended, this is, obviously, just a matter of presentation.
+Creating bounded intervals for \binaries{} is as trivial as replacing the open-ended interval by one including the lowest or highest value for the domain under consideration.
+Furthermore, more focused, highly restricted, bounded intervals can be created using two `opposing' constraints on a single attribute, such as \subgroup{a_i \geq v_1 \wedge a_i \leq v_2}, where $v_1 \leq v_2$.
+However, creating bounded intervals this way is computationally more expensive, as one needs to increase the search depth.
+
+The \nominal{} setting is the one favoured by the Vikamine \sd{} tool \cite{atzmueller:2012:vikamine}.
+It creates consecutive, bounded, intervals.
+As such, increasing $B$ results in smaller subgroups, because the domain is divided into more consecutive intervals.
+With this method, there are also advantages and drawbacks.
+Selecting sub-intervals directly is more straightforward than using `opposing' constraints, as needed by the \binaries{} strategy.
+More importantly, transforming numeric attributes into nominal ones allows the use of fast and efficient \sd{} algorithms \cite{atzmueller:2009:ismis,boley:2017,grosskreutz:2009,lemmerich:2012}.
+And, although this is just a choice of presentation, descriptions presenting bounded intervals might simply be more intuitive to end users.
+
+But, while the flexibility of \binaries{} allows it to adapt to the modelling task at hand, \nominal{} is fundamentally incapacitated by its inflexibility when it comes to some tasks.
+Although the \nominal{} setting produces an intuitive set of $B$ bins, the size of each interval is governed by the choice of $B$ in an undesirable and too restrictive manner.
+Assuming an equal height method of discretisation, each bin will contain roughly $N/B$ records.
+This means that depth-$1$ subgroups (containing a single condition) will all have a size of approximately $n=N/B$.
+Such an approach excludes large subgroups, and immediately pushes the search towards fairly specific areas of the search space.
+Combining subgroup descriptions through conjunctions generally exacerbates this problem, such that at higher search depths only very small subgroups are available.
+
+The limitations of this setting are relevant for both the classification and regression target types, though impact is usually more severe for the former.
+In essence, the issue revolves around the concept of target share.
+Basically, the fact that this approach invariantly produces small subgroups, precludes it from handling well those targets for which it is beneficial to select a large subset of records.
+Concretely, for classification targets this means that when the portion of positive target records is larger than $N/B$, this setting is inherently incapable of selecting all of them.
+For regression targets, in spite of eschewing a concept of target labels, the limitation still shows when the subset of `good' records is larger than $N/B$.
+Here, depending on the task at hand, `good' refers to those records that show a large deviation from the target mean, in either the positive or negative direction, or both.
+
+The reason the classification setting is more affected by this limitation, small subgroups, lies in the nature of these tasks.
+Most quality measures for classification targets, including \qm{WRAcc}, emphasise the inclusion of positive target records, or reversely, penalise not including them.
+With smaller subgroups, chances increase that positive target records are not included, and this becomes even more of a problem when combining subgroup descriptions through conjunctions at higher search depths.
+For the technically inclined, because of the small size of these subgroups, all results are restricted to a limited section of ROC space, and it sets an upper limit on the true positive rate.
+
+Quality measures for regression targets generally have less of an all-or-nothing nature, and focus on statistics like mean.
+There are no (positive) target labels in this setting, and subgroups that do not cover, say, the highest values of the target attribute, can still produce a high mean.
+Moreover, small subgroups more easily achieve low variation, for example selecting a small set of high, but not the highest, target values.
+Statistics like $z$-score and $t$-test take variation into account.
+So, by the nature of the mining task, smaller subgroups are generally less of a problem, or even beneficial, in a regression target setting, as there is no notion of (not including) positive target records.
+
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Granularity}
+\label{section:granularity}
+
+The \fine{} and \coarse{} options of the \dimension{granularity} dimension control how (many) hypotheses are generated given a numeric input domain.
+
+The \fine{} alternative is most straightforward, as every unique value in a given input domain will be considered.
+So, for a subgroup $s_j$, with extension $\extension{j}$, a description generator will generate refinements for every value in $\mathcal{A}_i^{\extension{j}}$.
+Obviously, this allows for a more extensive search, but computational cost are much higher also.
+% NOTE using the term exhaustive search would be misleading, the paper uses beam-search (so even fine-all is not exhaustive) (and in depth-first search, fine-best is not either)
+
+The greedy \coarse{} alternative leads to far fewer refinements being generated.
+First, by discretising the domain $\mathcal{A}_i^{\extension{j}}$, $B$ bins and $B{-}1$ cut points are obtained.
+Then, only these are used by the description generator to form hypotheses.
+In general, any method of discretisation can be used for this setting.
+So, this could be supervised techniques for classification targets \cite{fayyad:1993}, single \cite{kontkanen:2007} or multi-dimensional MDL-based methods \cite{nguyen:2014}, or database inspired alternatives like V-optimal discretisation \cite{ioannidis:2003}.
+In this paper, we focus on the \eh{} algorithm (Algorithm \ref{algorithm:equal-height-binning}), as it is fast, simple, and applicable in both the classification and regression target setting presented in Section \ref{section:experimental-setup}.
+% NOTE Vikamine also offers EH as discretisation option (though it differs from Algorithm 1 used by Cortana)
+
+In general, greedy methods trade in precision to achieve a reduction in computation.
+Sometimes even limits can be proven for the worst case performance of a certain greedy method with respect to the exhaustive alternative.
+No such bounds are derived in this work, as they depend on the exact combination of quality measure and search parameters.
+However, analyses will be performed comparing the quality of results obtain using the \coarse{} and \fine{} method.
+It will determine whether the \coarse{} method is capable of producing results sets that are comparable in quality to that of the \fine{} strategy, either for the top ranking subgroups, or the result set as a whole.
+
+A final note concerns the combination of dimensions \dimension{granularity} and \dimension{interval type}, and the influence of search constraints controlling the required minimum and maximum size of subgroups.
+Consider, for example, $p_2$, the minimum required size of a subgroup, set to $10\%$ of dataset size $N$, and an attribute $a_i$, for which the size of $\mathcal{A}_i$ equals $N$.
+For the \fine{} strategy, which is used exclusively in combination with \binaries{}, many of the possible hypotheses would result in subgroups that would not satisfy the minimum coverage search constraint.
+That is, $10\%$ of the descriptions involving $a_i$ would result in too small subgroups, for both the \op{\leq} and \op{\geq} operators.
+For the \coarse{} strategy similar effects hold.
+In combination with the \nominal{} strategy, setting $B$ to anything more than $10$ will yield only subgroups that are too small.
+For the experiments presented below, this is taken into consideration by never setting $B$ too high.
+For experiments involving the \binaries{} strategy, the same upper limit for $B$ is used, even though most of the (overlapping) intervals yield sufficiently large subgroups.
+First, it is consistent with the choice made for the \nominal{} setting.
+Moreover, using a large number of bins goes against the rationale behind the discretisation, which is to achieve a search space reduction.
+
+% NOTE
+% The statement below was originally in the experimental section, and it is false, though not for obvious reasons.
+% Section Items to Discuss in the appendix is also relevant here.
+% The statement is true only very narrowly, that is, with respect to the refinements that are evaluated for a single candidate, at that depth level.
+% In combination with any heuristic, the search space of fine, at any depth higher than 1, is no longer guaranteed to include any of the hypothesis that are in the search space of coarse.
+%
+% exhaustive : fine-all  coarse-all : true
+% exhaustive : fine-best coarse-best: false, only one (the best) description per attribute is used for refinement at the next depth
+%                                            for fine and coarse the best description might be a different one, this utterly changes the search space at the next depth
+% beam search: fine-all  coarse-all : false, imagine that for fine the beam of width 10 is completely filled with subgroups from a single attribute (using say the lowest 10 values)
+%                                            and coarse does not create any of those (the lowest bin boundary is say value number 20),
+%                                            then the search space at the next depth is completely different for the two strategies
+% beam search: fine-best coarse-best: false, see above
+%
+% ORIGINAL STATEMENT:
+% Every hypothesis generated by a \coarse{} strategy also occurs in the equivalent \fine{} strategy, which has a much larger search space.
+% Therefore, the main interest is to determine if \coarse{} strategies produce results comparable to that of \fine{} strategies, while being computationally far less demanding. 
+
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Selection Strategy}
+\label{section:selection-strategy}
+
+The final dimension to discuss is \dimension{selection strategy}, with options \all{} and \best{}.
+Unlike the other dimensions, this does not directly influence the process of \emph{hypothesis generation}, but that of \emph{hypothesis selection}.
+Here, hypothesis selection should not be equated with beam selection, as \all{} and \best{} can be applied in exhaustive depth-first, and (level-wise) breadth-first and beam searches.
+
+For description attributes of any type, multiple hypotheses can be generated, one for each operator-value combination.
+As an example, consider a numeric attribute $a_i$, and operator \op{\leq}, then, for each value $v_y$ in the domain $\mathcal{A}_i^{\extension{j}}$, \subgroup{a_i \leq v_y} is a viable hypothesis.
+On the set of hypotheses that do not violate any search constraints, \all{} and \best{} can be applied.
+The \all{} strategy evaluates all hypotheses in the set, and considers all of them for further processing.
+The \best{} strategy also evaluates all hypotheses, but only the one(s) that obtained the top score will be considered.
+
+Here, further processing refers to either of, or both, the possible addition of the hypothesis to the result set, and keeping the hypothesis available for further refinement, either immediately, or later in the search process.
+Note that there might be further constraints, like a maximum size, that restrict possible additions to both the final result set $\mathcal{F}$ and the candidate set $\mathcal{S}$ containing possible refinements.
+Therefore, additions to these two sets are not simple set additions per se, and need to be performed by specialised functions.
+
+In terms of complexity, the two strategies do not differ with respect to the number of evaluations that is performed for a single attribute.
+However, there is a reduction in the number of hypotheses considered for inclusion in the result set and the candidate set.
+If these need to remain sorted, as is customary for a result set, this can already have a considerable effect.
+For a result set of size $F$, and a set of hypotheses of size $H^*$, \all{} would have a complexity of $\mathcal{O}(H^* \log{} F)$.
+For \best{} it would only be $\mathcal{O}(1 \log{} F)$, or $\mathcal{O}(\log{} F)$, if at most one of the hypotheses in the set is allowed to be added to the result set.
+Note that this is the complexity per single attribute-operator combination, as that is what forms the set of hypotheses considered here.
+The effect of \best{} on the search space is more dramatic when the search depth $d$ is larger than $1$, but this discussed in Section \ref{section:complexity-analysis}.
+
+% NOTE the part below is removed, it is only valid for exhaustive search; it is replaced by Section Complexity analysis below
+%Even more dramatic is the effect of \best{} on the search space, when the search depth $d$ is larger than $1$.
+%Let $H'$ denote the size of the complete set of hypotheses that can be formed using a single conjunct, that is, all possible hypotheses, for every attribute and operator on search depth $1$.
+%Then ${H'}^d$ would give the number of hypotheses for a search depth $d$.
+%For \all{}, $H'$ consists of the sum of all possible hypotheses for each attribute-operator combination.
+%Since the size of the domain for each attribute can be equal to $N$, this could result in $\mathcal{O}(O \cdot A \cdot N)$ single conjunct hypotheses, where $A = m$, the number of description attributes.
+%So effectively, this yields a search space complexity of $\mathcal{O}(N^d)$, assuming $O$ and $A$ are so small they are dominated by $N$.
+%On the other hand, the \best{} strategy results in only $\mathcal{O}(O \cdot A \cdot 1)$ single conjunct hypotheses.
+%Ignoring $O$, as it is generally $1$ or $2$, this results in a search space complexity of $\mathcal{O}(A^d)$.
+
+%Since $N$ is generally orders of magnitude larger than $A$, \best{} has the potential to significantly reduce the size of the search space.
+%Obviously, like with the \fine{} and \coarse{} alternatives for the \dimension{granularity} dimension, the main advantages and drawbacks result from the trade-off between exploration precision and execution time.
+%However, when \all{} and \best{} are combined with \coarse{}, one should replace $N$ with $B$ in the analysis above, and the reduction obtained through \best{} is far smaller.
+
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Complexity analysis}
+\label{section:complexity-analysis}
+
+The sections above already described the computational complexity for individual options of the dimensions.
+But strategies combine options, and the compound effect of these choices influences the computational complexity.
+Additionally, the type of search space exploration is relevant.
+
+Table \ref{table:complexity-analysis} presents the complexity for various combinations of options.
+Not all four dimensions are listed explicitly, but all are accounted for.
+Dimension \dimension{discretisation moment} is omitted, because when an attribute is considered during search, its options differ only in which values of its domain are used, but not how many.
+The options of dimension \dimension{interval type} determine which operators are available for descriptions, and before the search commences, the type of operators, and their number, is set.
+The effect of this choice is incorporated through $\hs{}$, $\hs{}'$, and $\bb{}$.
+First, $\hs{}$ is the number of single condition hypotheses for the whole dataset, and this obviously takes the choice of operators into account.
+Then, $\hs{}'$ is the number of single condition hypotheses for the whole dataset, but in a \coarse{} setting, where $B$ controls the reduction of the number of values used for numeric description attributes.
+Finally, $\bb{}$ is created by summing the number of operators used for each description attribute.
+The latter is relevant in a \best{} setting, and for each refinement $r$, it indicates the number of results that can be added to final result set $\mathcal{F}$ and candidate set $\mathcal{S}$ (see Algorithm \ref{algorithm:subgroup-discovery-algorithm}).
+
+As the complexity can further be influenced by the type of search space exploration, this is also added to the table.
+It distinguishes between exhaustive depth-first search, and heuristic level-wise beam search.
+Symbol $\dm{}$ represents the maximum search depth, and $\bw{}$ indicates the beam width.
+
+For beam searches, the table shows that complexity for the two \fine{} combinations is the same, as is true for the two \coarse{} combinations.
+At every search level higher than $1$, only $\bw{}$ candidates of the previous level are combined with $\hs{}$ conditions.
+This is true for both \all{} and \best{}, erasing the difference between them.
+
+However, besides complexity there is also the aspect of subgroup set diversity.
+When a single attribute produces many good results, the result and candidate sets could become saturated with many similar descriptions.
+The use of \best{} avoids such saturation by retaining only one result per attribute-operator combination.
+
+\begin{table}[!h]
+\centering
+\caption{Complexity analysis.}
+\label{table:complexity-analysis}
+\begin{tabular}{ll|ll}
+\multicolumn{2}{c|}{dimension} & \multicolumn{2}{c}{search space exploration type}\\
+granularity & selection   & exhaustive                                                 & heuristic\\
+            & strategy    & (depth-first)                                              & (level-wise beam)\\
+\hline
+\fine{}     & \all{}      & $\mathcal{O} \left( \hs{}^\dm{} \right)$                   & $\mathcal{O} \left( \hs{} (\dm{}\bw{}{-}\bw{}{+}1) \right)$\\
+\fine{}     & \best{}     & $\mathcal{O} \left( \hs{} \bb{}^{\dm{}\text{-}1} \right)$  & $\mathcal{O} \left( \hs{} (\dm{}\bw{}{-}\bw{}{+}1) \right)$\\
+\coarse{}   & \all{}      & $\mathcal{O} \left( \hs{}'^\dm{} \right)$                  & $\mathcal{O} \left( \hs{}' (\dm{}\bw{}{-}\bw{}{+}1) \right)$\\
+\coarse{}   & \best{}     & $\mathcal{O} \left( \hs{}' \bb{}^{\dm{}\text{-}1} \right)$ & $\mathcal{O} \left( \hs{}' (\dm{}\bw{}{-}\bw{}{+}1) \right)$\\
+\end{tabular}
+\end{table}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Related Work}
+\label{section:related-work}
+
+The strategies presented in this work relate to an extensive range of topics.
+Therefore, only a selection of relevant work is discussed.
+%A few topics are highlighted, mostly along the lines of the four dimensions.
+
+First, many papers make a comparison between \sd{} algorithms.
+This is done in overview papers like \cite{atzmueller:2015,herrera:2011}, and papers introducing new algorithms \cite{atzmueller:2006,atzmueller:2009:ismis,boley:2017,grosskreutz:2009,leeuwen:2012,mampaey:2012,mampaey:2015,meeng:2014,nguyen:2014}.
+% TODO MM check this list if all indeed compare strategies, or just introduce a new one (konijn:2013:kdd|qimie might be added to the list)
+However, these papers only include a subset of the strategies presented in this work, and then only a very specific implementation of this limited set.
+The exclusive aim of this work is to provide a systematic and comprehensive experimental evaluation and comparison of all presented strategies, and this sets it apart from earlier work. 
+
+Furthermore, the focus of this work is on classical \sd{}, so its generalisation Exceptional Model Mining (\emm{}) \cite{duivesteijn:2013,leman:2008,lemmerich:2012} is not considered. 
+The working assumption is that, for a certain target type in \sd{}, different quality measures exist, but that the models they use to gauge subgroup quality are comparable.
+More specifically, classification tasks typically use (counts from) contingency tables, and regression tasks use (variations of) simple distribution statistics like mean, median and standard deviation.
+This work does not include experiments evaluating multiple quality measures for a single target type, as results would be similar, and the experimental section too expansive.
+For the various \emm{} tasks, the model classes are radically different, and probably incomparably so.
+As the dimensions tested in this work could have different effects for each distinct \emm{} task, as is true now for the classification and regression tasks, experiments would have to be performed for each included task, increasing results manyfold.
+One could add to the two target types classification and regression at least correlation and (multiple-)regression \cite{leman:2008,duivesteijn:2012}, bayesian-networks \cite{duivesteijn:2010}, and uni- and multi-variate probability density functions (forthcoming).
+Surely, this becomes to much to present in a single paper, if it also requires introducing all concepts and methodology presented in the current one.
+\todo{ARNO: something like this could go into introduction}
+
+With respect to \predis{} and the \nominal{} interval type, notable works include those concerning Vikamine \cite{atzmueller:2012:vikamine} and optimistic estimates \cite{atzmueller:2009:ismis,boley:2017,grosskreutz:2009,lemmerich:2012}.
+% TODO MM check pre/dynamic implementation of boley:2017 and grosskreutz:2009
+Most focus on (the design of) fast and efficient \sd{} algorithms, which is greatly facilitated by employing a \nominal{} strategy.
+Again, introducing new algorithms this is not the aim of this work.
+Nonetheless, the \dyndis{} variations of \nominal{} strategies appear to be novel, and their performance is evaluated.
+However, their creation should be considered a consequence of consummating the matrix of \sd{} strategies in Table \ref{table:dimensions}, and no effort is made to make them more efficient through optimistic estimates or other means.
+%Surely, optimistic estimates can be incorporated in \dyndis{} strategies, but effects are probably much smaller than for \predis{}, especially with respect to reduction of computational complexity.
+% TODO MM RealKrimp (hyperintervals); Witteveen et al.\@ (IDA)
+% TODO MM Richer Descriptions; Mampaey \cite{mampaey:2012,mampaey:2015}
+
+% NOTE the paragraph below does not really add anything
+%Section \ref{section:granularity} explained the pragmatic choice to use only equal height discretisation in this paper.
+%Although other techniques exist, that might sometimes be better, equal height discretisation is fast and can be employed for both target types, avoiding convolution of the experimental sections.
+%Furthermore, it is known to generally give good results, and only one of the four dimensions concerns the exact discretisation method.
+%Therefore no additional techniques are considered.
+% TODO numeric association rules; Arno?
+
+The work of \cite{leeuwen:2012} already came up above, but, it is not included in the experiments, as Diverse Subgroup Set Discovery (DSSD) does not have high quality scores as main objective, making for an unfair comparison in the context of this paper.
+Also, where \all{} and \best{} are applicable in both exhaustive and level-wise beam searches, DSSD is exclusively a \emph{beam} selection strategy. % and thus its use is more limited.
+%Notwithstanding, the \all{} and \best{} selection discussed above, could be incorporated into DSSD, and would occur in its \texttt{GenerateRefinements} function (line 5 of Algorithm 1 in the paper).
+%Then, all of the candidates generated by this function, that employed either the \all{} or \best{} strategy, will form the set of potential candidates to go into the beam for the next search level.
+%Only after generating all candidates for the current search level, a number of them, equal to beam width $W$, is selected for further processing through a process that considers both the quality scores of the individual candidates, and the diversity of the of the beam.
+%So, as a selection strategy, DSSD is both more limited than \all{} and \best{}, as it works only for beam searches, and more broad, as its performs additional processing.
+%Though, perversely, depth-first searches could be conceptualised as using a beam of unlimited size, that does not operate level-wise, but that orders its items (candidates) like a classical depth-first tree.
+Notwithstanding, the \all{} and \best{} selection discussed above, could be incorporated into DSSD.
+Moreover, it indicates that `best' should be considered a broader concept than just referring to subgroup quality score alone.
+It could encompass additional characteristics of an individual subgroup, or of a subgroup set.
+An example of the former is that a subgroup is required to present non-trivial, novel insights \cite{konijn:2013:pakdd}.
+Concerning subgroup sets, `best' could include the diversity criterion of DSSD.
+But `best' could also mean the single best per attribute, or the top-k, and, surely, many others variations have been, or could be, thought of.
+
+\marvin{
+The work of Mampaey et al.\@ \cite{mampaey:2012,mampaey:2015} describes the use of their \textsc{BestInterval} algorithm, for both classification and regression tasks.
+This work only considers the former, as no implementation of the algorithm is available for the latter.
+}
+
+\begin{comment}
+% NOTE MW-U is only introduced below, in the next section, ignore the paragraph below
+Finally, a few notes about the use of the Mann-Whitney $U$ statistic.
+First, this statistic is used only to compare mean ranks.
+To compare medians, the distributions are required to have `similar' shape, and this is not the case more often than it is.
+
+Also, different statistical packages offer different versions of the Mann-Whitney $U$ test \cite{bergman:2000}.
+When computing the $z$-score for a result, this work applies both a tie-correction, and a continuity correction.
+% TODO MM bergman:2000 Different Outcomes of the Wilcoxon-Mann-Whitney Test from Different Statistics Packages https://www.tandfonline.com/doi/abs/10.1080/00031305.2000.10474513
+
+Further, the independence of observations assumption could be considered violated as the same subgroup can occur in both groups (rankings).
+This could happen for some strategy comparisons, like those comparing the \all{} and \best{} variant of otherwise identical strategies.
+On the other hand, it does not usually happen for strategies that differ in dimension \dimension{interval type}, as \binaries{} and \nominal{} produce very different descriptions.
+But, this is under the assumption that observations refer to subgroup descriptions.
+Under the interpretation that subgroup extensions should be considered observations, the assumption is probably broken more often, as multiple descriptions can refer to the same extension.
+
+Nonetheless, the statistic is still used, and it seems a reasonable instrument, as the final conclusion will show that it produces the exact same ranking of strategies as a comparison based on mean scores.
+% NOTE the equivalence: AUC_1 = U_1/(n1*n2)
+\end{comment}
+
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Experimental Setup}
+\label{section:experimental-setup}
+
+In the experiments described below, we analyse the benefits and drawbacks of the strategies listed in Table \ref{table:dimensions}.
+Since there are interactions between the four dimensions, we do not consider them in isolation, but rather perform experiments comparing various combinations.
+Thus, we hope to cover the various aspects of the general question of how to deal with numeric attributes in \sd{}.
+Also, considering a dimension in isolation might lead to nice (theoretical) complexity, result quality, and so forth, but the impact of any parameter choice might be negligible in real-world analyses (in which dimensions are combined).
+
+The experimental sections discuss two main themes, that can be interpreted as \emph{within}, and \emph{across}, strategy analyses.
+First, for each individual strategy, Section \ref{section:best-number-of-bins} analyses results for various settings of $B$, and determines the best number of bins.
+But, a lower (or higher) bin count for one strategy with respect to another says nothing about how the quality of their results compare.
+So subsequent experimental sections will focus on that question by comparing across different strategies.
+To keep the discussion focused, results from only one variant, or parameter setting of $B$, of each strategy is used, based on the choice of $B$ established in Section \ref{section:best-number-of-bins}.
+
+Before discussing individual experiments, we first give an overview of the experimental conditions and parameters, and list the datasets that will feature in the subsequent sections.
+
+All experiments were performed using the \sd{} tool Cortana \cite{meeng:2011:cortana}.
+Search was performed using the quality measure \qm{WRAcc} for classification targets \cite{lavrac:1999}, tested in a `target value versus rest' setting, and \qm{z-score} for regression targets \cite{pieters:2010}.
+The minimum score threshold for \qm{WRAcc} was set to $-0.25$, the lowest possible score for this measure, as this will produce full rankings, that is, every subgroup generated by the pattern generator is considered.
+The minimum score threshold for \qm{z-score} was set to $0.0$, for the same reason.
+Note that actually the absolute \qm{z-score}, \qm{\absz}, is used, so both subgroups with a higher, or lower, average on the target are considered.
+The search depth ranges from $1$ to a maximum of $3$, as \sd{} algorithms often do not produce much better subgroups when increasing the search depth further, and also, complex subgroup descriptions are in disagreement with the easy to interpret, exploratory, descriptive nature of the paradigm.
+\todo{ARNO: There are plots available showing this, see Appendix \ref{appendix:quality-increase}.}
+% NOTE producing full rankings exacerbates beam and result set saturation, which could be a potential weakness of the experiments/ objection by reviewers.
+
+Respectively, a minimum and maximum subgroup size of $0.1 N$ and $0.9 N$ is enforced for all subgroups, to avoid, overly small, subgroups attaining unrealistic high scores.
+Beam search is performed using a beam of size $100$.
+The pattern language will use the \op{=} operator for nominal attributes, and for numeric attributes, \op{\leq} and \op{\geq} are used in strategies involving \binaries{}, and \op{\in} in \nominal{} contexts.
+The bins for the \coarse{} strategies are determined using the \eh{} method of discretisation given in Algorithm \ref{algorithm:equal-height-binning}, and for each strategy the exact number is determined in Section \ref{section:best-number-of-bins}.
+
+Tables \ref{table:table-datasets-nominal} (classification tasks) and \ref{table:table-datasets-numeric} (regression tasks) list the datasets used in the experiments.
+Datasets are taken from the UCI repository \cite{uci}, and the set is chosen such that it gives a good mix with respect to the various statistics.
+It represents a range of sizes ($N$), number of numeric description attributes ($|$numeric$|$), (positive) target share (for classification datasets), and target cardinality ($T$) (for regression datasets).
+The \dataset{adult} and \dataset{pima-indians} datasets are customarily used with a classification target, here they are also used in a regression setting, using the \attribute{age} attribute as (regression) target.
+
+\import{./res/}{table-datasets-nominal.tex}
+\import{./res/}{table-datasets-numeric.tex}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Best Number of Bins}
+\label{section:best-number-of-bins}
+
+This section is dedicated to the `number of bins' parameter setting $B$.
+This parameter controls the number of cut points that is eventually used by the \sd{} algorithm.
+Setting this parameter such that results are optimal is a non-trivial task, as it is not immediately clear what the effect of this parameter is within the context of the various strategies.
+Furthermore, the possibility that effects differ amongst target type settings, and datasets, might further hinder a straightforward selection of the parameter value.
+Therefore, this section presents the results of experiments performed to obtain insights into the intrinsic complexities stemming from these compound effects.
+
+For the strategies under investigation, a number of experiments is performed.
+All experiments are otherwise identical, except for the parameter setting controlling the number of bins.
+For a single strategy, for each dataset, result sets of experiments using different parameter settings for $B$ are collected.
+Then, from the result set obtained for each experiment, the average score for the top-k subgroups is determined.
+Finally, by ranking these average scores, a ranking is determined for the parameter setting $B$.
+That is, the experiment that yields the highest score for the top-k is assigned rank number $1$, the second highest gets number $2$, and so forth.
+It is thus determined what value of $B$, ranging from $2$ to $10$, results in the highest score.
+
+\import{./res/all_experiments/bins_tables/}{strategies-max10-bins-nominal-bins-table-top-1.tex}
+\import{./res/all_experiments/bins_tables/}{strategies-max10-bins-numeric-bins-table-top-1.tex}
+
+This section examines all strategies that use the \coarse{} alternative for hypothesis generation, and the two strategies that combine \fine{} with \predis{} and \binaries{}.
+As described in Section \ref{section:dimensions-table}, the latter can be used in a \coarse{} setup.
+For depths $1$, $2$, and $3$, and a top-k of $1$, results are shown for the classification and regression target setting in Table \ref{table:strategies-max10-bins-nominal-bins-table-top-1} and Table \ref{table:strategies-max10-bins-numeric-bins-table-top-1}, respectively.
+Experiments involving \binaries{} strategies often led to multiple settings of $B$ yielding the highest score.
+In part, this results from the nature of the algorithm.
+Demonstratively, the complete set of cut points obtained when creating $B$ half-intervals will occur in the set of cut points obtained when creating $2B$ half-intervals, or more generally, any positive multiple of $B$.
+In such cases, only the lowest value of $B$ is reported.
+Furthermore, within each table, the value for $B$ at depth $1$ is equal for the \all{} and \best{} alternative of an otherwise similar strategy, this is true by design.
+%Depth $1$ results for \best{} strategies are presented nonetheless, as a comparison will also be made between tables (target settings).
+% NOTE one might expect dbc* and pbf*, both using B bins, to be identical also for d=1, but by the nature of Algorithm 1 this is not true per se, pre-FINE uses all B values, dyn-COARSE might not.
+
+The results show there is no universal rule that guarantees a good number of bins.
+Not only does the best number differ per strategy, for a single strategy it can even differ per target type.
+Nonetheless, a number of general observations that can serve as guideline are listed and discussed below.
+Thereafter, Table \ref{table:best-number-of-bins} lists, for each strategy and target type, the number of bins used in the experiments comparing distinct strategies.
+This number is determined by taking the value of $\mu(B)$/overall in the relevant result table and rounding it to the closest integer.
+
+The best number of bins for:
+\begin{enumerate}
+% 1
+\item \binaries{} is higher than for \nominal{}, irrespective of target type,\\
+      \nominal{} is really low for classification targets,
+% 2
+\item \nominal{} never varies over depths for a single dataset in classification tasks (one exception),\\
+      \binaries{} often increases over depths, especially from depth $1$ to $2$, in these situations,
+% 3
+\item \nominal{} is stable over depths for a single dataset in regression tasks (for depth $1$ to $2$, some decrease),\\
+      \binaries{} with \dyndis{} always changes from depth $1$ to $2$, in these situations,
+% 4
+\item \binaries{} is on par for \dyndis{} and \predis{} for classification targets,\\
+      \binaries{} is higher for \dyndis{} than \predis{} for regression targets,
+% X
+% MM do not think the following item is relevant:
+%\item \binaries{}-\all{} is higher than for \binaries{}-\best{} for classification targets,\\
+%      \binaries{}-\all{} is not higher than for \binaries{}-\best{} for regression targets,
+%5
+\item almost every strategy varies greatly over datasets, irrespective of target type,\\
+      \nominal{} hardly varies for classification targets, and is an exception at that.
+\end{enumerate}
+
+Not every item from the list above is discussed in detail.
+But a first general conclusion concerns the clear difference between \binaries{} and \nominal{} strategies.
+Consistently, the former lists higher numbers.
+
+Section \ref{section:interval-type} described for both settings, and both target types, the effects of higher values of $B$ on the size of the subgroups, and how small subgroups impact result quality.
+For \nominal{}, when $B$ increases, the size of the subgroups decreases, something that is especially problematic in the classification target setting.
+For \binaries{}, it would be tempting to think that a higher $B$ would also result in smaller subgroups.
+But, remember that for \binaries{} $B{-}1$ overlapping virtual attributes are created, covering both small and large subsets of the data.
+And especially in conjunctions at higher search depths, including larger subgroups might actually be more useful than having only smaller ones, as combinations of the latter often become too small to meet the minimum coverage constraint.
+These observations cover items 1, 2, and the second part of 5.
+% NOTE check item number when changing list
+
+The above also explains why for almost all strategies a higher number of bins is listed for the regression target setting.
+The only deviations from this trend occur for the strategies combining \predis{} with \binaries{}.
+But again, remember that small subgroups are detrimental in a classification target setting, and, that for \binaries{}, a higher setting of $B$ actually also enables the formation of \emph{larger} subgroups.
+Unlike \dyndis{}, \predis{} is unable to adapt the bin boundaries selected for the description attributes to the current target distribution (of the subgroup).
+As a result, the joint probabilities created by conjunctions are build from conditions based on a limited set of pre-discretised values (bin boundaries), that might not be relevant in the context at hand.
+Descriptions using these values would then only select too small (or large) subgroups, or be otherwise unable to capture relevant aspects of the target.
+Given this inflexibility, a higher $B$ does not lead to better scores (item 4), as a lower $B$ already creates (small) subgroups with enough focus.
+%This is in part related to item 4, where \dyndis{} makes optimal use of added liberty to selected the most optimal subset of dataset currently under consideration.
+% NOTE item 4 / this text is referred to by Section \ref{section:ranking-subgroup-discovery-strategies}
+% NOTE check item number when changing list
+
+Obviously, the first part of item 5 is the most troubling.
+% NOTE check item number when changing list
+Although some general trends are discernible, the key problem of choosing a good setting of $B$ for all situations remains illusory.
+Here, also the dataset characteristics listed in Table \ref{table:table-datasets-nominal} and Table \ref{table:table-datasets-numeric} do not prove helpful.
+Limited relieve is offered by the fact that once a good setting of $B$ is found for a dataset, it is often useful for all depths.
+This holds true for both target types, and all strategies, except those combining \binaries{} with \dyndis{}.
+
+\begin{table}
+\centering
+\caption{Table showing, for each strategy and target type, the number bins used in subsequent experiments.}
+\label{table:best-number-of-bins}
+\begin{tabular}{l|ccccccc}
+target type    & \dbca{} & \dbcb{} & \dnca{} & \dncb{} & \pbfa{} & \pbfb{} & \pnca{}\\
+\hline
+classification & 7       & 6       & 2       & 2       & 7       & 6       & 2\\
+regression     & 7       & 7       & 3       & 4       & 6       & 5       & 4\\
+\end{tabular}
+\end{table}
+% NOTE the information in this table could be put into Tables 4 and 5, listing the best number of bins for each target type
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Comparing Subgroup Discovery Strategies}
+\label{section:comparing-subgroup-discovery-strategies}
+
+Each of the experimental sections below focuses on a different dimension, but all follow a similar setup.
+First, it lists the strategies that are compared.
+Then, separately for each target type, results are discussed.
+And a conclusion closes of each section.
+
+Results are presented in two different forms, tables with (aggregated) mean scores and tables with Mann-Whitney $U$-scores.
+Each table lists the results for all strategies in Table \ref{table:dimensions}, but \dnfb{0} is only included for classification targets.
+Individual sections then contrast different pairs of strategies, depending on the dimension being discussed.
+For strategies that involve a $B$ parameter, a superscript over the name indicates what setting of $B$ was used to produce the result.
+All tables are available in Appendix \ref{appendix:tables}.
+
+Two mean tables, one per target setting, are produced by obtaining the results for each dataset and every experimental setting.
+Then, for each depth and top-k, the scores for each dataset are normalised by dividing them by the score of strategy \dbfa{0}.
+Consequently, results for all datasets are now comparable, and can be aggregated.
+Mean aggregates are produced for depths $1$, $2$, and $3$, and a \emph{k} of $1$ and $10$.
+% NOTE top-100 is not used , especially for coarse{} strategies top-100 results are somewhat misleading, as for some datasets not enough results are produced
+% NOTE \dbfa{0} is used as index because it produces the biggest result set, such that top-k is always available, and it is available for both classification and regression targets (where for the latter it is guaranteed no other strategy can score better)
+
+% NOTE
+% independence of observations assumption could be considered violated as the same subgroup can occur in both groups (distributions)
+% MWU is used only to compare mean ranks, to compare medians the distributions are required to have `similar' shape
+% https://statistics.laerd.com/spss-tutorials/mann-whitney-u-test-using-spss-statistics.php
+Besides the mean tables, two tables with Mann-Whitney $U$-scores \cite{mann-whitney:1947} are also presented, again, one per target setting.
+Although a mean can give a useful indication of how well (top) subgroups score, \sd{} is generally concerned with a ranked list of resulting subgroups.
+So, to give a better insight into the distribution of scores in the involved rankings, the Mann-Whitney $U$ statistic is used.
+This statistic compares two distributions to determine if one is stochastically greater than the other, in which case the probability of an observation from the first distribution exceeding that of the second is different from the reverse probability (of an observation from the second exceeding that of the first).
+In the extreme case of $U = 0$, all values from one distribution come before all values of the other distribution.
+Such an insight can not obtained by comparing the means, or medians, of two rankings.
+%Under more strict assumptions, a significant $U$ can be interpreted as showing a difference in medians.
+
+Further, $U$-scores can be used for significance testing.
+For small samples, the null hypothesis `the distributions are equal' is accepted or reject using a critical value table available in standard statistics books.
+For large samples, $U$ can be converted into a $z$-score, and a $p$-value can be determined.
+Although the same statistics can be derived using a standard normal distribution, the majority of score distributions in the result lists do not adhere to the normality criterion\footnote{This was tested, but is not presented here as to keep the discussion focused.}.
+For the Mann-Whitney $U$-test non-normality is not an issue.
+
+When comparing two strategies, all scores of their result sets $\mathcal{F}_1$ and $\mathcal{F}_2$, of size $F_1$ and $F_2$ respectively, are put together, sorted, and assigned combined ranks.
+Then, $U_1$ is computed for set $\mathcal{F}_1$ as follows:
+\begin{equation}
+\label{equation:mann-whitney-U}
+  U_1 = \Sigma_1 - \frac{F_1 \left(F_1 + 1 \right)}{2},
+\end{equation}
+where $\Sigma_1$ is the sum of ranks of result set $\mathcal{F}_1$.
+The same is done for $\mathcal{F}_2$, and the smaller of $U_1$ and $U_2$ is used as $U$ for significance testing.
+
+A critical value table for Mann-Whitney $U$-scores typically lists values for different levels of significance, and one and two-sided testing.
+The result tables below compare the top-$10$ rankings of different strategies, so $F_1 = F_2 = 10$.
+For a one-sided test, and a significance level of $5\%$, the critical value is $27$.
+So, when $U \leq 27$ the null hypothesis `the distributions are equal' is rejected.
+
+However, the tables do not list $U$, but $U_1$, as this shows which of the two strategies is better.
+Using the fact that $U2 = F_1 \cdot F_2 - U_1$, scores below $50$ indicate that the first (left) strategy is better, scores above $50$ mean the second (right) strategy is better, and $50$ means that two rankings ranking are identical.
+% NOTE mwu tables are not aggregated, an average U over datasets is not useful, a result is significant or not, the average of a set can not be use used for significance statements
+
+The final columns of the table, under `$\leq$ 27 / $\geq$ 73 / valid', indicate per depth how often the $U$-score is significant for the left and right strategy, respectively, and how many (valid) results were obtained in this setting.
+Note that the total number of $U$-scores is not always equal to the number of datasets, as in some experimental settings not enough (valid) subgroups are found to create a top-10 ranking.
+
+The columns under `wins' use a number of symbols to summarise which of the strategies is better over all tested datasets, for a given depth.
+Triangles point in the direction of the strategy that has a better ranking more often than the other, \draw\ means there is no `winner'.
+Symbols \lasi, \lall, and \lmix, indicate that the left strategy is: better for all datasets, and all results are significant; better for all datasets, but not all results are significant; better overall, but not better for all datasets.
+Right-pointing triangles have equivalent meanings for the right strategy.
+
+Unlike the number of (valid) results, the number of symbols is equal for all strategies, which allows for a straightforward comparison.
+In the classification setting, each strategy is compared to nine others, and there are eight such comparisons in the regression setting.
+%For reasons of presentation, results are not shown in a 10x10 (9x9) matrix, instead the upper half, sans diagonal, of this would-be matrix is presented as a list.
+
+% LEAVE THIS IN - CURRENTLY MW-U z-score IS NOT USED AS ONLY top-10 IS COMPARED, BUT IT MAY COME BACK
+%
+%\marvin{If this text is ever reinstated, update the formulas to take into account the continuity correction and tie correction used to produce the results.
+%A continuity correction of $-0.5$ is applied to $|U - \mu_U|$, as a continuous distribution is used to approximate a discrete one.
+%A tie correction is applied to $\sigma_U$ to account for rank ties:
+%  \begin{equation}
+%    \sigma_{corr} = \sqrt{ \frac{F_1 F_2}{12} \left( \left(F + 1\right) - {\sum_{i=1}^{k}{\frac{t_{i}^{3} - t_{i}}{F \left(F-1\right)}}} \right)},
+%  \end{equation}
+%where $F = F_1 + F_2$, and $k$ is the number of distinct ranks.
+%}
+%\begin{equation}
+%\label{equation:mann-whitney-z}
+%  z_1 = \frac{U_1 - \mu_U}{\sigma_U} \text{, where\ } \mu_U = \frac{F_1 F_2}{2} \text{, and\ } \sigma_U = \sqrt{\frac{F_1 F_2 \left(F_1 + F_2 + 1 \right)}{12}}.
+%\end{equation}
+%We will be using this $z$-score to compare the top-k of both result sets (in the experiments k is either $10$ or $100$, ignoring a ranking of just $1$ result), so $F_1 = F_2$.
+%It can be proven that $z_1 = -z_2$.
+%A positive number for $z_1$ indicates that $\mathcal{F}_1$ is better than $\mathcal{F}_2$, and the inverse for a negative number for $z_1$.
+% NOTE
+% no relative versions of MW-U tables listing z-scores, instead of U-scores, are presented (for both non-aggregate and aggregate results)
+% two alternatives are possible, they are not the same
+% 1. use pivot to normalise all mean scores per strategy/depth/top-k and perform MW-U on the normalised mean values
+% 2. from MW-U table, pick one strategy:strategy column as pivot, and normalise all scores in the MW-U table using that
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% discretisation moment
+% (3-dbca,9-pbfa) / (4-dbcb,10-pbfb) / (7-dnca,15-pnca)
+\subsubsection{Discretisation Moment: Dynamic Discretisation versus Pre-Discretisation}
+\label{section:discretisation-moment-dynamic-discretisation-versus-pre-discretisation}
+
+This section compares options \predis{} and \dyndis{} of dimension \dimension{discretisation moment}.
+The following contexts are relevant to determine the best choice among these alternatives:
+
+\begin{itemize}
+\item \binaries{} with \coarse{} and \all{}.
+      The relevant strategies are \dbca{0} and \pbfa{0}, where the latter is transformed into a \coarse{} strategy by using a low number of values, as described in Section \ref{section:dimensions-table}.
+\item \binaries{} with \coarse{} and \best{}.
+      This compares \dbcb{0} with \pbfb{0}, here, using few values for \pbfb{0}.
+\item \nominal{} with \coarse{} and \all{}.
+      It pits \dnca{0} against \pnca{0}. % (Vikamine)
+\end{itemize}
+
+Below, we summarise the detailed results of these comparisons as can be found by looking up the appropriate lines in Tables \ref{table:strategies-1-2-3-4-7-8-9-10-15-17-nominal-mean-table-tex-aggregate-relative}, \ref{table:strategies-1-2-3-4-7-8-9-10-15-numeric-mean-table-tex-aggregate-relative}, \ref{table:strategies-1-2-3-4-7-8-9-10-15-17-nominal-MW-U-U-top-10-final-landscape} and \ref{table:strategies-1-2-3-4-7-8-9-10-15-numeric-MW-U-U-top-10-final-landscape}, in appendix \ref{appendix:tables}.
+
+\paragraph{Classification Target}
+Within, and across, the three contexts listed above, Tables \ref{table:strategies-1-2-3-4-7-8-9-10-15-17-nominal-mean-table-tex-aggregate-relative} and \ref{table:strategies-1-2-3-4-7-8-9-10-15-17-nominal-MW-U-U-top-10-final-landscape} list very mixed results.
+In the first two contexts, involving \binaries{}, alternative \predis{} is better at depth $1$, and \dyndis{} at depth $2$ and $3$.
+At depth $1$, the top-1 mean scores for \predis{} are better by margins of 2.4\%, and 1.5\%, respectively.
+Conversely, \dyndis{} results are better at depths $2$ and $3$, by margins between 1.5\% and 4.0\%.
+Considering the Mann-Whitney $U$-scores for the top-10 rankings, \predis{} is better at depth $1$, but results are close, and thus never significant.
+At depth $2$ and $3$, \dyndis{} outperforms its non-dynamic counterpart 8 out of 12 times (4 significant), and 9 out of 12 times (2 significant), for the first two contexts, respectively.
+In the \nominal{} context, top-1 mean results for \dyndis{} (\dnca{0}) are equal to, better than, and worse than, that of \predis{} (\pnca{0}) over depths $1$ to $3$, though margins are never bigger than 2.4\%.
+The top-10 rankings are identical at depth $1$, and of the 12 results for depths $2$ and $3$, \dyndis{} is better 8 times (2 significant).
+Remarkably, all four times \predis{} is better, results are significant.
+% NOTE statements like 'mean is close, but U=0' are never made, such situations are not related to saturation per se, so interpretation requires inspection of the result set
+
+\paragraph{Regression Target}
+For the two \binaries{} contexts, \dyndis{} is the recommended choice, based on Tables \ref{table:strategies-1-2-3-4-7-8-9-10-15-numeric-mean-table-tex-aggregate-relative} and \ref{table:strategies-1-2-3-4-7-8-9-10-15-numeric-MW-U-U-top-10-final-landscape}.
+All mean results are better by margins of 12.0\% to 16.5\%.
+Also, 17 of the 18 wins, out of 21 results, are significant in the first context, and from a total of 19 results in the second, this is true for 14 of the 16 wins.
+In the \nominal{} context, results are mixed again.
+At depth $1$, the top-1 mean result for \predis{} is better, with a 2.7\% margin. 
+At depths $2$ and $3$, \dyndis{} is better, by a margin of 4.5\% for both depths.
+Regarding the 20 results in the Mann-Whitney $U$ table, \dnca{0} and \pnca{0} draw once, and win 10, and 9 times, respectively.
+Results at depth $1$ are never significant, but at depth $2$ and $3$, 6 out of 8 wins for \dyndis{}, and 4 out of 6 wins for \predis{}, are.
+
+\paragraph{Conclusion}
+With respect to classification targets, \dyndis{} is the better option overall.
+At higher depths, and overall, it performed better.
+Only when considering depth $1$ exclusively, \predis{} performed better, though with margins for the means that are not big, much smaller than those in the regression setting, and with $U$-scores that do not differ much (contrary to the more pronounced differences at higher depths).
+For regression targets, \dyndis{} is the preferred choice also, as it performed clearly better in the \binaries{} contexts, and better, though less convincingly, in the \nominal{} context.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% interval type
+% (3-dbca,7-dnca) / (4-dbcb,8-dncb) / (9-pbfa,15-pnca)
+\subsubsection{Interval Type: Binaries versus Nominal}
+\label{section:interval-type-binaries-versus-nominal}
+
+In this section, dimension \dimension{interval type} is considered, with the two possible values \binaries{} and \nominal{}.
+The choice between these two settings is relevant in the following contexts:
+
+\begin{itemize}
+\item \dyndis{} with \coarse{} and \all{}.
+      In this context, \dbca{0} is pitted against \dnca{0}.
+\item \dyndis{} with \coarse{} and \best{}.
+      This comes down to comparing \dbcb{0} with \dncb{0}.
+\item \predis{} with \coarse{} and \all{}.
+      Pitting \pbfa{0} against \pnca{0} (again, with a \coarse{} \pbfa{}).
+\end{itemize}
+
+\paragraph{Classification Target}
+As Tables \ref{table:strategies-1-2-3-4-7-8-9-10-15-17-nominal-mean-table-tex-aggregate-relative} and \ref{table:strategies-1-2-3-4-7-8-9-10-15-17-nominal-MW-U-U-top-10-final-landscape} demonstrate, the \binaries{} setting consistently outperforms the \nominal{} setting in all relevant contexts.
+In terms of mean scores for the top-1 result at depth $1$, \binaries{} produces results 6.9\%, 6.0\%, and 9.0\%, better for the three contexts, respectively.
+For depths $2$ and $3$, this margin is at least 21.3\%, 19.9\%, and 18.2\%, respectively.
+In terms of Mann-Whitney $U$-scores, \binaries{} is significantly better in 16 out of 17 results, 13 out of 14 results, and 16 out of 17 results, respectively. 
+%The Mann-Whitney $U$-score of \binaries{} is significantly better in 16 out of 17 results, 13 out of 14 results and 16 out of 17 results, respectively.
+
+\paragraph{Regression Target}
+For two out of three contexts, \binaries{} is the clear preferred choice in all experiments (Tables \ref{table:strategies-1-2-3-4-7-8-9-10-15-numeric-mean-table-tex-aggregate-relative} and \ref{table:strategies-1-2-3-4-7-8-9-10-15-numeric-MW-U-U-top-10-final-landscape}).
+However, for the third context (\predis{}), mixed results have been obtained, and no clear preference can be discerned.
+For the first two contexts, involving \dyndis{}, margins between 1.7\% and 13.3\% can be observed for the top-1 mean scores.
+Comparing the obtained top-10 rankings, \binaries{} is significantly better 18 out of 20, and 10 out of 12 times, respectively.
+For the third context, results are more mixed, with essentially no clear preference for one or the other setting.
+For top-10 means, \binaries{} is better by at most 7.4\%, whereas \nominal{} is preferred for top-1, by at most 17.1\%.
+In terms of top-10 rankings, \binaries{} wins 11 out of 20 times (9 significant), and \nominal{} 9 out of 20 (4 significant).
+
+\paragraph{Conclusion}
+In the context of \dyndis{}, \binaries{} clearly outperforms \nominal{} for both targets types.
+In the context of \predis{}, results are mixed.
+Again, \binaries{} clearly outperforms \nominal{} for classification targets.
+But for regression targets, the best subgroup produced by \nominal{} (\pnca{0}) is clearly better than that of \binaries (\pbfa{0}), with the exception of the mean top-10 results.
+So only in fairly specific circumstances is a \nominal{} setting useful.
+% NOTE that for classification targets, pnca is already worse at d1, but it becomes really bad at d2,d3; while at d1 there is no beam effect yet
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% granularity
+% (1-dbfa,3-dbca) / (2-dbfb, 4-dbcb)
+\subsubsection{Granularity: Fine versus Coarse}
+\label{section:Granularity-fine-versus-coarse}
+
+This section contrasts options \fine{} and \coarse{} of dimension \dimension{granularity}.
+The relevant contexts are:
+
+\begin{itemize}
+\item \dyndis{} with \binaries{} and \all{}.
+      This selects strategies \dbfa{0} and \dbca{}.
+\item \dyndis{} with \binaries{} and \best{}.
+      Here, the relevant strategies are \dbfb{0} and \dbcb{}.
+\end{itemize}
+
+\paragraph{Classification Target}
+Without exception, \fine{} is the better option.
+Table \ref{table:strategies-1-2-3-4-7-8-9-10-15-17-nominal-mean-table-tex-aggregate-relative} shows that margins for the top-1 mean scores are between 2.2\% and 4.8\%.
+Concerning the top-10 rankings in Table \ref{table:strategies-1-2-3-4-7-8-9-10-15-17-nominal-MW-U-U-top-10-final-landscape}, 17 out of 18, and 10 out of 17, results are significant. % for \dbfa{0} and \dbfb{0}, respectively.
+
+\paragraph{Regression Target}
+Again, without exception, \fine{} is the better option, as can be gleaned from Tables \ref{table:strategies-1-2-3-4-7-8-9-10-15-numeric-mean-table-tex-aggregate-relative} and \ref{table:strategies-1-2-3-4-7-8-9-10-15-numeric-MW-U-U-top-10-final-landscape}.
+Here, margins for the top-1 mean scores are between 1.1\% and 2.6\%, and 20 out of 21, and 11 out of 19, results for the top-10 rankings are significant.
+
+\paragraph{Conclusion}
+Invariably, \fine{} is better.
+Considering that \coarse{} is a heuristic, this might not seem remarkable. % though in a beam setting, \fine{} is not guaranteed to perform better at higher search depths.
+Notwithstanding, the quality of the top subgroups \coarse{} produces is within a few percent of those of \fine{}.
+Unsurprisingly, differences are biggest at depth $1$, but at depth $3$ they are no more than 2.6\%, and 1.9\%, for the classification and regression target settings, respectively.
+This in spite of the much smaller search space, and accepting that heuristics trade-in quality for reduced exploration, \coarse{} fares pretty well.
+% NOTE saturation is always an issue with (all/best) and (fine/coarse); top-10 saturation is not checked, might interesting to check/ remark
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% selection strategy
+% (1-dbfa,2-dbfb) / (3-dbca,4-dbcb) / (7-dnca,8-dncb) / (9-pbfa,10-pbfb)
+\subsubsection{Selection Strategies: All versus Best}
+\label{section:selection-strategies-all-versus-best}
+
+Lastly, options \all{} and \best{} of dimension \dimension{selection strategy} are compared.
+The relevant contexts are:
+
+\begin{itemize}
+\item \dyndis{} with \binaries{} and \fine{}. Comparing \dbfa{0} with \dbfb{0}.
+\item \dyndis{} with \binaries{} and \coarse{}. Selecting \dbca{0} and \dbcb{0}.
+\item \dyndis{} with \nominal{} and \coarse{}. Pitting \dnca{0} against \dncb{0}.
+\item \predis{} with \binaries{} and \fine{}. Using both \pbfa{0} and \pbfb{0} with few values (\coarse{}).
+\end{itemize}
+
+\paragraph{Classification Target}
+Clearly, \all{} is the better option.
+In every context, \all{} outperforms \best{} with respect to the mean scores in Table \ref{table:strategies-1-2-3-4-7-8-9-10-15-17-nominal-mean-table-tex-aggregate-relative}.
+Margins for the top-1 are smaller in the \dyndis{} contexts (1.0\%, 1.9\%, 0.3\%), than in the \predis{} context (3.9\%).
+Also of note, the top-10 margins decline from between 23.3\% and 44.6\% at depth $1$, to at most $9.1\%$, and $5.5\%$, at depths $2$ and $3$, respectively, with some virtually disappeared (0.8\% and 0.2\%).
+Table \ref{table:strategies-1-2-3-4-7-8-9-10-15-17-nominal-MW-U-U-top-10-final-landscape} show that in the \binaries{} contexts, \all{} is better for 49 out of 51 results, of which 39 are significant (the two losses occur for dataset \dataset{ionosphere}).
+In the only \nominal{} context, results for \all{} and \best{} are basically identical, and thus never significant.
+		
+\paragraph{Regression Target}
+Almost universally, \all{} results are better for this target type.
+With respect to Table \ref{table:strategies-1-2-3-4-7-8-9-10-15-numeric-mean-table-tex-aggregate-relative}, the \binaries{} and \nominal{} contexts should be considered separately.
+In the \binaries{} contexts, \all{} is better, with margins of at most 1.3\% for the top-1.
+For the top-10, margins are between 15.5\% and 25.2\% at depth $1$, and no more than 3.6\%, and 3.1\%, at depths $2$ and $3$, respectively.
+In the \nominal{} context, \all{} is better at depth $2$ and $3$, but not at depth $1$.
+At first, it might seem puzzling that \all{} and \best{} do not perform identically at depth $1$.
+However, the two strategies do not use same the number of bins, and in this case, this results in a better score for \best{}.
+Remarkably, margins for the top-10 \emph{increase} with depth, bucking the trend observed for both target types, and all contexts discussed in this section.
+Contrary to the mean results, results for the top-10 rankings in Table \ref{table:strategies-1-2-3-4-7-8-9-10-15-numeric-MW-U-U-top-10-final-landscape} are uniform.
+Collectively, \all{} wins 66 out of 69 times, with 51 significant results.
+
+\paragraph{Conclusion}
+Alternative \all{} performs better than \best{}.
+This is no surprise, however, the more interesting observations relate to the performance of \best{}.
+Out of the 24 results for the two target types combined, the score for the top subgroup is within 1.3\% of the \all{} score 17 times.
+Of the bigger deviations, some occur at depth $1$, where \all{} and \best{} pairs would score identically when using the same number of bins, and for the very deviant results in the \nominal{} context for the regression target (\dnca{} versus \dncb{}).
+With respect to the top-10 mean scores, the sharp decline in margins is also noteworthy.
+The above suggest that as a search heuristic, the \best{} selection strategy is a very capable counterpart of \all{} when considering result quality, often coming with 1\% of the \all{} result.
+%\marvin{complicated complexity analyses goes here, ignore for now}
+% NOTE saturation is always an issue with (all/best) and (fine/coarse); top-10 saturation is not checked, might interesting to check/ remark
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% special strategy 17-dnfb
+% (17-dnfb versus all others)
+\subsubsection{Special Strategy: Mampaey et al.\@ (17-dncb) versus all other strategies}
+\label{section:special-strategy}
+
+So far, strategy \dnfb{0} was omitted from the analyses, but it will be the exclusive focus of the current section.
+Unlike the previous sections, this one will not revolve around contexts.
+Still, a separation along dimensions will be instrumental when analysing the results.
+Most important is the differentiation between \binaries{} and \nominal{} strategies.
+The latter will be treated as a single group, the former is sometimes divided into subgroups, should this provide additional insights.
+
+Strategy \dnfb{0} was included in the experiments because it produces `optimal' results at depth $1$.
+Table \ref{table:strategies-1-2-3-4-7-8-9-10-15-17-nominal-mean-table-tex-aggregate-relative} confirms this, as it lists better top-1 results for this strategy than for all others.
+%Incidentally, all top-10 scores are also better, though this is not guaranteed to hold universally.
+In relation to \binaries{}, \dnfb{0} is better by margins of 7.9\% to 13.3\%, for \nominal{} the margins are a bit over 20\%.
+
+Predictably, \dnfb{0} is better are depth $1$, but the more interesting behaviour occurs depth $2$ and $3$.
+First, consider the four strategies that combine \binaries{} with \dyndis{}.
+For the two that combine with \fine{}, \dbfa{0} and \dbfb{0}, all scores are now better than that of \dnfb{0}, although margins for the top-1 are no more than 1.3\%.
+For those that involve \coarse{}, \dbca{0} and \dbcb{0}, top-1 scores are now within 3\%.
+The latter holds true also for one of the \binaries{} strategies that uses \predis{} (\pbfa{0}).
+For the other, \pbfb{0}, margins are below 7\%. % (6.7\% and 6.1\%).
+
+Next, consider the \nominal{} strategies \dnca{0}, \dncb{0}, and \pnca{0}.
+Interestingly, while margins decrease for all \binaries{} strategies, they increase for all \nominal{} strategies.
+Margins for the top-1 grow in the advantage of \dnfb{0}, from some 20\% at depth $1$, to more than 25\% at depth $2$ and $3$.
+
+With respect to the Mann-Whitney $U$ results in Table \ref{table:strategies-1-2-3-4-7-8-9-10-15-17-nominal-MW-U-U-top-10-final-landscape}, the distinction along dimensions is informative again.
+Collectively, there are 117 results for \dnfb{0}, these include 83 wins (71\%), of which 71 are significant, for an 86\% significant-to-win ratio.
+Against strategies combining \binaries{} with \dyndis{}, there are 52 results, 25 wins (48\%), and 16 significant results (64\%), indicating that these strategies compare more favourably to \dnfb{0} than others.
+Against \binaries{} with \predis{}, there are 26 results, 19 wins (73\%), and	 again 16 significant results (84\%), which is about average.
+These numbers are even skewed in favour of \dnfb{0}, as \dbcb{0} and \pbfb{0} have 0 wins.
+Most strikingly though, there are 39 \nominal{} results, all of which \dnfb{0} wins significantly (that is, 100\% out of 100\%).
+
+As for the mean scores, the strategies that combine \dyndis{} with \binaries{} and \fine{} outperform \dnfb{0} at depth $2$ and $3$.
+Where \dbfa{0} is better for all 12 results (8 significant), \dbfb{0} is better 8 out of 12 times, but only one results is significant.
+Finally, the \coarse{} strategy \dbca{0} wins 7 to 5, all others strategies, \binaries{} and \nominal{}, are worse for every, or most, results.
+% NOTE treatment of these strategies is done such that they can be included in the conclusion
+
+\paragraph{Conclusion}
+The fact that \dnfb{0} performs best at depth $1$ is unsurprising.
+However, how the results of various (broad groups of) strategies evolve over increasing depths is noteworthy.
+Strategies involving \binaries{} fare much better than those using a \nominal{} approach.
+Nonetheless, only the two computationally most demanding strategies outperform \dnfb{0}, and just one heuristic comes close. % (\dbca{0}).
+As such, this strategy should be the method of choice when seeking high quality subgroups in a classification setting.
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Ranking Subgroup Discovery Strategies}
+\label{section:ranking-subgroup-discovery-strategies}
+
+After the focused discussions of the previous sections, a more holistic approach is taken in this section.
+First, Table \ref{table:strategies-1-2-3-4-7-8-9-10-15-17-nominal-mean-table-tex-aggregate-relative} shows that scores for \nominal{} strategies are markedly lower than those of \binaries{} for the classification targets.
+This was already observed in Section \ref{section:special-strategy}.
+Remarkably, for the regression targets, Table \ref{table:strategies-1-2-3-4-7-8-9-10-15-17-nominal-mean-table-tex-aggregate-relative} paints a different picture.
+The relative disadvantage of the \nominal{} strategies is much smaller, and now the relatively low scores of strategies combining \predis{} and \binaries{} stand out.
+
+A first general conclusion is that strategies combining \dyndis{} and \binaries{} show stable performance over target types.
+On the other hand, performance of \nominal{} strategies depends very much on target type, as was anticipated in Section \ref{section:interval-type}.
+For classification targets, they perform far worse than the \binaries{} strategies.
+Even compared to the heuristics that involve \coarse{}, many scores are lower by some 20\%.
+However, in case of the regression targets, the relative setback of \nominal{} scores is much smaller.
+Sure, they still trail those of the dynamic \binaries{}, but differences are now more in the range of 5\% to 10\%.
+Contrastingly, the \binaries{} strategies do not uniformly perform well for this target type.
+Apparently, the combination with \predis{} is a troubling one in this scenario, as scores declined sharply.
+Section \ref{section:best-number-of-bins} discussed this combination already, and determined that using a higher number of bins did not improve quality.
+Here it becomes clear this combination thus performs bad, irrespective of the number of bins.
+% 4
+%\item \binaries{} is on par for \dyndis{} and \predis{} for classification targets,\\
+%      \binaries{} is higher for \dyndis{} than \predis{} for regression targets,
+
+Finally, its time to move towards a conclusion.
+For this, two tables are presented, based on the information in Tables \ref{table:strategies-1-2-3-4-7-8-9-10-15-17-nominal-MW-U-U-top-10-final-landscape} and \ref{table:strategies-1-2-3-4-7-8-9-10-15-numeric-MW-U-U-top-10-final-landscape}.
+The left table of Table \ref{table:mwu-wins} lists all strategies, and results, for the two target types.
+For each depth, it lists how often a strategy was the better one of the contrasted pair, as indicated by the triangles under `wins', and columns $\Sigma_{C}$ and $\Sigma_{R}$ then add the result of each depth for the classification and regression setting, respectively.
+For the classification setting, column $\Sigma_{C}^{-17}$ was added.
+It lists similar information as column $\Sigma_{C}$, but counts now ignore all strategy pairs that include strategy \dnfb{0}, which is only available in this setting.
+The use of $\Sigma_{C}^{-17}$, instead of $\Sigma_{C}$, makes for comparable settings.
+The table to the right then creates the final strategy ranking, by summing the results from $\Sigma_{C}^{-17}$ and $\Sigma_{R}$, and ordering by this sum descendingly.
+% NOTE every strategy has the same number of `wins' results, this has been described in section Comparison of Subgroup Discovery Strategy
+
+% NOTE two tabulars inside tabular, simpler for layout than using two minipages
+% NOTE outermost table, so it floats, and use a single caption and label
+\begin{table}[!hb]
+\centering
+\caption{These tables indicate how the various strategies compare to each other.
+The table on the left shows how often a strategy is better than the others.
+Results are based on the symbols in the `wins' columns, and count the number of left-pointing triangles (\lmix,\lall,\lasi) when a strategy is on the left, and the number of right-pointing triangles (\rmix,\rall,\rasi) when a strategy is on the right, of strategy pairs in Table \ref{table:strategies-1-2-3-4-7-8-9-10-15-17-nominal-MW-U-U-top-10-final-landscape} and \ref{table:strategies-1-2-3-4-7-8-9-10-15-numeric-MW-U-U-top-10-final-landscape}.
+Note that every strategy has the same number of results under `wins', which is the number of strategies for the involved target type times the number of distinct depths.
+The table on the right presents the final ranking of the tested \sd{} strategies by combining the results of the two target types listed in the table on the left.
+}
+\label{table:mwu-wins}
+\begin{tabular}{cc}
+%\centering
+%\begin{table}
+%\centering
+%\caption{Count how often strategy is better than others.
+%Counts the number of '\lmix,\lall,\lasi' when strategy is on the left, and '\rmix,\rall,\rasi' when strategy is on the right, of strategy pairs in Table \ref{table:strategies-1-2-3-4-7-8-9-10-15-17-nominal-MW-U-U-top-10-final-landscape} and \ref{table:strategies-1-2-3-4-7-8-9-10-15-numeric-MW-U-U-top-10-final-landscape}.
+%Note that every strategy has the same number of '$<,=,>$' results (number of strategies for target type $\times$ number of depths).
+%}
+%\label{table:mwu-wins-combined}
+\begin{tabular}{l|rrrrr|rrrr}
+strategy     & \multicolumn{5}{c|}{classification} & \multicolumn{4}{c}{regression}\\
+             & \multicolumn{3}{c}{depth} & $\Sigma_{C}$   & $\Sigma_{C}^{-17}$ & \multicolumn{3}{c}{depth} & $\Sigma_{R}$\\
+             & 1 & 2 & 3 & (27) & (24) & 1 & 2 & 3 & (24)\\
+\hline
+~\:\dbfa{0}  & 8 & 9 & 9 & 26   &   24 & 8 & 8 & 8 & 24\\
+~\:\dbfb{0}  & 5 & 6 & 8 & 19   &   17 & 6 & 7 & 7 & 20\\
+~\:\dbca{0}  & 6 & 8 & 6 & 20   &   19 & 7 & 6 & 6 & 19\\
+~\:\dbcb{0}  & 3 & 4 & 4 & 11   &   11 & 5 & 5 & 5 & 15\\
+~\:\dnca{0}  & 0 & 2 & 2 &  4   &    4 & 1 & 3 & 3 &  7\\
+~\:\dncb{0}  & 0 & 1 & 1 &  2   &    2 & 0 & 0 & 0 &  0\\
+~\:\pbfa{0}  & 7 & 6 & 5 & 18   &   17 & 2 & 4 & 4 & 10\\
+   \pbfb{0}  & 4 & 3 & 3 & 10   &   10 & 0 & 1 & 2 &  3\\
+   \pnca{0}  & 0 & 0 & 0 &  0   &    0 & 3 & 2 & 1 &  6\\
+   \dnfb{0}  & 9 & 5 & 6 & 20   &      &   &   &   &   \\
+\end{tabular}
+%\end{table}
+&
+%\begin{table}
+%\centering
+%\caption{Ranks}
+%\label{table:mwu-wins-ranks}
+\begin{tabular}{l|rrrr}
+\multicolumn{5}{c}{}                                         \\ % for alignment
+strategy     & $\Sigma_{C}^{-17}$ & $\Sigma_{R}$ & sum & rank\\
+\hline
+~\:\dbfa{0}  & 24 & 24 & 48 & 1\\
+~\:\dbca{0}  & 19 & 19 & 38 & 2\\
+~\:\dbfb{0}  & 17 & 20 & 37 & 3\\
+~\:\pbfa{0}  & 17 & 10 & 27 & 4\\
+~\:\dbcb{0}  & 11 & 15 & 26 & 5\\
+   \pbfb{0}  & 10 &  3 & 13 & 6\\
+~\:\dnca{0}  &  4 &  7 & 11 & 7\\
+   \pnca{0}  &  0 &  6 &  6 & 8\\
+~\:\dncb{0}  &  2 &  0 &  2 & 9\\
+\end{tabular}
+%\end{table}
+\end{tabular}
+\end{table}
+
+Before discussing the table on the right, a note about the table on the left.
+Strategy \dnfb{0} is available only in the classification setting, and was discussed separately in Section \ref{section:special-strategy}.
+Referring to column $\Sigma_{C}$, it can be seen that this strategy scored 20 wins, out of the 27 possible.
+This ranks is somewhat behind the overall winner (\dbfa{0}), and equal to \dbca{0} (which wins 7 to 6, regarding the direct confrontations with \dnfb{0}).
+As seen before, \dnfb{0} is not the best strategy overall, even thought at depth $1$ it is better than all others.
+Also, the performance of heuristic \dbca{0} relative to that of \dnfb{0} should not be left unmentioned.
+Still, now, as then, results indicate that \dnfb{0} is a very capable strategy, that should be preferred in all but a few cases.
+
+The most remarkable finding in the table on the right would probably be the fact that the heuristic \dbca{0} performs so well.
+Surely, \dbfb{0} is a heuristic also, but its computational complexity is much higher nonetheless.
+Another non-trivial result is the scale at which the \nominal{} strategies perform worse than \binaries{} strategies.
+%For both target types, \nominal{} strategies rank at the bottom.
+For both target types, \nominal{} strategies rank at the bottom of the list.
+Generally, the table reaffirms some of the general trends that were observed before.
+To conclude the discussion of the experimental evaluation presented in this work, a concise list of findings is presented below.
+
+\begin{enumerate}
+\item \binaries{} performs better than \nominal{},
+\item \dyndis{} triumphs over \predis{},
+\item \fine{} outperforms \coarse{},
+\item \all{} beats \best{}.
+\end{enumerate}
+% NOTE this is an excruciatingly unremarkable list
+
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Conclusions}
+\label{section:conclusions}
+
+In this paper, a host of \sd{} strategies was systematically examined.
+These strategies differ along a number of dimensions, and experiments were performed to gain insights into the effects of different options within these dimensions.
+Choices were not evaluated in isolation, but always in the context of other parameter settings, as this is required to gauge real-world performance.
+
+Most of the findings are not unexpected, for reasons pointed out in the sections introducing each dimension.
+However, the fact that a single parameter choice would show markedly different behaviour in the classification and regression target type settings was unforeseen.
+Furthermore, it is especially the scale at which some strategies perform worse than others that is remarkable.
+
+As a whole, this systematic evaluation both affirms some intuitions that, to the best of our knowledge, have never been rigorously tested, and garnered new insights into both existing strategies, as well as into how to improve future algorithm design.
+As such, it is of value for those seeking information guiding an informed choice regarding the analysis of real-world data.
+Additionally, its findings can be of benefit to researchers and algorithm designers alike.
+Personally, the authors have already started incorporating some of the observations into work to be presented in the future.
+
+
+
+
+
+%\clearpage
+%references
+\input{bib}
+
+
+
+
+
+\clearpage
+\pagebreak
+\appendix
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{New tables, all strategies in a single table.}
+\label{appendix:tables}
+
+The new setup puts results for all strategies in a single table, leading to two mean tables, and two MW-U tables.
+Each MW-U tables need to be placed on a page of its own, as they are too big.
+However, the mean tables can be put on a single page together, and still leave about half a page empty.
+This space can be used for a more general text.
+Also, captions for the tables could be kept to a minimum, and relevant text would be placed here.
+
+\import{./res/all_experiments/mean_tables/}{strategies-1-2-3-4-7-8-9-10-15-17-nominal-mean-table-tex-aggregate-relative-final.tex}
+\import{./res/all_experiments/mean_tables/}{strategies-1-2-3-4-7-8-9-10-15-numeric-mean-table-tex-aggregate-relative-final.tex}
+
+\begin{landscape}
+\import{./res/all_experiments/mwu_tables/strategies-1-2-3-4-7-8-9-10-15-17-nominal/}{strategies-1-2-3-4-7-8-9-10-15-17-nominal-MW-U-U-top-10-final-landscape.tex}
+\import{./res/all_experiments/mwu_tables/strategies-1-2-3-4-7-8-9-10-15-numeric/}{strategies-1-2-3-4-7-8-9-10-15-numeric-MW-U-U-top-10-final-landscape.tex}
+\end{landscape}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Quality Increase}
+\label{appendix:quality-increase}
+
+\begin{figure}[!hb]
+\centering
+%\begin{minipage}{.5\textwidth}
+  \centering
+  \includegraphics[width=0.76\linewidth]{{./res/all_experiments/mean_plots/strategies-1-2-3-4-7-8-9-10-15-17-nominal-maxdepth4/strategies-1-2-3-4-7-8-9-10-15-17-nominal-mean-table-long-aggregate.dat}.eps}
+%  \label{figure:}
+%\end{minipage}%
+%HACKED IN MINIPAGE WITH MINIMAL TEXT TO SEPARATE TWO CAPTIONS
+%\begin{minipage}{.02\textwidth}~\end{minipage}%
+%\begin{minipage}{.5\textwidth}
+%  \centering
+  \includegraphics[width=0.76\linewidth]{{./res/all_experiments/mean_plots/strategies-1-2-3-4-7-8-9-10-15-17-nominal-maxdepth4/strategies-1-2-3-4-7-8-9-10-15-17-nominal-mean-table-long.dat.top-1}.eps}
+%  \label{figure:}
+%\end{minipage}
+\caption{
+Plots showing that for most datasets and strategies there is hardly a quality increase above depth $3$, justifying the decision to present only results up to depth $3$.
+The upper plot shows an aggregate over all datasets.
+The second plot show the quality of the top-1 result for each individual dataset.
+The latter plots shows that only for dataset $\ds{4}$ (\dataset{ionosphere}) there is still some increase, influencing the aggregate result.
+\todo{Plots could be replaced by a single sentence like: `from depth $1$ to $2$, quality improved by x\%; from $2$ to $3$ this was only y\%, $3$ to $4$ was 0.0\%'.
+It would remove two figures, and one page, from the paper.
+}
+}
+\label{figure:quality-increase-classification}
+\end{figure}
+
+\begin{figure}[!hb]
+\centering
+%\begin{minipage}{.5\textwidth}
+  \centering
+  \includegraphics[width=0.76\linewidth]{{./res/all_experiments/mean_plots/strategies-1-2-3-4-7-8-9-10-15-numeric-maxdepth4/strategies-1-2-3-4-7-8-9-10-15-numeric-mean-table-long-aggregate.dat}.eps}
+%  \label{figure:}
+%\end{minipage}%
+%HACKED IN MINIPAGE WITH MINIMAL TEXT TO SEPARATE TWO CAPTIONS
+%\begin{minipage}{.02\textwidth}~\end{minipage}%
+%\begin{minipage}{.5\textwidth}
+%  \centering
+  \includegraphics[width=0.76\linewidth]{{./res/all_experiments/mean_plots/strategies-1-2-3-4-7-8-9-10-15-numeric-maxdepth4/strategies-1-2-3-4-7-8-9-10-15-numeric-mean-table-long.dat.top-1}.eps}
+%  \label{figure:}
+%\end{minipage}
+\caption{
+For regression targets there appears to be more improvement, but the aggregate result is severely skewed by dataset $\ds{2}$ (\dataset{adult}), for which improvement is much larger than for the other six datasets.
+For the other datasets, there is basically no increase in result quality for the top subgroup.
+}
+\label{figure:quality-increase-regression}
+\end{figure}
+
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%% EXTRA MATERIALS - PART I. %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\clearpage
+\pagebreak
+
+\hspace{0pt}
+\vfill
+
+\centerline{THE PAPER ENDS HERE}
+\centerline{BELOW ARE ADDITIONAL MATERIALS AND TEMPORARY TABLES}
+
+\textbf{Items to Discuss}
+Topics that should be addressed.\\
+Possible objections from reviewers that need to be countered preemptively.\\
+Considerations that need to be described in the paper.
+
+\textbf{Mean Tables}
+Extended versions of Tables \ref{table:strategies-1-2-3-4-7-8-9-10-15-17-nominal-mean-table-tex-aggregate-relative} and \ref{table:strategies-1-2-3-4-7-8-9-10-15-numeric-mean-table-tex-aggregate-relative}.
+Extended tables include ratios of mean scores used in Section \ref{section:comparing-subgroup-discovery-strategies}.
+These extended tables could replace currently used tables.
+The current tables do not include these ratios.
+They only include the \dbfa{0} index-based ratios.
+Including the extended tables would spare the reader from having to compute the ratios.
+
+\textbf{MW-U win table alternatives}
+The first two tables give information per target type.
+The left part of these tables includes the number of $U$-score `wins' per depth, and overall.
+The right half presents the same information, but orders the strategies best to worse.
+This presentation of the tables does not really add anything.
+The third table is currently used in the paper.
+It combines the information of the two target type settings in a single subtable.
+The ranking is put in another, and uses comparable score metrics.
+
+\textbf{Strategy rankings based on mean}
+The paper presents a ranking of strategies based on top-10 MW-U scores.
+No such ranking is shown presented based on top-1 and top 10 mean scores.
+Tables \ref{table:mean-top-1-ranks} and \ref{table:mean-top-10-ranks} rank strategies based on top-1 and top-10, respectively.
+Table \ref{table:mean-mwu-ranks} presents all rankings in a single table.
+
+
+\vfill
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%% EXTRA MATERIALS - PART II. %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\clearpage
+\pagebreak
+\section*{Items to Discuss}
+
+\paragraph{Mampaey et al.\@ describes using regression targets with Richer Descriptions}
+Why do we not use it, why  is it not available in Cortana?
+
+\paragraph{Beam search in combination with 15-pnca}
+The interpretation of \pnca{0} used in this paper is conceptually similar to Vikamine.
+However, Vikamine uses optimistic estimates, as do many other `\nominal{}'-style algorithms.
+These are typically exhaustive, whereas the paper uses a beam search.
+Objections could be made against evaluating \pnca{0} in such a setting, as it is not created this way.
+Essentially, the algorithm is designed to use \nominal{} precisely because that is what allows for exhaustive search.
+Thus, not using it in such a manner gives it an unfair disadvantage.
+Note, however, that results for depth $1$ are unaffected, regardless.
+
+\paragraph{Beam search}
+The use of a beam search, is a potential weakness in the experiments, and no good justification (experiments or otherwise) is given for the size of the beam.
+Beam search has an effect on the search space, controlling which subgroups are generated, and therefore on result set quality, and redundancy.
+The analyses in the paper focused on quality, so why not use exhaustive search.
+
+Especially for a beam search, the difference in the end result for \fine{} and \coarse{} could be mediated by the fact that the abundance of not so good scoring subgroups of \fine{}-\all{} will be ignored anyway.
+(It is not, there is still a lot of saturation for the \dbfa{0} strategy.)
+The use of a beam could limit the (\fine{})-\all{} strategies generally, and \dbfa{0} especially.
+
+Assume $P$ is the set of all possible single conjunct descriptions (subgroups) that can be generated for a dataset.
+At search depth $1$, all subgroups in $P$ will be tested, but only a limited number will end up in beam $B$.
+On the next level, only subgroups in $B$ will be refined.
+But, by the design of the algorithm, the set of subgroups created at depth $2$ is not the cross-product $B \times P$.
+Subgroups in $B$ only combine with only those subgroups in $P$ with which they intersect (share at least one record, or member).
+Conversely, subgroups in $P$ that do not have a common member with any of the subgroups in $B$, will no longer be used in the search process, that is, not at the current search level, and not at any higher level.
+So, conjunctions that include any of these left-out subgroups will never be created.
+This is unfortunate, as conjunctions of the these left-out subgroups with any of the subgroups in $P$ (that are not in $B$), could actually yield the very best subgroup possible.
+Note that this is true for all combinations of left-out subgroups with other subgroups that are not in $B$.
+For the latter, it does not matter whether they are also left out themselves, or that they do intersect with a subgroup in $B$.
+
+This effect could cause \best{} to perform better than \all{}, and \coarse{} better than \fine{}, at search level higher than one.
+For \all{}, it could happen that the subgroups in the beam never form high quality conjunctions.
+For \best{}, the subgroups in the beam could be of lower quality when compared to those in the \all{} setting, but nonetheless produce better quality conjunctions.
+Reasoning for \fine{} and \coarse{} is similar.
+
+\paragraph{Best number of bins per strategy}
+Per strategy, the best number of bins is determined.
+Then, for each experimental setting, results are produced using this number.
+However, for some settings (datasets, depth, top-k even) this number might not produce the best result.
+So why not just use the best result for each dataset/depth, irrespective of the number of bins.
+Moreover, all results are already available anyway.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%% EXTRA MATERIALS - PART III. %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\clearpage
+\pagebreak
+%\section{Temporary Results Section for mean and MW-U bullets}
+
+\begin{landscape}
+\import{./res/all_experiments/mean_tables/}{strategies-1-2-3-4-7-8-9-10-15-17-nominal-mean-table-tex-aggregate-relative-extended.tex}
+\import{./res/all_experiments/mean_tables/}{strategies-1-2-3-4-7-8-9-10-15-numeric-mean-table-tex-aggregate-relative-extended.tex}
+\import{./res/all_experiments/mean_tables/}{strategies-1-2-3-4-7-8-9-10-15-17-nominal-mean-table-tex-aggregate-relative-extended-dncb.tex}
+\end{landscape}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%% EXTRA MATERIALS - PART IV. %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\clearpage
+\pagebreak
+%\section{MW-U wins tables, alternatives}
+
+\begin{table}
+\centering
+\caption{Classification target. (Note for 3-dbca versus 17-dnfb, wins are 7 versus 6, respectively, so 3-dbca ranks higher.)}
+\label{table:mwu-wins-nominal}
+\begin{tabular}{l|rrrr|rlr}
+strategy     &  \multicolumn{3}{c}{depth} & total & rank & strategy & total\\
+             & 1 & 2 & 3 & (27) &    &             &\\
+\hline
+~\:\dbfa{0}  & 8 & 9 & 9 & 26   &  1 & ~\:\dbfa{0} & 26\\
+~\:\dbfb{0}  & 5 & 6 & 8 & 19   &  2 & ~\:\dbca{0} & 20\\ % 3 versus 17 = 7:6 wins, so 3 ranks higher
+~\:\dbca{0}  & 6 & 8 & 6 & 20   &  3 &    \dnfb{0} & 20\\
+~\:\dbcb{0}  & 3 & 4 & 4 & 11   &  4 & ~\:\dbfb{0} & 19\\
+~\:\dnca{0}  & 0 & 2 & 2 &  4   &  5 & ~\:\pbfa{0} & 18\\
+~\:\dncb{0}  & 0 & 1 & 1 &  2   &  6 & ~\:\dbcb{0} & 11\\
+~\:\pbfa{0}  & 7 & 6 & 5 & 18   &  7 &    \pbfb{0} & 10\\
+   \pbfb{0}  & 4 & 3 & 3 & 10   &  8 & ~\:\dnca{0} & 4\\
+   \pnca{0}  & 0 & 0 & 0 &  0   &  9 & ~\:\dncb{0} & 2\\
+   \dnfb{0}  & 9 & 5 & 6 & 20   & 10 &    \pnca{0} & 0\\
+\end{tabular}
+\end{table}
+
+\begin{table}
+\centering
+\caption{Regression target.}
+\label{table:mwu-wins-numeric}
+\begin{tabular}{l|rrrr|rlr}
+strategy    &  \multicolumn{3}{c}{depth} & total & rank & strategy & total\\
+            & 1 & 2 & 3 & (24) &   &          &\\
+\hline
+~\:\dbfa{0} & 8 & 8 & 8 & 24   & 1 & ~\:\dbfa{0} & 24\\
+~\:\dbfb{0} & 6 & 7 & 7 & 20   & 2 & ~\:\dbfb{0} & 20\\
+~\:\dbca{0} & 7 & 6 & 6 & 19   & 3 & ~\:\dbca{0} & 19\\
+~\:\dbcb{0} & 5 & 5 & 5 & 15   & 4 & ~\:\dbcb{0} & 15\\
+~\:\dnca{0} & 1 & 3 & 3 &  7   & 5 & ~\:\pbfa{0} & 10\\
+~\:\dncb{0} & 0 & 0 & 0 &  0   & 6 & ~\:\dnca{0} &  7\\
+~\:\pbfa{0} & 2 & 4 & 4 & 10   & 7 &    \pnca{0} &  6\\
+   \pbfb{0} & 0 & 1 & 2 &  3   & 8 &    \pbfb{0} &  3\\
+   \pnca{0} & 3 & 2 & 1 &  6   & 9 & ~\:\dncb{0} &  0\\
+\end{tabular}
+\end{table}
+
+% NOTE two tabulars inside tabular, simpler for layout than using two minipages
+% NOTE outermost table, so it floats, and use a single caption and label
+\begin{table}
+\centering
+\caption{\marvin{
+I like this better, single table for both target types, side-by-side with rank table.
+Separate tables per target type do not really add anything.
+A single remark would be enough to state that 17-dnfb ranks second for classification targets.
+Column $\Sigma_{C}^{-17}$ is added, showing results when completely ignoring 17-dnfb results.
+This makes the two settings comparable.
+Conveniently, this also results in a complete ranking, whereas this would not be true when combining scores, or ranks, from the two separate tables.
+}
+\todo{
+Actually, the left table does not really add much.
+For each strategy, results over various depths are pretty uniform, so results per depth are not discussed.
+Without depth information, the two tables are basically the same, with the left only including the extra column $\Sigma_{C}$, and extra row for 17-dnfb
+}
+}
+\label{table:mwu-wins-EXAMPLE}
+\begin{tabular}{cc}
+%\centering
+%\begin{table}
+%\centering
+%\caption{Count how often strategy is better than others.
+%Counts the number of '\lmix,\lall,\lasi' when strategy is on the left, and '\rmix,\rall,\rasi' when strategy is on the right, of strategy pairs in Table \ref{table:strategies-1-2-3-4-7-8-9-10-15-17-nominal-MW-U-U-top-10-final-landscape} and \ref{table:strategies-1-2-3-4-7-8-9-10-15-numeric-MW-U-U-top-10-final-landscape}.
+%Note that every strategy has the same number of '$<,=,>$' results (number of strategies for target type $\times$ number of depths).
+%}
+%\label{table:mwu-wins-combined}
+\begin{tabular}{l|rrrrr|rrrr}
+strategy     & \multicolumn{5}{c|}{classification} & \multicolumn{4}{c}{regression}\\
+             & \multicolumn{3}{c}{depth} & $\Sigma_{C}$   & $\Sigma_{C}^{-17}$ & \multicolumn{3}{c}{depth} & $\Sigma_{R}$\\
+             & 1 & 2 & 3 & (27) & (24) & 1 & 2 & 3 & (24)\\
+\hline
+~\:\dbfa{0}  & 8 & 9 & 9 & 26   &   24 & 8 & 8 & 8 & 24\\
+~\:\dbfb{0}  & 5 & 6 & 8 & 19   &   17 & 6 & 7 & 7 & 20\\
+~\:\dbca{0}  & 6 & 8 & 6 & 20   &   19 & 7 & 6 & 6 & 19\\
+~\:\dbcb{0}  & 3 & 4 & 4 & 11   &   11 & 5 & 5 & 5 & 15\\
+~\:\dnca{0}  & 0 & 2 & 2 &  4   &    4 & 1 & 3 & 3 &  7\\
+~\:\dncb{0}  & 0 & 1 & 1 &  2   &    2 & 0 & 0 & 0 &  0\\
+~\:\pbfa{0}  & 7 & 6 & 5 & 18   &   17 & 2 & 4 & 4 & 10\\
+   \pbfb{0}  & 4 & 3 & 3 & 10   &   10 & 0 & 1 & 2 &  3\\
+   \pnca{0}  & 0 & 0 & 0 &  0   &    0 & 3 & 2 & 1 &  6\\
+   \dnfb{0}  & 9 & 5 & 6 & 20   &      &   &   &   &   \\
+\end{tabular}
+%\end{table}
+&
+%\begin{table}
+%\centering
+%\caption{Ranks}
+%\label{table:mwu-wins-ranks}
+\begin{tabular}{l|rrrr}
+\multicolumn{5}{c}{}                                         \\ % for alignment
+strategy     & $\Sigma_{C}^{-17}$ & $\Sigma_{R}$ & sum & rank\\
+\hline
+~\:\dbfa{0}  & 24 & 24 & 48 & 1\\
+~\:\dbca{0}  & 19 & 19 & 38 & 2\\
+~\:\dbfb{0}  & 17 & 20 & 37 & 3\\
+~\:\pbfa{0}  & 17 & 10 & 27 & 4\\
+~\:\dbcb{0}  & 11 & 15 & 26 & 5\\
+   \pbfb{0}  & 10 &  3 & 13 & 6\\
+~\:\dnca{0}  &  4 &  7 & 11 & 7\\
+   \pnca{0}  &  0 &  6 &  6 & 8\\
+~\:\dncb{0}  &  2 &  0 &  2 & 9\\
+\end{tabular}
+%\end{table}
+\end{tabular}
+\end{table}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%% EXTRA MATERIALS - PART III.2 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\clearpage
+\pagebreak
+\begin{table}
+\centering
+\caption{Based on top-1 mean scores in the mean tables, strategies are ranked for both target types, per depth.
+The sum of the ranks per depth is in the $\Sigma$ column, and $r$ shows the rank for each strategy based on the results in $\Sigma$.
+Then, $\Sigma_{C+R}^{17}$ sums the two $\Sigma$ columns, and `rank' is the rank for each strategy based on that.
+(Note summing the $r$ for each target type gives the same ordering of the result, with one tie for 7/15, instead of 15 before 7.)
+Finally, $\mu_1$ and $U_{10}$ show the ranking of all strategies based on the top-1 mean and the top-10 $U$-scores.
+\todo{NOTE ranks per depth just order the strategies based on mean score.
+An alternative would be an a-better-than-b setup, like that for to MW-U.
+It would count how often a strategy is better that the others.
+This might give a slightly different result, as it deals differently with ties.
+But overall the result is probably the same.
+Also, the information needed for that is not presented in the paper.
+}
+}
+\label{table:mean-top-1-ranks}
+\begin{tabular}{l|rrr|rr||rrr|rr||rr||ll}
+strategy & \multicolumn{5}{c||}{classification} & \multicolumn{5}{c||}{regression} & \multicolumn{2}{c||}{combined} & \multicolumn{2}{c}{mean and MW-U}\\
+            & 1   & 2 & 3 & $\Sigma_{C}^{-17}$ & $r_{C}^{-17}$ & 1 & 2 & 3 & $\Sigma_{R}$ & $r_{R}$ & $\Sigma_{C+R}^{-17}$ & rank & \multicolumn{1}{c}{$\mu_1$} & \multicolumn{1}{c}{$U_{10}$}\\
+\hline
+~\:\dbfa{0} & 1.5 & 1 & 1 & 3.5 & 1 & 1   & 1   & 1 &  3   & 1 &  6.5 & 1 & ~\:\dbfa{0} & ~\:\dbfa{0}\\
+~\:\dbfb{0} & 1.5 & 2 & 2 & 5.5 & 2 & 2   & 2   & 2 &  6   & 2 & 11.5 & 2 & ~\:\dbfb{0} & ~\:\dbca{0}\\
+~\:\dbca{0} &   5 & 3 & 3 & 11  & 3 & 3.5 & 3   & 3 &  9.5 & 3 & 21.5 & 3 & ~\:\dbca{0} & ~\:\dbfb{0}\\
+~\:\dbcb{0} &   6 & 5 & 4 & 15  & 5 & 3.5 & 4   & 4 & 11.5 & 4 & 26.5 & 4 & ~\:\dbcb{0} & ~\:\pbfa{0}\\
+~\:\dnca{0} &   8 & 8 & 8 & 24  & 8 & 7   & 5   & 5 & 17   & 5 & 41   & 7 & ~\:\pbfa{0} & ~\:\dbcb{0}\\
+~\:\dncb{0} &   8 & 9 & 9 & 26  & 9 & 5.5 & 7   & 9 & 21.5 & 7 & 47.5 & 9 &    \pnca{0} &    \pbfb{0}\\
+~\:\pbfa{0} &   3 & 4 & 5 & 12  & 4 & 8   & 8.5 & 7 & 23.5 & 8 & 35.5 & 5 & ~\:\dnca{0} & ~\:\dnca{0}\\
+   \pbfb{0} &   4 & 6 & 6 & 16  & 6 & 9   & 8.5 & 8 & 25.5 & 9 & 41.5 & 8 &    \pbfb{0} &    \pnca{0}\\
+   \pnca{0} &   8 & 7 & 7 & 22  & 7 & 5.5 & 6   & 6 & 17.5 & 6 & 39.5 & 6 & ~\:\dncb{0} & ~\:\dncb{0}\\
+\end{tabular}
+\end{table}
+
+\begin{table}
+\centering
+\caption{Based on top-10 mean scores.
+Note that the two rankings are exactly equal.
+Further note that top-10 $U$ can be used for significance testing, whereas this is not possible for using top-10 mean scores.
+}
+\label{table:mean-top-10-ranks}
+\begin{tabular}{l|rrr|rr||rrr|rr||rr||ll}
+strategy & \multicolumn{5}{c||}{classification}  & \multicolumn{5}{c||}{regression} & \multicolumn{2}{c||}{combined} & \multicolumn{2}{c}{mean and MW-U}\\
+             & 1   & 2 & 3 & $\Sigma_{C}^{-17}$ & $r_{C}^{-17}$ & 1 & 2 & 3 & $\Sigma_{R}$ & $r_{R}$ & \multicolumn{1}{c}{$\Sigma_{C+R}^{-17}$} & rank & \multicolumn{1}{c}{$\mu_{10}$} & \multicolumn{1}{c}{$U_{10}$}\\
+\hline
+~\:\dbfa{0} &   1 & 1 & 1 &    3 & 1 & 1 & 1 & 1 &  3 &   1 &    6 & 1 & ~\:\dbfa{0} & ~\:\dbfa{0}\\
+~\:\dbfb{0} &   4 & 3 & 2 &    9 & 3 & 3 & 3 & 2 &  8 &   3 &   17 & 3 & ~\:\dbca{0} & ~\:\dbca{0}\\
+~\:\dbca{0} &   3 & 2 & 3 &    8 & 2 & 2 & 2 & 3 &  7 &   2 &   15 & 2 & ~\:\dbfb{0} & ~\:\dbfb{0}\\
+~\:\dbcb{0} &   6 & 5 & 5 &   16 & 5 & 5 & 4 & 4 & 13 &   4 &   29 & 5 & ~\:\pbfa{0} & ~\:\pbfa{0}\\
+~\:\dnca{0} & 7.5 & 7 & 8 & 22.5 & 7 & 8 & 5 & 6 & 19 &   6 & 41.5 & 7 & ~\:\dbcb{0} & ~\:\dbcb{0}\\
+~\:\dncb{0} &   9 & 8 & 9 &   26 & 9 & 4 & 9 & 9 & 22 &   7 &   48 & 9 &    \pbfb{0} &    \pbfb{0}\\
+~\:\pbfa{0} &   2 & 4 & 4 &   10 & 4 & 6 & 6 & 5 & 17 &   5 &   27 & 4 & ~\:\dnca{0} & ~\:\dnca{0}\\
+   \pbfb{0} &   5 & 6 & 6 &   17 & 6 & 9 & 7 & 7 & 23 & 8.5 &   40 & 6 &    \pnca{0} &    \pnca{0}\\
+   \pnca{0} & 7.5 & 9 & 7 & 23.5 & 8 & 7 & 8 & 8 & 23 & 8.5 & 46.5 & 8 & ~\:\dncb{0} & ~\:\dncb{0}\\
+\end{tabular}
+\end{table}
+
+\begin{table}
+\centering
+\caption{Table showing the ranking of strategies based on scores for top-1 mean, top-10 mean, and top-10 $U$, respectively.}
+\label{table:mean-mwu-ranks}
+\begin{tabular}{ccc}
+$\mu_{1}$ & $\mu_{10}$ & $U_{10}$\\
+\hline
+~\:\dbfa{0} & ~\:\dbfa{0} & ~\:\dbfa{0}\\
+~\:\dbfb{0} & ~\:\dbca{0} & ~\:\dbca{0}\\
+~\:\dbca{0} & ~\:\dbfb{0} & ~\:\dbfb{0}\\
+~\:\dbcb{0} & ~\:\pbfa{0} & ~\:\pbfa{0}\\
+~\:\pbfa{0} & ~\:\dbcb{0} & ~\:\dbcb{0}\\
+   \pnca{0} &    \pbfb{0} &    \pbfb{0}\\
+~\:\dnca{0} & ~\:\dnca{0} & ~\:\dnca{0}\\
+   \pbfb{0} &    \pnca{0} &    \pnca{0}\\
+~\:\dncb{0} & ~\:\dncb{0} & ~\:\dncb{0}\\
+\end{tabular}
+\end{table}
+
+\begin{comment}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%% EXTRA MATERIALS - PART IV. %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% The highlighted text below give a number of consideration that should be discussed in the paper.
+%
+\begin{landscape}
+
+\paragraph{Bins}
+
+\marvin{
+Note, $B$ is used as a maximum.
+So, when it is not possible to create $B$ for an attribute, less are returned.
+This would not show in the results, as number $B$ is reported, even if no attribute has that many values.
+Also, $B$ is a global setting, used for every numeric attribute.
+So, when a result benefits from using a high number $B$ for a single attribute, that $B$ will be reported.
+Even when no other attribute has that many values.
+}
+
+\marvin{
+For both the top-10 and top-100, the binary settings often list 10, the maximum number of bins.
+This could be a potential weakness in the paper, as for top-1, the numbers listed are often lower.
+It could give a (sense of) false impression.
+Using these lower numbers later on in the paper could be considered misleading, as they occur only for top-1.
+Probably the cause of this is result set redundancy and for higher depths greater than 1, beam redundancy also.
+That is, the top-10 or top-100 would include many variations of the same attribute.
+If a certain attribute produces high quality subgroups, having many minor variations of its description results in many high scoring subgroups.
+Inspection of the result sets can confirm or invalidate this suspicion (this is not done yet).
+But probably, the paper will only present the top-1 results.
+}
+\pagebreak
+
+% bin tables that-use 2-10 bins - only top-1 fits on portrait page, others need landscape
+\import{./res/all_experiments/bins_tables/}{strategies-max10-bins-nominal-bins-table-top-1.tex}
+\import{./res/all_experiments/bins_tables/}{strategies-max10-bins-nominal-bins-table-top-10.tex}
+\import{./res/all_experiments/bins_tables/}{strategies-max10-bins-nominal-bins-table-top-100.tex}
+\import{./res/all_experiments/bins_tables/}{strategies-max10-bins-numeric-bins-table-top-1.tex}
+\import{./res/all_experiments/bins_tables/}{strategies-max10-bins-numeric-bins-table-top-100.tex}
+
+\end{landscape}
+\end{comment}
+
+
+
+
+
+\end{document}
+
