@@ -284,10 +284,6 @@ public class ResultWindow extends JFrame implements ActionListener
 
 			jButtonShowModel.setVisible(TargetType.hasBaseModel(aTargetType));
 			jButtonROC.setVisible(aTargetType == TargetType.SINGLE_NOMINAL);
-			// TargetType.SINGLE_NUMERIC shortcut for cmsb versions
-			jButtonPValues.setVisible(aTargetType != TargetType.SINGLE_NUMERIC);
-			jButtonRegressionTest.setVisible(aTargetType != TargetType.SINGLE_NUMERIC);
-			jButtonEmpirical.setVisible(aTargetType != TargetType.SINGLE_NUMERIC);
 
 			jButtonFold.setVisible(itsFold != 0);
 		}
