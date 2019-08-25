@@ -150,7 +150,7 @@ public class FileHandler
 							aTimer.getElapsedTimeString()));
 		printLoadingInfo();
 		if (aLoaderDialog != null)
-			aLoaderDialog.setVisible(false);
+			aLoaderDialog.dispose();
 	}
 
 	private void openDatabase()
