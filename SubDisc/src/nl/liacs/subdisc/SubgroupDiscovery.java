@@ -360,18 +360,13 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 	/*
 	 * this method remains only for debugging purposes
 	 * it should not be called by code outside this class
-	 * currently Validation.runSRSD() calls this method
-	 * meaning it will not make use of parallel computation, making it slow
 	 */
 	private Filter itsFilter = null;
 	@Deprecated
-	void mine(long theBeginTime)
+	private final void mine(long theBeginTime)
 	{
 		// not in Constructor, Table / SearchParameters may change
 		final ConditionBaseSet aConditions = new ConditionBaseSet(itsTable, itsSearchParameters);
-//		final SearchStrategy aSearchStrategy = itsSearchParameters.getSearchStrategy();
-
-		logExperimentSettings(aConditions);
 
 		//make subgroup to start with, containing all elements
 		BitSet aBitSet = getAllDataBitSet(itsNrRows);
@@ -381,18 +376,13 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 
 		int aSearchDepth = itsSearchParameters.getSearchDepth();
 
-		long theEndTime = theBeginTime + (long) (((double) itsSearchParameters.getMaximumTime()) * 60 * 1000);
-
-		if (theEndTime <= theBeginTime)
-			theEndTime = Long.MAX_VALUE;
-
 		// to print filter output use: DebugFilter(itsSearchParameters);
 		itsFilter = new Filter(itsSearchParameters);
 
 // TODO MM DEBUG only, set counts to 0
 //RefinementList.COUNT.set(0);
 //RefinementList.ADD.set(0);
-		while ((itsCandidateQueue.size() > 0) && (System.currentTimeMillis() <= theEndTime))
+		while ((itsCandidateQueue.size() > 0) && !isTimeToStop())
 		{
 			Candidate aCandidate = itsCandidateQueue.removeFirst(); // take off first Candidate from Queue
 			Subgroup aSubgroup = aCandidate.getSubgroup();
@@ -407,14 +397,14 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 
 				for (int i = 0, j = aRefinementList.size(); i < j; i++)
 				{
-					if (System.currentTimeMillis() > theEndTime)
+					if (isTimeToStop())
 						break;
 
 					Refinement aRefinement = aRefinementList.get(i);
 
 					if (!itsFilter.isUseful(aRefinement))
 						continue;
-System.out.println(aSubgroup + "\t" + aRefinement.getConditionBase());
+
 					ConditionBase aConditionBase = aRefinement.getConditionBase();
 					// if refinement is (num_attr = value) then treat it as nominal
 					// using EQUALS for numeric conditions is bad, see evaluateNominalBinaryRefinements()
@@ -430,7 +420,6 @@ System.out.println(aSubgroup + "\t" + aRefinement.getConditionBase());
 			if (itsCandidateQueue.size() == 0)
 				flushBuffer();
 		}
-
 
 // TODO MM DEBUG only, set counts to 0
 //Log.logCommandLine("RefinementList.COUNT: " + RefinementList.COUNT);
