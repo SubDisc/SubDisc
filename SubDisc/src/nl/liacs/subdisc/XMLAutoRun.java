@@ -1,6 +1,7 @@
 package nl.liacs.subdisc;
 
 import java.io.*;
+import java.text.*;
 import java.util.*;
 
 import nl.liacs.subdisc.XMLDocument.XMLType;
@@ -198,9 +199,10 @@ public class XMLAutoRun
 
 		long aBegin = System.currentTimeMillis();
 		SubgroupDiscovery aSubgroupDiscovery =
-			nl.liacs.subdisc.Process.runSubgroupDiscovery(aTable, 0, null, aSearchParameters, showWindows, theNrThreads, null); //null means no progress update to mainwindow
+			Process.runSubgroupDiscovery(aTable, 0, null, aSearchParameters, showWindows, theNrThreads, null); //null means no progress update to mainwindow
 		// always save result TODO search parameters based filename
-		save(aSubgroupDiscovery.getResult(), theFile.getAbsolutePath().replace(".xml", ("_"+ aBegin + ".txt")), aSearchParameters.getTargetType());
+		String aTimeStamp = new SimpleDateFormat("yyyyMMddHHmmssSSS").format(new Date(aBegin));
+		save(aSubgroupDiscovery.getResult(), theFile.getAbsolutePath().replace(".xml", ("_"+ aTimeStamp + ".txt")), aSearchParameters.getTargetType());
 	}
 
 	public static void save(SubgroupSet theSubgroupSet, String theFileName, TargetType theTargetType)
