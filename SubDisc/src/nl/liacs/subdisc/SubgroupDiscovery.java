@@ -11,7 +11,7 @@ import javax.swing.*;
 import nl.liacs.subdisc.ConditionListBuilder.ConditionListA;
 import nl.liacs.subdisc.ConvexHull.HullPoint;
 
-public class SubgroupDiscovery extends MiningAlgorithm
+public class SubgroupDiscovery
 {
 	// leave TEMPORARY_CODE at false in svn
 	// when true, creates PMF instead of PDF in single numeric H^2 setting
@@ -19,6 +19,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 	static int TEMPORARY_CODE_NR_SPLIT_POINTS = -1;
 	static boolean TEMPORARY_CODE_USE_EQUAL_WIDTH = false;
 
+	private final SearchParameters itsSearchParameters;
 	private final Table itsTable;
 	private final int itsNrRows;		// itsTable.getNrRows()
 	private final int itsMinimumCoverage;	// itsSearchParameters.getMinimumCoverage();
@@ -99,7 +100,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 	//SINGLE_NOMINAL
 	public SubgroupDiscovery(SearchParameters theSearchParameters, Table theTable, int theNrPositive, JFrame theMainWindow)
 	{
-		super(theSearchParameters);
+		itsSearchParameters = theSearchParameters;
 		itsTable = theTable;
 		itsNrRows = itsTable.getNrRows();
 		itsMainWindow = theMainWindow;
@@ -141,7 +142,7 @@ public class SubgroupDiscovery extends MiningAlgorithm
 	//SINGLE_NUMERIC, float > signature differs from multi-label constructor
 	public SubgroupDiscovery(SearchParameters theSearchParameters, Table theTable, float theAverage, JFrame theMainWindow)
 	{
-		super(theSearchParameters);
+		itsSearchParameters = theSearchParameters;
 		itsTable = theTable;
 		itsNrRows = itsTable.getNrRows();
 		itsMainWindow = theMainWindow;
@@ -181,7 +182,7 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 	//DOUBLE_CORRELATION and DOUBLE_REGRESSION
 	public SubgroupDiscovery(SearchParameters theSearchParameters, Table theTable, boolean isRegression, JFrame theMainWindow)
 	{
-		super(theSearchParameters);
+		itsSearchParameters = theSearchParameters;
 		itsTable = theTable;
 		itsNrRows = itsTable.getNrRows();
 		itsMainWindow = theMainWindow;
@@ -242,7 +243,7 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 	//SCAPE
 	public SubgroupDiscovery(JFrame theMainWindow, SearchParameters theSearchParameters, Table theTable)
 	{
-		super(theSearchParameters);
+		itsSearchParameters = theSearchParameters;
 		itsTable = theTable;
 		itsNrRows = itsTable.getNrRows();
 		itsMainWindow = theMainWindow;
@@ -266,7 +267,7 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 	//MULTI_LABEL
 	public SubgroupDiscovery(SearchParameters theSearchParameters, Table theTable, JFrame theMainWindow)
 	{
-		super(theSearchParameters);
+		itsSearchParameters = theSearchParameters;
 		itsTable = theTable;
 		itsNrRows = itsTable.getNrRows();
 		itsMainWindow = theMainWindow;
@@ -291,7 +292,7 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 	//LABEL_RANKING
 	public SubgroupDiscovery(SearchParameters theSearchParameters, JFrame theMainWindow, Table theTable)
 	{
-		super(theSearchParameters);
+		itsSearchParameters = theSearchParameters;
 		itsTable = theTable;
 		itsNrRows = itsTable.getNrRows();
 		itsMainWindow = theMainWindow;
@@ -312,7 +313,7 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 	// MULTI_NUMERIC
 	public SubgroupDiscovery(Table theTable, JFrame theMainWindow, SearchParameters theSearchParameters)
 	{
-		super(theSearchParameters);
+		itsSearchParameters = theSearchParameters;
 		itsTable = theTable;
 		itsNrRows = itsTable.getNrRows();
 		itsMainWindow = theMainWindow;
@@ -748,6 +749,7 @@ AtomicInteger TOTAL_FILTERED = new AtomicInteger(0);
 			//Log.logCommandLine("Evalutations: " + anEvalCounter);
 		}
 
+		// FIXME quality is known, re-evaluation in check() should be avoided
 		Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(aBestInterval);
 		checkAndLog(aNewSubgroup, anOldCoverage);
 	}
@@ -921,6 +923,8 @@ AtomicInteger TOTAL_FILTERED = new AtomicInteger(0);
 	{
 		final int aNewCoverage = theNewSubgroup.getCoverage();
 
+		// FIXME MM the first and third check should be made obsolete
+		// numericConsecutive bins should check this, then they can be removed
 		// is theNewSubgroup valid
 		if (aNewCoverage >= itsMinimumCoverage && aNewCoverage <= itsMaximumCoverage && aNewCoverage < theOldCoverage)
 		{
@@ -976,6 +980,7 @@ AtomicInteger TOTAL_FILTERED = new AtomicInteger(0);
 			final QM aQualityMeasure = itsSearchParameters.getQualityMeasure();
 			if (aQualityMeasure == QM.WRACC)
 			{
+				// FIXME MM floats are imprecise for data with N > 2^24
 				float aRatio = itsQualityMeasure.getNrPositives() / (float)(itsQualityMeasure.getNrRecords());
 				for (int i = 0; i < aNCT.size(); i++)
 				{
@@ -1078,6 +1083,15 @@ AtomicInteger TOTAL_FILTERED = new AtomicInteger(0);
 
 			if (aDomainBestSubSet.size() != 0)
 			{
+				// FIXME MM this does not take maximum coverage into account
+				// the best ValueSet might be > maxCov, and thus not be used
+				// but when this is the last search level, the refined version
+				// will also never be created
+				// a better solution is to obtain the best VALID ValueSet for
+				// this level, add it to the result set (possibly), and add the
+				// BEST (valid or not) candidate to the CandidateQueue
+				// and then never refine a nominal attribute with itself
+				// FIXME quality is known, re-evaluation should be avoided
 				final ValueSet aBestSubset = new ValueSet(aDomainBestSubSet);
 				Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(aBestSubset);
 				valueSetCheckAndLog(aNewSubgroup, anOldCoverage);
@@ -1104,6 +1118,8 @@ AtomicInteger TOTAL_FILTERED = new AtomicInteger(0);
 			// switch for now, will separate code paths when numeric EQUALS is fixed
 			switch (c.getType())
 			{
+				// FIXME MM when the returned domain consists of just 1 value it
+				// will select the whole previous subset, and can be ignored
 				case NOMINAL :
 				{
 					for (String aValue : c.getUniqueNominalBinaryDomain(theMembers))
@@ -1119,6 +1135,9 @@ AtomicInteger TOTAL_FILTERED = new AtomicInteger(0);
 				}
 				case NUMERIC :
 				{
+					// FIXME MM when the returned domain consists of just 1 value it
+					// will select the whole previous subset, and can be ignored
+					// (except for Refinements of the initial EMPTY subgroup)
 					// FIXME MM see mine() comment on
 					// evaluating Numeric Refinement here
 					for (float aValue : c.getUniqueNumericDomain(theMembers))
@@ -1136,6 +1155,8 @@ AtomicInteger TOTAL_FILTERED = new AtomicInteger(0);
 					throw new AssertionError(AttributeType.ORDINAL);
 				case BINARY :
 				{
+					// FIXME MM when the returned domain consists of just 1 value it
+					// will select the whole previous subset, and can be ignored
 					for (String aValue : c.getUniqueNominalBinaryDomain(theMembers))
 					{
 						if (itsFilter != null)
@@ -1183,6 +1204,7 @@ AtomicInteger TOTAL_FILTERED = new AtomicInteger(0);
 
 		// if (isValid), checkAndLog() already printed the Subgroup
 		// for historic reasons, the ignored Subgroup is printed anyway
+		// FIXME MM remove this special case and valueSetCheckAndLog()
 		if (!isValid)
 			Log.logCommandLine("ignored subgroup: " + theNewSubgroup.getConditions().toString());
 	}
@@ -1266,6 +1288,7 @@ AtomicInteger TOTAL_FILTERED = new AtomicInteger(0);
 	private final Object itsCheckLock = new Object();
 	private boolean check(Subgroup theSubgroup, int theOldCoverage)
 	{
+// FIXME MM this check should be made obsolete
 		int aNewCoverage = theSubgroup.getCoverage();
 		boolean isValid = (aNewCoverage < theOldCoverage && aNewCoverage >= itsMinimumCoverage);
 
@@ -1274,6 +1297,7 @@ AtomicInteger TOTAL_FILTERED = new AtomicInteger(0);
 			float aQuality = evaluateCandidate(theSubgroup);
 			theSubgroup.setMeasureValue(aQuality);
 
+// FIXME MM check size is > 1, otherwise Candidate can never be refined anyway
 			Candidate aCandidate = new Candidate(theSubgroup);
 
 			boolean aResultAddition = false;
@@ -1830,10 +1854,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	public QualityMeasure getQualityMeasure() { return itsQualityMeasure; }
 	public SearchParameters getSearchParameters() { return itsSearchParameters; }
 
-
 	/*
-	 * TEST TEST TEST TEST TEST TEST TEST TEST TEST TEST TEST TEST TEST
-	 *
 	 * same as public void mine(long theBeginTime)
 	 * but allows nrThreads to be set
 	 * use theNrThreads < 0 to run old mine(theBeginTime)
@@ -1841,6 +1862,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	public void mine(long theBeginTime, int theNrThreads)
 	{
 		final boolean mainWindowNotNull = (itsMainWindow != null);
+
 		final QM aQualityMeasure = itsSearchParameters.getQualityMeasure();
 
 		//fill the conditionList of local and global knowledge, Rob
@@ -1974,6 +1996,8 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 
 				// Candidate should not be in CandidateQueue 
 				assert (aSubgroup.getDepth() < aSearchDepth);
+// FIXME a subgroup of size 0 or 1 can not be refined, check and disallow
+				//assert (aSubgroup.getCoverage() > 1);
 
 				if (mainWindowNotNull)
 					setTitle(aSubgroup);
@@ -2053,6 +2077,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		long now = System.nanoTime();
 		if (now - itsThen < INTERVAL)
 			return;
+
 		itsThen = now;
 
 		String aCurrent = theSubgroup.toString();
@@ -2082,6 +2107,8 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		public Test(Subgroup theSubgroup, int theSearchDepth, long theEndTime, Semaphore theSemaphore, ConditionBaseSet theConditionBaseSet)
 		{
 			assert (theSubgroup.getDepth() < theSearchDepth);
+// FIXME a subgroup of size 0 or 1 can not be refined, check and disallow
+			//assert (theSubgroup.getCoverage() > 1);
 
 			itsSubgroup = theSubgroup;
 			itsSearchDepth = theSearchDepth;
@@ -2107,6 +2134,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 						break;
 
 					Refinement aRefinement = aRefinementList.get(i);
+
 					ConditionBase aConditionBase = aRefinement.getConditionBase();
 					// if refinement is (num_attr = value) then treat it as nominal
 					if (aConditionBase.getColumn().getType() == AttributeType.NUMERIC && aConditionBase.getOperator() != Operator.EQUALS)
@@ -2136,10 +2164,9 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	{
 		if (itsBuffer == null)
 			return;
-		Iterator<Candidate> anIterator = itsBuffer.iterator();
-		while (anIterator.hasNext())
+		for (Iterator<Candidate> it = itsBuffer.iterator(); it.hasNext(); )
 		{
-			Candidate aCandidate = anIterator.next();
+			Candidate aCandidate = it.next();
 			Subgroup aSubgroup = aCandidate.getSubgroup();
 			checkAndLog(aSubgroup, itsNrRows);
 		}
