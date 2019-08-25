@@ -1872,6 +1872,11 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			itsGlobalKnowledge = new GlobalKnowledge(extKnowledge.getGlobal(), itsBinaryTarget);
 		}
 
+		// not in Constructor, Table / SearchParameters may change
+		final ConditionBaseSet aConditions = new ConditionBaseSet(itsTable, itsSearchParameters);
+
+		logExperimentSettings(aConditions);
+
 		if (theNrThreads < 0)
 		{
 			mine(theBeginTime);
@@ -1879,11 +1884,6 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		}
 		else if (theNrThreads == 0)
 			theNrThreads = Runtime.getRuntime().availableProcessors();
-
-		// not in Constructor, Table / SearchParameters may change
-		final ConditionBaseSet aConditions = new ConditionBaseSet(itsTable, itsSearchParameters);
-
-		logExperimentSettings(aConditions);
 
 		// make subgroup to start with, containing all elements
 		BitSet aBitSet = getAllDataBitSet(itsNrRows);
