@@ -7,6 +7,7 @@ public class Candidate implements Comparable<Candidate>
 	private final Subgroup itsSubgroup;
 	private double itsPriority;
 
+	// FIXME MM disallow Candidates of size 0 and 1, they can not be refined
 	public Candidate(Subgroup theSubgroup)
 	{
 		itsSubgroup = theSubgroup;
@@ -46,6 +47,26 @@ public class Candidate implements Comparable<Candidate>
 		// than re-evaluation of a small number of them
 		// at some point the return will be:
 		// return itsSubgroup.compareTo(theCandidate.getSubgroup());
+		// NOTE THAT THIS BREAKS THE (x.compareTo(y)==0)==(x.equals(y)) contract
+		// ANOTHER SOLUTION WOULD BE TO USE -1 +1 FOR GENERAL CASES
+		// AND -2 +2 TO INDICATE THAT THE ITEMS ARE EQUIVALENT (IN CANONICAL
+		// FORM) BUT NOT EQUAL (IN SEARCH ORDER FORM), 0 MEANS SAME SEARCH ORDER
+		// FORM AND IMPLIES SAME CANONINCAL FORM (SHOULD NEVER HAPPEN BTW)
+		//
+		// FIXME MM
+		// to create invocation-invariant results, without calling
+		// ConditionListBuilder.toCanonicalOrder(), a compareCanonicalOrder()
+		// method would be called when compareTo() returns 0, which happens
+		// when two ConditionListsAs hold the same set of Conditions, but in a
+		// (possibly) different search order
+		// compareCanonicalOrder() would only return 0 when two ConditionListsAs
+		// are identical (same Object, same canonical order of Conditions should
+		// not happen otherwise), else its return indicates which of the two is
+		// (closer to) canonical order
+		// could be a static method, or one for each ConditionListA subclass
+		// NOTE to ensure proper functioning code, the compareTo() call is
+		// required first, as at a return of 0, one of the the Candidates needs
+		// to be removed from the CandidateSet or SubgroupSet (= ResultSet)
 		System.out.format("WARNING REDUNDANCY: Candidate.compareTo()%n\t%s%n\t%s%n",
 					itsSubgroup.toString(),
 					theCandidate.getSubgroup().toString());

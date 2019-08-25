@@ -8,6 +8,8 @@ import java.util.*;
  * 
  * TODO Queue classes in Concurrency framework allow for better concurrency. Eg.
  * Higher concurrency through non-locking algorithms and compareAndSwap methods.
+ * TODO additions to CandidateQueue and SubgroupSet need to be atomic, so not
+ * only individual classes need to be thread safe
  * 
  * NOTE ROC_BEAM implementation uses Lists for sorted, indexed, storage of
  * Candidates. It allows for faster modification of the hull. Consequently,
@@ -128,6 +130,8 @@ public class CandidateQueue
 	 * @see CandidateQueue#removeFirst()
 	 * @see Candidate
 	 */
+	// CandidateQueue does not assert (theCandidate.size() >= minimum coverage)
+	// this is left to SubgroupDiscovery.check(), which is bad design
 	public boolean add(Candidate theCandidate)
 	{
 		Subgroup aSubgroup = theCandidate.getSubgroup();
