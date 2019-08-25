@@ -4,7 +4,7 @@ import java.util.*;
 
 import javax.swing.*;
 
-import nl.liacs.histo.*;
+import nl.liacs.subdisc.Column.*;
 import nl.liacs.subdisc.gui.*;
 
 public class Process
@@ -119,6 +119,9 @@ public class Process
 		}
 
 		echoMiningEnd(anEnd - aBegin, aSubgroupDiscovery.getNumberOfSubgroups());
+
+		// FIXME MM for now hack this into p-value column
+		aSubgroupDiscovery.getResult().markAlternativeDescriptions();
 
 		if (showWindows)
 		{
