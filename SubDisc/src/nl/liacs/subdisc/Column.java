@@ -2272,7 +2272,7 @@ public class Column implements XMLNodeInterface
 		// and selects indexes using x*step_size, with x = 1..(nrBins-1)
 		// selected indexes are always [ >= 0 ; < size ]
 		// NOTE can cause integer overflow on large data
-//		// N.B. Order matters to prevent integer division from yielding zero.
+		// N.B. Order matters to prevent integer division from yielding zero.
 //		for (int j=0; j<theNrSplits; j++)
 //			aSplitPoints[j] = aDomain[size*(j+1)/(theNrSplits+1)];
 
@@ -2410,22 +2410,187 @@ public class Column implements XMLNodeInterface
 
 		// N.B. Order matters to prevent integer division from yielding zero.
 		for (int j=0; j<theNrSplits; j++)
-			aSplitPoints[j] = aDomain[size*(j+1)/(theNrSplits+1)];
+			aSplitPoints[j] = aDomain[(size*(j+1)) / (theNrSplits+1)];
 
 		return aSplitPoints;
 	}
 
-	// FIXME MM - implement
-	public NavigableMap<Float, Integer> getSplitPointsMap(BitSet theBitSet, int theNrSplits) throws IllegalArgumentException
+	// NOTE
+	// for historic comparison and evaluation this implementation should be
+	// exactly equal to getSplitPoints(), and have the same bugs
+	// but not all faulty behaviour can be reproduced using a map implementation
+	// as invalid split point values would have a count of 0 and are ignored,
+	// whereas with getSplitPoints() they would lead to evaluated Conditions
+	// also the final (alternative) implementation will change and be based on
+	// the new getUniqueNumericDomainMap() code (and a better bin strategy)
+	// BUG1: returns an array with 0s when theBitSet is empty (note that in that
+	//       case the result will not be used, as the subgroup selects no data)
+	//       so for the search result keeping or removing this bug has no effect
+	//       therefore it is left in code for now
+	//       note: the current implementation returns an empty SortedSet in this
+	//       scenario, such that the return of this method is slightly different
+	// BUG2: like above, but when there are less members than split points the
+	//       original getSplitPoints() returns an array with 0s at
+	//       indexes >= theBitSet.cardinality()
+	//       in this case the 0s will: (incorrectly) be considered to be valid
+	//       split points; be used in Conditions; and effect the search result
+	//       the map implementation can not cause such errors, as the counts for
+	//       invalid split points are 0, causing them to be ignored
+	// BUG3: for example, when data has two values, and the first covers more
+	//       than half of the records, then using two bins results in a split
+	//       point that selects all data when using operator >=
+	//       as such the condition using this split point does not select less
+	//       records, and is therefore considered to be no valid refinement
+	//       thus, effectively, no condition is created for this Column and >=
+	//       (the same holds for <= and less than half of the data)
+	// BUG4: the final loop could yield an array that contains the same split
+	//       points multiple times, the SortedSet does not reproduce this
+	//       the search algorithm already checked for this situation, so it has no
+	//       effect on the search result, just on the returned split point array
+	// NOTE
+	// the returned split points should be considered differently for <= and >=
+	// this setup allows identical loop behaviour for getUniqueSplitPointsMap()/
+	// getUniqueNumericDomainMap() in SybgroupDiscovery.numericHalfIntervals()
+	// for <= the split points in the array are inclusive end points
+	//        and the count for this split point represents the bin count for
+	//        the interval (exclusive-previous-split-point, this-split-point]
+	// for >= the split points in the array are inclusive start points
+	//        and the count for this split point represents the bin count for
+	//        the interval [this-split-point, exclusive-next-split-point)
+	public SortedMap<Float, Integer> getUniqueSplitPointsMap(BitSet theBitSet, int theBitSetCardinality, int theNrSplits, Operator theOperator) throws IllegalArgumentException
 	{
-		// FIXME MM
-		// code needs to take into account the Condition.Operator
-		// EQUALS: (theNrSplits *  <value, count>)
-		// LEQ|GEQ: when returning (theNrSplits *  <value, count>) info
-		//     is missing, for LEQ count should be sum of all previous
-		//     counts for each next <value, sum_till_now>
-		//     for GEQ the count reduces with each ascending value
-		throw new IllegalArgumentException("NOT IMPLEMENTED YET");
+		assert (theOperator == Operator.LESS_THAN_OR_EQUAL || theOperator == Operator.GREATER_THAN_OR_EQUAL);
+
+		if (!isValidCall("getSplitPointsMap", theBitSet))
+			return Collections.emptySortedMap();
+
+		if (theNrSplits < 0)
+			throw new IllegalArgumentException(theNrSplits + " (theNrSplits) < 0");
+		// valid, but useless
+		if (theNrSplits == 0)
+			return Collections.emptySortedMap();
+
+		SortedMap<Float, Integer> aSplitPointsMap = new TreeMap<Float, Integer>();
+		final int size = theBitSetCardinality;
+
+		// SEE NOTE ON BUG1 ABOVE
+		if (size == 0)
+			return Collections.emptySortedMap();
+
+		float[] aDomain = new float[size];
+		for (int i = theBitSet.nextSetBit(0), j = -1; i >= 0; i = theBitSet.nextSetBit(i + 1))
+			aDomain[++j] = itsFloatz[i];
+
+		Arrays.sort(aDomain);
+
+		// SEE NOTE ON BUG2, BUG3, BUG4 ABOVE
+		// N.B. Order matters to prevent integer division from yielding zero.
+//		for (int j=0; j<theNrSplits; j++)
+//			aSplitPoints[j] = aDomain[size*(j+1)/(theNrSplits+1)];
+
+		// NOTE
+		// the goal is an output with the same values as getSplitPoints() even
+		// even if it is incorrect
+		// NOTE
+		// code is not based on getUniqueNumericDomainMap(), and then used to
+		// select only a limited number of values from those returned by adding
+		// intermediate counts
+		// here, only theNrSplits values are checked, corrected for possible
+		// duplicates (the inner for-loop with int m)
+		// NOTE
+		// the final equal height histogram code will use all values and counts
+		// like getUniqueNumericDomainMap(), such that bins can be filled in a
+		// more balanced way (also avoiding BUG3)
+		// NOTE
+		// Column.add(float) allows NaN, -0.0, and 0.0, values to be added
+		// the == and Float.compare() checks for floats differ for these values
+		// (NaN == NaN) returns false; this is incorrect, as they are the same
+		// (-0.0 == 0.0) returns true; assuming -0.0 numerically equal to 0.0 *
+		// Float.compare(NaN, NaN) returns 0; this is correct, they are the same
+		// Float.compare(-0.0, 0.0) returns -1; assuming -0.0 smaller than 0.0 *
+		//
+		// * so to correctly deal with NaN, Float.compare() is required
+		//   but for data containing both -0.0 and 0.0 this results in two
+		//   different boundaries, with different counts
+		//   for the algorithm the choice of whether to allow NaN, -0.0, and 0.0
+		//   is of major importance, and will have effects everywhere
+		//   many (model) classes use either == or Float.compare()
+		//   so, a choice should be made what values to allow, as currently the
+		//   code has inconsistent behaviour, and all code needs a review
+		//   the case for assuming that -0.0 and 0.0 are the same is that they
+		//   are numerically equal
+		//   the case for considering -0.0 smaller that 0.0 is to allow complete
+		//   ordering of floats, and that the user might intent these values to
+		//   be considered different, expecting them to be treated as such
+		//   to best resolve this issue, the final solution lies with the values
+		//   Column.add(float) allows
+		//   in case it changes -0.0 to 0.0, users should be made aware of this
+		//   and could be suggested to modify their data and use some very small
+		//   value -0.00...00001 as substitute for  -0.0
+		//
+		// NOTE Arrays.sort() uses DualPivotQuicksort.sort(float[]), which puts:
+		//      all NaN values at the end of the array
+		//      -0.0 before 0.0, like Float.compare() behaviour
+		//
+		// FIXME review all code
+		//       the evaluation code needs to be checked, as it might not deal
+		//       correctly with the NaN, -0.0, and 0.0 situations
+		//
+		// the code below assumes the data does not contain both -0.0 and 0.0
+		long nrBins = theNrSplits + 1;
+		long size_L = size;
+		if (theOperator == Operator.LESS_THAN_OR_EQUAL)
+		{
+			for (int i = 1, j = 0; i <= theNrSplits; ++i)
+			{
+				int k = (int)((size_L*i)/nrBins);
+				if (k < j)
+					continue;
+
+				float aSplitPoint = aDomain[k];
+
+				// produce correct count for value
+				for (int m = k+1; m < size; ++m)
+					if (Float.compare(aSplitPoint, aDomain[m]) == 0) // NOTE -0.0 is smaller than 0.0
+						++k;
+
+				// 0-based index, so size is index +1
+				aSplitPointsMap.put(aSplitPoint, (k-j+1));
+				j = (k+1);
+			}
+		}
+		else // theOperator == Operator.GREATER_THAN_OR_EQUAL
+		{
+			// NOTE
+			// at i=1 the first Float.compare() should not return 0, so aLast is
+			// set to a value that is unequal to aDomain[0]
+			// checking aDomain[0] is safe as aDomain.length > 0, as size > 0
+			Float aLast = (Float.isNaN(aDomain[0]) ? 0.0f : Float.NaN);
+			for (int i = 1, j = size; i <= theNrSplits; ++i)
+			{
+				int k = (int)((size_L*i)/nrBins);
+
+				float aSplitPoint = aDomain[k];
+
+				// check is faster than aSplitPointsMap.containsKey(aSplitPoint)
+				if (Float.compare(aSplitPoint, aLast) == 0) // NOTE -0.0 is smaller than 0.0
+					continue;
+
+				// produce correct count for value
+				for (int m = k-1; m >= 0; --m)
+					if (Float.compare(aSplitPoint, aDomain[m]) == 0) // NOTE -0.0 is smaller than 0.0
+						--k;
+
+				j = (size-k);
+				aSplitPointsMap.put(aSplitPoint, j);
+				if (i > 1)
+					aSplitPointsMap.put(aLast, aSplitPointsMap.get(aLast)-j);
+				// only now set aLast to aSplitPoint, aLast was needed above
+				aLast = aSplitPoint;
+			}
+		}
+
+		return aSplitPointsMap;
 	}
 
 	/**
