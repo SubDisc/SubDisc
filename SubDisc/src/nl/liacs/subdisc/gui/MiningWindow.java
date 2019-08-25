@@ -1777,7 +1777,7 @@ public class MiningWindow extends JFrame implements ActionListener
 	private void prepareStopDialog()
 	{
 		Object[] oa = { "Stop" };
-		final JOptionPane optionPane = new JOptionPane("Press Stop to abort the mining run\n(shows result obtained up till now).",
+		final JOptionPane optionPane = new JOptionPane("Press Stop to abort the mining run\n(will show result obtained thus far).",
 														JOptionPane.DEFAULT_OPTION,
 														JOptionPane.INFORMATION_MESSAGE,
 														null,
