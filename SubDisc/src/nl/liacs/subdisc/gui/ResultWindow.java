@@ -124,10 +124,12 @@ public class ResultWindow extends JFrame implements ActionListener
 
 		setTitle();
 		setIconImage(MiningWindow.ICON);
-		setLocation(100, 100);
+		setLocation(200, 200);
 		setSize(GUI.WINDOW_DEFAULT_SIZE);
 		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		setVisible(true);
+		setAlwaysOnTop(true);
+		setAlwaysOnTop(false);
 	}
 
 	private void initComponents()

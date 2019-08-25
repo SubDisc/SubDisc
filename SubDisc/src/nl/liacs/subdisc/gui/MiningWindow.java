@@ -2,6 +2,7 @@ package nl.liacs.subdisc.gui;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.beans.*;
 import java.io.*;
 import java.sql.*;
 import java.text.*;
@@ -1729,10 +1730,77 @@ public class MiningWindow extends JFrame implements ActionListener
 		initTitle(); // reset the window's title
 	}
 
-	private void runSubgroupDiscovery(Table theTable, int theFold, BitSet theBitSet)
+	// hack to get this information to SubgroupDiscovery
+	private boolean isCancelled = false;
+	public boolean isCancelled() { return isCancelled; }
+	private void runSubgroupDiscovery(final Table theTable, final int theFold, final BitSet theBitSet)
 	{
+		isCancelled = false;
 		setupSearchParameters();
-		Process.runSubgroupDiscovery(theTable, theFold, theBitSet, itsSearchParameters, true, getNrThreads(), this);
+
+		final SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>()
+		{
+			@Override
+			public Void doInBackground()
+			{
+				SwingUtilities.invokeLater(new Runnable()
+				{
+					public void run()
+					{
+						prepareStopDialog();
+						itsStopDialog.setVisible(true);
+
+						Object o = ((JOptionPane) itsStopDialog.getContentPane()).getValue();
+						if (o.equals("Stop"))
+							isCancelled = true;
+					}
+				});
+
+				Process.runSubgroupDiscovery(theTable, theFold, theBitSet, itsSearchParameters, true, getNrThreads(), masterWindow);
+
+				if (itsStopDialog != null)
+					itsStopDialog.dispose();
+
+				return null;
+			}
+		};
+
+		worker.execute();
+
+		if (itsStopDialog != null)
+			itsStopDialog.dispose();
+	}
+
+	// make itsStopDialog available from outside the SwingWorker/Runnable so it
+	// can be closed when Process.runSubgroupDiscovery() finishes
+	private JDialog itsStopDialog = null;
+	private void prepareStopDialog()
+	{
+		Object[] oa = { "Stop" };
+		final JOptionPane optionPane = new JOptionPane("Press Stop to abort the mining run\n(shows result obtained up till now).",
+														JOptionPane.DEFAULT_OPTION,
+														JOptionPane.INFORMATION_MESSAGE,
+														null,
+														oa,
+														oa[0]);
+
+		final JDialog aDialog = new JDialog(masterWindow, "Mining in progress...", true);
+		aDialog.setIconImage(MiningWindow.ICON);
+		aDialog.setContentPane(optionPane);
+		aDialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
+		aDialog.pack();
+		aDialog.setLocationRelativeTo(masterWindow);
+		// eat event: user can only close this dialog by pressing Stop
+		aDialog.addWindowListener(new WindowAdapter() { public void windowClosing(WindowEvent we) {} });
+
+		optionPane.addPropertyChangeListener(new PropertyChangeListener() {
+			public void propertyChange(PropertyChangeEvent e) {
+				if (aDialog.isVisible() && (e.getSource() == optionPane) && (e.getPropertyName().equals(JOptionPane.VALUE_PROPERTY)))
+					aDialog.setVisible(false);
+			}
+		});
+
+		itsStopDialog = aDialog;
 	}
 
 	private void jButtonComputeThresholdActionPerformed()
@@ -1951,7 +2019,7 @@ public class MiningWindow extends JFrame implements ActionListener
 		// NOTE with minimum support = 10%, more than 10 bins is useless
 		int[] full_interval_bins = { 2, 3, 4, 5, 6, 7, 8, 9, 10 };
 		for (int b : full_interval_bins)
-			nl.liacs.discretisation.NumericRanges.foo(itsTable, itsTargetConcept.getPrimaryTarget(), b);
+			;//nl.liacs.discretisation.NumericRanges.foo(itsTable, itsTargetConcept.getPrimaryTarget(), b);
 	}
 
 	// the number of values in a column should be (at most) equal to 'bins'

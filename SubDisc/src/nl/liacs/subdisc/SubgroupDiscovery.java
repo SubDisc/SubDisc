@@ -5,11 +5,13 @@ import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
+import java.util.concurrent.locks.*;
 
 import javax.swing.*;
 
 import nl.liacs.subdisc.ConditionListBuilder.ConditionListA;
 import nl.liacs.subdisc.ConvexHull.HullPoint;
+import nl.liacs.subdisc.gui.*;
 
 public class SubgroupDiscovery
 {
@@ -538,6 +540,7 @@ AtomicInteger TOTAL_FILTERED = new AtomicInteger(0);
 		NumericStrategy aNumericStrategy = itsSearchParameters.getNumericStrategy();
 		assert (aNumericStrategy == NumericStrategy.NUMERIC_ALL || aNumericStrategy == NumericStrategy.NUMERIC_BEST ||
 			aNumericStrategy == NumericStrategy.NUMERIC_BINS || aNumericStrategy == NumericStrategy.NUMERIC_BEST_BINS);
+
 		// might require update when more strategies are added
 		boolean isAllStrategy = (aNumericStrategy == NumericStrategy.NUMERIC_ALL || aNumericStrategy == NumericStrategy.NUMERIC_BINS);
 
@@ -585,6 +588,9 @@ AtomicInteger TOTAL_FILTERED = new AtomicInteger(0);
 //		for (float aSplitPoint : map.keySet())
 		for (float aSplitPoint : aSplitPoints)
 		{
+			if (isTimeToStop())
+				break;
+
 			if (!isUseful(itsFilter, aList, new Condition(aConditionBase, aSplitPoint)))
 				continue;
 
@@ -603,8 +609,8 @@ AtomicInteger TOTAL_FILTERED = new AtomicInteger(0);
 			}
 		}
 
-		// if-check not strictly necessary, but more clear
-		if (!isAllStrategy)
+		// FIXME quality is already known, re-evaluation in check() is useless
+		if (!isAllStrategy && (aBestSubgroup != null))
 			bestAdd(aBestSubgroup, anOldCoverage);
 	}
 
@@ -781,6 +787,9 @@ AtomicInteger TOTAL_FILTERED = new AtomicInteger(0);
 		Subgroup aBestSubgroup = null;
 		for (Interval anInterval : anIntervals)
 		{
+			if (isTimeToStop())
+				break;
+
 			// catch invalid input
 			if (anInterval == null)
 				continue;
@@ -804,8 +813,8 @@ AtomicInteger TOTAL_FILTERED = new AtomicInteger(0);
 			}
 		}
 
-		// if-check not strictly necessary, but more clear
-		if (!isAllStrategy)
+		// FIXME quality is already known, re-evaluation in check() is useless
+		if (!isAllStrategy && (aBestSubgroup != null))
 			bestAdd(aBestSubgroup, anOldCoverage);
 	}
 
@@ -825,15 +834,15 @@ AtomicInteger TOTAL_FILTERED = new AtomicInteger(0);
 		}
 	}
 
-	// FIXME MM - Column.getSplitPointsMap() is not implemented yet
-	private static final NavigableMap<Float, Integer> getDomainMap(BitSet theMembers, NumericStrategy theNumericStrategy, Column theColumn, int theNrBins)
+	// FIXME MM profiling will determine which versions to choose
+	private static final SortedMap<Float, Integer> getDomainMap(BitSet theMembers, int theMembersCardinality, NumericStrategy theNumericStrategy, Column theColumn, int theNrBins, Operator theOperator)
 	{
 		switch (theNumericStrategy)
 		{
-			case NUMERIC_ALL	: return theColumn.getUniqueNumericDomainMap(theMembers);
-			case NUMERIC_BEST	: return theColumn.getUniqueNumericDomainMap(theMembers);
-			case NUMERIC_BINS	: return theColumn.getSplitPointsMap(theMembers, theNrBins);
-			case NUMERIC_BEST_BINS	: return theColumn.getSplitPointsMap(theMembers, theNrBins);
+			case NUMERIC_ALL	: return theColumn.getUniqueNumericDomainMap(theMembers, theMembersCardinality);
+			case NUMERIC_BEST	: return theColumn.getUniqueNumericDomainMap(theMembers, theMembersCardinality);
+			case NUMERIC_BINS	: return theColumn.getUniqueSplitPointsMap(theMembers, theMembersCardinality, theNrBins-1, theOperator);
+			case NUMERIC_BEST_BINS	: return theColumn.getUniqueSplitPointsMap(theMembers, theMembersCardinality, theNrBins-1, theOperator);
 			case NUMERIC_INTERVALS	:
 			{
 				throw new AssertionError("NUMERIC_STRATEGY NOT IMPLEMENTED: " + theNumericStrategy);
@@ -943,15 +952,10 @@ AtomicInteger TOTAL_FILTERED = new AtomicInteger(0);
 
 	private final void bestAdd(Subgroup theBestSubgroup, int theOldCoverage)
 	{
-		// always (aBestSubgroup == null) when (isAllStrategy == true)
-		// when (theBestSubgroup != null), at least one subgroup with
-		// valid coverage was found
-		if (theBestSubgroup != null)
-		{
-			//addToBuffer(aBestSubgroup);
-			// unnecessarily re-evaluates result
-			checkAndLog(theBestSubgroup, theOldCoverage);
-		}
+		assert (theBestSubgroup != null);
+
+		//addToBuffer(aBestSubgroup);
+		checkAndLog(theBestSubgroup, theOldCoverage);
 	}
 
 	/*
@@ -969,6 +973,7 @@ AtomicInteger TOTAL_FILTERED = new AtomicInteger(0);
 
 		final ConditionBase aConditionBase = theRefinement.getConditionBase();
 
+		// this code path deliberately does not check isTimeToStop()
 		if (aConditionBase.getOperator() == Operator.ELEMENT_OF)
 		{
 			// set-valued, implies target type is SINGLE_NOMINAL
@@ -1137,7 +1142,6 @@ AtomicInteger TOTAL_FILTERED = new AtomicInteger(0);
 				{
 					// FIXME MM when the returned domain consists of just 1 value it
 					// will select the whole previous subset, and can be ignored
-					// (except for Refinements of the initial EMPTY subgroup)
 					// FIXME MM see mine() comment on
 					// evaluating Numeric Refinement here
 					for (float aValue : c.getUniqueNumericDomain(theMembers))
@@ -1212,6 +1216,8 @@ AtomicInteger TOTAL_FILTERED = new AtomicInteger(0);
 	// this method increments itsCandidateCount
 	private final boolean checkAndLog(Subgroup theSubgroup, int theOldCoverage)
 	{
+		setTitle(theSubgroup);
+
 		boolean isValid = check(theSubgroup, theOldCoverage);
 
 		// incrementing after expensive check() makes subgroup numbers
@@ -1861,7 +1867,8 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	 */
 	public void mine(long theBeginTime, int theNrThreads)
 	{
-		final boolean mainWindowNotNull = (itsMainWindow != null);
+		long anEndTime = theBeginTime + (long) (((double) itsSearchParameters.getMaximumTime()) * 60.0 * 1000.0);
+		itsEndTime = (anEndTime <= theBeginTime) ? Long.MAX_VALUE : anEndTime;
 
 		final QM aQualityMeasure = itsSearchParameters.getQualityMeasure();
 
@@ -1933,10 +1940,6 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 
 		final int aSearchDepth = itsSearchParameters.getSearchDepth();
 
-		long theEndTime = theBeginTime + (long) (((double) itsSearchParameters.getMaximumTime()) * 60 * 1000);
-		if (theEndTime <= theBeginTime)
-			theEndTime = Long.MAX_VALUE;
-
 		/*
 		 * essential multi-thread setup
 		 * uses semaphores so only nrThreads can run at the same time
@@ -1946,7 +1949,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		ExecutorService es = Executors.newFixedThreadPool(theNrThreads);
 		Semaphore s = new Semaphore(theNrThreads);
 
-		while (System.currentTimeMillis() <= theEndTime)
+		while (!isTimeToStop())
 		{
 			// wait until a Thread becomes available
 			try { s.acquire(); }
@@ -1999,10 +2002,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 // FIXME a subgroup of size 0 or 1 can not be refined, check and disallow
 				//assert (aSubgroup.getCoverage() > 1);
 
-				if (mainWindowNotNull)
-					setTitle(aSubgroup);
-
-				es.execute(new Test(aSubgroup, aSearchDepth, theEndTime, s, aConditions));
+				es.execute(new Test(aSubgroup, aSearchDepth, s, aConditions));
 			}
 			// queue was empty, but other threads were running, they
 			// may be in the process of adding new Candidates
@@ -2066,28 +2066,53 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 //Log.logCommandLine(String.format("CANDIDATES: %s\tFILTERED: %s\tRATIO:%f", itsCandidateCount.toString(), TOTAL_FILTERED.toString(), (TOTAL_FILTERED.doubleValue()/(itsCandidateCount.doubleValue()+TOTAL_FILTERED.doubleValue()))));
 	}
 
-	// to throttle GUI update, assumes setTitle() is called by 1 Thread only
-	// check in main loop would be slightly faster
-	private static final long INTERVAL = 100000000L; // in nanoseconds
+	private long itsEndTime = Long.MIN_VALUE;
+	private final boolean isTimeToStop()
+	{
+		if (System.currentTimeMillis() > itsEndTime)
+			return true;
+
+		if ((itsMainWindow != null) && ((MiningWindow) itsMainWindow).isCancelled())
+			return true;
+
+		return false;
+	}
+
+	// to throttle GUI update, only one thread can obtain lock and update time
+	private final Lock itsClockLock = new ReentrantLock();
+	private static final long INTERVAL = 100_000_000L; // in nanoseconds
 	private long itsThen = 0L;
 
 	// NOTE itsCandidateCount and currently refined subgroup are unrelated
 	private final void setTitle(Subgroup theSubgroup)
 	{
-		long now = System.nanoTime();
-		if (now - itsThen < INTERVAL)
+		if (itsMainWindow == null)
 			return;
 
-		itsThen = now;
+		// do not even try to obtain lock
+		if (System.nanoTime() - itsThen < INTERVAL)
+			return;
 
-		String aCurrent = theSubgroup.toString();
+		if (!itsClockLock.tryLock())
+			return;
 
-		StringBuilder sb = new StringBuilder(aCurrent.length() + 32);
-		sb.append("d=").append(Integer.toString(theSubgroup.getDepth()+1))
-		.append(", cands=").append(itsCandidateCount.get())
-		.append(", refining ").append(aCurrent);
+		try
+		{
+			itsThen = System.nanoTime();
 
-		itsMainWindow.setTitle(sb.toString());
+			String aCurrent = theSubgroup.toString();
+
+			StringBuilder sb = new StringBuilder(aCurrent.length() + 32);
+			sb.append("d=").append(Integer.toString(theSubgroup.getDepth()))
+				.append(", cands=").append(itsCandidateCount.get())
+				.append(", evaluating: ").append(aCurrent);
+
+			itsMainWindow.setTitle(sb.toString());
+		}
+		finally
+		{
+			itsClockLock.unlock();
+		}
 	}
 
 	/*
@@ -2099,12 +2124,11 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	{
 		private final Subgroup itsSubgroup;
 		private final int itsSearchDepth;
-		private final long itsEndTime;
 		private final Semaphore itsSemaphore;
 		private final ConditionBaseSet itsConditionBaseSet;
 
 		// XXX MM - theSearchDepth parameter will be removed
-		public Test(Subgroup theSubgroup, int theSearchDepth, long theEndTime, Semaphore theSemaphore, ConditionBaseSet theConditionBaseSet)
+		public Test(Subgroup theSubgroup, int theSearchDepth, Semaphore theSemaphore, ConditionBaseSet theConditionBaseSet)
 		{
 			assert (theSubgroup.getDepth() < theSearchDepth);
 // FIXME a subgroup of size 0 or 1 can not be refined, check and disallow
@@ -2112,7 +2136,6 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 
 			itsSubgroup = theSubgroup;
 			itsSearchDepth = theSearchDepth;
-			itsEndTime = theEndTime;
 			itsSemaphore = theSemaphore;
 			itsConditionBaseSet = theConditionBaseSet;
 		}
@@ -2130,7 +2153,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 
 				for (int i = 0, j = aRefinementList.size(); i < j; i++)
 				{
-					if (System.currentTimeMillis() > itsEndTime)
+					if (isTimeToStop())
 						break;
 
 					Refinement aRefinement = aRefinementList.get(i);
