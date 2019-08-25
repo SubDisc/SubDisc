@@ -571,9 +571,7 @@ public class Validation
 		theSubgroupDiscovery.ignoreQualityMinimum();
 
 		Log.COMMANDLINELOG = false;
-		theSubgroupDiscovery.mine(System.currentTimeMillis());
-		// TODO MM use parallel SubgroupDiscovery.mine()
-		// theSubgroupDiscovery.mine(System.currentTimeMillis(), nrThreads);
+		theSubgroupDiscovery.mine(System.currentTimeMillis(), itsSearchParameters.getNrThreads());
 		Log.COMMANDLINELOG = true;
 		SubgroupSet aSubgroupSet = theSubgroupDiscovery.getResult();
 		if (aSubgroupSet.size() == 0)
