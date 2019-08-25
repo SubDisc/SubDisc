@@ -4,6 +4,8 @@ import java.io.*;
 import java.util.*;
 import java.util.concurrent.*;
 
+import nl.liacs.subdisc.ConditionListBuilder.ConditionListA;
+
 /**
  * A SubgroupSet is a <code>TreeSet</code> of {@link Subgroup Subgroup}s. If its
  * size is set to <= 0, the SubgroupSet has no maximum size, else the number of
@@ -299,7 +301,7 @@ public class SubgroupSet extends TreeSet<Subgroup>
 	{
 		update();
 		int aCount = 0;
-		for(Subgroup s : this)
+		for (Subgroup s : this)
 			s.setID(++aCount);
 	}
 
@@ -681,4 +683,104 @@ Log.logCommandLine("\nAUC: " + itsROCList.getAreaUnderCurve());
 	}
 
 	public double getJointEntropy() { return itsJointEntropy; }
+
+	public static final boolean CHECK_FOR_ALTERNATIVE_DESCRIPTIONS = true;
+	public final void markAlternativeDescriptions()
+	{
+		if (!CHECK_FOR_ALTERNATIVE_DESCRIPTIONS)
+			return;
+
+		update();
+
+		if (this.size() <= 1)
+			return;
+
+		// first select all rows that might be duplicates based on cqst:
+		//   Coverage+Quality+Probability+Positives (nominal)
+		//   Coverage+Quality+Average    +St. Dev.  (numeric)
+		// if unique                               -> write line
+		// else canonicalise these lines
+		//   for all lines that might be duplicates:
+		//     if later lines reduce to an earlier -> write DELETE_SYMBOL + line
+		//     else if later is subsets of earlier -> write DELETE_SYMBOL + line
+		//     else                                -> write line
+		List<Subgroup> aSameCQST = new ArrayList<Subgroup>();
+
+		// fake this one
+		BitSet aBitSet = SubgroupDiscovery.getAllDataBitSet(itsTotalCoverage);
+		Subgroup aLast = new Subgroup(ConditionListBuilder.emptyList(), aBitSet, this);
+		// compares false for first Subgroup, even if its score is NaN
+		aLast.setMeasureValue(Double.NaN);
+
+		for (Subgroup s : this)
+		{
+			// FIXME MM overwrite any value that might be present, abuse p-value
+			s.setPValue(Double.NaN);
+
+			boolean hasSameCQPP =
+				(aLast.getCoverage() == s.getCoverage()) &&
+				(aLast.getMeasureValue() == s.getMeasureValue()) &&
+				(aLast.getSecondaryStatistic() == s.getSecondaryStatistic()) &&
+				(aLast.getTertiaryStatistic() == s.getTertiaryStatistic());
+
+			if (!hasSameCQPP && aSameCQST.isEmpty())
+			{
+				aLast = s;
+				continue;
+			}
+			else if (!hasSameCQPP && !aSameCQST.isEmpty())
+			{
+				// new CQPP found, but all lines in
+				// sameCQPP need to be processed first
+				markAlternativeDescriptionsProcess(aSameCQST);
+				aSameCQST.clear();
+				aLast = s;
+				continue;
+			}
+			else if (hasSameCQPP && aSameCQST.isEmpty())
+			{
+				// first duplicate, so add previous also
+				aSameCQST.add(aLast);
+				aSameCQST.add(s);
+			}
+			else // (hasSameCQPP && !sameCQPP.isEmpty())
+			{
+				// multiple duplicates, add current too
+				aSameCQST.add(s);
+			}
+		}
+	}
+
+	private static final void markAlternativeDescriptionsProcess(List<Subgroup> sameCQST)
+	{
+		for (int i = 0, j = sameCQST.size(); i < j-1; ++i)
+		{
+			Subgroup si = sameCQST.get(i);
+			if (!Double.isNaN(si.getPValue()))
+				continue;
+
+			// set to lowest id, possibly multiple times for si
+			int id = si.getID();
+
+			for (int k = i+1; k < j; ++k)
+			{
+				Subgroup sk = sameCQST.get(k);
+				if (!Double.isNaN(sk.getPValue()))
+					continue;
+
+				if (!si.getMembers().equals(sk.getMembers()))
+					continue;
+
+				// of equal-scoring Subgroups in a SubgroupSet those with the
+				// smaller ConditionListA come first
+				assert (si.getConditions().size() <= sk.getConditions().size());
+				if (ConditionListBuilder.isCanonicalisedProperSubSetOf(si.getConditions(), sk.getConditions()))
+					if (id > 0)
+						id = -id;
+
+				si.setPValue(id);
+				sk.setPValue(id);
+			}
+		}
+	}
 }

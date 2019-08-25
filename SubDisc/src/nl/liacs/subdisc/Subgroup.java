@@ -359,6 +359,7 @@ public class Subgroup implements Comparable<Subgroup>
 	}
 */
 
+	// this code is never called
 	final int countCommon(BitSet theBitSet)
 	{
 		if (theBitSet == null)
@@ -370,6 +371,10 @@ public class Subgroup implements Comparable<Subgroup>
 		finally { itsMembersLock.unlock(); }
 	}
 
+	// FIXME MM - there is a reasonable chance that an and() on the two BitSets
+	// is faster, as it operates on the underlying longs in the long[], instead
+	// of evaluating the individual bits (which requires visiting every long
+	// also), the only problem is that BitSet.and(BitSet) modifies the first Set
 	private static final int countCommon(BitSet a, BitSet b)
 	{
 		int aCount = 0;
@@ -468,6 +473,8 @@ public class Subgroup implements Comparable<Subgroup>
 		return (isPValueComputed ? itsPValue : Double.NaN);
 	}
 
+	// FIXME MM find better solution for this
+	void setPValue(double theFakePValue) { isPValueComputed = true; itsPValue = theFakePValue; }
 	public void setPValue(NormalDistribution theDistro)
 	{
 		isPValueComputed = true;
@@ -520,6 +527,9 @@ public class Subgroup implements Comparable<Subgroup>
 			return -cmp;
 
 		// Subgroups that are larger come first
+		// this implies that when all of the conditions of a Subgroup s1 are
+		// contained in the set of Conditions for s2 (a proper subset), s1 ranks
+		// before s2
 		cmp = this.itsCoverage - theSubgroup.itsCoverage;
 		if (cmp != 0)
 			return -cmp;

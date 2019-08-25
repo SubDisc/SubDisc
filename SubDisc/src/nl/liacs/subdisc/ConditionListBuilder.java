@@ -646,4 +646,109 @@ System.out.format("ERROR ConditionListN-3: duplicate conjuncts%n\t%s%n\t%s%n", t
 		// abuses method for simple implementation
 		return toString(aConditions);
 	}
+
+	// FIXME MM static method for now, might change later (for each sub-class)
+	static final boolean isCanonicalisedProperSubSetOf(ConditionListA theFormer, ConditionListA theLatter)
+	{
+		if (theFormer.size() >= theLatter.size())
+			return false;
+
+		Condition[] aFormer = canonicalise(theFormer);
+		Condition[] aLatter = canonicalise(theLatter);
+
+		// if every Condition in the former occurs in the latter -> subset
+	OUTER: for (int i = 0; i < aFormer.length; ++i)
+		{
+			Condition c = aFormer[i];
+
+			// all Conditions in theFormer are checked and occurred in theLatter
+			if (aFormer[i] == null)
+				return true;
+
+			boolean aFound = false;
+			for (Condition d : aLatter)
+			{
+				if (d == null)
+					return false;
+
+				if (c.compareTo(d) == 0)
+					continue OUTER;
+			}
+
+			// c is not in aLatter, so theFormer is not a subset of theLatter
+			if (!aFound)
+				return false;
+		}
+
+		return true;
+	}
+
+	// FIXME MM  lazy implementation for now
+	private static final Condition[] canonicalise(ConditionListA theConditionList)
+	{
+		int aSize = theConditionList.size();
+
+		Condition[] aList = new Condition[aSize];
+		for (int i = 0; i < aSize; ++i)
+			aList[i] = theConditionList.get(i);
+
+		if (aSize <= 1)
+		{
+			return aList;
+		}
+
+		Arrays.sort(aList);
+
+		for (int i = 0; i < aSize-1; ++i)
+		{
+			Condition ci = aList[i];
+			if (ci == null)
+				continue;
+
+			Column cc = ci.getColumn();
+
+			Operator oi = ci.getOperator();
+			if (oi != Operator.LESS_THAN_OR_EQUAL && oi != Operator.GREATER_THAN_OR_EQUAL)
+				continue;
+
+			boolean isLEQ = (oi == Operator.LESS_THAN_OR_EQUAL);
+
+			for (int j = i+1; j < aSize; ++j)
+			{
+				Condition cj = aList[j];
+				if ((cj == null) || (cc != cj.getColumn()) || (oi != cj.getOperator()))
+					continue;
+
+				boolean isLEQ2 = (cj.getOperator() == Operator.LESS_THAN_OR_EQUAL);
+				if (isLEQ != isLEQ2)
+					continue;
+
+				// equal values in conditions for same attribute + operator must
+				// never occur; after sorting the former bound should always be
+				// smaller that latter (during search, first used bound is
+				// higher for <=, and smaller for >=)
+				assert (Float.compare(ci.getNumericValue(), cj.getNumericValue()) < 0);
+				// remove least specific bound
+				if (isLEQ)
+					aList[j] = null;
+				else
+				{
+					aList[i] = null;
+					break;
+				}
+			}
+		}
+
+		for (int i = 0, j = -1; i < aSize; ++i)
+		{
+			Condition c = aList[i];
+			if (c != null)
+			{
+				aList[i] = null; // might be reset below
+				aList[++j] = c;
+			}
+		}
+
+		return aList;
+	}
 }
