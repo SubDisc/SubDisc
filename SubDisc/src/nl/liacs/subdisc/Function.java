@@ -4,6 +4,8 @@
  */
 package nl.liacs.subdisc;
 
+import java.util.*;
+
 public class Function
 {
 	// for LogGamma
@@ -73,5 +75,85 @@ public class Function
 		for (int i=2; i<a; i++)
 			res += Math.log(i);
 		return res;
+	}
+
+	/**
+	 * Counts the number of distinct float values in the supplied array.
+	 * <p>
+	 * Float.compare(float, float) is used, such that <code>NaN</code>
+	 * values are considered equal, and <code>-0.0f</code> is considered
+	 * different fom <code>0.0f</code>.
+	 * <p>
+	 * NOTE the original array is not modified, and need not be sorted.
+	 *
+	 * @param theArray to count the distinct values of.
+	 *
+	 * @return an int representing the number of distinct values.
+	*/
+	public static int getCardinality(float[] theArray)
+	{
+		if (theArray.length <= 1)
+			return theArray.length;
+
+		float[] fa = Arrays.copyOf(theArray, theArray.length);
+		Arrays.sort(fa);
+
+		// NOTE
+		// first Float.compare() should not return 0, so aLast is set to
+		// set to a value that is unequal to fa[0] (safe as itsSize > 1)
+		int aCount = 0;
+		Float aLast = (Float.isNaN(fa[0]) ? 0.0f : Float.NaN);
+		for (float f : fa)
+		{
+			if (Float.compare(f, aLast) == 0) // NOTE -0.0 < 0.0
+				continue;
+			aLast = f;
+			++aCount;
+		}
+
+		return aCount;
+	}
+
+	/**
+	 * Returns a sorted array with all and only unique values occurring in
+	 * the supplied array.
+	 * <p>
+	 * Float.compare(float, float) is used, such that <code>NaN</code>
+	 * values are considered equal, and <code>-0.0f</code> is considered
+	 * smaller than <code>-0.0f</code>.
+	 * <p>
+	 * NOTE the original array is not modified, and need not be sorted.
+	 *
+	 * @param theArray to select the distinct values of.
+	 *
+	 * @return a new float[] with all unique values of the supplied array
+	 *         in ascending order.
+	*/
+	public static float[] getUniqueValues(float[] theArray)
+	{
+		if (theArray.length <= 1)
+			return Arrays.copyOf(theArray, theArray.length);
+
+		float[] fa = Arrays.copyOf(theArray, theArray.length);
+		Arrays.sort(fa);
+
+		// NOTE
+		// first Float.compare() should not return 0, so aLast is set to
+		// set to a value that is unequal to fa[0] (safe as itsSize > 1)
+		int idx = 0;
+		Float aLast = fa[0];
+		for (int i = 1; i < fa.length; ++i)
+		{
+			float f = fa[i];
+			if (Float.compare(f, aLast) == 0) // NOTE -0.0 < 0.0
+				continue;
+			aLast = f;
+			fa[++idx] = f;
+		}
+
+		if (idx+1 < fa.length)
+			fa = Arrays.copyOf(fa, idx+1);
+
+		return fa;
 	}
 }

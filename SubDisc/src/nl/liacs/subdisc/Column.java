@@ -1346,10 +1346,7 @@ public class Column implements XMLNodeInterface
 					}
 				}
 
-				// XXX inefficient but good enough
-				BitSet b = new BitSet();
-				b.set(0, itsSize);
-				itsCardinality = getUniqueNumericDomain(b).length;
+				itsCardinality = Function.getCardinality(itsFloatz);
 				return itsCardinality;
 			}
 			case ORDINAL :
