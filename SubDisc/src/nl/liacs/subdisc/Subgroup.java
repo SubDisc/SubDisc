@@ -189,6 +189,33 @@ public class Subgroup implements Comparable<Subgroup>
 		return new Subgroup(this, theCondition);
 	}
 
+	// for SINGLE_NOMINAL: re-use BitSet obtained from Column.evaluateBinary(BitSet, boolean)
+	Subgroup getRefinedSubgroup(Condition theCondition, BitSet theNewMembers, int theCoverage)
+	{
+		// not a public method, assert is enough
+		assert (theCondition != null);
+		assert (theNewMembers != null);
+		assert (theNewMembers.cardinality() == theCoverage);
+		assert (theCoverage > 0);
+		assert (theCondition.getColumn().evaluate(getMembersUnsafe(), theCondition).cardinality() == theCoverage);
+
+		return new Subgroup(this, theCondition, theNewMembers, theCoverage);
+	}
+
+	private Subgroup(Subgroup theSubgroup, Condition theCondition, BitSet theNewSubgroupMembers, int theCoverage)
+	{
+		itsConditions = ConditionListBuilder.createList(theSubgroup.itsConditions, theCondition);
+		itsParentSet  = theSubgroup.itsParentSet;
+		itsCoverage   = theCoverage;
+
+		// not setting these fields, see NOTE at Subgroup(Subgroup, Condition)
+		// itsMeasureValue, itsSecondaryStatistic, theSecondaryStatistic
+
+		itsMembersLock.lock();
+		try { itsMembers = theNewSubgroupMembers; }
+		finally { itsMembersLock.unlock(); }
+	}
+
 	// private, for use within this class only, do no expose members
 	// does not return a clone, but the actual itsMembers
 	// re-instantiates itsMembers, not in separate method, as it requires

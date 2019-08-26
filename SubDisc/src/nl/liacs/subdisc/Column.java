@@ -1667,8 +1667,8 @@ public class Column implements XMLNodeInterface
 			}
 			case BINARY :
 			{
-				assert(anOperator == Operator.EQUALS);
-				aResult =  binaryEquals(theBitSet, theCondition.getBinaryValue());
+				assert (anOperator == Operator.EQUALS);
+				aResult =  evaluateBinary(theBitSet, theCondition.getBinaryValue());
 				break;
 			}
 			default :
@@ -1683,6 +1683,40 @@ public class Column implements XMLNodeInterface
 		assert (postTest(aResult, evaluate(theCondition)));
 
 		return aResult;
+	}
+
+	// this replaces the BINARY part of evaluate(BitSet, Condition) above and
+	// of getUniqueNominalBinaryDomain(): the two methods are merged
+	// instead of determining the distinct values for this Column, it directly
+	// returns the evaluation for the members BitSet and this Column
+	// the old situation would first determine the domain { false, true }, and
+	// then call Column.evaluate(BitSet, Condition)
+	// and then use that to set the Subgroup members, using this method this can
+	// be done directly, using the returned BitSet
+	// also, for the special SINGLE_NOMINAL case, the caller can determine the
+	// true positive count for the Subgroup by calling aResult.and(binaryTarget)
+	//
+	// NOTE
+	// when (column.itsCardinality != 2) this method should not be called when
+	// evaluating a Refinement during mining, as for a cardinality of 0 there
+	// there are no Refinements, for 1 theBitSet selects the oldCoverage
+	final BitSet evaluateBinary(BitSet theBitSet, boolean theValue)
+	{
+		assert (itsType == AttributeType.BINARY);
+
+		BitSet aResult;
+		if (theValue)
+		{
+			aResult = (BitSet) itsBinaries.clone();
+			aResult.and(theBitSet);
+			return aResult;
+		}
+		else
+		{
+			aResult = (BitSet) theBitSet.clone();
+			aResult.andNot(itsBinaries);
+			return aResult;
+		}
 	}
 
 	// account for d>1, where _new will not be the same as old
@@ -1764,20 +1798,6 @@ public class Column implements XMLNodeInterface
 				theResult.set(i);
 
 		return theResult;
-	}
-
-	private BitSet binaryEquals(BitSet theMembers, boolean theValue)
-	{
-		// faster than or
-		BitSet aResult = (BitSet)itsBinaries.clone();
-
-		if (!theValue)
-			aResult.flip(0, itsSize);
-
-		// faster than bit-loop, operates on underlying longs in long[]
-		aResult.and(theMembers);
-
-		return aResult;
 	}
 
 	/**
