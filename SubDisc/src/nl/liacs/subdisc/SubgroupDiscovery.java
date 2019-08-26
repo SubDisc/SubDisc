@@ -480,10 +480,11 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 	 */
 	private void evaluateNumericRefinements(BitSet theMembers, Refinement theRefinement)
 	{
-		// faster than theMembers.cardinality()
-		// useless call, coverage never changes, could be parameter
-		final int anOldCoverage = theRefinement.getSubgroup().getCoverage();
-		assert (theMembers.cardinality() == anOldCoverage);
+		assert (theRefinement.getSubgroup().getCoverage() == theMembers.cardinality());
+//		assert (theRefinement.getSubgroup().getCoverage() > 1);
+		// this subgroup can not be refined - FIXME MM make this an assert
+		if (theRefinement.getSubgroup().getCoverage() <= 1)
+			return;
 
 		switch (itsSearchParameters.getNumericStrategy())
 		{
@@ -828,11 +829,11 @@ AtomicInteger TOTAL_FILTERED = new AtomicInteger(0);
 	{
 		switch (theNumericStrategy)
 		{
-			case NUMERIC_ALL	: return theColumn.getUniqueNumericDomainMap(theMembers, theMembersCardinality);
-			case NUMERIC_BEST	: return theColumn.getUniqueNumericDomainMap(theMembers, theMembersCardinality);
-			case NUMERIC_BINS	: return theColumn.getUniqueSplitPointsMap(theMembers, theMembersCardinality, theNrBins-1, theOperator);
-			case NUMERIC_BEST_BINS	: return theColumn.getUniqueSplitPointsMap(theMembers, theMembersCardinality, theNrBins-1, theOperator);
-			case NUMERIC_INTERVALS	:
+			case NUMERIC_ALL        : return theColumn.getUniqueNumericDomainMap(theMembers, theMembersCardinality);
+			case NUMERIC_BEST       : return theColumn.getUniqueNumericDomainMap(theMembers, theMembersCardinality);
+			case NUMERIC_BINS       : return theColumn.getUniqueSplitPointsMap(theMembers, theMembersCardinality, theNrBins-1, theOperator);
+			case NUMERIC_BEST_BINS  : return theColumn.getUniqueSplitPointsMap(theMembers, theMembersCardinality, theNrBins-1, theOperator);
+			case NUMERIC_INTERVALS  :
 			{
 				throw new AssertionError("NUMERIC_STRATEGY NOT IMPLEMENTED: " + theNumericStrategy);
 				//return theColumn.getUniqueNumericDomainMap(theMembers);
@@ -1148,23 +1149,105 @@ AtomicInteger TOTAL_FILTERED = new AtomicInteger(0);
 					throw new AssertionError(AttributeType.ORDINAL);
 				case BINARY :
 				{
-					// FIXME MM when the returned domain consists of just 1 value it
-					// will select the whole previous subset, and can be ignored
-					for (String aValue : c.getUniqueNominalBinaryDomain(theMembers))
-					{
-						if (itsFilter != null)
-							if (!itsFilter.isUseful(aList, new Condition(aConditionBase, aValue)))
-								continue;
-
-						aNewSubgroup = theRefinement.getRefinedSubgroup(aValue.equals(AttributeType.DEFAULT_BINARY_TRUE_STRING));
-						checkAndLog(aNewSubgroup, anOldCoverage);
-					}
+					evaluateBinaryRefinements(theMembers, theRefinement);
 					break;
 				}
 				default :
 					throw new AssertionError(c.getType());
 			}
 		}
+	}
+
+	// XXX (c = false) is checked first, (c = true) is conditionally, it depends
+	//       on data and search characteristics  whether this is the best order
+	private final void evaluateBinaryRefinements(BitSet theMembers, Refinement theRefinement)
+	{
+		// faster than theMembers.cardinality() + avoids theParentSize parameter
+		Subgroup anOldSubgroup = theRefinement.getSubgroup();
+		int anOldCoverage = anOldSubgroup.getCoverage();
+		assert (theMembers.cardinality() == anOldCoverage);
+		// this subgroup can not be refined - FIXME MM make this an assert
+		if (anOldCoverage <= 1)
+			return;
+
+		// members-based domain, no empty Subgroups will occur
+		ConditionBase aConditionBase = theRefinement.getConditionBase();
+		// evaluateNominalRefinements() should prevent getting here for ValueSet
+		assert (theRefinement.getConditionBase().getOperator() != Operator.ELEMENT_OF);
+		Column aColumn = aConditionBase.getColumn();
+		ConditionListA anOldConditionList = anOldSubgroup.getConditions();
+
+		// no useful Refinements are possible
+		if (aColumn.getCardinality() != 2)
+			return;
+
+		BitSet aNewSubgroupMembers = aColumn.evaluateBinary(theMembers, false);
+		// for null: aCoverage is set to anOldCoverage for ignore check below
+		int aCoverage = (aNewSubgroupMembers == null ? anOldCoverage : aNewSubgroupMembers.cardinality());
+		boolean ignore = (aCoverage == anOldCoverage); // ignore both f and t
+
+		// check for (aColumn = false)
+		if (!ignore && !(aCoverage < itsMinimumCoverage))
+			evaluateBinary(aConditionBase, false, anOldSubgroup, aNewSubgroupMembers, aCoverage, itsFilter, anOldConditionList);
+
+		// binary check is fast, but for some models evaluateCandidate() is not
+		if (isTimeToStop())
+			return;
+
+		// check for (aColumn = true), do this only when useful
+		// everything that is not positive is negative
+		aCoverage = (anOldCoverage - aCoverage);
+		if (!ignore && !(aCoverage < itsMinimumCoverage))
+		{
+			aNewSubgroupMembers = aColumn.evaluateBinary(theMembers, true);
+			evaluateBinary(aConditionBase, true, anOldSubgroup, aNewSubgroupMembers, aCoverage, itsFilter, anOldConditionList);
+		}
+	}
+
+	private final boolean isDirectSettingBinary()
+	{
+		// checking this all the time is a bit wasteful, but fine for now
+		return ((itsSearchParameters.getTargetType() == TargetType.SINGLE_NOMINAL) &&
+				!itsSearchParameters.getNominalSets() &&
+				!(itsSearchParameters.getQualityMeasure() == QM.PROP_SCORE_WRACC) || (itsSearchParameters.getQualityMeasure() == QM.PROP_SCORE_RATIO));
+	}
+
+	private final void evaluateBinary(ConditionBase theConditionBase, boolean theValue, Subgroup theOldSubgroup, BitSet theNewSubgroupMembers, int theCoverage, Filter theFilter, ConditionListA theOldConditionList)
+	{
+		assert (theNewSubgroupMembers.cardinality() == theCoverage);
+		assert (theCoverage > 0);
+
+		Condition aCondition = new Condition(theConditionBase, theValue);
+
+		Subgroup aNewSubgroup;
+
+		if (isDirectSettingBinary())
+		{
+			// safe: it is a clone, and subgroup coverage is stored: theCoverage
+			theNewSubgroupMembers.and(itsBinaryTarget);
+			int aTP = theNewSubgroupMembers.cardinality();
+
+			aNewSubgroup = directComputation(theOldSubgroup, aCondition, itsQualityMeasure, theCoverage, aTP);
+		}
+		else
+		{
+			if ((theFilter != null) && !theFilter.isUseful(theOldConditionList, aCondition))
+				return;
+
+			aNewSubgroup = theOldSubgroup.getRefinedSubgroup(aCondition, theNewSubgroupMembers, theCoverage);
+		}
+
+		checkAndLog(aNewSubgroup, theOldSubgroup.getCoverage());
+	}
+
+	private static final Subgroup directComputation(Subgroup theOldSubgroup, Condition theAddedCondition, QualityMeasure theQualityMeasure, int theCoverage, int theTruePositives)
+	{
+		// FIXME MM q is only cast to float to make historic results comparable
+		float q = (float) theQualityMeasure.calculate(theTruePositives, theCoverage);
+		double s = ((double) theTruePositives)/theCoverage;
+		double t = ((double) theTruePositives);
+
+		return theOldSubgroup.getRefinedSubgroup(theAddedCondition, q, s, t, theCoverage);
 	}
 
 //	/*
@@ -1283,7 +1366,7 @@ AtomicInteger TOTAL_FILTERED = new AtomicInteger(0);
 	private final Object itsCheckLock = new Object();
 	private boolean check(Subgroup theSubgroup, int theOldCoverage)
 	{
-// FIXME MM this check should be made obsolete
+		// FIXME MM this check should be made obsolete
 		int aNewCoverage = theSubgroup.getCoverage();
 		boolean isValid = (aNewCoverage < theOldCoverage && aNewCoverage >= itsMinimumCoverage);
 
@@ -1312,6 +1395,10 @@ AtomicInteger TOTAL_FILTERED = new AtomicInteger(0);
 			}
 		}
 
+		// prevent OutOfMemory / GC Overhead Limit errors, some code paths
+		// bypass evaluateCandidate(Subgroup) so calling it there is no good
+		// and this is the sole method to add to Candidate and Result sets
+		theSubgroup.killMembers();
 		return isValid;
 	}
 
@@ -1406,20 +1493,21 @@ AtomicInteger TOTAL_FILTERED = new AtomicInteger(0);
 
 	private float evaluateCandidate(Subgroup theNewSubgroup)
 	{
+		// theNewSubgroup.killMembers() is called at end of check(), not here
+		BitSet aMembers = theNewSubgroup.getMembers();
 		float aQuality = 0.0f;
 
 		switch (itsSearchParameters.getTargetType())
 		{
 			case SINGLE_NOMINAL :
 			{
-				final int aCoverage = theNewSubgroup.getCoverage();
-				final BitSet aMembers = theNewSubgroup.getMembers();
+				int aCoverage = theNewSubgroup.getCoverage();
 				// NOTE aMembers is a clone so this is safe
 				aMembers.and(itsBinaryTarget);
-				final int aCountHeadBody = aMembers.cardinality();
+				int aCountHeadBody = aMembers.cardinality();
 // FIXME MM - hold: functional change + needs testing / profiling
 //				final int aCountHeadBody = theNewSubgroup.countCommon(itsBinaryTarget);
-				final QM aMeasure = itsSearchParameters.getQualityMeasure();
+				QM aMeasure = itsSearchParameters.getQualityMeasure();
 
 				//Rob
 				if ((aMeasure == QM.PROP_SCORE_WRACC) || (aMeasure == QM.PROP_SCORE_RATIO))
@@ -1478,8 +1566,6 @@ AtomicInteger TOTAL_FILTERED = new AtomicInteger(0);
 			{
 if (!TEMPORARY_CODE)
 {
-				final BitSet aMembers = theNewSubgroup.getMembers();
-
 				// what needs to be calculated for this QM
 				// NOTE requiredStats could be a final SubgroupDiscovery.class member
 				Set<Stat> aRequiredStats = QM.requiredStats(itsSearchParameters.getQualityMeasure());
@@ -1505,8 +1591,6 @@ else
 }
 else
 {
-	final BitSet aMembers = theNewSubgroup.getMembers();
-
 // FIXME MM TEMP
 System.out.format("#Subgroup: '%s' (size = %d)%n", theNewSubgroup, theNewSubgroup.getCoverage());
 	ProbabilityMassFunction_ND aPMF = new ProbabilityMassFunction_ND((ProbabilityMassFunction_ND) itsQualityMeasure.getProbabilityDensityFunction(), aMembers);
@@ -1518,7 +1602,6 @@ System.out.format("#Subgroup: '%s' (size = %d)%n", theNewSubgroup, theNewSubgrou
 			}
 			case MULTI_NUMERIC :
 			{
-				final BitSet aMembers = theNewSubgroup.getMembers();
 				// for now always test against complement
 				aQuality = itsPDF_ND.getDensityDifference(aMembers, true, itsSearchParameters.getQualityMeasure());
 				// for now set just the sizes, most computations
@@ -1536,7 +1619,7 @@ System.out.format("#Subgroup: '%s' (size = %d)%n", theNewSubgroup, theNewSubgrou
 					case REGRESSION_FLATNESS:
 					case REGRESSION_SSD_4:
 					{
-						RegressionMeasure aRM = new RegressionMeasure(itsBaseRM, theNewSubgroup.getMembers());
+						RegressionMeasure aRM = new RegressionMeasure(itsBaseRM, aMembers);
 						aQuality = (float) aRM.getEvaluationMeasureValue();
 						theNewSubgroup.setSecondaryStatistic(aRM.getSlope()); //slope
 						theNewSubgroup.setTertiaryStatistic(aRM.getIntercept()); //intercept
@@ -1564,7 +1647,6 @@ System.out.format("#Subgroup: '%s' (size = %d)%n", theNewSubgroup, theNewSubgrou
 
 						// start actual computation
 						Log.logCommandLine("");
-						BitSet aMembers = theNewSubgroup.getMembers();
 						int aSampleSize = aMembers.cardinality();
 
 						// filter out rank deficient model that crash matrix multiplication library // TODO: should read <itsP instead of <2!!!
@@ -1656,7 +1738,6 @@ System.out.format("#Subgroup: '%s' (size = %d)%n", theNewSubgroup, theNewSubgrou
 			case DOUBLE_CORRELATION :
 			{
 				CorrelationMeasure aCM = new CorrelationMeasure(itsBaseCM);
-				final BitSet aMembers = theNewSubgroup.getMembers();
 
 				for (int i = aMembers.nextSetBit(0); i >= 0; i = aMembers.nextSetBit(i+1))
 					aCM.addObservation(itsPrimaryColumn.getFloat(i), itsSecondaryColumn.getFloat(i));
@@ -1671,7 +1752,6 @@ System.out.format("#Subgroup: '%s' (size = %d)%n", theNewSubgroup, theNewSubgrou
 			case SCAPE :
 			{
 				int aCoverage = theNewSubgroup.getCoverage();
-				BitSet aMembers = theNewSubgroup.getMembers();
 				// NOTE aMembers is a clone so this is safe
 				aMembers.and(itsPrimaryColumn.getBinaries());
 				int aCountHeadBody = aMembers.cardinality();
@@ -1679,7 +1759,6 @@ System.out.format("#Subgroup: '%s' (size = %d)%n", theNewSubgroup, theNewSubgrou
 //				int aCountHeadBody = theNewSubgroup.countCommon(itsPrimaryColumn.getBinaries());
 
 				aQuality = itsQualityMeasure.calculate(theNewSubgroup.getMembers(), aCoverage, aCountHeadBody);
-
 				theNewSubgroup.setSecondaryStatistic(aCountHeadBody); //count of positives in the subgroup
 				theNewSubgroup.setTertiaryStatistic(aCoverage - aCountHeadBody); //count of negatives in the subgroup
 
@@ -1687,6 +1766,10 @@ System.out.format("#Subgroup: '%s' (size = %d)%n", theNewSubgroup, theNewSubgrou
 			}
 			case MULTI_LABEL :
 			{
+// FIXME multiLabelCalculate(Subgroup) uses Subgroup.getMembers() to select a
+// subset of records from itsBinaryTable, supply BitSet as parameter, then all
+// methods use BitSet aMembers, theNewSubgroup.killMembers() is called once at
+// the end for evaluateCandidate(), and it is more clear why
 				aQuality = multiLabelCalculate(theNewSubgroup); //also stores DAG in Subgroup
 				theNewSubgroup.setSecondaryStatistic(itsQualityMeasure.calculateEditDistance(theNewSubgroup.getDAG())); //edit distance
 				theNewSubgroup.setTertiaryStatistic(QualityMeasure.calculateEntropy(itsNrRows, theNewSubgroup.getCoverage())); //entropy
@@ -1694,7 +1777,11 @@ System.out.format("#Subgroup: '%s' (size = %d)%n", theNewSubgroup, theNewSubgrou
 			}
 			case LABEL_RANKING :
 			{
-				final int aCoverage = theNewSubgroup.getCoverage();
+// FIXME getAverageRankingMatrix(Subgroup) and getAverageRanking(Subgroup) only
+// uses Subgroup.getMembers(), supply BitSet as sole parameter, then all
+// methods use BitSet aMembers, theNewSubgroup.killMembers() is called once at
+// the end for evaluateCandidate(), and it is more clear why
+				int aCoverage = theNewSubgroup.getCoverage();
 				LabelRankingMatrix aLRM = itsTargetRankings.getAverageRankingMatrix(theNewSubgroup);
 				aQuality = itsQualityMeasure.computeLabelRankingDistance(aCoverage, aLRM);
 				theNewSubgroup.setLabelRanking(itsTargetRankings.getAverageRanking(theNewSubgroup)); //store the average ranking for later reference
@@ -1707,6 +1794,7 @@ System.out.format("#Subgroup: '%s' (size = %d)%n", theNewSubgroup, theNewSubgrou
 			}
 			default : throw new AssertionError(itsSearchParameters.getTargetType());
 		}
+
 		return aQuality;
 	}
 /*
