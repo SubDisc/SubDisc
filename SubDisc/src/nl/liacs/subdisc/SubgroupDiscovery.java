@@ -604,7 +604,6 @@ AtomicInteger TOTAL_FILTERED = new AtomicInteger(0);
 			}
 		}
 
-		// FIXME quality is already known, re-evaluation in check() is useless
 		if (!isAllStrategy && (aBestSubgroup != null))
 			bestAdd(aBestSubgroup, anOldCoverage);
 	}
@@ -808,7 +807,6 @@ AtomicInteger TOTAL_FILTERED = new AtomicInteger(0);
 			}
 		}
 
-		// FIXME quality is already known, re-evaluation in check() is useless
 		if (!isAllStrategy && (aBestSubgroup != null))
 			bestAdd(aBestSubgroup, anOldCoverage);
 	}
@@ -1114,7 +1112,7 @@ AtomicInteger TOTAL_FILTERED = new AtomicInteger(0);
 		}
 	}
 
-	private final void evaluateNominalRefinements(final BitSet theParentMembers, final Refinement theRefinement, int theParentCoverage)
+	private final void evaluateNominalRefinementsX(final BitSet theParentMembers, final Refinement theRefinement, int theParentCoverage)
 	{
 		// evaluateNominalRefinements() should prevent getting here for ValueSet
 		assert (!itsSearchParameters.getNominalSets());
@@ -1138,6 +1136,54 @@ AtomicInteger TOTAL_FILTERED = new AtomicInteger(0);
 		for (int i = 0, j = aDomain.length; i < j && !isTimeToStop(); ++i)
 		{
 			Condition aCondition = new Condition(aConditionBase, aDomain[i]);
+
+			if (!isFilterNull && !itsFilter.isUseful(aParentConditions, aCondition))
+				continue;
+
+			Subgroup aNewSubgroup = aParent.getRefinedSubgroup(aCondition);
+			checkAndLog(aNewSubgroup, theParentCoverage);
+		}
+	}
+
+	private final void evaluateNominalRefinements(final BitSet theParentMembers, final Refinement theRefinement, int theParentCoverage)
+	{
+		// evaluateNominalRefinements() should prevent getting here for ValueSet
+		assert (!itsSearchParameters.getNominalSets());
+		// should have been checked by evaluateNominalBinaryRefinements()
+		assert (theParentMembers.cardinality() == theParentCoverage);
+		assert (theParentCoverage > 1);
+
+		boolean isFilterNull = (itsFilter == null);
+		Subgroup aParent = theRefinement.getSubgroup();
+		// members-based domain, no empty Subgroups will occur
+		ConditionBase aConditionBase = theRefinement.getConditionBase();
+		Column aColumn = aConditionBase.getColumn();
+		ConditionListA aParentConditions = (isFilterNull ? null : aParent.getConditions());
+
+		int[] aCounts = aColumn.getUniqueNominalDomainCounts(theParentMembers, theParentCoverage);
+
+		// avoid entering loop and checking 0-count values, no useful Refinement
+		// is possible, as it would have the same coverage as anOldCoverage
+		int aNrDistinct = aCounts[aCounts.length-1];
+		if (aNrDistinct <= 1)
+			return;
+
+		List<String> aDomain = aColumn.itsDistinctValuesU;
+		for (int i = 0, j = aNrDistinct; j > 0 && !isTimeToStop(); ++i)
+		{
+			int aCount = aCounts[i];
+			if (aCount == 0)
+					continue;
+
+			-- j;
+
+			if (aCount < itsMinimumCoverage)
+				continue;
+
+			if (aCount == theParentCoverage)
+				break;
+
+			Condition aCondition = new Condition(aConditionBase, aDomain.get(i));
 
 			if (!isFilterNull && !itsFilter.isUseful(aParentConditions, aCondition))
 				continue;
@@ -2004,8 +2050,10 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		long anEndTime = theBeginTime + (long) (((double) itsSearchParameters.getMaximumTime()) * 60.0 * 1000.0);
 		itsEndTime = (anEndTime <= theBeginTime) ? Long.MAX_VALUE : anEndTime;
 
+		List<Column> aColumns = itsTable.getColumns();
+		prepareNominalData(aColumns);
 		// some settings should always build a sorted domain for all TargetTypes
-		preparePOCData(isPOCSetting(), itsBinaryTarget, itsTable.getColumns());
+		preparePOCData(isPOCSetting(), itsBinaryTarget, aColumns);
 
 		final QM aQualityMeasure = itsSearchParameters.getQualityMeasure();
 
@@ -2206,6 +2254,13 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 // XXX MM : debug info not useful for general use
 //Log.logCommandLine(String.format("CANDIDATES: %s\tFILTERED: %s\tRATIO:%f", itsCandidateCount.toString(), TOTAL_FILTERED.toString(), (TOTAL_FILTERED.doubleValue()/(itsCandidateCount.doubleValue()+TOTAL_FILTERED.doubleValue()))));
 		deleteSortData(itsTable.getColumns());
+	}
+
+	private static final void prepareNominalData(List<Column> theColumns)
+	{
+		for (Column c : theColumns)
+			if (c.getType() == AttributeType.NOMINAL)
+				c.buildSharedDomain();
 	}
 
 	private static final void preparePOCData(boolean isPOCSetting, BitSet theBinaryTarget, List<Column> theColumns)
