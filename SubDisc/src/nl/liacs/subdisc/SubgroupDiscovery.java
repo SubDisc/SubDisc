@@ -134,10 +134,8 @@ public class SubgroupDiscovery
 				throw new AssertionError(aTarget.getType());
 		}
 
-		itsBinaryTarget = aTC.getPrimaryTarget().evaluate(aCondition);
-// TODO MM - evaluate(aBitSet, aCondition), evaluate(aCondition) is deprecated
-//		BitSet aBitSet = getAllDataBitSet(itsNrRows);
-//		itsBinaryTarget = aTC.getPrimaryTarget().evaluate(aBitSet, aCondition);
+		BitSet aBitSet = getAllDataBitSet(itsNrRows);
+		itsBinaryTarget = aTC.getPrimaryTarget().evaluate(aBitSet, aCondition);
 		itsResult = new SubgroupSet(itsSearchParameters.getMaximumSubgroups(), itsNrRows, itsBinaryTarget);
 	}
 
@@ -332,7 +330,6 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 		itsResult = new SubgroupSet(itsSearchParameters.getMaximumSubgroups(), itsNrRows);
 	}
 
-	// XXX MM - preferably store this somewhere
 	static final BitSet getAllDataBitSet(int theNrRows)
 	{
 		BitSet aBitSet = new BitSet(theNrRows);
@@ -829,11 +826,11 @@ AtomicInteger TOTAL_FILTERED = new AtomicInteger(0);
 	{
 		switch (theNumericStrategy)
 		{
-			case NUMERIC_ALL        : return theColumn.getUniqueNumericDomainMap(theMembers, theMembersCardinality);
-			case NUMERIC_BEST       : return theColumn.getUniqueNumericDomainMap(theMembers, theMembersCardinality);
-			case NUMERIC_BINS       : return theColumn.getUniqueSplitPointsMap(theMembers, theMembersCardinality, theNrBins-1, theOperator);
-			case NUMERIC_BEST_BINS  : return theColumn.getUniqueSplitPointsMap(theMembers, theMembersCardinality, theNrBins-1, theOperator);
-			case NUMERIC_INTERVALS  :
+			case NUMERIC_ALL	: return theColumn.getUniqueNumericDomainMap(theMembers, theMembersCardinality);
+			case NUMERIC_BEST	: return theColumn.getUniqueNumericDomainMap(theMembers, theMembersCardinality);
+			case NUMERIC_BINS	: return theColumn.getUniqueSplitPointsMap(theMembers, theMembersCardinality, theNrBins-1, theOperator);
+			case NUMERIC_BEST_BINS	: return theColumn.getUniqueSplitPointsMap(theMembers, theMembersCardinality, theNrBins-1, theOperator);
+			case NUMERIC_INTERVALS	:
 			{
 				throw new AssertionError("NUMERIC_STRATEGY NOT IMPLEMENTED: " + theNumericStrategy);
 				//return theColumn.getUniqueNumericDomainMap(theMembers);
