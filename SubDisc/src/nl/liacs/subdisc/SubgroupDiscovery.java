@@ -370,6 +370,10 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 		BitSet aBitSet = getAllDataBitSet(itsNrRows);
 		Subgroup aStart = new Subgroup(ConditionListBuilder.emptyList(), aBitSet, itsResult);
 
+		// set number of true positives for dataset
+		if (isPOCSetting())
+			aStart.setTertiaryStatistic(itsQualityMeasure.getNrPositives());
+
 		itsCandidateQueue = new CandidateQueue(itsSearchParameters, new Candidate(aStart));
 
 		int aSearchDepth = itsSearchParameters.getSearchDepth();
@@ -456,6 +460,7 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 		// in MULTI_LABEL, order may have changed
 		// in COVER_BASED_BEAM_SELECTION, subgroups may have been removed
 		itsResult.setIDs(); //assign 1 to n to subgroups, for future reference in subsets
+		deleteSortData(itsTable.getColumns());
 	}
 
 	private void logExperimentSettings(ConditionBaseSet theConditionBaseSet)
@@ -1396,7 +1401,7 @@ AtomicInteger TOTAL_FILTERED = new AtomicInteger(0);
 
 			float aQuality;
 
-			if (false && (lastAdded == AttributeType.NUMERIC))
+			if (isPOCSetting() && (lastAdded == AttributeType.NUMERIC))
 			{
 				// NOTE this path already performed the isValid-coverage check
 				aQuality = (float) theSubgroup.getMeasureValue();
@@ -1994,6 +1999,8 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		long anEndTime = theBeginTime + (long) (((double) itsSearchParameters.getMaximumTime()) * 60.0 * 1000.0);
 		itsEndTime = (anEndTime <= theBeginTime) ? Long.MAX_VALUE : anEndTime;
 
+		preparePOCData(isPOCSetting(), itsBinaryTarget, itsTable.getColumns());
+
 		final QM aQualityMeasure = itsSearchParameters.getQualityMeasure();
 
 		//fill the conditionList of local and global knowledge, Rob
@@ -2023,6 +2030,10 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		// make subgroup to start with, containing all elements
 		BitSet aBitSet = getAllDataBitSet(itsNrRows);
 		Subgroup aStart = new Subgroup(ConditionListBuilder.emptyList(), aBitSet, itsResult);
+
+		// set number of true positives for dataset
+		if (isPOCSetting())
+			aStart.setTertiaryStatistic(itsQualityMeasure.getNrPositives());
 
 		if (itsSearchParameters.getBeamSeed() == null)
 			itsCandidateQueue = new CandidateQueue(itsSearchParameters, new Candidate(aStart));
@@ -2188,6 +2199,46 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		itsResult.setIDs(); //assign 1 to n to subgroups, for future reference in subsets
 // XXX MM : debug info not useful for general use
 //Log.logCommandLine(String.format("CANDIDATES: %s\tFILTERED: %s\tRATIO:%f", itsCandidateCount.toString(), TOTAL_FILTERED.toString(), (TOTAL_FILTERED.doubleValue()/(itsCandidateCount.doubleValue()+TOTAL_FILTERED.doubleValue()))));
+		deleteSortData(itsTable.getColumns());
+	}
+
+	private static final void preparePOCData(boolean isPOCSetting, BitSet theBinaryTarget, List<Column> theColumns)
+	{
+		// currently numeric with EQUALS is not a valid setting
+		if (!isPOCSetting)
+			return;
+
+		Timer outer = new Timer();
+
+		for (Column c : theColumns)
+		{
+			if (c.getType() == AttributeType.NUMERIC)
+			{
+				Log.logCommandLine(c.getName() + " building sorted domain");
+				Timer t = new Timer();
+				c.buildSorted(theBinaryTarget); // build SORTED and SORT_INDEX
+				Log.logCommandLine(t.getElapsedTimeString());
+			}
+		}
+
+		Log.logCommandLine("total sorting time: " + outer.getElapsedTimeString());
+	}
+
+	// not SINGLE_NOMINAL with ValueSet, NUMERIC_INTERVALS/CONSECUTIVE_ALL|BEST
+	private final boolean isPOCSetting()
+	{
+		return (((itsSearchParameters.getNumericStrategy() == NumericStrategy.NUMERIC_ALL) || (itsSearchParameters.getNumericStrategy() == NumericStrategy.NUMERIC_BEST) ||
+				 (itsSearchParameters.getNumericStrategy() == NumericStrategy.NUMERIC_BEST_BINS) || (itsSearchParameters.getNumericStrategy() == NumericStrategy.NUMERIC_BINS)) &&
+				((itsSearchParameters.getTargetType() == TargetType.SINGLE_NOMINAL) && !itsSearchParameters.getNominalSets()) && false);
+	}
+
+	private static final void deleteSortData(List<Column> theColumns)
+	{
+		for (Column c : theColumns)
+		{
+			c.SORTED = null;
+			c.SORT_INDEX = null;
+		}
 	}
 
 	private long itsEndTime = Long.MIN_VALUE;
