@@ -547,6 +547,7 @@ AtomicInteger TOTAL_FILTERED = new AtomicInteger(0);
 		Column aColumn = aConditionBase.getColumn();
 		Operator anOperator = aConditionBase.getOperator();
 		float[] aSplitPoints = getDomain(theMembers, aNumericStrategy, aColumn, itsSearchParameters.getNrBins(), anOperator);
+//		float[] aSplitPoints = getDomain(theMembers, anOldCoverage, aNumericStrategy, aColumn, itsSearchParameters.getNrBins(), anOperator);
 // TODO MM
 // domain map contain using <value, count> nodes, useful for unique values and
 // for histogram/KDE creation (latter can multiply result for 1 point by count)
@@ -618,6 +619,7 @@ AtomicInteger TOTAL_FILTERED = new AtomicInteger(0);
 		Column aColumn = aConditionBase.getColumn();
 
 		float[] aSplitPoints = getDomain(theMembers, aNumericStrategy, aColumn, itsSearchParameters.getNrBins(), null);
+//		float[] aSplitPoints = getDomain(theMembers, anOldCoverage, aNumericStrategy, aColumn, itsSearchParameters.getNrBins(), null);
 
 		// FIXME MM Subgroup -> theMembers
 		RealBaseIntervalCrossTable aRBICT = new RealBaseIntervalCrossTable(aSplitPoints, aColumn, theRefinement.getSubgroup(), itsBinaryTarget);
@@ -821,6 +823,24 @@ AtomicInteger TOTAL_FILTERED = new AtomicInteger(0);
 				throw new AssertionError("invalid Numeric Strategy: " + theNumericStrategy);
 		}
 	}
+
+/*
+	private static final float[] getDomain(BitSet theMembers, int theMembersCardinality, NumericStrategy theNumericStrategy, Column theColumn, int theNrBins, Operator theOperator)
+	{
+		switch (theNumericStrategy)
+		{
+			case NUMERIC_ALL	: return theColumn.getUniqueNumericDomain(theMembers, theMembersCardinality);
+			case NUMERIC_BEST	: return theColumn.getUniqueNumericDomain(theMembers, theMembersCardinality);
+			case NUMERIC_BINS	: return getUniqueSplitPoints(theMembers, theColumn, theNrBins-1, theOperator);
+			case NUMERIC_BEST_BINS	: return getUniqueSplitPoints(theMembers, theColumn, theNrBins-1, theOperator);
+//			case NUMERIC_BINS	: return theColumn.getUniqueSplitPoints(theMembers, theNrBins-1, theOperator);
+//			case NUMERIC_BEST_BINS	: return theColumn.getUniqueSplitPoints(theMembers, theNrBins-1, theOperator);
+			case NUMERIC_INTERVALS	: return theColumn.getUniqueNumericDomain(theMembers, theMembersCardinality);
+			default :
+				throw new AssertionError("invalid Numeric Strategy: " + theNumericStrategy);
+		}
+	}
+*/
 
 	// FIXME MM profiling will determine which versions to choose
 	private static final SortedMap<Float, Integer> getDomainMap(BitSet theMembers, int theMembersCardinality, NumericStrategy theNumericStrategy, Column theColumn, int theNrBins, Operator theOperator)
