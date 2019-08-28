@@ -1106,7 +1106,6 @@ AtomicInteger TOTAL_FILTERED = new AtomicInteger(0);
 // logged as a Candidate (though it does increment itsNrCandidates)
 			//ConditionList aList = theRefinement.getSubgroup().getConditions();
 			ConditionListA aList = theRefinement.getSubgroup().getConditions();
-
 			// switch for now, will separate code paths when numeric EQUALS is fixed
 			switch (c.getType())
 			{
@@ -1174,10 +1173,9 @@ AtomicInteger TOTAL_FILTERED = new AtomicInteger(0);
 		Column aColumn = aConditionBase.getColumn();
 		ConditionListA anOldConditionList = anOldSubgroup.getConditions();
 
-		// no useful Refinements are possible
+		// no useful Refinements are possible 
 		if (aColumn.getCardinality() != 2)
 			return;
-
 		BitSet aNewSubgroupMembers = aColumn.evaluateBinary(theMembers, false);
 		// for null: aCoverage is set to anOldCoverage for ignore check below
 		int aCoverage = (aNewSubgroupMembers == null ? anOldCoverage : aNewSubgroupMembers.cardinality());
@@ -2159,6 +2157,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	private final Lock itsClockLock = new ReentrantLock();
 	private static final long INTERVAL = 100_000_000L; // in nanoseconds
 	private long itsThen = 0L;
+	private static final DecimalFormat FORMATTER = (DecimalFormat) NumberFormat.getNumberInstance(Locale.GERMAN);
 
 	// NOTE itsCandidateCount and currently refined subgroup are unrelated
 	private final void setTitle(Subgroup theSubgroup)
@@ -2181,8 +2180,8 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 
 			StringBuilder sb = new StringBuilder(aCurrent.length() + 32);
 			sb.append("d=").append(Integer.toString(theSubgroup.getDepth()))
-				.append(", cands=").append(itsCandidateCount.get())
-				.append(", evaluating: ").append(aCurrent);
+				.append(" cands=").append(FORMATTER.format(itsCandidateCount.get()))
+				.append(" evaluating: ").append(aCurrent);
 
 			itsMainWindow.setTitle(sb.toString());
 		}
