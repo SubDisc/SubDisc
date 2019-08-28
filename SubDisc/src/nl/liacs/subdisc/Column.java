@@ -2693,6 +2693,25 @@ public class Column implements XMLNodeInterface
 			}
 		}
 
+		if (false)
+		{
+			int sum = 0;
+			for (int i : aSplitPointsMap.values())
+				sum += i;
+			if (sum > theBitSetCardinality)
+				throw new AssertionError(String.format("%s.getSplitPointsMap() sum=%d > theBitSetCardinality=%d%n%s%n", this.getClass().getName(), sum, theBitSetCardinality, aSplitPointsMap));
+
+			float[] fa = getSplitPoints(theBitSet, theNrSplits);
+			for (float f : fa)
+			{
+				if (aSplitPointsMap.get(f) == null)
+				{
+					System.out.println("WARNING: getSplitPoinsMap() does not contain value = " + f + " (could be bug in original code)");
+					System.out.format("SortedMap != getSplitPoints():%n%s%n%s%n", aSplitPointsMap, Arrays.toString(fa));
+				}
+			}
+		}
+
 		return aSplitPointsMap;
 	}
 
