@@ -546,8 +546,7 @@ AtomicInteger TOTAL_FILTERED = new AtomicInteger(0);
 		// temporary hack for better getSplitPoints(), see getDomain()
 		Column aColumn = aConditionBase.getColumn();
 		Operator anOperator = aConditionBase.getOperator();
-		float[] aSplitPoints = getDomain(theMembers, aNumericStrategy, aColumn, itsSearchParameters.getNrBins(), anOperator);
-//		float[] aSplitPoints = getDomain(theMembers, anOldCoverage, aNumericStrategy, aColumn, itsSearchParameters.getNrBins(), anOperator);
+		float[] aSplitPoints = getDomain(theMembers, anOldCoverage, aNumericStrategy, aColumn, itsSearchParameters.getNrBins(), anOperator);
 // TODO MM
 // domain map contain using <value, count> nodes, useful for unique values and
 // for histogram/KDE creation (latter can multiply result for 1 point by count)
@@ -618,8 +617,7 @@ AtomicInteger TOTAL_FILTERED = new AtomicInteger(0);
 		ConditionBase aConditionBase = theRefinement.getConditionBase();
 		Column aColumn = aConditionBase.getColumn();
 
-		float[] aSplitPoints = getDomain(theMembers, aNumericStrategy, aColumn, itsSearchParameters.getNrBins(), null);
-//		float[] aSplitPoints = getDomain(theMembers, anOldCoverage, aNumericStrategy, aColumn, itsSearchParameters.getNrBins(), null);
+		float[] aSplitPoints = getDomain(theMembers, anOldCoverage, aNumericStrategy, aColumn, itsSearchParameters.getNrBins(), null);
 
 		// FIXME MM Subgroup -> theMembers
 		RealBaseIntervalCrossTable aRBICT = new RealBaseIntervalCrossTable(aSplitPoints, aColumn, theRefinement.getSubgroup(), itsBinaryTarget);
@@ -808,23 +806,6 @@ AtomicInteger TOTAL_FILTERED = new AtomicInteger(0);
 			bestAdd(aBestSubgroup, anOldCoverage);
 	}
 
-	private static final float[] getDomain(BitSet theMembers, NumericStrategy theNumericStrategy, Column theColumn, int theNrBins, Operator theOperator)
-	{
-		switch (theNumericStrategy)
-		{
-			case NUMERIC_ALL	: return theColumn.getUniqueNumericDomain(theMembers);
-			case NUMERIC_BEST	: return theColumn.getUniqueNumericDomain(theMembers);
-			case NUMERIC_BINS	: return getUniqueSplitPoints(theMembers, theColumn, theNrBins-1, theOperator);
-			case NUMERIC_BEST_BINS	: return getUniqueSplitPoints(theMembers, theColumn, theNrBins-1, theOperator);
-//			case NUMERIC_BINS	: return theColumn.getUniqueSplitPoints(theMembers, theNrBins-1, theOperator);
-//			case NUMERIC_BEST_BINS	: return theColumn.getUniqueSplitPoints(theMembers, theNrBins-1, theOperator);
-			case NUMERIC_INTERVALS	: return theColumn.getUniqueNumericDomain(theMembers);
-			default :
-				throw new AssertionError("invalid Numeric Strategy: " + theNumericStrategy);
-		}
-	}
-
-/*
 	private static final float[] getDomain(BitSet theMembers, int theMembersCardinality, NumericStrategy theNumericStrategy, Column theColumn, int theNrBins, Operator theOperator)
 	{
 		switch (theNumericStrategy)
@@ -840,7 +821,6 @@ AtomicInteger TOTAL_FILTERED = new AtomicInteger(0);
 				throw new AssertionError("invalid Numeric Strategy: " + theNumericStrategy);
 		}
 	}
-*/
 
 	// FIXME MM profiling will determine which versions to choose
 	private static final SortedMap<Float, Integer> getDomainMap(BitSet theMembers, int theMembersCardinality, NumericStrategy theNumericStrategy, Column theColumn, int theNrBins, Operator theOperator)
@@ -974,12 +954,15 @@ AtomicInteger TOTAL_FILTERED = new AtomicInteger(0);
 	 */
 	private void evaluateNominalBinaryRefinements(BitSet theMembers, Refinement theRefinement)
 	{
-		// faster than theMembers.cardinality()
-		// useless call, coverage never changes, could be parameter
-		final int anOldCoverage = theRefinement.getSubgroup().getCoverage();
-		assert (theMembers.cardinality() == anOldCoverage);
+		Subgroup aParent = theRefinement.getSubgroup();
+		int aParentCoverage = aParent.getCoverage();
+		assert (theMembers.cardinality() == aParentCoverage);
 
-		final ConditionBase aConditionBase = theRefinement.getConditionBase();
+		// this subgroup can not be refined - FIXME MM make this an assert
+		if (aParentCoverage <= 1)
+			return;
+
+		ConditionBase aConditionBase = theRefinement.getConditionBase();
 
 		// this code path deliberately does not check isTimeToStop()
 		if (aConditionBase.getOperator() == Operator.ELEMENT_OF)
@@ -1107,107 +1090,87 @@ AtomicInteger TOTAL_FILTERED = new AtomicInteger(0);
 				// FIXME quality is known, re-evaluation should be avoided
 				final ValueSet aBestSubset = new ValueSet(aDomainBestSubSet);
 				Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(aBestSubset);
-				valueSetCheckAndLog(aNewSubgroup, anOldCoverage);
+				valueSetCheckAndLog(aNewSubgroup, aParentCoverage);
 			}
 		}
-		else //regular single-value conditions
+		else // single-value conditions (class labels)
 		{
-			// members-based domain, no empty Subgroups will occur
-			Column c = aConditionBase.getColumn();
-			Subgroup aNewSubgroup = null;
-
-// FIXME MM
-// for now the code creates a Condition that may not be needed at all
-// the final code can be based on isUseful(Refinement, aValue)
-// using Refinement.Subgroup.ConditionList, Refinement.ConditionBase, and aValue
-// but at least Refinement.getRefinedSubgroup(aValue) is not called (expensive)
-// it creates a copy of the Subgroup (members-BitSet) and ConditionList
-// and performs a full table scan to add the new Condition
-// as the new Subgroup would not decrease in size / or became empty it was not
-// logged as a Candidate (though it does increment itsNrCandidates)
-			//ConditionList aList = theRefinement.getSubgroup().getConditions();
-			ConditionListA aList = theRefinement.getSubgroup().getConditions();
-			// switch for now, will separate code paths when numeric EQUALS is fixed
-			switch (c.getType())
+			// FIXME: NUMERIC Refinement should not be done here
+			switch (aConditionBase.getColumn().getType())
 			{
-				// FIXME MM when the returned domain consists of just 1 value it
-				// will select the whole previous subset, and can be ignored
-				case NOMINAL :
-				{
-					for (String aValue : c.getUniqueNominalBinaryDomain(theMembers))
-					{
-						if (itsFilter != null)
-							if (!itsFilter.isUseful(aList, new Condition(aConditionBase, aValue)))
-								continue;
-
-						aNewSubgroup = theRefinement.getRefinedSubgroup(aValue);
-						checkAndLog(aNewSubgroup, anOldCoverage);
-					}
-					break;
-				}
-				case NUMERIC :
-				{
-					// FIXME MM when the returned domain consists of just 1 value it
-					// will select the whole previous subset, and can be ignored
-					// FIXME MM see mine() comment on
-					// evaluating Numeric Refinement here
-					for (float aValue : c.getUniqueNumericDomain(theMembers))
-					{
-						if (itsFilter != null)
-							if (!itsFilter.isUseful(aList, new Condition(aConditionBase, aValue)))
-								continue;
-
-						aNewSubgroup = theRefinement.getRefinedSubgroup(aValue);
-						checkAndLog(aNewSubgroup, anOldCoverage);
-					}
-					break;
-				}
-				case ORDINAL :
-					throw new AssertionError(AttributeType.ORDINAL);
-				case BINARY :
-				{
-					evaluateBinaryRefinements(theMembers, theRefinement);
-					break;
-				}
-				default :
-					throw new AssertionError(c.getType());
+				case NOMINAL : evaluateNominalRefinements(theMembers, theRefinement, aParentCoverage); break;
+				case NUMERIC : evaluateNumericEqualsRefinements(theMembers, theRefinement, aParentCoverage); break;
+				case ORDINAL : throw new AssertionError(AttributeType.ORDINAL);
+				case BINARY  : evaluateBinaryRefinements(theMembers, theRefinement, aParentCoverage); break;
+				default      : throw new AssertionError(aConditionBase.getColumn().getType());
 			}
+		}
+	}
+
+	private final void evaluateNominalRefinements(final BitSet theParentMembers, final Refinement theRefinement, int theParentCoverage)
+	{
+		// evaluateNominalRefinements() should prevent getting here for ValueSet
+		assert (!itsSearchParameters.getNominalSets());
+		// should have been checked by evaluateNominalBinaryRefinements()
+		assert (theParentMembers.cardinality() == theParentCoverage);
+		assert (theParentCoverage > 1);
+
+		boolean isFilterNull = (itsFilter == null);
+		Subgroup aParent = theRefinement.getSubgroup();
+		// members-based domain, no empty Subgroups will occur
+		ConditionBase aConditionBase = theRefinement.getConditionBase();
+		Column aColumn = aConditionBase.getColumn();
+		ConditionListA aParentConditions = (isFilterNull ? null : aParent.getConditions());
+
+		String[] aDomain = aColumn.getUniqueNominalBinaryDomain(theParentMembers);
+
+		// no useful Refinements are possible
+		if (aDomain.length <= 1)
+			return;
+
+		for (int i = 0, j = aDomain.length; i < j && !isTimeToStop(); ++i)
+		{
+			Condition aCondition = new Condition(aConditionBase, aDomain[i]);
+
+			if (!isFilterNull && !itsFilter.isUseful(aParentConditions, aCondition))
+				continue;
+
+			Subgroup aNewSubgroup = aParent.getRefinedSubgroup(aCondition);
+			checkAndLog(aNewSubgroup, theParentCoverage);
 		}
 	}
 
 	// XXX (c = false) is checked first, (c = true) is conditionally, it depends
 	//       on data and search characteristics  whether this is the best order
-	private final void evaluateBinaryRefinements(BitSet theMembers, Refinement theRefinement)
+	private final void evaluateBinaryRefinements(final BitSet theParentMembers, final Refinement theRefinement, int theParentCoverage)
 	{
-		// faster than theMembers.cardinality() + avoids theParentSize parameter
-		Subgroup anOldSubgroup = theRefinement.getSubgroup();
-		int anOldCoverage = anOldSubgroup.getCoverage();
-		assert (theMembers.cardinality() == anOldCoverage);
-		// this subgroup can not be refined - FIXME MM make this an assert
-		if (anOldCoverage <= 1)
-			return;
+		// evaluateNominalRefinements() should prevent getting here for ValueSet
+		assert (!itsSearchParameters.getNominalSets());
+		// should have been checked by evaluateNominalBinaryRefinements()
+		assert (theParentMembers.cardinality() == theParentCoverage);
+		assert (theParentCoverage > 1);
 
+		boolean isFilterNull = (itsFilter == null);
+		Subgroup aParent = theRefinement.getSubgroup();
 		// members-based domain, no empty Subgroups will occur
 		ConditionBase aConditionBase = theRefinement.getConditionBase();
-		// evaluateNominalRefinements() should prevent getting here for ValueSet
-		assert (theRefinement.getConditionBase().getOperator() != Operator.ELEMENT_OF);
 		Column aColumn = aConditionBase.getColumn();
-		ConditionListA anOldConditionList = anOldSubgroup.getConditions();
+		ConditionListA aParentConditions = (isFilterNull ? null : aParent.getConditions());
 
 		// no useful Refinements are possible 
 		if (aColumn.getCardinality() != 2)
 			return;
-		BitSet aNewSubgroupMembers = aColumn.evaluateBinary(theMembers, false);
-		// for null: aCoverage is set to anOldCoverage for ignore check below
-		int aCoverage = (aNewSubgroupMembers == null ? anOldCoverage : aNewSubgroupMembers.cardinality());
+
+		BitSet aChildMembers = aColumn.evaluateBinary(theParentMembers, false);
+		int aChildCoverage = (aChildMembers == null ? 0 : aChildMembers.cardinality());
 
 		// ignore both f and t
-		if ((aCoverage == 0) || (aCoverage == anOldCoverage))
+		if ((aChildCoverage == 0) || (aChildCoverage == theParentCoverage))
 			return;
 
 		// check for (aColumn = false)
-		if (aCoverage >= itsMinimumCoverage)
-			evaluateBinary(aConditionBase, false, anOldSubgroup, aNewSubgroupMembers, aCoverage, itsFilter, anOldConditionList);
+		if (aChildCoverage >= itsMinimumCoverage)
+			evaluateBinary(aParent, new Condition(aConditionBase, false), aChildMembers, aChildCoverage, itsFilter, aParentConditions);
 
 		// binary check is fast, but for some models evaluateCandidate() is not
 		if (isTimeToStop())
@@ -1215,11 +1178,11 @@ AtomicInteger TOTAL_FILTERED = new AtomicInteger(0);
 
 		// check for (aColumn = true), do this only when useful
 		// everything that is not positive is negative
-		aCoverage = (anOldCoverage - aCoverage);
-		if (aCoverage >= itsMinimumCoverage)
+		aChildCoverage = (theParentCoverage - aChildCoverage);
+		if (aChildCoverage >= itsMinimumCoverage)
 		{
-			aNewSubgroupMembers = aColumn.evaluateBinary(theMembers, true);
-			evaluateBinary(aConditionBase, true, anOldSubgroup, aNewSubgroupMembers, aCoverage, itsFilter, anOldConditionList);
+			aChildMembers = aColumn.evaluateBinary(theParentMembers, true);
+			evaluateBinary(aParent, new Condition(aConditionBase, true), aChildMembers, aChildCoverage, itsFilter, aParentConditions);
 		}
 	}
 
@@ -1231,42 +1194,79 @@ AtomicInteger TOTAL_FILTERED = new AtomicInteger(0);
 				!(itsSearchParameters.getQualityMeasure() == QM.PROP_SCORE_WRACC) || (itsSearchParameters.getQualityMeasure() == QM.PROP_SCORE_RATIO));
 	}
 
-	private final void evaluateBinary(ConditionBase theConditionBase, boolean theValue, Subgroup theOldSubgroup, BitSet theNewSubgroupMembers, int theCoverage, Filter theFilter, ConditionListA theOldConditionList)
+	private final void evaluateBinary(Subgroup theParent, Condition theAddedCondition, BitSet theChildMembers, int theChildCoverage, Filter theFilter, ConditionListA theParentConditionList)
 	{
-		assert (theNewSubgroupMembers.cardinality() == theCoverage);
-		assert (theCoverage > 0);
+		// evaluateNominalRefinements() should prevent getting here for ValueSet
+		assert (!itsSearchParameters.getNominalSets());
+		assert (theChildMembers.cardinality() == theChildCoverage);
+		assert (theChildCoverage > 0);
+		// must both be non-null, or both be null
+		assert (!((theFilter == null) ^ (theParentConditionList == null)));
 
-		Condition aCondition = new Condition(theConditionBase, theValue);
-
-		Subgroup aNewSubgroup;
+		final Subgroup aChildSubgroup;
 
 		if (isDirectSettingBinary())
 		{
 			// safe: it is a clone, and subgroup coverage is stored: theCoverage
-			theNewSubgroupMembers.and(itsBinaryTarget);
-			int aTP = theNewSubgroupMembers.cardinality();
+			theChildMembers.and(itsBinaryTarget);
+			int aTruePositives = theChildMembers.cardinality();
 
-			aNewSubgroup = directComputation(theOldSubgroup, aCondition, itsQualityMeasure, theCoverage, aTP);
+			aChildSubgroup = directComputation(theParent, theAddedCondition, itsQualityMeasure, theChildCoverage, aTruePositives);
 		}
 		else
 		{
-			if ((theFilter != null) && !theFilter.isUseful(theOldConditionList, aCondition))
+			if ((theFilter != null) && !theFilter.isUseful(theParentConditionList, theAddedCondition))
 				return;
 
-			aNewSubgroup = theOldSubgroup.getRefinedSubgroup(aCondition, theNewSubgroupMembers, theCoverage);
+			aChildSubgroup = theParent.getRefinedSubgroup(theAddedCondition, theChildMembers, theChildCoverage);
 		}
 
-		checkAndLog(aNewSubgroup, theOldSubgroup.getCoverage());
+		checkAndLog(aChildSubgroup, theParent.getCoverage());
 	}
 
-	private static final Subgroup directComputation(Subgroup theOldSubgroup, Condition theAddedCondition, QualityMeasure theQualityMeasure, int theCoverage, int theTruePositives)
+	private static final Subgroup directComputation(Subgroup theParent, Condition theAddedCondition, QualityMeasure theQualityMeasure, int theChildCoverage, int theTruePositives)
 	{
 		// FIXME MM q is only cast to float to make historic results comparable
-		float q = (float) theQualityMeasure.calculate(theTruePositives, theCoverage);
-		double s = ((double) theTruePositives)/theCoverage;
+		float q = (float) theQualityMeasure.calculate(theTruePositives, theChildCoverage);
+		double s = ((double) theTruePositives)/theChildCoverage;
 		double t = ((double) theTruePositives);
 
-		return theOldSubgroup.getRefinedSubgroup(theAddedCondition, q, s, t, theCoverage);
+		return theParent.getRefinedSubgroup(theAddedCondition, q, s, t, theChildCoverage);
+	}
+
+	// shares a lot of code with evaluateNominalRefinements(), but will change
+	private final void evaluateNumericEqualsRefinements(final BitSet theParentMembers, final Refinement theRefinement, int theParentCoverage)
+	{
+		// NUMERIC Refinement in evaluateNominalBinaryRefinements is a weird
+		// setting, this check is irrelevant for NUMERIC Columns
+		// evaluateNominalRefinements() should prevent getting here for ValueSet
+		//assert (!itsSearchParameters.getNominalSets());
+		// should have been checked by evaluateNominalBinaryRefinements()
+		assert (theParentMembers.cardinality() == theParentCoverage);
+		assert (theParentCoverage > 1);
+
+		boolean isFilterNull = (itsFilter == null);
+		Subgroup aParent = theRefinement.getSubgroup();
+		// members-based domain, no empty Subgroups will occur
+		ConditionBase aConditionBase = theRefinement.getConditionBase();
+		Column aColumn = aConditionBase.getColumn();
+		ConditionListA aParentConditions = (isFilterNull ? null : aParent.getConditions());
+
+		float[] aDomain = aColumn.getUniqueNumericDomain(theParentMembers);
+
+		if (aDomain.length <= 1)
+			return;
+
+		for (int i = 0, j = aDomain.length; i < j && !isTimeToStop(); ++i)
+		{
+			Condition aCondition = new Condition(aConditionBase, aDomain[i]);
+
+			if (!isFilterNull && !itsFilter.isUseful(aParentConditions, aCondition))
+				continue;
+
+			Subgroup aNewSubgroup = aParent.getRefinedSubgroup(aCondition);
+			checkAndLog(aNewSubgroup, theParentCoverage);
+		}
 	}
 
 //	/*
@@ -1391,8 +1391,36 @@ AtomicInteger TOTAL_FILTERED = new AtomicInteger(0);
 
 		if (isValid)
 		{
-			float aQuality = evaluateCandidate(theSubgroup);
-			theSubgroup.setMeasureValue(aQuality);
+			NumericStrategy ns = itsSearchParameters.getNumericStrategy();
+			AttributeType lastAdded = theSubgroup.getConditions().get(theSubgroup.getDepth()-1).getColumn().getType();
+
+			float aQuality;
+
+			if (false && (lastAdded == AttributeType.NUMERIC))
+			{
+				// NOTE this path already performed the isValid-coverage check
+				aQuality = (float) theSubgroup.getMeasureValue();
+			}
+			else if (isDirectSettingBinary() && (lastAdded == AttributeType.BINARY))
+			{
+				// NOTE this path already performed the isValid-coverage check
+				aQuality = (float) theSubgroup.getMeasureValue();
+			}
+			else if (ns == NumericStrategy.NUMERIC_BEST || ns == NumericStrategy.NUMERIC_BEST_BINS || ns == NumericStrategy.NUMERIC_VIKAMINE_CONSECUTIVE_BEST)
+			{
+				// NOTE for BEST* Subgroup is already evaluated and score is set
+				//      by isValidAndBest()
+				aQuality = (float) theSubgroup.getMeasureValue();
+			}
+			else if (false)
+			{
+				// FIXME BestInterval and BestValueset also already computed quality
+			}
+			else
+			{
+				aQuality = evaluateCandidate(theSubgroup);
+				theSubgroup.setMeasureValue(aQuality);
+			}
 
 // FIXME MM check size is > 1, otherwise Candidate can never be refined anyway
 			Candidate aCandidate = new Candidate(theSubgroup);
