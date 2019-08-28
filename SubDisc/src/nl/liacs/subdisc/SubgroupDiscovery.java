@@ -1181,10 +1181,13 @@ AtomicInteger TOTAL_FILTERED = new AtomicInteger(0);
 		BitSet aNewSubgroupMembers = aColumn.evaluateBinary(theMembers, false);
 		// for null: aCoverage is set to anOldCoverage for ignore check below
 		int aCoverage = (aNewSubgroupMembers == null ? anOldCoverage : aNewSubgroupMembers.cardinality());
-		boolean ignore = (aCoverage == anOldCoverage); // ignore both f and t
+
+		// ignore both f and t
+		if ((aCoverage == 0) || (aCoverage == anOldCoverage))
+			return;
 
 		// check for (aColumn = false)
-		if (!ignore && !(aCoverage < itsMinimumCoverage))
+		if (aCoverage >= itsMinimumCoverage)
 			evaluateBinary(aConditionBase, false, anOldSubgroup, aNewSubgroupMembers, aCoverage, itsFilter, anOldConditionList);
 
 		// binary check is fast, but for some models evaluateCandidate() is not
@@ -1194,7 +1197,7 @@ AtomicInteger TOTAL_FILTERED = new AtomicInteger(0);
 		// check for (aColumn = true), do this only when useful
 		// everything that is not positive is negative
 		aCoverage = (anOldCoverage - aCoverage);
-		if (!ignore && !(aCoverage < itsMinimumCoverage))
+		if (aCoverage >= itsMinimumCoverage)
 		{
 			aNewSubgroupMembers = aColumn.evaluateBinary(theMembers, true);
 			evaluateBinary(aConditionBase, true, anOldSubgroup, aNewSubgroupMembers, aCoverage, itsFilter, anOldConditionList);
