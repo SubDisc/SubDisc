@@ -447,6 +447,48 @@ public class Condition implements Comparable<Condition>
 		itsInterval = UNINITIALISED_INTERVAL;
 		itsBinaryValue = UNINITIALISED_BINARY;
 	}
+	// HACK to allow for non-float based evaluation code (use int index instead)
+	int itsSortIndex; // non-final during test phase, leave other code as-is
+	/** Condition for NUMERIC Column, single value, NaN is not allowed. */
+	Condition(ConditionBase theConditionBase, float theValue, int theIndex)
+	{
+		// check Column
+		Column aColumn = theConditionBase.getColumn();
+		if (aColumn.getType() != AttributeType.NUMERIC)
+			throw exception("ConditionBase.Column.AttributeType", aColumn.getType().toString());
+
+		// assume that ConditionBase checked validity of Column-Operator
+		// check NUMERIC operators only
+		Operator anOperator = theConditionBase.getOperator();
+		switch (anOperator)
+		{
+			case EQUALS :
+				break;
+			case LESS_THAN_OR_EQUAL :
+				break;
+			case GREATER_THAN_OR_EQUAL :
+				break;
+			case BETWEEN :
+				throw exception("ConditionBase.Operator", anOperator.GUI_TEXT);
+			default :
+				throw new AssertionError(anOperator);
+		}
+
+		// check value
+		if (Float.isNaN(theValue))
+			throw exception("float value", "NaN");
+
+		itsColumn = aColumn;
+		itsOperator = anOperator;
+		itsNumericValue = theValue;
+		itsSortIndex = theIndex; // new field
+
+		// set non used value member fields to uninitialised default
+		itsNominalValue = UNINITIALISED_NOMINAL;
+		itsNominalValueSet = UNINITIALISED_NOMINAL_SET;
+		itsInterval = UNINITIALISED_INTERVAL;
+		itsBinaryValue = UNINITIALISED_BINARY;
+	}
 
 	private static final IllegalArgumentException exception(String pre, String post)
 	{
