@@ -16,7 +16,9 @@ import nl.liacs.subdisc.gui.*;
 
 public class SubgroupDiscovery
 {
-	// leave TEMPORARY_CODE at false in svn
+	// log slows down mining a lot, but leave NO_CANDIDATE_LOG at false in git
+	private static final boolean NO_CANDIDATE_LOG = false;
+	// leave TEMPORARY_CODE at false in git
 	// when true, creates PMF instead of PDF in single numeric H^2 setting
 	static boolean TEMPORARY_CODE = false;
 	static int TEMPORARY_CODE_NR_SPLIT_POINTS = -1;
@@ -1528,6 +1530,9 @@ AtomicInteger TOTAL_FILTERED = new AtomicInteger(0);
 	// else logs from other threads could end up in between
 	private void logCandidateAddition(Subgroup theSubgroup, long count)
 	{
+		if (NO_CANDIDATE_LOG)
+			return;
+
 		String aCandidate = theSubgroup.getConditions().toString();
 
 		StringBuilder sb = new StringBuilder(aCandidate.length() + 100);
@@ -1999,6 +2004,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		long anEndTime = theBeginTime + (long) (((double) itsSearchParameters.getMaximumTime()) * 60.0 * 1000.0);
 		itsEndTime = (anEndTime <= theBeginTime) ? Long.MAX_VALUE : anEndTime;
 
+		// some settings should always build a sorted domain for all TargetTypes
 		preparePOCData(isPOCSetting(), itsBinaryTarget, itsTable.getColumns());
 
 		final QM aQualityMeasure = itsSearchParameters.getQualityMeasure();
