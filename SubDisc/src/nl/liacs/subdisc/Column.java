@@ -2288,6 +2288,56 @@ public class Column implements XMLNodeInterface
 	}
 	*/
 
+	static final class DomainMapNumeric
+	{
+		final int itsSize;       // itsSize indicates end-of-valid-input
+		final int itsCountsSum;  // required only for BEST_BINS|BINS
+		final float[] itsDomain; // values at [>= itsSize] are invalid, ignore them
+		final int[] itsCounts;   // -1 at [itsSize] indicates end-of-valid-input
+
+		DomainMapNumeric(int theSize, int theCountsSum, float[] theDomain, int[] theCounts)
+		{
+			itsSize = theSize;
+			itsCountsSum = theCountsSum;
+			itsDomain = theDomain;
+			itsCounts = theCounts;
+		}
+	}
+
+	// NOTE values itsDomain are unique up to itsCounts sentinel of -1
+	public DomainMapNumeric getUniqueNumericDomainMap(BitSet theBitSet, int theBitSetCardinality)
+	{
+		assert (theBitSetCardinality == theBitSet.cardinality());
+
+		if (!isValidCall("getUniqueNumericDomainMap", theBitSet))
+			return null;
+
+		float[] aDomain = new float[theBitSetCardinality];
+		int[] aCounts = new int[theBitSetCardinality];
+		for (int i = 0, j = theBitSet.nextSetBit(0); j >= 0; j = theBitSet.nextSetBit(j + 1), ++i)
+			aDomain[i] = itsFloatz[j];
+
+		// sort
+		Arrays.sort(aDomain);
+
+		float x = Float.NaN; // comparison is always false
+		int idx = -1;
+		for (int k = 0; k < theBitSetCardinality; ++k)
+		{
+			if (aDomain[k] != x)
+			{
+				x = aDomain[k];
+				aDomain[++idx] = x;
+			}
+
+			++aCounts[idx];
+		}
+		if (idx < aCounts.length-1)
+			aCounts[idx+1] = -1;
+
+		return new DomainMapNumeric(idx+1, theBitSetCardinality, aDomain, aCounts);
+	}
+
 	// XXX profiling suggest that MASK is faster than bit invert (~)
 	//     probably because numericLEQ|GEQ can unconditionally apply MASK_OFF
 	private static final int MASK_ON  = 0x80000000;
