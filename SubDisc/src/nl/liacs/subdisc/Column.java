@@ -1648,10 +1648,10 @@ public class Column implements XMLNodeInterface
 						numericEquals(theBitSet, theCondition.getNumericValue(), aResult);
 						break;
 					case LESS_THAN_OR_EQUAL :
-						numericLEQ(theBitSet, theCondition.getNumericValue(), aResult);
+						numericLEQ(theBitSet, theCondition.getNumericValue(), theCondition.itsSortIndex, aResult);
 						break;
 					case GREATER_THAN_OR_EQUAL :
-						numericGEQ(theBitSet, theCondition.getNumericValue(), aResult);
+						numericGEQ(theBitSet, theCondition.getNumericValue(), theCondition.itsSortIndex, aResult);
 						break;
 					case BETWEEN :
 						numericBetween(theBitSet, theCondition.getNumericInterval(), aResult);
@@ -1775,21 +1775,40 @@ public class Column implements XMLNodeInterface
 		return theResult;
 	}
 
-	private BitSet numericLEQ(BitSet theMembers, float theValue, BitSet theResult)
+	private BitSet numericLEQ(BitSet theMembers, float theValue, int theIndex, BitSet theResult)
 	{
-		for (int i = theMembers.nextSetBit(0); i >= 0; i = theMembers.nextSetBit(i + 1))
-			if (itsFloatz[i] <= theValue)
-				theResult.set(i);
+		if (SORT_INDEX != null)
+		{
+			for (int i = theMembers.nextSetBit(0); i >= 0; i = theMembers.nextSetBit(i + 1))
+				if ((MASK_OFF & SORT_INDEX[i]) <= theIndex)
+					theResult.set(i);
+		}
+		else
+		{
+			for (int i = theMembers.nextSetBit(0); i >= 0; i = theMembers.nextSetBit(i + 1))
+				if (itsFloatz[i] <= theValue)
+					theResult.set(i);
+		}
 
 		return theResult;
 	}
 
-	private BitSet numericGEQ(BitSet theMembers, float theValue, BitSet theResult)
+	private BitSet numericGEQ(BitSet theMembers, float theValue, int theIndex, BitSet theResult)
 	{
-		for (int i = theMembers.nextSetBit(0); i >= 0; i = theMembers.nextSetBit(i + 1))
-			if (itsFloatz[i] >= theValue)
-				theResult.set(i);
-
+		// others use SORT_INDEX, NUM5A/NUM5B/NUM6/NUM7 set index in Conditions
+		// when SubgroupDiscovery.mine() ends SORT_INDEX is always set to null
+		if (SORT_INDEX != null)
+		{
+			for (int i = theMembers.nextSetBit(0); i >= 0; i = theMembers.nextSetBit(i + 1))
+				if ((MASK_OFF & SORT_INDEX[i]) >= theIndex)
+					theResult.set(i);
+		}
+		else
+		{
+			for (int i = theMembers.nextSetBit(0); i >= 0; i = theMembers.nextSetBit(i + 1))
+				if (itsFloatz[i] >= theValue)
+					theResult.set(i);
+		}
 		return theResult;
 	}
 
@@ -2208,6 +2227,7 @@ public class Column implements XMLNodeInterface
 		return aResult;
 	}
 
+	/*
 	public NavigableMap<Float, Integer> getUniqueNumericDomainMap(BitSet theBitSet)
 	{
 		if (!isValidCall("getUniqueNumericDomainMap", theBitSet))
@@ -2225,6 +2245,62 @@ public class Column implements XMLNodeInterface
 		}
 
 		return aUniqueValues;
+	}
+	*/
+
+	// XXX profiling suggest that MASK is faster than bit invert (~)
+	//     probably because numericLEQ|GEQ can unconditionally apply MASK_OFF
+	private static final int MASK_ON  = 0x80000000;
+	private static final int MASK_OFF = 0x7fffffff;
+	public float[] SORTED;   // public for now, will create getters later
+	public int[] SORT_INDEX;
+	public void buildSorted(BitSet theTarget)
+	{
+		SORTED = Function.getUniqueValues(itsFloatz);
+
+		// determine sort-index for each value in Column.itsFloatz
+		SORT_INDEX = new int[itsFloatz.length];
+		for (int i = 0; i < itsFloatz.length; ++i)
+		{
+			int idx = Arrays.binarySearch(SORTED, itsFloatz[i]);
+			SORT_INDEX[i] = theTarget.get(i) ? idx : (MASK_ON | idx);
+		}
+	}
+
+	static class ValueInfo
+	{
+		final int[] itsCounts;  // of size column.cardinality
+		final int[] itsRecords; // of size column.cardinality
+
+		ValueInfo(int[] theCounts, int[] theRecords)
+		{
+			itsCounts = theCounts;
+			itsRecords = theRecords;
+		}
+	}
+
+	public ValueInfo getUniqueNumericDomainMap(BitSet theBitSet)
+	{
+		if (!isValidCall("getUniqueNumericDomainMap", theBitSet))
+			return new ValueInfo(new int[0], new int[0]);
+
+		// NOTE (SORTED.length == itsCardinality)
+		int[] aCnt = new int[SORTED.length];
+		int[] aPos = new int[SORTED.length];
+
+		for (int i = theBitSet.nextSetBit(0); i >= 0; i = theBitSet.nextSetBit(i + 1))
+		{
+			int idx = SORT_INDEX[i];
+			if (idx >= 0)
+			{
+				++aCnt[idx];
+				++aPos[idx];
+			}
+			else
+				++aCnt[(MASK_OFF & idx)];
+		}
+
+		return new ValueInfo(aCnt, aPos);
 	}
 
 	// FIXME MM - temporary hack for better bins
@@ -2254,6 +2330,7 @@ public class Column implements XMLNodeInterface
 	//                         -> 100% is useless anyway
 	//
 	// leave false in svn - set to true by code that needs it
+	// NOTE: in svn revision 3430 USE_NEW_BINNING = true; in git revision ad14cb3 USE_NEW_BINNING = false;
 	public static boolean USE_NEW_BINNING = false;
 	public float[] getUniqueSplitPoints(BitSet theBitSet, int theNrSplits, Operator theOperator) throws IllegalArgumentException
 	{
