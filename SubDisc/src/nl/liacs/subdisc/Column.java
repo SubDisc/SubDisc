@@ -2141,6 +2141,46 @@ public class Column implements XMLNodeInterface
 		return aUniqueValues.toArray(new String[0]);
 	}
 
+	// callers obtain an int[] with counts for each value for this Column
+	// counts can be zero, the index of non-zero counts should be used get the
+	// corresponding value from column.itsDistinctValuesU(non_zero_count_index)
+	// this uses aCollection.unmodifiableList<String> for the domain to avoids
+	// creating Objects, sharing is safe, and the JVM knows it will not change
+	List<String> itsDistinctValuesU = null;
+	void buildSharedDomain() { itsDistinctValuesU = Collections.unmodifiableList(itsDistinctValues); }
+	int[] getUniqueNominalDomainCounts(BitSet theBitSet, int theBitSetCardinality)
+	{
+		// not a public method, caller should ensure (theBitSetCardinality > 1)
+		// as else no valid Refinement can be created
+		// the cardinality() call is relatively expensive, and should only be
+		// performed once for the parent BitSet
+		assert (theBitSetCardinality > 1);
+		assert (theBitSetCardinality == theBitSet.cardinality());
+
+		// NOTE (itsCardinality == 0) when Column.close() is not called or
+		// on empty data (occurs when the FileLoader can not load a file)
+		if (itsCardinality == 0)
+			return new int[] { 0 };
+
+		// only one value in domain, obviously all members cover this value
+		if (itsCardinality == 1)
+			return new int[] { theBitSetCardinality, 1 };
+
+		int aNrDistinct = 0;
+		int[] aCounts = new int[itsCardinality + 1];
+
+		for (int i = theBitSet.nextSetBit(0); i >= 0; i = theBitSet.nextSetBit(i + 1))
+			if ((++aCounts[itsNominalz[i]]) == 1)
+				++aNrDistinct;
+
+		// XXX WARNING
+		// add aNrDistinct to aCounts at [itsCardinality+1], the danger is that
+		// (itsCardinality+1) overflows int, indexing at a negative index
+		aCounts[itsCardinality] = aNrDistinct;
+
+		return aCounts;
+	}
+
 	/**
 	 * Returns the unique, sorted domain for Columns of
 	 * {@link AttributeType} {@link AttributeType#NUMERIC} and
