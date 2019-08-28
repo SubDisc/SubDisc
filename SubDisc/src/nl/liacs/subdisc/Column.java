@@ -2078,10 +2078,8 @@ public class Column implements XMLNodeInterface
 	 * @see java.util.BitSet
 	 */
 	// TODO MM return Set, instead of creating Set, and returning toArray()
-	/*
 	public String[] getUniqueNominalBinaryDomain(BitSet theBitSet, int theBitSetCardinality)
 	{ return getUniqueNominalBinaryDomain(theBitSet); }
-	*/
 	public String[] getUniqueNominalBinaryDomain(BitSet theBitSet)
 	{
 		if (theBitSet.length() > itsSize)
@@ -2155,10 +2153,8 @@ public class Column implements XMLNodeInterface
 	 * @see Subgroup
 	 * @see java.util.BitSet
 	 */
-	/*
 	public float[] getUniqueNumericDomain(BitSet theBitSet, int theBitSetCardinality)
 	{ return getUniqueNumericDomain(theBitSet); }
-	*/
 	public float[] getUniqueNumericDomain(BitSet theBitSet)
 	{
 		if (!isValidCall("getUniqueNumericDomain", theBitSet))
