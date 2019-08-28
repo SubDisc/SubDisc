@@ -1700,6 +1700,9 @@ public class Column implements XMLNodeInterface
 	// when (column.itsCardinality != 2) this method should not be called when
 	// evaluating a Refinement during mining, as for a cardinality of 0 there
 	// there are no Refinements, for 1 theBitSet selects the oldCoverage
+	//
+	// could be replaced by calls to evaluate(BitSet, Condition) (less code)
+	// but the extra parameter checks and switch might reduce performance a lot
 	final BitSet evaluateBinary(BitSet theBitSet, boolean theValue)
 	{
 		assert (itsType == AttributeType.BINARY);
@@ -2076,7 +2079,9 @@ public class Column implements XMLNodeInterface
 	 * @see java.util.BitSet
 	 */
 	// TODO MM return Set, instead of creating Set, and returning toArray()
-	public String[] getUniqueNominalBinaryDomain(BitSet theBitSet)
+	public String[] getUniqueNominalBinaryDomainGit(BitSet theBitSet, int theBitSetCardinality)
+	{ return getUniqueNominalBinaryDomainGit(theBitSet); }
+	public String[] getUniqueNominalBinaryDomainGit(BitSet theBitSet)
 	{
 		if (theBitSet.length() > itsSize)
 			throw new IllegalArgumentException("theBitSet.length() > " + itsSize);
