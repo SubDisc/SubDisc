@@ -189,7 +189,7 @@ public class Subgroup implements Comparable<Subgroup>
 		return new Subgroup(this, theCondition);
 	}
 
-	// for SINGLE_NOMINAL: re-use BitSet obtained from Column.evaluateBinary(BitSet, boolean)
+	// for SINGLE_NOMINAL: re-use BitSet obtained from Column.getBinaryDomain()
 	Subgroup getRefinedSubgroup(Condition theCondition, BitSet theNewMembers, int theCoverage)
 	{
 		// not a public method, assert is enough
@@ -214,6 +214,29 @@ public class Subgroup implements Comparable<Subgroup>
 		itsMembersLock.lock();
 		try { itsMembers = theNewSubgroupMembers; }
 		finally { itsMembersLock.unlock(); }
+	}
+
+	// for direct computation of qualities scores, bypass BitSet evaluation
+	Subgroup getRefinedSubgroup(Condition theCondition, double theQuality, double theSecondaryStatistic, double theTertiaryStatistic, int theCoverage)
+	{
+
+		// not a public method, assert is enough
+		assert (theCondition != null);
+		assert (theCoverage > 0);
+		assert (theCondition.getColumn().evaluate(getMembersUnsafe(), theCondition).cardinality() == theCoverage);
+
+		return new Subgroup(this, theCondition, theQuality, theSecondaryStatistic, theTertiaryStatistic, theCoverage);
+	}
+
+	private Subgroup(Subgroup theSubgroup, Condition theCondition, double theQuality, double theSecondaryStatistic, double theTertiaryStatistic, int theCoverage)
+	{
+		itsConditions         = ConditionListBuilder.createList(theSubgroup.itsConditions, theCondition);
+		itsMeasureValue       = theQuality;
+		itsSecondaryStatistic = theSecondaryStatistic;
+		itsTertiaryStatistic  = theTertiaryStatistic;
+		itsParentSet          = theSubgroup.itsParentSet;
+
+		itsCoverage = theCoverage;
 	}
 
 	// private, for use within this class only, do no expose members
