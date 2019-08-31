@@ -20,6 +20,7 @@ public class SubgroupDiscovery
 {
 	// log slows down mining a lot, but leave NO_CANDIDATE_LOG at false in git
 	private static final boolean NO_CANDIDATE_LOG = false;
+	private static final boolean ENABLE_POC_SETTINGS = true;
 	// leave TEMPORARY_CODE at false in git
 	// when true, creates PMF instead of PDF in single numeric H^2 setting
 	static boolean TEMPORARY_CODE = false;
@@ -2675,7 +2676,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	{
 		return (((itsSearchParameters.getNumericStrategy() == NumericStrategy.NUMERIC_ALL) || (itsSearchParameters.getNumericStrategy() == NumericStrategy.NUMERIC_BEST) ||
 				 (itsSearchParameters.getNumericStrategy() == NumericStrategy.NUMERIC_BEST_BINS) || (itsSearchParameters.getNumericStrategy() == NumericStrategy.NUMERIC_BINS)) &&
-				((itsSearchParameters.getTargetType() == TargetType.SINGLE_NOMINAL) && !itsSearchParameters.getNominalSets()) && false);
+				((itsSearchParameters.getTargetType() == TargetType.SINGLE_NOMINAL) && !itsSearchParameters.getNominalSets()) && ENABLE_POC_SETTINGS);
 	}
 
 	private static final void deleteSortData(List<Column> theColumns)
