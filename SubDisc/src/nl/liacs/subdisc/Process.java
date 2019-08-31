@@ -23,8 +23,6 @@ public class Process
 			return null;
 
 		SubgroupDiscovery aSubgroupDiscovery = null;
-		echoMiningStart();
-		long aBegin = System.currentTimeMillis();
 
 		switch (aTargetType)
 		{
@@ -99,6 +97,8 @@ public class Process
 									aTargetType));
 			}
 		}
+
+		long aBegin = System.currentTimeMillis();
 		aSubgroupDiscovery.mine(System.currentTimeMillis(), theNrThreads);
 		// if 2nd argument to above mine() is < 0, you effectively run:
 		//aSubgroupDiscovery.mine(System.currentTimeMillis());
@@ -106,7 +106,7 @@ public class Process
 		long anEnd = System.currentTimeMillis();
 		float aMaxTime = theSearchParameters.getMaximumTime();
 
-		if (aMaxTime > 0.0f && (anEnd > (aBegin + aMaxTime*60*1000)))
+		if (aMaxTime > 0.0f && (anEnd > (aBegin + (aMaxTime * 60_000f))))
 		{
 			String aMessage = "Mining process ended prematurely due to time limit.";
 			if (showWindows)
@@ -118,7 +118,10 @@ public class Process
 				Log.logCommandLine(aMessage);
 		}
 
-		echoMiningEnd(anEnd - aBegin, aSubgroupDiscovery.getNumberOfSubgroups());
+		// called by SubgroupDiscovery.mine(), pure time of mining task, not any
+		// sorting
+		// NOTE aborted prematurely message not comes after this message
+//		echoMiningEnd(anEnd - aBegin, aSubgroupDiscovery.getNumberOfSubgroups());
 
 		// FIXME MM for now hack this into p-value column
 		aSubgroupDiscovery.getResult().markAlternativeDescriptions();
@@ -363,11 +366,13 @@ public class Process
 
 	public static void echoMiningEnd(long theMilliSeconds, int theNumberOfSubgroups)
 	{
-		int seconds = Math.round(theMilliSeconds / 1000);
-		int minutes = Math.round(theMilliSeconds / 60000);
-		int secondsRemainder = seconds - (minutes * 60);
-		String aString = new String("Mining process finished in " + minutes
-				+ " minutes and " + secondsRemainder + " seconds.\n");
+		long minutes = theMilliSeconds / 60_000l;
+		float seconds = (theMilliSeconds % 60_000l) / 1_000.0f;
+
+		String aString = String.format(Locale.US,
+			"Mining process finished in %d minute%s and %3$.3f seconds.%n",
+			minutes, (minutes == 1 ? "" : "s"),
+			seconds);
 
 		if (theNumberOfSubgroups == 0)
 			aString += "   No subgroups found that match the search criterion.\n";
