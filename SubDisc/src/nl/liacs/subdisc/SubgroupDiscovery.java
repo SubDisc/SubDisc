@@ -2459,6 +2459,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		if (theNrThreads < 0)
 		{
 			mine(theBeginTime);
+			Process.echoMiningEnd(System.currentTimeMillis() - theBeginTime, getNumberOfSubgroups());
 			return;
 		}
 		else if (theNrThreads == 0)
@@ -2600,6 +2601,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		es.shutdown();
 		// wait for last active threads to complete
 		while(!es.isTerminated()) {};
+		Process.echoMiningEnd(System.currentTimeMillis() - theBeginTime, getNumberOfSubgroups());
 
 		Log.logCommandLine("number of candidates: " + itsCandidateCount.get());
 		if (aQualityMeasure == QM.COOKS_DISTANCE)
