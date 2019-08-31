@@ -385,194 +385,68 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 	 */
 	private Filter itsFilter = null;
 	@Deprecated
-	private final void mine(long theBeginTime)
+	private final void mine(long theBeginTime, ConditionBaseSet theConditions)
 	{
-		// not in Constructor, Table / SearchParameters may change
-		final ConditionBaseSet aConditions = new ConditionBaseSet(itsTable, itsSearchParameters);
-
-		//make subgroup to start with, containing all elements
-		BitSet aBitSet = getAllDataBitSet(itsNrRows);
-		Subgroup aStart = new Subgroup(ConditionListBuilder.emptyList(), aBitSet, itsResult);
-
-		// set number of true positives for dataset
-		if (isPOCSetting())
-			aStart.setTertiaryStatistic(itsQualityMeasure.getNrPositives());
-
-		itsCandidateQueue = new CandidateQueue(itsSearchParameters, new Candidate(aStart));
-
-		int aSearchDepth = itsSearchParameters.getSearchDepth();
-
 		// to print filter output use: DebugFilter(itsSearchParameters);
 		itsFilter = new Filter(itsSearchParameters);
 
-// TODO MM DEBUG only, set counts to 0
-//RefinementList.COUNT.set(0);
-//RefinementList.ADD.set(0);
+		// TODO MM DEBUG only, set counts to 0
+		//RefinementList.COUNT.set(0);
+		//RefinementList.ADD.set(0);
+
 		while ((itsCandidateQueue.size() > 0) && !isTimeToStop())
 		{
 			Candidate aCandidate = itsCandidateQueue.removeFirst(); // take off first Candidate from Queue
 			Subgroup aSubgroup = aCandidate.getSubgroup();
 
-			if (aSubgroup.getDepth() < aSearchDepth)
+//			RefinementList aRefinementList = new RefinementList(aSubgroup, itsTable, itsSearchParameters);
+			RefinementList aRefinementList = new RefinementList(aSubgroup, theConditions);
+//			RefinementList aRefinementList = new RefinementList(aSubgroup, aConditions, aSearchStrategy);
+			// .getMembers() creates expensive clone, reuse
+			final BitSet aMembers = aSubgroup.getMembers();
+
+			for (int i = 0, j = aRefinementList.size(); i < j && !isTimeToStop(); i++)
 			{
-//				RefinementList aRefinementList = new RefinementList(aSubgroup, itsTable, itsSearchParameters);
-				RefinementList aRefinementList = new RefinementList(aSubgroup, aConditions);
-//				RefinementList aRefinementList = new RefinementList(aSubgroup, aConditions, aSearchStrategy);
-				// .getMembers() creates expensive clone, reuse
-				final BitSet aMembers = aSubgroup.getMembers();
+				Refinement aRefinement = aRefinementList.get(i);
 
-				for (int i = 0, j = aRefinementList.size(); i < j; i++)
-				{
-					if (isTimeToStop())
-						break;
+				if (!itsFilter.isUseful(aRefinement))
+					continue;
 
-					Refinement aRefinement = aRefinementList.get(i);
-
-					if (!itsFilter.isUseful(aRefinement))
-						continue;
-
-					ConditionBase aConditionBase = aRefinement.getConditionBase();
-					// if refinement is (num_attr = value) then treat it as nominal
-					// using EQUALS for numeric conditions is bad, see evaluateNominalBinaryRefinements()
-					// evaluateNumericRefinements() should split code path for EQUALS and !EQUALS
-					// only NUMERIC_BINS setting is affected
-					if (aConditionBase.getColumn().getType() == AttributeType.NUMERIC && aConditionBase.getOperator() != Operator.EQUALS)
-						evaluateNumericRefinements(aMembers, aRefinement);
-					else
-						evaluateNominalBinaryRefinements(aMembers, aRefinement);
-				}
+				ConditionBase aConditionBase = aRefinement.getConditionBase();
+				// if refinement is (num_attr = value) then treat it as nominal
+				// using EQUALS for numeric conditions is bad, see evaluateNominalBinaryRefinements()
+				// evaluateNumericRefinements() should split code path for EQUALS and !EQUALS
+				// only NUMERIC_BINS setting is affected
+				if (aConditionBase.getColumn().getType() == AttributeType.NUMERIC && aConditionBase.getOperator() != Operator.EQUALS)
+					evaluateNumericRefinements(aMembers, aRefinement);
+				else
+					evaluateNominalBinaryRefinements(aMembers, aRefinement);
 			}
 
 			if (itsCandidateQueue.size() == 0)
 				flushBuffer();
 		}
 
-// TODO MM DEBUG only, set counts to 0
-//Log.logCommandLine("RefinementList.COUNT: " + RefinementList.COUNT);
-//Log.logCommandLine("RefinementList.ADD: " + RefinementList.ADD);
+		// TODO MM DEBUG only, set counts to 0
+		//Log.logCommandLine("RefinementList.COUNT: " + RefinementList.COUNT);
+		//Log.logCommandLine("RefinementList.ADD: " + RefinementList.ADD);
 
-		Log.logCommandLine("number of candidates: " + itsCandidateCount.get());
-		if (itsSearchParameters.getQualityMeasure() == QM.COOKS_DISTANCE)
-		{
-			Log.logCommandLine("Bound seven computed " + getNrBoundSeven() + " times");
-			Log.logCommandLine("Bound six   computed " + getNrBoundSix() + " times");
-			Log.logCommandLine("Bound five  computed " + getNrBoundFive() + " times");
-			Log.logCommandLine("Bound four  computed " + getNrBoundFour() + " times");
-			Log.logCommandLine("Bound seven fired " + getNrBoundSevenFired() + " times");
-			Log.logCommandLine("Bound six   fired " + getNrBoundSixFired() + " times");
-			Log.logCommandLine("Bound five  fired " + getNrBoundFiveFired() + " times");
-			Log.logCommandLine("Bound four  fired " + getNrBoundFourFired() + " times");
-			Log.logCommandLine("Rank deficient models: " + getNrRankDef());
-		}
-		Log.logCommandLine("number of subgroups: " + getNumberOfSubgroups());
-
-		itsResult.setIDs(); //assign 1 to n to subgroups, for future reference in subsets
-		if ((itsSearchParameters.getTargetType() == TargetType.MULTI_LABEL) && itsSearchParameters.getPostProcessingDoAutoRun())
-			postprocess();
-
-		//now just for cover-based beam search post selection
-		// TODO MM see note at SubgroupSet.postProcess(), all itsResults will remain in memory
-		SubgroupSet aSet = itsResult.postProcess(itsSearchParameters.getSearchStrategy());
-		// FIXME MM hack to deal with strange postProcess implementation
-		if (itsResult != aSet)
-		{
-			// no reassign, we want itsResult to be final
-			itsResult.clear();
-			itsResult.addAll(aSet);
-		}
-
-		// in MULTI_LABEL, order may have changed
-		// in COVER_BASED_BEAM_SELECTION, subgroups may have been removed
-		itsResult.setIDs(); //assign 1 to n to subgroups, for future reference in subsets
-		deleteSortData(itsTable.getColumns());
+		postMining(System.currentTimeMillis() - theBeginTime);
 	}
 
 	/* use theNrThreads < 0 to run old mine(theBeginTime) */
 	public void mine(long theBeginTime, int theNrThreads)
 	{
-		long anEndTime = theBeginTime + (long) (((double) itsSearchParameters.getMaximumTime()) * 60.0 * 1000.0);
-		itsEndTime = (anEndTime <= theBeginTime) ? Long.MAX_VALUE : anEndTime;
-
-		List<Column> aColumns = itsTable.getColumns();
-		prepareNominalData(aColumns);
-		// some settings should always build a sorted domain for all TargetTypes
-		preparePOCData(isPOCSetting(), itsBinaryTarget, aColumns);
-
-		final QM aQualityMeasure = itsSearchParameters.getQualityMeasure();
-
-		// fill the conditionList of local and global knowledge, Rob
-		if (aQualityMeasure == QM.PROP_SCORE_WRACC || aQualityMeasure == QM.PROP_SCORE_RATIO)
-		{
-			ExternalKnowledgeFileLoader extKnowledge;
-			extKnowledge = new ExternalKnowledgeFileLoader(new File("").getAbsolutePath());
-			extKnowledge.createConditionListLocal(itsTable);
-			extKnowledge.createConditionListGlobal(itsTable);
-			itsLocalKnowledge = new LocalKnowledge(extKnowledge.getLocal(), itsBinaryTarget);
-			itsGlobalKnowledge = new GlobalKnowledge(extKnowledge.getGlobal(), itsBinaryTarget);
-		}
-
-		// not in Constructor, Table / SearchParameters may change
-		final ConditionBaseSet aConditions = new ConditionBaseSet(itsTable, itsSearchParameters);
-
-		logExperimentSettings(aConditions);
+		final ConditionBaseSet aConditions = preMining(theBeginTime, theNrThreads);
 
 		if (theNrThreads < 0)
 		{
-			mine(theBeginTime);
-			Process.echoMiningEnd(System.currentTimeMillis() - theBeginTime, getNumberOfSubgroups());
+			mine(theBeginTime, aConditions);
 			return;
 		}
-		else if (theNrThreads == 0)
+
+		if (theNrThreads == 0)
 			theNrThreads = Runtime.getRuntime().availableProcessors();
-
-		// make subgroup to start with, containing all elements
-		BitSet aBitSet = getAllDataBitSet(itsNrRows);
-		Subgroup aStart = new Subgroup(ConditionListBuilder.emptyList(), aBitSet, itsResult);
-
-		// set number of true positives for dataset
-		if (isPOCSetting())
-			aStart.setTertiaryStatistic(itsQualityMeasure.getNrPositives());
-
-		if (itsSearchParameters.getBeamSeed() == null)
-			itsCandidateQueue = new CandidateQueue(itsSearchParameters, new Candidate(aStart));
-		else
-		{
-			// using a different CandidateQueue constructor would
-			// make this code much cleaner, and avoid any crash
-
-			//List<ConditionList> aBeamSeed = itsSearchParameters.getBeamSeed();
-			List<ConditionListA> aBeamSeed = itsSearchParameters.getBeamSeed();
-			//ConditionList aFirstConditionList = aBeamSeed.get(0);
-			ConditionListA aFirstConditionList = aBeamSeed.get(0);
-			//TODO there may be no members, in which case the following statement crashes
-			BitSet aFirstMembers = itsTable.evaluate(aFirstConditionList);
-			Subgroup aFirstSubgroup = new Subgroup(aFirstConditionList, aFirstMembers, itsResult);
-			CandidateQueue aSeededCandidateQueue = new CandidateQueue(itsSearchParameters, new Candidate(aFirstSubgroup));
-			aBeamSeed.remove(0); // does a full array-copy of aBeamSeed
-			int aNrEmptySeeds = 0;
-			//for (ConditionList aConditionList : aBeamSeed)
-			for (ConditionListA aConditionList : aBeamSeed)
-			//for (int i = 1, j = aBeamSeed.size(); i < j; ++i)
-			{
-				//ConditionList aConditionList = aBeamSeed.get(i);
-				Log.logCommandLine(aConditionList.toString());
-				BitSet aMembers = itsTable.evaluate(aConditionList);
-				if (aMembers.cardinality()>0)
-				{
-					Subgroup aSubgroup = new Subgroup(aConditionList,aMembers,itsResult);
-					aSeededCandidateQueue.add(new Candidate(aSubgroup));
-				}
-				else
-					aNrEmptySeeds++;
-			}
-			itsCandidateQueue = aSeededCandidateQueue;
-			if (aNrEmptySeeds>0)
-				Log.logCommandLine("Number of empty seeds discarded: "+aNrEmptySeeds);
-			Log.logCommandLine("Beam Seed size: " + itsCandidateQueue.size());
-		}
-
-		final int aSearchDepth = itsSearchParameters.getSearchDepth();
-
 		/*
 		 * essential multi-thread setup
 		 * uses semaphores so only nrThreads can run at the same time
@@ -581,6 +455,7 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 		 */
 		ExecutorService es = Executors.newFixedThreadPool(theNrThreads);
 		Semaphore s = new Semaphore(theNrThreads);
+		int aSearchDepth = itsSearchParameters.getSearchDepth();
 
 		while (!isTimeToStop())
 		{
@@ -588,7 +463,6 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 			try { s.acquire(); }
 			catch (InterruptedException e) { e.printStackTrace(); }
 
-			Candidate aCandidate = null;
 			/*
 			 * if other threads still have Candidates to add they
 			 * are blocked from doing so through this lock on
@@ -601,7 +475,7 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 			 * NOTE for beam search strategies (COVER-BASED/ BEAM)
 			 * CandidateQueue will moveToNext level upon depletion
 			 * of the current one, overriding the current one with
-			 * the next, and creation a new next level
+			 * the next, and creating a new next level
 			 * therefore only after all but the last Candidates are
 			 * processed (added to next level) can we take the last
 			 * one and let the next level become the current
@@ -610,6 +484,7 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 			 * are thread save, we need a compound action here
 			 * so synchronized is still needed
 			 */
+			Candidate aCandidate = null;
 			synchronized (itsCandidateQueue)
 			{
 				final int aTotalSize = itsCandidateQueue.size();
@@ -632,10 +507,9 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 
 				// Candidate should not be in CandidateQueue 
 				assert (aSubgroup.getDepth() < aSearchDepth);
-// FIXME a subgroup of size 0 or 1 can not be refined, check and disallow
-				//assert (aSubgroup.getCoverage() > 1);
+				assert (aSubgroup.getCoverage() > 1);
 
-				es.execute(new Test(aSubgroup, aSearchDepth, s, aConditions));
+				es.execute(new Test(aSubgroup, s, aConditions));
 			}
 			// queue was empty, but other threads were running, they
 			// may be in the process of adding new Candidates
@@ -662,44 +536,58 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 		// wait for last active threads to complete
 		while(!es.isTerminated()) {};
 
-		Process.echoMiningEnd(System.currentTimeMillis() - theBeginTime, getNumberOfSubgroups());
+		postMining(System.currentTimeMillis() - theBeginTime);
 
-		Log.logCommandLine("number of candidates: " + itsCandidateCount.get());
-		if (aQualityMeasure == QM.COOKS_DISTANCE)
+		// XXX MM : debug info not useful for general use
+		//Log.logCommandLine(String.format("CANDIDATES: %s\tFILTERED: %s\tRATIO:%f", itsCandidateCount.toString(), TOTAL_FILTERED.toString(), (TOTAL_FILTERED.doubleValue()/(itsCandidateCount.doubleValue()+TOTAL_FILTERED.doubleValue()))));
+	}
+
+	private final ConditionBaseSet preMining(long theBeginTime, int theNrThreads)
+	{
+		// setup
+		// TODO this should not be here but in the SINGLE_NOMINAL constructor
+		loadExternalKnowledge();
+
+		// not in Constructor, Table / SearchParameters may change
+		// TODO not sure if this is still true
+		final ConditionBaseSet aConditions = new ConditionBaseSet(itsTable, itsSearchParameters);
+		logExperimentSettings(aConditions);
+
+		// make subgroup to start with, containing all elements
+		BitSet aBitSet = getAllDataBitSet(itsNrRows);
+		Subgroup aStart = new Subgroup(ConditionListBuilder.emptyList(), aBitSet, itsResult);
+
+		// set number of true positives for dataset
+		if (isPOCSetting())
+			aStart.setTertiaryStatistic(itsQualityMeasure.getNrPositives());
+
+		if ((itsSearchParameters.getBeamSeed() == null) || (theNrThreads < 0))
+			itsCandidateQueue = new CandidateQueue(itsSearchParameters, new Candidate(aStart));
+		else
+			itsCandidateQueue = getCandidateQueueFromBeamSeed();
+
+		prepareData(isPOCSetting(), itsBinaryTarget, itsTable.getColumns());
+
+		long anEndTime = theBeginTime + (long) (((double) itsSearchParameters.getMaximumTime()) * 60.0 * 1000.0);
+		itsEndTime = (anEndTime <= theBeginTime) ? Long.MAX_VALUE : anEndTime;
+
+		return aConditions;
+	}
+
+	private final void loadExternalKnowledge()
+	{
+		final QM aQualityMeasure = itsSearchParameters.getQualityMeasure();
+
+		// fill the conditionList of local and global knowledge, Rob
+		if (aQualityMeasure == QM.PROP_SCORE_WRACC || aQualityMeasure == QM.PROP_SCORE_RATIO)
 		{
-			Log.logCommandLine("Bound seven computed " + getNrBoundSeven() + " times");
-			Log.logCommandLine("Bound six   computed " + getNrBoundSix() + " times");
-			Log.logCommandLine("Bound five  computed " + getNrBoundFive() + " times");
-			Log.logCommandLine("Bound four  computed " + getNrBoundFour() + " times");
-			Log.logCommandLine("Bound seven fired " + getNrBoundSevenFired() + " times");
-			Log.logCommandLine("Bound six   fired " + getNrBoundSixFired() + " times");
-			Log.logCommandLine("Bound five  fired " + getNrBoundFiveFired() + " times");
-			Log.logCommandLine("Bound four  fired " + getNrBoundFourFired() + " times");
-			Log.logCommandLine("Rank deficient models: " + getNrRankDef());
+			ExternalKnowledgeFileLoader extKnowledge;
+			extKnowledge = new ExternalKnowledgeFileLoader(new File("").getAbsolutePath());
+			extKnowledge.createConditionListLocal(itsTable);
+			extKnowledge.createConditionListGlobal(itsTable);
+			itsLocalKnowledge = new LocalKnowledge(extKnowledge.getLocal(), itsBinaryTarget);
+			itsGlobalKnowledge = new GlobalKnowledge(extKnowledge.getGlobal(), itsBinaryTarget);
 		}
-		Log.logCommandLine("number of subgroups: " + getNumberOfSubgroups());
-
-		itsResult.setIDs(); //assign 1 to n to subgroups, for future reference in subsets
-		if ((itsSearchParameters.getTargetType() == TargetType.MULTI_LABEL) && itsSearchParameters.getPostProcessingDoAutoRun())
-			postprocess();
-
-		//now just for cover-based beam search post selection
-		// TODO MM see note at SubgroupSet.postProcess(), all itsResults will remain in memory
-		SubgroupSet aSet = itsResult.postProcess(itsSearchParameters.getSearchStrategy());
-		// FIXME MM hack to deal with strange postProcess implementation
-		if (itsResult != aSet)
-		{
-			// no reassign, we want itsResult to be final
-			itsResult.clear();
-			itsResult.addAll(aSet);
-		}
-
-		// in MULTI_LABEL, order may have changed
-		// in COVER_BASED_BEAM_SELECTION, subgroups may have been removed
-		itsResult.setIDs(); //assign 1 to n to subgroups, for future reference in subsets
-// XXX MM : debug info not useful for general use
-//Log.logCommandLine(String.format("CANDIDATES: %s\tFILTERED: %s\tRATIO:%f", itsCandidateCount.toString(), TOTAL_FILTERED.toString(), (TOTAL_FILTERED.doubleValue()/(itsCandidateCount.doubleValue()+TOTAL_FILTERED.doubleValue()))));
-		deleteSortData(itsTable.getColumns());
 	}
 
 	private void logExperimentSettings(ConditionBaseSet theConditionBaseSet)
@@ -710,33 +598,33 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 		Log.logCommandLine(theConditionBaseSet.toString());
 	}
 
-	private static final void prepareNominalData(List<Column> theColumns)
+	private static final void prepareData(boolean isPOCSetting, BitSet theBinaryTarget, List<Column> theColumns)
 	{
+		// just wraps itsDistinctValues in a shared unmodifiable Collection
 		for (Column c : theColumns)
 			if (c.getType() == AttributeType.NOMINAL)
 				c.buildSharedDomain();
-	}
 
-	private static final void preparePOCData(boolean isPOCSetting, BitSet theBinaryTarget, List<Column> theColumns)
-	{
+		// some settings should always build a sorted domain for all TargetTypes
+
 		// currently numeric with EQUALS is not a valid setting
 		if (!isPOCSetting)
 			return;
 
-		Timer outer = new Timer();
+		Timer aTotal = new Timer();
 
 		for (Column c : theColumns)
 		{
-			if (c.getType() == AttributeType.NUMERIC)
-			{
-				Log.logCommandLine(c.getName() + " building sorted domain");
-				Timer t = new Timer();
-				c.buildSorted(theBinaryTarget); // build SORTED and SORT_INDEX
-				Log.logCommandLine(t.getElapsedTimeString());
-			}
+			if (c.getType() != AttributeType.NUMERIC)
+				continue;
+
+			Log.logCommandLine(c.getName() + " building sorted domain");
+			Timer t = new Timer();
+			c.buildSorted(theBinaryTarget); // build SORTED and SORT_INDEX
+			Log.logCommandLine(t.getElapsedTimeString());
 		}
 
-		Log.logCommandLine("total sorting time: " + outer.getElapsedTimeString());
+		Log.logCommandLine("total sorting time: " + aTotal.getElapsedTimeString());
 	}
 
 	// not SINGLE_NOMINAL with ValueSet, NUMERIC_INTERVALS/CONSECUTIVE_ALL|BEST
@@ -761,6 +649,44 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 			c.SORTED = null;
 			c.SORT_INDEX = null;
 		}
+	}
+
+	private final CandidateQueue getCandidateQueueFromBeamSeed()
+	{
+		//List<ConditionList> aBeamSeed = itsSearchParameters.getBeamSeed();
+		List<ConditionListA> aBeamSeed = itsSearchParameters.getBeamSeed();
+		//ConditionList aFirstConditionList = aBeamSeed.get(0);
+		ConditionListA aFirstConditionList = aBeamSeed.get(0);
+		//TODO there may be no members, in which case the following statement crashes
+		BitSet aFirstMembers = itsTable.evaluate(aFirstConditionList);
+		Subgroup aFirstSubgroup = new Subgroup(aFirstConditionList, aFirstMembers, itsResult);
+		CandidateQueue aSeededCandidateQueue = new CandidateQueue(itsSearchParameters, new Candidate(aFirstSubgroup));
+		// no useful Refinement from this can result
+		if (aFirstSubgroup.getCoverage() <= 1)
+			aSeededCandidateQueue.removeFirst();
+
+		int aNrEmptySeeds = 0;
+		//for (ConditionList aConditionList : aBeamSeed)
+		for (ConditionListA aConditionList : aBeamSeed)
+		//for (int i = 1, j = aBeamSeed.size(); i < j; ++i)
+		{
+			//ConditionList aConditionList = aBeamSeed.get(i);
+			Log.logCommandLine(aConditionList.toString());
+			BitSet aMembers = itsTable.evaluate(aConditionList);
+			if (aMembers.cardinality() > 0)
+			{
+				Subgroup aSubgroup = new Subgroup(aConditionList,aMembers,itsResult);
+				aSeededCandidateQueue.add(new Candidate(aSubgroup));
+			}
+			else
+				aNrEmptySeeds++;
+		}
+
+		if (aNrEmptySeeds > 0)
+			Log.logCommandLine("Number of empty seeds discarded: "+aNrEmptySeeds);
+		Log.logCommandLine("Beam Seed size: " + aSeededCandidateQueue.size());
+
+		return aSeededCandidateQueue;
 	}
 
 	private final boolean isTimeToStop()
@@ -819,19 +745,13 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 	private class Test implements Runnable
 	{
 		private final Subgroup itsSubgroup;
-		private final int itsSearchDepth;
 		private final Semaphore itsSemaphore;
 		private final ConditionBaseSet itsConditionBaseSet;
 
 		// XXX MM - theSearchDepth parameter will be removed
-		public Test(Subgroup theSubgroup, int theSearchDepth, Semaphore theSemaphore, ConditionBaseSet theConditionBaseSet)
+		public Test(Subgroup theSubgroup, Semaphore theSemaphore, ConditionBaseSet theConditionBaseSet)
 		{
-			assert (theSubgroup.getDepth() < theSearchDepth);
-// FIXME a subgroup of size 0 or 1 can not be refined, check and disallow
-			//assert (theSubgroup.getCoverage() > 1);
-
 			itsSubgroup = theSubgroup;
-			itsSearchDepth = theSearchDepth;
 			itsSemaphore = theSemaphore;
 			itsConditionBaseSet = theConditionBaseSet;
 		}
@@ -839,31 +759,160 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 		@Override
 		public void run()
 		{
-			// XXX MM - can be removed, check by Constructor
-			// in the meantime getDepth() should not have changed
-			if (itsSubgroup.getDepth() < itsSearchDepth)
+			assert (itsSubgroup.getDepth() < itsSearchParameters.getSearchDepth());
+
+			RefinementList aRefinementList = new RefinementList(itsSubgroup, itsConditionBaseSet);
+			// .getMembers() creates expensive clone, reuse
+			final BitSet aMembers = itsSubgroup.getMembers();
+
+			for (int i = 0, j = aRefinementList.size(); i < j && !isTimeToStop(); i++)
 			{
-				RefinementList aRefinementList = new RefinementList(itsSubgroup, itsConditionBaseSet);
-				// .getMembers() creates expensive clone, reuse
-				final BitSet aMembers = itsSubgroup.getMembers();
+				Refinement aRefinement = aRefinementList.get(i);
 
-				for (int i = 0, j = aRefinementList.size(); i < j; i++)
-				{
-					if (isTimeToStop())
-						break;
-
-					Refinement aRefinement = aRefinementList.get(i);
-
-					ConditionBase aConditionBase = aRefinement.getConditionBase();
-					// if refinement is (num_attr = value) then treat it as nominal
-					if (aConditionBase.getColumn().getType() == AttributeType.NUMERIC && aConditionBase.getOperator() != Operator.EQUALS)
-						evaluateNumericRefinements(aMembers, aRefinement);
-					else
-						evaluateNominalBinaryRefinements(aMembers, aRefinement);
-				}
+				ConditionBase aConditionBase = aRefinement.getConditionBase();
+				// if refinement is (num_attr = value) then treat it as nominal
+				if (aConditionBase.getColumn().getType() == AttributeType.NUMERIC && aConditionBase.getOperator() != Operator.EQUALS)
+					evaluateNumericRefinements(aMembers, aRefinement);
+				else
+					evaluateNominalBinaryRefinements(aMembers, aRefinement);
 			}
+
 			itsSemaphore.release();
 		}
+	}
+
+	////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////
+	///// when done                                                        /////
+	////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////
+
+	private void postMining(long theElapsedTime)
+	{
+		Process.echoMiningEnd(theElapsedTime, getNumberOfSubgroups());
+
+		deleteSortData(itsTable.getColumns());
+
+		// postProcessCook() output is supposed to go in between
+		Log.logCommandLine("number of candidates: " + itsCandidateCount.get());
+		postProcessCook();
+		Log.logCommandLine("number of subgroups: " + getNumberOfSubgroups());
+
+		// assign 1 to n to subgroups, for future reference in subsets
+		itsResult.setIDs();
+
+		postProcessMultiLabelAutoRun(); // IDs must be set first,  might set new
+		postProcessCBBS();
+	}
+
+	private void postProcessCook()
+	{
+		if (itsSearchParameters.getQualityMeasure() != QM.COOKS_DISTANCE)
+			return;
+
+		Log.logCommandLine("Bound seven computed "   + itsBoundSevenCount + " times");
+		Log.logCommandLine("Bound six   computed "   + itsBoundSixCount   + " times");
+		Log.logCommandLine("Bound five  computed "   + itsBoundFiveCount  + " times");
+		Log.logCommandLine("Bound four  computed "   + itsBoundFourCount  + " times");
+		Log.logCommandLine("Bound seven fired "      + itsBoundSevenFired + " times");
+		Log.logCommandLine("Bound six   fired "      + itsBoundSixFired   + " times");
+		Log.logCommandLine("Bound five  fired "      + itsBoundFiveFired  + " times");
+		Log.logCommandLine("Bound four  fired "      + itsBoundFourFired  + " times");
+		Log.logCommandLine("Rank deficient models: " + itsRankDefCount);
+	}
+/*
+TODO for stable jar, disabled, causes compile errors, reinstate later
+	private void addToBuffer(Subgroup theSubgroup )
+	{
+		int aCoverage = theSubgroup.getCoverage();
+		itsBaseRM.computeRemovedIndices(theSubgroup.getMembers(), aCoverage);
+		itsBaseRM.updateSquaredResidualSum();
+		itsBaseRM.updateRemovedTrace();
+		double aPriority = itsBaseRM.computeBoundFour(aCoverage);
+		Log.logCommandLine(theSubgroup.getConditions().toString() + " --- bound : " + aPriority);
+		// @deprecated constructor
+		itsBuffer.add(new Candidate(theSubgroup, aPriority));
+	}
+*/
+
+	private void flushBuffer()
+	{
+		if (itsBuffer == null)
+			return;
+		for (Iterator<Candidate> it = itsBuffer.iterator(); it.hasNext(); )
+		{
+			Candidate aCandidate = it.next();
+			Subgroup aSubgroup = aCandidate.getSubgroup();
+			checkAndLog(aSubgroup, itsNrRows);
+		}
+		itsBuffer = new TreeSet<Candidate>();
+	}
+
+	private void postProcessCBBS()
+	{
+		// just for cover-based beam search post selection, see note at
+		// SubgroupSet.postProcess(), all itsResults will remain in memory
+		SubgroupSet aSet = itsResult.postProcess(itsSearchParameters.getSearchStrategy());
+
+		// FIXME MM hack to deal with strange postProcess implementation
+		if (itsResult != aSet)
+		{
+			// no reassign, we want itsResult to be final
+			itsResult.clear();
+			itsResult.addAll(aSet);
+			// in COVER_BASED_BEAM_SELECTION, subgroups may have been removed
+			itsResult.setIDs();
+		}
+	}
+
+	private void postProcessMultiLabelAutoRun()
+	{
+		if (!((itsSearchParameters.getTargetType() == TargetType.MULTI_LABEL) && itsSearchParameters.getPostProcessingDoAutoRun()))
+			return;
+
+		if (itsResult.isEmpty())
+			return;
+
+		// Create quality measures on whole dataset
+		Log.logCommandLine("Creating quality measures.");
+		int aPostProcessingCount = itsSearchParameters.getPostProcessingCount();
+		double aPostProcessingCountSquare = Math.pow(aPostProcessingCount, 2.0);
+
+		QualityMeasure[] aQMs = new QualityMeasure[aPostProcessingCount];
+		for (int i = 0; i < aPostProcessingCount; i++)
+		{
+			Bayesian aGlobalBayesian = new Bayesian(itsBinaryTable);
+			aGlobalBayesian.climb();
+			aQMs[i] = new QualityMeasure(itsSearchParameters, aGlobalBayesian.getDAG(), itsNrRows);
+		}
+
+		// Iterate over subgroups
+		SubgroupSet aNewSubgroupSet = new SubgroupSet(itsSearchParameters.getMaximumSubgroups(), itsNrRows);
+		// most methods of SubgroupSet are not thread save, but this is
+		// no problem for this method as it is run by a single thread
+		// however all itsResult sets, of all refinement depths,  will
+		// be kept in memory
+		// see comment in SubgroupSet.postProcess()
+		for (Subgroup s : itsResult)
+		{
+			Log.logCommandLine("Postprocessing subgroup " + s.getID());
+			double aTotalQuality = 0.0;
+			BinaryTable aSubgroupTable = itsBinaryTable.selectRows(s.getMembers());
+			for (int i = 0; i < aPostProcessingCount; i++)
+			{
+				Bayesian aLocalBayesian = new Bayesian(aSubgroupTable);
+				aLocalBayesian.climb();
+				s.setDAG(aLocalBayesian.getDAG());
+				for (int j = 0; j < aPostProcessingCount; j++)
+					aTotalQuality += aQMs[j].calculate(s);
+			}
+			s.setMeasureValue(aTotalQuality / aPostProcessingCountSquare);
+			s.renouncePValue();
+			aNewSubgroupSet.add(s);
+		}
+		aNewSubgroupSet.setIDs();
+		itsResult.clear();
+		itsResult.addAll(aNewSubgroupSet);
 	}
 
 	////////////////////////////////////////////////////////////////////////////
@@ -894,8 +943,8 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 		Column aColumn = aConditionBase.getColumn();
 		ConditionListA aParentConditions = (isFilterNull ? null : aParent.getConditions());
 
-		// no useful Refinements are possible 
-		if (aColumn.getCardinality() != 2)
+		// no useful Refinements are possible
+		if (aColumn.getCardinality() < 2)
 			return;
 
 		BitSet aChildMembers = aColumn.evaluateBinary(theParentMembers, false);
@@ -2788,91 +2837,14 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		return itsQualityMeasure.calculate(theSubgroup);
 	}
 
-	private void postprocess()
-	{
-		if (itsResult.isEmpty())
-			return;
+	////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////
+	///// general methods to return information about this instance        /////
+	////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////
 
-		// Create quality measures on whole dataset
-		Log.logCommandLine("Creating quality measures.");
-		int aPostProcessingCount = itsSearchParameters.getPostProcessingCount();
-		double aPostProcessingCountSquare = Math.pow(aPostProcessingCount, 2);
-
-		QualityMeasure[] aQMs = new QualityMeasure[aPostProcessingCount];
-		for (int i = 0; i < aPostProcessingCount; i++)
-		{
-			Bayesian aGlobalBayesian = new Bayesian(itsBinaryTable);
-			aGlobalBayesian.climb();
-			aQMs[i] = new QualityMeasure(itsSearchParameters, aGlobalBayesian.getDAG(), itsNrRows);
-		}
-
-		// Iterate over subgroups
-		SubgroupSet aNewSubgroupSet = new SubgroupSet(itsSearchParameters.getMaximumSubgroups(), itsNrRows);
-		// most methods of SubgroupSet are not thread save, but this is
-		// no problem for this method as it is run by a single thread
-		// however all itsResult sets, of all refinement depths,  will
-		// be kept in memory
-		// see comment in SubgroupSet.postProcess()
-		for (Subgroup s : itsResult)
-		{
-			Log.logCommandLine("Postprocessing subgroup " + s.getID());
-			double aTotalQuality = 0.0;
-			BinaryTable aSubgroupTable = itsBinaryTable.selectRows(s.getMembers());
-			for (int i = 0; i < aPostProcessingCount; i++)
-			{
-				Bayesian aLocalBayesian = new Bayesian(aSubgroupTable);
-				aLocalBayesian.climb();
-				s.setDAG(aLocalBayesian.getDAG());
-				for (int j = 0; j < aPostProcessingCount; j++)
-					aTotalQuality += aQMs[j].calculate(s);
-			}
-			s.setMeasureValue(aTotalQuality / aPostProcessingCountSquare);
-			s.renouncePValue();
-			aNewSubgroupSet.add(s);
-		}
-		aNewSubgroupSet.setIDs();
-		itsResult.clear();
-		itsResult.addAll(aNewSubgroupSet);
-	}
-
-/*
-TODO for stable jar, disabled, causes compile errors, reinstate later
-	private void addToBuffer(Subgroup theSubgroup )
-	{
-		int aCoverage = theSubgroup.getCoverage();
-		itsBaseRM.computeRemovedIndices(theSubgroup.getMembers(), aCoverage);
-		itsBaseRM.updateSquaredResidualSum();
-		itsBaseRM.updateRemovedTrace();
-		double aPriority = itsBaseRM.computeBoundFour(aCoverage);
-		Log.logCommandLine(theSubgroup.getConditions().toString() + " --- bound : " + aPriority);
-		// @deprecated constructor
-		itsBuffer.add(new Candidate(theSubgroup, aPriority));
-	}
-*/
-
-	private void flushBuffer()
-	{
-		if (itsBuffer == null)
-			return;
-		for (Iterator<Candidate> it = itsBuffer.iterator(); it.hasNext(); )
-		{
-			Candidate aCandidate = it.next();
-			Subgroup aSubgroup = aCandidate.getSubgroup();
-			checkAndLog(aSubgroup, itsNrRows);
-		}
-		itsBuffer = new TreeSet<Candidate>();
-	}
-
-	public int getNrBoundSeven() { return itsBoundSevenCount; }
-	public int getNrBoundSix() { return itsBoundSixCount; }
-	public int getNrBoundFive() { return itsBoundFiveCount; }
-	public int getNrBoundFour() { return itsBoundFourCount; }
-	public int getNrBoundSevenFired() { return itsBoundSevenFired; }
-	public int getNrBoundSixFired() { return itsBoundSixFired; }
-	public int getNrBoundFiveFired() { return itsBoundFiveFired; }
-	public int getNrBoundFourFired() { return itsBoundFourFired; }
-	public int getNrRankDef() { return itsRankDefCount; }
-
+	public int getNumberOfSubgroups() { return itsResult.size(); }
+	public SubgroupSet getResult() { return itsResult; }
 	public QualityMeasure getQualityMeasure() { return itsQualityMeasure; }
 	public SearchParameters getSearchParameters() { return itsSearchParameters; }
 
@@ -2887,10 +2859,6 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	{
 		return itsBaseRM;
 	}
-
-	public int getNumberOfSubgroups() { return itsResult.size(); }
-	public SubgroupSet getResult() { return itsResult; }
-	public void clearResult() { itsResult.clear(); }
 
 	/* *********************************************************************
 	 * REMOVE USELESS REFINEMENTS - MAY GO INTO DIFFERENT CLASS(ES)
