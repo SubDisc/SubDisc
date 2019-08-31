@@ -29,33 +29,30 @@ public class SubgroupDiscovery
 
 	private final SearchParameters itsSearchParameters;
 	private final Table itsTable;
-	private final int itsNrRows;		// itsTable.getNrRows()
-	private final int itsMinimumCoverage;	// itsSearchParameters.getMinimumCoverage();
-	private final int itsMaximumCoverage;	// itsNrRows * itsSearchParameters.getMaximumCoverageFraction();
+	private final int itsNrRows;          // itsTable.getNrRows()
+	private final int itsMinimumCoverage; // itsSearchParameters.getMinimumCoverage();
+	private final int itsMaximumCoverage; // itsNrRows * itsSearchParameters.getMaximumCoverageFraction();
 
 	private final QualityMeasure itsQualityMeasure;
-	private final float itsQualityMeasureMinimum;	// itsSearchParameters.getQualityMeasureMinimum();
-	private boolean ignoreQualityMinimum = false; //used for swap-randomization purposes, and to get random qualities
+	private final float itsQualityMeasureMinimum;   // itsSearchParameters.getQualityMeasureMinimum();
+	private boolean ignoreQualityMinimum = false;   //used for swap-randomization purposes, and to get random qualities
 
-	private final SubgroupSet itsResult;
-	private CandidateQueue itsCandidateQueue;
-	private AtomicLong itsCandidateCount = new AtomicLong(0);
+	// target concept type-specific information, including base models
+	private BitSet itsBinaryTarget;                 // SINGLE_NOMINAL
+	private Column itsTargetRankings;               // SINGLE_NOMINAL (label ranking)
+	private Column itsNumericTarget;                // SINGLE_NUMERIC
+	private Column itsPrimaryColumn;                // DOUBLE_CORRELATION / DOUBLE_REGRESSION / SCAPE
+	private Column itsSecondaryColumn;              // DOUBLE_CORRELATION / DOUBLE_REGRESSION / SCAPE
+	private CorrelationMeasure itsBaseCM;           // DOUBLE_CORRELATION
+	private RegressionMeasure itsBaseRM;            // DOUBLE_REGRESSION
+	private BinaryTable itsBinaryTable;             // MULTI_LABEL
+	private List<Column> itsTargets;                // MULTI_LABEL / MULTI_NUMERIC
+	public ProbabilityDensityFunction_ND itsPDF_ND; // MULTI_NUMERIC
 
-	//target concept type-specific information, including base models
-	private BitSet itsBinaryTarget;		//SINGLE_NOMINAL
-	private Column itsTargetRankings;	//SINGLE_NOMINAL (label ranking)
-	private Column itsNumericTarget;	//SINGLE_NUMERIC
-	private Column itsPrimaryColumn;	//DOUBLE_CORRELATION / DOUBLE_REGRESSION / SCAPE
-	private Column itsSecondaryColumn;	//DOUBLE_CORRELATION / DOUBLE_REGRESSION / SCAPE
-	private CorrelationMeasure itsBaseCM;	//DOUBLE_CORRELATION
-	private RegressionMeasure itsBaseRM;	//DOUBLE_REGRESSION
-	private BinaryTable itsBinaryTable;	//MULTI_LABEL
-	private List<Column> itsTargets;	//MULTI_LABEL / MULTI_NUMERIC
-	public ProbabilityDensityFunction_ND itsPDF_ND; //MULTI_NUMERIC
+	private LocalKnowledge itsLocalKnowledge;       // PROPENSITY SCORE BASED
+	private GlobalKnowledge itsGlobalKnowledge;     // PROPENSITY SCORE BASED
 
-	private LocalKnowledge itsLocalKnowledge; //PROPENSITY SCORE BASED
-	private GlobalKnowledge itsGlobalKnowledge;//PROPENSITY SCORE BASED
-
+	// only use in disabled Cook code
 	private int itsBoundSevenCount;
 	private int itsBoundSixCount;
 	private int itsBoundFiveCount;
@@ -65,9 +62,23 @@ public class SubgroupDiscovery
 	private int itsBoundFiveFired;
 	private int itsBoundFourFired;
 	private int itsRankDefCount;
-
 	private TreeSet<Candidate> itsBuffer;
-	private JFrame itsMainWindow; //for feeding back progress info
+
+	// candidate and result set
+	private AtomicLong itsCandidateCount = new AtomicLong(0);
+	private CandidateQueue itsCandidateQueue;
+	private final SubgroupSet itsResult;
+
+	// for mining
+	private long itsEndTime = Long.MIN_VALUE;
+
+	// for feeding back progress info
+	// to throttle GUI update, only one thread can obtain lock and update time
+	private static final long INTERVAL = 100_000_000L;
+	private static final DecimalFormat FORMATTER = (DecimalFormat) NumberFormat.getNumberInstance(Locale.GERMAN);
+	private JFrame itsMainWindow;
+	private final Lock itsClockLock = new ReentrantLock();
+	private long itsThen = 0L;
 
 //	public SubgroupDiscovery(SearchParameters theSearchParameters, Table theTable, JFrame theMainWindow)
 //	{
@@ -360,6 +371,14 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 		ignoreQualityMinimum = true;
 	}
 
+	////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////
+	///// start of mine() and related methods                              /////
+	///// first version is the deprecated original (remains for debugging) /////
+	///// only second version can be called by external code               /////
+	////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////
+
 	/*
 	 * this method remains only for debugging purposes
 	 * it should not be called by code outside this class
@@ -468,12 +487,777 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 		deleteSortData(itsTable.getColumns());
 	}
 
+	/* use theNrThreads < 0 to run old mine(theBeginTime) */
+	public void mine(long theBeginTime, int theNrThreads)
+	{
+		long anEndTime = theBeginTime + (long) (((double) itsSearchParameters.getMaximumTime()) * 60.0 * 1000.0);
+		itsEndTime = (anEndTime <= theBeginTime) ? Long.MAX_VALUE : anEndTime;
+
+		List<Column> aColumns = itsTable.getColumns();
+		prepareNominalData(aColumns);
+		// some settings should always build a sorted domain for all TargetTypes
+		preparePOCData(isPOCSetting(), itsBinaryTarget, aColumns);
+
+		final QM aQualityMeasure = itsSearchParameters.getQualityMeasure();
+
+		// fill the conditionList of local and global knowledge, Rob
+		if (aQualityMeasure == QM.PROP_SCORE_WRACC || aQualityMeasure == QM.PROP_SCORE_RATIO)
+		{
+			ExternalKnowledgeFileLoader extKnowledge;
+			extKnowledge = new ExternalKnowledgeFileLoader(new File("").getAbsolutePath());
+			extKnowledge.createConditionListLocal(itsTable);
+			extKnowledge.createConditionListGlobal(itsTable);
+			itsLocalKnowledge = new LocalKnowledge(extKnowledge.getLocal(), itsBinaryTarget);
+			itsGlobalKnowledge = new GlobalKnowledge(extKnowledge.getGlobal(), itsBinaryTarget);
+		}
+
+		// not in Constructor, Table / SearchParameters may change
+		final ConditionBaseSet aConditions = new ConditionBaseSet(itsTable, itsSearchParameters);
+
+		logExperimentSettings(aConditions);
+
+		if (theNrThreads < 0)
+		{
+			mine(theBeginTime);
+			Process.echoMiningEnd(System.currentTimeMillis() - theBeginTime, getNumberOfSubgroups());
+			return;
+		}
+		else if (theNrThreads == 0)
+			theNrThreads = Runtime.getRuntime().availableProcessors();
+
+		// make subgroup to start with, containing all elements
+		BitSet aBitSet = getAllDataBitSet(itsNrRows);
+		Subgroup aStart = new Subgroup(ConditionListBuilder.emptyList(), aBitSet, itsResult);
+
+		// set number of true positives for dataset
+		if (isPOCSetting())
+			aStart.setTertiaryStatistic(itsQualityMeasure.getNrPositives());
+
+		if (itsSearchParameters.getBeamSeed() == null)
+			itsCandidateQueue = new CandidateQueue(itsSearchParameters, new Candidate(aStart));
+		else
+		{
+			// using a different CandidateQueue constructor would
+			// make this code much cleaner, and avoid any crash
+
+			//List<ConditionList> aBeamSeed = itsSearchParameters.getBeamSeed();
+			List<ConditionListA> aBeamSeed = itsSearchParameters.getBeamSeed();
+			//ConditionList aFirstConditionList = aBeamSeed.get(0);
+			ConditionListA aFirstConditionList = aBeamSeed.get(0);
+			//TODO there may be no members, in which case the following statement crashes
+			BitSet aFirstMembers = itsTable.evaluate(aFirstConditionList);
+			Subgroup aFirstSubgroup = new Subgroup(aFirstConditionList, aFirstMembers, itsResult);
+			CandidateQueue aSeededCandidateQueue = new CandidateQueue(itsSearchParameters, new Candidate(aFirstSubgroup));
+			aBeamSeed.remove(0); // does a full array-copy of aBeamSeed
+			int aNrEmptySeeds = 0;
+			//for (ConditionList aConditionList : aBeamSeed)
+			for (ConditionListA aConditionList : aBeamSeed)
+			//for (int i = 1, j = aBeamSeed.size(); i < j; ++i)
+			{
+				//ConditionList aConditionList = aBeamSeed.get(i);
+				Log.logCommandLine(aConditionList.toString());
+				BitSet aMembers = itsTable.evaluate(aConditionList);
+				if (aMembers.cardinality()>0)
+				{
+					Subgroup aSubgroup = new Subgroup(aConditionList,aMembers,itsResult);
+					aSeededCandidateQueue.add(new Candidate(aSubgroup));
+				}
+				else
+					aNrEmptySeeds++;
+			}
+			itsCandidateQueue = aSeededCandidateQueue;
+			if (aNrEmptySeeds>0)
+				Log.logCommandLine("Number of empty seeds discarded: "+aNrEmptySeeds);
+			Log.logCommandLine("Beam Seed size: " + itsCandidateQueue.size());
+		}
+
+		final int aSearchDepth = itsSearchParameters.getSearchDepth();
+
+		/*
+		 * essential multi-thread setup
+		 * uses semaphores so only nrThreads can run at the same time
+		 * AND ExecutorService can only start new Test after old one
+		 * completes
+		 */
+		ExecutorService es = Executors.newFixedThreadPool(theNrThreads);
+		Semaphore s = new Semaphore(theNrThreads);
+
+		while (!isTimeToStop())
+		{
+			// wait until a Thread becomes available
+			try { s.acquire(); }
+			catch (InterruptedException e) { e.printStackTrace(); }
+
+			Candidate aCandidate = null;
+			/*
+			 * if other threads still have Candidates to add they
+			 * are blocked from doing so through this lock on
+			 * itsCandidateQueue, and therefore can not release
+			 * their permit
+			 * although they could have added their Candidates
+			 * immediately prior this lock, without releasing their
+			 * permit yet
+			 *
+			 * NOTE for beam search strategies (COVER-BASED/ BEAM)
+			 * CandidateQueue will moveToNext level upon depletion
+			 * of the current one, overriding the current one with
+			 * the next, and creation a new next level
+			 * therefore only after all but the last Candidates are
+			 * processed (added to next level) can we take the last
+			 * one and let the next level become the current
+			 *
+			 * NOTE 2 although individual methods of CandidateQueue
+			 * are thread save, we need a compound action here
+			 * so synchronized is still needed
+			 */
+			synchronized (itsCandidateQueue)
+			{
+				final int aTotalSize = itsCandidateQueue.size();
+				final boolean alone = (s.availablePermits() == theNrThreads-1);
+				// take off first Candidate from Queue
+				if (itsCandidateQueue.currentLevelQueueSize() > 0)
+					aCandidate = itsCandidateQueue.removeFirst();
+				// obviously (currentLevelQueueSize <= 0)
+				// take solely when this is only active thread
+				else if ((aTotalSize > 0) && alone)
+					aCandidate = itsCandidateQueue.removeFirst();
+				// no other thread can add new candidates
+				else if ((aTotalSize == 0) && alone)
+					break;
+			}
+
+			if (aCandidate != null)
+			{
+				Subgroup aSubgroup = aCandidate.getSubgroup();
+
+				// Candidate should not be in CandidateQueue 
+				assert (aSubgroup.getDepth() < aSearchDepth);
+// FIXME a subgroup of size 0 or 1 can not be refined, check and disallow
+				//assert (aSubgroup.getCoverage() > 1);
+
+				es.execute(new Test(aSubgroup, aSearchDepth, s, aConditions));
+			}
+			// queue was empty, but other threads were running, they
+			// may be in the process of adding new Candidates
+			// wait until at least one finishes, or this one becomes
+			// only thread
+			else
+			{
+				try
+				{
+					final int aNrFree = s.drainPermits();
+					if (aNrFree < theNrThreads-1)
+					{
+						s.acquire();
+						s.release(aNrFree+2);
+					}
+					else
+						s.release(aNrFree+1);
+					//continue;
+				}
+				catch (InterruptedException e) { e.printStackTrace(); }
+			}
+		}
+		es.shutdown();
+		// wait for last active threads to complete
+		while(!es.isTerminated()) {};
+
+		Process.echoMiningEnd(System.currentTimeMillis() - theBeginTime, getNumberOfSubgroups());
+
+		Log.logCommandLine("number of candidates: " + itsCandidateCount.get());
+		if (aQualityMeasure == QM.COOKS_DISTANCE)
+		{
+			Log.logCommandLine("Bound seven computed " + getNrBoundSeven() + " times");
+			Log.logCommandLine("Bound six   computed " + getNrBoundSix() + " times");
+			Log.logCommandLine("Bound five  computed " + getNrBoundFive() + " times");
+			Log.logCommandLine("Bound four  computed " + getNrBoundFour() + " times");
+			Log.logCommandLine("Bound seven fired " + getNrBoundSevenFired() + " times");
+			Log.logCommandLine("Bound six   fired " + getNrBoundSixFired() + " times");
+			Log.logCommandLine("Bound five  fired " + getNrBoundFiveFired() + " times");
+			Log.logCommandLine("Bound four  fired " + getNrBoundFourFired() + " times");
+			Log.logCommandLine("Rank deficient models: " + getNrRankDef());
+		}
+		Log.logCommandLine("number of subgroups: " + getNumberOfSubgroups());
+
+		itsResult.setIDs(); //assign 1 to n to subgroups, for future reference in subsets
+		if ((itsSearchParameters.getTargetType() == TargetType.MULTI_LABEL) && itsSearchParameters.getPostProcessingDoAutoRun())
+			postprocess();
+
+		//now just for cover-based beam search post selection
+		// TODO MM see note at SubgroupSet.postProcess(), all itsResults will remain in memory
+		SubgroupSet aSet = itsResult.postProcess(itsSearchParameters.getSearchStrategy());
+		// FIXME MM hack to deal with strange postProcess implementation
+		if (itsResult != aSet)
+		{
+			// no reassign, we want itsResult to be final
+			itsResult.clear();
+			itsResult.addAll(aSet);
+		}
+
+		// in MULTI_LABEL, order may have changed
+		// in COVER_BASED_BEAM_SELECTION, subgroups may have been removed
+		itsResult.setIDs(); //assign 1 to n to subgroups, for future reference in subsets
+// XXX MM : debug info not useful for general use
+//Log.logCommandLine(String.format("CANDIDATES: %s\tFILTERED: %s\tRATIO:%f", itsCandidateCount.toString(), TOTAL_FILTERED.toString(), (TOTAL_FILTERED.doubleValue()/(itsCandidateCount.doubleValue()+TOTAL_FILTERED.doubleValue()))));
+		deleteSortData(itsTable.getColumns());
+	}
+
 	private void logExperimentSettings(ConditionBaseSet theConditionBaseSet)
 	{
 		Log.logCommandLine("");
 		Log.logCommandLine(itsSearchParameters.getTargetConcept().toString());
 		Log.logCommandLine(itsSearchParameters.toString());
 		Log.logCommandLine(theConditionBaseSet.toString());
+	}
+
+	private static final void prepareNominalData(List<Column> theColumns)
+	{
+		for (Column c : theColumns)
+			if (c.getType() == AttributeType.NOMINAL)
+				c.buildSharedDomain();
+	}
+
+	private static final void preparePOCData(boolean isPOCSetting, BitSet theBinaryTarget, List<Column> theColumns)
+	{
+		// currently numeric with EQUALS is not a valid setting
+		if (!isPOCSetting)
+			return;
+
+		Timer outer = new Timer();
+
+		for (Column c : theColumns)
+		{
+			if (c.getType() == AttributeType.NUMERIC)
+			{
+				Log.logCommandLine(c.getName() + " building sorted domain");
+				Timer t = new Timer();
+				c.buildSorted(theBinaryTarget); // build SORTED and SORT_INDEX
+				Log.logCommandLine(t.getElapsedTimeString());
+			}
+		}
+
+		Log.logCommandLine("total sorting time: " + outer.getElapsedTimeString());
+	}
+
+	// not SINGLE_NOMINAL with ValueSet, NUMERIC_INTERVALS/CONSECUTIVE_ALL|BEST
+	private final boolean isPOCSetting()
+	{
+		EnumSet<NumericStrategy> aValid = EnumSet.of(
+											NumericStrategy.NUMERIC_ALL,
+											NumericStrategy.NUMERIC_BEST,
+											NumericStrategy.NUMERIC_BEST_BINS,
+											NumericStrategy.NUMERIC_BINS);
+
+		SearchParameters s = itsSearchParameters;
+		return (aValid.contains(s.getNumericStrategy()) &&
+				((s.getTargetType() == TargetType.SINGLE_NOMINAL) && !s.getNominalSets()) &&
+				ENABLE_POC_SETTINGS);
+	}
+
+	private static final void deleteSortData(List<Column> theColumns)
+	{
+		for (Column c : theColumns)
+		{
+			c.SORTED = null;
+			c.SORT_INDEX = null;
+		}
+	}
+
+	private final boolean isTimeToStop()
+	{
+		if (System.currentTimeMillis() > itsEndTime)
+			return true;
+
+		if ((itsMainWindow != null) && ((MiningWindow) itsMainWindow).isCancelled())
+			return true;
+
+		return false;
+	}
+
+	// NOTE itsCandidateCount and currently refined subgroup are unrelated
+	private final void setTitle(Subgroup theSubgroup)
+	{
+		if (itsMainWindow == null)
+			return;
+
+		// do not even try to obtain lock
+		if ((System.nanoTime() - itsThen) < INTERVAL)
+			return;
+
+		if (!itsClockLock.tryLock())
+			return;
+
+		try
+		{
+			String aCurrent = theSubgroup.toString();
+
+			StringBuilder sb = new StringBuilder(aCurrent.length() + 32);
+			sb.append("d=").append(Integer.toString(theSubgroup.getDepth()))
+				.append(" cands=").append(FORMATTER.format(itsCandidateCount.get()))
+				.append(" evaluating: ").append(aCurrent);
+
+			itsMainWindow.setTitle(sb.toString());
+
+			itsThen = System.nanoTime();
+		}
+		finally
+		{
+			itsClockLock.unlock();
+		}
+	}
+
+	////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////
+	///// start of essential parallelisation code                          /////
+	////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////
+
+	/*
+	 * After Test is done, its releases its semaphore, so ExecutorService can
+	 * start a new Test.
+	 */
+	private class Test implements Runnable
+	{
+		private final Subgroup itsSubgroup;
+		private final int itsSearchDepth;
+		private final Semaphore itsSemaphore;
+		private final ConditionBaseSet itsConditionBaseSet;
+
+		// XXX MM - theSearchDepth parameter will be removed
+		public Test(Subgroup theSubgroup, int theSearchDepth, Semaphore theSemaphore, ConditionBaseSet theConditionBaseSet)
+		{
+			assert (theSubgroup.getDepth() < theSearchDepth);
+// FIXME a subgroup of size 0 or 1 can not be refined, check and disallow
+			//assert (theSubgroup.getCoverage() > 1);
+
+			itsSubgroup = theSubgroup;
+			itsSearchDepth = theSearchDepth;
+			itsSemaphore = theSemaphore;
+			itsConditionBaseSet = theConditionBaseSet;
+		}
+
+		@Override
+		public void run()
+		{
+			// XXX MM - can be removed, check by Constructor
+			// in the meantime getDepth() should not have changed
+			if (itsSubgroup.getDepth() < itsSearchDepth)
+			{
+				RefinementList aRefinementList = new RefinementList(itsSubgroup, itsConditionBaseSet);
+				// .getMembers() creates expensive clone, reuse
+				final BitSet aMembers = itsSubgroup.getMembers();
+
+				for (int i = 0, j = aRefinementList.size(); i < j; i++)
+				{
+					if (isTimeToStop())
+						break;
+
+					Refinement aRefinement = aRefinementList.get(i);
+
+					ConditionBase aConditionBase = aRefinement.getConditionBase();
+					// if refinement is (num_attr = value) then treat it as nominal
+					if (aConditionBase.getColumn().getType() == AttributeType.NUMERIC && aConditionBase.getOperator() != Operator.EQUALS)
+						evaluateNumericRefinements(aMembers, aRefinement);
+					else
+						evaluateNominalBinaryRefinements(aMembers, aRefinement);
+				}
+			}
+			itsSemaphore.release();
+		}
+	}
+
+	////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////
+	///// start of Refinement generation and related methods               /////
+	///// after Refinement generation follows evaluateCandidate()          /////
+	///// but some methods bypass it and compute the result directly       /////
+	///// binary                                                           /////
+	///// nominal                                                          /////
+	///// numeric                                                          /////
+	////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////
+
+	// XXX (c = false) is checked first, (c = true) is conditionally, it depends
+	//       on data and search characteristics  whether this is the best order
+	private final void evaluateBinaryRefinements(final BitSet theParentMembers, final Refinement theRefinement, int theParentCoverage)
+	{
+		// evaluateNominalRefinements() should prevent getting here for ValueSet
+		assert (!itsSearchParameters.getNominalSets());
+		// should have been checked by evaluateNominalBinaryRefinements()
+		assert (theParentMembers.cardinality() == theParentCoverage);
+		assert (theParentCoverage > 1);
+
+		boolean isFilterNull = (itsFilter == null);
+		Subgroup aParent = theRefinement.getSubgroup();
+		// members-based domain, no empty Subgroups will occur
+		ConditionBase aConditionBase = theRefinement.getConditionBase();
+		Column aColumn = aConditionBase.getColumn();
+		ConditionListA aParentConditions = (isFilterNull ? null : aParent.getConditions());
+
+		// no useful Refinements are possible 
+		if (aColumn.getCardinality() != 2)
+			return;
+
+		BitSet aChildMembers = aColumn.evaluateBinary(theParentMembers, false);
+		int aChildCoverage = (aChildMembers == null ? 0 : aChildMembers.cardinality());
+
+		// ignore both f and t
+		if ((aChildCoverage == 0) || (aChildCoverage == theParentCoverage))
+			return;
+
+		// check for (aColumn = false)
+		if (aChildCoverage >= itsMinimumCoverage)
+			evaluateBinary(aParent, new Condition(aConditionBase, false), aChildMembers, aChildCoverage, itsFilter, aParentConditions);
+
+		// binary check is fast, but for some models evaluateCandidate() is not
+		if (isTimeToStop())
+			return;
+
+		// check for (aColumn = true), do this only when useful
+		// everything that is not positive is negative
+		aChildCoverage = (theParentCoverage - aChildCoverage);
+		if (aChildCoverage >= itsMinimumCoverage)
+		{
+			aChildMembers = aColumn.evaluateBinary(theParentMembers, true);
+			evaluateBinary(aParent, new Condition(aConditionBase, true), aChildMembers, aChildCoverage, itsFilter, aParentConditions);
+		}
+	}
+
+	private final boolean isDirectSettingBinary()
+	{
+		// checking this all the time is a bit wasteful, but fine for now
+		return ((itsSearchParameters.getTargetType() == TargetType.SINGLE_NOMINAL) &&
+				!itsSearchParameters.getNominalSets() &&
+				!(itsSearchParameters.getQualityMeasure() == QM.PROP_SCORE_WRACC) || (itsSearchParameters.getQualityMeasure() == QM.PROP_SCORE_RATIO));
+	}
+
+	private final void evaluateBinary(Subgroup theParent, Condition theAddedCondition, BitSet theChildMembers, int theChildCoverage, Filter theFilter, ConditionListA theParentConditionList)
+	{
+		// evaluateNominalRefinements() should prevent getting here for ValueSet
+		assert (!itsSearchParameters.getNominalSets());
+		assert (theChildMembers.cardinality() == theChildCoverage);
+		assert (theChildCoverage > 0);
+		// must both be non-null, or both be null
+		assert (!((theFilter == null) ^ (theParentConditionList == null)));
+
+		final Subgroup aChildSubgroup;
+
+		if (isDirectSettingBinary())
+		{
+			// safe: it is a clone, and subgroup coverage is stored: theCoverage
+			theChildMembers.and(itsBinaryTarget);
+			int aTruePositives = theChildMembers.cardinality();
+
+			aChildSubgroup = directComputation(theParent, theAddedCondition, itsQualityMeasure, theChildCoverage, aTruePositives);
+		}
+		else
+		{
+			if ((theFilter != null) && !theFilter.isUseful(theParentConditionList, theAddedCondition))
+				return;
+
+			aChildSubgroup = theParent.getRefinedSubgroup(theAddedCondition, theChildMembers, theChildCoverage);
+		}
+
+		checkAndLog(aChildSubgroup, theParent.getCoverage());
+	}
+
+	private static final Subgroup directComputation(Subgroup theParent, Condition theAddedCondition, QualityMeasure theQualityMeasure, int theChildCoverage, int theTruePositives)
+	{
+		// FIXME MM q is only cast to float to make historic results comparable
+		float q = (float) theQualityMeasure.calculate(theTruePositives, theChildCoverage);
+		double s = ((double) theTruePositives) / theChildCoverage;
+		double t = ((double) theTruePositives);
+
+		return theParent.getRefinedSubgroup(theAddedCondition, q, s, t, theChildCoverage);
+	}
+
+	////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////
+	///// nominal                                                          /////
+	////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////
+
+	/*
+	 * NOTE itsSubgroup / theMembers for each Refinement from the same
+	 * RefinementList are always the same
+	 * supply a cached version of theMembers, as Subgroup.getMembers()
+	 * creates a clone on each call
+	 */
+	private void evaluateNominalBinaryRefinements(BitSet theMembers, Refinement theRefinement)
+	{
+		Subgroup aParent = theRefinement.getSubgroup();
+		int aParentCoverage = aParent.getCoverage();
+		assert (theMembers.cardinality() == aParentCoverage);
+
+		// this subgroup can not be refined - FIXME MM make this an assert
+		if (aParentCoverage <= 1)
+			return;
+
+		ConditionBase aConditionBase = theRefinement.getConditionBase();
+
+		// this code path deliberately does not check isTimeToStop()
+		if (aConditionBase.getOperator() == Operator.ELEMENT_OF)
+		{
+			// set-valued, implies target type is SINGLE_NOMINAL
+			assert (itsSearchParameters.getTargetType() == TargetType.SINGLE_NOMINAL);
+
+			NominalCrossTable aNCT = new NominalCrossTable(aConditionBase.getColumn(), theMembers, itsBinaryTarget);
+			final SortedSet<String> aDomainBestSubSet = new TreeSet<String>();
+
+			final QM aQualityMeasure = itsSearchParameters.getQualityMeasure();
+			if (aQualityMeasure == QM.WRACC)
+			{
+				// FIXME MM floats are imprecise for data with N > 2^24
+				float aRatio = itsQualityMeasure.getNrPositives() / (float)(itsQualityMeasure.getNrRecords());
+				for (int i = 0; i < aNCT.size(); i++)
+				{
+					int aPi = aNCT.getPositiveCount(i);
+					int aNi = aNCT.getNegativeCount(i);
+					// include values with WRAcc=0 too, result has same WRAcc but higher support
+					if (aPi >= aRatio * (aPi + aNi))
+						aDomainBestSubSet.add(aNCT.getValue(i));
+				}
+			}
+			else // not WRACC
+			{
+				// construct and check all subsets on the convex hull
+				final List<Integer> aSortedDomainIndices = aNCT.getSortedDomainIndices();
+				final int aSortedDomainIndicesSize = aSortedDomainIndices.size();
+				double aBestQuality = Double.NEGATIVE_INFINITY;
+
+				// upper part of the hull
+				int aP = 0;
+				int aN = 0;
+				int aPrevBestI = -1;
+				for (int i = 0; i < aSortedDomainIndicesSize - 1; i++)
+				{
+					int anIndex = aSortedDomainIndices.get(i);
+					int aPi = aNCT.getPositiveCount(anIndex);
+					int aNi = aNCT.getNegativeCount(anIndex);
+					aP += aPi;
+					aN += aNi;
+					int aNextIndex = aSortedDomainIndices.get(i+1);
+					if (i < aSortedDomainIndicesSize-2 && aPi * aNCT.getNegativeCount(aNextIndex) == aNCT.getPositiveCount(aNextIndex) * aNi) // skip checking degenerate hull points
+						continue;
+					double aQuality = itsQualityMeasure.calculate(aP, aP + aN);
+					if (aQuality > aBestQuality)
+					{
+						aBestQuality = aQuality;
+						for (int j = aPrevBestI+1; j <= i; j++)
+						{
+							String aValue = aNCT.getValue(aSortedDomainIndices.get(j));
+							aDomainBestSubSet.add(aValue);
+						}
+						aPrevBestI = i;
+					}
+				}
+
+				// lower part of the hull
+				// TODO: complete list of QMs
+				boolean aLowIsDominatedQM = false;
+				boolean anAsymmetricQM = true;
+				if (aQualityMeasure == QM.BINOMIAL)
+					aLowIsDominatedQM = true;
+				if (aQualityMeasure == QM.CHI_SQUARED || aQualityMeasure == QM.INFORMATION_GAIN)
+					anAsymmetricQM = false;
+
+				if (false && !anAsymmetricQM) // TODO: fix this for depth > 1, check only upper OR lower hull
+				{
+					if (aDomainBestSubSet.size() > aNCT.size()/2) // prefer complement if smaller
+					{
+						aDomainBestSubSet.clear();
+						for (int j = aPrevBestI + 1; j < aSortedDomainIndicesSize; j++)
+						{
+							String aValue = aNCT.getValue(aSortedDomainIndices.get(j));
+							aDomainBestSubSet.add(aValue);
+						}
+					}
+				}
+				else if (true || !aLowIsDominatedQM)
+				{
+					aP = 0;
+					aN = 0;
+					aPrevBestI = -1;
+					for (int i = aSortedDomainIndicesSize - 1; i > 0; i--)
+					{
+						int anIndex = aSortedDomainIndices.get(i).intValue();
+						int aPi = aNCT.getPositiveCount(anIndex);
+						int aNi = aNCT.getNegativeCount(anIndex);
+						aP += aPi;
+						aN += aNi;
+						int aPrevIndex = aSortedDomainIndices.get(i-1);
+						if (i > 1 && aPi * aNCT.getNegativeCount(aPrevIndex) == aNCT.getPositiveCount(aPrevIndex) * aNi)
+							continue; // skip degenerate hull points
+						double aQuality = itsQualityMeasure.calculate(aP, aP + aN);
+						if (aQuality > aBestQuality)
+						{
+							aBestQuality = aQuality;
+							if (aPrevBestI == -1)
+							{
+								aDomainBestSubSet.clear();
+								aPrevBestI = aSortedDomainIndicesSize;
+							}
+							for (int j = aPrevBestI-1; j >= i; j--)
+							{
+								String aValue = aNCT.getValue(aSortedDomainIndices.get(j));
+								aDomainBestSubSet.add(aValue);
+							}
+							aPrevBestI = i;
+						}
+					}
+				}
+			}
+
+			if (aDomainBestSubSet.size() != 0)
+			{
+				// FIXME MM this does not take maximum coverage into account
+				// the best ValueSet might be > maxCov, and thus not be used
+				// but when this is the last search level, the refined version
+				// will also never be created
+				// a better solution is to obtain the best VALID ValueSet for
+				// this level, add it to the result set (possibly), and add the
+				// BEST (valid or not) candidate to the CandidateQueue
+				// and then never refine a nominal attribute with itself
+				// FIXME quality is known, re-evaluation should be avoided
+				final ValueSet aBestSubset = new ValueSet(aDomainBestSubSet);
+				Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(aBestSubset);
+				valueSetCheckAndLog(aNewSubgroup, aParentCoverage);
+			}
+		}
+		else // single-value conditions (class labels)
+		{
+			// FIXME: NUMERIC Refinement should not be done here
+			switch (aConditionBase.getColumn().getType())
+			{
+				case NOMINAL : evaluateNominalRefinements(theMembers, theRefinement, aParentCoverage); break;
+				case NUMERIC : evaluateNumericEqualsRefinements(theMembers, theRefinement, aParentCoverage); break;
+				case ORDINAL : throw new AssertionError(AttributeType.ORDINAL);
+				case BINARY  : evaluateBinaryRefinements(theMembers, theRefinement, aParentCoverage); break;
+				default      : throw new AssertionError(aConditionBase.getColumn().getType());
+			}
+		}
+	}
+
+	private final void evaluateNominalRefinementsX(final BitSet theParentMembers, final Refinement theRefinement, int theParentCoverage)
+	{
+		// evaluateNominalRefinements() should prevent getting here for ValueSet
+		assert (!itsSearchParameters.getNominalSets());
+		// should have been checked by evaluateNominalBinaryRefinements()
+		assert (theParentMembers.cardinality() == theParentCoverage);
+		assert (theParentCoverage > 1);
+
+		boolean isFilterNull = (itsFilter == null);
+		Subgroup aParent = theRefinement.getSubgroup();
+		// members-based domain, no empty Subgroups will occur
+		ConditionBase aConditionBase = theRefinement.getConditionBase();
+		Column aColumn = aConditionBase.getColumn();
+		ConditionListA aParentConditions = (isFilterNull ? null : aParent.getConditions());
+
+		String[] aDomain = aColumn.getUniqueNominalBinaryDomain(theParentMembers);
+
+		// no useful Refinements are possible
+		if (aDomain.length <= 1)
+			return;
+
+		for (int i = 0, j = aDomain.length; i < j && !isTimeToStop(); ++i)
+		{
+			Condition aCondition = new Condition(aConditionBase, aDomain[i]);
+
+			if (!isFilterNull && !itsFilter.isUseful(aParentConditions, aCondition))
+				continue;
+
+			Subgroup aNewSubgroup = aParent.getRefinedSubgroup(aCondition);
+			checkAndLog(aNewSubgroup, theParentCoverage);
+		}
+	}
+
+	private final void evaluateNominalRefinements(final BitSet theParentMembers, final Refinement theRefinement, int theParentCoverage)
+	{
+		// evaluateNominalRefinements() should prevent getting here for ValueSet
+		assert (!itsSearchParameters.getNominalSets());
+		// should have been checked by evaluateNominalBinaryRefinements()
+		assert (theParentMembers.cardinality() == theParentCoverage);
+		assert (theParentCoverage > 1);
+
+		boolean isFilterNull = (itsFilter == null);
+		Subgroup aParent = theRefinement.getSubgroup();
+		// members-based domain, no empty Subgroups will occur
+		ConditionBase aConditionBase = theRefinement.getConditionBase();
+		Column aColumn = aConditionBase.getColumn();
+		ConditionListA aParentConditions = (isFilterNull ? null : aParent.getConditions());
+
+		int[] aCounts = aColumn.getUniqueNominalDomainCounts(theParentMembers, theParentCoverage);
+
+		// avoid entering loop and checking 0-count values, no useful Refinement
+		// is possible, as it would have the same coverage as anOldCoverage
+		int aNrDistinct = aCounts[aCounts.length-1];
+		if (aNrDistinct <= 1)
+			return;
+
+		List<String> aDomain = aColumn.itsDistinctValuesU;
+		for (int i = 0, j = aNrDistinct; j > 0 && !isTimeToStop(); ++i)
+		{
+			int aCount = aCounts[i];
+			if (aCount == 0)
+					continue;
+
+			-- j;
+
+			if (aCount < itsMinimumCoverage)
+				continue;
+
+			if (aCount == theParentCoverage)
+				break;
+
+			Condition aCondition = new Condition(aConditionBase, aDomain.get(i));
+
+			if (!isFilterNull && !itsFilter.isUseful(aParentConditions, aCondition))
+				continue;
+
+			Subgroup aNewSubgroup = aParent.getRefinedSubgroup(aCondition);
+			checkAndLog(aNewSubgroup, theParentCoverage);
+		}
+	}
+
+	////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////
+	///// numeric                                                          /////
+	////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////
+
+	// shares a lot of code with evaluateNominalRefinements(), but will change
+	private final void evaluateNumericEqualsRefinements(final BitSet theParentMembers, final Refinement theRefinement, int theParentCoverage)
+	{
+		// NUMERIC Refinement in evaluateNominalBinaryRefinements is a weird
+		// setting, this check is irrelevant for NUMERIC Columns
+		// evaluateNominalRefinements() should prevent getting here for ValueSet
+		//assert (!itsSearchParameters.getNominalSets());
+		// should have been checked by evaluateNominalBinaryRefinements()
+		assert (theParentMembers.cardinality() == theParentCoverage);
+		assert (theParentCoverage > 1);
+
+		boolean isFilterNull = (itsFilter == null);
+		Subgroup aParent = theRefinement.getSubgroup();
+		// members-based domain, no empty Subgroups will occur
+		ConditionBase aConditionBase = theRefinement.getConditionBase();
+		Column aColumn = aConditionBase.getColumn();
+		ConditionListA aParentConditions = (isFilterNull ? null : aParent.getConditions());
+
+		float[] aDomain = aColumn.getUniqueNumericDomain(theParentMembers);
+
+		if (aDomain.length <= 1)
+			return;
+
+		for (int i = 0, j = aDomain.length; i < j && !isTimeToStop(); ++i)
+		{
+			Condition aCondition = new Condition(aConditionBase, aDomain[i]);
+
+			if (!isFilterNull && !itsFilter.isUseful(aParentConditions, aCondition))
+				continue;
+
+			Subgroup aNewSubgroup = aParent.getRefinedSubgroup(aCondition);
+			checkAndLog(aNewSubgroup, theParentCoverage);
+		}
 	}
 
 	/*
@@ -993,6 +1777,78 @@ AtomicInteger TOTAL_FILTERED = new AtomicInteger(0);
 			return theBestSubgroup; // if the old subgroup is better (or null)
 	}
 
+	////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////
+	///// numeric consecutive intervals                                    /////
+	////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////
+
+	private void numericConsecutiveBins(BitSet theMembers, Refinement theRefinement)
+	{
+		NumericStrategy aNumericStrategy = itsSearchParameters.getNumericStrategy();
+		assert (aNumericStrategy == NumericStrategy.NUMERIC_VIKAMINE_CONSECUTIVE_ALL || aNumericStrategy == NumericStrategy.NUMERIC_VIKAMINE_CONSECUTIVE_BEST);
+		// might require update when more strategies are added
+		boolean isAllStrategy = (aNumericStrategy == NumericStrategy.NUMERIC_VIKAMINE_CONSECUTIVE_ALL);
+
+		Subgroup anOldSubgroup = theRefinement.getSubgroup();
+		// faster than theMembers.cardinality()
+		// useless call, coverage never changes, could be parameter
+		final int anOldCoverage = anOldSubgroup.getCoverage();
+		assert (theMembers.cardinality() == anOldCoverage);
+
+		// see comment at evaluateNominalBinaryRefinement()
+		ConditionBase aConditionBase = theRefinement.getConditionBase();
+		ConditionListA aList = anOldSubgroup.getConditions();
+
+		// this is the crucial translation from nr bins to nr splitpoints
+		int aNrSplitPoints = itsSearchParameters.getNrBins() - 1;
+		// useless, Column.getSplitPointsBounded() would return an empty array
+		if (aNrSplitPoints <= 0)
+			return;
+		SortedSet<Interval> anIntervals = aConditionBase.getColumn().getUniqueSplitPointsBounded(theMembers, aNrSplitPoints);
+
+		Subgroup aBestSubgroup = null;
+		for (Interval anInterval : anIntervals)
+		{
+			if (isTimeToStop())
+				break;
+
+			// catch invalid input
+			if (anInterval == null)
+				continue;
+
+			if (itsFilter != null)
+				if (!itsFilter.isUseful(aList, new Condition(aConditionBase, anInterval)))
+					continue;
+
+			Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(anInterval);
+
+			if (isAllStrategy)
+			{
+				//addToBuffer(aNewSubgroup);
+				checkAndLog(aNewSubgroup, anOldCoverage);
+			}
+			else
+			{
+				// more clear than using else-if
+				if (isValidAndBest(aNewSubgroup, anOldCoverage, aBestSubgroup))
+					aBestSubgroup = aNewSubgroup;
+			}
+		}
+
+		if (!isAllStrategy && (aBestSubgroup != null))
+			bestAdd(aBestSubgroup, anOldCoverage);
+	}
+
+	////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////
+	///// numeric intervals - BestInterval algorithm                       /////
+	///// only works for SINGLE NOMINAL, other types not are implemented   /////
+	///// BestInterval is actually applicable to any convex measure        /////
+	///// TODO not sure if this requirement is checked by the code below   /////
+	////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////
+
 	private void numericIntervals(BitSet theMembers, Refinement theRefinement)
 	{
 		NumericStrategy aNumericStrategy = itsSearchParameters.getNumericStrategy();
@@ -1139,63 +1995,32 @@ AtomicInteger TOTAL_FILTERED = new AtomicInteger(0);
 		checkAndLog(aNewSubgroup, anOldCoverage);
 	}
 
-	private void numericConsecutiveBins(BitSet theMembers, Refinement theRefinement)
+	////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////
+	///// numeric domain code - some methods now bypass these methods      /////
+	////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////
+
+	// called by numericHalfIntervalsDomainMapNumeric()
+	private static final DomainMapNumeric getDomainMapD(BitSet theMembers, int theMembersCardinality, NumericStrategy theNumericStrategy, Column theColumn, int theNrBins, Operator theOperator)
 	{
-		NumericStrategy aNumericStrategy = itsSearchParameters.getNumericStrategy();
-		assert (aNumericStrategy == NumericStrategy.NUMERIC_VIKAMINE_CONSECUTIVE_ALL || aNumericStrategy == NumericStrategy.NUMERIC_VIKAMINE_CONSECUTIVE_BEST);
-		// might require update when more strategies are added
-		boolean isAllStrategy = (aNumericStrategy == NumericStrategy.NUMERIC_VIKAMINE_CONSECUTIVE_ALL);
-
-		Subgroup anOldSubgroup = theRefinement.getSubgroup();
-		// faster than theMembers.cardinality()
-		// useless call, coverage never changes, could be parameter
-		final int anOldCoverage = anOldSubgroup.getCoverage();
-		assert (theMembers.cardinality() == anOldCoverage);
-
-		// see comment at evaluateNominalBinaryRefinement()
-		ConditionBase aConditionBase = theRefinement.getConditionBase();
-		ConditionListA aList = anOldSubgroup.getConditions();
-
-		// this is the crucial translation from nr bins to nr splitpoints
-		int aNrSplitPoints = itsSearchParameters.getNrBins() - 1;
-		// useless, Column.getSplitPointsBounded() would return an empty array
-		if (aNrSplitPoints <= 0)
-			return;
-		SortedSet<Interval> anIntervals = aConditionBase.getColumn().getUniqueSplitPointsBounded(theMembers, aNrSplitPoints);
-
-		Subgroup aBestSubgroup = null;
-		for (Interval anInterval : anIntervals)
+		switch (theNumericStrategy)
 		{
-			if (isTimeToStop())
-				break;
-
-			// catch invalid input
-			if (anInterval == null)
-				continue;
-
-			if (itsFilter != null)
-				if (!itsFilter.isUseful(aList, new Condition(aConditionBase, anInterval)))
-					continue;
-
-			Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(anInterval);
-
-			if (isAllStrategy)
-			{
-				//addToBuffer(aNewSubgroup);
-				checkAndLog(aNewSubgroup, anOldCoverage);
-			}
-			else
-			{
-				// more clear than using else-if
-				if (isValidAndBest(aNewSubgroup, anOldCoverage, aBestSubgroup))
-					aBestSubgroup = aNewSubgroup;
-			}
+			case NUMERIC_ALL	: return theColumn.getUniqueNumericDomainMapD(theMembers, theMembersCardinality);
+			case NUMERIC_BEST	: return theColumn.getUniqueNumericDomainMapD(theMembers, theMembersCardinality);
+			case NUMERIC_BINS	: return theColumn.getSplitPointsMapD(theMembers, theMembersCardinality, theNrBins-1, theOperator);
+			case NUMERIC_BEST_BINS	: return theColumn.getSplitPointsMapD(theMembers, theMembersCardinality, theNrBins-1, theOperator);
+			case NUMERIC_INTERVALS	:
+		{
+			throw new AssertionError("NUMERIC_STRATEGY NOT IMPLEMENTED: " + theNumericStrategy);
+			//return theColumn.getUniqueNumericDomainMap(theMembers);
 		}
-
-		if (!isAllStrategy && (aBestSubgroup != null))
-			bestAdd(aBestSubgroup, anOldCoverage);
+		default :
+			throw new AssertionError("invalid Numeric Strategy: " + theNumericStrategy);
+		}
 	}
 
+	// called by numericIntervals() - it does not use value counts at the moment
 	private static final float[] getDomain(BitSet theMembers, int theMembersCardinality, NumericStrategy theNumericStrategy, Column theColumn, int theNrBins, Operator theOperator)
 	{
 		switch (theNumericStrategy)
@@ -1207,24 +2032,6 @@ AtomicInteger TOTAL_FILTERED = new AtomicInteger(0);
 //			case NUMERIC_BINS	: return theColumn.getUniqueSplitPoints(theMembers, theNrBins-1, theOperator);
 //			case NUMERIC_BEST_BINS	: return theColumn.getUniqueSplitPoints(theMembers, theNrBins-1, theOperator);
 			case NUMERIC_INTERVALS	: return theColumn.getUniqueNumericDomain(theMembers, theMembersCardinality);
-			default :
-				throw new AssertionError("invalid Numeric Strategy: " + theNumericStrategy);
-		}
-	}
-
-	private static final DomainMapNumeric getDomainMapD(BitSet theMembers, int theMembersCardinality, NumericStrategy theNumericStrategy, Column theColumn, int theNrBins, Operator theOperator)
-	{
-		switch (theNumericStrategy)
-		{
-			case NUMERIC_ALL	: return theColumn.getUniqueNumericDomainMapD(theMembers, theMembersCardinality);
-			case NUMERIC_BEST	: return theColumn.getUniqueNumericDomainMapD(theMembers, theMembersCardinality);
-			case NUMERIC_BINS	: return theColumn.getSplitPointsMapD(theMembers, theMembersCardinality, theNrBins-1, theOperator);
-			case NUMERIC_BEST_BINS	: return theColumn.getSplitPointsMapD(theMembers, theMembersCardinality, theNrBins-1, theOperator);
-			case NUMERIC_INTERVALS	:
-			{
-				throw new AssertionError("NUMERIC_STRATEGY NOT IMPLEMENTED: " + theNumericStrategy);
-				//return theColumn.getUniqueNumericDomainMap(theMembers);
-			}
 			default :
 				throw new AssertionError("invalid Numeric Strategy: " + theNumericStrategy);
 		}
@@ -1335,411 +2142,11 @@ AtomicInteger TOTAL_FILTERED = new AtomicInteger(0);
 		checkAndLog(theBestSubgroup, theOldCoverage);
 	}
 
-	/*
-	 * NOTE itsSubgroup / theMembers for each Refinement from the same
-	 * RefinementList are always the same
-	 * supply a cached version of theMembers, as Subgroup.getMembers()
-	 * creates a clone on each call
-	 */
-	private void evaluateNominalBinaryRefinements(BitSet theMembers, Refinement theRefinement)
-	{
-		Subgroup aParent = theRefinement.getSubgroup();
-		int aParentCoverage = aParent.getCoverage();
-		assert (theMembers.cardinality() == aParentCoverage);
-
-		// this subgroup can not be refined - FIXME MM make this an assert
-		if (aParentCoverage <= 1)
-			return;
-
-		ConditionBase aConditionBase = theRefinement.getConditionBase();
-
-		// this code path deliberately does not check isTimeToStop()
-		if (aConditionBase.getOperator() == Operator.ELEMENT_OF)
-		{
-			// set-valued, implies target type is SINGLE_NOMINAL
-			assert (itsSearchParameters.getTargetType() == TargetType.SINGLE_NOMINAL);
-
-			NominalCrossTable aNCT = new NominalCrossTable(aConditionBase.getColumn(), theMembers, itsBinaryTarget);
-			final SortedSet<String> aDomainBestSubSet = new TreeSet<String>();
-
-			final QM aQualityMeasure = itsSearchParameters.getQualityMeasure();
-			if (aQualityMeasure == QM.WRACC)
-			{
-				// FIXME MM floats are imprecise for data with N > 2^24
-				float aRatio = itsQualityMeasure.getNrPositives() / (float)(itsQualityMeasure.getNrRecords());
-				for (int i = 0; i < aNCT.size(); i++)
-				{
-					int aPi = aNCT.getPositiveCount(i);
-					int aNi = aNCT.getNegativeCount(i);
-					// include values with WRAcc=0 too, result has same WRAcc but higher support
-					if (aPi >= aRatio * (aPi + aNi))
-						aDomainBestSubSet.add(aNCT.getValue(i));
-				}
-			}
-			else // not WRACC
-			{
-				// construct and check all subsets on the convex hull
-				final List<Integer> aSortedDomainIndices = aNCT.getSortedDomainIndices();
-				final int aSortedDomainIndicesSize = aSortedDomainIndices.size();
-				double aBestQuality = Double.NEGATIVE_INFINITY;
-
-				// upper part of the hull
-				int aP = 0;
-				int aN = 0;
-				int aPrevBestI = -1;
-				for (int i = 0; i < aSortedDomainIndicesSize - 1; i++)
-				{
-					int anIndex = aSortedDomainIndices.get(i);
-					int aPi = aNCT.getPositiveCount(anIndex);
-					int aNi = aNCT.getNegativeCount(anIndex);
-					aP += aPi;
-					aN += aNi;
-					int aNextIndex = aSortedDomainIndices.get(i+1);
-					if (i < aSortedDomainIndicesSize-2 && aPi * aNCT.getNegativeCount(aNextIndex) == aNCT.getPositiveCount(aNextIndex) * aNi) // skip checking degenerate hull points
-						continue;
-					double aQuality = itsQualityMeasure.calculate(aP, aP + aN);
-					if (aQuality > aBestQuality)
-					{
-						aBestQuality = aQuality;
-						for (int j = aPrevBestI+1; j <= i; j++)
-						{
-							String aValue = aNCT.getValue(aSortedDomainIndices.get(j));
-							aDomainBestSubSet.add(aValue);
-						}
-						aPrevBestI = i;
-					}
-				}
-
-				// lower part of the hull
-				// TODO: complete list of QMs
-				boolean aLowIsDominatedQM = false;
-				boolean anAsymmetricQM = true;
-				if (aQualityMeasure == QM.BINOMIAL)
-					aLowIsDominatedQM = true;
-				if (aQualityMeasure == QM.CHI_SQUARED || aQualityMeasure == QM.INFORMATION_GAIN)
-					anAsymmetricQM = false;
-
-				if (false && !anAsymmetricQM) // TODO: fix this for depth > 1, check only upper OR lower hull
-				{
-					if (aDomainBestSubSet.size() > aNCT.size()/2) // prefer complement if smaller
-					{
-						aDomainBestSubSet.clear();
-						for (int j = aPrevBestI + 1; j < aSortedDomainIndicesSize; j++)
-						{
-							String aValue = aNCT.getValue(aSortedDomainIndices.get(j));
-							aDomainBestSubSet.add(aValue);
-						}
-					}
-				}
-				else if (true || !aLowIsDominatedQM)
-				{
-					aP = 0;
-					aN = 0;
-					aPrevBestI = -1;
-					for (int i = aSortedDomainIndicesSize - 1; i > 0; i--)
-					{
-						int anIndex = aSortedDomainIndices.get(i).intValue();
-						int aPi = aNCT.getPositiveCount(anIndex);
-						int aNi = aNCT.getNegativeCount(anIndex);
-						aP += aPi;
-						aN += aNi;
-						int aPrevIndex = aSortedDomainIndices.get(i-1);
-						if (i > 1 && aPi * aNCT.getNegativeCount(aPrevIndex) == aNCT.getPositiveCount(aPrevIndex) * aNi)
-							continue; // skip degenerate hull points
-						double aQuality = itsQualityMeasure.calculate(aP, aP + aN);
-						if (aQuality > aBestQuality)
-						{
-							aBestQuality = aQuality;
-							if (aPrevBestI == -1)
-							{
-								aDomainBestSubSet.clear();
-								aPrevBestI = aSortedDomainIndicesSize;
-							}
-							for (int j = aPrevBestI-1; j >= i; j--)
-							{
-								String aValue = aNCT.getValue(aSortedDomainIndices.get(j));
-								aDomainBestSubSet.add(aValue);
-							}
-							aPrevBestI = i;
-						}
-					}
-				}
-			}
-
-			if (aDomainBestSubSet.size() != 0)
-			{
-				// FIXME MM this does not take maximum coverage into account
-				// the best ValueSet might be > maxCov, and thus not be used
-				// but when this is the last search level, the refined version
-				// will also never be created
-				// a better solution is to obtain the best VALID ValueSet for
-				// this level, add it to the result set (possibly), and add the
-				// BEST (valid or not) candidate to the CandidateQueue
-				// and then never refine a nominal attribute with itself
-				// FIXME quality is known, re-evaluation should be avoided
-				final ValueSet aBestSubset = new ValueSet(aDomainBestSubSet);
-				Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(aBestSubset);
-				valueSetCheckAndLog(aNewSubgroup, aParentCoverage);
-			}
-		}
-		else // single-value conditions (class labels)
-		{
-			// FIXME: NUMERIC Refinement should not be done here
-			switch (aConditionBase.getColumn().getType())
-			{
-				case NOMINAL : evaluateNominalRefinements(theMembers, theRefinement, aParentCoverage); break;
-				case NUMERIC : evaluateNumericEqualsRefinements(theMembers, theRefinement, aParentCoverage); break;
-				case ORDINAL : throw new AssertionError(AttributeType.ORDINAL);
-				case BINARY  : evaluateBinaryRefinements(theMembers, theRefinement, aParentCoverage); break;
-				default      : throw new AssertionError(aConditionBase.getColumn().getType());
-			}
-		}
-	}
-
-	private final void evaluateNominalRefinementsX(final BitSet theParentMembers, final Refinement theRefinement, int theParentCoverage)
-	{
-		// evaluateNominalRefinements() should prevent getting here for ValueSet
-		assert (!itsSearchParameters.getNominalSets());
-		// should have been checked by evaluateNominalBinaryRefinements()
-		assert (theParentMembers.cardinality() == theParentCoverage);
-		assert (theParentCoverage > 1);
-
-		boolean isFilterNull = (itsFilter == null);
-		Subgroup aParent = theRefinement.getSubgroup();
-		// members-based domain, no empty Subgroups will occur
-		ConditionBase aConditionBase = theRefinement.getConditionBase();
-		Column aColumn = aConditionBase.getColumn();
-		ConditionListA aParentConditions = (isFilterNull ? null : aParent.getConditions());
-
-		String[] aDomain = aColumn.getUniqueNominalBinaryDomain(theParentMembers);
-
-		// no useful Refinements are possible
-		if (aDomain.length <= 1)
-			return;
-
-		for (int i = 0, j = aDomain.length; i < j && !isTimeToStop(); ++i)
-		{
-			Condition aCondition = new Condition(aConditionBase, aDomain[i]);
-
-			if (!isFilterNull && !itsFilter.isUseful(aParentConditions, aCondition))
-				continue;
-
-			Subgroup aNewSubgroup = aParent.getRefinedSubgroup(aCondition);
-			checkAndLog(aNewSubgroup, theParentCoverage);
-		}
-	}
-
-	private final void evaluateNominalRefinements(final BitSet theParentMembers, final Refinement theRefinement, int theParentCoverage)
-	{
-		// evaluateNominalRefinements() should prevent getting here for ValueSet
-		assert (!itsSearchParameters.getNominalSets());
-		// should have been checked by evaluateNominalBinaryRefinements()
-		assert (theParentMembers.cardinality() == theParentCoverage);
-		assert (theParentCoverage > 1);
-
-		boolean isFilterNull = (itsFilter == null);
-		Subgroup aParent = theRefinement.getSubgroup();
-		// members-based domain, no empty Subgroups will occur
-		ConditionBase aConditionBase = theRefinement.getConditionBase();
-		Column aColumn = aConditionBase.getColumn();
-		ConditionListA aParentConditions = (isFilterNull ? null : aParent.getConditions());
-
-		int[] aCounts = aColumn.getUniqueNominalDomainCounts(theParentMembers, theParentCoverage);
-
-		// avoid entering loop and checking 0-count values, no useful Refinement
-		// is possible, as it would have the same coverage as anOldCoverage
-		int aNrDistinct = aCounts[aCounts.length-1];
-		if (aNrDistinct <= 1)
-			return;
-
-		List<String> aDomain = aColumn.itsDistinctValuesU;
-		for (int i = 0, j = aNrDistinct; j > 0 && !isTimeToStop(); ++i)
-		{
-			int aCount = aCounts[i];
-			if (aCount == 0)
-					continue;
-
-			-- j;
-
-			if (aCount < itsMinimumCoverage)
-				continue;
-
-			if (aCount == theParentCoverage)
-				break;
-
-			Condition aCondition = new Condition(aConditionBase, aDomain.get(i));
-
-			if (!isFilterNull && !itsFilter.isUseful(aParentConditions, aCondition))
-				continue;
-
-			Subgroup aNewSubgroup = aParent.getRefinedSubgroup(aCondition);
-			checkAndLog(aNewSubgroup, theParentCoverage);
-		}
-	}
-
-	// XXX (c = false) is checked first, (c = true) is conditionally, it depends
-	//       on data and search characteristics  whether this is the best order
-	private final void evaluateBinaryRefinements(final BitSet theParentMembers, final Refinement theRefinement, int theParentCoverage)
-	{
-		// evaluateNominalRefinements() should prevent getting here for ValueSet
-		assert (!itsSearchParameters.getNominalSets());
-		// should have been checked by evaluateNominalBinaryRefinements()
-		assert (theParentMembers.cardinality() == theParentCoverage);
-		assert (theParentCoverage > 1);
-
-		boolean isFilterNull = (itsFilter == null);
-		Subgroup aParent = theRefinement.getSubgroup();
-		// members-based domain, no empty Subgroups will occur
-		ConditionBase aConditionBase = theRefinement.getConditionBase();
-		Column aColumn = aConditionBase.getColumn();
-		ConditionListA aParentConditions = (isFilterNull ? null : aParent.getConditions());
-
-		// no useful Refinements are possible 
-		if (aColumn.getCardinality() != 2)
-			return;
-
-		BitSet aChildMembers = aColumn.evaluateBinary(theParentMembers, false);
-		int aChildCoverage = (aChildMembers == null ? 0 : aChildMembers.cardinality());
-
-		// ignore both f and t
-		if ((aChildCoverage == 0) || (aChildCoverage == theParentCoverage))
-			return;
-
-		// check for (aColumn = false)
-		if (aChildCoverage >= itsMinimumCoverage)
-			evaluateBinary(aParent, new Condition(aConditionBase, false), aChildMembers, aChildCoverage, itsFilter, aParentConditions);
-
-		// binary check is fast, but for some models evaluateCandidate() is not
-		if (isTimeToStop())
-			return;
-
-		// check for (aColumn = true), do this only when useful
-		// everything that is not positive is negative
-		aChildCoverage = (theParentCoverage - aChildCoverage);
-		if (aChildCoverage >= itsMinimumCoverage)
-		{
-			aChildMembers = aColumn.evaluateBinary(theParentMembers, true);
-			evaluateBinary(aParent, new Condition(aConditionBase, true), aChildMembers, aChildCoverage, itsFilter, aParentConditions);
-		}
-	}
-
-	private final boolean isDirectSettingBinary()
-	{
-		// checking this all the time is a bit wasteful, but fine for now
-		return ((itsSearchParameters.getTargetType() == TargetType.SINGLE_NOMINAL) &&
-				!itsSearchParameters.getNominalSets() &&
-				!(itsSearchParameters.getQualityMeasure() == QM.PROP_SCORE_WRACC) || (itsSearchParameters.getQualityMeasure() == QM.PROP_SCORE_RATIO));
-	}
-
-	private final void evaluateBinary(Subgroup theParent, Condition theAddedCondition, BitSet theChildMembers, int theChildCoverage, Filter theFilter, ConditionListA theParentConditionList)
-	{
-		// evaluateNominalRefinements() should prevent getting here for ValueSet
-		assert (!itsSearchParameters.getNominalSets());
-		assert (theChildMembers.cardinality() == theChildCoverage);
-		assert (theChildCoverage > 0);
-		// must both be non-null, or both be null
-		assert (!((theFilter == null) ^ (theParentConditionList == null)));
-
-		final Subgroup aChildSubgroup;
-
-		if (isDirectSettingBinary())
-		{
-			// safe: it is a clone, and subgroup coverage is stored: theCoverage
-			theChildMembers.and(itsBinaryTarget);
-			int aTruePositives = theChildMembers.cardinality();
-
-			aChildSubgroup = directComputation(theParent, theAddedCondition, itsQualityMeasure, theChildCoverage, aTruePositives);
-		}
-		else
-		{
-			if ((theFilter != null) && !theFilter.isUseful(theParentConditionList, theAddedCondition))
-				return;
-
-			aChildSubgroup = theParent.getRefinedSubgroup(theAddedCondition, theChildMembers, theChildCoverage);
-		}
-
-		checkAndLog(aChildSubgroup, theParent.getCoverage());
-	}
-
-	private static final Subgroup directComputation(Subgroup theParent, Condition theAddedCondition, QualityMeasure theQualityMeasure, int theChildCoverage, int theTruePositives)
-	{
-		// FIXME MM q is only cast to float to make historic results comparable
-		float q = (float) theQualityMeasure.calculate(theTruePositives, theChildCoverage);
-		double s = ((double) theTruePositives)/theChildCoverage;
-		double t = ((double) theTruePositives);
-
-		return theParent.getRefinedSubgroup(theAddedCondition, q, s, t, theChildCoverage);
-	}
-
-	// shares a lot of code with evaluateNominalRefinements(), but will change
-	private final void evaluateNumericEqualsRefinements(final BitSet theParentMembers, final Refinement theRefinement, int theParentCoverage)
-	{
-		// NUMERIC Refinement in evaluateNominalBinaryRefinements is a weird
-		// setting, this check is irrelevant for NUMERIC Columns
-		// evaluateNominalRefinements() should prevent getting here for ValueSet
-		//assert (!itsSearchParameters.getNominalSets());
-		// should have been checked by evaluateNominalBinaryRefinements()
-		assert (theParentMembers.cardinality() == theParentCoverage);
-		assert (theParentCoverage > 1);
-
-		boolean isFilterNull = (itsFilter == null);
-		Subgroup aParent = theRefinement.getSubgroup();
-		// members-based domain, no empty Subgroups will occur
-		ConditionBase aConditionBase = theRefinement.getConditionBase();
-		Column aColumn = aConditionBase.getColumn();
-		ConditionListA aParentConditions = (isFilterNull ? null : aParent.getConditions());
-
-		float[] aDomain = aColumn.getUniqueNumericDomain(theParentMembers);
-
-		if (aDomain.length <= 1)
-			return;
-
-		for (int i = 0, j = aDomain.length; i < j && !isTimeToStop(); ++i)
-		{
-			Condition aCondition = new Condition(aConditionBase, aDomain[i]);
-
-			if (!isFilterNull && !itsFilter.isUseful(aParentConditions, aCondition))
-				continue;
-
-			Subgroup aNewSubgroup = aParent.getRefinedSubgroup(aCondition);
-			checkAndLog(aNewSubgroup, theParentCoverage);
-		}
-	}
-
-//	/*
-//	 * keep output together using synchronized method
-//	 * NOTE other threads calling this method are stalled for a while when
-//	 * checkAndLog().check() needs to resize itsCandidateQueue/ itsResult
-//	 *
-//	 * NOTE that in case of ties on the itsCandidateQueue/ itsResult
-//	 * max_size boundary this may effect the final search result
-//	 * this is related to to the fixed max size and has the potential to
-//	 * break invocation invariant results in multi-threaded settings
-//	 */
-//	// FIXME MM - since whole method is synchronised, evaluateCandidate()
-//	// call in checkAndLog() is also, severely slowing down multi-threaded
-//	// execution, especially when the models are computationally expensive
-//	// there seems not need for a separate method for ValueSets when the
-//	// printing of (ignored) values is omitted
-//	private final synchronized void valueSetCheckAndLog(ValueSet theBestSubset, Subgroup theNewSubgroup, int theOldCoverage)
-//	{
-//		boolean isValid = checkAndLog(theNewSubgroup, theOldCoverage);
-//
-//		// required? - prevents multi-threaded evaluateCandidate()
-//		String pre = isValid ? "  values: " : "ignored subgroup with values: ";
-//
-//		Log.logCommandLine(pre + theBestSubset.toString());
-//	}
-	private final void valueSetCheckAndLog(Subgroup theNewSubgroup, int theOldCoverage)
-	{
-		boolean isValid = checkAndLog(theNewSubgroup, theOldCoverage);
-
-		// if (isValid), checkAndLog() already printed the Subgroup
-		// for historic reasons, the ignored Subgroup is printed anyway
-		// FIXME MM remove this special case and valueSetCheckAndLog()
-		if (!isValid)
-			Log.logCommandLine("ignored subgroup: " + theNewSubgroup.getConditions().toString());
-	}
+	////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////
+	///// generic Candidate evaluation code - some methods now bypass this /////
+	////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////
 
 	// this method increments itsCandidateCount
 	private final boolean checkAndLog(Subgroup theSubgroup, int theOldCoverage)
@@ -1759,6 +2166,17 @@ AtomicInteger TOTAL_FILTERED = new AtomicInteger(0);
 			logCandidateAddition(theSubgroup, count);
 
 		return isValid;
+	}
+
+	private final void valueSetCheckAndLog(Subgroup theNewSubgroup, int theOldCoverage)
+	{
+		boolean isValid = checkAndLog(theNewSubgroup, theOldCoverage);
+
+		// if (isValid), checkAndLog() already printed the Subgroup
+		// for historic reasons, the ignored Subgroup is printed anyway
+		// FIXME MM remove this special case and valueSetCheckAndLog()
+		if (!isValid)
+			Log.logCommandLine("ignored subgroup: " + theNewSubgroup.getConditions().toString());
 	}
 
 	/*
@@ -2417,381 +2835,6 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		itsResult.addAll(aNewSubgroupSet);
 	}
 
-	public int getNumberOfSubgroups() { return itsResult.size(); }
-	public SubgroupSet getResult() { return itsResult; }
-	public void clearResult() { itsResult.clear(); }
-	public BitSet getBinaryTarget() { return (BitSet)itsBinaryTarget.clone(); }
-	public QualityMeasure getQualityMeasure() { return itsQualityMeasure; }
-	public SearchParameters getSearchParameters() { return itsSearchParameters; }
-
-	/*
-	 * same as public void mine(long theBeginTime)
-	 * but allows nrThreads to be set
-	 * use theNrThreads < 0 to run old mine(theBeginTime)
-	 */
-	public void mine(long theBeginTime, int theNrThreads)
-	{
-		long anEndTime = theBeginTime + (long) (((double) itsSearchParameters.getMaximumTime()) * 60.0 * 1000.0);
-		itsEndTime = (anEndTime <= theBeginTime) ? Long.MAX_VALUE : anEndTime;
-
-		List<Column> aColumns = itsTable.getColumns();
-		prepareNominalData(aColumns);
-		// some settings should always build a sorted domain for all TargetTypes
-		preparePOCData(isPOCSetting(), itsBinaryTarget, aColumns);
-
-		final QM aQualityMeasure = itsSearchParameters.getQualityMeasure();
-
-		//fill the conditionList of local and global knowledge, Rob
-		if (aQualityMeasure == QM.PROP_SCORE_WRACC || aQualityMeasure == QM.PROP_SCORE_RATIO)
-		{
-			ExternalKnowledgeFileLoader extKnowledge;
-			extKnowledge = new ExternalKnowledgeFileLoader(new File("").getAbsolutePath());
-			extKnowledge.createConditionListLocal(itsTable);
-			extKnowledge.createConditionListGlobal(itsTable);
-			itsLocalKnowledge = new LocalKnowledge(extKnowledge.getLocal(), itsBinaryTarget);
-			itsGlobalKnowledge = new GlobalKnowledge(extKnowledge.getGlobal(), itsBinaryTarget);
-		}
-
-		// not in Constructor, Table / SearchParameters may change
-		final ConditionBaseSet aConditions = new ConditionBaseSet(itsTable, itsSearchParameters);
-
-		logExperimentSettings(aConditions);
-
-		if (theNrThreads < 0)
-		{
-			mine(theBeginTime);
-			Process.echoMiningEnd(System.currentTimeMillis() - theBeginTime, getNumberOfSubgroups());
-			return;
-		}
-		else if (theNrThreads == 0)
-			theNrThreads = Runtime.getRuntime().availableProcessors();
-
-		// make subgroup to start with, containing all elements
-		BitSet aBitSet = getAllDataBitSet(itsNrRows);
-		Subgroup aStart = new Subgroup(ConditionListBuilder.emptyList(), aBitSet, itsResult);
-
-		// set number of true positives for dataset
-		if (isPOCSetting())
-			aStart.setTertiaryStatistic(itsQualityMeasure.getNrPositives());
-
-		if (itsSearchParameters.getBeamSeed() == null)
-			itsCandidateQueue = new CandidateQueue(itsSearchParameters, new Candidate(aStart));
-		else
-		{
-			// using a different CandidateQueue constructor would
-			// make this code much cleaner, and avoid any crash
-
-			//List<ConditionList> aBeamSeed = itsSearchParameters.getBeamSeed();
-			List<ConditionListA> aBeamSeed = itsSearchParameters.getBeamSeed();
-			//ConditionList aFirstConditionList = aBeamSeed.get(0);
-			ConditionListA aFirstConditionList = aBeamSeed.get(0);
-			//TODO there may be no members, in which case the following statement crashes
-			BitSet aFirstMembers = itsTable.evaluate(aFirstConditionList);
-			Subgroup aFirstSubgroup = new Subgroup(aFirstConditionList, aFirstMembers, itsResult);
-			CandidateQueue aSeededCandidateQueue = new CandidateQueue(itsSearchParameters, new Candidate(aFirstSubgroup));
-			aBeamSeed.remove(0); // does a full array-copy of aBeamSeed
-			int aNrEmptySeeds = 0;
-			//for (ConditionList aConditionList : aBeamSeed)
-			for (ConditionListA aConditionList : aBeamSeed)
-			//for (int i = 1, j = aBeamSeed.size(); i < j; ++i)
-			{
-				//ConditionList aConditionList = aBeamSeed.get(i);
-				Log.logCommandLine(aConditionList.toString());
-				BitSet aMembers = itsTable.evaluate(aConditionList);
-				if (aMembers.cardinality()>0)
-				{
-					Subgroup aSubgroup = new Subgroup(aConditionList,aMembers,itsResult);
-					aSeededCandidateQueue.add(new Candidate(aSubgroup));
-				}
-				else
-					aNrEmptySeeds++;
-			}
-			itsCandidateQueue = aSeededCandidateQueue;
-			if (aNrEmptySeeds>0)
-				Log.logCommandLine("Number of empty seeds discarded: "+aNrEmptySeeds);
-			Log.logCommandLine("Beam Seed size: " + itsCandidateQueue.size());
-		}
-
-		final int aSearchDepth = itsSearchParameters.getSearchDepth();
-
-		/*
-		 * essential multi-thread setup
-		 * uses semaphores so only nrThreads can run at the same time
-		 * AND ExecutorService can only start new Test after old one
-		 * completes
-		 */
-		ExecutorService es = Executors.newFixedThreadPool(theNrThreads);
-		Semaphore s = new Semaphore(theNrThreads);
-
-		while (!isTimeToStop())
-		{
-			// wait until a Thread becomes available
-			try { s.acquire(); }
-			catch (InterruptedException e) { e.printStackTrace(); }
-
-			Candidate aCandidate = null;
-			/*
-			 * if other threads still have Candidates to add they
-			 * are blocked from doing so through this lock on
-			 * itsCandidateQueue, and therefore can not release
-			 * their permit
-			 * although they could have added their Candidates
-			 * immediately prior this lock, without releasing their
-			 * permit yet
-			 *
-			 * NOTE for beam search strategies (COVER-BASED/ BEAM)
-			 * CandidateQueue will moveToNext level upon depletion
-			 * of the current one, overriding the current one with
-			 * the next, and creation a new next level
-			 * therefore only after all but the last Candidates are
-			 * processed (added to next level) can we take the last
-			 * one and let the next level become the current
-			 *
-			 * NOTE 2 although individual methods of CandidateQueue
-			 * are thread save, we need a compound action here
-			 * so synchronized is still needed
-			 */
-			synchronized (itsCandidateQueue)
-			{
-				final int aTotalSize = itsCandidateQueue.size();
-				final boolean alone = (s.availablePermits() == theNrThreads-1);
-				// take off first Candidate from Queue
-				if (itsCandidateQueue.currentLevelQueueSize() > 0)
-					aCandidate = itsCandidateQueue.removeFirst();
-				// obviously (currentLevelQueueSize <= 0)
-				// take solely when this is only active thread
-				else if ((aTotalSize > 0) && alone)
-					aCandidate = itsCandidateQueue.removeFirst();
-				// no other thread can add new candidates
-				else if ((aTotalSize == 0) && alone)
-					break;
-			}
-
-			if (aCandidate != null)
-			{
-				Subgroup aSubgroup = aCandidate.getSubgroup();
-
-				// Candidate should not be in CandidateQueue 
-				assert (aSubgroup.getDepth() < aSearchDepth);
-// FIXME a subgroup of size 0 or 1 can not be refined, check and disallow
-				//assert (aSubgroup.getCoverage() > 1);
-
-				es.execute(new Test(aSubgroup, aSearchDepth, s, aConditions));
-			}
-			// queue was empty, but other threads were running, they
-			// may be in the process of adding new Candidates
-			// wait until at least one finishes, or this one becomes
-			// only thread
-			else
-			{
-				try
-				{
-					final int aNrFree = s.drainPermits();
-					if (aNrFree < theNrThreads-1)
-					{
-						s.acquire();
-						s.release(aNrFree+2);
-					}
-					else
-						s.release(aNrFree+1);
-					//continue;
-				}
-				catch (InterruptedException e) { e.printStackTrace(); }
-			}
-		}
-		es.shutdown();
-		// wait for last active threads to complete
-		while(!es.isTerminated()) {};
-		Process.echoMiningEnd(System.currentTimeMillis() - theBeginTime, getNumberOfSubgroups());
-
-		Log.logCommandLine("number of candidates: " + itsCandidateCount.get());
-		if (aQualityMeasure == QM.COOKS_DISTANCE)
-		{
-			Log.logCommandLine("Bound seven computed " + getNrBoundSeven() + " times");
-			Log.logCommandLine("Bound six   computed " + getNrBoundSix() + " times");
-			Log.logCommandLine("Bound five  computed " + getNrBoundFive() + " times");
-			Log.logCommandLine("Bound four  computed " + getNrBoundFour() + " times");
-			Log.logCommandLine("Bound seven fired " + getNrBoundSevenFired() + " times");
-			Log.logCommandLine("Bound six   fired " + getNrBoundSixFired() + " times");
-			Log.logCommandLine("Bound five  fired " + getNrBoundFiveFired() + " times");
-			Log.logCommandLine("Bound four  fired " + getNrBoundFourFired() + " times");
-			Log.logCommandLine("Rank deficient models: " + getNrRankDef());
-		}
-		Log.logCommandLine("number of subgroups: " + getNumberOfSubgroups());
-
-		itsResult.setIDs(); //assign 1 to n to subgroups, for future reference in subsets
-		if ((itsSearchParameters.getTargetType() == TargetType.MULTI_LABEL) && itsSearchParameters.getPostProcessingDoAutoRun())
-			postprocess();
-
-		//now just for cover-based beam search post selection
-		// TODO MM see note at SubgroupSet.postProcess(), all itsResults will remain in memory
-		SubgroupSet aSet = itsResult.postProcess(itsSearchParameters.getSearchStrategy());
-		// FIXME MM hack to deal with strange postProcess implementation
-		if (itsResult != aSet)
-		{
-			// no reassign, we want itsResult to be final
-			itsResult.clear();
-			itsResult.addAll(aSet);
-		}
-
-		// in MULTI_LABEL, order may have changed
-		// in COVER_BASED_BEAM_SELECTION, subgroups may have been removed
-		itsResult.setIDs(); //assign 1 to n to subgroups, for future reference in subsets
-// XXX MM : debug info not useful for general use
-//Log.logCommandLine(String.format("CANDIDATES: %s\tFILTERED: %s\tRATIO:%f", itsCandidateCount.toString(), TOTAL_FILTERED.toString(), (TOTAL_FILTERED.doubleValue()/(itsCandidateCount.doubleValue()+TOTAL_FILTERED.doubleValue()))));
-		deleteSortData(itsTable.getColumns());
-	}
-
-	private static final void prepareNominalData(List<Column> theColumns)
-	{
-		for (Column c : theColumns)
-			if (c.getType() == AttributeType.NOMINAL)
-				c.buildSharedDomain();
-	}
-
-	private static final void preparePOCData(boolean isPOCSetting, BitSet theBinaryTarget, List<Column> theColumns)
-	{
-		// currently numeric with EQUALS is not a valid setting
-		if (!isPOCSetting)
-			return;
-
-		Timer outer = new Timer();
-
-		for (Column c : theColumns)
-		{
-			if (c.getType() == AttributeType.NUMERIC)
-			{
-				Log.logCommandLine(c.getName() + " building sorted domain");
-				Timer t = new Timer();
-				c.buildSorted(theBinaryTarget); // build SORTED and SORT_INDEX
-				Log.logCommandLine(t.getElapsedTimeString());
-			}
-		}
-
-		Log.logCommandLine("total sorting time: " + outer.getElapsedTimeString());
-	}
-
-	// not SINGLE_NOMINAL with ValueSet, NUMERIC_INTERVALS/CONSECUTIVE_ALL|BEST
-	private final boolean isPOCSetting()
-	{
-		return (((itsSearchParameters.getNumericStrategy() == NumericStrategy.NUMERIC_ALL) || (itsSearchParameters.getNumericStrategy() == NumericStrategy.NUMERIC_BEST) ||
-				 (itsSearchParameters.getNumericStrategy() == NumericStrategy.NUMERIC_BEST_BINS) || (itsSearchParameters.getNumericStrategy() == NumericStrategy.NUMERIC_BINS)) &&
-				((itsSearchParameters.getTargetType() == TargetType.SINGLE_NOMINAL) && !itsSearchParameters.getNominalSets()) && ENABLE_POC_SETTINGS);
-	}
-
-	private static final void deleteSortData(List<Column> theColumns)
-	{
-		for (Column c : theColumns)
-		{
-			c.SORTED = null;
-			c.SORT_INDEX = null;
-		}
-	}
-
-	private long itsEndTime = Long.MIN_VALUE;
-	private final boolean isTimeToStop()
-	{
-		if (System.currentTimeMillis() > itsEndTime)
-			return true;
-
-		if ((itsMainWindow != null) && ((MiningWindow) itsMainWindow).isCancelled())
-			return true;
-
-		return false;
-	}
-
-	// to throttle GUI update, only one thread can obtain lock and update time
-	private final Lock itsClockLock = new ReentrantLock();
-	private static final long INTERVAL = 100_000_000L; // in nanoseconds
-	private long itsThen = 0L;
-	private static final DecimalFormat FORMATTER = (DecimalFormat) NumberFormat.getNumberInstance(Locale.GERMAN);
-
-	// NOTE itsCandidateCount and currently refined subgroup are unrelated
-	private final void setTitle(Subgroup theSubgroup)
-	{
-		if (itsMainWindow == null)
-			return;
-
-		// do not even try to obtain lock
-		if (System.nanoTime() - itsThen < INTERVAL)
-			return;
-
-		if (!itsClockLock.tryLock())
-			return;
-
-		try
-		{
-			itsThen = System.nanoTime();
-
-			String aCurrent = theSubgroup.toString();
-
-			StringBuilder sb = new StringBuilder(aCurrent.length() + 32);
-			sb.append("d=").append(Integer.toString(theSubgroup.getDepth()))
-				.append(" cands=").append(FORMATTER.format(itsCandidateCount.get()))
-				.append(" evaluating: ").append(aCurrent);
-
-			itsMainWindow.setTitle(sb.toString());
-		}
-		finally
-		{
-			itsClockLock.unlock();
-		}
-	}
-
-	/*
-	 * Essential Runnable, code copied from old mine().
-	 * After Test is done, semaphore is release, so ExecutorService can
-	 * start a new Test.
-	 */
-	private class Test implements Runnable
-	{
-		private final Subgroup itsSubgroup;
-		private final int itsSearchDepth;
-		private final Semaphore itsSemaphore;
-		private final ConditionBaseSet itsConditionBaseSet;
-
-		// XXX MM - theSearchDepth parameter will be removed
-		public Test(Subgroup theSubgroup, int theSearchDepth, Semaphore theSemaphore, ConditionBaseSet theConditionBaseSet)
-		{
-			assert (theSubgroup.getDepth() < theSearchDepth);
-// FIXME a subgroup of size 0 or 1 can not be refined, check and disallow
-			//assert (theSubgroup.getCoverage() > 1);
-
-			itsSubgroup = theSubgroup;
-			itsSearchDepth = theSearchDepth;
-			itsSemaphore = theSemaphore;
-			itsConditionBaseSet = theConditionBaseSet;
-		}
-
-		@Override
-		public void run()
-		{
-			// XXX MM - can be removed, check by Constructor
-			// in the meantime getDepth() should not have changed
-			if (itsSubgroup.getDepth() < itsSearchDepth)
-			{
-				RefinementList aRefinementList = new RefinementList(itsSubgroup, itsConditionBaseSet);
-				// .getMembers() creates expensive clone, reuse
-				final BitSet aMembers = itsSubgroup.getMembers();
-
-				for (int i = 0, j = aRefinementList.size(); i < j; i++)
-				{
-					if (isTimeToStop())
-						break;
-
-					Refinement aRefinement = aRefinementList.get(i);
-
-					ConditionBase aConditionBase = aRefinement.getConditionBase();
-					// if refinement is (num_attr = value) then treat it as nominal
-					if (aConditionBase.getColumn().getType() == AttributeType.NUMERIC && aConditionBase.getOperator() != Operator.EQUALS)
-						evaluateNumericRefinements(aMembers, aRefinement);
-					else
-						evaluateNominalBinaryRefinements(aMembers, aRefinement);
-				}
-			}
-			itsSemaphore.release();
-		}
-	}
 /*
 TODO for stable jar, disabled, causes compile errors, reinstate later
 	private void addToBuffer(Subgroup theSubgroup )
@@ -2806,6 +2849,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		itsBuffer.add(new Candidate(theSubgroup, aPriority));
 	}
 */
+
 	private void flushBuffer()
 	{
 		if (itsBuffer == null)
@@ -2829,6 +2873,9 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	public int getNrBoundFourFired() { return itsBoundFourFired; }
 	public int getNrRankDef() { return itsRankDefCount; }
 
+	public QualityMeasure getQualityMeasure() { return itsQualityMeasure; }
+	public SearchParameters getSearchParameters() { return itsSearchParameters; }
+
 	/**
 	 * Return the base {@link RegressionMeasure} for this SubgroupDiscovery.
 	 *
@@ -2840,6 +2887,10 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	{
 		return itsBaseRM;
 	}
+
+	public int getNumberOfSubgroups() { return itsResult.size(); }
+	public SubgroupSet getResult() { return itsResult; }
+	public void clearResult() { itsResult.clear(); }
 
 	/* *********************************************************************
 	 * REMOVE USELESS REFINEMENTS - MAY GO INTO DIFFERENT CLASS(ES)
