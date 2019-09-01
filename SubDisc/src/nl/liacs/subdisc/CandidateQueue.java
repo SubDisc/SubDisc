@@ -97,6 +97,7 @@ public class CandidateQueue
 				throw new IllegalArgumentException(itsSearchStrategy.toString());
 		}
 
+		// this.add() would be better
 		itsQueue.add(theRootCandidate);
 	}
 
@@ -137,6 +138,10 @@ public class CandidateQueue
 		Subgroup aSubgroup = theCandidate.getSubgroup();
 		if (aSubgroup.getDepth() >= itsMaxDepth)
 			return false;
+
+		// no useful Refinement from this can result
+		if (aSubgroup.getCoverage() <= 1)
+			return false;;
 
 		// kill members in all settings for now
 		// COVER_BASED_BEAM_SELECTION actually still needs the members
