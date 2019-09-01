@@ -1277,7 +1277,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		// FIXME quality is known, re-evaluation should be avoided
 		final ValueSet aBestSubset = new ValueSet(aDomainBestSubSet);
 		Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(aBestSubset);
-		valueSetCheckAndLog(aNewSubgroup, aParentCoverage);
+		checkAndLog(aNewSubgroup, aParentCoverage);
 	}
 
 	////////////////////////////////////////////////////////////////////////////
@@ -2097,11 +2097,11 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	////////////////////////////////////////////////////////////////////////////
 
 	// this method increments itsCandidateCount
-	private final boolean checkAndLog(Subgroup theSubgroup, int theOldCoverage)
+	private final boolean checkAndLog(Subgroup theChildSubgroup, int theParentCoverage)
 	{
-		setTitle(theSubgroup);
+		setTitle(theChildSubgroup);
 
-		boolean isValid = check(theSubgroup, theOldCoverage);
+		boolean isValid = check(theChildSubgroup, theParentCoverage);
 
 		// incrementing after expensive check() makes subgroup numbers
 		// in log 'closer to being consecutive' when multi-threading
@@ -2111,20 +2111,9 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		long count = itsCandidateCount.getAndIncrement();
 
 		if (isValid)
-			logCandidateAddition(theSubgroup, count);
+			logCandidateAddition(theChildSubgroup, count);
 
 		return isValid;
-	}
-
-	private final void valueSetCheckAndLog(Subgroup theNewSubgroup, int theOldCoverage)
-	{
-		boolean isValid = checkAndLog(theNewSubgroup, theOldCoverage);
-
-		// if (isValid), checkAndLog() already printed the Subgroup
-		// for historic reasons, the ignored Subgroup is printed anyway
-		// FIXME MM remove this special case and valueSetCheckAndLog()
-		if (!isValid)
-			Log.logCommandLine("ignored subgroup: " + theNewSubgroup.getConditions().toString());
 	}
 
 	/*
