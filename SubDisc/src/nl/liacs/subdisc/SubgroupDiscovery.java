@@ -2127,13 +2127,13 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	 * (NOTE when a search is stopped because of max_time all bets are of)
 	 */
 	private final Object itsCheckLock = new Object();
-	private void checkAndLog(Subgroup theChildSubgroup, int theOldCoverage)
+	private void checkAndLog(Subgroup theChild, int theParentCoverage)
 	{
-		setTitle(theChildSubgroup);
+		setTitle(theChild);
 
 		// FIXME MM this check should be made obsolete
-		int aNewCoverage = theChildSubgroup.getCoverage();
-		boolean isValid = (aNewCoverage < theOldCoverage && aNewCoverage >= itsMinimumCoverage);
+		int aChildCoverage = theChild.getCoverage();
+		boolean isValid = (aChildCoverage >= itsMinimumCoverage && aChildCoverage < theParentCoverage);
 
 		if (isValid)
 		{
@@ -2143,7 +2143,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			// sets the quality/secondary/tertiary statistics for theSubgroup
 			// e.g. INTERVALS is a best-strategy, but does not set the quality
 			EnumSet<NumericStrategy> aNumericBest = EnumSet.of(NumericStrategy.NUMERIC_BEST, NumericStrategy.NUMERIC_BEST_BINS, NumericStrategy.NUMERIC_VIKAMINE_CONSECUTIVE_BEST);
-			AttributeType lastAdded = theChildSubgroup.getConditions().get(theChildSubgroup.getDepth()-1).getColumn().getType();
+			AttributeType lastAdded = theChild.getConditions().get(theChild.getDepth()-1).getColumn().getType();
 			boolean isLastNumeric = (lastAdded == AttributeType.NUMERIC);
 
 			float aQuality;
@@ -2151,18 +2151,18 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			if (isLastNumeric && isPOCSetting())
 			{
 				// NOTE this path already performed the isValid-coverage check
-				aQuality = (float) theChildSubgroup.getMeasureValue();
+				aQuality = (float) theChild.getMeasureValue();
 			}
 			else if ((lastAdded == AttributeType.BINARY) && isDirectSettingBinary())
 			{
 				// NOTE this path already performed the isValid-coverage check
-				aQuality = (float) theChildSubgroup.getMeasureValue();
+				aQuality = (float) theChild.getMeasureValue();
 			}
 			else if (isLastNumeric && aNumericBest.contains(itsSearchParameters.getNumericStrategy()))
 			{
 				// NOTE for BEST* Subgroup is already evaluated and score is set
 				//      by isValidAndBest()
-				aQuality = (float) theChildSubgroup.getMeasureValue();
+				aQuality = (float) theChild.getMeasureValue();
 			}
 			else if (false)
 			{
@@ -2170,16 +2170,16 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			}
 			else
 			{
-				aQuality = evaluateCandidate(theChildSubgroup);
-				theChildSubgroup.setMeasureValue(aQuality);
+				aQuality = evaluateCandidate(theChild);
+				theChild.setMeasureValue(aQuality);
 			}
 
-			Candidate aCandidate = new Candidate(theChildSubgroup);
+			Candidate aCandidate = new Candidate(theChild);
 
 			boolean aResultAddition = false;
 			// if quality should be ignored or is enough
 			// and the coverage is not too high
-			if ((ignoreQualityMinimum || aQuality > itsQualityMeasureMinimum) && (aNewCoverage <= itsMaximumCoverage))
+			if ((ignoreQualityMinimum || aQuality > itsQualityMeasureMinimum) && (aChildCoverage <= itsMaximumCoverage))
 				aResultAddition = true;
 
 			// all logic is performed outside of synchronized block
@@ -2187,7 +2187,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			synchronized (itsCheckLock)
 			{
 				if (aResultAddition)
-					itsResult.add(theChildSubgroup);
+					itsResult.add(theChild);
 
 				itsCandidateQueue.add(aCandidate);
 			}
@@ -2196,7 +2196,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		// prevent OutOfMemory / GC Overhead Limit errors, some code paths
 		// bypass evaluateCandidate(Subgroup) so calling it there is no good
 		// and this is the sole method to add to Candidate and Result sets
-		theChildSubgroup.killMembers();
+		theChild.killMembers();
 
 		// incrementing after expensive check() makes subgroup numbers
 		// in log 'closer to being consecutive' when multi-threading
@@ -2206,81 +2206,10 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		long count = itsCandidateCount.getAndIncrement();
 
 		if (isValid)
-			logCandidateAddition(theChildSubgroup, count);
+			logCandidateAddition(theChild, count);
 	}
 
-//	private long check(Subgroup theSubgroup, int theOldCoverage)
-//	{
-//		final long count = itsCandidateCount.getAndIncrement();
-//		final int aNewCoverage = theSubgroup.getCoverage();
-//
-//		Subgroup addToResults = null;
-//		Subgroup addToCandidates = null;
-//		boolean isValidCandidate = (aNewCoverage < theOldCoverage && aNewCoverage >= itsMinimumCoverage);
-//
-//		if (isValidCandidate)
-//		{
-//			// evaluations for complex models are expensive
-//			// so this should not be done in a synchronised block
-//			float aQuality = evaluateCandidate(theSubgroup);
-//			theSubgroup.setMeasureValue(aQuality);
-//
-//			// if the quality should be ignored, or is good enough
-//			// and the coverage is not too high
-//			if ((ignoreQualityMinimum || aQuality > itsQualityMeasureMinimum) && (aNewCoverage <= itsMaximumCoverage))
-//				addToResults = theSubgroup;
-//
-//			// always add to candidates
-//			addToCandidates = theSubgroup;
-//		}
-//
-//		// a synchronised call
-//		addToResultsAndCandidates(count, addToResults, addToCandidates);
-//
-//		// only log addition 
-//		return isValidCandidate ? count : DO_NOT_LOG;
-//	}
-
-//	// unsynchronized member field, should only be used by this method
-//	// alternatively, a Concurrent Collection could be used that would
-//	// allow each thread to insert a new item in the waiting list
-//	// and a separate thread would be notified upon each insertion
-//	// that thread would be responsible for checking the head of the list
-//	// and insert into the result and candidate list
-//	// but then a lock on the collection MUST be obtained before executing
-//	// the [firstEntry() + pollFirstEntry()] checks as a single logical call
-//	// to avoid TOCTOU bugs (time-of-check-time-of-use)
-//	private long itsLastCount = itsCandidateCount.get()-1L; // same start point
-//	private final TreeMap<Long, Subgroup[]> itsWaitingList = new TreeMap<Long, Subgroup[]>();
-//	private synchronized void addToResultsAndCandidates(long theCount, Subgroup addToResults, Subgroup addToCandidates)
-//	{
-//		if (theCount == (itsLastCount+1L))
-//		{
-//			if (addToResults != null)
-//				itsResult.add(addToResults);
-//			if (addToCandidates != null)
-//				itsCandidateQueue.add(new Candidate(addToCandidates));
-//			itsLastCount = theCount;
-//
-//			// synchronized methods use reentrant locks
-//			// so no other thread can modify itsWaintingList
-//			Entry<Long, Subgroup[]> e = itsWaitingList.firstEntry();
-//			if (e != null)
-//			{
-//				// recursively check if next item can be processed now
-//				if (e.getKey() == (itsLastCount+1L))
-//				{
-//					e = itsWaitingList.pollFirstEntry();
-//					addToResultsAndCandidates(e.getKey(), e.getValue()[0], e.getValue()[1]);
-//				}
-//			}
-//		}
-//		else
-//			itsWaitingList.put(theCount, new Subgroup[] { addToResults, addToCandidates });
-//	}
-
-	// because of multi-theading consecutive log calls should be grouped
-	// else logs from other threads could end up in between
+	// log as a single message, else messages of other threads end up in between
 	private void logCandidateAddition(Subgroup theSubgroup, long count)
 	{
 		if (NO_CANDIDATE_LOG)
@@ -2301,312 +2230,325 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		Log.logCommandLine(sb.toString());
 	}
 
-	private float evaluateCandidate(Subgroup theNewSubgroup)
+	private float evaluateCandidate(Subgroup theChild)
 	{
-		// theNewSubgroup.killMembers() is called at end of check(), not here
-		BitSet aMembers = theNewSubgroup.getMembers();
-		float aQuality = 0.0f;
-
 		switch (itsSearchParameters.getTargetType())
 		{
-			case SINGLE_NOMINAL :
+			case SINGLE_NOMINAL     : return evaluateCandidateSingleNominal(theChild);
+			case SINGLE_NUMERIC     : return evaluateCandidateSingleNumeric(theChild);
+			case MULTI_NUMERIC      : return evaluateCandidateMultiNumeric(theChild);
+			case DOUBLE_REGRESSION  : return evaluateCandidateDoubleRegression(theChild);
+			case DOUBLE_CORRELATION : return evaluateCandidateDoubleCorrelation(theChild);
+			case SCAPE              : return evaluateCandidateScape(theChild);
+			case MULTI_LABEL        : return evaluateCandidateMultiLabel(theChild);
+			case LABEL_RANKING      : return evaluateCandidateLabelRanking(theChild);
+			default :
+				throw new AssertionError(itsSearchParameters.getTargetType());
+		}
+	}
+
+	private final float evaluateCandidateSingleNominal(Subgroup theChild)
+	{
+		int aCoverage = theChild.getCoverage();
+		BitSet aChildMembers = theChild.getMembers();
+
+		// getMembers() always returns a clone so and() is safe
+		aChildMembers.and(itsBinaryTarget);
+		int aCountHeadBody = aChildMembers.cardinality();
+		// FIXME MM - hold: functional change + needs testing / profiling
+		// int aCountHeadBody = theNewSubgroup.countCommon(itsBinaryTarget);
+
+		final float aQuality;
+
+		QM aMeasure = itsSearchParameters.getQualityMeasure();
+		if ((aMeasure != QM.PROP_SCORE_WRACC) && (aMeasure != QM.PROP_SCORE_RATIO))
+			aQuality = (float) itsQualityMeasure.calculate(aCountHeadBody, aCoverage);
+		else
+		{
+			PropensityScore aPropensityScore = new PropensityScore(theChild, itsBinaryTarget, itsLocalKnowledge, itsGlobalKnowledge, PropensityScore.LOGISTIC_REGRESSION);
+			double aCountHeadPropensityScore = aPropensityScore.getPropensityScoreSum();
+			aQuality = QualityMeasure.calculatePropensityBased(aMeasure, aCountHeadBody, aCoverage, itsNrRows, aCountHeadPropensityScore);
+		}
+
+		theChild.setSecondaryStatistic(aCountHeadBody / (double) aCoverage);
+		theChild.setTertiaryStatistic(aCountHeadBody);
+
+		return aQuality;
+	}
+
+	private final float evaluateCandidateSingleNumeric(Subgroup theChild)
+	{
+		BitSet aChildMembers = theChild.getMembers();
+		final float aQuality;
+
+		if (!TEMPORARY_CODE)
+		{
+			// what needs to be calculated for this QM
+			// NOTE requiredStats could be a final SubgroupDiscovery.class member
+			QM aQM = itsSearchParameters.getQualityMeasure();
+			Set<Stat> aRequiredStats = QM.requiredStats(aQM);
+			//Statistics aStatistics = itsNumericTarget.getStatistics(aMembers, aRequiredStats);
+			// TODO MM - implement better solution than below two checks
+			Statistics aStatistics = itsNumericTarget.getStatistics(aChildMembers, aQM == QM.MMAD, true);
+
+			ProbabilityDensityFunction aPDF = null;
+			if (aRequiredStats.contains(Stat.PDF))
 			{
-				int aCoverage = theNewSubgroup.getCoverage();
-				// NOTE aMembers is a clone so this is safe
-				aMembers.and(itsBinaryTarget);
-				int aCountHeadBody = aMembers.cardinality();
-// FIXME MM - hold: functional change + needs testing / profiling
-//				int aCountHeadBody = theNewSubgroup.countCommon(itsBinaryTarget);
-				QM aMeasure = itsSearchParameters.getQualityMeasure();
+				// FIXME MM TEMP
+				System.out.format("#Subgroup: '%s' (size = %d)%n", theChild, theChild.getCoverage());
 
-				//Rob
-				if ((aMeasure == QM.PROP_SCORE_WRACC) || (aMeasure == QM.PROP_SCORE_RATIO))
-				{
-					PropensityScore aPropensityScore = new PropensityScore(theNewSubgroup, itsBinaryTarget, itsLocalKnowledge, itsGlobalKnowledge, PropensityScore.LOGISTIC_REGRESSION);
-//					double[] aScores = aPropensityScore.getPropensityScore();
-					double aCountHeadPropensityScore = aPropensityScore.getPropensityScoreSum();
-					System.out.println("Evaluating subgroup");
-					//System.out.println(itsBinaryTarget.cardinality());
-//					double aSumTest = 0.0;
-//					for (int i = aMembers.nextSetBit(0); i >= 0; i = aMembers.nextSetBit(i+1))
-//					{
-//						aCountHeadPropensityScore += aScores[i];
-//						//if (aPropensityScore.getPropensityScore()[i]>0.24){
-//						//	aSumTest++;
-//						//}
-//						// count propensity score for all points in subgroup (aMembers)
-//						if (itsBinaryTarget.get(i))
-//							++aCountHeadBody;
-//					}
-					System.out.print("Count head:");
-					System.out.println(aCountHeadBody);
-					System.out.print("Count expected head:");
-					System.out.println(aCountHeadPropensityScore);
-					//System.out.print("Propensity score bigger than PT:");
-					//System.out.println(aSumTest);
-					//double aSum =0; // small check for propensity score (should sum to #target)
-					//for (int i=0;i<aPropensityScore.getPropensityScore().length;i++){
-					//	aSum = aSum+ aPropensityScore.getPropensityScore()[i];
-					//}
-					//System.out.println("Sum propensity score");
-					//System.out.println(aSum);
-					aQuality = QualityMeasure.calculatePropensityBased(aMeasure, aCountHeadBody, aCoverage, itsNrRows , aCountHeadPropensityScore);
-				}
-
-				//TODO: is this special case still needed?
-				// FIXME MM - this creates a new set FOR EVERY
-				// tested nominal Subgroup, killing performance
-				// also LABEL_RANKING is a separate TargetType
-				// see case below
-//				else if ( QM.getQualityMeasures(TargetType.LABEL_RANKING).contains(aMeasure) )
-//				{
-//					LabelRankingMatrix aLRM = itsTargetRankings.getAverageRankingMatrix(theNewSubgroup);
-//					aQuality = itsQualityMeasure.computeLabelRankingDistance(aCoverage, aLRM);
-//					theNewSubgroup.setLabelRanking(itsTargetRankings.getAverageRanking(theNewSubgroup)); //store the average ranking for later reference
-//					theNewSubgroup.setLabelRankingMatrix(aLRM); //store the matrix for later reference
-//				}
-				else //normal SINGLE_NOMINAL
-					aQuality = (float) itsQualityMeasure.calculate(aCountHeadBody, aCoverage);
-
-				theNewSubgroup.setSecondaryStatistic(aCountHeadBody / (double) aCoverage); //relative occurence of positives in subgroup
-				theNewSubgroup.setTertiaryStatistic(aCountHeadBody); //count of positives in the subgroup
-				break;
+				// DEBUG
+				if (!ProbabilityDensityFunction.USE_ProbabilityDensityFunction2)
+					aPDF = new ProbabilityDensityFunction(itsQualityMeasure.getProbabilityDensityFunction(), aChildMembers);
+				else
+					aPDF = new ProbabilityDensityFunction2(itsQualityMeasure.getProbabilityDensityFunction(), aChildMembers);
+				aPDF.smooth();
 			}
-			case SINGLE_NUMERIC :
-			{
-if (!TEMPORARY_CODE)
-{
-				// what needs to be calculated for this QM
-				// NOTE requiredStats could be a final SubgroupDiscovery.class member
-				Set<Stat> aRequiredStats = QM.requiredStats(itsSearchParameters.getQualityMeasure());
-				//Statistics aStatistics = itsNumericTarget.getStatistics(aMembers, aRequiredStats); // TODO MM - implement better solution than below two checks
-				Statistics aStatistics = itsNumericTarget.getStatistics(aMembers, itsSearchParameters.getQualityMeasure() == QM.MMAD, true);
-				ProbabilityDensityFunction aPDF = null;
-				if (aRequiredStats.contains(Stat.PDF))
-				{
-// FIXME MM TEMP
-System.out.format("#Subgroup: '%s' (size = %d)%n", theNewSubgroup, theNewSubgroup.getCoverage());
-// DEBUG
-if (!ProbabilityDensityFunction.USE_ProbabilityDensityFunction2)
-	aPDF = new ProbabilityDensityFunction(itsQualityMeasure.getProbabilityDensityFunction(), aMembers);
-else
-	aPDF = new ProbabilityDensityFunction2(itsQualityMeasure.getProbabilityDensityFunction(), aMembers);
-					aPDF.smooth();
-				}
 
-				aQuality = itsQualityMeasure.calculate(aStatistics, aPDF);
-				theNewSubgroup.setSecondaryStatistic(aStatistics.getSubgroupAverage());
-				theNewSubgroup.setTertiaryStatistic(aStatistics.getSubgroupStandardDeviation());
-				break;
-}
-else
-{
-// FIXME MM TEMP
-System.out.format("#Subgroup: '%s' (size = %d)%n", theNewSubgroup, theNewSubgroup.getCoverage());
-	ProbabilityMassFunction_ND aPMF = new ProbabilityMassFunction_ND((ProbabilityMassFunction_ND) itsQualityMeasure.getProbabilityDensityFunction(), aMembers);
-	aQuality = itsQualityMeasure.calculate(new Statistics(theNewSubgroup.getCoverage(), -1, -1, -1, -1), aPMF);
-	theNewSubgroup.setSecondaryStatistic(theNewSubgroup.getCoverage());
-	theNewSubgroup.setTertiaryStatistic(itsTable.getNrRows()-theNewSubgroup.getCoverage());
-	break;
-}
-			}
-			case MULTI_NUMERIC :
-			{
-				// for now always test against complement
-				aQuality = itsPDF_ND.getDensityDifference(aMembers, true, itsSearchParameters.getQualityMeasure());
-				// for now set just the sizes, most computations
-				// are expensive and neglected anyway
-				theNewSubgroup.setSecondaryStatistic(theNewSubgroup.getCoverage());
-				theNewSubgroup.setTertiaryStatistic(itsNrRows-theNewSubgroup.getCoverage());
-				break;
-			}
-			case DOUBLE_REGRESSION :
-			{
-				switch (itsBaseRM.itsQualityMeasure)
-				{
-					case REGRESSION_SSD_COMPLEMENT:
-					case REGRESSION_SSD_DATASET:
-					case REGRESSION_FLATNESS:
-					case REGRESSION_SSD_4:
-					{
-						RegressionMeasure aRM = new RegressionMeasure(itsBaseRM, aMembers);
-						aQuality = (float) aRM.getEvaluationMeasureValue();
-						theNewSubgroup.setSecondaryStatistic(aRM.getSlope()); //slope
-						theNewSubgroup.setTertiaryStatistic(aRM.getIntercept()); //intercept
-						break;
-					}
-/*
- * LEAVE THIS CODE IN, it will be used one day
-					case QualityMeasure.COOKS_DISTANCE:
-					{
-						// initialize variables
-						double aThreshold = -Double.MAX_VALUE;
-						boolean aNeedToComputeRegression = true;
-						boolean aNeedToComputeBounds = true;
+			aQuality = itsQualityMeasure.calculate(aStatistics, aPDF);
+			theChild.setSecondaryStatistic(aStatistics.getSubgroupAverage());
+			theChild.setTertiaryStatistic(aStatistics.getSubgroupStandardDeviation());
+		}
+		else
+		{
+			int aChildCoverage = theChild.getCoverage();
 
-						// check what the pruning quality will be, if this exists at all
-						int aBorderlineSubgroupNumber;
-						if (theNewSubgroup.itsDepth < itsSearchParameters.getSearchDepth())
-							aBorderlineSubgroupNumber = itsSearchParameters.getSearchStrategyWidth();
-						else aBorderlineSubgroupNumber = itsSearchParameters.getMaximumSubgroups();
-						// TODO these methods on itsResult are not (yet) thread save and will will cause
-						// problems during concurrent access, easy to fix
-						if ( itsResult.size() >= aBorderlineSubgroupNumber )
-							aThreshold = itsResult.last().getMeasureValue();
-						else { aNeedToComputeBounds = false; }
+			// FIXME MM TEMP
+			System.out.format("#Subgroup: '%s' (size = %d)%n", theChild, aChildCoverage);
 
-						// start actual computation
-						Log.logCommandLine("");
-						int aSampleSize = aMembers.cardinality();
-
-						// filter out rank deficient model that crash matrix multiplication library // TODO: should read <itsP instead of <2!!!
-						if (aSampleSize<2)
-						{
-							itsRankDefCount++;
-							return -Float.MAX_VALUE;
-						}
-
-						itsBaseRM.computeRemovedIndices(aMembers, aSampleSize);
-
-						// calculate the upper bound values. Before each bound, only the necessary computations are done.
-						if (aNeedToComputeBounds)
-						{
-							double aT = itsBaseRM.getT(aSampleSize);
-							double aRSquared = itsBaseRM.getRSquared(aSampleSize);
-
-							// bound seven
-							double aBoundSeven = itsBaseRM.computeBoundSeven(aSampleSize, aT, aRSquared);
-							if (aBoundSeven<Double.MAX_VALUE)
-							{
-								Log.logCommandLine("                   Bound 7: " + aBoundSeven);
-								itsBoundSevenCount++;
-							}
-
-							if (aBoundSeven < aThreshold)
-							{
-								aNeedToComputeRegression = false;
-								itsBoundSevenFired++;
-							}
-							else
-							{	// bound six
-								double aBoundSix = itsBaseRM.computeBoundSix(aSampleSize, aT);
-								if (aBoundSix<Double.MAX_VALUE)
-								{
-									Log.logCommandLine("                   Bound 6: " + aBoundSix);
-									itsBoundSixCount++;
-								}
-								if (aBoundSix < aThreshold)
-								{
-									aNeedToComputeRegression = false;
-									itsBoundSixFired++;
-								}
-								else
-								{	// bound five
-									double aBoundFive = itsBaseRM.computeBoundFive(aSampleSize, aRSquared);
-									if (aBoundFive<Double.MAX_VALUE)
-									{
-										Log.logCommandLine("                   Bound 5: " + aBoundFive);
-										itsBoundFiveCount++;
-									}
-									if (aBoundFive < aThreshold)
-									{
-										aNeedToComputeRegression = false;
-										itsBoundFiveFired++;
-									}
-									else
-									{	// bound four
-										double aBoundFour = itsBaseRM.computeBoundFour(aSampleSize);
-										if (aBoundFour<Double.MAX_VALUE)
-										{
-											Log.logCommandLine("                   Bound 4: " + aBoundFour);
-											itsBoundFourCount++;
-										}
-										if (aBoundFour < aThreshold)
-										{
-											aNeedToComputeRegression = false;
-											itsBoundFourFired++;
-										}
-									}
-								}
-							}
-						}
-
-						// finally, compute regression
-						if (aNeedToComputeRegression)
-						{
-							double aDoubleQuality = itsBaseRM.calculate(theNewSubgroup);
-							if (aDoubleQuality == -Double.MAX_VALUE)
-								itsRankDefCount++;
-							aQuality = (float) aDoubleQuality;
-						}
-						else aQuality = -Float.MAX_VALUE;
-					}
-*/
-				}
-				break;
-			}
-			case DOUBLE_CORRELATION :
-			{
-				CorrelationMeasure aCM = new CorrelationMeasure(itsBaseCM);
-
-				for (int i = aMembers.nextSetBit(0); i >= 0; i = aMembers.nextSetBit(i+1))
-					aCM.addObservation(itsPrimaryColumn.getFloat(i), itsSecondaryColumn.getFloat(i));
-				//for (int i = 0; i < itsNrRows; i++)
-				//	if (aMembers.get(i))
-				//		aCM.addObservation(itsPrimaryColumn.getFloat(i), itsSecondaryColumn.getFloat(i));
-				theNewSubgroup.setSecondaryStatistic(aCM.getCorrelation()); //correlation
-				theNewSubgroup.setTertiaryStatistic(aCM.computeCorrelationDistance()); //intercept
-				aQuality = (float) aCM.getEvaluationMeasureValue();
-				break;
-			}
-			case SCAPE :
-			{
-				int aCoverage = theNewSubgroup.getCoverage();
-				// NOTE aMembers is a clone so this is safe
-				aMembers.and(itsPrimaryColumn.getBinaries());
-				int aCountHeadBody = aMembers.cardinality();
-// FIXME MM - hold: functional change
-//				int aCountHeadBody = theNewSubgroup.countCommon(itsPrimaryColumn.getBinaries());
-
-				aQuality = itsQualityMeasure.calculate(theNewSubgroup.getMembers(), aCoverage, aCountHeadBody);
-				theNewSubgroup.setSecondaryStatistic(aCountHeadBody); //count of positives in the subgroup
-				theNewSubgroup.setTertiaryStatistic(aCoverage - aCountHeadBody); //count of negatives in the subgroup
-
-				break;
-			}
-			case MULTI_LABEL :
-			{
-// FIXME multiLabelCalculate(Subgroup) uses Subgroup.getMembers() to select a
-// subset of records from itsBinaryTable, supply BitSet as parameter, then all
-// methods use BitSet aMembers, theNewSubgroup.killMembers() is called once at
-// the end for evaluateCandidate(), and it is more clear why
-				aQuality = multiLabelCalculate(theNewSubgroup); //also stores DAG in Subgroup
-				theNewSubgroup.setSecondaryStatistic(itsQualityMeasure.calculateEditDistance(theNewSubgroup.getDAG())); //edit distance
-				theNewSubgroup.setTertiaryStatistic(QualityMeasure.calculateEntropy(itsNrRows, theNewSubgroup.getCoverage())); //entropy
-				break;
-			}
-			case LABEL_RANKING :
-			{
-// FIXME getAverageRankingMatrix(Subgroup) and getAverageRanking(Subgroup) only
-// uses Subgroup.getMembers(), supply BitSet as sole parameter, then all
-// methods use BitSet aMembers, theNewSubgroup.killMembers() is called once at
-// the end for evaluateCandidate(), and it is more clear why
-				int aCoverage = theNewSubgroup.getCoverage();
-				LabelRankingMatrix aLRM = itsTargetRankings.getAverageRankingMatrix(theNewSubgroup);
-				aQuality = itsQualityMeasure.computeLabelRankingDistance(aCoverage, aLRM);
-				theNewSubgroup.setLabelRanking(itsTargetRankings.getAverageRanking(theNewSubgroup)); //store the average ranking for later reference
-				theNewSubgroup.setLabelRankingMatrix(aLRM); //store the matrix for later reference
-
-				//TODO: make this more sensible
-				//theNewSubgroup.setSecondaryStatistic(aCountHeadBody / (double) aCoverage); //relative occurence of positives in subgroup
-				//theNewSubgroup.setTertiaryStatistic(aCountHeadBody); //count of positives in the subgroup
-				break;
-			}
-			default : throw new AssertionError(itsSearchParameters.getTargetType());
+			ProbabilityMassFunction_ND aPMF = new ProbabilityMassFunction_ND((ProbabilityMassFunction_ND) itsQualityMeasure.getProbabilityDensityFunction(), aChildMembers);
+			aQuality = itsQualityMeasure.calculate(new Statistics(aChildCoverage, -1, -1, -1, -1), aPMF);
+			theChild.setSecondaryStatistic(aChildCoverage);
+			theChild.setTertiaryStatistic(itsNrRows - aChildCoverage);
 		}
 
 		return aQuality;
 	}
+
+	private final float evaluateCandidateMultiNumeric(Subgroup theChild)
+	{
+			// for now always test against complement
+			float aQuality = itsPDF_ND.getDensityDifference(theChild.getMembers(), true, itsSearchParameters.getQualityMeasure());
+			// for now set just the sizes, most computations
+			// are expensive and neglected anyway
+			theChild.setSecondaryStatistic(theChild.getCoverage());
+			theChild.setTertiaryStatistic(itsNrRows - theChild.getCoverage());
+
+			return aQuality;
+	}
+
+	private final float evaluateCandidateDoubleRegression(Subgroup theChild)
+	{
+		BitSet aChildMembers = theChild.getMembers();
+		double aQuality;
+
+		// FIXME why is this a static member field
+		switch (itsBaseRM.itsQualityMeasure)
+		{
+			case REGRESSION_SSD_COMPLEMENT :
+			case REGRESSION_SSD_DATASET    :
+			case REGRESSION_FLATNESS       :
+			case REGRESSION_SSD_4          :
+			{
+				RegressionMeasure aRM = new RegressionMeasure(itsBaseRM, aChildMembers);
+				aQuality = aRM.getEvaluationMeasureValue();
+				theChild.setSecondaryStatistic(aRM.getSlope());
+				theChild.setTertiaryStatistic(aRM.getIntercept());
+				break;
+			}
+			/*
+			case COOKS_DISTANCE :
+			{
+				// initialize variables
+				double aThreshold = -Double.MAX_VALUE;
+				boolean aNeedToComputeRegression = true;
+				boolean aNeedToComputeBounds = true;
+
+				// check what the pruning quality will be, if this exists at all
+				int aBorderlineSubgroupNumber;
+				if (theChild.getDepth() < itsSearchParameters.getSearchDepth())
+					aBorderlineSubgroupNumber = itsSearchParameters.getSearchStrategyWidth();
+				else
+					aBorderlineSubgroupNumber = itsSearchParameters.getMaximumSubgroups();
+
+				// TODO these methods on itsResult are not (yet) thread save and
+				// will cause problems during concurrent access, easy to fix
+				if ( itsResult.size() >= aBorderlineSubgroupNumber)
+					aThreshold = itsResult.last().getMeasureValue();
+				else
+					aNeedToComputeBounds = false;
+
+				// start actual computation
+				Log.logCommandLine("");
+				int aSampleSize = theChild.getCoverage();
+
+				// filter out rank deficient model that crash matrix
+				// multiplication library
+				// TODO: should read < itsP instead of < 2 !!!
+				if (aSampleSize < 2)
+				{
+					itsRankDefCount++;
+					return -Float.MAX_VALUE;
+				}
+
+				itsBaseRM.computeRemovedIndices(aChildMembers, aSampleSize);
+
+				// calculate the upper bound values
+				// before each bound, only the necessary computations are done
+				if (aNeedToComputeBounds)
+				{
+					double aT = itsBaseRM.getT(aSampleSize);
+					double aRSquared = itsBaseRM.getRSquared(aSampleSize);
+
+					// bound seven
+					double aBoundSeven = itsBaseRM.computeBoundSeven(aSampleSize, aT, aRSquared);
+					if (aBoundSeven < Double.MAX_VALUE)
+					{
+						Log.logCommandLine("                   Bound 7: " + aBoundSeven);
+						itsBoundSevenCount++;
+					}
+
+					if (aBoundSeven < aThreshold)
+					{
+						aNeedToComputeRegression = false;
+						itsBoundSevenFired++;
+					}
+					else
+					{	// bound six
+						double aBoundSix = itsBaseRM.computeBoundSix(aSampleSize, aT);
+						if (aBoundSix < Double.MAX_VALUE)
+						{
+							Log.logCommandLine("                   Bound 6: " + aBoundSix);
+							itsBoundSixCount++;
+						}
+						if (aBoundSix < aThreshold)
+						{
+							aNeedToComputeRegression = false;
+							itsBoundSixFired++;
+						}
+						else
+						{	// bound five
+							double aBoundFive = itsBaseRM.computeBoundFive(aSampleSize, aRSquared);
+							if (aBoundFive < Double.MAX_VALUE)
+							{
+								Log.logCommandLine("                   Bound 5: " + aBoundFive);
+								itsBoundFiveCount++;
+							}
+							if (aBoundFive < aThreshold)
+							{
+								aNeedToComputeRegression = false;
+								itsBoundFiveFired++;
+							}
+							else
+							{	// bound four
+								double aBoundFour = itsBaseRM.computeBoundFour(aSampleSize);
+								if (aBoundFour < Double.MAX_VALUE)
+								{
+									Log.logCommandLine("                   Bound 4: " + aBoundFour);
+									itsBoundFourCount++;
+								}
+								if (aBoundFour < aThreshold)
+								{
+									aNeedToComputeRegression = false;
+									itsBoundFourFired++;
+								}
+							}
+						}
+					}
+				}
+
+				// finally, compute regression
+				if (aNeedToComputeRegression)
+				{
+					double aDoubleQuality = itsBaseRM.calculate(theChild);
+					if (aDoubleQuality == -Double.MAX_VALUE)
+						itsRankDefCount++;
+					aQuality = (float) aDoubleQuality;
+				}
+				else
+					aQuality = -Float.MAX_VALUE;
+				break;
+			}
+			*/
+			default :
+				throw new AssertionError(itsBaseRM.itsQualityMeasure);
+		}
+
+		return (float) aQuality;
+	}
+
+	private final float evaluateCandidateDoubleCorrelation(Subgroup theChild)
+	{
+		BitSet theChildMembers = theChild.getMembers();
+		CorrelationMeasure aCM = new CorrelationMeasure(itsBaseCM);
+
+		for (int i = theChildMembers.nextSetBit(0); i >= 0; i = theChildMembers.nextSetBit(i+1))
+			aCM.addObservation(itsPrimaryColumn.getFloat(i), itsSecondaryColumn.getFloat(i));
+
+		theChild.setSecondaryStatistic(aCM.getCorrelation());
+		theChild.setTertiaryStatistic(aCM.computeCorrelationDistance()); // intercept
+		double aQuality = aCM.getEvaluationMeasureValue();
+
+		return (float) aQuality;
+	}
+
+	private final float evaluateCandidateScape(Subgroup theChild)
+	{
+		int aCoverage = theChild.getCoverage();
+
+		BitSet aChildMembers = theChild.getMembers();
+		BitSet aClone = (BitSet) aChildMembers.clone();
+
+		// getMembers() always returns a clone so and() is safe
+		aChildMembers.and(itsPrimaryColumn.getBinaries());
+		int aCountHeadBody = aChildMembers.cardinality();
+		// FIXME MM - hold: functional change
+		// int aCountHeadBody = theNewSubgroup.countCommon(itsPrimaryColumn.getBinaries());
+
+		float aQuality = itsQualityMeasure.calculate(aClone, aCoverage, aCountHeadBody);
+		theChild.setSecondaryStatistic(aCountHeadBody);
+		theChild.setTertiaryStatistic(aCoverage - aCountHeadBody);
+
+		return aQuality;
+	}
+
+	// FIXME
+	// multiLabelCalculate(Subgroup) uses Subgroup.getMembers() to select a
+	// subset of records from itsBinaryTable, supply BitSet as parameter
+	private final float evaluateCandidateMultiLabel(Subgroup theChild)
+	{
+		BinaryTable aBinaryTable = itsBinaryTable.selectRows(theChild.getMembers());
+		Bayesian aBayesian = new Bayesian(aBinaryTable, itsTargets);
+		aBayesian.climb();               //induce DAG
+		DAG aDAG = aBayesian.getDAG();
+		theChild.setDAG(aDAG);           //store DAG with subgroup for later use
+
+		float aQuality = itsQualityMeasure.calculate(theChild);
+		theChild.setSecondaryStatistic(itsQualityMeasure.calculateEditDistance(theChild.getDAG()));
+		theChild.setTertiaryStatistic(QualityMeasure.calculateEntropy(itsNrRows, theChild.getCoverage()));
+
+		return aQuality;
+	}
+
+	// FIXME
+	// getAverageRankingMatrix(Subgroup) and getAverageRanking(Subgroup)
+	// only use Subgroup.getMembers(), supply BitSet as sole parameter
+	private final float evaluateCandidateLabelRanking(Subgroup theChild)
+	{
+		int aCoverage = theChild.getCoverage();
+		LabelRankingMatrix aLRM = itsTargetRankings.getAverageRankingMatrix(theChild);
+
+		float aQuality = itsQualityMeasure.computeLabelRankingDistance(aCoverage, aLRM);
+		theChild.setLabelRanking(itsTargetRankings.getAverageRanking(theChild));
+		theChild.setLabelRankingMatrix(aLRM);
+
+		// TODO make this more sensible
+		//theChild.setSecondaryStatistic(aCountHeadBody / (double) aCoverage);
+		//theChild.setTertiaryStatistic(aCountHeadBody);
+
+		return aQuality;
+	}
+
 /*
 TODO for stable jar, disabled, causes compile errors, reinstate later
 	private void generateBoundGraph()
@@ -2683,16 +2625,6 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		}
 	}
 */
-	private float multiLabelCalculate(Subgroup theSubgroup)
-	{
-		BinaryTable aBinaryTable = itsBinaryTable.selectRows(theSubgroup.getMembers());
-		Bayesian aBayesian = new Bayesian(aBinaryTable, itsTargets);
-		aBayesian.climb(); //induce DAG
-		DAG aDAG = aBayesian.getDAG();
-		theSubgroup.setDAG(aDAG); //store DAG with subgroup for later use
-		return itsQualityMeasure.calculate(theSubgroup);
-	}
-
 	////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////
 	///// general methods to return information about this instance        /////
