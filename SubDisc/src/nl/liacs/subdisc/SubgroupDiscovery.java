@@ -790,11 +790,13 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 	private void postMining(long theElapsedTime)
 	{
 		Process.echoMiningEnd(theElapsedTime, getNumberOfSubgroups());
+		long aNrCandidates = itsCandidateCount.get();
+		setTitle(itsMainWindow, theElapsedTime, aNrCandidates);
 
 		deleteSortData(itsTable.getColumns());
 
 		// postProcessCook() output is supposed to go in between
-		Log.logCommandLine("number of candidates: " + itsCandidateCount.get());
+		Log.logCommandLine("number of candidates: " + aNrCandidates);
 		postProcessCook();
 		Log.logCommandLine("number of subgroups: " + getNumberOfSubgroups());
 
@@ -803,6 +805,24 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 
 		postProcessMultiLabelAutoRun(); // IDs must be set first,  might set new
 		postProcessCBBS();
+	}
+
+	private static final void setTitle(JFrame theMainWindow, long theElapsedTime, long theNrCandidates)
+	{
+		if (theMainWindow == null)
+			return;
+
+		long minutes = theElapsedTime / 60_000l;
+		float seconds = (theElapsedTime % 60_000l) / 1_000.0f;
+
+		String aMessage = (minutes == 0 ? "" : (String.format(" %d minute%s and", minutes, (minutes == 1 ? "" : "s"))));
+		aMessage = String.format(Locale.US, "%s %.3f seconds", aMessage, seconds);
+		aMessage = String.format("Finished: evaluated %s candidate%s in%s.",
+									FORMATTER.format(theNrCandidates),
+									(theNrCandidates == 1 ? "" : "s"),
+									aMessage);
+
+		theMainWindow.setTitle(aMessage);
 	}
 
 	private void postProcessCook()
