@@ -1165,8 +1165,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		QM aQualityMeasure = itsSearchParameters.getQualityMeasure();
 		if (aQualityMeasure == QM.WRACC)
 		{
-			// FIXME MM floats are imprecise for data with N > 2^24
-			float aRatio = itsQualityMeasure.getNrPositives() / (float)(itsQualityMeasure.getNrRecords());
+			double aRatio = itsQualityMeasure.getNrPositives() / (double)(itsQualityMeasure.getNrRecords());
 			for (int i = 0; i < aNCT.size() && !isTimeToStop(); i++)
 			{
 				int aPi = aNCT.getPositiveCount(i);
