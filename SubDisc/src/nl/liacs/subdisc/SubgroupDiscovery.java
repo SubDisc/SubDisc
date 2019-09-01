@@ -936,12 +936,10 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		assert (theParentMembers.cardinality() == theParentCoverage);
 		assert (theParentCoverage > 1);
 
-		boolean isFilterNull = (itsFilter == null);
 		Subgroup aParent = theRefinement.getSubgroup();
 		// members-based domain, no empty Subgroups will occur
 		ConditionBase aConditionBase = theRefinement.getConditionBase();
 		Column aColumn = aConditionBase.getColumn();
-		ConditionListA aParentConditions = (isFilterNull ? null : aParent.getConditions());
 
 		// no useful Refinements are possible
 		if (aColumn.getCardinality() < 2)
@@ -954,9 +952,11 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		if ((aChildCoverage == 0) || (aChildCoverage == theParentCoverage))
 			return;
 
+		int aNrTruePositives = INVALID_NR_TRUE_POSITIVES;
+
 		// check for (aColumn = false)
 		if (aChildCoverage >= itsMinimumCoverage)
-			evaluateBinary(aParent, new Condition(aConditionBase, false), aChildMembers, aChildCoverage, itsFilter, aParentConditions);
+			aNrTruePositives = evaluateBinary(aParent, new Condition(aConditionBase, false), aChildMembers, aChildCoverage);
 
 		// binary check is fast, but for some models evaluateCandidate() is not
 		if (isTimeToStop())
@@ -967,8 +967,21 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		aChildCoverage = (theParentCoverage - aChildCoverage);
 		if (aChildCoverage >= itsMinimumCoverage)
 		{
-			aChildMembers = aColumn.evaluateBinary(theParentMembers, true);
-			evaluateBinary(aParent, new Condition(aConditionBase, true), aChildMembers, aChildCoverage, itsFilter, aParentConditions);
+			Condition aCondition = new Condition(aConditionBase, true);
+
+			// (aColumn = false) is not evaluated when < itsMinimumCoverage
+			// NOTE if-check can never be true unless isDirectSettingBinary()
+			if (aNrTruePositives != INVALID_NR_TRUE_POSITIVES)
+			{
+				aNrTruePositives = (((int) aParent.getTertiaryStatistic()) - aNrTruePositives);
+				Subgroup aChildSubgroup = directComputation(aParent, aCondition, itsQualityMeasure, aChildCoverage, aNrTruePositives);
+				checkAndLog(aChildSubgroup, theParentCoverage);
+			}
+			else
+			{
+				aChildMembers = aColumn.evaluateBinary(theParentMembers, true);
+				evaluateBinary(aParent, aCondition, aChildMembers, aChildCoverage);
+			}
 		}
 	}
 
@@ -980,42 +993,50 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 				!(itsSearchParameters.getQualityMeasure() == QM.PROP_SCORE_WRACC) || (itsSearchParameters.getQualityMeasure() == QM.PROP_SCORE_RATIO));
 	}
 
-	private final void evaluateBinary(Subgroup theParent, Condition theAddedCondition, BitSet theChildMembers, int theChildCoverage, Filter theFilter, ConditionListA theParentConditionList)
+	// return is always INVALID_NR_TRUE_POSITIVES when !isDirectSettingBinary()
+	private static final int INVALID_NR_TRUE_POSITIVES = -1;
+	private final int evaluateBinary(Subgroup theParent, Condition theAddedCondition, BitSet theChildMembers, int theChildCoverage)
 	{
 		// evaluateNominalRefinements() should prevent getting here for ValueSet
 		assert (!itsSearchParameters.getNominalSets());
 		assert (theChildMembers.cardinality() == theChildCoverage);
 		assert (theChildCoverage > 0);
-		// must both be non-null, or both be null
-		assert (!((theFilter == null) ^ (theParentConditionList == null)));
 
+		boolean isDirectSettingBinary = isDirectSettingBinary();
 		final Subgroup aChildSubgroup;
+		int aNrTruePositives = INVALID_NR_TRUE_POSITIVES;
 
-		if (isDirectSettingBinary())
+		if (isDirectSettingBinary)
 		{
 			// safe: it is a clone, and subgroup coverage is stored: theCoverage
 			theChildMembers.and(itsBinaryTarget);
-			int aTruePositives = theChildMembers.cardinality();
+			aNrTruePositives = theChildMembers.cardinality();
 
-			aChildSubgroup = directComputation(theParent, theAddedCondition, itsQualityMeasure, theChildCoverage, aTruePositives);
+			aChildSubgroup = directComputation(theParent, theAddedCondition, itsQualityMeasure, theChildCoverage, aNrTruePositives);
 		}
 		else
 		{
-			if ((theFilter != null) && !theFilter.isUseful(theParentConditionList, theAddedCondition))
-				return;
+			if ((itsFilter != null) && !itsFilter.isUseful(theParent.getConditions(), theAddedCondition))
+				return INVALID_NR_TRUE_POSITIVES;
 
 			aChildSubgroup = theParent.getRefinedSubgroup(theAddedCondition, theChildMembers, theChildCoverage);
+
+			// SINGLE_NOMINAL only, but not for PROP_SCORE_* and ValueSet
+			if (isDirectSettingBinary)
+				aNrTruePositives = (int) aChildSubgroup.getTertiaryStatistic();
 		}
 
 		checkAndLog(aChildSubgroup, theParent.getCoverage());
+
+		return aNrTruePositives;
 	}
 
-	private static final Subgroup directComputation(Subgroup theParent, Condition theAddedCondition, QualityMeasure theQualityMeasure, int theChildCoverage, int theTruePositives)
+	private static final Subgroup directComputation(Subgroup theParent, Condition theAddedCondition, QualityMeasure theQualityMeasure, int theChildCoverage, int theNrTruePositives)
 	{
 		// FIXME MM q is only cast to float to make historic results comparable
-		float q = (float) theQualityMeasure.calculate(theTruePositives, theChildCoverage);
-		double s = ((double) theTruePositives) / theChildCoverage;
-		double t = ((double) theTruePositives);
+		float q = (float) theQualityMeasure.calculate(theNrTruePositives, theChildCoverage);
+		double s = ((double) theNrTruePositives) / theChildCoverage;
+		double t = ((double) theNrTruePositives);
 
 		return theParent.getRefinedSubgroup(theAddedCondition, q, s, t, theChildCoverage);
 	}
@@ -1037,10 +1058,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		Subgroup aParent = theRefinement.getSubgroup();
 		int aParentCoverage = aParent.getCoverage();
 		assert (theMembers.cardinality() == aParentCoverage);
-
-		// this subgroup can not be refined - FIXME MM make this an assert
-		if (aParentCoverage <= 1)
-			return;
+		assert (aParentCoverage > 1);
 
 		ConditionBase aConditionBase = theRefinement.getConditionBase();
 
