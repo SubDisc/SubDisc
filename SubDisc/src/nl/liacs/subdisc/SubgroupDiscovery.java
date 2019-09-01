@@ -400,11 +400,13 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 			Candidate aCandidate = itsCandidateQueue.removeFirst(); // take off first Candidate from Queue
 			Subgroup aSubgroup = aCandidate.getSubgroup();
 
-//			RefinementList aRefinementList = new RefinementList(aSubgroup, itsTable, itsSearchParameters);
+			// Subgroup.getMembers() creates expensive clone, reuse
+			BitSet aMembers = aSubgroup.getMembers();
+			int aCoverage = aSubgroup.getCoverage();
+			assert (aMembers.cardinality() == aCoverage);
+			assert (aSubgroup.getDepth() < itsSearchParameters.getSearchDepth());
+
 			RefinementList aRefinementList = new RefinementList(aSubgroup, theConditions);
-//			RefinementList aRefinementList = new RefinementList(aSubgroup, aConditions, aSearchStrategy);
-			// .getMembers() creates expensive clone, reuse
-			final BitSet aMembers = aSubgroup.getMembers();
 
 			for (int i = 0, j = aRefinementList.size(); i < j && !isTimeToStop(); i++)
 			{
@@ -414,14 +416,20 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 					continue;
 
 				ConditionBase aConditionBase = aRefinement.getConditionBase();
+				Column aColumn = aConditionBase.getColumn();
+
+				// no useful Refinements are possible
+				if (aColumn.getCardinality() <= 1)
+					continue;
+
 				// if refinement is (num_attr = value) then treat it as nominal
 				// using EQUALS for numeric conditions is bad, see evaluateNominalBinaryRefinements()
 				// evaluateNumericRefinements() should split code path for EQUALS and !EQUALS
 				// only NUMERIC_BINS setting is affected
-				if (aConditionBase.getColumn().getType() == AttributeType.NUMERIC && aConditionBase.getOperator() != Operator.EQUALS)
-					evaluateNumericRefinements(aMembers, aRefinement);
+				if (aColumn.getType() == AttributeType.NUMERIC && aConditionBase.getOperator() != Operator.EQUALS)
+					evaluateNumericRefinements(aMembers, aCoverage, aRefinement);
 				else
-					evaluateNominalBinaryRefinements(aMembers, aRefinement);
+					evaluateNominalBinaryRefinements(aMembers, aCoverage, aRefinement);
 			}
 
 			if (itsCandidateQueue.size() == 0)
@@ -438,6 +446,7 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 	/* use theNrThreads < 0 to run old mine(theBeginTime) */
 	public void mine(long theBeginTime, int theNrThreads)
 	{
+		// not a member field, final and unmodifiable, good for concurrency
 		final ConditionBaseSet aConditions = preMining(theBeginTime, theNrThreads);
 
 		if (theNrThreads < 0)
@@ -488,8 +497,8 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 			Candidate aCandidate = null;
 			synchronized (itsCandidateQueue)
 			{
-				final int aTotalSize = itsCandidateQueue.size();
-				final boolean alone = (s.availablePermits() == theNrThreads-1);
+				int aTotalSize = itsCandidateQueue.size();
+				boolean alone = (s.availablePermits() == theNrThreads-1);
 				// take off first Candidate from Queue
 				if (itsCandidateQueue.currentLevelQueueSize() > 0)
 					aCandidate = itsCandidateQueue.removeFirst();
@@ -574,7 +583,7 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 
 	private final void loadExternalKnowledge()
 	{
-		final QM aQualityMeasure = itsSearchParameters.getQualityMeasure();
+		QM aQualityMeasure = itsSearchParameters.getQualityMeasure();
 
 		// fill the conditionList of local and global knowledge, Rob
 		if (aQualityMeasure == QM.PROP_SCORE_WRACC || aQualityMeasure == QM.PROP_SCORE_RATIO)
@@ -746,7 +755,6 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 		private final Semaphore itsSemaphore;
 		private final ConditionBaseSet itsConditionBaseSet;
 
-		// XXX MM - theSearchDepth parameter will be removed
 		public Test(Subgroup theSubgroup, Semaphore theSemaphore, ConditionBaseSet theConditionBaseSet)
 		{
 			itsSubgroup = theSubgroup;
@@ -757,22 +765,29 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 		@Override
 		public void run()
 		{
-			assert (itsSubgroup.getDepth() < itsSearchParameters.getSearchDepth());
-
-			RefinementList aRefinementList = new RefinementList(itsSubgroup, itsConditionBaseSet);
-			// .getMembers() creates expensive clone, reuse
+			// Subgroup.getMembers() creates expensive clone, reuse
 			final BitSet aMembers = itsSubgroup.getMembers();
+			final int aCoverage = itsSubgroup.getCoverage();
+			assert (aMembers.cardinality() == aCoverage);
+
+			final RefinementList aRefinementList = new RefinementList(itsSubgroup, itsConditionBaseSet);
 
 			for (int i = 0, j = aRefinementList.size(); i < j && !isTimeToStop(); i++)
 			{
-				Refinement aRefinement = aRefinementList.get(i);
+				final Refinement aRefinement = aRefinementList.get(i);
 
 				ConditionBase aConditionBase = aRefinement.getConditionBase();
+				Column aColumn = aConditionBase.getColumn();
+
+				// no useful Refinements are possible
+				if (aColumn.getCardinality() <= 1)
+					continue;
+
 				// if refinement is (num_attr = value) then treat it as nominal
-				if (aConditionBase.getColumn().getType() == AttributeType.NUMERIC && aConditionBase.getOperator() != Operator.EQUALS)
-					evaluateNumericRefinements(aMembers, aRefinement);
+				if (aColumn.getType() == AttributeType.NUMERIC && aConditionBase.getOperator() != Operator.EQUALS)
+					evaluateNumericRefinements(aMembers, aCoverage, aRefinement);
 				else
-					evaluateNominalBinaryRefinements(aMembers, aRefinement);
+					evaluateNominalBinaryRefinements(aMembers, aCoverage, aRefinement);
 			}
 
 			itsSemaphore.release();
@@ -945,17 +960,28 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////
 
-	// split code paths for ValueSet and class labels (nominal/numeric/binary)
-	private void evaluateNominalBinaryRefinements(BitSet theParentMembers, Refinement theRefinement)
+	/*
+	 * NOTE
+	 * itsSubgroup / theMembers for each Refinement from the same RefinementList
+	 * are always the same, supply a cached version of theMembers, as
+	 * Subgroup.getMembers() creates a clone on each call
+	 *
+	 * NOTE
+	 * all required data can come from a single Refinement parameter, but
+	 * theParentMembers are obtained through an expensive Subgroup.getMembers()
+	 * call, which creates a new copy every time, therefore it is cached
+	 *
+	 * NOTE
+	 * these asserts are omitted as only the two mine() methods call this one:
+	 * (theParentMembers.cardinality() == theParentCoverage)
+	 * (theRefinement.getSubgroup().getMembers().equals(theParentMembers))
+	 */
+	private void evaluateNominalBinaryRefinements(BitSet theParentMembers, int theParentCoverage, Refinement theRefinement)
 	{
-		Subgroup aParent = theRefinement.getSubgroup();
-		int aParentCoverage = aParent.getCoverage();
-		assert (theParentMembers.cardinality() == aParentCoverage);
-		assert (aParentCoverage > 1);
-
+		// split code paths for ValueSet/class labels (nominal/numeric/binary)
 		if (itsSearchParameters.getNominalSets())
 		{
-			evaluateNominalBestValueSet(theParentMembers, theRefinement);
+			evaluateNominalBestValueSet(theParentMembers, theParentCoverage, theRefinement);
 			return;
 		}
 
@@ -965,24 +991,18 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		// FIXME: NUMERIC Refinement should not be done here
 		switch (aConditionBase.getColumn().getType())
 		{
-			case NOMINAL : evaluateNominalRefinements(theParentMembers, theRefinement, aParentCoverage); break;
-			case NUMERIC : evaluateNumericEqualsRefinements(theParentMembers, theRefinement, aParentCoverage); break;
+			case NOMINAL : evaluateNominalRefinements(theParentMembers, theParentCoverage, theRefinement); break;
+			case NUMERIC : evaluateNumericEqualsRefinements(theParentMembers, theParentCoverage, theRefinement); break;
 			case ORDINAL : throw new AssertionError(AttributeType.ORDINAL);
-			case BINARY  : evaluateBinaryRefinements(theParentMembers, theRefinement, aParentCoverage); break;
+			case BINARY  : evaluateBinaryRefinements(theParentMembers, theParentCoverage, theRefinement); break;
 			default      : throw new AssertionError(aConditionBase.getColumn().getType());
 		}
 	}
 
 	// XXX (c = false) is checked first, (c = true) is conditionally, it depends
 	//       on data and search characteristics  whether this is the best order
-	private final void evaluateBinaryRefinements(final BitSet theParentMembers, final Refinement theRefinement, int theParentCoverage)
+	private final void evaluateBinaryRefinements(BitSet theParentMembers, int theParentCoverage, Refinement theRefinement)
 	{
-		// evaluateNominalRefinements() should prevent getting here for ValueSet
-		assert (!itsSearchParameters.getNominalSets());
-		// should have been checked by evaluateNominalBinaryRefinements()
-		assert (theParentMembers.cardinality() == theParentCoverage);
-		assert (theParentCoverage > 1);
-
 		Subgroup aParent = theRefinement.getSubgroup();
 		// members-based domain, no empty Subgroups will occur
 		ConditionBase aConditionBase = theRefinement.getConditionBase();
@@ -1036,11 +1056,6 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	private static final int INVALID_NR_TRUE_POSITIVES = -1;
 	private final int evaluateBinary(Subgroup theParent, Condition theAddedCondition, BitSet theChildMembers, int theChildCoverage)
 	{
-		// evaluateNominalRefinements() should prevent getting here for ValueSet
-		assert (!itsSearchParameters.getNominalSets());
-		assert (theChildMembers.cardinality() == theChildCoverage);
-		assert (theChildCoverage > 0);
-
 		boolean isDirectSettingBinary = isDirectSettingBinary();
 		final Subgroup aChildSubgroup;
 		int aNrTruePositives = INVALID_NR_TRUE_POSITIVES;
@@ -1094,14 +1109,8 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////
 
-	private final void evaluateNominalRefinements(final BitSet theParentMembers, final Refinement theRefinement, int theParentCoverage)
+	private final void evaluateNominalRefinements(BitSet theParentMembers, int theParentCoverage, Refinement theRefinement)
 	{
-		// evaluateNominalRefinements() should prevent getting here for ValueSet
-		assert (!itsSearchParameters.getNominalSets());
-		// should have been checked by evaluateNominalBinaryRefinements()
-		assert (theParentMembers.cardinality() == theParentCoverage);
-		assert (theParentCoverage > 1);
-
 		boolean isFilterNull = (itsFilter == null);
 		Subgroup aParent = theRefinement.getSubgroup();
 		// members-based domain, no empty Subgroups will occur
@@ -1142,24 +1151,18 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		}
 	}
 
-	private final void evaluateNominalBestValueSet(BitSet theParentMembers, Refinement theRefinement)
+	private final void evaluateNominalBestValueSet(BitSet theParentMembers, int theParentCoverage, Refinement theRefinement)
 	{
-		Subgroup aParent = theRefinement.getSubgroup();
-		int aParentCoverage = aParent.getCoverage();
-		assert (theParentMembers.cardinality() == aParentCoverage);
-		assert (aParentCoverage > 1);
-
 		ConditionBase aConditionBase = theRefinement.getConditionBase();
 
 		// BestValueSet implies target type is SINGLE_NOMINAL
 		assert (itsSearchParameters.getTargetType() == TargetType.SINGLE_NOMINAL);
-		assert (itsSearchParameters.getNominalSets());
 		assert (aConditionBase.getOperator() == Operator.ELEMENT_OF);
 
 		NominalCrossTable aNCT = new NominalCrossTable(aConditionBase.getColumn(), theParentMembers, itsBinaryTarget);
-		final SortedSet<String> aDomainBestSubSet = new TreeSet<String>();
+		SortedSet<String> aDomainBestSubSet = new TreeSet<String>();
 
-		final QM aQualityMeasure = itsSearchParameters.getQualityMeasure();
+		QM aQualityMeasure = itsSearchParameters.getQualityMeasure();
 		if (aQualityMeasure == QM.WRACC)
 		{
 			// FIXME MM floats are imprecise for data with N > 2^24
@@ -1176,8 +1179,8 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		else // not WRACC
 		{
 			// construct and check all subsets on the convex hull
-			final List<Integer> aSortedDomainIndices = aNCT.getSortedDomainIndices();
-			final int aSortedDomainIndicesSize = aSortedDomainIndices.size();
+			List<Integer> aSortedDomainIndices = aNCT.getSortedDomainIndices();
+			int aSortedDomainIndicesSize = aSortedDomainIndices.size();
 			double aBestQuality = Double.NEGATIVE_INFINITY;
 
 			// upper part of the hull
@@ -1275,9 +1278,9 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		// BEST (valid or not) candidate to the CandidateQueue
 		// and then never refine a nominal attribute with itself
 		// FIXME quality is known, re-evaluation should be avoided
-		final ValueSet aBestSubset = new ValueSet(aDomainBestSubSet);
+		ValueSet aBestSubset = new ValueSet(aDomainBestSubSet);
 		Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(aBestSubset);
-		checkAndLog(aNewSubgroup, aParentCoverage);
+		checkAndLog(aNewSubgroup, theParentCoverage);
 	}
 
 	////////////////////////////////////////////////////////////////////////////
@@ -1287,15 +1290,12 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	////////////////////////////////////////////////////////////////////////////
 
 	// shares a lot of code with evaluateNominalRefinements(), but will change
-	private final void evaluateNumericEqualsRefinements(final BitSet theParentMembers, final Refinement theRefinement, int theParentCoverage)
+	private final void evaluateNumericEqualsRefinements(BitSet theParentMembers, int theParentCoverage, Refinement theRefinement)
 	{
 		// NUMERIC Refinement in evaluateNominalBinaryRefinements is a weird
 		// setting, this check is irrelevant for NUMERIC Columns
 		// evaluateNominalRefinements() should prevent getting here for ValueSet
 		//assert (!itsSearchParameters.getNominalSets());
-		// should have been checked by evaluateNominalBinaryRefinements()
-		assert (theParentMembers.cardinality() == theParentCoverage);
-		assert (theParentCoverage > 1);
 
 		boolean isFilterNull = (itsFilter == null);
 		Subgroup aParent = theRefinement.getSubgroup();
@@ -1322,48 +1322,57 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	}
 
 	/*
-	 * NOTE itsSubgroup / theMembers for each Refinement from the same
-	 * RefinementList are always the same
-	 * supply a cached version of theMembers, as Subgroup.getMembers()
-	 * creates a clone on each call
-	 * 
-	 * TODO MM - for *_BEST strategies, in case of ties, multiple subgroups
+	 * NOTE
+	 * itsSubgroup / theMembers for each Refinement from the same RefinementList
+	 * are always the same, supply a cached version of theMembers, as
+	 * Subgroup.getMembers() creates a clone on each call
+	 *
+	 * NOTE
+	 * all required data can come from a single Refinement parameter, but
+	 * theParentMembers are obtained through an expensive Subgroup.getMembers()
+	 * call, which creates a new copy every time, therefore it is cached
+	 *
+	 * NOTE
+	 * these asserts are omitted as only the two mine() methods call this one:
+	 * (theParentMembers.cardinality() == theParentCoverage)
+	 * (theRefinement.getSubgroup().getMembers().equals(theParentMembers))
+	 *
+	 * TODO MM
+	 * for *_BEST strategies, in case of ties, multiple subgroups
 	 * attaining the best score, this implementation retains only the first
 	 * instead it could retain all best scoring subgroups
+	 *
+	 * moreover, the treatment of <= and >= is dubious
+	 * for <= the first, and therefore smallest best Subgroup is retained
+	 * for >= the first, and therefore largest best Subgroup is retained
 	 */
-	private void evaluateNumericRefinements(BitSet theMembers, Refinement theRefinement)
+	private void evaluateNumericRefinements(BitSet theParentMembers, int theParentCoverage, Refinement theRefinement)
 	{
-		assert (theRefinement.getSubgroup().getCoverage() == theMembers.cardinality());
-//		assert (theRefinement.getSubgroup().getCoverage() > 1);
-		// this subgroup can not be refined - FIXME MM make this an assert
-		if (theRefinement.getSubgroup().getCoverage() <= 1)
-			return;
-
 		switch (itsSearchParameters.getNumericStrategy())
 		{
 			case NUMERIC_ALL :
-				numericHalfIntervals(theMembers, theRefinement);
+				numericHalfIntervals(theParentMembers, theParentCoverage, theRefinement);
 				break;
 			// NUMERIC_BEST is like NUMERIC_ALL, but uses only best scoring subgroup
 			case NUMERIC_BEST :
-				numericHalfIntervals(theMembers, theRefinement);
+				numericHalfIntervals(theParentMembers, theParentCoverage, theRefinement);
 				break;
 			case NUMERIC_BINS :
-				numericHalfIntervals(theMembers, theRefinement);
+				numericHalfIntervals(theParentMembers, theParentCoverage, theRefinement);
 				break;
 			// NUMERIC_BEST_BINS is like NUMERIC_BINS, but uses only best scoring subgroup
 			case NUMERIC_BEST_BINS :
-				numericHalfIntervals(theMembers, theRefinement);
+				numericHalfIntervals(theParentMembers, theParentCoverage, theRefinement);
 				break;
 			case NUMERIC_INTERVALS :
-				numericIntervals(theMembers, theRefinement);
+				numericIntervals(theParentMembers, theParentCoverage, theRefinement);
 				break;
 			case NUMERIC_VIKAMINE_CONSECUTIVE_ALL :
-				numericConsecutiveBins(theMembers, theRefinement);
+				numericConsecutiveBins(theParentMembers, theParentCoverage, theRefinement);
 				break;
 			// NUMERIC_VIKAMINE_CONSECUTIVE_BEST is like NUMERIC_VIKAMINE_CONSECUTIVE_ALL, but uses only best scoring subgroup
 			case NUMERIC_VIKAMINE_CONSECUTIVE_BEST :
-				numericConsecutiveBins(theMembers, theRefinement);
+				numericConsecutiveBins(theParentMembers, theParentCoverage, theRefinement);
 				break;
 //			case NUMERIC_VIKAMINE_CARTESIAN_ALL :
 //				throw new AssertionError(itsSearchParameters.getNumericStrategy() + " not implemented");
@@ -1377,7 +1386,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	}
 
 	// FIXME MM historically numeric EQUALS uses nominal code, it should change
-	private final void numericHalfIntervalsDomainMapNumeric(BitSet theParentMembers, Refinement theRefinement)
+	private final void numericHalfIntervalsDomainMapNumeric(BitSet theParentMembers, int theParentCoverage, Refinement theRefinement)
 	{
 		// evaluateNumericRefinements() should prevent getting here for
 		// NUMERIC_INTERVALS and NUMERIC_VIKAMINE_CONSECUTIVE_ALL|BEST
@@ -1388,10 +1397,6 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		////////////////////////////////////////////////////////////////////////
 		boolean isFilterNull = (itsFilter == null);
 		Subgroup aParent = theRefinement.getSubgroup();
-		int aParentCoverage = aParent.getCoverage();
-		// should have been checked by evaluateNumericRefinements()
-		assert (theParentMembers.cardinality() == aParentCoverage);
-		assert (aParentCoverage > 1);
 
 		// members-based domain, no empty Subgroups will occur
 		ConditionBase aConditionBase = theRefinement.getConditionBase();
@@ -1402,24 +1407,20 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		// (cover-update and check) order relies on binary choice <= or >=
 		assert (anOperator == Operator.LESS_THAN_OR_EQUAL || anOperator == Operator.GREATER_THAN_OR_EQUAL);
 
-		// no useful Refinements are possible
-		if (aColumn.getCardinality() <= 1)
-			return;
-
 		// might require update when more strategies are added
 		boolean isAllStrategy = (aNumericStrategy == NumericStrategy.NUMERIC_ALL || aNumericStrategy == NumericStrategy.NUMERIC_BINS);
 
 		Subgroup aBestSubgroup = null;
 		////////////////////////////////////////////////////////////////////////
 
-		DomainMapNumeric m = getDomainMapD(theParentMembers, aParentCoverage, aNumericStrategy, aColumn, itsSearchParameters.getNrBins(), anOperator);
+		DomainMapNumeric m = getDomainMapD(theParentMembers, theParentCoverage, aNumericStrategy, aColumn, itsSearchParameters.getNrBins(), anOperator);
 		float[] aDomain = m.itsDomain;
 		int[] aCounts = m.itsCounts;
 
 		// code paths might be split one day, to avoid isLEQ check inside loop
 		boolean isLEQ = (anOperator == Operator.LESS_THAN_OR_EQUAL);
 		// for bins: <= with last value, >= with first, might select all data
-		boolean selectsAllData = (m.itsCountsSum == aParentCoverage);
+		boolean selectsAllData = (m.itsCountsSum == theParentCoverage);
 		int s = (!isLEQ && selectsAllData ? 1 : 0);
 		int e = ( isLEQ && selectsAllData ? m.itsSize-1 : m.itsSize);
 		int c = (isLEQ ? 0 : (!selectsAllData ? m.itsCountsSum : (m.itsCountsSum-aCounts[0])));
@@ -1454,35 +1455,31 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			if (isAllStrategy)
 			{
 				//addToBuffer(aNewSubgroup);
-				checkAndLog(aNewSubgroup, aParentCoverage);
+				checkAndLog(aNewSubgroup, theParentCoverage);
 			}
 			else
 			{
 				// more clear than using else-if
-				if (isValidAndBest(aNewSubgroup, aParentCoverage, aBestSubgroup))
+				if (isValidAndBest(aNewSubgroup, theParentCoverage, aBestSubgroup))
 					aBestSubgroup = aNewSubgroup;
 			}
 		}
 
 		if (!isAllStrategy && (aBestSubgroup != null))
-			bestAdd(aBestSubgroup, aParentCoverage);
+			bestAdd(aBestSubgroup, theParentCoverage);
 	}
 
-	private final void numericHalfIntervals(final BitSet theParentMembers, final Refinement theRefinement)
+	private final void numericHalfIntervals(BitSet theParentMembers, int theParentCoverage, Refinement theRefinement)
 	{
 		// only for SINGLE_NOMINAL + class labels
 		if (!isPOCSetting())
 		{
-			numericHalfIntervalsDomainMapNumeric(theParentMembers, theRefinement);
+			numericHalfIntervalsDomainMapNumeric(theParentMembers, theParentCoverage, theRefinement);
 			return;
 		}
 
 		////////////////////////////////////////////////////////////////////////
 		Subgroup aParent = theRefinement.getSubgroup();
-		int aParentCoverage = aParent.getCoverage();
-		// should have been checked by evaluateNumericRefinements()
-		assert (theParentMembers.cardinality() == aParentCoverage);
-		assert (aParentCoverage > 1);
 
 		// members-based domain, no empty Subgroups will occur
 		ConditionBase aConditionBase = theRefinement.getConditionBase();
@@ -1491,10 +1488,6 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 
 		// (cover-update and check) order relies on binary choice <= or >=
 		assert (anOperator == Operator.LESS_THAN_OR_EQUAL || anOperator == Operator.GREATER_THAN_OR_EQUAL);
-
-		// no useful Refinements are possible
-		if (aColumn.getCardinality() <= 1)
-			return;
 
 		// might require update when more strategies are added
 		NumericStrategy aNumericStrategy = itsSearchParameters.getNumericStrategy();
@@ -1506,8 +1499,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		ValueInfo via = aColumn.getUniqueNumericDomainMap(theParentMembers);
 
 		// split path split - BEST_BINS/BINS use substantially different loop
-		boolean aCoarse = ((aNumericStrategy == NumericStrategy.NUMERIC_BEST_BINS) || (aNumericStrategy == NumericStrategy.NUMERIC_BINS));
-		if (aCoarse)
+		if (aNumericStrategy.isDiscretiser())
 		{
 			numericHalfIntervalsValueCountsCoarsePOC(aParent, aConditionBase, via);
 			return;
@@ -1527,7 +1519,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 
 				cover += aCount;
 
-				if (cover == aParentCoverage)
+				if (cover == theParentCoverage)
 					break;
 
 				// count true positives fort this value
@@ -1549,7 +1541,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		else
 		{
 			// NOTE getTertiaryStatistic() only works for SINGLE_NOMINAL
-			for (int i = 0, j = aCounts.length, cover = aParentCoverage, tp = (int) aParent.getTertiaryStatistic(); i < j && !isTimeToStop(); ++i)
+			for (int i = 0, j = aCounts.length, cover = theParentCoverage, tp = (int) aParent.getTertiaryStatistic(); i < j && !isTimeToStop(); ++i)
 			{
 				if (cover < itsMinimumCoverage)
 					break;
@@ -1560,7 +1552,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 
 				// >= with the first value select the same subset as the parent
 				// old tp and cover, as counts for this value should be included
-				if (cover != aParentCoverage)
+				if (cover != theParentCoverage)
 				{
 					Condition aCondition = new Condition(aConditionBase, aColumn.SORTED[i], i);
 					aBestSubgroup = evaluateCandidate(aParent, aCondition, cover, tp, isAllStrategy, aBestSubgroup);
@@ -1573,11 +1565,11 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		}
 
 		if (!isAllStrategy && (aBestSubgroup != null))
-			bestAdd(aBestSubgroup, aParentCoverage);
+			bestAdd(aBestSubgroup, theParentCoverage);
 	}
 
 	// NOTE for comparison bugs in original code are deliberately reproduced atm
-	@SuppressWarnings("unused") // suppress warnings when DEBUG_POC_BINS = true
+	@SuppressWarnings("unused") // suppress warnings when DEBUG_POC_BINS = false
 	private final void numericHalfIntervalsValueCountsCoarsePOC(Subgroup theParent, ConditionBase theConditionBase, ValueInfo theValueInfo)
 	{
 		NumericStrategy aNumericStrategy = itsSearchParameters.getNumericStrategy();
@@ -1763,7 +1755,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////
 
-	private void numericConsecutiveBins(BitSet theParentMembers, Refinement theRefinement)
+	private void numericConsecutiveBins(BitSet theParentMembers, int theParentCoverage, Refinement theRefinement)
 	{
 		// evaluateNumericRefinements() should prevent getting here for others
 		NumericStrategy aNumericStrategy = itsSearchParameters.getNumericStrategy();
@@ -1772,23 +1764,14 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		////////////////////////////////////////////////////////////////////////
 		boolean isFilterNull = (itsFilter == null);
 		Subgroup aParent = theRefinement.getSubgroup();
-		int aParentCoverage = aParent.getCoverage();
-		// should have been checked by evaluateNumericRefinements()
-		assert (theParentMembers.cardinality() == aParentCoverage);
-		assert (aParentCoverage > 1);
 
 		// members-based domain, no empty Subgroups will occur
 		ConditionBase aConditionBase = theRefinement.getConditionBase();
-		Column aColumn = aConditionBase.getColumn();
 		ConditionListA aParentConditions = (isFilterNull ? null : aParent.getConditions());
 		Operator anOperator = aConditionBase.getOperator();
 
 		// 'in' is the only valid Operator for this setting
 		assert (anOperator == Operator.BETWEEN);
-
-		// no useful Refinements are possible
-		if (aColumn.getCardinality() <= 1)
-			return;
 
 		// might require update when more strategies are added
 		boolean isAllStrategy = (aNumericStrategy == NumericStrategy.NUMERIC_VIKAMINE_CONSECUTIVE_ALL);
@@ -1822,18 +1805,18 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			if (isAllStrategy)
 			{
 				//addToBuffer(aNewSubgroup);
-				checkAndLog(aNewSubgroup, aParentCoverage);
+				checkAndLog(aNewSubgroup, theParentCoverage);
 			}
 			else
 			{
 				// more clear than using else-if
-				if (isValidAndBest(aNewSubgroup, aParentCoverage, aBestSubgroup))
+				if (isValidAndBest(aNewSubgroup, theParentCoverage, aBestSubgroup))
 					aBestSubgroup = aNewSubgroup;
 			}
 		}
 
 		if (!isAllStrategy && (aBestSubgroup != null))
-			bestAdd(aBestSubgroup, aParentCoverage);
+			bestAdd(aBestSubgroup, theParentCoverage);
 	}
 
 	////////////////////////////////////////////////////////////////////////////
@@ -1846,19 +1829,13 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	////////////////////////////////////////////////////////////////////////////
 
 	// TODO this code does not check isTimeToStop() - but will be modifies soon
-	private void numericIntervals(BitSet theParentMembers, Refinement theRefinement)
+	private void numericIntervals(BitSet theParentMembers, int theParentCoverage, Refinement theRefinement)
 	{
 		// evaluateNumericRefinements() should prevent getting here for others
 		NumericStrategy aNumericStrategy = itsSearchParameters.getNumericStrategy();
 		assert (aNumericStrategy == NumericStrategy.NUMERIC_INTERVALS);
 
 		////////////////////////////////////////////////////////////////////////
-		Subgroup aParent = theRefinement.getSubgroup();
-		int aParentCoverage = aParent.getCoverage();
-		// should have been checked by evaluateNumericRefinements()
-		assert (theParentMembers.cardinality() == aParentCoverage);
-		assert (aParentCoverage > 1);
-
 		// members-based domain, no empty Subgroups will occur
 		ConditionBase aConditionBase = theRefinement.getConditionBase();
 		Column aColumn = aConditionBase.getColumn();
@@ -1866,13 +1843,9 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 
 		// 'in' is the only valid Operator for this setting
 		assert (anOperator == Operator.BETWEEN);
-
-		// no useful Refinements are possible
-		if (aColumn.getCardinality() <= 1)
-			return;
 		////////////////////////////////////////////////////////////////////////
 
-		float[] aSplitPoints = getDomain(theParentMembers, aParentCoverage, aNumericStrategy, aColumn, itsSearchParameters.getNrBins(), null);
+		float[] aSplitPoints = getDomain(theParentMembers, theParentCoverage, aNumericStrategy, aColumn, itsSearchParameters.getNrBins(), null);
 
 		// FIXME half-interval code determines TP/FP also, but 70 times faster
 		RealBaseIntervalCrossTable aRBICT = new RealBaseIntervalCrossTable(aSplitPoints, aColumn, theParentMembers, itsBinaryTarget);
@@ -2000,7 +1973,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 
 		// FIXME quality is known, re-evaluation in check() should be avoided
 		Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(aBestInterval);
-		checkAndLog(aNewSubgroup, aParentCoverage);
+		checkAndLog(aNewSubgroup, theParentCoverage);
 	}
 
 	////////////////////////////////////////////////////////////////////////////
@@ -2059,7 +2032,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 
 	private final boolean isValidAndBest(Subgroup theNewSubgroup, int theOldCoverage, Subgroup theBestSubgroup)
 	{
-		final int aNewCoverage = theNewSubgroup.getCoverage();
+		int aNewCoverage = theNewSubgroup.getCoverage();
 
 		// FIXME MM the first and second check should be made obsolete
 		// numericConsecutive bins should check this, then they can be removed
@@ -2353,7 +2326,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 				aMembers.and(itsBinaryTarget);
 				int aCountHeadBody = aMembers.cardinality();
 // FIXME MM - hold: functional change + needs testing / profiling
-//				final int aCountHeadBody = theNewSubgroup.countCommon(itsBinaryTarget);
+//				int aCountHeadBody = theNewSubgroup.countCommon(itsBinaryTarget);
 				QM aMeasure = itsSearchParameters.getQualityMeasure();
 
 				//Rob
@@ -2878,7 +2851,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		//boolean isUseful(ConditionList theConditionList, Condition theCondition)
 		boolean isUseful(ConditionListA theConditionList, Condition theCondition)
 		{
-			final int aSize = theConditionList.size();
+			int aSize = theConditionList.size();
 			if (aSize == 0)
 				return true;
 
@@ -3266,7 +3239,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////
 
-	private final void evaluateNominalRefinementsObsolete(final BitSet theParentMembers, final Refinement theRefinement, int theParentCoverage)
+	private final void evaluateNominalRefinementsObsolete(BitSet theParentMembers, int theParentCoverage, Refinement theRefinement)
 	{
 		// evaluateNominalRefinements() should prevent getting here for ValueSet
 		assert (!itsSearchParameters.getNominalSets());
