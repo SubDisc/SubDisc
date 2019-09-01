@@ -2321,22 +2321,28 @@ AtomicInteger TOTAL_FILTERED = new AtomicInteger(0);
 
 		if (isValid)
 		{
-			NumericStrategy ns = itsSearchParameters.getNumericStrategy();
+			// NOTE
+			// NumericStrategy could get a method like isBestStrategy(), but
+			// than still it gives no guarantee that code in SubgroupDiscovery
+			// sets the quality/secondary/tertiary statistics for theSubgroup
+			// e.g. INTERVALS is a best-strategy, but does not set the quality
+			EnumSet<NumericStrategy> aNumericBest = EnumSet.of(NumericStrategy.NUMERIC_BEST, NumericStrategy.NUMERIC_BEST_BINS, NumericStrategy.NUMERIC_VIKAMINE_CONSECUTIVE_BEST);
 			AttributeType lastAdded = theSubgroup.getConditions().get(theSubgroup.getDepth()-1).getColumn().getType();
+			boolean isLastNumeric = (lastAdded == AttributeType.NUMERIC);
 
 			float aQuality;
 
-			if (isPOCSetting() && (lastAdded == AttributeType.NUMERIC))
+			if (isLastNumeric && isPOCSetting())
 			{
 				// NOTE this path already performed the isValid-coverage check
 				aQuality = (float) theSubgroup.getMeasureValue();
 			}
-			else if (isDirectSettingBinary() && (lastAdded == AttributeType.BINARY))
+			else if ((lastAdded == AttributeType.BINARY) && isDirectSettingBinary())
 			{
 				// NOTE this path already performed the isValid-coverage check
 				aQuality = (float) theSubgroup.getMeasureValue();
 			}
-			else if (ns == NumericStrategy.NUMERIC_BEST || ns == NumericStrategy.NUMERIC_BEST_BINS || ns == NumericStrategy.NUMERIC_VIKAMINE_CONSECUTIVE_BEST)
+			else if (isLastNumeric && aNumericBest.contains(itsSearchParameters.getNumericStrategy()))
 			{
 				// NOTE for BEST* Subgroup is already evaluated and score is set
 				//      by isValidAndBest()
@@ -2352,7 +2358,6 @@ AtomicInteger TOTAL_FILTERED = new AtomicInteger(0);
 				theSubgroup.setMeasureValue(aQuality);
 			}
 
-// FIXME MM check size is > 1, otherwise Candidate can never be refined anyway
 			Candidate aCandidate = new Candidate(theSubgroup);
 
 			boolean aResultAddition = false;
