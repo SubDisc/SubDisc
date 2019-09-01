@@ -537,9 +537,6 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 		while(!es.isTerminated()) {};
 
 		postMining(System.currentTimeMillis() - theBeginTime);
-
-		// XXX MM : debug info not useful for general use
-		//Log.logCommandLine(String.format("CANDIDATES: %s\tFILTERED: %s\tRATIO:%f", itsCandidateCount.toString(), TOTAL_FILTERED.toString(), (TOTAL_FILTERED.doubleValue()/(itsCandidateCount.doubleValue()+TOTAL_FILTERED.doubleValue()))));
 	}
 
 	private final ConditionBaseSet preMining(long theBeginTime, int theNrThreads)
@@ -618,13 +615,13 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 			if (c.getType() != AttributeType.NUMERIC)
 				continue;
 
-			Log.logCommandLine(c.getName() + " building sorted domain");
+			Log.logCommandLine(c.getName());
 			Timer t = new Timer();
 			c.buildSorted(theBinaryTarget); // build SORTED and SORT_INDEX
-			Log.logCommandLine(t.getElapsedTimeString());
+			Log.logCommandLine("sorted domain build: " + t.getElapsedTimeString());
 		}
 
-		Log.logCommandLine("total sorting time: " + aTotal.getElapsedTimeString());
+		Log.logCommandLine("total sorting time : " + aTotal.getElapsedTimeString());
 	}
 
 	// not SINGLE_NOMINAL with ValueSet, NUMERIC_INTERVALS/CONSECUTIVE_ALL|BEST
@@ -1410,84 +1407,68 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		}
 	}
 
-// FIXME MM - DEBUG ONLY
-AtomicInteger TOTAL_FILTERED = new AtomicInteger(0);
-	private final void numericHalfIntervalsX(BitSet theMembers, Refinement theRefinement)
+	// NOTE this is the original code, it remains for debugging
+	private final void numericHalfIntervalsX(BitSet theParentMembers, Refinement theRefinement)
 	{
+		// evaluateNumericRefinements() should prevent getting here for
+		// NUMERIC_INTERVALS and NUMERIC_VIKAMINE_CONSECUTIVE_ALL|BEST
 		NumericStrategy aNumericStrategy = itsSearchParameters.getNumericStrategy();
 		assert (aNumericStrategy == NumericStrategy.NUMERIC_ALL || aNumericStrategy == NumericStrategy.NUMERIC_BEST ||
-			aNumericStrategy == NumericStrategy.NUMERIC_BINS || aNumericStrategy == NumericStrategy.NUMERIC_BEST_BINS);
+				aNumericStrategy == NumericStrategy.NUMERIC_BINS || aNumericStrategy == NumericStrategy.NUMERIC_BEST_BINS);
+
+		////////////////////////////////////////////////////////////////////////
+		boolean isFilterNull = (itsFilter == null);
+		Subgroup aParent = theRefinement.getSubgroup();
+		int aParentCoverage = aParent.getCoverage();
+		// should have been checked by evaluateNumericRefinements()
+		assert (theParentMembers.cardinality() == aParentCoverage);
+		assert (aParentCoverage > 1);
+
+		// members-based domain, no empty Subgroups will occur
+		ConditionBase aConditionBase = theRefinement.getConditionBase();
+		Column aColumn = aConditionBase.getColumn();
+		ConditionListA aParentConditions = (isFilterNull ? null : aParent.getConditions());
+		Operator anOperator = aConditionBase.getOperator();
+
+		// (cover-update and check) order relies on binary choice <= or >=
+		assert (anOperator == Operator.LESS_THAN_OR_EQUAL || anOperator == Operator.GREATER_THAN_OR_EQUAL);
+
+		// no useful Refinements are possible
+		if (aColumn.getCardinality() <= 1)
+			return;
 
 		// might require update when more strategies are added
 		boolean isAllStrategy = (aNumericStrategy == NumericStrategy.NUMERIC_ALL || aNumericStrategy == NumericStrategy.NUMERIC_BINS);
 
-		Subgroup anOldSubgroup = theRefinement.getSubgroup();
-		// faster than theMembers.cardinality()
-		// useless call, coverage never changes, could be parameter
-		final int anOldCoverage = anOldSubgroup.getCoverage();
-		assert (theMembers.cardinality() == anOldCoverage);
-
-		// see comment at evaluateNominalBinaryRefinement()
-		ConditionBase aConditionBase = theRefinement.getConditionBase();
-		ConditionListA aList = anOldSubgroup.getConditions();
-
-		// FIXME MM
-		// temporary hack for better getSplitPoints(), see getDomain()
-		Column aColumn = aConditionBase.getColumn();
-		Operator anOperator = aConditionBase.getOperator();
-		float[] aSplitPoints = getDomain(theMembers, anOldCoverage, aNumericStrategy, aColumn, itsSearchParameters.getNrBins(), anOperator);
-// TODO MM
-// domain map contain using <value, count> nodes, useful for unique values and
-// for histogram/KDE creation (latter can multiply result for 1 point by count)
-//		SortedMap<Float, Integer> map = getDomainMap(theMembers, aNumericStrategy, aConditionBase.getColumn(), itsSearchParameters.getNrBins());
-//Float[] fa = map.keySet().toArray(new Float[0]);
-//Integer[] ia = map.values().toArray(new Integer[0]);
-//System.out.println(Arrays.toString(aSplitPoints));
-//System.out.println(Arrays.toString(fa));
-//System.out.println(Arrays.toString(ia));
-//		filterDomain(map, aConditionBase.getOperator(), itsSearchParameters.getMinimumCoverage());
-//		Float[] aSplitPointsMap = map.keySet().toArray(new Float[0]);
-//
-// TODO MM - like above (above is the svn version, decide what to use later)
-//Set<Float> aSplitPoints = getDomain(theMembers, aNumericStrategy, aConditionBase.getColumn(), itsSearchParameters.getNrBins());
-//NavigableMap<Float, Integer> map = getDomainMap(theMembers, aNumericStrategy, aConditionBase.getColumn(), itsSearchParameters.getNrBins());
-//assert(aSplitPoints.length == map.size());
-//int pre = map.size();
-//System.out.println(aConditionBase.getOperator());
-//System.out.println(map);
-//filterDomain(map, aConditionBase.getOperator(), itsSearchParameters.getMinimumCoverage());
-//System.out.println(map);
-//int post = map.size();
-//int reduced = pre-post;
-//System.out.format("PRE: %d\tPOST: %d\tREDUCED: %d%nTOTAL_FILTERED: %d%n%n", pre, post, reduced, TOTAL_FILTERED.addAndGet(reduced));
-
 		Subgroup aBestSubgroup = null;
-//		for (float aSplitPoint : map.keySet())
-		for (float aSplitPoint : aSplitPoints)
-		{
-			if (isTimeToStop())
-				break;
+		////////////////////////////////////////////////////////////////////////
 
-			if (!isUseful(itsFilter, aList, new Condition(aConditionBase, aSplitPoint)))
+		float[] aDomain = getDomain(theParentMembers, aParentCoverage, aNumericStrategy, aColumn, itsSearchParameters.getNrBins(), anOperator);
+
+		for (int i = 0, j = aDomain.length; i < j && !isTimeToStop(); ++i)
+		{
+			Condition aCondition = new Condition(aConditionBase, aDomain[i]);
+
+			if (!isFilterNull && !itsFilter.isUseful(aParentConditions, aCondition))
 				continue;
 
-			Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(aSplitPoint);
+			Subgroup aNewSubgroup = aParent.getRefinedSubgroup(aCondition);
 
 			if (isAllStrategy)
 			{
 				//addToBuffer(aNewSubgroup);
-				checkAndLog(aNewSubgroup, anOldCoverage);
+				checkAndLog(aNewSubgroup, aParentCoverage);
 			}
 			else
 			{
 				// more clear than using else-if
-				if (isValidAndBest(aNewSubgroup, anOldCoverage, aBestSubgroup))
+				if (isValidAndBest(aNewSubgroup, aParentCoverage, aBestSubgroup))
 					aBestSubgroup = aNewSubgroup;
 			}
 		}
 
 		if (!isAllStrategy && (aBestSubgroup != null))
-			bestAdd(aBestSubgroup, anOldCoverage);
+			bestAdd(aBestSubgroup, aParentCoverage);
 	}
 
 	// FIXME MM historically numeric EQUALS uses nominal code, it should change
@@ -2144,67 +2125,37 @@ AtomicInteger TOTAL_FILTERED = new AtomicInteger(0);
 			return Column.getUniqueValues(aSplitPoints);
 	}
 
+	// TODO method is never used, but EQUALS and BETWEEN might benefit from the
+	// technique, leave it in; current code already does these check for <=, >=
 	private final void filterDomain(NavigableMap<Float, Integer> theSplitPoints, Operator theOperator, int theMinimumCoverage)
 	{
-		// switch in for-loop is expensive, so check Operator only once
-		switch (theOperator)
+		if (!(theOperator == Operator.EQUALS || theOperator == Operator.BETWEEN))
+			throw new AssertionError("NOT IMPLEMENTED YET: " + theOperator);
+
+		if (theOperator == Operator.EQUALS)
 		{
-			case EQUALS :
-			{
-				for (Iterator<Entry<Float, Integer>> it = theSplitPoints.entrySet().iterator(); it.hasNext(); )
-					if (it.next().getValue() < theMinimumCoverage)
-						it.remove();
-
-				break;
-			}
-			case LESS_THAN_OR_EQUAL :
-			{
-				int sum = 0;
-
-				for (Iterator<Entry<Float, Integer>> it = theSplitPoints.entrySet().iterator(); it.hasNext(); )
-				{
-					if ((sum += it.next().getValue()) < theMinimumCoverage)
-						it.remove();
-					else
-						break;
-				}
-
-				break;
-			}
-			case GREATER_THAN_OR_EQUAL :
-			{
-				filterDomain(theSplitPoints.descendingMap(), Operator.LESS_THAN_OR_EQUAL, theMinimumCoverage);
-				break;
-			}
-			case BETWEEN :
-			{
-				// FIXME MM
-				// perhaps no filtering needed in this setting
-				// Interval code might take care of it itself
-				// need to check code
-				// Interval might be using values that can never
-				// lead to a valid Subgroup
-				// happens when Interval covers to few items
-				int sum = 0;
-
-				for (Iterator<Entry<Float, Integer>> it = theSplitPoints.entrySet().iterator(); it.hasNext(); )
-					if ((sum += it.next().getValue()) > theMinimumCoverage)
-						break; // could return
-
-				if (sum < theMinimumCoverage)
-					theSplitPoints.clear();
-
-				throw new AssertionError("NOT IMPLEMENTED YET: " + theOperator);
-				//break;
-			}
-			default :
-				throw new AssertionError("invalid Operator: " + theOperator);
+			for (Iterator<Entry<Float, Integer>> it = theSplitPoints.entrySet().iterator(); it.hasNext(); )
+				if (it.next().getValue() < theMinimumCoverage)
+					it.remove();
 		}
-	}
+		else
+		{
+			// FIXME MM
+			// perhaps no filtering needed in this setting
+			// Interval code might take care of it itself
+			// need to check code
+			// Interval might be using values that can never
+			// lead to a valid Subgroup
+			// happens when Interval covers to few items
+			int sum = 0;
 
-	private static final boolean isUseful(Filter theFilter, ConditionListA theConditionList, Condition theCondition)
-	{
-		return ((theFilter == null) || theFilter.isUseful(theConditionList, theCondition));
+			for (Iterator<Entry<Float, Integer>> it = theSplitPoints.entrySet().iterator(); it.hasNext(); )
+				if ((sum += it.next().getValue()) > theMinimumCoverage)
+					break; // could return
+
+			if (sum < theMinimumCoverage)
+				theSplitPoints.clear();
+		}
 	}
 
 	private final boolean isValidAndBest(Subgroup theNewSubgroup, int theOldCoverage, Subgroup theBestSubgroup)
@@ -2229,6 +2180,7 @@ AtomicInteger TOTAL_FILTERED = new AtomicInteger(0);
 		return false;
 	}
 
+	// this method is currently unnecessary, but addToBuffer will return one day
 	private final void bestAdd(Subgroup theBestSubgroup, int theOldCoverage)
 	{
 		assert (theBestSubgroup != null);
