@@ -1874,8 +1874,8 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 
 		float[] aSplitPoints = getDomain(theParentMembers, aParentCoverage, aNumericStrategy, aColumn, itsSearchParameters.getNrBins(), null);
 
-		// FIXME MM Subgroup -> theMembers
-		RealBaseIntervalCrossTable aRBICT = new RealBaseIntervalCrossTable(aSplitPoints, aColumn, aParent, itsBinaryTarget);
+		// FIXME half-interval code determines TP/FP also, but 70 times faster
+		RealBaseIntervalCrossTable aRBICT = new RealBaseIntervalCrossTable(aSplitPoints, aColumn, theParentMembers, itsBinaryTarget);
 
 		// prune splitpoints for which adjacent base intervals have equal class distribution
 		// TODO: check whether this preprocessing reduces *total* computation time

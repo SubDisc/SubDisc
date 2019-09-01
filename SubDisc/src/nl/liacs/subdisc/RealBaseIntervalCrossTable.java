@@ -14,12 +14,12 @@ public class RealBaseIntervalCrossTable
 	private int itsNegativeCount; //sum
 	private boolean itsUseNegInfty;
 
-	public RealBaseIntervalCrossTable(float[] theSplitPoints, Column theColumn, Subgroup theSubgroup, BitSet theTarget)
+	public RealBaseIntervalCrossTable(float[] theSplitPoints, Column theColumn, BitSet theSubgroupMembers, BitSet theTarget)
 	{
-		this(theSplitPoints, theColumn, theSubgroup, theTarget, true);
+		this(theSplitPoints, theColumn, theSubgroupMembers, theTarget, true);
 	}
 
-	public RealBaseIntervalCrossTable(float[] theSplitPoints, Column theColumn, Subgroup theSubgroup, BitSet theTarget, boolean theUseNegInfty)
+	private RealBaseIntervalCrossTable(float[] theSplitPoints, Column theColumn, BitSet theSubgroupMembers, BitSet theTarget, boolean theUseNegInfty)
 	{
 		itsUseNegInfty = theUseNegInfty;
 		int offset = itsUseNegInfty ? 1 : 0;
@@ -41,9 +41,10 @@ public class RealBaseIntervalCrossTable
 		}
 		//sort(itsSplitPoints);
 
+		// FIXME half-interval code determines TP/FP also, but 70 times faster
 		for (int i=0; i<theColumn.size(); i++) //loop over all records (AK could be faster? ok for now)
 		{
-			if (theSubgroup.covers(i))
+			if (theSubgroupMembers.get(i))
 			{
 				float aValue = theColumn.getFloat(i);
 				int anIndex = Arrays.binarySearch(itsSplitPoints, aValue);
