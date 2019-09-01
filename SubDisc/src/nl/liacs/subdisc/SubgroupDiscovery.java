@@ -926,6 +926,34 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////
 
+	// split code paths for ValueSet and class labels (nominal/numeric/binary)
+	private void evaluateNominalBinaryRefinements(BitSet theParentMembers, Refinement theRefinement)
+	{
+		Subgroup aParent = theRefinement.getSubgroup();
+		int aParentCoverage = aParent.getCoverage();
+		assert (theParentMembers.cardinality() == aParentCoverage);
+		assert (aParentCoverage > 1);
+
+		if (itsSearchParameters.getNominalSets())
+		{
+			evaluateNominalBestValueSet(theParentMembers, theRefinement);
+			return;
+		}
+
+		ConditionBase aConditionBase = theRefinement.getConditionBase();
+		assert (aConditionBase.getOperator() == Operator.EQUALS);
+
+		// FIXME: NUMERIC Refinement should not be done here
+		switch (aConditionBase.getColumn().getType())
+		{
+			case NOMINAL : evaluateNominalRefinements(theParentMembers, theRefinement, aParentCoverage); break;
+			case NUMERIC : evaluateNumericEqualsRefinements(theParentMembers, theRefinement, aParentCoverage); break;
+			case ORDINAL : throw new AssertionError(AttributeType.ORDINAL);
+			case BINARY  : evaluateBinaryRefinements(theParentMembers, theRefinement, aParentCoverage); break;
+			default      : throw new AssertionError(aConditionBase.getColumn().getType());
+		}
+	}
+
 	// XXX (c = false) is checked first, (c = true) is conditionally, it depends
 	//       on data and search characteristics  whether this is the best order
 	private final void evaluateBinaryRefinements(final BitSet theParentMembers, final Refinement theRefinement, int theParentCoverage)
@@ -985,14 +1013,6 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		}
 	}
 
-	private final boolean isDirectSettingBinary()
-	{
-		// checking this all the time is a bit wasteful, but fine for now
-		return ((itsSearchParameters.getTargetType() == TargetType.SINGLE_NOMINAL) &&
-				!itsSearchParameters.getNominalSets() &&
-				!(itsSearchParameters.getQualityMeasure() == QM.PROP_SCORE_WRACC) || (itsSearchParameters.getQualityMeasure() == QM.PROP_SCORE_RATIO));
-	}
-
 	// return is always INVALID_NR_TRUE_POSITIVES when !isDirectSettingBinary()
 	private static final int INVALID_NR_TRUE_POSITIVES = -1;
 	private final int evaluateBinary(Subgroup theParent, Condition theAddedCondition, BitSet theChildMembers, int theChildCoverage)
@@ -1031,6 +1051,14 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		return aNrTruePositives;
 	}
 
+	private final boolean isDirectSettingBinary()
+	{
+		// checking this all the time is a bit wasteful, but fine for now
+		return ((itsSearchParameters.getTargetType() == TargetType.SINGLE_NOMINAL) &&
+				!itsSearchParameters.getNominalSets() &&
+				!(itsSearchParameters.getQualityMeasure() == QM.PROP_SCORE_WRACC) || (itsSearchParameters.getQualityMeasure() == QM.PROP_SCORE_RATIO));
+	}
+
 	private static final Subgroup directComputation(Subgroup theParent, Condition theAddedCondition, QualityMeasure theQualityMeasure, int theChildCoverage, int theNrTruePositives)
 	{
 		// FIXME MM q is only cast to float to make historic results comparable
@@ -1046,164 +1074,6 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	///// nominal                                                          /////
 	////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////
-
-	/*
-	 * NOTE itsSubgroup / theMembers for each Refinement from the same
-	 * RefinementList are always the same
-	 * supply a cached version of theMembers, as Subgroup.getMembers()
-	 * creates a clone on each call
-	 */
-	private void evaluateNominalBinaryRefinements(BitSet theMembers, Refinement theRefinement)
-	{
-		Subgroup aParent = theRefinement.getSubgroup();
-		int aParentCoverage = aParent.getCoverage();
-		assert (theMembers.cardinality() == aParentCoverage);
-		assert (aParentCoverage > 1);
-
-		ConditionBase aConditionBase = theRefinement.getConditionBase();
-
-		// this code path deliberately does not check isTimeToStop()
-		if (aConditionBase.getOperator() == Operator.ELEMENT_OF)
-		{
-			// set-valued, implies target type is SINGLE_NOMINAL
-			assert (itsSearchParameters.getTargetType() == TargetType.SINGLE_NOMINAL);
-
-			NominalCrossTable aNCT = new NominalCrossTable(aConditionBase.getColumn(), theMembers, itsBinaryTarget);
-			final SortedSet<String> aDomainBestSubSet = new TreeSet<String>();
-
-			final QM aQualityMeasure = itsSearchParameters.getQualityMeasure();
-			if (aQualityMeasure == QM.WRACC)
-			{
-				// FIXME MM floats are imprecise for data with N > 2^24
-				float aRatio = itsQualityMeasure.getNrPositives() / (float)(itsQualityMeasure.getNrRecords());
-				for (int i = 0; i < aNCT.size(); i++)
-				{
-					int aPi = aNCT.getPositiveCount(i);
-					int aNi = aNCT.getNegativeCount(i);
-					// include values with WRAcc=0 too, result has same WRAcc but higher support
-					if (aPi >= aRatio * (aPi + aNi))
-						aDomainBestSubSet.add(aNCT.getValue(i));
-				}
-			}
-			else // not WRACC
-			{
-				// construct and check all subsets on the convex hull
-				final List<Integer> aSortedDomainIndices = aNCT.getSortedDomainIndices();
-				final int aSortedDomainIndicesSize = aSortedDomainIndices.size();
-				double aBestQuality = Double.NEGATIVE_INFINITY;
-
-				// upper part of the hull
-				int aP = 0;
-				int aN = 0;
-				int aPrevBestI = -1;
-				for (int i = 0; i < aSortedDomainIndicesSize - 1; i++)
-				{
-					int anIndex = aSortedDomainIndices.get(i);
-					int aPi = aNCT.getPositiveCount(anIndex);
-					int aNi = aNCT.getNegativeCount(anIndex);
-					aP += aPi;
-					aN += aNi;
-					int aNextIndex = aSortedDomainIndices.get(i+1);
-					if (i < aSortedDomainIndicesSize-2 && aPi * aNCT.getNegativeCount(aNextIndex) == aNCT.getPositiveCount(aNextIndex) * aNi) // skip checking degenerate hull points
-						continue;
-					double aQuality = itsQualityMeasure.calculate(aP, aP + aN);
-					if (aQuality > aBestQuality)
-					{
-						aBestQuality = aQuality;
-						for (int j = aPrevBestI+1; j <= i; j++)
-						{
-							String aValue = aNCT.getValue(aSortedDomainIndices.get(j));
-							aDomainBestSubSet.add(aValue);
-						}
-						aPrevBestI = i;
-					}
-				}
-
-				// lower part of the hull
-				// TODO: complete list of QMs
-				boolean aLowIsDominatedQM = false;
-				boolean anAsymmetricQM = true;
-				if (aQualityMeasure == QM.BINOMIAL)
-					aLowIsDominatedQM = true;
-				if (aQualityMeasure == QM.CHI_SQUARED || aQualityMeasure == QM.INFORMATION_GAIN)
-					anAsymmetricQM = false;
-
-				if (false && !anAsymmetricQM) // TODO: fix this for depth > 1, check only upper OR lower hull
-				{
-					if (aDomainBestSubSet.size() > aNCT.size()/2) // prefer complement if smaller
-					{
-						aDomainBestSubSet.clear();
-						for (int j = aPrevBestI + 1; j < aSortedDomainIndicesSize; j++)
-						{
-							String aValue = aNCT.getValue(aSortedDomainIndices.get(j));
-							aDomainBestSubSet.add(aValue);
-						}
-					}
-				}
-				else if (true || !aLowIsDominatedQM)
-				{
-					aP = 0;
-					aN = 0;
-					aPrevBestI = -1;
-					for (int i = aSortedDomainIndicesSize - 1; i > 0; i--)
-					{
-						int anIndex = aSortedDomainIndices.get(i).intValue();
-						int aPi = aNCT.getPositiveCount(anIndex);
-						int aNi = aNCT.getNegativeCount(anIndex);
-						aP += aPi;
-						aN += aNi;
-						int aPrevIndex = aSortedDomainIndices.get(i-1);
-						if (i > 1 && aPi * aNCT.getNegativeCount(aPrevIndex) == aNCT.getPositiveCount(aPrevIndex) * aNi)
-							continue; // skip degenerate hull points
-						double aQuality = itsQualityMeasure.calculate(aP, aP + aN);
-						if (aQuality > aBestQuality)
-						{
-							aBestQuality = aQuality;
-							if (aPrevBestI == -1)
-							{
-								aDomainBestSubSet.clear();
-								aPrevBestI = aSortedDomainIndicesSize;
-							}
-							for (int j = aPrevBestI-1; j >= i; j--)
-							{
-								String aValue = aNCT.getValue(aSortedDomainIndices.get(j));
-								aDomainBestSubSet.add(aValue);
-							}
-							aPrevBestI = i;
-						}
-					}
-				}
-			}
-
-			if (aDomainBestSubSet.size() != 0)
-			{
-				// FIXME MM this does not take maximum coverage into account
-				// the best ValueSet might be > maxCov, and thus not be used
-				// but when this is the last search level, the refined version
-				// will also never be created
-				// a better solution is to obtain the best VALID ValueSet for
-				// this level, add it to the result set (possibly), and add the
-				// BEST (valid or not) candidate to the CandidateQueue
-				// and then never refine a nominal attribute with itself
-				// FIXME quality is known, re-evaluation should be avoided
-				final ValueSet aBestSubset = new ValueSet(aDomainBestSubSet);
-				Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(aBestSubset);
-				valueSetCheckAndLog(aNewSubgroup, aParentCoverage);
-			}
-		}
-		else // single-value conditions (class labels)
-		{
-			// FIXME: NUMERIC Refinement should not be done here
-			switch (aConditionBase.getColumn().getType())
-			{
-				case NOMINAL : evaluateNominalRefinements(theMembers, theRefinement, aParentCoverage); break;
-				case NUMERIC : evaluateNumericEqualsRefinements(theMembers, theRefinement, aParentCoverage); break;
-				case ORDINAL : throw new AssertionError(AttributeType.ORDINAL);
-				case BINARY  : evaluateBinaryRefinements(theMembers, theRefinement, aParentCoverage); break;
-				default      : throw new AssertionError(aConditionBase.getColumn().getType());
-			}
-		}
-	}
 
 	private final void evaluateNominalRefinementsX(final BitSet theParentMembers, final Refinement theRefinement, int theParentCoverage)
 	{
@@ -1284,6 +1154,144 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			Subgroup aNewSubgroup = aParent.getRefinedSubgroup(aCondition);
 			checkAndLog(aNewSubgroup, theParentCoverage);
 		}
+	}
+
+	private final void evaluateNominalBestValueSet(BitSet theParentMembers, Refinement theRefinement)
+	{
+		Subgroup aParent = theRefinement.getSubgroup();
+		int aParentCoverage = aParent.getCoverage();
+		assert (theParentMembers.cardinality() == aParentCoverage);
+		assert (aParentCoverage > 1);
+
+		ConditionBase aConditionBase = theRefinement.getConditionBase();
+
+		// BestValueSet implies target type is SINGLE_NOMINAL
+		assert (itsSearchParameters.getTargetType() == TargetType.SINGLE_NOMINAL);
+		assert (itsSearchParameters.getNominalSets());
+		assert (aConditionBase.getOperator() == Operator.ELEMENT_OF);
+
+		NominalCrossTable aNCT = new NominalCrossTable(aConditionBase.getColumn(), theParentMembers, itsBinaryTarget);
+		final SortedSet<String> aDomainBestSubSet = new TreeSet<String>();
+
+		final QM aQualityMeasure = itsSearchParameters.getQualityMeasure();
+		if (aQualityMeasure == QM.WRACC)
+		{
+			// FIXME MM floats are imprecise for data with N > 2^24
+			float aRatio = itsQualityMeasure.getNrPositives() / (float)(itsQualityMeasure.getNrRecords());
+			for (int i = 0; i < aNCT.size() && !isTimeToStop(); i++)
+			{
+				int aPi = aNCT.getPositiveCount(i);
+				int aNi = aNCT.getNegativeCount(i);
+				// include values with WRAcc=0 too, result has same WRAcc but higher support
+				if (aPi >= aRatio * (aPi + aNi))
+					aDomainBestSubSet.add(aNCT.getValue(i));
+			}
+		}
+		else // not WRACC
+		{
+			// construct and check all subsets on the convex hull
+			final List<Integer> aSortedDomainIndices = aNCT.getSortedDomainIndices();
+			final int aSortedDomainIndicesSize = aSortedDomainIndices.size();
+			double aBestQuality = Double.NEGATIVE_INFINITY;
+
+			// upper part of the hull
+			int aP = 0;
+			int aN = 0;
+			int aPrevBestI = -1;
+			for (int i = 0; i < aSortedDomainIndicesSize - 1 && !isTimeToStop(); i++)
+			{
+				int anIndex = aSortedDomainIndices.get(i);
+				int aPi = aNCT.getPositiveCount(anIndex);
+				int aNi = aNCT.getNegativeCount(anIndex);
+				aP += aPi;
+				aN += aNi;
+				int aNextIndex = aSortedDomainIndices.get(i+1);
+				if (i < aSortedDomainIndicesSize-2 && aPi * aNCT.getNegativeCount(aNextIndex) == aNCT.getPositiveCount(aNextIndex) * aNi) // skip checking degenerate hull points
+					continue;
+				double aQuality = itsQualityMeasure.calculate(aP, aP + aN);
+				if (aQuality > aBestQuality)
+				{
+					aBestQuality = aQuality;
+					for (int j = aPrevBestI+1; j <= i; j++)
+					{
+						String aValue = aNCT.getValue(aSortedDomainIndices.get(j));
+						aDomainBestSubSet.add(aValue);
+					}
+					aPrevBestI = i;
+				}
+			}
+
+			// lower part of the hull
+			// TODO: complete list of QMs
+			boolean aLowIsDominatedQM = false;
+			boolean anAsymmetricQM = true;
+			if (aQualityMeasure == QM.BINOMIAL)
+				aLowIsDominatedQM = true;
+			if (aQualityMeasure == QM.CHI_SQUARED || aQualityMeasure == QM.INFORMATION_GAIN)
+				anAsymmetricQM = false;
+
+			if (false && !anAsymmetricQM) // TODO: fix this for depth > 1, check only upper OR lower hull
+			{
+				if (aDomainBestSubSet.size() > aNCT.size()/2) // prefer complement if smaller
+				{
+					aDomainBestSubSet.clear();
+					for (int j = aPrevBestI + 1; j < aSortedDomainIndicesSize; j++)
+					{
+						String aValue = aNCT.getValue(aSortedDomainIndices.get(j));
+						aDomainBestSubSet.add(aValue);
+					}
+				}
+			}
+			else if (true || !aLowIsDominatedQM)
+			{
+				aP = 0;
+				aN = 0;
+				aPrevBestI = -1;
+				for (int i = aSortedDomainIndicesSize - 1; i > 0 && !isTimeToStop(); i--)
+				{
+					int anIndex = aSortedDomainIndices.get(i).intValue();
+					int aPi = aNCT.getPositiveCount(anIndex);
+					int aNi = aNCT.getNegativeCount(anIndex);
+					aP += aPi;
+					aN += aNi;
+					int aPrevIndex = aSortedDomainIndices.get(i-1);
+					if (i > 1 && aPi * aNCT.getNegativeCount(aPrevIndex) == aNCT.getPositiveCount(aPrevIndex) * aNi)
+						continue; // skip degenerate hull points
+					double aQuality = itsQualityMeasure.calculate(aP, aP + aN);
+					if (aQuality > aBestQuality)
+					{
+						aBestQuality = aQuality;
+						if (aPrevBestI == -1)
+						{
+							aDomainBestSubSet.clear();
+							aPrevBestI = aSortedDomainIndicesSize;
+						}
+						for (int j = aPrevBestI-1; j >= i; j--)
+						{
+							String aValue = aNCT.getValue(aSortedDomainIndices.get(j));
+							aDomainBestSubSet.add(aValue);
+						}
+						aPrevBestI = i;
+					}
+				}
+			}
+		}
+
+		if (aDomainBestSubSet.size() == 0)
+			return;
+
+		// FIXME MM this does not take maximum coverage into account
+		// the best ValueSet might be > maxCov, and thus not be used
+		// but when this is the last search level, the refined version
+		// will also never be created
+		// a better solution is to obtain the best VALID ValueSet for
+		// this level, add it to the result set (possibly), and add the
+		// BEST (valid or not) candidate to the CandidateQueue
+		// and then never refine a nominal attribute with itself
+		// FIXME quality is known, re-evaluation should be avoided
+		final ValueSet aBestSubset = new ValueSet(aDomainBestSubSet);
+		Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(aBestSubset);
+		valueSetCheckAndLog(aNewSubgroup, aParentCoverage);
 	}
 
 	////////////////////////////////////////////////////////////////////////////
