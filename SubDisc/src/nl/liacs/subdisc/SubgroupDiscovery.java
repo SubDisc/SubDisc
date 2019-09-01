@@ -65,7 +65,7 @@ public class SubgroupDiscovery
 	private int itsRankDefCount;
 	private TreeSet<Candidate> itsBuffer;
 
-	// candidate and result set
+	// candidate and result set - check() increments itsCandidateCount
 	private AtomicLong itsCandidateCount = new AtomicLong(0);
 	private CandidateQueue itsCandidateQueue;
 	private final SubgroupSet itsResult;
@@ -2069,26 +2069,6 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////
 
-	// this method increments itsCandidateCount
-	private final boolean checkAndLog(Subgroup theChildSubgroup, int theParentCoverage)
-	{
-		setTitle(theChildSubgroup);
-
-		boolean isValid = check(theChildSubgroup, theParentCoverage);
-
-		// incrementing after expensive check() makes subgroup numbers
-		// in log 'closer to being consecutive' when multi-threading
-		// a synchronized block with itsCandidateCount.getAndIncrement()
-		// and logCandidateAddition() would yield consecutive numbers
-		// but is slower and does not yield useful practical benefits
-		long count = itsCandidateCount.getAndIncrement();
-
-		if (isValid)
-			logCandidateAddition(theChildSubgroup, count);
-
-		return isValid;
-	}
-
 	/*
 	 * REQUIREMENT 1
 	 * additions to itsResult and itsCandidateQueue need to be performed as
@@ -2148,10 +2128,12 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	 * (NOTE when a search is stopped because of max_time all bets are of)
 	 */
 	private final Object itsCheckLock = new Object();
-	private boolean check(Subgroup theSubgroup, int theOldCoverage)
+	private void checkAndLog(Subgroup theChildSubgroup, int theOldCoverage)
 	{
+		setTitle(theChildSubgroup);
+
 		// FIXME MM this check should be made obsolete
-		int aNewCoverage = theSubgroup.getCoverage();
+		int aNewCoverage = theChildSubgroup.getCoverage();
 		boolean isValid = (aNewCoverage < theOldCoverage && aNewCoverage >= itsMinimumCoverage);
 
 		if (isValid)
@@ -2162,7 +2144,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			// sets the quality/secondary/tertiary statistics for theSubgroup
 			// e.g. INTERVALS is a best-strategy, but does not set the quality
 			EnumSet<NumericStrategy> aNumericBest = EnumSet.of(NumericStrategy.NUMERIC_BEST, NumericStrategy.NUMERIC_BEST_BINS, NumericStrategy.NUMERIC_VIKAMINE_CONSECUTIVE_BEST);
-			AttributeType lastAdded = theSubgroup.getConditions().get(theSubgroup.getDepth()-1).getColumn().getType();
+			AttributeType lastAdded = theChildSubgroup.getConditions().get(theChildSubgroup.getDepth()-1).getColumn().getType();
 			boolean isLastNumeric = (lastAdded == AttributeType.NUMERIC);
 
 			float aQuality;
@@ -2170,18 +2152,18 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			if (isLastNumeric && isPOCSetting())
 			{
 				// NOTE this path already performed the isValid-coverage check
-				aQuality = (float) theSubgroup.getMeasureValue();
+				aQuality = (float) theChildSubgroup.getMeasureValue();
 			}
 			else if ((lastAdded == AttributeType.BINARY) && isDirectSettingBinary())
 			{
 				// NOTE this path already performed the isValid-coverage check
-				aQuality = (float) theSubgroup.getMeasureValue();
+				aQuality = (float) theChildSubgroup.getMeasureValue();
 			}
 			else if (isLastNumeric && aNumericBest.contains(itsSearchParameters.getNumericStrategy()))
 			{
 				// NOTE for BEST* Subgroup is already evaluated and score is set
 				//      by isValidAndBest()
-				aQuality = (float) theSubgroup.getMeasureValue();
+				aQuality = (float) theChildSubgroup.getMeasureValue();
 			}
 			else if (false)
 			{
@@ -2189,11 +2171,11 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			}
 			else
 			{
-				aQuality = evaluateCandidate(theSubgroup);
-				theSubgroup.setMeasureValue(aQuality);
+				aQuality = evaluateCandidate(theChildSubgroup);
+				theChildSubgroup.setMeasureValue(aQuality);
 			}
 
-			Candidate aCandidate = new Candidate(theSubgroup);
+			Candidate aCandidate = new Candidate(theChildSubgroup);
 
 			boolean aResultAddition = false;
 			// if quality should be ignored or is enough
@@ -2206,7 +2188,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			synchronized (itsCheckLock)
 			{
 				if (aResultAddition)
-					itsResult.add(theSubgroup);
+					itsResult.add(theChildSubgroup);
 
 				itsCandidateQueue.add(aCandidate);
 			}
@@ -2215,8 +2197,17 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		// prevent OutOfMemory / GC Overhead Limit errors, some code paths
 		// bypass evaluateCandidate(Subgroup) so calling it there is no good
 		// and this is the sole method to add to Candidate and Result sets
-		theSubgroup.killMembers();
-		return isValid;
+		theChildSubgroup.killMembers();
+
+		// incrementing after expensive check() makes subgroup numbers
+		// in log 'closer to being consecutive' when multi-threading
+		// a synchronized block with itsCandidateCount.getAndIncrement()
+		// and logCandidateAddition() would yield consecutive numbers
+		// but is slower and does not yield useful practical benefits
+		long count = itsCandidateCount.getAndIncrement();
+
+		if (isValid)
+			logCandidateAddition(theChildSubgroup, count);
 	}
 
 //	private long check(Subgroup theSubgroup, int theOldCoverage)
