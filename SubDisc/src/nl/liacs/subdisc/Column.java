@@ -2843,13 +2843,52 @@ public class Column implements XMLNodeInterface
 	 * @see NumericStrategy
 	 * @see java.util.BitSet
 	 */
-	public SortedSet<Interval> getUniqueSplitPointsBounded(BitSet theBitSet, int theNrSplits) throws IllegalArgumentException
+	public SortedMap<Interval, Integer> getUniqueSplitPointsBounded(BitSet theBitSet, int theBitSetCardinality, int theNrSplits) throws IllegalArgumentException
+	{
+		// for testing only, final version will supply theBitSetCardinality
+		int aCardinality = theBitSet.cardinality();
+		SortedSet<Interval> set = getUniqueSplitPointsBoundedOriginal(theBitSet, theNrSplits);
+		SortedMap<Interval, Integer> map = getUniqueSplitPointsBoundedMap(theBitSet, aCardinality, theNrSplits);
+
+		int aSum = 0;
+		Iterator<Interval> s = set.iterator();
+		Iterator<Map.Entry<Interval, Integer>> m = map.entrySet().iterator();
+		Log.logCommandLine("");
+		while (s.hasNext() || m.hasNext())
+		{
+			boolean sn = s.hasNext();
+			boolean mn = m.hasNext();
+
+			Interval si = (sn ? s.next() : null);
+			Map.Entry<Interval, Integer> me = (mn ? m.next() : null);
+
+			aSum += (mn ? me.getValue() : 0);
+
+			StringBuilder sb = new StringBuilder(128);
+			// when the same, both are true -> non-null
+			sb.append(sn ? si : "empty").append("\t");
+			sb.append(mn ? me : "empty");
+
+			sb.append(((sn != mn) || (si.compareTo(me.getKey()) != 0)) ? "\t<- NOTE" : "");
+
+			Log.logCommandLine(sb.toString());
+		}
+		Log.logCommandLine("BitSet.cardinality = " + aCardinality + "\n");
+
+		if (aCardinality != aSum)
+			throw new AssertionError("getUniqueSplitPointsBounded(): " + aCardinality + " != " + aSum);
+
+		return map;
+	}
+
+	private SortedSet<Interval> getUniqueSplitPointsBoundedOriginal(BitSet theBitSet, int theNrSplits) throws IllegalArgumentException
 	{
 		if (!isValidCall("getSplitPointsBounded", theBitSet))
 			return Collections.emptySortedSet();
 
 		if (theNrSplits < 0)
 			throw new IllegalArgumentException(theNrSplits + " (theNrSplits) < 0");
+
 		// valid, but useless
 		if (theNrSplits == 0)
 			return Collections.emptySortedSet();
@@ -2876,6 +2915,107 @@ public class Column implements XMLNodeInterface
 			set.add(new Interval(i == 0 ? Float.NEGATIVE_INFINITY : aBounds[i-1], aBounds[i]));
 
 		return set;
+	}
+
+	private SortedMap<Interval, Integer> getUniqueSplitPointsBoundedMap(BitSet theBitSet, int theBitSetCardinality, int theNrSplits) throws IllegalArgumentException
+	{
+		if (!isValidCall("getSplitPointsBounded", theBitSet))
+			return Collections.emptySortedMap();
+
+		if (theNrSplits < 0)
+			throw new IllegalArgumentException(theNrSplits + " (theNrSplits) < 0");
+
+		// valid, but useless
+		if (theNrSplits == 0)
+			return Collections.emptySortedMap();
+
+		// NOTE
+		// the map version of this method does not have a USE_NEW_BINNING
+		// variant, but getUniqueSplitPointsMap() does take into account the
+		// Operator to manipulate the value counts which has similar effects
+		//
+		// this setting is not really used by anyone, and may be removed after
+		// the paper, even when not, it is not a successful strategy anyway, it
+		// should not be used, so not having it optimised is not a big problem
+		//
+		// this method uses the result of getUniqueSplitPointsMap(), and loops
+		// over it again, so it is not the most efficient
+		// but it is not too much of a problem, as getUniqueSplitPointsMap()
+		// is fast, O(nrBins) for high-cardinality data, and the loop over its
+		// result to establish the bounded intervals requires only O(nrBins)
+		//
+		// the rest of the comment below is from the original non-map version
+		//
+		// ##### ORIGINAL CODE STARTS HERE #####################################
+		// TODO use same procedure as pre-discretisation in MiningWindow
+		//boolean anOrig = Column.USE_NEW_BINNING ;
+		//Column.USE_NEW_BINNING = true;
+//		float[] aBounds = getUniqueSplitPoints(theBitSet, theNrSplits, Operator.LESS_THAN_OR_EQUAL);
+//		//Column.USE_NEW_BINNING = anOrig;
+//
+//		int aNrBounds = aBounds.length;
+//		if (aNrBounds == 0)
+//			return Collections.emptySortedMap();
+//
+//		if (aBounds[aNrBounds - 1] != Float.POSITIVE_INFINITY)
+//		{
+//			aBounds = Arrays.copyOf(aBounds, aNrBounds + 1);
+//			aBounds[aNrBounds] = Float.POSITIVE_INFINITY;
+//			++aNrBounds;
+//		}
+//
+//		SortedSet<Interval> set = new TreeSet<Interval>();
+//		for (int i = 0; i < aNrBounds; ++i)
+//			set.add(new Interval(i == 0 ? Float.NEGATIVE_INFINITY : aBounds[i-1], aBounds[i]));
+		// ##### ORIGINAL CODE ENDS HERE #######################################
+
+		SortedMap<Float, Integer> aMap = getUniqueSplitPointsMap(theBitSet, theBitSetCardinality, theNrSplits, Operator.LESS_THAN_OR_EQUAL);
+		if (aMap.isEmpty())
+			return Collections.emptySortedMap();
+
+		SortedMap<Interval, Integer> aResult = new TreeMap<Interval, Integer>();
+		Iterator<Map.Entry<Float, Integer>> it = aMap.entrySet().iterator();
+		int aSum = 0;
+
+		// special treatment for first value, as the -infinity bound is used
+		Map.Entry<Float, Integer> e = it.next(); // safe as !aMap.isEmpty()
+		float f = e.getKey();
+		Integer i = e.getValue();
+		aSum += i; // auto cast, the put() does not
+		aResult.put(new Interval(Float.NEGATIVE_INFINITY, f), i);
+
+		while (it.hasNext())
+		{
+			e = it.next();
+			float n = e.getKey();
+			i = e.getValue();
+			aSum += i;
+			if (aSum == theBitSetCardinality)
+				aResult.put(new Interval(f, Float.POSITIVE_INFINITY), i);
+			else
+				aResult.put(new Interval(f, n), i);
+			f = n;
+		}
+
+		// POSITIVE_INFINITY should never be present, as this type of value
+		// should not be in the data, but this is copied from the original code
+		// moreover Column.add() does not guard against +/- infinity, -0 and NaN
+		//
+		// if there is already a key for POSITIVE_INFINITY, do not overwrite it
+		// it should be the last value anyway, and have a correct count, if it
+		// exists (though Arrays.sort() would put NaNs after it)
+		//
+		// if it is not in getUniqueSplitPointsMap(), two situations could occur
+		// 1. the sum of the value.counts for the map entries is equal to
+		// theBitSetCardinality (for a half-interval: <= lastKey() would select
+		// the whole data, and be useless), or 2. the sum is lower
+		//
+		// the former case is handled by the loop, it replaces the last value
+		// in the latter case, add the Interval that selects the remaining data
+		if ((aSum != theBitSetCardinality) && (Float.compare(Float.POSITIVE_INFINITY, aMap.lastKey()) != 0))
+			aResult.put(new Interval(f, Float.POSITIVE_INFINITY), (theBitSetCardinality - aSum));
+
+		return aResult;
 	}
 
 	/**
