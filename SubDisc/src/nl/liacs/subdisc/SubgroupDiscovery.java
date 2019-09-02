@@ -1783,18 +1783,28 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		// useless, Column.getSplitPointsBounded() would return an empty array
 		if (aNrSplitPoints <= 0)
 			return;
-		SortedSet<Interval> anIntervals = aConditionBase.getColumn().getUniqueSplitPointsBounded(theParentMembers, aNrSplitPoints);
+		//SortedSet<Interval> anIntervals = aConditionBase.getColumn().getUniqueSplitPointsBounded(theParentMembers, aNrSplitPoints);
+		SortedMap<Interval, Integer> anIntervals = aConditionBase.getColumn().getUniqueSplitPointsBounded(theParentMembers, theParentCoverage, aNrSplitPoints);
 
-		for (Interval anInterval : anIntervals)
+		// can happen for aNrSplitPoints >= 1: the underlying algorithm had bugs
+		if (anIntervals.size() <= 1)
+			return;
+
+		//for (Interval anInterval : anIntervals)
+		for (Entry<Interval, Integer> e : anIntervals.entrySet())
 		{
 			if (isTimeToStop())
 				break;
 
-			// catch invalid input
-			if (anInterval == null)
+			int aCount = e.getValue();
+
+			if (aCount < itsMinimumCoverage)
 				continue;
 
-			Condition aCondition = new Condition(aConditionBase, anInterval);
+			if (aCount == theParentCoverage)
+				break;
+
+			Condition aCondition = new Condition(aConditionBase, e.getKey());
 
 			if (!isFilterNull && !itsFilter.isUseful(aParentConditions, aCondition))
 				continue;
@@ -1986,10 +1996,10 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	{
 		switch (theNumericStrategy)
 		{
-			case NUMERIC_ALL	: return theColumn.getUniqueNumericDomainMapD(theMembers, theMembersCardinality);
-			case NUMERIC_BEST	: return theColumn.getUniqueNumericDomainMapD(theMembers, theMembersCardinality);
-			case NUMERIC_BINS	: return theColumn.getSplitPointsMapD(theMembers, theMembersCardinality, theNrBins-1, theOperator);
-			case NUMERIC_BEST_BINS	: return theColumn.getSplitPointsMapD(theMembers, theMembersCardinality, theNrBins-1, theOperator);
+			case NUMERIC_ALL	: return theColumn.getUniqueNumericDomainMap(theMembers, theMembersCardinality);
+			case NUMERIC_BEST	: return theColumn.getUniqueNumericDomainMap(theMembers, theMembersCardinality);
+			case NUMERIC_BINS	: return theColumn.getUniqueSplitPointsMap(theMembers, theMembersCardinality, theNrBins-1, theOperator);
+			case NUMERIC_BEST_BINS	: return theColumn.getUniqueSplitPointsMap(theMembers, theMembersCardinality, theNrBins-1, theOperator);
 			case NUMERIC_INTERVALS	:
 			{
 				throw new AssertionError("NUMERIC_STRATEGY NOT IMPLEMENTED: " + theNumericStrategy);
