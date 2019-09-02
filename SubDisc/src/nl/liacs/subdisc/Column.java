@@ -2650,7 +2650,7 @@ public class Column implements XMLNodeInterface
 	// for >= the split points in the array are inclusive start points
 	//        and the count for this split point represents the bin count for
 	//        the interval [this-split-point, exclusive-next-split-point)
-	public SortedMap<Float, Integer> getUniqueSplitPointsMap(BitSet theBitSet, int theBitSetCardinality, int theNrSplits, Operator theOperator) throws IllegalArgumentException
+	private SortedMap<Float, Integer> getUniqueSplitPointsMapX(BitSet theBitSet, int theBitSetCardinality, int theNrSplits, Operator theOperator) throws IllegalArgumentException
 	{
 		assert (theOperator == Operator.LESS_THAN_OR_EQUAL || theOperator == Operator.GREATER_THAN_OR_EQUAL);
 
@@ -2803,6 +2803,168 @@ public class Column implements XMLNodeInterface
 		}
 
 		return aSplitPointsMap;
+	}
+
+	// NOTE
+	// this setup differs from the SortedMap implementation
+	// FIXME make the two equal, as it is easier to understand
+	//       this setup is half-interval based
+	//       but requires complicated logic for external callers
+	//       also, when implementing nominal-bins and cross-product bins, the
+	//       implementation from the SortedMap alternative is more convenient
+	//
+	// the returned split points should be considered differently for <= and >=
+	// this setup allows identical loop behaviour for getUniqueSplitPointsMap()/
+	// getUniqueNumericDomainMap() in SybgroupDiscovery.numericHalfIntervals()
+	// for <= the split points in the array are inclusive end points
+	//        and the count for this split point represents the bin count for
+	//        the interval [input-domain-minimum-value, this-split-point]
+	// for >= the split points in the array are inclusive start points
+	//        and the count for this split point represents the bin count for
+	//        the interval [this-split-point, input-domain-maximum-value]
+	public DomainMapNumeric getUniqueSplitPointsMap(BitSet theBitSet, int theBitSetCardinality, int theNrSplits, Operator theOperator) throws IllegalArgumentException
+	{
+		assert (theOperator == Operator.LESS_THAN_OR_EQUAL || theOperator == Operator.GREATER_THAN_OR_EQUAL);
+
+		if (!isValidCall("getSplitPointsMap", theBitSet))
+			return new DomainMapNumeric(0, 0, new float[0], new int[0]);
+
+		if (theNrSplits < 0)
+			throw new IllegalArgumentException(theNrSplits + " (theNrSplits) < 0");
+		// valid, but useless
+		if (theNrSplits == 0)
+			return new DomainMapNumeric(0, 0, new float[0], new int[0]);
+
+		// usually theNrSplits is lowest, but this is not guaranteed
+		int anUpper = Math.min(theBitSetCardinality, theNrSplits);
+		if (itsCardinality != 0)
+			anUpper = Math.min(anUpper, itsCardinality);
+
+		float[] dDomain = new float[anUpper];
+		int[] dCounts = new int[anUpper];
+
+//		int size = theBitSetCardinality;
+
+		// SEE NOTE ON BUG1 ABOVE
+		if (theBitSetCardinality == 0)
+			return new DomainMapNumeric(0, 0, new float[theNrSplits], new int[theNrSplits]);
+
+		float[] aDomain = new float[theBitSetCardinality];
+		for (int i = theBitSet.nextSetBit(0), j = -1; i >= 0; i = theBitSet.nextSetBit(i + 1))
+			aDomain[++j] = itsFloatz[i];
+
+		Arrays.sort(aDomain);
+
+		// SEE NOTE ON BUG2, BUG3, BUG4 ABOVE
+		// N.B. Order matters to prevent integer division from yielding zero.
+//		for (int j=0; j<theNrSplits; j++)
+//			aSplitPoints[j] = aDomain[size*(j+1)/(theNrSplits+1)];
+
+		// NOTE
+		// the goal is an output with the same values as getSplitPoints() even
+		// even if it is incorrect
+		// NOTE
+		// code is not based on getUniqueNumericDomainMap(), and then used to
+		// select only a limited number of values from those returned by adding
+		// intermediate counts
+		// here, only theNrSplits values are checked, corrected for possible
+		// duplicates (the inner for-loop with int m)
+		// NOTE
+		// the final equal height histogram code will use all values and counts
+		// like getUniqueNumericDomainMap(), such that bins can be filled in a
+		// more balanced way (also avoiding BUG3)
+		long nrBins = theNrSplits + 1;
+		long size_L = theBitSetCardinality;
+		int idx = -1;
+		int sum = 0; // FIXME REMOVE j FROM LOOP
+		if (theOperator == Operator.LESS_THAN_OR_EQUAL)
+		{
+			for (int i = 1, j = 0; i <= theNrSplits; ++i)
+			{
+				int k = (int)((size_L*i)/nrBins);
+				if (k < j)
+					continue;
+
+				float aSplitPoint = aDomain[k];
+
+				// produce correct count for value
+				for (int m = k+1; m < theBitSetCardinality; ++m)
+					if (Float.compare(aSplitPoint, aDomain[m]) == 0)
+						++k;
+
+				++idx;
+				// 0-based index, so size is index +1
+				dDomain[idx] = aSplitPoint;
+				dCounts[idx] = (k-j+1);
+				j = (k+1);
+				sum = (k+1);
+			}
+		}
+		else // theOperator == Operator.GREATER_THAN_OR_EQUAL
+		{
+			// NOTE
+			// at i=1 the first Float.compare() should not return 0, so aLast is
+			// set to a value that is unequal to aDomain[0]
+			// checking aDomain[0] is safe as aDomain.length > 0, as size > 0
+			Float aLast = (Float.isNaN(aDomain[0]) ? 0.0f : Float.NaN);
+			// FIXME MM run this loop backwards i=NrSplits...i>0
+			for (int i = 1, j = theBitSetCardinality; i <= theNrSplits; ++i)
+			{
+				int k = (int)((size_L*i)/nrBins);
+
+				float aSplitPoint = aDomain[k];
+
+				if (Float.compare(aSplitPoint, aLast) == 0) // NOTE -0.0 is smaller than 0.0
+					continue;
+				aLast = aSplitPoint;
+
+				// produce correct count for value
+				for (int m = k-1; m >= 0; --m)
+					if (Float.compare(aSplitPoint, aDomain[m]) == 0) // NOTE -0.0 is smaller than 0.0
+						--k;
+
+				j = (theBitSetCardinality-k);
+				++idx;
+				dDomain[idx] = aSplitPoint;
+				dCounts[idx] = j;
+				if (idx == 0)
+					sum = j;
+				else
+					dCounts[idx-1] -= j;
+//				// if this selects all data, write special value -count
+//				if (idx == 0)
+//					dCounts[idx] = (j == theBitSetCardinality ? -j : j);
+//				else
+//				{
+//					dCounts[idx] = j;
+//					if ((idx == 1) && (dCounts[0] < 0))
+//						dCounts[0] += j;
+//					else
+//						dCounts[idx-1] -= j;
+//				}
+			}
+		}
+		// note strictly needed, use DomainMapNumeric.itsSize for end-of-input
+		if (idx < dCounts.length-1)
+			dCounts[idx+1] = -1;
+
+		if (false)
+		{
+			// compare to SortedMap version
+			SortedMap<Float, Integer> s = getUniqueSplitPointsMapX(theBitSet, theBitSetCardinality, theNrSplits, theOperator);
+			int ss = s.size();
+			for (int i = 0; i < idx+1; ++i)
+			{
+				--ss;
+
+				if (dCounts[i] != s.get(dDomain[i]))
+					throw new AssertionError(String.format("SortedMap != DomainMapNumeric:%n%s%n%s%n%s%n", s, Arrays.toString(dDomain), Arrays.toString(dCounts)));
+			}
+			if (ss != 0)
+				throw new AssertionError(String.format("SortedMap != DomainMapNumeric:%n%s%n%s%n%s%n", s, Arrays.toString(dDomain), Arrays.toString(dCounts)));
+		}
+
+		return new DomainMapNumeric(idx+1, sum, dDomain, dCounts);
 	}
 
 	/**
@@ -2969,7 +3131,7 @@ public class Column implements XMLNodeInterface
 //			set.add(new Interval(i == 0 ? Float.NEGATIVE_INFINITY : aBounds[i-1], aBounds[i]));
 		// ##### ORIGINAL CODE ENDS HERE #######################################
 
-		SortedMap<Float, Integer> aMap = getUniqueSplitPointsMap(theBitSet, theBitSetCardinality, theNrSplits, Operator.LESS_THAN_OR_EQUAL);
+		SortedMap<Float, Integer> aMap = getUniqueSplitPointsMapX(theBitSet, theBitSetCardinality, theNrSplits, Operator.LESS_THAN_OR_EQUAL);
 		if (aMap.isEmpty())
 			return Collections.emptySortedMap();
 
