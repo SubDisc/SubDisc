@@ -1151,6 +1151,16 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		}
 	}
 
+	////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////
+	///// BestValueSet algorithm                                           /////
+	///// only works for SINGLE NOMINAL, other types not are implemented   /////
+	///// BestValueSet is actually applicable to any convex measure        /////
+	///// TODO not sure if this requirement is checked by the code below   /////
+	///// FIXME this does not take maximum coverage into account           /////
+	////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////
+
 	private final void evaluateNominalBestValueSet(BitSet theParentMembers, int theParentCoverage, Refinement theRefinement)
 	{
 		ConditionBase aConditionBase = theRefinement.getConditionBase();
@@ -1159,28 +1169,58 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		assert (itsSearchParameters.getTargetType() == TargetType.SINGLE_NOMINAL);
 		assert (aConditionBase.getOperator() == Operator.ELEMENT_OF);
 
+		// as for BestIntervals -> use new half-interval code, it is 70x faster
 		NominalCrossTable aNCT = new NominalCrossTable(aConditionBase.getColumn(), theParentMembers, itsBinaryTarget);
 		SortedSet<String> aDomainBestSubSet = new TreeSet<String>();
 
+		double aBestQuality = Double.NEGATIVE_INFINITY;
+
 		QM aQualityMeasure = itsSearchParameters.getQualityMeasure();
-		if (aQualityMeasure == QM.WRACC)
+		if (aQualityMeasure == QM.WRACC || aQualityMeasure == QM.CORTANA_QUALITY)
 		{
-			double aRatio = itsQualityMeasure.getNrPositives() / (double)(itsQualityMeasure.getNrRecords());
+			// NOTE
+			// this path did not set aBestQuality, by keeping track of the sum
+			// of both aPi and (aPi + aNi) the aBestQuality score can be
+			// computed using: itsQualityMeasure.calculate(aPiSum, aPiPlusNiSum)
+			//
+			// NOTE
+			// Michael used imprecise (and slower) floating-point calculation
+			// by rewriting, the result can be computed using integer arithmetic
+			long T = itsQualityMeasure.getNrPositives();
+			long N = itsQualityMeasure.getNrRecords();
+			int aCountHeadBody = 0;
+			int aCoverage      = 0;
+
+//			double aRatio = itsQualityMeasure.getNrPositives() / (double)(itsQualityMeasure.getNrRecords());
 			for (int i = 0; i < aNCT.size() && !isTimeToStop(); i++)
 			{
 				int aPi = aNCT.getPositiveCount(i);
 				int aNi = aNCT.getNegativeCount(i);
 				// include values with WRAcc=0 too, result has same WRAcc but higher support
-				if (aPi >= aRatio * (aPi + aNi))
+				// NOTE
+				// with respect to the remark above, see the end of this method
+				// including such values might result in a subgroup size that is
+				// > maximum_coverage
+//				if (aPi >= aRatio * (aPi + aNi))
+//					aDomainBestSubSet.add(aNCT.getValue(i));
+				int aCount = (aPi + aNi);
+				if ((aPi * N) >= (T * aCount))
+				{
+					aCountHeadBody += aPi;
+					aCoverage += aCount;
 					aDomainBestSubSet.add(aNCT.getValue(i));
+				}
+
+				// NOTE could happen because of floating-point rounding errors
+				assert ((aPi >= ((T / ((double) N)) * aCount)) == ((aPi * N) >= (T * aCount)));
 			}
+			aBestQuality = itsQualityMeasure.calculate(aCountHeadBody, aCoverage);
 		}
 		else // not WRACC
 		{
 			// construct and check all subsets on the convex hull
 			List<Integer> aSortedDomainIndices = aNCT.getSortedDomainIndices();
 			int aSortedDomainIndicesSize = aSortedDomainIndices.size();
-			double aBestQuality = Double.NEGATIVE_INFINITY;
 
 			// upper part of the hull
 			int aP = 0;
@@ -1194,6 +1234,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 				aP += aPi;
 				aN += aNi;
 				int aNextIndex = aSortedDomainIndices.get(i+1);
+				// FIXME multiplications might overflow, though == remains valid
 				if (i < aSortedDomainIndicesSize-2 && aPi * aNCT.getNegativeCount(aNextIndex) == aNCT.getPositiveCount(aNextIndex) * aNi) // skip checking degenerate hull points
 					continue;
 				double aQuality = itsQualityMeasure.calculate(aP, aP + aN);
@@ -1274,11 +1315,31 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		// will also never be created
 		// a better solution is to obtain the best VALID ValueSet for
 		// this level, add it to the result set (possibly), and add the
-		// BEST (valid or not) candidate to the CandidateQueue
+		// BEST (valid or not) Candidate to the CandidateQueue
 		// and then never refine a nominal attribute with itself
-		// FIXME quality is known, re-evaluation should be avoided
+		//
+		// this is especially relevant because for WRAcc the original
+		// includes values with a score of 0, this increases the
+		// support
+		// in general this is a good approach, as larger Subgroups have
+		// more possibilities as refinement seeds
+		// but obviously, when having to choose between not returning a
+		// ValueSet, and one that omits some 0-score labels the latter
+		// seems the logical choice
+		//
+		// so before returning the ValueSet, as simple solution for now
+		// is to reduce the ValueSet if it is too large, by removing
+		// 0-score and labels, and, if needed, those with the worst
+		// ratios, until the ValueSet < maximimum_coverage
+		// then this method calls checkAndLog() twice, once with the
+		// BEST VALID ValueSet (which can be added to the ResultSet)
+		// and the BEST (even if too large) ValueSet, which will never
+		// be added to the ResultSet, but could be added to the
+		// CandidateSet
 		ValueSet aBestSubset = new ValueSet(aDomainBestSubSet);
 		Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(aBestSubset);
+		// FIXME downcast used to make value identical to historic results
+		aNewSubgroup.setMeasureValue((float) aBestQuality);
 		checkAndLog(aNewSubgroup, theParentCoverage);
 	}
 
@@ -1834,10 +1895,12 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	///// only works for SINGLE NOMINAL, other types not are implemented   /////
 	///// BestInterval is actually applicable to any convex measure        /////
 	///// TODO not sure if this requirement is checked by the code below   /////
+	///// FIXME this does not take maximum coverage into account           /////
+	/////       see comment at evaluateNominalBestValueSet() on this issue /////
 	////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////
 
-	// TODO this code does not check isTimeToStop() - but will be modifies soon
+	// TODO this code does not check isTimeToStop() - but will be modified soon
 	private void numericIntervals(BitSet theParentMembers, int theParentCoverage, Refinement theRefinement)
 	{
 		// evaluateNumericRefinements() should prevent getting here for others
@@ -1980,8 +2043,9 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			//Log.logCommandLine("Evalutations: " + anEvalCounter);
 		}
 
-		// FIXME quality is known, re-evaluation in check() should be avoided
 		Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(aBestInterval);
+		// FIXME downcast used to make value identical to historic results
+		aNewSubgroup.setMeasureValue((float) aBestQuality);
 		checkAndLog(aNewSubgroup, theParentCoverage);
 	}
 
@@ -2151,8 +2215,10 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			// NumericStrategy could get a method like isBestStrategy(), but
 			// than still it gives no guarantee that code in SubgroupDiscovery
 			// sets the quality/secondary/tertiary statistics for theSubgroup
-			// e.g. INTERVALS is a best-strategy, but does not set the quality
-			EnumSet<NumericStrategy> aNumericBest = EnumSet.of(NumericStrategy.NUMERIC_BEST, NumericStrategy.NUMERIC_BEST_BINS, NumericStrategy.NUMERIC_VIKAMINE_CONSECUTIVE_BEST);
+			EnumSet<NumericStrategy> aNumericBest = EnumSet.of(NumericStrategy.NUMERIC_BEST,
+																NumericStrategy.NUMERIC_BEST_BINS,
+																NumericStrategy.NUMERIC_VIKAMINE_CONSECUTIVE_BEST,
+																NumericStrategy.NUMERIC_INTERVALS);
 			AttributeType lastAdded = theChild.getConditions().get(theChild.getDepth()-1).getColumn().getType();
 			boolean isLastNumeric = (lastAdded == AttributeType.NUMERIC);
 
@@ -2170,13 +2236,19 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			}
 			else if (isLastNumeric && aNumericBest.contains(itsSearchParameters.getNumericStrategy()))
 			{
-				// NOTE for BEST* Subgroup is already evaluated and score is set
-				//      by isValidAndBest()
+				// NOTE for BEST* Subgroup is already evaluated and quality is
+				// set by isValidAndBest() or numericIntervals() (BestInterval)
+				// NOTE isValidAndBest() performs an incorrect isValid-coverage
+				// check, and BestInterval does not perform one at all
 				aQuality = (float) theChild.getMeasureValue();
 			}
-			else if (false)
+			else if (itsSearchParameters.getNominalSets() && (lastAdded == AttributeType.BINARY || lastAdded == AttributeType.NOMINAL))
 			{
-				// FIXME BestInterval and BestValueset also already computed quality
+				// the if does not use a !isLastNumeric shortcut (is bad design)
+				// BestValueset and BestInterval already set quality
+				// NOTE these paths did not performed the isValid-coverage check
+				//      refer to the methods for comments on this issue
+				aQuality = (float) theChild.getMeasureValue();
 			}
 			else
 			{
