@@ -152,7 +152,8 @@ public class SubgroupDiscovery
 				throw new AssertionError(aTarget.getType());
 		}
 
-		BitSet aBitSet = getAllDataBitSet(itsNrRows);
+		BitSet aBitSet = new BitSet(itsNrRows);
+		aBitSet.set(0, itsNrRows);
 		itsBinaryTarget = aTC.getPrimaryTarget().evaluate(aBitSet, aCondition);
 		itsResult = new SubgroupSet(itsSearchParameters.getMaximumSubgroups(), itsNrRows, itsBinaryTarget);
 	}
@@ -169,7 +170,8 @@ public class SubgroupDiscovery
 		TargetConcept aTC = itsSearchParameters.getTargetConcept();
 		itsNumericTarget = aTC.getPrimaryTarget();
 
-		BitSet aBitSet = getAllDataBitSet(itsNrRows);
+		BitSet aBitSet = new BitSet(itsNrRows);
+		aBitSet.set(0, itsNrRows);
 		Statistics aStatistics = itsNumericTarget.getStatistics(aBitSet, false, true); // no median, yes complement
 		ProbabilityDensityFunction aPDF;
 if (!TEMPORARY_CODE)
@@ -346,13 +348,6 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 		itsQualityMeasureMinimum = itsSearchParameters.getQualityMeasureMinimum();
 
 		itsResult = new SubgroupSet(itsSearchParameters.getMaximumSubgroups(), itsNrRows);
-	}
-
-	static final BitSet getAllDataBitSet(int theNrRows)
-	{
-		BitSet aBitSet = new BitSet(theNrRows);
-		aBitSet.set(0, theNrRows);
-		return aBitSet;
 	}
 
 	/*
@@ -561,8 +556,7 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 		logExperimentSettings(aConditions);
 
 		// make subgroup to start with, containing all elements
-		BitSet aBitSet = getAllDataBitSet(itsNrRows);
-		Subgroup aStart = new Subgroup(ConditionListBuilder.emptyList(), aBitSet, itsResult);
+		Subgroup aStart = new Subgroup(ConditionListBuilder.emptyList(), itsResult.getAllDataBitSetClone(), itsResult);
 
 		// set number of true positives for dataset
 		if (isPOCSetting())
