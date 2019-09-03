@@ -4,8 +4,6 @@ import java.io.*;
 import java.util.*;
 import java.util.concurrent.*;
 
-import nl.liacs.subdisc.ConditionListBuilder.ConditionListA;
-
 /**
  * A SubgroupSet is a <code>TreeSet</code> of {@link Subgroup Subgroup}s. If its
  * size is set to <= 0, the SubgroupSet has no maximum size, else the number of
@@ -28,10 +26,11 @@ public class SubgroupSet extends TreeSet<Subgroup>
 {
 	private static final long serialVersionUID = 1L;
 
-	// For SubgroupSet in nominal target setting (used for TPR/FPR in ROCList)
+	// for SubgroupSet in nominal target setting (used for TPR/FPR in ROCList)
 	private final boolean nominalTargetSetting;
 	private final int itsTotalCoverage;
-	private BitSet itsBinaryTarget; // no longer final for CAUC
+	private final BitSet itsAllDataBitSet; // for SubgroupDiscovery and Subgroup
+	private BitSet itsBinaryTarget;        // no longer final for CAUC
 	private int itsMaximumSize;
 	private ROCList itsROCList;
 	// used as quick check for add(), tests on NaN always return false
@@ -65,6 +64,10 @@ public class SubgroupSet extends TreeSet<Subgroup>
 		itsTotalCoverage = theTotalCoverage;
 		nominalTargetSetting = theNominalTargetSetting;
 		itsBinaryTarget = theBinaryTarget;
+
+		BitSet aBitSet = new BitSet(itsTotalCoverage);
+		aBitSet.set(0, itsTotalCoverage);
+		itsAllDataBitSet = aBitSet;
 	}
 
 	/**
@@ -109,6 +112,8 @@ public class SubgroupSet extends TreeSet<Subgroup>
 		itsMaximumSize = Integer.MAX_VALUE;
 		itsTotalCoverage = -1;
 		itsBinaryTarget = null;
+		// FIXME this class has the worst programming available in Cortana FIXME
+		itsAllDataBitSet = null;
 	}
 
 	/**
@@ -383,6 +388,11 @@ public class SubgroupSet extends TreeSet<Subgroup>
 			return null;
 		else
 			return (BitSet) itsBinaryTarget.clone();
+	}
+
+	final BitSet getAllDataBitSetClone()
+	{
+		return (BitSet) itsAllDataBitSet.clone();
 	}
 
 	/**
@@ -684,7 +694,7 @@ Log.logCommandLine("\nAUC: " + itsROCList.getAreaUnderCurve());
 
 	public double getJointEntropy() { return itsJointEntropy; }
 
-	public static final boolean CHECK_FOR_ALTERNATIVE_DESCRIPTIONS = true;
+	public static final boolean CHECK_FOR_ALTERNATIVE_DESCRIPTIONS = false;
 	public final void markAlternativeDescriptions()
 	{
 		if (!CHECK_FOR_ALTERNATIVE_DESCRIPTIONS)
@@ -706,9 +716,8 @@ Log.logCommandLine("\nAUC: " + itsROCList.getAreaUnderCurve());
 		//     else                                -> write line
 		List<Subgroup> aSameCQST = new ArrayList<Subgroup>();
 
-		// fake this one
-		BitSet aBitSet = SubgroupDiscovery.getAllDataBitSet(itsTotalCoverage);
-		Subgroup aLast = new Subgroup(ConditionListBuilder.emptyList(), aBitSet, this);
+		// fake this one - could pass itsAllDataBitSet, but clone is more safe
+		Subgroup aLast = new Subgroup(ConditionListBuilder.emptyList(), getAllDataBitSetClone(), this);
 		// compares false for first Subgroup, even if its score is NaN
 		aLast.setMeasureValue(Double.NaN);
 
