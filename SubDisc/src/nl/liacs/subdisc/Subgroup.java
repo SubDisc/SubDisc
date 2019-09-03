@@ -251,10 +251,7 @@ public class Subgroup implements Comparable<Subgroup>
 			if (itsMembers == null)
 			{
 				// the default Constructor ensures SubgroupSet
-				int size = itsParentSet.getTotalCoverage();
-				// XXX MM - SubgroupDiscovery.getAllDataBitSet()
-				BitSet b = new BitSet(size);
-				b.set(0, size);
+				BitSet b = itsParentSet.getAllDataBitSetClone();
 
 				// does nothing when ConditionListA is empty
 				for (int i = 0, j = itsConditions.size(); i < j; ++i)
