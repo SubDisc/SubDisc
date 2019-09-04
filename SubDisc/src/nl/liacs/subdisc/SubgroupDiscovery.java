@@ -1332,10 +1332,11 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		// be added to the ResultSet, but could be added to the
 		// CandidateSet
 		ValueSet aBestSubset = new ValueSet(aDomainBestSubSet);
-		Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(aBestSubset);
+		Condition anAddedCondition = new Condition(aConditionBase, aBestSubset);
+		Subgroup aChild = theRefinement.getSubgroup().getRefinedSubgroup(anAddedCondition);
 		// FIXME downcast used to make value identical to historic results
-		aNewSubgroup.setMeasureValue((float) aBestQuality);
-		checkAndLog(aNewSubgroup, theParentCoverage);
+		aChild.setMeasureValue((float) aBestQuality);
+		checkAndLog(aChild, theParentCoverage);
 	}
 
 	////////////////////////////////////////////////////////////////////////////
