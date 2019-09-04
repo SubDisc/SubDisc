@@ -2,10 +2,14 @@ package nl.liacs.subdisc;
 
 import java.util.*;
 
-public class RefinementList extends ArrayList<Refinement>
+public class RefinementList
 {
 	private static final long serialVersionUID = 1L;
-//	private Table itsTable;
+
+	private final List<Refinement> itsRefinementBases;
+	private final int itsSize;
+
+	//	private Table itsTable;
 //	private Subgroup itsSubgroup;
 //
 // TODO MM DEBUG symbols
@@ -74,9 +78,17 @@ public class RefinementList extends ArrayList<Refinement>
 //
 	public RefinementList(Subgroup theSubgroup, ConditionBaseSet theConditionBaseSet)
 	{
+		List<Refinement> aRefinementBases = new ArrayList<Refinement>();
+
 		for (ConditionBase c : theConditionBaseSet.getConditionBases())
-			super.add(new Refinement(c, theSubgroup));
+			aRefinementBases.add(new Refinement(c, theSubgroup));
+
+		itsSize = aRefinementBases.size();
+		itsRefinementBases = Collections.unmodifiableList(aRefinementBases);
 	}
+
+	final int size() { return itsSize; }
+	final Refinement get(int index) { return itsRefinementBases.get(index); }
 
 	/*
 	 * relevant settings:
