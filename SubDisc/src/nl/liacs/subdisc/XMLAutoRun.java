@@ -246,7 +246,7 @@ public class XMLAutoRun
 				aWriter.write(String.valueOf(aSubgroup.getPValue()));
 				aWriter.write(aDelimiter);
 				if (IS_MULTI_THREAD_TEST)
-					aWriter.write(ConditionListBuilder.toCanonicalOrder(aSubgroup.getConditions()));
+					aWriter.write(ConditionListBuilder.toCanonicalOrderString(aSubgroup.getConditions()));
 				else
 					aWriter.write(aSubgroup.getConditions().toString());
 				aWriter.write("\n");

@@ -631,7 +631,14 @@ System.out.format("ERROR ConditionListN-3: duplicate conjuncts%n\t%s%n\t%s%n", t
 	}
 
 	// used for testing results obtained in multi-threaded experiments
-	static final String toCanonicalOrder(ConditionListA theConditionList)
+	static final String toCanonicalOrderString(ConditionListA theConditionList)
+	{
+		// abuses method for simple implementation
+		return toString(toCanonicalOrder(theConditionList));
+	}
+
+	// test (ConditionList order == ConditionBaseSet order) - should change soon
+	static final Condition[] toCanonicalOrder(ConditionListA theConditionList)
 	{
 		int aSize = theConditionList.size();
 		Condition[] aConditions = new Condition[aSize];
@@ -643,8 +650,7 @@ System.out.format("ERROR ConditionListN-3: duplicate conjuncts%n\t%s%n\t%s%n", t
 		// put Conditions in canonical order
 		Arrays.sort(aConditions);
 
-		// abuses method for simple implementation
-		return toString(aConditions);
+		return aConditions;
 	}
 
 	// FIXME MM static method for now, might change later (for each sub-class)
