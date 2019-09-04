@@ -127,7 +127,7 @@ class ConditionBaseSet
 
 		// overestimate, not all columns are numeric description columns
 		int init = theTable.getNrColumns() * aNumOps.size();
-		List<ConditionBase> result = new ArrayList<ConditionBase>(init);
+		ArrayList<ConditionBase> result = new ArrayList<ConditionBase>(init);
 
 		for (Column c : theTable.getColumns())
 		{
@@ -164,6 +164,7 @@ class ConditionBaseSet
 			}
 		}
 
+		result.trimToSize();
 		return result;
 	}
 }
