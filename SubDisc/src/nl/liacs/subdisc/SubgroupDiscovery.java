@@ -635,7 +635,8 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 											NumericStrategy.NUMERIC_ALL,
 											NumericStrategy.NUMERIC_BEST,
 											NumericStrategy.NUMERIC_BEST_BINS,
-											NumericStrategy.NUMERIC_BINS);
+											NumericStrategy.NUMERIC_BINS,
+											NumericStrategy.NUMERIC_INTERVALS);
 
 		SearchParameters s = itsSearchParameters;
 		return (aValid.contains(s.getNumericStrategy()) &&
@@ -1894,7 +1895,6 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////
 
-	// TODO this code does not check isTimeToStop() - but will be modified soon
 	private void numericIntervals(BitSet theParentMembers, int theParentCoverage, Refinement theRefinement)
 	{
 		// evaluateNumericRefinements() should prevent getting here for others
@@ -1902,6 +1902,8 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		assert (aNumericStrategy == NumericStrategy.NUMERIC_INTERVALS);
 
 		////////////////////////////////////////////////////////////////////////
+		Subgroup aParent = theRefinement.getSubgroup();
+
 		// members-based domain, no empty Subgroups will occur
 		ConditionBase aConditionBase = theRefinement.getConditionBase();
 		Column aColumn = aConditionBase.getColumn();
@@ -1911,10 +1913,10 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		assert (anOperator == Operator.BETWEEN);
 		////////////////////////////////////////////////////////////////////////
 
-		float[] aSplitPoints = getDomain(theParentMembers, theParentCoverage, aNumericStrategy, aColumn, itsSearchParameters.getNrBins(), null);
+		float [] aDomain = Arrays.copyOf(aColumn.SORTED, aColumn.SORTED.length);
+		ValueInfo via = aColumn.getUniqueNumericDomainMap(theParentMembers);
 
-		// FIXME half-interval code determines TP/FP also, but 70 times faster
-		RealBaseIntervalCrossTable aRBICT = new RealBaseIntervalCrossTable(aSplitPoints, aColumn, theParentMembers, itsBinaryTarget);
+		RealBaseIntervalCrossTable aRBICT = new RealBaseIntervalCrossTable(theParentCoverage, (int) aParent.getTertiaryStatistic(), aDomain, via);
 
 		// prune splitpoints for which adjacent base intervals have equal class distribution
 		// TODO: check whether this preprocessing reduces *total* computation time
@@ -1923,8 +1925,11 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			return; // no specialization improves quality
 
 		double aBestQuality = Double.NEGATIVE_INFINITY;
+		int aBestNrFalsePositives = Integer.MIN_VALUE;
+		int aBestNrTruePositives = Integer.MIN_VALUE;
 		Interval aBestInterval = new Interval(Float.NEGATIVE_INFINITY, Float.POSITIVE_INFINITY);
 
+		// NOTE Michael disabled this setting, if ever enabled: set *NrPositives
 		if (false && itsSearchParameters.getQualityMeasure() == QM.WRACC)
 		{
 			long aPg = (long)itsQualityMeasure.getNrPositives();
@@ -1937,7 +1942,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			long aMaxH = aPr * aNg - aNr * aPg;
 			float aBestLHS = Float.NEGATIVE_INFINITY;
 
-			for (int i = 0; i < aRBICT.getNrBaseIntervals(); i++)
+			for (int i = 0; i < aRBICT.getNrBaseIntervals() && !isTimeToStop(); i++)
 			{
 				long anH = aPr * aNg - aNr * aPg;
 				if (anH > aMaxH)
@@ -2013,7 +2018,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 					ConvexHull aMinkDiff = aHulls[l].minkowskiDifference(aHulls[l+1], true);
 					for (int aSide = 0; aSide < 2; aSide++)
 					{
-						for (int i = 0; i < aMinkDiff.getSize(aSide); i++)
+						for (int i = 0; i < aMinkDiff.getSize(aSide) && !isTimeToStop(); i++)
 						{
 							if (aSide == 1 && (i == 0 || i == aMinkDiff.getSize(aSide)-1) )
 								continue; // no need to check duplicate hull points
@@ -2022,6 +2027,8 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 							anEvalCounter++;
 							if (aQuality > aBestQuality) {
 								aBestQuality = aQuality;
+								aBestNrFalsePositives = aCandidate.itsX;
+								aBestNrTruePositives = aCandidate.itsY;
 								aBestInterval = new Interval(aCandidate.getLabel2(), aCandidate.itsLabel1);
 							}
 						}
@@ -2037,9 +2044,16 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			//Log.logCommandLine("Evalutations: " + anEvalCounter);
 		}
 
-		Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(aBestInterval);
-		// FIXME downcast used to make value identical to historic results
-		aNewSubgroup.setMeasureValue((float) aBestQuality);
+		Condition anAddedCondition = new Condition(aConditionBase, aBestInterval);
+		double aBestNrTruePositivesD = (double) aBestNrTruePositives;
+		int aChildCoverage = (aBestNrTruePositives + aBestNrFalsePositives);
+		// FIXME MM q is only cast to float to make historic results comparable
+		float q = (float) aBestQuality;
+		double s = aBestNrTruePositivesD / aChildCoverage;
+		double t = aBestNrTruePositivesD;
+
+		Subgroup aNewSubgroup = aParent.getRefinedSubgroup(anAddedCondition, q, s, t, aChildCoverage);
+
 		checkAndLog(aNewSubgroup, theParentCoverage);
 	}
 
@@ -2209,6 +2223,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			// NumericStrategy could get a method like isBestStrategy(), but
 			// than still it gives no guarantee that code in SubgroupDiscovery
 			// sets the quality/secondary/tertiary statistics for theSubgroup
+			// NOTE NUMERIC_INTERVALS is both a isPOCSetting and a aNumericBest
 			EnumSet<NumericStrategy> aNumericBest = EnumSet.of(NumericStrategy.NUMERIC_BEST,
 																NumericStrategy.NUMERIC_BEST_BINS,
 																NumericStrategy.NUMERIC_VIKAMINE_CONSECUTIVE_BEST,
