@@ -1,90 +1,131 @@
 package nl.liacs.subdisc;
 
-import java.util.*;
+import nl.liacs.subdisc.Column.ValueInfo;
 
 //Michael says: this is basically a copy of NominalCrossTable
 
 public class RealBaseIntervalCrossTable
 {
-	private float[] itsSplitPoints;
-	private int itsSplitPointCount;
-	private int[] itsPositiveCounts;
-	private int[] itsNegativeCounts;
-	private int itsPositiveCount; //sum
-	private int itsNegativeCount; //sum
-	private boolean itsUseNegInfty;
+	private final float[] itsSplitPoints;
+	private int itsSplitPointCount;     // not final, see aggregateIntervals()
+	private final int[] itsPositiveCounts;
+	private final int[] itsNegativeCounts;
+	private final int itsPositiveCount; // sum
+	private final int itsNegativeCount; // sum
+	private final boolean itsUseNegInfty;
 
-	public RealBaseIntervalCrossTable(float[] theSplitPoints, Column theColumn, BitSet theSubgroupMembers, BitSet theTarget)
+	public RealBaseIntervalCrossTable(int theTotalCount, int theTotalNrTruePositives, float[] theDomainCopy, ValueInfo theValueInfo)
 	{
-		this(theSplitPoints, theColumn, theSubgroupMembers, theTarget, true);
-	}
+		itsPositiveCount = theTotalNrTruePositives;
+		itsNegativeCount = (theTotalCount - theTotalNrTruePositives);
 
-	private RealBaseIntervalCrossTable(float[] theSplitPoints, Column theColumn, BitSet theSubgroupMembers, BitSet theTarget, boolean theUseNegInfty)
-	{
-		itsUseNegInfty = theUseNegInfty;
+		// compact arrays first, count aNrDistinct, array-copy; (abuse counts)
+		int[] aCounts = theValueInfo.itsCounts;
+		int[] aRecords = theValueInfo.itsRecords; // the TruePositive count
+
+		int aNrDistinct = 0;
+		for (int i = 0, j = aCounts.length; i < j; ++i)
+		{
+			int aCount = aCounts[i];
+			if (aCount == 0)
+				continue;
+
+			theDomainCopy[aNrDistinct] = theDomainCopy[i];
+			aRecords[aNrDistinct]      = aRecords[i];
+			aCounts [aNrDistinct]      = (aCount - aRecords[i]);
+			++aNrDistinct;
+
+			if ((theTotalCount -= aCount) == 0)
+				break;
+		}
+
+		itsUseNegInfty = true;
 		int offset = itsUseNegInfty ? 1 : 0;
-		itsSplitPointCount = theSplitPoints.length + offset;
-		itsSplitPoints = new float[itsSplitPointCount];
+
+		itsSplitPointCount = aNrDistinct + offset;
+		itsSplitPoints    = new float[itsSplitPointCount];
 		itsPositiveCounts = new int[getNrBaseIntervals()];
 		itsNegativeCounts = new int[getNrBaseIntervals()];
 
-		int aCount = 0;
 		if (itsUseNegInfty)
-		{
 			itsSplitPoints[0] = Float.NEGATIVE_INFINITY;
-			aCount = 1;
-		}
-		for (float aSplitPoint : theSplitPoints)
-		{
-			itsSplitPoints[aCount] = aSplitPoint;
-			aCount++;
-		}
-		//sort(itsSplitPoints);
 
-		// FIXME half-interval code determines TP/FP also, but 70 times faster
-		for (int i=0; i<theColumn.size(); i++) //loop over all records (AK could be faster? ok for now)
-		{
-			if (theSubgroupMembers.get(i))
-			{
-				float aValue = theColumn.getFloat(i);
-				int anIndex = Arrays.binarySearch(itsSplitPoints, aValue);
-				if (anIndex < 0)
-					anIndex = -anIndex - 1;
-				if (theTarget.get(i))
-					itsPositiveCounts[anIndex]++;
-				else
-					itsNegativeCounts[anIndex]++;
-			}
-		}
-		for (int i=0; i<getNrBaseIntervals(); i++)
-		{
-			itsPositiveCount += itsPositiveCounts[i];
-			itsNegativeCount += itsNegativeCounts[i];
-		}
+		System.arraycopy(theDomainCopy, 0, itsSplitPoints, offset, aNrDistinct);
+		System.arraycopy(aRecords,      0, itsPositiveCounts, offset, aNrDistinct);
+		System.arraycopy(aCounts,       0, itsNegativeCounts, offset, aNrDistinct);
+	}
 
-//		// always create a copy of the theSplitPoints input array
-//		if (itsUseNegInfty)
-//			itsSplitPoints[0] = Float.NEGATIVE_INFINITY;
-//		System.arraycopy(theSplitPoints, 0, itsSplitPoints, offset, theSplitPoints.length);
+//	public RealBaseIntervalCrossTable(float[] theSplitPoints, Column theColumn, BitSet theSubgroupMembers, BitSet theTarget)
+//	{
+//		this(theSplitPoints, theColumn, theSubgroupMembers, theTarget, true);
+//	}
+
+//	private RealBaseIntervalCrossTable(float[] theSplitPoints, Column theColumn, BitSet theSubgroupMembers, BitSet theTarget, boolean theUseNegInfty)
+//	{
+//		itsUseNegInfty = theUseNegInfty;
+//		int offset = itsUseNegInfty ? 1 : 0;
+//		itsSplitPointCount = theSplitPoints.length + offset;
+//		itsSplitPoints = new float[itsSplitPointCount];
+//		itsPositiveCounts = new int[getNrBaseIntervals()];
+//		itsNegativeCounts = new int[getNrBaseIntervals()];
 //
-//		final BitSet b = theSubgroup.getMembers();
-//		// uses j to break loop as early as possible
-//		for (int i = b.nextSetBit(0), j = theSubgroup.getCoverage(); j != 0 ; i = b.nextSetBit(i+1), --j) {
-//			int anIndex = Arrays.binarySearch(itsSplitPoints, theColumn.getFloat(i));
-//			if (anIndex < 0)
-//				anIndex ~= anIndex; // bitwise inverse: -anIndex - 1;
-//			if (theTarget.get(i))
+//		int aCount = 0;
+//		if (itsUseNegInfty)
+//		{
+//			itsSplitPoints[0] = Float.NEGATIVE_INFINITY;
+//			aCount = 1;
+//		}
+//		for (float aSplitPoint : theSplitPoints)
+//		{
+//			itsSplitPoints[aCount] = aSplitPoint;
+//			aCount++;
+//		}
+//		//sort(itsSplitPoints);
+//
+//		// FIXME half-interval code determines TP/FP also, but 70 times faster
+//		for (int i=0; i<theColumn.size(); i++) //loop over all records (AK could be faster? ok for now)
+//		{
+//			if (theSubgroupMembers.get(i))
 //			{
-//				++itsPositiveCounts[anIndex];
-//				++itsPositiveCount;
-//			}
-//			else
-//			{
-//				++itsNegativeCounts[anIndex];
-//				++itsNegativeCount;
+//				float aValue = theColumn.getFloat(i);
+//				int anIndex = Arrays.binarySearch(itsSplitPoints, aValue);
+//				if (anIndex < 0)
+//					anIndex = -anIndex - 1;
+//				if (theTarget.get(i))
+//					itsPositiveCounts[anIndex]++;
+//				else
+//					itsNegativeCounts[anIndex]++;
 //			}
 //		}
-	}
+//		for (int i=0; i<getNrBaseIntervals(); i++)
+//		{
+//			itsPositiveCount += itsPositiveCounts[i];
+//			itsNegativeCount += itsNegativeCounts[i];
+//		}
+//
+////		// always create a copy of the theSplitPoints input array
+////		if (itsUseNegInfty)
+////			itsSplitPoints[0] = Float.NEGATIVE_INFINITY;
+////		System.arraycopy(theSplitPoints, 0, itsSplitPoints, offset, theSplitPoints.length);
+////
+////		final BitSet b = theSubgroup.getMembers();
+////		// uses j to break loop as early as possible
+////		for (int i = b.nextSetBit(0), j = theSubgroup.getCoverage(); j != 0 ; i = b.nextSetBit(i+1), --j) {
+////			int anIndex = Arrays.binarySearch(itsSplitPoints, theColumn.getFloat(i));
+////			if (anIndex < 0)
+////				anIndex ~= anIndex; // bitwise inverse: -anIndex - 1;
+////			if (theTarget.get(i))
+////			{
+////				++itsPositiveCounts[anIndex];
+////				++itsPositiveCount;
+////			}
+////			else
+////			{
+////				++itsNegativeCounts[anIndex];
+////				++itsNegativeCount;
+////			}
+////		}
+//	}
 
 	public float getSplitPoint(int theIndex)
 	{
@@ -128,14 +169,15 @@ public class RealBaseIntervalCrossTable
 		return itsSplitPointCount;
 	}
 
-	public int getNrBaseIntervals() {
+	public int getNrBaseIntervals()
+	{
 		return itsSplitPointCount + 1; 
 	}
 
-	public float[] getSplitPoints()
-	{
-		return Arrays.copyOfRange(itsSplitPoints, 0, itsSplitPointCount);
-	}
+//	public float[] getSplitPoints()
+//	{
+//		return Arrays.copyOfRange(itsSplitPoints, 0, itsSplitPointCount);
+//	}
 
 	// eliminate split points that separate base intervals with equal distributions
 	// only to be used for convex quality measures
@@ -163,10 +205,10 @@ public class RealBaseIntervalCrossTable
 		return;
 	}
 
-	public void print()
-	{
-		for (int i = 0; i < getNrBaseIntervals(); i++)
-			Log.logCommandLine(getBaseInterval(i) + ": (" + itsPositiveCounts[i] + ", " + itsNegativeCounts[i] + ")");
-		return;
-	}
+//	public void print()
+//	{
+//		for (int i = 0; i < getNrBaseIntervals(); i++)
+//			Log.logCommandLine(getBaseInterval(i) + ": (" + itsPositiveCounts[i] + ", " + itsNegativeCounts[i] + ")");
+//		return;
+//	}
 }
