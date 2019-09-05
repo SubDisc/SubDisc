@@ -638,6 +638,7 @@ System.out.format("ERROR ConditionListN-3: duplicate conjuncts%n\t%s%n\t%s%n", t
 	}
 
 	// test (ConditionList order == ConditionBaseSet order) - should change soon
+	// for more information, refer to isInConditionBaseOrder(ConditionListA)
 	static final Condition[] toCanonicalOrder(ConditionListA theConditionList)
 	{
 		int aSize = theConditionList.size();
