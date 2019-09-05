@@ -1246,6 +1246,9 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 				assert ((aPi >= ((T / ((double) N)) * aCount)) == ((aPi * N) >= (T * aCount)));
 			}
 
+			if (aDomainBestSubSet.size() == 0)
+				return;
+
 			aCountHeadBody = aP;
 			aCoverage = (aP + aN);
 			aFinalBestQuality = itsQualityMeasure.calculate(aCountHeadBody, aCoverage);
@@ -1350,13 +1353,13 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 				}
 			}
 
+			if (aDomainBestSubSet.size() == 0)
+				return;
+
 			aCountHeadBody = aBestP;
 			aCoverage = (aBestP + aBestN);
 			aFinalBestQuality = aBestQuality;
 		}
-
-		if (aDomainBestSubSet.size() == 0)
-			return;
 
 		// FIXME MM this does not take maximum coverage into account
 		// the best ValueSet might be > maxCov, and thus not be used
