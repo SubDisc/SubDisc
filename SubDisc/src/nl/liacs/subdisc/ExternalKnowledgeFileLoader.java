@@ -160,9 +160,6 @@ public class ExternalKnowledgeFileLoader
 		final List<String> aList = new ArrayList<String>();
 		for (Operator o : Operator.set())
 		{
-			if (o == Operator.NOT_AN_OPERATOR)
-				continue;
-
 			final String s = new StringBuilder(4)
 							.append(" ")
 							.append(o.GUI_TEXT)

@@ -54,15 +54,6 @@ public enum Operator
 			// all code should be checked when it is
 			return theType == AttributeType.NUMERIC;
 		}
-	},
-	@Deprecated
-	NOT_AN_OPERATOR("") // legacy, will be removed in some future update
-	{
-		@Override
-		public boolean isValidFor(AttributeType theType)
-		{
-			return true;
-		}
 	};
 
 	public final String GUI_TEXT;
@@ -104,15 +95,7 @@ public enum Operator
 			if (o.GUI_TEXT.equals(theText))
 				return o;
 
-		/*
-		 * theText cannot be resolved to an Operator. Log error and
-		 * return Operator.NOT_AN_OPERATOR.
-		 */
-		Log.logCommandLine(
-			String.format("'%s' is not a valid Operator. Returning '%s'.",
-					theText,
-					Operator.NOT_AN_OPERATOR.name()));
-		return Operator.NOT_AN_OPERATOR;
+		throw new IllegalArgumentException("Operator.formString(), unknown Operator: " + theText);
 	}
 
 	/**
@@ -134,7 +117,7 @@ public enum Operator
 	{
 		final EnumSet<Operator> set = EnumSet.noneOf(Operator.class);
 		for (Operator o : Operator.values())
-			if (o != NOT_AN_OPERATOR && o.isValidFor(theAttributeType))
+			if (o.isValidFor(theAttributeType))
 				set.add(o);
 		return Collections.unmodifiableSet(set);
 	}
