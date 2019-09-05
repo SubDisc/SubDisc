@@ -628,7 +628,36 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 		Log.logCommandLine("total sorting time : " + aTotal.getElapsedTimeString());
 	}
 
-	// not SINGLE_NOMINAL with ValueSet, NUMERIC_INTERVALS/CONSECUTIVE_ALL|BEST
+	// direct computation is relevant only for a SINGLE_NOMINAL target as it
+	// relates to tracking the true positive counts
+	// evaluateBinary(): for BINARY description Attributes use directComputation
+	//                   for other types this is not possible
+	// evaluateNominalBestValueSet(): description Attribute is always NOMINAL
+	//                                and directComputation is possible
+	// numericIntervals(): see evaluateNominalBestValueSet()
+	//
+	// for PROP_SCORE_WRACC/PROP_SCORE_RATIO directComputation is not possible
+	private final boolean isDirectSetting()
+	{
+		EnumSet<QM> anInvalid = EnumSet.of(QM.PROP_SCORE_WRACC, QM.PROP_SCORE_RATIO);
+
+		// checking this all the time is a bit wasteful, but fine for now
+		SearchParameters s = itsSearchParameters;
+		return ((s.getTargetType() == TargetType.SINGLE_NOMINAL) && !anInvalid.contains(s.getQualityMeasure()));
+	}
+
+	// POCSetting relates to model updates for numeric half-intervals, and it
+	// requires sorted numeric domains to be available for all NUMERIC Columns
+	//
+	// currently only an implementation for SINGLE_NOMINAL is available, it
+	// requires the number of TruePositives to be set for the parent, most
+	// notably for the initial Start Subgroup (preMining should take care of it)
+	//
+	// future updates will add other TargetTypes
+	//
+	// NOTE
+	// aValid includes NUMERIC_INTERVALS, as it requires sorted NUMERIC domains
+	// it does not use model updates (at least not like the half-intervals)
 	private final boolean isPOCSetting()
 	{
 		EnumSet<NumericStrategy> aValid = EnumSet.of(
@@ -638,9 +667,11 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 											NumericStrategy.NUMERIC_BINS,
 											NumericStrategy.NUMERIC_INTERVALS);
 
+		EnumSet<QM> anInvalid = EnumSet.of(QM.PROP_SCORE_WRACC, QM.PROP_SCORE_RATIO);
+
 		SearchParameters s = itsSearchParameters;
 		return (aValid.contains(s.getNumericStrategy()) &&
-				((s.getTargetType() == TargetType.SINGLE_NOMINAL) && !s.getNominalSets()) &&
+				((s.getTargetType() == TargetType.SINGLE_NOMINAL) && !anInvalid.contains(s.getQualityMeasure())) &&
 				ENABLE_POC_SETTINGS);
 	}
 
@@ -973,14 +1004,19 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	 */
 	private void evaluateNominalBinaryRefinements(BitSet theParentMembers, int theParentCoverage, Refinement theRefinement)
 	{
+		ConditionBase aConditionBase = theRefinement.getConditionBase();
+
 		// split code paths for ValueSet/class labels (nominal/numeric/binary)
-		if (itsSearchParameters.getNominalSets())
+		if (aConditionBase.getOperator() == Operator.ELEMENT_OF)
 		{
+			// currently BestValueSet implies the target type is SINGLE_NOMINAL
+			assert (itsSearchParameters.getTargetType() == TargetType.SINGLE_NOMINAL);
+			assert (itsSearchParameters.getNominalSets());
+
 			evaluateNominalBestValueSet(theParentMembers, theParentCoverage, theRefinement);
 			return;
 		}
 
-		ConditionBase aConditionBase = theRefinement.getConditionBase();
 		assert (aConditionBase.getOperator() == Operator.EQUALS);
 
 		// FIXME: NUMERIC Refinement should not be done here
@@ -1018,7 +1054,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 
 		// check for (aColumn = false)
 		if (aChildCoverage >= itsMinimumCoverage)
-			aNrTruePositives = evaluateBinary(aParent, new Condition(aConditionBase, false), aChildMembers, aChildCoverage);
+			aNrTruePositives = evaluateBinaryRefinementsHelper(aParent, new Condition(aConditionBase, false), aChildMembers, aChildCoverage);
 
 		// binary check is fast, but for some models evaluateCandidate() is not
 		if (isTimeToStop())
@@ -1032,7 +1068,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			Condition aCondition = new Condition(aConditionBase, true);
 
 			// (aColumn = false) is not evaluated when < itsMinimumCoverage
-			// NOTE if-check can never be true unless isDirectSettingBinary()
+			// NOTE if-check can never be true unless isDirectSetting()
 			if (aNrTruePositives != INVALID_NR_TRUE_POSITIVES)
 			{
 				aNrTruePositives = (((int) aParent.getTertiaryStatistic()) - aNrTruePositives);
@@ -1042,56 +1078,55 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			else
 			{
 				aChildMembers = aColumn.evaluateBinary(theParentMembers, true);
-				evaluateBinary(aParent, aCondition, aChildMembers, aChildCoverage);
+				evaluateBinaryRefinementsHelper(aParent, aCondition, aChildMembers, aChildCoverage);
 			}
 		}
 	}
 
-	// return is always INVALID_NR_TRUE_POSITIVES when !isDirectSettingBinary()
+	// return is always INVALID_NR_TRUE_POSITIVES when !isDirectSetting()
 	private static final int INVALID_NR_TRUE_POSITIVES = -1;
-	private final int evaluateBinary(Subgroup theParent, Condition theAddedCondition, BitSet theChildMembers, int theChildCoverage)
+	private final int evaluateBinaryRefinementsHelper(Subgroup theParent, Condition theAddedCondition, BitSet theChildMembers, int theChildCoverage)
 	{
-		boolean isDirectSettingBinary = isDirectSettingBinary();
-		final Subgroup aChildSubgroup;
+		boolean isDirectSetting = isDirectSetting();
+		final Subgroup aChild;
 		int aNrTruePositives = INVALID_NR_TRUE_POSITIVES;
 
-		if (isDirectSettingBinary)
+		if (isDirectSetting)
 		{
 			// safe: it is a clone, and subgroup coverage is stored: theCoverage
 			theChildMembers.and(itsBinaryTarget);
 			aNrTruePositives = theChildMembers.cardinality();
 
-			aChildSubgroup = directComputation(theParent, theAddedCondition, itsQualityMeasure, theChildCoverage, aNrTruePositives);
+			aChild = directComputation(theParent, theAddedCondition, itsQualityMeasure, theChildCoverage, aNrTruePositives);
 		}
 		else
 		{
 			if ((itsFilter != null) && !itsFilter.isUseful(theParent.getConditions(), theAddedCondition))
 				return INVALID_NR_TRUE_POSITIVES;
 
-			aChildSubgroup = theParent.getRefinedSubgroup(theAddedCondition, theChildMembers, theChildCoverage);
+			aChild = theParent.getRefinedSubgroup(theAddedCondition, theChildMembers, theChildCoverage);
 
-			// SINGLE_NOMINAL only, but not for PROP_SCORE_* and ValueSet
-			if (isDirectSettingBinary)
-				aNrTruePositives = (int) aChildSubgroup.getTertiaryStatistic();
+			// SINGLE_NOMINAL only, not for PROP_SCORE_WRACC and PROP_SCORE_RATIO
+			if (isDirectSetting)
+				aNrTruePositives = (int) aChild.getTertiaryStatistic();
 		}
 
-		checkAndLog(aChildSubgroup, theParent.getCoverage());
+		checkAndLog(aChild, theParent.getCoverage());
 
 		return aNrTruePositives;
 	}
 
-	private final boolean isDirectSettingBinary()
-	{
-		// checking this all the time is a bit wasteful, but fine for now
-		return ((itsSearchParameters.getTargetType() == TargetType.SINGLE_NOMINAL) &&
-				!itsSearchParameters.getNominalSets() &&
-				!(itsSearchParameters.getQualityMeasure() == QM.PROP_SCORE_WRACC) || (itsSearchParameters.getQualityMeasure() == QM.PROP_SCORE_RATIO));
-	}
-
+	// two methods, as BestValueSet and BestInterval already computed the score
 	private static final Subgroup directComputation(Subgroup theParent, Condition theAddedCondition, QualityMeasure theQualityMeasure, int theChildCoverage, int theNrTruePositives)
 	{
+		double aQualityScore = theQualityMeasure.calculate(theNrTruePositives, theChildCoverage);
+		return directComputation(theParent, theAddedCondition, aQualityScore, theChildCoverage, theNrTruePositives);
+	}
+
+	private static final Subgroup directComputation(Subgroup theParent, Condition theAddedCondition, double theQualityScore, int theChildCoverage, int theNrTruePositives)
+	{
 		// FIXME MM q is only cast to float to make historic results comparable
-		float q = (float) theQualityMeasure.calculate(theNrTruePositives, theChildCoverage);
+		float q = (float) theQualityScore;
 		double s = ((double) theNrTruePositives) / theChildCoverage;
 		double t = ((double) theNrTruePositives);
 
@@ -1158,17 +1193,18 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 
 	private final void evaluateNominalBestValueSet(BitSet theParentMembers, int theParentCoverage, Refinement theRefinement)
 	{
-		ConditionBase aConditionBase = theRefinement.getConditionBase();
+		assert (isDirectSetting());
 
-		// BestValueSet implies target type is SINGLE_NOMINAL
-		assert (itsSearchParameters.getTargetType() == TargetType.SINGLE_NOMINAL);
-		assert (aConditionBase.getOperator() == Operator.ELEMENT_OF);
+		ConditionBase aConditionBase = theRefinement.getConditionBase();
 
 		// as for BestIntervals -> use new half-interval code, it is 70x faster
 		NominalCrossTable aNCT = new NominalCrossTable(aConditionBase.getColumn(), theParentMembers, itsBinaryTarget);
 		SortedSet<String> aDomainBestSubSet = new TreeSet<String>();
 
-		double aBestQuality = Double.NEGATIVE_INFINITY;
+		// final: if-else is long, ensure value is set before creating Subgroup
+		final int aCountHeadBody;
+		final int aCoverage;
+		final double aFinalBestQuality;
 
 		QM aQualityMeasure = itsSearchParameters.getQualityMeasure();
 		if (aQualityMeasure == QM.WRACC || aQualityMeasure == QM.CORTANA_QUALITY)
@@ -1183,8 +1219,8 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			// by rewriting, the result can be computed using integer arithmetic
 			long T = itsQualityMeasure.getNrPositives();
 			long N = itsQualityMeasure.getNrRecords();
-			int aCountHeadBody = 0;
-			int aCoverage      = 0;
+			int aP = 0;
+			int aN = 0;
 
 //			double aRatio = itsQualityMeasure.getNrPositives() / (double)(itsQualityMeasure.getNrRecords());
 			for (int i = 0; i < aNCT.size() && !isTimeToStop(); i++)
@@ -1201,18 +1237,25 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 				int aCount = (aPi + aNi);
 				if ((aPi * N) >= (T * aCount))
 				{
-					aCountHeadBody += aPi;
-					aCoverage += aCount;
+					aP += aPi;
+					aN += aNi;
 					aDomainBestSubSet.add(aNCT.getValue(i));
 				}
 
 				// NOTE could happen because of floating-point rounding errors
 				assert ((aPi >= ((T / ((double) N)) * aCount)) == ((aPi * N) >= (T * aCount)));
 			}
-			aBestQuality = itsQualityMeasure.calculate(aCountHeadBody, aCoverage);
+
+			aCountHeadBody = aP;
+			aCoverage = (aP + aN);
+			aFinalBestQuality = itsQualityMeasure.calculate(aCountHeadBody, aCoverage);
 		}
 		else // not WRACC
 		{
+			double aBestQuality = Double.NEGATIVE_INFINITY;
+			int aBestP = Integer.MIN_VALUE;
+			int aBestN = Integer.MIN_VALUE;
+
 			// construct and check all subsets on the convex hull
 			List<Integer> aSortedDomainIndices = aNCT.getSortedDomainIndices();
 			int aSortedDomainIndicesSize = aSortedDomainIndices.size();
@@ -1236,6 +1279,9 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 				if (aQuality > aBestQuality)
 				{
 					aBestQuality = aQuality;
+					aBestP = aP;
+					aBestN = aN;
+
 					for (int j = aPrevBestI+1; j <= i; j++)
 					{
 						String aValue = aNCT.getValue(aSortedDomainIndices.get(j));
@@ -1254,6 +1300,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			if (aQualityMeasure == QM.CHI_SQUARED || aQualityMeasure == QM.INFORMATION_GAIN)
 				anAsymmetricQM = false;
 
+			// NOTE if ever enabled: set aBestQuality, aCountHeadBody, aCoverage
 			if (false && !anAsymmetricQM) // TODO: fix this for depth > 1, check only upper OR lower hull
 			{
 				if (aDomainBestSubSet.size() > aNCT.size()/2) // prefer complement if smaller
@@ -1285,6 +1332,9 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 					if (aQuality > aBestQuality)
 					{
 						aBestQuality = aQuality;
+						aBestP = aP;
+						aBestN = aN;
+
 						if (aPrevBestI == -1)
 						{
 							aDomainBestSubSet.clear();
@@ -1299,6 +1349,10 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 					}
 				}
 			}
+
+			aCountHeadBody = aBestP;
+			aCoverage = (aBestP + aBestN);
+			aFinalBestQuality = aBestQuality;
 		}
 
 		if (aDomainBestSubSet.size() == 0)
@@ -1333,9 +1387,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		// CandidateSet
 		ValueSet aBestSubset = new ValueSet(aDomainBestSubSet);
 		Condition anAddedCondition = new Condition(aConditionBase, aBestSubset);
-		Subgroup aChild = theRefinement.getSubgroup().getRefinedSubgroup(anAddedCondition);
-		// FIXME downcast used to make value identical to historic results
-		aChild.setMeasureValue((float) aBestQuality);
+		Subgroup aChild = directComputation(theRefinement.getSubgroup(), anAddedCondition, aFinalBestQuality, aCoverage, aCountHeadBody);
 		checkAndLog(aChild, theParentCoverage);
 	}
 
@@ -1898,6 +1950,8 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 
 	private void numericIntervals(BitSet theParentMembers, int theParentCoverage, Refinement theRefinement)
 	{
+		assert (isPOCSetting());
+
 		// evaluateNumericRefinements() should prevent getting here for others
 		NumericStrategy aNumericStrategy = itsSearchParameters.getNumericStrategy();
 		assert (aNumericStrategy == NumericStrategy.NUMERIC_INTERVALS);
@@ -1914,6 +1968,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		assert (anOperator == Operator.BETWEEN);
 		////////////////////////////////////////////////////////////////////////
 
+		// copy, as RealBaseIntervalCrossTable will modify the supplied array
 		float [] aDomain = Arrays.copyOf(aColumn.SORTED, aColumn.SORTED.length);
 		ValueInfo via = aColumn.getUniqueNumericDomainMap(theParentMembers);
 
@@ -1999,8 +2054,6 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			}*/
 
 			// the linear algo
-			@SuppressWarnings("unused")
-			int anEvalCounter = 0; // debug counter
 			ConvexHull [] aHulls = new ConvexHull[aRBICT.getNrBaseIntervals()];
 			int aPi = 0;
 			int aNi = 0;
@@ -2023,10 +2076,12 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 						{
 							if (aSide == 1 && (i == 0 || i == aMinkDiff.getSize(aSide)-1) )
 								continue; // no need to check duplicate hull points
+
 							HullPoint aCandidate = aMinkDiff.getPoint(aSide, i);
 							double aQuality = itsQualityMeasure.calculate(aCandidate.itsY, (aCandidate.itsX + aCandidate.itsY));
-							anEvalCounter++;
-							if (aQuality > aBestQuality) {
+
+							if (aQuality > aBestQuality)
+							{
 								aBestQuality = aQuality;
 								aBestNrFalsePositives = aCandidate.itsX;
 								aBestNrTruePositives = aCandidate.itsY;
@@ -2038,24 +2093,15 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 
 				for (int l = 0; l+1 < k; l += 2)
 					aHulls[l/2] = aHulls[l].concatenate(aHulls[l+1]);
+
 				if (k % 2 == 1)
 					aHulls[k/2] = aHulls[k-1];
 			}
-
-			//Log.logCommandLine("Evalutations: " + anEvalCounter);
 		}
 
 		Condition anAddedCondition = new Condition(aConditionBase, aBestInterval);
-		double aBestNrTruePositivesD = (double) aBestNrTruePositives;
-		int aChildCoverage = (aBestNrTruePositives + aBestNrFalsePositives);
-		// FIXME MM q is only cast to float to make historic results comparable
-		float q = (float) aBestQuality;
-		double s = aBestNrTruePositivesD / aChildCoverage;
-		double t = aBestNrTruePositivesD;
-
-		Subgroup aNewSubgroup = aParent.getRefinedSubgroup(anAddedCondition, q, s, t, aChildCoverage);
-
-		checkAndLog(aNewSubgroup, theParentCoverage);
+		Subgroup aChild = directComputation(aParent, anAddedCondition, aBestQuality, (aBestNrTruePositives + aBestNrFalsePositives), aBestNrTruePositives);
+		checkAndLog(aChild, theParentCoverage);
 	}
 
 	////////////////////////////////////////////////////////////////////////////
@@ -2234,12 +2280,19 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 
 			float aQuality;
 
-			if (isLastNumeric && isPOCSetting())
+			if ((lastAdded == AttributeType.BINARY) && isDirectSetting())
 			{
 				// NOTE this path already performed the isValid-coverage check
 				aQuality = (float) theChild.getMeasureValue();
 			}
-			else if ((lastAdded == AttributeType.BINARY) && isDirectSettingBinary())
+			else if ((lastAdded == AttributeType.NOMINAL) && itsSearchParameters.getNominalSets())
+			{
+				// BestValueset and BestInterval already set quality
+				// NOTE these paths did not performed the isValid-coverage check
+				//      refer to the methods for comments on this issue
+				aQuality = (float) theChild.getMeasureValue();
+			}
+			else if (isLastNumeric && isPOCSetting())
 			{
 				// NOTE this path already performed the isValid-coverage check
 				aQuality = (float) theChild.getMeasureValue();
@@ -2250,14 +2303,6 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 				// set by isValidAndBest() or numericIntervals() (BestInterval)
 				// NOTE isValidAndBest() performs an incorrect isValid-coverage
 				// check, and BestInterval does not perform one at all
-				aQuality = (float) theChild.getMeasureValue();
-			}
-			else if (itsSearchParameters.getNominalSets() && (lastAdded == AttributeType.BINARY || lastAdded == AttributeType.NOMINAL))
-			{
-				// the if does not use a !isLastNumeric shortcut (is bad design)
-				// BestValueset and BestInterval already set quality
-				// NOTE these paths did not performed the isValid-coverage check
-				//      refer to the methods for comments on this issue
 				aQuality = (float) theChild.getMeasureValue();
 			}
 			else
