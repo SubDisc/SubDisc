@@ -180,7 +180,14 @@ public class Process
 		final Column aTarget = theSubgroupDiscovery.getSearchParameters().getTargetConcept().getPrimaryTarget();
 		final SubgroupSet aSet = theSubgroupDiscovery.getResult();
 		final BitSet aMembers = membersCheck(theBitSet, aTarget.size());
-		final float[] aDomain = aTarget.getUniqueNumericDomain(aMembers);
+//		final float[] aDomain = aTarget.getUniqueNumericDomain(aMembers);
+		// FIXME code is changed because Column.getUniqueNumericDomain(BitSet)
+		// will be removed (counts are not used, but code is 4x faster still)
+		// but currently this code is not used, so leave it at this for now
+		//
+		// NOTE using aBackup.size() would be faster than aMembers.cardinality()
+		DomainMapNumeric dm = aTarget.getUniqueNumericDomainMap(aMembers, aMembers.cardinality());
+		final float[] aDomain = Arrays.copyOf(dm.itsDomain, dm.itsSize);
 
 		// last index is whole dataset
 		List<List<Double>> statistics = new ArrayList<List<Double>>(aDomain.length-1);
@@ -209,7 +216,14 @@ public class Process
 
 		final Column aBackup = theSearchParameters.getTargetConcept().getPrimaryTarget().copy();
 		final BitSet aMembers = membersCheck(theBitSet, aBackup.size());
-		final float[] aDomain = aBackup.getUniqueNumericDomain(aMembers);
+//		final float[] aDomain = aBackup.getUniqueNumericDomain(aMembers);
+		// FIXME code is changed because Column.getUniqueNumericDomain(BitSet)
+		// will be removed (counts are not used, but code is 4x faster still)
+		// but currently this code is not used, so leave it at this for now
+		//
+		// NOTE using aBackup.size() would be faster than aMembers.cardinality()
+		DomainMapNumeric dm = aBackup.getUniqueNumericDomainMap(aMembers, aMembers.cardinality());
+		final float[] aDomain = Arrays.copyOf(dm.itsDomain, dm.itsSize);
 
 		final List<Column> aColumns = theTable.getColumns();
 		final String aName = aBackup.getName();
