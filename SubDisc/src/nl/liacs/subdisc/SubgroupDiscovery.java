@@ -539,7 +539,7 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 		}
 		es.shutdown();
 		// wait for last active threads to complete
-		while(!es.isTerminated()) {};
+		while (!es.isTerminated()) {};
 
 		postMining(System.currentTimeMillis() - theBeginTime);
 	}
@@ -1582,7 +1582,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 
 	private final void numericHalfIntervals(BitSet theParentMembers, int theParentCoverage, Refinement theRefinement)
 	{
-		// only for SINGLE_NOMINAL + class labels
+		// currently only for SINGLE_NOMINAL (and not for propensity scores)
 		if (!isPOCSetting())
 		{
 			numericHalfIntervalsDomainMapNumeric(theParentMembers, theParentCoverage, theRefinement);
@@ -1837,6 +1837,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	// return is only relevant (and non-null) in BEST and BEST_BINS settings
 	private Subgroup evaluateCandidate(Subgroup theParent, Condition theAddedCondition, int theChildCoverage, int theNrTruePositives, boolean isAllStrategy, Subgroup theBestSubgroup)
 	{
+		// currently only for SINGLE_NOMINAL (and not for propensity scores)
 		assert (isPOCSetting());
 
 		if ((itsFilter != null) && !itsFilter.isUseful(theParent.getConditions(), theAddedCondition))
@@ -1945,7 +1946,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	///// numeric intervals - BestInterval algorithm                       /////
 	///// only works for SINGLE NOMINAL, other types not are implemented   /////
 	///// BestInterval is actually applicable to any convex measure        /////
-	///// TODO not sure if this requirement is checked by the code below   /////
+	///// TODO not sure if convex requirement is checked by the code below /////
 	///// FIXME this does not take maximum coverage into account           /////
 	/////       see comment at evaluateNominalBestValueSet() on this issue /////
 	////////////////////////////////////////////////////////////////////////////
@@ -1953,6 +1954,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 
 	private void numericIntervals(BitSet theParentMembers, int theParentCoverage, Refinement theRefinement)
 	{
+		// this method is a deviant case, but ValueInfo relies on isPOCSetting
 		assert (isPOCSetting());
 
 		// evaluateNumericRefinements() should prevent getting here for others
@@ -2281,7 +2283,8 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			AttributeType lastAdded = theChild.getConditions().get(theChild.getDepth()-1).getColumn().getType();
 			boolean isLastNumeric = (lastAdded == AttributeType.NUMERIC);
 
-			float aQuality;
+			// final: ensure value is set before aResultAddition-check
+			final float aQuality;
 
 			if ((lastAdded == AttributeType.BINARY) && isDirectSetting())
 			{
@@ -2290,13 +2293,15 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			}
 			else if ((lastAdded == AttributeType.NOMINAL) && itsSearchParameters.getNominalSets())
 			{
-				// BestValueset and BestInterval already set quality
-				// NOTE these paths did not performed the isValid-coverage check
-				//      refer to the methods for comments on this issue
+				// BestValueset already set quality (BestInterval did also, but
+				// is picked up by the BEST* check below)
+				// NOTE both code paths did not performed the isValid-coverage
+				//      check refer to the methods for comments on this issue
 				aQuality = (float) theChild.getMeasureValue();
 			}
 			else if (isLastNumeric && isPOCSetting())
 			{
+				// currently only for SINGLE_NOMINAL (and no propensity scores)
 				// NOTE this path already performed the isValid-coverage check
 				aQuality = (float) theChild.getMeasureValue();
 			}
