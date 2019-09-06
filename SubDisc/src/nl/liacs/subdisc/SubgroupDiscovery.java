@@ -12,11 +12,7 @@ import javax.swing.*;
 
 import nl.liacs.subdisc.Column.DomainMapNumeric;
 import nl.liacs.subdisc.Column.ValueInfo;
-import nl.liacs.subdisc.ColumnConditionBasesBuilder.ColumnConditionBases;
-import nl.liacs.subdisc.ColumnConditionBasesBuilder.ColumnConditionBasesBinary;
-import nl.liacs.subdisc.ColumnConditionBasesBuilder.ColumnConditionBasesNominalElementOf;
-import nl.liacs.subdisc.ColumnConditionBasesBuilder.ColumnConditionBasesNominalEquals;
-import nl.liacs.subdisc.ColumnConditionBasesBuilder.ColumnConditionBasesNumeric;
+import nl.liacs.subdisc.ColumnConditionBasesBuilder.*;
 import nl.liacs.subdisc.ConditionListBuilder.ConditionListA;
 import nl.liacs.subdisc.ConvexHull.HullPoint;
 import nl.liacs.subdisc.gui.*;
@@ -653,7 +649,8 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 
 		// checking this all the time is a bit wasteful, but fine for now
 		SearchParameters s = itsSearchParameters;
-		return ((s.getTargetType() == TargetType.SINGLE_NOMINAL) && !anInvalid.contains(s.getQualityMeasure()));
+		return ((s.getTargetType() == TargetType.SINGLE_NOMINAL) && !anInvalid.contains(s.getQualityMeasure())
+				&& (s.getNumericStrategy() != NumericStrategy.NUMERIC_VIKAMINE_CONSECUTIVE_ALL && s.getNumericStrategy() != NumericStrategy.NUMERIC_VIKAMINE_CONSECUTIVE_BEST));
 	}
 
 	// POCSetting relates to model updates for numeric half-intervals, and it
@@ -848,12 +845,10 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 				else if (c instanceof ColumnConditionBasesNominalEquals)
 					evaluateNominalEquals(itsSubgroup, aMembers, (ColumnConditionBasesNominalEquals) c);
 				else if (c instanceof ColumnConditionBasesNumeric)
-				{
-					for (int k = 0; k < c.size(); ++k)
-						evaluateNumericRefinements(aMembers, aCoverage, new Refinement(c.get(k), itsSubgroup));
-				}
+					evaluateNumeric(itsSubgroup, aMembers, (ColumnConditionBasesNumeric) c);
 				else
-					throw new AssertionError();
+					throw new AssertionError("Test.run() unexpected subclass of ColumnConditionBasesNumeric");
+
 			}
 
 			itsSemaphore.release();
@@ -1042,14 +1037,15 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	 * (theParentMembers.cardinality() == theParentCoverage)
 	 * (theRefinement.getSubgroup().getMembers().equals(theParentMembers))
 	 */
-	private void evaluateNominalBinaryRefinements(BitSet theParentMembers, int theParentCoverage, Refinement theRefinement)
+	private final void evaluateNominalBinaryRefinements(BitSet theParentMembers, int theParentCoverage, Refinement theRefinement)
 	{
+		assert (false); // code should never get here
+
 		ConditionBase aConditionBase = theRefinement.getConditionBase();
 
 		// split code paths for ValueSet/class labels (nominal/numeric/binary)
 		if (aConditionBase.getOperator() == Operator.ELEMENT_OF)
 		{
-			assert (false); // code should never get here
 
 			// currently BestValueSet implies the target type is SINGLE_NOMINAL
 			assert (itsSearchParameters.getTargetType() == TargetType.SINGLE_NOMINAL);
@@ -1065,7 +1061,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		switch (aConditionBase.getColumn().getType())
 		{
 			//case NOMINAL : evaluateNominalRefinements(theParentMembers, theParentCoverage, theRefinement); break;
-			case NUMERIC : evaluateNumericEqualsRefinements(theParentMembers, theParentCoverage, theRefinement); break;
+			//case NUMERIC : evaluateNumericEqualsRefinements(theParentMembers, theParentCoverage, theRefinement); break;
 			case ORDINAL : throw new AssertionError(AttributeType.ORDINAL);
 			//case BINARY  : evaluateBinaryRefinements(theParentMembers, theParentCoverage, theRefinement); break;
 			default      : throw new AssertionError(aConditionBase.getColumn().getType());
@@ -1602,12 +1598,14 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 				numericIntervals(theParentMembers, theParentCoverage, theRefinement);
 				break;
 			case NUMERIC_VIKAMINE_CONSECUTIVE_ALL :
-				numericConsecutiveBins(theParentMembers, theParentCoverage, theRefinement);
-				break;
+				throw new AssertionError("evaluateNumericRefinements() not available for NUMERIC_VIKAMINE_CONSECUTIVE_ALL");
+//				evaluateNumericConsecutiveIntervals(theParentMembers, theParentCoverage, theRefinement);
+//				break;
 			// NUMERIC_VIKAMINE_CONSECUTIVE_BEST is like NUMERIC_VIKAMINE_CONSECUTIVE_ALL, but uses only best scoring subgroup
 			case NUMERIC_VIKAMINE_CONSECUTIVE_BEST :
-				numericConsecutiveBins(theParentMembers, theParentCoverage, theRefinement);
-				break;
+				throw new AssertionError("evaluateNumericRefinements() not available for NUMERIC_VIKAMINE_CONSECUTIVE_BEST");
+//				evaluateNumericConsecutiveIntervals(theParentMembers, theParentCoverage, theRefinement);
+//				break;
 //			case NUMERIC_VIKAMINE_CARTESIAN_ALL :
 //				throw new AssertionError(itsSearchParameters.getNumericStrategy() + " not implemented");
 //			case NUMERIC_VIKAMINE_CARTESIAN_BEST :
@@ -1617,6 +1615,50 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 							itsSearchParameters.getNumericStrategy());
 				break;
 		}
+	}
+
+	// probably half-intervals can be grouped, but expect EQUALS to change soon
+	// as the behaviour of NUMERIC_ALL (=,<=,>=) is inconsistent for =
+	private final void evaluateNumeric(Subgroup theParent, BitSet theParentMembers, ColumnConditionBasesNumeric theColumnConditionBases)
+	{
+		if (theColumnConditionBases instanceof ColumnConditionBasesNumericNormal)
+		{
+			numericHalfIntervals(theParentMembers, theParent.getCoverage(), new Refinement(theColumnConditionBases.get(0), theParent));
+			numericHalfIntervals(theParentMembers, theParent.getCoverage(), new Refinement(theColumnConditionBases.get(1), theParent));
+		}
+		else if (theColumnConditionBases instanceof ColumnConditionBasesNumericLEQ)
+			numericHalfIntervals(theParentMembers, theParent.getCoverage(), new Refinement(theColumnConditionBases.get(0), theParent));
+		else if (theColumnConditionBases instanceof ColumnConditionBasesNumericGEQ)
+			numericHalfIntervals(theParentMembers, theParent.getCoverage(), new Refinement(theColumnConditionBases.get(0), theParent));
+		else if (theColumnConditionBases instanceof ColumnConditionBasesNumericAll)
+		{
+			evaluateNumericEqualsRefinements(theParentMembers, theParent.getCoverage(), new Refinement(theColumnConditionBases.get(0), theParent));
+			numericHalfIntervals(theParentMembers, theParent.getCoverage(), new Refinement(theColumnConditionBases.get(1), theParent));
+			numericHalfIntervals(theParentMembers, theParent.getCoverage(), new Refinement(theColumnConditionBases.get(2), theParent));
+		}
+		else if (theColumnConditionBases instanceof ColumnConditionBasesNumericEquals)
+			evaluateNumericEqualsRefinements(theParentMembers, theParent.getCoverage(), new Refinement(theColumnConditionBases.get(0), theParent));
+		else if (theColumnConditionBases instanceof ColumnConditionBasesNumericIntervals)
+			evaluateNumericIntervals(theParent, theParentMembers, (ColumnConditionBasesNumericIntervals) theColumnConditionBases);
+		else
+			throw new AssertionError("evaluateNumeric() unexpected subclass of ColumnConditionBasesNumeric");
+	}
+
+	// helper to differentiate between strategies, these NumericStrategies all
+	// use the same Operator and NumericOperatorSetting
+	private final void evaluateNumericIntervals(Subgroup theParent, BitSet theParentMembers, ColumnConditionBasesNumericIntervals theColumnConditionBases)
+	{
+		assert (theColumnConditionBases.size() == 1);
+		assert (theColumnConditionBases.get(0).getOperator() == Operator.BETWEEN);
+		assert (itsSearchParameters.getNumericOperatorSetting() == NumericOperatorSetting.NUMERIC_INTERVALS);
+		assert (EnumSet.of(NumericStrategy.NUMERIC_INTERVALS,
+							NumericStrategy.NUMERIC_VIKAMINE_CONSECUTIVE_ALL,
+							NumericStrategy.NUMERIC_VIKAMINE_CONSECUTIVE_BEST).contains(itsSearchParameters.getNumericStrategy()));
+
+		if (NumericStrategy.NUMERIC_INTERVALS == itsSearchParameters.getNumericStrategy())
+			numericIntervals(theParentMembers, theParent.getCoverage(), new Refinement(theColumnConditionBases.get(0), theParent));
+		else
+			evaluateNumericConsecutiveIntervals(theParent, theParentMembers, theColumnConditionBases);
 	}
 
 	// FIXME MM historically numeric EQUALS uses nominal code, it should change
@@ -1990,38 +2032,30 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////
 
-	private void numericConsecutiveBins(BitSet theParentMembers, int theParentCoverage, Refinement theRefinement)
+//	private void evaluateNumericConsecutiveIntervals(BitSet theParentMembers, int theParentCoverage, Refinement theRefinement)
+	private final void evaluateNumericConsecutiveIntervals(Subgroup theParent, BitSet theParentMembers, ColumnConditionBasesNumericIntervals theColumnConditionBases)
 	{
-		// evaluateNumericRefinements() should prevent getting here for others
 		NumericStrategy aNumericStrategy = itsSearchParameters.getNumericStrategy();
 		assert (aNumericStrategy == NumericStrategy.NUMERIC_VIKAMINE_CONSECUTIVE_ALL || aNumericStrategy == NumericStrategy.NUMERIC_VIKAMINE_CONSECUTIVE_BEST);
 
 		////////////////////////////////////////////////////////////////////////
 		boolean isFilterNull = (itsFilter == null);
-		Subgroup aParent = theRefinement.getSubgroup();
-
+		int aParentCoverage = theParent.getCoverage();
 		// members-based domain, no empty Subgroups will occur
-		ConditionBase aConditionBase = theRefinement.getConditionBase();
-		ConditionListA aParentConditions = (isFilterNull ? null : aParent.getConditions());
-		Operator anOperator = aConditionBase.getOperator();
-
-		// 'in' is the only valid Operator for this setting
-		assert (anOperator == Operator.BETWEEN);
-
+		ConditionBase aConditionBase = theColumnConditionBases.get(0);
+		Column aColumn = aConditionBase.getColumn();
+		ConditionListA aParentConditions = (isFilterNull ? null : theParent.getConditions());
 		// might require update when more strategies are added
 		boolean isAllStrategy = (aNumericStrategy == NumericStrategy.NUMERIC_VIKAMINE_CONSECUTIVE_ALL);
-
 		Subgroup aBestSubgroup = null;
 		////////////////////////////////////////////////////////////////////////
 
-		// this is the crucial translation from nr bins to nr splitpoints
 		int aNrSplitPoints = itsSearchParameters.getNrBins() - 1;
 		// useless, Column.getSplitPointsBounded() would return an empty array
 		if (aNrSplitPoints <= 0)
 			return;
 		//SortedSet<Interval> anIntervals = aConditionBase.getColumn().getUniqueSplitPointsBounded(theParentMembers, aNrSplitPoints);
-		SortedMap<Interval, Integer> anIntervals = aConditionBase.getColumn().getUniqueSplitPointsBounded(theParentMembers, theParentCoverage, aNrSplitPoints);
-
+		SortedMap<Interval, Integer> anIntervals = aColumn.getUniqueSplitPointsBounded(theParentMembers, aParentCoverage, aNrSplitPoints);
 		// can happen for aNrSplitPoints >= 1: the underlying algorithm had bugs
 		if (anIntervals.size() <= 1)
 			return;
@@ -2037,7 +2071,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			if (aCount < itsMinimumCoverage)
 				continue;
 
-			if (aCount == theParentCoverage)
+			if (aCount == aParentCoverage)
 				break;
 
 			Condition aCondition = new Condition(aConditionBase, e.getKey());
@@ -2045,23 +2079,23 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			if (!isFilterNull && !itsFilter.isUseful(aParentConditions, aCondition))
 				continue;
 
-			Subgroup aNewSubgroup = aParent.getRefinedSubgroup(aCondition);
+			Subgroup aChild = theParent.getRefinedSubgroup(aCondition);
 
 			if (isAllStrategy)
 			{
 				//addToBuffer(aNewSubgroup);
-				checkAndLog(aNewSubgroup, theParentCoverage);
+				checkAndLog(aChild, aParentCoverage);
 			}
 			else
 			{
 				// more clear than using else-if
-				if (isValidAndBest(aNewSubgroup, theParentCoverage, aBestSubgroup))
-					aBestSubgroup = aNewSubgroup;
+				if (isValidAndBest(aChild, aParentCoverage, aBestSubgroup))
+					aBestSubgroup = aChild;
 			}
 		}
 
 		if (!isAllStrategy && (aBestSubgroup != null))
-			bestAdd(aBestSubgroup, theParentCoverage);
+			bestAdd(aBestSubgroup, aParentCoverage);
 	}
 
 	////////////////////////////////////////////////////////////////////////////
