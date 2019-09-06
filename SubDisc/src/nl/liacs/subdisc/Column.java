@@ -1313,8 +1313,6 @@ public class Column implements XMLNodeInterface
 	 * contains no data ({@link #size} {@code == 0}).
 	 *
 	 * @see #getDomain()
-	 * @see #getUniqueNominalBinaryDomain(BitSet)
-	 * @see #getUniqueNumericDomain(BitSet)
 	 */
 	public int getCardinality()
 	{
@@ -2000,8 +1998,7 @@ public class Column implements XMLNodeInterface
 	 *
 	 * @return the domain for this Column.
 	 *
-	 * @see #getUniqueNominalBinaryDomain(BitSet)
-	 * @see #getUniqueNumericDomain(BitSet)
+	 * @see #getUniqueNominalDomainCounts(BitSet, int)
 	 * @see #getCardinality()
 	 */
 	public TreeSet<String> getDomain()
@@ -2064,83 +2061,6 @@ public class Column implements XMLNodeInterface
 		}
 	}
 
-	/**
-	 * Returns the unique, sorted domain for Columns of
-	 * {@link AttributeType} {@link AttributeType#NOMINAL} and
-	 * {@link AttributeType#BINARY}.
-	 * <p>
-	 * The bits set in the BitSet supplied as argument indicate which values
-	 * of the Column should be used for the creation of the domain.
-	 * When the BitSet represents the members of a {@link Subgroup}, this
-	 * method returns the domain covered by that Subgroup.
-	 * <p>
-	 * The maximum size of the returned String[] is the minimum of
-	 * {@link java.util.BitSet#cardinality() BitSet.cardinality()} and this
-	 * Columns {@link #getCardinality() cardinality}}.</br>
-	 * The minimum size is 0, if the BitSet has cardinality {@code 0} or is
-	 * {@code null}.
-	 * <p>
-	 * When the Column is not of {@link AttributeType}
-	 * {@link AttributeType#NOMINAL} or {@link AttributeType#BINARY} a
-	 * {@code new String[0]} will be returned.
-	 *
-	 * @param theBitSet the BitSet indicating what values of this Column to
-	 * use for the creation of the domain.
-	 *
-	 * @return a String[], holding the distinct values for the domain.
-	 *
-	 * @see #getDomain()
-	 * @see #getUniqueNominalBinaryDomain(BitSet)
-	 * @see #getCardinality()
-	 * @see AttributeType
-	 * @see Subgroup
-	 * @see java.util.BitSet
-	 */
-	// TODO MM return Set, instead of creating Set, and returning toArray()
-	public String[] getUniqueNominalBinaryDomain(BitSet theBitSet, int theBitSetCardinality)
-	{ return getUniqueNominalBinaryDomain(theBitSet); }
-	public String[] getUniqueNominalBinaryDomain(BitSet theBitSet)
-	{
-		if (theBitSet.length() > itsSize)
-			throw new IllegalArgumentException("theBitSet.length() > " + itsSize);
-
-		final Set<String> aUniqueValues = new TreeSet<String>();
-
-		switch (itsType)
-		{
-			case NOMINAL :
-			{
-				// abort when all distinct values are added
-				for (int i = theBitSet.nextSetBit(0); i >= 0 && i < itsSize; i = theBitSet.nextSetBit(i + 1))
-					if (aUniqueValues.add(itsDistinctValues.get(itsNominalz[i])))
-						if (aUniqueValues.size() == itsCardinality)
-							break;
-				break;
-
-// TODO MM - profile, could use the same strategy as getUniqueNumericDomain
-//return getUniqueNominalDomain(theBitSet);
-			}
-			case BINARY :
-			{
-				// abort when all distinct values are added
-				for (int i = theBitSet.nextSetBit(0); i >= 0 && i < itsSize; i = theBitSet.nextSetBit(i + 1))
-					if (aUniqueValues.add(itsBinaries.get(i) ? AttributeType.DEFAULT_BINARY_TRUE_STRING : AttributeType.DEFAULT_BINARY_FALSE_STRING))
-						if (aUniqueValues.size() == itsCardinality)
-							break;
-				break;
-// TODO MM - profile, could use the same strategy as getUniqueNumericDomain
-//return getUniqueBinaryDomain(theBitSet, itsCardinality, itsBinaries);
-			}
-			default :
-			{
-				logMessage("getUniqueNominalBinaryDomain",
-						getTypeError("NOMINAL or BINARY"));
-			}
-		}
-
-		return aUniqueValues.toArray(new String[0]);
-	}
-
 	// callers obtain an int[] with counts for each value for this Column
 	// counts can be zero, the index of non-zero counts should be used get the
 	// corresponding value from column.itsDistinctValuesU(non_zero_count_index)
@@ -2180,113 +2100,6 @@ public class Column implements XMLNodeInterface
 
 		return aCounts;
 	}
-
-	/**
-	 * Returns the unique, sorted domain for Columns of
-	 * {@link AttributeType} {@link AttributeType#NUMERIC} and
-	 * {@link AttributeType#ORDINAL}.
-	 *
-	 * The bits set in the BitSet supplied as argument indicate which values
-	 * of the Column should be used for the creation of the domain.
-	 * When the BitSet represents the members of a {@link Subgroup}, this
-	 * method returns the domain covered by that Subgroup.
-	 *
-	 * The resulting float[] has a maximum size of the
-	 * {@link java.util.BitSet#cardinality() BitSet.cardinality()}. The
-	 * minimum size is 0, if the BitSet has cardinality 0 or is
-	 * <code>null</code>.
-	 *
-	 * When the Column is not of {@link AttributeType}
-	 * {@link AttributeType#NUMERIC} or {@link AttributeType#ORDINAL} a
-	 * {@code new float[0]} will be returned.
-	 *
-	 * @param theBitSet the BitSet indicating what values of this Column to
-	 * use for the creation of the domain.
-	 *
-	 * @return a float[], holding the distinct values for the domain.
-	 *
-	 * @see #getDomain()
-	 * @see #getUniqueNominalBinaryDomain(BitSet)
-	 * @see #getCardinality()
-	 * @see AttributeType
-	 * @see Subgroup
-	 * @see java.util.BitSet
-	 */
-	public float[] getUniqueNumericDomain(BitSet theBitSet, int theBitSetCardinality)
-	{ return getUniqueNumericDomain(theBitSet); }
-	public float[] getUniqueNumericDomain(BitSet theBitSet)
-	{
-		if (!isValidCall("getUniqueNumericDomain", theBitSet))
-			return new float[0];
-
-		// First create TreeSet<Float>, then copy to float[], not ideal,
-		// but I lack the inspiration to write a RB-tree for floats
-		Set<Float> aUniqueValues = new TreeSet<Float>();
-		for (int i = theBitSet.nextSetBit(0); i >= 0; i = theBitSet.nextSetBit(i + 1))
-			aUniqueValues.add(itsFloatz[i]);
-
-		float[] aResult = new float[aUniqueValues.size()];
-		int i = -1;
-		for (Float f : aUniqueValues)
-			aResult[++i] = f.floatValue();
-
-// TODO MM - profile
-//		// float[] to retrieve all data, call Arrays.sort(), then filter
-//		// a TreeSet would sort and filter automatically
-//		// but test have shown that in the majority of configurations
-//		// the current alternative is faster (and uses less memory)
-//		// only when itsCaridinality is very low (<100) the following is
-//		// faster: retrieve and filter data using HashSet, convert to
-//		// float[], Arrays.sort(float[])
-//		int aNrMembers = theBitSet.cardinality();
-//		float[] aResult2 = new float[aNrMembers];
-//
-//		for (int k = 0, j = theBitSet.nextSetBit(0); j >= 0; j = theBitSet.nextSetBit(j + 1), ++k)
-//			aResult2[k] = itsFloatz[j];
-//
-//		// sort
-//		Arrays.sort(aResult2);
-//
-//		// filter duplicates, assume high cardinality
-//		// use upper bound on number of distinct values that can be
-//		// found, but on Column.init (itsCardinality == 0)
-//		int anUpper = (itsCardinality == 0) ? aNrMembers : Math.min(aNrMembers, itsCardinality);
-//		int aLast = 0;
-//		for (int k = 1; k < aNrMembers && aLast < anUpper-1; ++k)
-//			if (aResult2[k] != aResult2[aLast])
-//				aResult2[++aLast] = aResult2[k];
-//
-//		// truncate everything after last unique value
-//		// copy could be avoided using a sentinel that signals end of
-//		// input, but then returned array would not contain only unique
-//		// values and external code would need to check for sentinel
-//		//return Arrays.copyOf(aResult, aLast+1);
-//
-//		System.out.println("EQUALS: " + (Arrays.equals(aResult, Arrays.copyOf(aResult2, aLast+1))));
-
-		return aResult;
-	}
-
-	/*
-	public NavigableMap<Float, Integer> getUniqueNumericDomainMap(BitSet theBitSet)
-	{
-		if (!isValidCall("getUniqueNumericDomainMap", theBitSet))
-			return null;
-
-		NavigableMap<Float, Integer> aUniqueValues = new TreeMap<Float, Integer>();
-		for (int i = theBitSet.nextSetBit(0); i >= 0; i = theBitSet.nextSetBit(i + 1))
-		{
-			Float f = itsFloatz[i];
-			Integer aCount = aUniqueValues.get(f);
-			if (aCount == null)
-				aUniqueValues.put(f, 1);
-			else
-				aUniqueValues.put(f, aCount+1);
-		}
-
-		return aUniqueValues;
-	}
-	*/
 
 	static final class DomainMapNumeric
 	{
@@ -2650,7 +2463,8 @@ public class Column implements XMLNodeInterface
 	// for >= the split points in the array are inclusive start points
 	//        and the count for this split point represents the bin count for
 	//        the interval [this-split-point, exclusive-next-split-point)
-	private SortedMap<Float, Integer> getUniqueSplitPointsMapX(BitSet theBitSet, int theBitSetCardinality, int theNrSplits, Operator theOperator) throws IllegalArgumentException
+	@Deprecated
+	SortedMap<Float, Integer> getUniqueSplitPointsMapX(BitSet theBitSet, int theBitSetCardinality, int theNrSplits, Operator theOperator) throws IllegalArgumentException
 	{
 		assert (theOperator == Operator.LESS_THAN_OR_EQUAL || theOperator == Operator.GREATER_THAN_OR_EQUAL);
 
@@ -3041,42 +2855,6 @@ public class Column implements XMLNodeInterface
 			throw new AssertionError("getUniqueSplitPointsBounded(): " + aCardinality + " != " + aSum);
 
 		return map;
-	}
-
-	private SortedSet<Interval> getUniqueSplitPointsBoundedOriginal(BitSet theBitSet, int theNrSplits) throws IllegalArgumentException
-	{
-		if (!isValidCall("getSplitPointsBounded", theBitSet))
-			return Collections.emptySortedSet();
-
-		if (theNrSplits < 0)
-			throw new IllegalArgumentException(theNrSplits + " (theNrSplits) < 0");
-
-		// valid, but useless
-		if (theNrSplits == 0)
-			return Collections.emptySortedSet();
-
-		// TODO use same procedure as pre-discretisation in MiningWindow
-		boolean anOrig = Column.USE_NEW_BINNING ;
-		Column.USE_NEW_BINNING = true;
-		float[] aBounds = getUniqueSplitPoints(theBitSet, theNrSplits, Operator.LESS_THAN_OR_EQUAL);
-		Column.USE_NEW_BINNING = anOrig;
-
-		int aNrBounds = aBounds.length;
-		if (aNrBounds == 0)
-			return Collections.emptySortedSet();
-
-		if (aBounds[aNrBounds - 1] != Float.POSITIVE_INFINITY)
-		{
-			aBounds = Arrays.copyOf(aBounds, aNrBounds + 1);
-			aBounds[aNrBounds] = Float.POSITIVE_INFINITY;
-			++aNrBounds;
-		}
-
-		SortedSet<Interval> set = new TreeSet<Interval>();
-		for (int i = 0; i < aNrBounds; ++i)
-			set.add(new Interval(i == 0 ? Float.NEGATIVE_INFINITY : aBounds[i-1], aBounds[i]));
-
-		return set;
 	}
 
 	private SortedMap<Interval, Integer> getUniqueSplitPointsBoundedMap(BitSet theBitSet, int theBitSetCardinality, int theNrSplits) throws IllegalArgumentException
@@ -3477,5 +3255,208 @@ public class Column implements XMLNodeInterface
 				aResult[--k] = itsDistinctValues.get(m);
 
 		return aResult;
+	}
+
+	////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////
+	///// start of obsolete code - some remains for debugging (for now)    /////
+	////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////
+
+	/**
+	 * Returns the unique, sorted domain for Columns of
+	 * {@link AttributeType} {@link AttributeType#NOMINAL} and
+	 * {@link AttributeType#BINARY}.
+	 * <p>
+	 * The bits set in the BitSet supplied as argument indicate which values
+	 * of the Column should be used for the creation of the domain.
+	 * When the BitSet represents the members of a {@link Subgroup}, this
+	 * method returns the domain covered by that Subgroup.
+	 * <p>
+	 * The maximum size of the returned String[] is the minimum of
+	 * {@link java.util.BitSet#cardinality() BitSet.cardinality()} and this
+	 * Columns {@link #getCardinality() cardinality}}.</br>
+	 * The minimum size is 0, if the BitSet has cardinality {@code 0} or is
+	 * {@code null}.
+	 * <p>
+	 * When the Column is not of {@link AttributeType}
+	 * {@link AttributeType#NOMINAL} or {@link AttributeType#BINARY} a
+	 * {@code new String[0]} will be returned.
+	 *
+	 * @param theBitSet the BitSet indicating what values of this Column to
+	 * use for the creation of the domain.
+	 *
+	 * @return a String[], holding the distinct values for the domain.
+	 *
+	 * @see #getDomain()
+	 * @see #getCardinality()
+	 * @see AttributeType
+	 * @see Subgroup
+	 * @see java.util.BitSet
+	 */
+	// TODO MM return Set, instead of creating Set, and returning toArray()
+	@Deprecated
+	private String[] getUniqueNominalBinaryDomain(BitSet theBitSet)
+	{
+		if (theBitSet.length() > itsSize)
+			throw new IllegalArgumentException("theBitSet.length() > " + itsSize);
+
+		final Set<String> aUniqueValues = new TreeSet<String>();
+
+		switch (itsType)
+		{
+			case NOMINAL :
+			{
+				// abort when all distinct values are added
+				for (int i = theBitSet.nextSetBit(0); i >= 0 && i < itsSize; i = theBitSet.nextSetBit(i + 1))
+					if (aUniqueValues.add(itsDistinctValues.get(itsNominalz[i])))
+						if (aUniqueValues.size() == itsCardinality)
+							break;
+				break;
+
+// TODO MM - profile, could use the same strategy as getUniqueNumericDomain
+//return getUniqueNominalDomain(theBitSet);
+			}
+			case BINARY :
+			{
+				// abort when all distinct values are added
+				for (int i = theBitSet.nextSetBit(0); i >= 0 && i < itsSize; i = theBitSet.nextSetBit(i + 1))
+					if (aUniqueValues.add(itsBinaries.get(i) ? AttributeType.DEFAULT_BINARY_TRUE_STRING : AttributeType.DEFAULT_BINARY_FALSE_STRING))
+						if (aUniqueValues.size() == itsCardinality)
+							break;
+				break;
+// TODO MM - profile, could use the same strategy as getUniqueNumericDomain
+//return getUniqueBinaryDomain(theBitSet, itsCardinality, itsBinaries);
+			}
+			default :
+			{
+				logMessage("getUniqueNominalBinaryDomain",
+						getTypeError("NOMINAL or BINARY"));
+			}
+		}
+
+		return aUniqueValues.toArray(new String[0]);
+	}
+
+	/**
+	 * Returns the unique, sorted domain for Columns of
+	 * {@link AttributeType} {@link AttributeType#NUMERIC} and
+	 * {@link AttributeType#ORDINAL}.
+	 *
+	 * The bits set in the BitSet supplied as argument indicate which values
+	 * of the Column should be used for the creation of the domain.
+	 * When the BitSet represents the members of a {@link Subgroup}, this
+	 * method returns the domain covered by that Subgroup.
+	 *
+	 * The resulting float[] has a maximum size of the
+	 * {@link java.util.BitSet#cardinality() BitSet.cardinality()}. The
+	 * minimum size is 0, if the BitSet has cardinality 0 or is
+	 * <code>null</code>.
+	 *
+	 * When the Column is not of {@link AttributeType}
+	 * {@link AttributeType#NUMERIC} or {@link AttributeType#ORDINAL} a
+	 * {@code new float[0]} will be returned.
+	 *
+	 * @param theBitSet the BitSet indicating what values of this Column to
+	 * use for the creation of the domain.
+	 *
+	 * @return a float[], holding the distinct values for the domain.
+	 *
+	 * @see #getDomain()
+	 * @see #getUniqueNominalBinaryDomain(BitSet)
+	 * @see #getCardinality()
+	 * @see AttributeType
+	 * @see Subgroup
+	 * @see java.util.BitSet
+	 */
+	@Deprecated
+	private float[] getUniqueNumericDomain(BitSet theBitSet)
+	{
+		if (!isValidCall("getUniqueNumericDomain", theBitSet))
+			return new float[0];
+
+		// First create TreeSet<Float>, then copy to float[], not ideal,
+		// but I lack the inspiration to write a RB-tree for floats
+		Set<Float> aUniqueValues = new TreeSet<Float>();
+		for (int i = theBitSet.nextSetBit(0); i >= 0; i = theBitSet.nextSetBit(i + 1))
+			aUniqueValues.add(itsFloatz[i]);
+
+		float[] aResult = new float[aUniqueValues.size()];
+		int i = -1;
+		for (Float f : aUniqueValues)
+			aResult[++i] = f.floatValue();
+
+// TODO MM - profile
+//		// float[] to retrieve all data, call Arrays.sort(), then filter
+//		// a TreeSet would sort and filter automatically
+//		// but test have shown that in the majority of configurations
+//		// the current alternative is faster (and uses less memory)
+//		// only when itsCaridinality is very low (<100) the following is
+//		// faster: retrieve and filter data using HashSet, convert to
+//		// float[], Arrays.sort(float[])
+//		int aNrMembers = theBitSet.cardinality();
+//		float[] aResult2 = new float[aNrMembers];
+//
+//		for (int k = 0, j = theBitSet.nextSetBit(0); j >= 0; j = theBitSet.nextSetBit(j + 1), ++k)
+//			aResult2[k] = itsFloatz[j];
+//
+//		// sort
+//		Arrays.sort(aResult2);
+//
+//		// filter duplicates, assume high cardinality
+//		// use upper bound on number of distinct values that can be
+//		// found, but on Column.init (itsCardinality == 0)
+//		int anUpper = (itsCardinality == 0) ? aNrMembers : Math.min(aNrMembers, itsCardinality);
+//		int aLast = 0;
+//		for (int k = 1; k < aNrMembers && aLast < anUpper-1; ++k)
+//			if (aResult2[k] != aResult2[aLast])
+//				aResult2[++aLast] = aResult2[k];
+//
+//		// truncate everything after last unique value
+//		// copy could be avoided using a sentinel that signals end of
+//		// input, but then returned array would not contain only unique
+//		// values and external code would need to check for sentinel
+//		//return Arrays.copyOf(aResult, aLast+1);
+//
+//		System.out.println("EQUALS: " + (Arrays.equals(aResult, Arrays.copyOf(aResult2, aLast+1))));
+
+		return aResult;
+	}
+
+	@Deprecated
+	private SortedSet<Interval> getUniqueSplitPointsBoundedOriginal(BitSet theBitSet, int theNrSplits) throws IllegalArgumentException
+	{
+		if (!isValidCall("getSplitPointsBounded", theBitSet))
+			return Collections.emptySortedSet();
+
+		if (theNrSplits < 0)
+			throw new IllegalArgumentException(theNrSplits + " (theNrSplits) < 0");
+
+		// valid, but useless
+		if (theNrSplits == 0)
+			return Collections.emptySortedSet();
+
+		// TODO use same procedure as pre-discretisation in MiningWindow
+		boolean anOrig = Column.USE_NEW_BINNING ;
+		Column.USE_NEW_BINNING = true;
+		float[] aBounds = getUniqueSplitPoints(theBitSet, theNrSplits, Operator.LESS_THAN_OR_EQUAL);
+		Column.USE_NEW_BINNING = anOrig;
+
+		int aNrBounds = aBounds.length;
+		if (aNrBounds == 0)
+			return Collections.emptySortedSet();
+
+		if (aBounds[aNrBounds - 1] != Float.POSITIVE_INFINITY)
+		{
+			aBounds = Arrays.copyOf(aBounds, aNrBounds + 1);
+			aBounds[aNrBounds] = Float.POSITIVE_INFINITY;
+			++aNrBounds;
+		}
+
+		SortedSet<Interval> set = new TreeSet<Interval>();
+		for (int i = 0; i < aNrBounds; ++i)
+			set.add(new Interval(i == 0 ? Float.NEGATIVE_INFINITY : aBounds[i-1], aBounds[i]));
+
+		return set;
 	}
 }
