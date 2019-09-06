@@ -842,7 +842,7 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 				ColumnConditionBases c = itsColumnConditionBasesSet.get(i);
 
 				if (c instanceof ColumnConditionBasesBinary)
-					evaluateNominalBinaryRefinements(aMembers, aCoverage, new Refinement(c.get(0), itsSubgroup));
+					evaluateBinary(itsSubgroup, aMembers, (ColumnConditionBasesBinary) c);
 				else if (c instanceof ColumnConditionBasesNominalElementOf)
 					evaluateNominalElementOf(itsSubgroup, aMembers, (ColumnConditionBasesNominalElementOf) c);
 				else if (c instanceof ColumnConditionBasesNominalEquals)
@@ -1067,36 +1067,36 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			case NOMINAL : evaluateNominalRefinements(theParentMembers, theParentCoverage, theRefinement); break;
 			case NUMERIC : evaluateNumericEqualsRefinements(theParentMembers, theParentCoverage, theRefinement); break;
 			case ORDINAL : throw new AssertionError(AttributeType.ORDINAL);
-			case BINARY  : evaluateBinaryRefinements(theParentMembers, theParentCoverage, theRefinement); break;
+			//case BINARY  : evaluateBinaryRefinements(theParentMembers, theParentCoverage, theRefinement); break;
 			default      : throw new AssertionError(aConditionBase.getColumn().getType());
 		}
 	}
 
 	// XXX (c = false) is checked first, (c = true) is conditionally, it depends
 	//       on data and search characteristics  whether this is the best order
-	private final void evaluateBinaryRefinements(BitSet theParentMembers, int theParentCoverage, Refinement theRefinement)
+//	private final void evaluateBinaryRefinements(BitSet theParentMembers, int theParentCoverage, Refinement theRefinement)
+	private final void evaluateBinary(Subgroup theParent, BitSet theParentMembers, ColumnConditionBasesBinary theColumnConditionBases)
 	{
-		Subgroup aParent = theRefinement.getSubgroup();
-		// members-based domain, no empty Subgroups will occur
-		ConditionBase aConditionBase = theRefinement.getConditionBase();
-		Column aColumn = aConditionBase.getColumn();
+		assert (theColumnConditionBases.size() == 1);
+		assert (theColumnConditionBases.get(0).getOperator() == Operator.EQUALS);
 
-		// no useful Refinements are possible
-		if (aColumn.getCardinality() < 2)
-			return;
+		// members-based domain, no empty Subgroups will occur
+		ConditionBase aConditionBase = theColumnConditionBases.get(0);
+		Column aColumn = aConditionBase.getColumn();
+		int aParentCoverage = theParent.getCoverage();
 
 		BitSet aChildMembers = aColumn.evaluateBinary(theParentMembers, false);
 		int aChildCoverage = (aChildMembers == null ? 0 : aChildMembers.cardinality());
 
 		// ignore both f and t
-		if ((aChildCoverage == 0) || (aChildCoverage == theParentCoverage))
+		if ((aChildCoverage == 0) || (aChildCoverage == aParentCoverage))
 			return;
 
 		int aNrTruePositives = INVALID_NR_TRUE_POSITIVES;
 
 		// check for (aColumn = false)
 		if (aChildCoverage >= itsMinimumCoverage)
-			aNrTruePositives = evaluateBinaryRefinementsHelper(aParent, new Condition(aConditionBase, false), aChildMembers, aChildCoverage);
+			aNrTruePositives = evaluateBinaryRefinementsHelper(theParent, new Condition(aConditionBase, false), aChildMembers, aChildCoverage);
 
 		// binary check is fast, but for some models evaluateCandidate() is not
 		if (isTimeToStop())
@@ -1104,7 +1104,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 
 		// check for (aColumn = true), do this only when useful
 		// everything that is not positive is negative
-		aChildCoverage = (theParentCoverage - aChildCoverage);
+		aChildCoverage = (aParentCoverage - aChildCoverage);
 		if (aChildCoverage >= itsMinimumCoverage)
 		{
 			Condition aCondition = new Condition(aConditionBase, true);
@@ -1113,14 +1113,14 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			// NOTE if-check can never be true unless isDirectSetting()
 			if (aNrTruePositives != INVALID_NR_TRUE_POSITIVES)
 			{
-				aNrTruePositives = (((int) aParent.getTertiaryStatistic()) - aNrTruePositives);
-				Subgroup aChildSubgroup = directComputation(aParent, aCondition, itsQualityMeasure, aChildCoverage, aNrTruePositives);
-				checkAndLog(aChildSubgroup, theParentCoverage);
+				aNrTruePositives = (((int) theParent.getTertiaryStatistic()) - aNrTruePositives);
+				Subgroup aChildSubgroup = directComputation(theParent, aCondition, itsQualityMeasure, aChildCoverage, aNrTruePositives);
+				checkAndLog(aChildSubgroup, aParentCoverage);
 			}
 			else
 			{
 				aChildMembers = aColumn.evaluateBinary(theParentMembers, true);
-				evaluateBinaryRefinementsHelper(aParent, aCondition, aChildMembers, aChildCoverage);
+				evaluateBinaryRefinementsHelper(theParent, aCondition, aChildMembers, aChildCoverage);
 			}
 		}
 	}
