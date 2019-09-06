@@ -1479,6 +1479,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		{
 			int aCoverage = aCounts[i];
 
+			// for ValueInfo this includes the (aCounts[i] == 0) check
 			if (aCoverage < itsMinimumCoverage)
 				continue;
 
@@ -2201,35 +2202,6 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			default :
 				throw new AssertionError("invalid Numeric Strategy: " + theNumericStrategy);
 		}
-	}
-
-	// called by numericIntervals() - it does not use value counts at the moment
-	private static final float[] getDomain(BitSet theMembers, int theMembersCardinality, NumericStrategy theNumericStrategy, Column theColumn, int theNrBins, Operator theOperator)
-	{
-		switch (theNumericStrategy)
-		{
-			case NUMERIC_ALL	: return theColumn.getUniqueNumericDomain(theMembers, theMembersCardinality);
-			case NUMERIC_BEST	: return theColumn.getUniqueNumericDomain(theMembers, theMembersCardinality);
-			case NUMERIC_BINS	: return getUniqueSplitPoints(theMembers, theColumn, theNrBins-1, theOperator);
-			case NUMERIC_BEST_BINS	: return getUniqueSplitPoints(theMembers, theColumn, theNrBins-1, theOperator);
-//			case NUMERIC_BINS	: return theColumn.getUniqueSplitPoints(theMembers, theNrBins-1, theOperator);
-//			case NUMERIC_BEST_BINS	: return theColumn.getUniqueSplitPoints(theMembers, theNrBins-1, theOperator);
-			case NUMERIC_INTERVALS	: return theColumn.getUniqueNumericDomain(theMembers, theMembersCardinality);
-			default :
-				throw new AssertionError("invalid Numeric Strategy: " + theNumericStrategy);
-		}
-	}
-
-	// see comment theColumn.getUniqueSplitPoints()
-	private static final float[] getUniqueSplitPoints(BitSet theMembers, Column theColumn, int theNrSplits, Operator theOperator)
-	{
-		float[] aSplitPoints = theColumn.getUniqueSplitPoints(theMembers, theNrSplits, theOperator);
-
-		// if new code is run, aSplitPoints is already filtered
-		if (Column.USE_NEW_BINNING)
-			return aSplitPoints;
-		else
-			return Column.getUniqueValues(aSplitPoints);
 	}
 
 	private final boolean isValidAndBest(Subgroup theNewSubgroup, int theOldCoverage, Subgroup theBestSubgroup)
@@ -3479,6 +3451,35 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 
 		if (!isAllStrategy && (aBestSubgroup != null))
 			bestAdd(aBestSubgroup, aParentCoverage);
+	}
+
+	// called by numericIntervals() - it does not use value counts at the moment
+	private static final float[] getDomain(BitSet theMembers, int theMembersCardinality, NumericStrategy theNumericStrategy, Column theColumn, int theNrBins, Operator theOperator)
+	{
+		switch (theNumericStrategy)
+		{
+			case NUMERIC_ALL	: return theColumn.getUniqueNumericDomainTest(theMembers, theMembersCardinality);
+			case NUMERIC_BEST	: return theColumn.getUniqueNumericDomainTest(theMembers, theMembersCardinality);
+			case NUMERIC_BINS	: return getUniqueSplitPoints(theMembers, theColumn, theNrBins-1, theOperator);
+			case NUMERIC_BEST_BINS	: return getUniqueSplitPoints(theMembers, theColumn, theNrBins-1, theOperator);
+//			case NUMERIC_BINS	: return theColumn.getUniqueSplitPoints(theMembers, theNrBins-1, theOperator);
+//			case NUMERIC_BEST_BINS	: return theColumn.getUniqueSplitPoints(theMembers, theNrBins-1, theOperator);
+			case NUMERIC_INTERVALS	: return theColumn.getUniqueNumericDomainTest(theMembers, theMembersCardinality);
+			default :
+				throw new AssertionError("invalid Numeric Strategy: " + theNumericStrategy);
+		}
+	}
+
+	// see comment theColumn.getUniqueSplitPoints()
+	private static final float[] getUniqueSplitPoints(BitSet theMembers, Column theColumn, int theNrSplits, Operator theOperator)
+	{
+		float[] aSplitPoints = theColumn.getUniqueSplitPoints(theMembers, theNrSplits, theOperator);
+
+		// if new code is run, aSplitPoints is already filtered
+		if (Column.USE_NEW_BINNING)
+			return aSplitPoints;
+		else
+			return Column.getUniqueValues(aSplitPoints);
 	}
 
 	// TODO method is never used, but EQUALS and BETWEEN might benefit from the
