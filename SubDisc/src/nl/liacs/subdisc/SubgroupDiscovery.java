@@ -1400,35 +1400,104 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////
 
-	// shares a lot of code with evaluateNominalRefinements(), but will change
+	// for SINGLE_NOMINAL this could call getUniqueNumericDomainMap
+	// because EQUAL was treated as NOMINAL no 'best' version exists, also the
+	// GUI is a mess, it is not clear what ALL/BEST/BEST_BINS/BINS mean for
+	// EQUALS, for example: BINS with EQUALS could be interpreted as what is
+	// currently CONSECUTIVE bins
+	// TODO when finished -> update isPOCSetting() related codes
+	//
+	//
+	// NOTE
+	// historically, numeric equals was treated as a nominal Refinement
+	// this should be considered a bug
+	// when user selects numeric operator setting NUMERIC_ALL (=, <=, >=), both
+	// <= and >= use bins when NumericStrategy.NUMERIC_(BEST_)BINS is used, but
+	// = does not, it always evaluated all numeric values in a domain
+	//
+	// so for NumericOperatorSetting.NUMERIC_EQ, which uses Operator.EQUALS, the
+	// NumericStrategy is not respected
+	// the behaviour is always like NumericStrategy.NUMERIC_ALL
+	// there is no NUMERIC_BEST, NUMERIC_BEST_BINS and NUMERIC_BINS alternative
 	private final void evaluateNumericEqualsRefinements(BitSet theParentMembers, int theParentCoverage, Refinement theRefinement)
 	{
-		// NUMERIC Refinement in evaluateNominalBinaryRefinements is a weird
-		// setting, this check is irrelevant for NUMERIC Columns
-		// evaluateNominalRefinements() should prevent getting here for ValueSet
-		//assert (!itsSearchParameters.getNominalSets());
+		//NumericStrategy aNumericStrategy = itsSearchParameters.getNumericStrategy();
+		NumericStrategy THIS_IS_A_FAKE = NumericStrategy.NUMERIC_ALL;
+		assert (itsSearchParameters.getNumericOperatorSetting().includesEquals());
 
+		////////////////////////////////////////////////////////////////////////
 		boolean isFilterNull = (itsFilter == null);
 		Subgroup aParent = theRefinement.getSubgroup();
+
 		// members-based domain, no empty Subgroups will occur
 		ConditionBase aConditionBase = theRefinement.getConditionBase();
 		Column aColumn = aConditionBase.getColumn();
 		ConditionListA aParentConditions = (isFilterNull ? null : aParent.getConditions());
+		Operator anOperator = aConditionBase.getOperator();
 
-		float[] aDomain = aColumn.getUniqueNumericDomain(theParentMembers);
+		assert (anOperator == Operator.EQUALS);
 
-		if (aDomain.length <= 1)
-			return;
+		// FIXME this is why this is such a weird strategy - leave it for now
+		// might require update when more strategies are added
+		//boolean isAllStrategy = (aNumericStrategy == NumericStrategy.NUMERIC_ALL || aNumericStrategy == NumericStrategy.NUMERIC_BINS);
 
-		for (int i = 0, j = aDomain.length; i < j && !isTimeToStop(); ++i)
+		//Subgroup aBestSubgroup = null;
+		////////////////////////////////////////////////////////////////////////
+
+		// POCSetting ensures a sorted NUMERIC domain for SINGLE_NOMINAL
+		// DirectSetting is implied
+		// NUMERIC_VIKAMINE_CONSECUTIVE_ALL|BEST are currently not a POCSetting
+		boolean direct = isPOCSetting();
+		// final: ensure value is set before use in loop
+		final int aSize;
+		final float [] aDomain;
+		final int[] aCounts;
+		final int[] aTPs;
+
+		// split code paths, for most SINGLE_NOMINAL settings versus the rest
+		if (direct)
 		{
-			Condition aCondition = new Condition(aConditionBase, aDomain[i]);
+			ValueInfo via = aColumn.getUniqueNumericDomainMap(theParentMembers);
+			aDomain = aColumn.SORTED;
+			aCounts = via.itsCounts;
+			aSize = aDomain.length;
+			aTPs = via.itsRecords; // this is the TruePositive count
+		}
+		else
+		{
+//			DomainMapNumeric m = getDomainMapD(theParentMembers, theParentCoverage, aNumericStrategy, aColumn, itsSearchParameters.getNrBins(), anOperator);
+			DomainMapNumeric m = getDomainMapD(theParentMembers, theParentCoverage, THIS_IS_A_FAKE, aColumn, 0, anOperator);
+			aDomain = m.itsDomain;
+			aCounts = m.itsCounts;
+			aSize = m.itsSize;
+			aTPs = null;
+			if (aSize <= 1)
+				return;
+		}
 
-			if (!isFilterNull && !itsFilter.isUseful(aParentConditions, aCondition))
+		for (int i = 0; i < aSize && !isTimeToStop(); ++i)
+		{
+			int aCoverage = aCounts[i];
+
+			if (aCoverage < itsMinimumCoverage)
 				continue;
 
-			Subgroup aNewSubgroup = aParent.getRefinedSubgroup(aCondition);
-			checkAndLog(aNewSubgroup, theParentCoverage);
+			// NOTE latter check not required for aDomainMap as size would be 1
+			if (direct && (aCoverage == theParentCoverage))
+				break;
+
+			Condition anAddedCondition = new Condition(aConditionBase, aDomain[i]);
+
+			if (!isFilterNull && !itsFilter.isUseful(aParentConditions, anAddedCondition))
+				continue;
+
+			final Subgroup aChild;
+			if (direct)
+				aChild = directComputation(aParent, anAddedCondition, itsQualityMeasure, aCoverage, aTPs[i]);
+			else
+				aChild = aParent.getRefinedSubgroup(anAddedCondition);
+
+			checkAndLog(aChild, theParentCoverage);
 		}
 	}
 
