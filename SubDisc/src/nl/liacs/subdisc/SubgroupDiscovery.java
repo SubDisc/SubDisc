@@ -844,7 +844,7 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 				if (c instanceof ColumnConditionBasesBinary)
 					evaluateNominalBinaryRefinements(aMembers, aCoverage, new Refinement(c.get(0), itsSubgroup));
 				else if (c instanceof ColumnConditionBasesNominalElementOf)
-					evaluateNominalBinaryRefinements(aMembers, aCoverage, new Refinement(c.get(0), itsSubgroup));
+					evaluateNominalElementOf(itsSubgroup, aMembers, (ColumnConditionBasesNominalElementOf) c);
 				else if (c instanceof ColumnConditionBasesNominalEquals)
 					evaluateNominalBinaryRefinements(aMembers, aCoverage, new Refinement(c.get(0), itsSubgroup));
 				else if (c instanceof ColumnConditionBasesNumeric)
@@ -1049,11 +1049,13 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		// split code paths for ValueSet/class labels (nominal/numeric/binary)
 		if (aConditionBase.getOperator() == Operator.ELEMENT_OF)
 		{
+			assert (false); // code should never get here
+
 			// currently BestValueSet implies the target type is SINGLE_NOMINAL
 			assert (itsSearchParameters.getTargetType() == TargetType.SINGLE_NOMINAL);
 			assert (itsSearchParameters.getNominalSets());
 
-			evaluateNominalBestValueSet(theParentMembers, theParentCoverage, theRefinement);
+			//evaluateNominalElementOf(theParentMembers, theParentCoverage, theRefinement);
 			return;
 		}
 
@@ -1231,11 +1233,17 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////
 
-	private final void evaluateNominalBestValueSet(BitSet theParentMembers, int theParentCoverage, Refinement theRefinement)
+//	private final void evaluateNominalBestValueSet(BitSet theParentMembers, int theParentCoverage, Refinement theRefinement)
+	private final void evaluateNominalElementOf(Subgroup theParent, BitSet theParentMembers, ColumnConditionBasesNominalElementOf theColumnConditionBases)
 	{
+		// currently BestValueSet implies the target type is SINGLE_NOMINAL
+		assert (itsSearchParameters.getTargetType() == TargetType.SINGLE_NOMINAL);
+		assert (itsSearchParameters.getNominalSets());
 		assert (isDirectSetting());
+		assert (theColumnConditionBases.size() == 1);
+		assert (theColumnConditionBases.get(0).getOperator() == Operator.ELEMENT_OF);
 
-		ConditionBase aConditionBase = theRefinement.getConditionBase();
+		ConditionBase aConditionBase = theColumnConditionBases.get(0);
 
 		// as for BestIntervals -> use new half-interval code, it is 70x faster
 		NominalCrossTable aNCT = new NominalCrossTable(aConditionBase.getColumn(), theParentMembers, itsBinaryTarget);
@@ -1430,8 +1438,8 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		// CandidateSet
 		ValueSet aBestSubset = new ValueSet(aDomainBestSubSet);
 		Condition anAddedCondition = new Condition(aConditionBase, aBestSubset);
-		Subgroup aChild = directComputation(theRefinement.getSubgroup(), anAddedCondition, aFinalBestQuality, aCoverage, aCountHeadBody);
-		checkAndLog(aChild, theParentCoverage);
+		Subgroup aChild = directComputation(theParent, anAddedCondition, aFinalBestQuality, aCoverage, aCountHeadBody);
+		checkAndLog(aChild, theParent.getCoverage());
 	}
 
 	////////////////////////////////////////////////////////////////////////////
