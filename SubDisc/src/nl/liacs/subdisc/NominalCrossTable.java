@@ -7,60 +7,45 @@ public class NominalCrossTable
 	private final String[] itsValues;
 	private final int[] itsPositiveCounts;
 	private final int[] itsNegativeCounts;
-	private final int itsPositiveCount; //sum
-	private final int itsNegativeCount; //sum
 
-	// DO NOT modify theSubgroupMembers-BitSset
 	public NominalCrossTable(Column theColumn, BitSet theSubgroupMembers, BitSet theTarget)
 	{
-		itsValues = theColumn.getUniqueNominalBinaryDomain(theSubgroupMembers);
+		//itsValues = theColumn.getUniqueNominalBinaryDomain(theSubgroupMembers);
+		// FIXME code is changed because Column.getUniqueNumericDomain(BitSet)
+		// will be removed
+		// the new methods is about as fast, even when it also establishes value
+		// counts (which are ignored), and needs to sort the domain
+		// the final version of this method will be implemented in the same way
+		// as ValueInfo, it holds same count + true positive for numeric values
+		// that is required here (RealBaseIntervalCrossTable already uses it)
+		List<String> aDomain = theColumn.itsDistinctValuesU;
+		int aNrMembers = theSubgroupMembers.cardinality();
+		int[] aCounts = theColumn.getUniqueNominalDomainCounts(theSubgroupMembers, aNrMembers);
+
+		itsValues = new String[aCounts[aCounts.length-1]];
+		for (int i = 0, j = -1; i < aCounts.length-1; ++i)
+			if (aCounts[i] > 0)
+				itsValues[++j] = aDomain.get(i);
+		Arrays.sort(itsValues);
+
 		itsPositiveCounts = new int[itsValues.length];
 		itsNegativeCounts = new int[itsValues.length];
 
-		int aPositiveCount = 0;
-		int aNegativeCount = 0;
 		// check only SG.members, combine 2 loops
 		for (int i = theSubgroupMembers.nextSetBit(0); i >= 0; i = theSubgroupMembers.nextSetBit(i + 1))
 		{
 			int anIndex = Arrays.binarySearch(itsValues, theColumn.getNominal(i));
 			if (theTarget.get(i))
-			{
 				++itsPositiveCounts[anIndex];
-				++aPositiveCount;
-			}
 			else
-			{
 				++itsNegativeCounts[anIndex];
-				++aNegativeCount;
-			}
 		}
-
-		itsPositiveCount = aPositiveCount;
-		itsNegativeCount = aNegativeCount;
 	}
 
 	public String getValue(int index) { return itsValues[index]; }
 	public int getPositiveCount(int theIndex) { return itsPositiveCounts[theIndex]; }
 	public int getNegativeCount(int theIndex) { return itsNegativeCounts[theIndex]; }
 	public int size() { return itsValues.length; }
-
-	// never used
-	@Deprecated
-	public int getPositiveCount() { return itsPositiveCount; }
-
-	// never used
-	@Deprecated
-	public int getNegativeCount() { return itsNegativeCount; }
-
-	// never used
-	@Deprecated
-	public HashSet<String> getDomain()
-	{
-		HashSet<String> aSet = new HashSet<String>();
-		for (int i = 0; i < itsValues.length; i++)
-			aSet.add(itsValues[i]);
-		return aSet;
-	}
 
 	// Get the domain sorted by p/n
 	// Michael says: rather cumbersome, there must be a cleaner way to do this
@@ -96,12 +81,6 @@ public class NominalCrossTable
 		}
 
 		return aSortedIndexList;
-	}
-
-	public void print()
-	{
-		for (int i = 0; i < size(); i++)
-			Log.logCommandLine(itsValues[i] + ": (" + itsPositiveCounts[i] + ", " + itsNegativeCounts[i] + ")");
 	}
 
 	/*
