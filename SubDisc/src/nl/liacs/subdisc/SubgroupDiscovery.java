@@ -12,6 +12,11 @@ import javax.swing.*;
 
 import nl.liacs.subdisc.Column.DomainMapNumeric;
 import nl.liacs.subdisc.Column.ValueInfo;
+import nl.liacs.subdisc.ColumnConditionBasesBuilder.ColumnConditionBases;
+import nl.liacs.subdisc.ColumnConditionBasesBuilder.ColumnConditionBasesBinary;
+import nl.liacs.subdisc.ColumnConditionBasesBuilder.ColumnConditionBasesNominalElementOf;
+import nl.liacs.subdisc.ColumnConditionBasesBuilder.ColumnConditionBasesNominalEquals;
+import nl.liacs.subdisc.ColumnConditionBasesBuilder.ColumnConditionBasesNumeric;
 import nl.liacs.subdisc.ConditionListBuilder.ConditionListA;
 import nl.liacs.subdisc.ConvexHull.HullPoint;
 import nl.liacs.subdisc.gui.*;
@@ -438,11 +443,16 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 		postMining(System.currentTimeMillis() - theBeginTime);
 	}
 
+	private List<ColumnConditionBases> itsColumnConditionBasesSet;
 	/* use theNrThreads < 0 to run old mine(theBeginTime) */
 	public void mine(long theBeginTime, int theNrThreads)
 	{
 		// not a member field, final and unmodifiable, good for concurrency
 		final ConditionBaseSet aConditions = preMining(theBeginTime, theNrThreads);
+
+		// FIXME for testing, obtain another set again, ignore preMining version
+		// make it a member field, so Test signature need not be changed
+		itsColumnConditionBasesSet = ColumnConditionBasesBuilder.FACTORY.getColumnConditionBasesSet(itsTable, itsSearchParameters);
 
 		if (theNrThreads < 0)
 		{
@@ -788,8 +798,8 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 			itsConditionBaseSet = theConditionBaseSet;
 		}
 
-		@Override
-		public void run()
+		//@Override
+		public void runx()
 		{
 			// Subgroup.getMembers() creates expensive clone, reuse
 			final BitSet aMembers = itsSubgroup.getMembers();
@@ -814,6 +824,36 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 					evaluateNumericRefinements(aMembers, aCoverage, aRefinement);
 				else
 					evaluateNominalBinaryRefinements(aMembers, aCoverage, aRefinement);
+			}
+
+			itsSemaphore.release();
+		}
+
+		@Override
+		public void run()
+		{
+			// Subgroup.getMembers() creates expensive clone, reuse
+			final BitSet aMembers = itsSubgroup.getMembers();
+			final int aCoverage = itsSubgroup.getCoverage();
+			assert (aMembers.cardinality() == aCoverage);
+
+			for (int i = 0, j = itsColumnConditionBasesSet.size(); i < j && !isTimeToStop(); ++i)
+			{
+				ColumnConditionBases c = itsColumnConditionBasesSet.get(i);
+
+				if (c instanceof ColumnConditionBasesBinary)
+					evaluateNominalBinaryRefinements(aMembers, aCoverage, new Refinement(c.get(0), itsSubgroup));
+				else if (c instanceof ColumnConditionBasesNominalElementOf)
+					evaluateNominalBinaryRefinements(aMembers, aCoverage, new Refinement(c.get(0), itsSubgroup));
+				else if (c instanceof ColumnConditionBasesNominalEquals)
+					evaluateNominalBinaryRefinements(aMembers, aCoverage, new Refinement(c.get(0), itsSubgroup));
+				else if (c instanceof ColumnConditionBasesNumeric)
+				{
+					for (int k = 0; k < c.size(); ++k)
+						evaluateNumericRefinements(aMembers, aCoverage, new Refinement(c.get(k), itsSubgroup));
+				}
+				else
+					throw new AssertionError();
 			}
 
 			itsSemaphore.release();
