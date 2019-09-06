@@ -3362,7 +3362,16 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		Column aColumn = aConditionBase.getColumn();
 		ConditionListA aParentConditions = (isFilterNull ? null : aParent.getConditions());
 
-		String[] aDomain = aColumn.getUniqueNominalBinaryDomain(theParentMembers);
+		//String[] aDomain = aColumn.getUniqueNominalBinaryDomain(theParentMembers);
+		// obsolete code calls obsolete code, ignore: change required to compile
+		List<String> aColumnDomain = aColumn.itsDistinctValuesU;
+		int[] aCounts = aColumn.getUniqueNominalDomainCounts(theParentMembers, theParentCoverage);
+
+		String[] aDomain = new String[aCounts[aCounts.length-1]];
+		for (int i = 0, j = -1; i < aCounts.length-1; ++i)
+			if (aCounts[i] > 0)
+				aDomain[++j] = aColumnDomain.get(i);
+		Arrays.sort(aDomain);
 
 		// no useful Refinements are possible
 		if (aDomain.length <= 1)
