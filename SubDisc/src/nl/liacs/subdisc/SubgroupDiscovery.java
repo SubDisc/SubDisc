@@ -846,7 +846,7 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 				else if (c instanceof ColumnConditionBasesNominalElementOf)
 					evaluateNominalElementOf(itsSubgroup, aMembers, (ColumnConditionBasesNominalElementOf) c);
 				else if (c instanceof ColumnConditionBasesNominalEquals)
-					evaluateNominalBinaryRefinements(aMembers, aCoverage, new Refinement(c.get(0), itsSubgroup));
+					evaluateNominalEquals(itsSubgroup, aMembers, (ColumnConditionBasesNominalEquals) c);
 				else if (c instanceof ColumnConditionBasesNumeric)
 				{
 					for (int k = 0; k < c.size(); ++k)
@@ -1064,7 +1064,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		// FIXME: NUMERIC Refinement should not be done here
 		switch (aConditionBase.getColumn().getType())
 		{
-			case NOMINAL : evaluateNominalRefinements(theParentMembers, theParentCoverage, theRefinement); break;
+			//case NOMINAL : evaluateNominalRefinements(theParentMembers, theParentCoverage, theRefinement); break;
 			case NUMERIC : evaluateNumericEqualsRefinements(theParentMembers, theParentCoverage, theRefinement); break;
 			case ORDINAL : throw new AssertionError(AttributeType.ORDINAL);
 			//case BINARY  : evaluateBinaryRefinements(theParentMembers, theParentCoverage, theRefinement); break;
@@ -1080,10 +1080,10 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		assert (theColumnConditionBases.size() == 1);
 		assert (theColumnConditionBases.get(0).getOperator() == Operator.EQUALS);
 
+		int aParentCoverage = theParent.getCoverage();
 		// members-based domain, no empty Subgroups will occur
 		ConditionBase aConditionBase = theColumnConditionBases.get(0);
 		Column aColumn = aConditionBase.getColumn();
-		int aParentCoverage = theParent.getCoverage();
 
 		BitSet aChildMembers = aColumn.evaluateBinary(theParentMembers, false);
 		int aChildCoverage = (aChildMembers == null ? 0 : aChildMembers.cardinality());
@@ -1181,16 +1181,21 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////
 
-	private final void evaluateNominalRefinements(BitSet theParentMembers, int theParentCoverage, Refinement theRefinement)
+//	private final void evaluateNominalRefinements(BitSet theParentMembers, int theParentCoverage, Refinement theRefinement)
+	private final void evaluateNominalEquals(Subgroup theParent, BitSet theParentMembers, ColumnConditionBasesNominalEquals theColumnConditionBases)
 	{
-		boolean isFilterNull = (itsFilter == null);
-		Subgroup aParent = theRefinement.getSubgroup();
-		// members-based domain, no empty Subgroups will occur
-		ConditionBase aConditionBase = theRefinement.getConditionBase();
-		Column aColumn = aConditionBase.getColumn();
-		ConditionListA aParentConditions = (isFilterNull ? null : aParent.getConditions());
+		assert (!itsSearchParameters.getNominalSets());
+		assert (theColumnConditionBases.size() == 1);
+		assert (theColumnConditionBases.get(0).getOperator() == Operator.EQUALS);
 
-		int[] aCounts = aColumn.getUniqueNominalDomainCounts(theParentMembers, theParentCoverage);
+		boolean isFilterNull = (itsFilter == null);
+		int aParentCoverage = theParent.getCoverage();
+		// members-based domain, no empty Subgroups will occur
+		ConditionBase aConditionBase = theColumnConditionBases.get(0);
+		Column aColumn = aConditionBase.getColumn();
+		ConditionListA aParentConditions = (isFilterNull ? null : theParent.getConditions());
+
+		int[] aCounts = aColumn.getUniqueNominalDomainCounts(theParentMembers, aParentCoverage);
 
 		// avoid entering loop and checking 0-count values, no useful Refinement
 		// is possible, as it would have the same coverage as anOldCoverage
@@ -1210,7 +1215,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			if (aCount < itsMinimumCoverage)
 				continue;
 
-			if (aCount == theParentCoverage)
+			if (aCount == aParentCoverage)
 				break;
 
 			Condition aCondition = new Condition(aConditionBase, aDomain.get(i));
@@ -1218,8 +1223,8 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			if (!isFilterNull && !itsFilter.isUseful(aParentConditions, aCondition))
 				continue;
 
-			Subgroup aNewSubgroup = aParent.getRefinedSubgroup(aCondition);
-			checkAndLog(aNewSubgroup, theParentCoverage);
+			Subgroup aNewSubgroup = theParent.getRefinedSubgroup(aCondition);
+			checkAndLog(aNewSubgroup, aParentCoverage);
 		}
 	}
 
