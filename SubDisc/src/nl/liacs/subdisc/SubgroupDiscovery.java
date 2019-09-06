@@ -1595,15 +1595,16 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 				numericHalfIntervals(theParentMembers, theParentCoverage, theRefinement);
 				break;
 			case NUMERIC_INTERVALS :
-				numericIntervals(theParentMembers, theParentCoverage, theRefinement);
-				break;
+				throw new AssertionError("SubgroupDiscovery.evaluateNumericRefinements() not available for NUMERIC_INTERVALS");
+				//numericIntervals(theParentMembers, theParentCoverage, theRefinement);
+				//break;
 			case NUMERIC_VIKAMINE_CONSECUTIVE_ALL :
-				throw new AssertionError("evaluateNumericRefinements() not available for NUMERIC_VIKAMINE_CONSECUTIVE_ALL");
+				throw new AssertionError("SubgroupDiscovery.evaluateNumericRefinements() not available for NUMERIC_VIKAMINE_CONSECUTIVE_ALL");
 //				evaluateNumericConsecutiveIntervals(theParentMembers, theParentCoverage, theRefinement);
 //				break;
 			// NUMERIC_VIKAMINE_CONSECUTIVE_BEST is like NUMERIC_VIKAMINE_CONSECUTIVE_ALL, but uses only best scoring subgroup
 			case NUMERIC_VIKAMINE_CONSECUTIVE_BEST :
-				throw new AssertionError("evaluateNumericRefinements() not available for NUMERIC_VIKAMINE_CONSECUTIVE_BEST");
+				throw new AssertionError("SubgroupDiscovery.evaluateNumericRefinements() not available for NUMERIC_VIKAMINE_CONSECUTIVE_BEST");
 //				evaluateNumericConsecutiveIntervals(theParentMembers, theParentCoverage, theRefinement);
 //				break;
 //			case NUMERIC_VIKAMINE_CARTESIAN_ALL :
@@ -1611,9 +1612,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 //			case NUMERIC_VIKAMINE_CARTESIAN_BEST :
 //				throw new AssertionError(itsSearchParameters.getNumericStrategy() + " not implemented");
 			default :
-				Log.logCommandLine("SubgroupDiscovery.evaluateNumericRefinements(): unknown Numeric Strategy: " +
-							itsSearchParameters.getNumericStrategy());
-				break;
+				throw new AssertionError("SubgroupDiscovery.evaluateNumericRefinements(): unknown Numeric Strategy: " + itsSearchParameters.getNumericStrategy());
 		}
 	}
 
@@ -1641,7 +1640,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		else if (theColumnConditionBases instanceof ColumnConditionBasesNumericIntervals)
 			evaluateNumericIntervals(theParent, theParentMembers, (ColumnConditionBasesNumericIntervals) theColumnConditionBases);
 		else
-			throw new AssertionError("evaluateNumeric() unexpected subclass of ColumnConditionBasesNumeric");
+			throw new AssertionError("SubgroupDiscovery.evaluateNumeric() unexpected subclass of ColumnConditionBasesNumeric");
 	}
 
 	// helper to differentiate between strategies, these NumericStrategies all
@@ -1656,7 +1655,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 							NumericStrategy.NUMERIC_VIKAMINE_CONSECUTIVE_BEST).contains(itsSearchParameters.getNumericStrategy()));
 
 		if (NumericStrategy.NUMERIC_INTERVALS == itsSearchParameters.getNumericStrategy())
-			numericIntervals(theParentMembers, theParent.getCoverage(), new Refinement(theColumnConditionBases.get(0), theParent));
+			evaluateNumericBestInterval(theParent, theParentMembers, theColumnConditionBases);
 		else
 			evaluateNumericConsecutiveIntervals(theParent, theParentMembers, theColumnConditionBases);
 	}
@@ -2109,32 +2108,30 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////
 
-	private void numericIntervals(BitSet theParentMembers, int theParentCoverage, Refinement theRefinement)
+//	private void numericIntervals(BitSet theParentMembers, int theParentCoverage, Refinement theRefinement)
+	private void evaluateNumericBestInterval(Subgroup theParent, BitSet theParentMembers, ColumnConditionBasesNumericIntervals theColumnConditionBases)
 	{
+		// currently BestIntervals implies the target type is SINGLE_NOMINAL
+		assert (itsSearchParameters.getTargetType() == TargetType.SINGLE_NOMINAL);
+		assert (isDirectSetting());
+		assert (theColumnConditionBases.size() == 1);
+		assert (theColumnConditionBases.get(0).getOperator() == Operator.BETWEEN);
+		assert (itsSearchParameters.getNumericOperatorSetting() == NumericOperatorSetting.NUMERIC_INTERVALS);
 		// this method is a deviant case, but ValueInfo relies on isPOCSetting
 		assert (isPOCSetting());
 
-		// evaluateNumericRefinements() should prevent getting here for others
-		NumericStrategy aNumericStrategy = itsSearchParameters.getNumericStrategy();
-		assert (aNumericStrategy == NumericStrategy.NUMERIC_INTERVALS);
-
 		////////////////////////////////////////////////////////////////////////
-		Subgroup aParent = theRefinement.getSubgroup();
-
+		int aParentCoverage = theParent.getCoverage();
 		// members-based domain, no empty Subgroups will occur
-		ConditionBase aConditionBase = theRefinement.getConditionBase();
+		ConditionBase aConditionBase = theColumnConditionBases.get(0);
 		Column aColumn = aConditionBase.getColumn();
-		Operator anOperator = aConditionBase.getOperator();
-
-		// 'in' is the only valid Operator for this setting
-		assert (anOperator == Operator.BETWEEN);
 		////////////////////////////////////////////////////////////////////////
 
 		// copy, as RealBaseIntervalCrossTable will modify the supplied array
 		float [] aDomain = Arrays.copyOf(aColumn.SORTED, aColumn.SORTED.length);
 		ValueInfo via = aColumn.getUniqueNumericDomainMap(theParentMembers);
 
-		RealBaseIntervalCrossTable aRBICT = new RealBaseIntervalCrossTable(theParentCoverage, (int) aParent.getTertiaryStatistic(), aDomain, via);
+		RealBaseIntervalCrossTable aRBICT = new RealBaseIntervalCrossTable(aParentCoverage, (int) theParent.getTertiaryStatistic(), aDomain, via);
 
 		// prune splitpoints for which adjacent base intervals have equal class distribution
 		// TODO: check whether this preprocessing reduces *total* computation time
@@ -2262,8 +2259,8 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		}
 
 		Condition anAddedCondition = new Condition(aConditionBase, aBestInterval);
-		Subgroup aChild = directComputation(aParent, anAddedCondition, aBestQuality, (aBestNrTruePositives + aBestNrFalsePositives), aBestNrTruePositives);
-		checkAndLog(aChild, theParentCoverage);
+		Subgroup aChild = directComputation(theParent, anAddedCondition, aBestQuality, (aBestNrTruePositives + aBestNrFalsePositives), aBestNrTruePositives);
+		checkAndLog(aChild, aParentCoverage);
 	}
 
 	////////////////////////////////////////////////////////////////////////////
