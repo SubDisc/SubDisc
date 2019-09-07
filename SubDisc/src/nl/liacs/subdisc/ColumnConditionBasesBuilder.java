@@ -29,7 +29,16 @@ public enum ColumnConditionBasesBuilder
 		boolean useSets = theSearchParameters.getNominalSets();
 		// set-valued only allowed for SINGLE_NOMINAL
 		assert (!useSets || (tc.getTargetType() == TargetType.SINGLE_NOMINAL));
-		NumericOperatorSetting nos = theSearchParameters.getNumericOperatorSetting();
+
+		NumericOperatorSetting n = theSearchParameters.getNumericOperatorSetting();
+		boolean isInterval = (n == NumericOperatorSetting.NUMERIC_INTERVALS);
+		// BestInterval only allowed for SINGLE_NOMINAL
+		assert (!isInterval || (tc.getTargetType() == TargetType.SINGLE_NOMINAL));
+
+		EnumSet<Operator> o = n.getOperators();
+		boolean useEquals = (!isInterval && o.contains(Operator.EQUALS));
+		boolean useLeq    = (!isInterval && o.contains(Operator.LESS_THAN_OR_EQUAL));
+		boolean useGeq    = (!isInterval && o.contains(Operator.GREATER_THAN_OR_EQUAL));
 
 		List<ColumnConditionBases> result = new ArrayList<ColumnConditionBases>(theTable.getNrColumns());
 
@@ -55,22 +64,10 @@ public enum ColumnConditionBasesBuilder
 				}
 				case NUMERIC :
 				{
-					// checking NumericOperatorSetting once would be enough
-					// but code is called only once per SubgroupDiscovery.mine()
-					// and the number of Columns is generally low
-					final ColumnConditionBasesNumeric cb;
-					switch (nos)
-					{
-						case NUMERIC_NORMAL    : cb = FACTORY.new ColumnConditionBasesNumericNormal(c);    break;
-						case NUMERIC_LEQ       : cb = FACTORY.new ColumnConditionBasesNumericLEQ(c);       break;
-						case NUMERIC_GEQ       : cb = FACTORY.new ColumnConditionBasesNumericGEQ(c);       break;
-						case NUMERIC_ALL       : cb = FACTORY.new ColumnConditionBasesNumericAll(c);       break;
-						case NUMERIC_EQ        : cb = FACTORY.new ColumnConditionBasesNumericEquals(c);    break;
-						case NUMERIC_INTERVALS : cb = FACTORY.new ColumnConditionBasesNumericIntervals(c); break;
-						default :
-							throw new AssertionError();
-					}
-					result.add(cb);
+					if (!isInterval)
+						result.add(FACTORY.new ColumnConditionBasesNumericRegular(c, useEquals, useLeq, useGeq));
+					else
+						result.add(FACTORY.new ColumnConditionBasesNumericIntervals(c));
 					break;
 				}
 				// no fall-through, ORDINAL is not implemented
@@ -131,8 +128,6 @@ public enum ColumnConditionBasesBuilder
 
 	abstract class ColumnConditionBases
 	{
-		abstract int size();
-
 		abstract ConditionBase get(int index);
 	}
 
@@ -149,9 +144,6 @@ public enum ColumnConditionBasesBuilder
 		{
 			itsConditionBase = new ConditionBase(theColumn, Operator.EQUALS);
 		}
-
-		@Override
-		final int size() { return 1; }
 
 		// do not bother checking the supplied parameter
 		@Override
@@ -184,9 +176,6 @@ public enum ColumnConditionBasesBuilder
 			itsConditionBase = new ConditionBase(theColumn, Operator.ELEMENT_OF);
 		}
 
-		@Override
-		final int size() { return 1; }
-
 		// do not bother checking the supplied parameter
 		@Override
 		final ConditionBase get(int ignored) { return itsConditionBase; }
@@ -205,90 +194,38 @@ public enum ColumnConditionBasesBuilder
 			itsConditionBase = new ConditionBase(theColumn, Operator.EQUALS);
 		}
 
-		@Override
-		public final int size() { return 1; }
-
 		// do not bother checking the supplied parameter
 		@Override
 		public final ConditionBase get(int ignored) { return itsConditionBase; }
 	}
 
-	// ColumnConditionBasesNumeric such that all sub-types are treated uniformly
-	abstract class ColumnConditionBasesNumeric extends ColumnConditionBases {}
-
-	static { assert (NumericOperatorSetting.NUMERIC_NORMAL.getOperators().equals(EnumSet.of(Operator.LESS_THAN_OR_EQUAL, Operator.GREATER_THAN_OR_EQUAL))); }
-	final class ColumnConditionBasesNumericNormal extends ColumnConditionBasesNumeric
+	static { assert (regularIsEqualsLeqGeq()); }
+	private static final boolean regularIsEqualsLeqGeq()
 	{
-		private final ConditionBase itsConditionBaseLEQ;
-		private final ConditionBase itsConditionBaseGEQ;
+		EnumSet<Operator> e = EnumSet.noneOf(Operator.class);
+		EnumSet<NumericOperatorSetting> nos = EnumSet.allOf(NumericOperatorSetting.class);
+		nos.remove(NumericOperatorSetting.NUMERIC_INTERVALS);
 
-		private ColumnConditionBasesNumericNormal(Column theColumn)
-		{
-			itsConditionBaseLEQ = new ConditionBase(theColumn, Operator.LESS_THAN_OR_EQUAL);
-			itsConditionBaseGEQ = new ConditionBase(theColumn, Operator.GREATER_THAN_OR_EQUAL);
-		}
+		for (NumericOperatorSetting n : nos)
+			e.addAll(n.getOperators());
 
-		final int size() { return 2; }
-
-		final ConditionBase get(int zeroOrOne)
-		{
-			assert ((zeroOrOne == 0) || zeroOrOne == 1);
-			return (zeroOrOne == 0 ? itsConditionBaseLEQ : itsConditionBaseGEQ); 
-		}
+		return EnumSet.of(Operator.EQUALS, Operator.LESS_THAN_OR_EQUAL, Operator.GREATER_THAN_OR_EQUAL).equals(e);
 	}
 
-	static { assert (NumericOperatorSetting.NUMERIC_LEQ.getOperators().equals(EnumSet.of(Operator.LESS_THAN_OR_EQUAL))); }
-	final class ColumnConditionBasesNumericLEQ extends ColumnConditionBasesNumeric
-	{
-		private final ConditionBase itsConditionBase;
-
-		private ColumnConditionBasesNumericLEQ(Column theColumn)
-		{
-			itsConditionBase = new ConditionBase(theColumn, Operator.LESS_THAN_OR_EQUAL);
-		}
-
-		@Override
-		final int size() { return 1; }
-
-		// do not bother checking the supplied parameter
-		@Override
-		final ConditionBase get(int ignored) { return itsConditionBase; }
-	}
-
-	static { assert (NumericOperatorSetting.NUMERIC_GEQ.getOperators().equals(EnumSet.of(Operator.GREATER_THAN_OR_EQUAL))); }
-	final class ColumnConditionBasesNumericGEQ extends ColumnConditionBasesNumeric
-	{
-		private final ConditionBase itsConditionBase;
-
-		private ColumnConditionBasesNumericGEQ(Column theColumn)
-		{
-			itsConditionBase = new ConditionBase(theColumn, Operator.GREATER_THAN_OR_EQUAL);
-		}
-
-		@Override
-		final int size() { return 1; }
-
-		// do not bother checking the supplied parameter
-		@Override
-		final ConditionBase get(int ignored) { return itsConditionBase; }
-	}
-
-	static { assert (NumericOperatorSetting.NUMERIC_ALL.getOperators().equals(EnumSet.of(Operator.EQUALS, Operator.LESS_THAN_OR_EQUAL, Operator.GREATER_THAN_OR_EQUAL))); }
-	final class ColumnConditionBasesNumericAll extends ColumnConditionBasesNumeric
+	// wastes some bytes as not all member fields are always populated, but the
+	// design is simplified and there are only few (shared) ColumnConditionBases
+	final class ColumnConditionBasesNumericRegular extends ColumnConditionBases
 	{
 		private final ConditionBase itsConditionBaseEquals;
 		private final ConditionBase itsConditionBaseLEQ;
 		private final ConditionBase itsConditionBaseGEQ;
 
-		private ColumnConditionBasesNumericAll(Column theColumn)
+		private ColumnConditionBasesNumericRegular(Column theColumn, boolean useEquals, boolean useLeq, boolean useGeq)
 		{
-			itsConditionBaseEquals = new ConditionBase(theColumn, Operator.EQUALS);
-			itsConditionBaseLEQ = new ConditionBase(theColumn, Operator.LESS_THAN_OR_EQUAL);
-			itsConditionBaseGEQ = new ConditionBase(theColumn, Operator.GREATER_THAN_OR_EQUAL);
+			itsConditionBaseEquals = useEquals ? new ConditionBase(theColumn, Operator.EQUALS)                : null;
+			itsConditionBaseLEQ    = useLeq    ? new ConditionBase(theColumn, Operator.LESS_THAN_OR_EQUAL)    : null;
+			itsConditionBaseGEQ    = useGeq    ? new ConditionBase(theColumn, Operator.GREATER_THAN_OR_EQUAL) : null;
 		}
-
-		@Override
-		final int size() { return 3; }
 
 		@Override
 		final ConditionBase get(int zeroOrOneOrTwo)
@@ -299,26 +236,8 @@ public enum ColumnConditionBasesBuilder
 		}
 	}
 
-	static { assert (NumericOperatorSetting.NUMERIC_EQ.getOperators().equals(EnumSet.of(Operator.EQUALS))); }
-	final class ColumnConditionBasesNumericEquals extends ColumnConditionBasesNumeric
-	{
-		private final ConditionBase itsConditionBase;
-
-		private ColumnConditionBasesNumericEquals(Column theColumn)
-		{
-			itsConditionBase = new ConditionBase(theColumn, Operator.EQUALS);
-		}
-
-		@Override
-		final int size() { return 1; }
-
-		// do not bother checking the supplied parameter
-		@Override
-		final ConditionBase get(int ignored) { return itsConditionBase; }
-	}
-
 	static { assert (NumericOperatorSetting.NUMERIC_INTERVALS.getOperators().equals(EnumSet.of(Operator.BETWEEN))); }
-	final class ColumnConditionBasesNumericIntervals extends ColumnConditionBasesNumeric
+	final class ColumnConditionBasesNumericIntervals extends ColumnConditionBases
 	{
 		private final ConditionBase itsConditionBase;
 
@@ -326,9 +245,6 @@ public enum ColumnConditionBasesBuilder
 		{
 			itsConditionBase = new ConditionBase(theColumn, Operator.BETWEEN);
 		}
-
-		@Override
-		final int size() { return 1; }
 
 		// do not bother checking the supplied parameter
 		@Override
