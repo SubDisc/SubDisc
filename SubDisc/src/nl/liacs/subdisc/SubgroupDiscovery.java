@@ -1450,108 +1450,6 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////
 
-	// for SINGLE_NOMINAL this could call getUniqueNumericDomainMap
-	// because EQUAL was treated as NOMINAL no 'best' version exists, also the
-	// GUI is a mess, it is not clear what ALL/BEST/BEST_BINS/BINS mean for
-	// EQUALS, for example: BINS with EQUALS could be interpreted as what is
-	// currently CONSECUTIVE bins
-	// TODO when finished -> update isPOCSetting() related codes
-	//
-	//
-	// NOTE
-	// historically, numeric equals was treated as a nominal Refinement
-	// this should be considered a bug
-	// when user selects numeric operator setting NUMERIC_ALL (=, <=, >=), both
-	// <= and >= use bins when NumericStrategy.NUMERIC_(BEST_)BINS is used, but
-	// = does not, it always evaluated all numeric values in a domain
-	//
-	// so for NumericOperatorSetting.NUMERIC_EQ, which uses Operator.EQUALS, the
-	// NumericStrategy is not respected
-	// the behaviour is always like NumericStrategy.NUMERIC_ALL
-	// there is no NUMERIC_BEST, NUMERIC_BEST_BINS and NUMERIC_BINS alternative
-	private final void evaluateNumericEqualsRefinements(BitSet theParentMembers, int theParentCoverage, Refinement theRefinement)
-	{
-		//NumericStrategy aNumericStrategy = itsSearchParameters.getNumericStrategy();
-		NumericStrategy THIS_IS_A_FAKE = NumericStrategy.NUMERIC_ALL;
-		assert (itsSearchParameters.getNumericOperatorSetting().includesEquals());
-
-		////////////////////////////////////////////////////////////////////////
-		boolean isFilterNull = (itsFilter == null);
-		Subgroup aParent = theRefinement.getSubgroup();
-
-		// members-based domain, no empty Subgroups will occur
-		ConditionBase aConditionBase = theRefinement.getConditionBase();
-		Column aColumn = aConditionBase.getColumn();
-		ConditionListA aParentConditions = (isFilterNull ? null : aParent.getConditions());
-		Operator anOperator = aConditionBase.getOperator();
-
-		assert (anOperator == Operator.EQUALS);
-
-		// FIXME this is why this is such a weird strategy - leave it for now
-		// might require update when more strategies are added
-		//boolean isAllStrategy = (aNumericStrategy == NumericStrategy.NUMERIC_ALL || aNumericStrategy == NumericStrategy.NUMERIC_BINS);
-
-		//Subgroup aBestSubgroup = null;
-		////////////////////////////////////////////////////////////////////////
-
-		// POCSetting ensures a sorted NUMERIC domain for SINGLE_NOMINAL
-		// DirectSetting is implied
-		// NUMERIC_VIKAMINE_CONSECUTIVE_ALL|BEST are currently not a POCSetting
-		boolean direct = isPOCSetting();
-		// final: ensure value is set before use in loop
-		final int aSize;
-		final float [] aDomain;
-		final int[] aCounts;
-		final int[] aTPs;
-
-		// split code paths, for most SINGLE_NOMINAL settings versus the rest
-		if (direct)
-		{
-			ValueInfo via = aColumn.getUniqueNumericDomainMap(theParentMembers);
-			aDomain = aColumn.SORTED;
-			aCounts = via.itsCounts;
-			aSize = aDomain.length;
-			aTPs = via.itsRecords; // this is the TruePositive count
-		}
-		else
-		{
-//			DomainMapNumeric m = getDomainMapD(theParentMembers, theParentCoverage, aNumericStrategy, aColumn, itsSearchParameters.getNrBins(), anOperator);
-			DomainMapNumeric m = getDomainMapD(theParentMembers, theParentCoverage, THIS_IS_A_FAKE, aColumn, 0, anOperator);
-			aDomain = m.itsDomain;
-			aCounts = m.itsCounts;
-			aSize = m.itsSize;
-			aTPs = null;
-			if (aSize <= 1)
-				return;
-		}
-
-		for (int i = 0; i < aSize && !isTimeToStop(); ++i)
-		{
-			int aCoverage = aCounts[i];
-
-			// for ValueInfo this includes the (aCounts[i] == 0) check
-			if (aCoverage < itsMinimumCoverage)
-				continue;
-
-			// NOTE latter check not required for aDomainMap as size would be 1
-			if (direct && (aCoverage == theParentCoverage))
-				break;
-
-			Condition anAddedCondition = new Condition(aConditionBase, aDomain[i]);
-
-			if (!isFilterNull && !itsFilter.isUseful(aParentConditions, anAddedCondition))
-				continue;
-
-			final Subgroup aChild;
-			if (direct)
-				aChild = directComputation(aParent, anAddedCondition, itsQualityMeasure, aCoverage, aTPs[i]);
-			else
-				aChild = aParent.getRefinedSubgroup(anAddedCondition);
-
-			checkAndLog(aChild, theParentCoverage);
-		}
-	}
-
 	/*
 	 * NOTE
 	 * itsSubgroup / theMembers for each Refinement from the same RefinementList
@@ -1618,6 +1516,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	}
 
 	// this proxy method will be removed
+	@Deprecated
 	private final void evaluateNumeric(Subgroup theParent, BitSet theParentMembers, ColumnConditionBases theColumnConditionBases)
 	{
 		if (theColumnConditionBases instanceof ColumnConditionBasesNumericRegular)
@@ -1630,20 +1529,19 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 
 	private final void evaluateNumericRegular(Subgroup theParent, BitSet theParentMembers, ColumnConditionBasesNumericRegular theColumnConditionBases)
 	{
-		NumericStrategy aNumericStrategy = itsSearchParameters.getNumericStrategy();
-		assert (aNumericStrategy == NumericStrategy.NUMERIC_ALL || aNumericStrategy == NumericStrategy.NUMERIC_BEST ||
-				aNumericStrategy == NumericStrategy.NUMERIC_BINS || aNumericStrategy == NumericStrategy.NUMERIC_BEST_BINS);
+		assert (EnumSet.of(NumericStrategy.NUMERIC_ALL, NumericStrategy.NUMERIC_BEST,
+							NumericStrategy.NUMERIC_BEST_BINS, NumericStrategy.NUMERIC_BINS).contains(itsSearchParameters.getNumericStrategy()));
 
-		final ConditionBase e = theColumnConditionBases.get(0);
-		final ConditionBase l = theColumnConditionBases.get(1);
-		final ConditionBase g = theColumnConditionBases.get(2);
+		ConditionBase e = theColumnConditionBases.get(0);
+		ConditionBase l = theColumnConditionBases.get(1);
+		ConditionBase g = theColumnConditionBases.get(2);
 
 		// SearchSettings should not change, but checking all the time is cheap
 		boolean doEq_Test = (e != null);
 		boolean doLeqTest = (l != null);
 		boolean doGeqTest = (g != null);
 
-		assert (!doEq_Test || (e.getOperator() == Operator.EQUALS));
+		assert (!doEq_Test || (e.getOperator() == (itsSearchParameters.getNumericStrategy().isDiscretiser() ? Operator.BETWEEN : Operator.EQUALS)));
 		assert (!doLeqTest || (l.getOperator() == Operator.LESS_THAN_OR_EQUAL));
 		assert (!doGeqTest || (g.getOperator() == Operator.GREATER_THAN_OR_EQUAL));
 
@@ -1651,27 +1549,27 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 
 		// currently only for SINGLE_NOMINAL (and not for propensity scores)
 		// but expect there to be more optimised settings, so keep split here
-		if (!isPOCSetting())
+		if (isPOCSetting())
 		{
-			// FIXME
+			ValueInfo via = aColumn.getUniqueNumericDomainMap(theParentMembers);
+			if (doEq_Test) evaluateNumericRegularSingleBinary(theParent, e, via);
+			if (doLeqTest) evaluateNumericRegularSingleBinary(theParent, l, via);
+			if (doGeqTest) evaluateNumericRegularSingleBinary(theParent, g, via);
+		}
+		else
+		{
 			if (doEq_Test) numericHalfIntervals(theParentMembers, theParent.getCoverage(), new Refinement(e, theParent));
 			if (doLeqTest) numericHalfIntervals(theParentMembers, theParent.getCoverage(), new Refinement(l, theParent));
 			if (doGeqTest) numericHalfIntervals(theParentMembers, theParent.getCoverage(), new Refinement(g, theParent));
-			return;
 		}
-
-		ValueInfo via = aColumn.getUniqueNumericDomainMap(theParentMembers);
-		if (doEq_Test) evaluateNumericRegular(theParent, e, via);
-		if (doLeqTest) evaluateNumericRegular(theParent, l, via);
-		if (doGeqTest) evaluateNumericRegular(theParent, g, via);
 	}
 
 	// helper to differentiate between strategies, these NumericStrategies all
 	// use the same Operator and NumericOperatorSetting
 	private final void evaluateNumericIntervals(Subgroup theParent, BitSet theParentMembers, ColumnConditionBasesNumericIntervals theColumnConditionBases)
 	{
-		assert (theColumnConditionBases.get(0).getOperator() == Operator.BETWEEN);
-		assert (itsSearchParameters.getNumericOperatorSetting() == NumericOperatorSetting.NUMERIC_INTERVALS);
+		assert (Operator.BETWEEN == theColumnConditionBases.get(0).getOperator());
+		assert (NumericOperatorSetting.NUMERIC_INTERVALS == itsSearchParameters.getNumericOperatorSetting());
 		assert (EnumSet.of(NumericStrategy.NUMERIC_INTERVALS,
 							NumericStrategy.NUMERIC_VIKAMINE_CONSECUTIVE_ALL,
 							NumericStrategy.NUMERIC_VIKAMINE_CONSECUTIVE_BEST).contains(itsSearchParameters.getNumericStrategy()));
@@ -1687,9 +1585,8 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	{
 		// evaluateNumericRefinements() should prevent getting here for
 		// NUMERIC_INTERVALS and NUMERIC_VIKAMINE_CONSECUTIVE_ALL|BEST
-		NumericStrategy aNumericStrategy = itsSearchParameters.getNumericStrategy();
-		assert (aNumericStrategy == NumericStrategy.NUMERIC_ALL || aNumericStrategy == NumericStrategy.NUMERIC_BEST ||
-				aNumericStrategy == NumericStrategy.NUMERIC_BINS || aNumericStrategy == NumericStrategy.NUMERIC_BEST_BINS);
+		assert (EnumSet.of(NumericStrategy.NUMERIC_ALL, NumericStrategy.NUMERIC_BEST,
+							NumericStrategy.NUMERIC_BEST_BINS, NumericStrategy.NUMERIC_BINS).contains(itsSearchParameters.getNumericStrategy()));
 
 		////////////////////////////////////////////////////////////////////////
 		boolean isFilterNull = (itsFilter == null);
@@ -1705,6 +1602,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		assert (anOperator == Operator.LESS_THAN_OR_EQUAL || anOperator == Operator.GREATER_THAN_OR_EQUAL);
 
 		// might require update when more strategies are added
+		NumericStrategy aNumericStrategy = itsSearchParameters.getNumericStrategy();
 		boolean isAllStrategy = (aNumericStrategy == NumericStrategy.NUMERIC_ALL || aNumericStrategy == NumericStrategy.NUMERIC_BINS);
 
 		Subgroup aBestSubgroup = null;
@@ -1767,6 +1665,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	}
 
 	// kept for historic reasons, will be removed soon
+	@Deprecated
 	private final void numericHalfIntervals(BitSet theParentMembers, int theParentCoverage, Refinement theRefinement)
 	{
 		// currently only for SINGLE_NOMINAL (and not for propensity scores)
@@ -1786,17 +1685,17 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 
 		ValueInfo via = aColumn.getUniqueNumericDomainMap(theParentMembers);
 
-		evaluateNumericRegular(aParent, aConditionBase, via);
+		evaluateNumericRegularSingleBinary(aParent, aConditionBase, via);
 	}
 
-	private final void evaluateNumericRegular(Subgroup theParent, ConditionBase theConditionBase, ValueInfo theValueInfo)
+	private final void evaluateNumericRegularSingleBinary(Subgroup theParent, ConditionBase theConditionBase, ValueInfo theValueInfo)
 	{
 		NumericStrategy ns = itsSearchParameters.getNumericStrategy();
 
 		// split code path - BEST_BINS/BINS use substantially different loop
 		if (ns.isDiscretiser())
 		{
-			evaluateNumericRegularCoarse(theParent, theConditionBase, theValueInfo);
+			evaluateNumericRegularSingleBinaryCoarse(theParent, theConditionBase, theValueInfo);
 			return;
 		}
 
@@ -1810,13 +1709,29 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 
 		float[] aDomain =  theConditionBase.getColumn().SORTED;
 		int[] aCounts = theValueInfo.itsCounts;
-		int[] aRecords = theValueInfo.itsRecords; // this is the TruePositive count
+		int[] aTPs = theValueInfo.itsRecords; // this is the TruePositive count
 
-		// a lot of code, but keep it together for now, loops are similar
+		// a lot of code, but keep it together for now, loops differ in subtle
+		// ways, keeping them together for now aids interpretation
 		if (anOperator == Operator.EQUALS)
 		{
-			// eat this
-			throw new AssertionError("numericHalfIntervals() + " + Operator.EQUALS);
+			for (int i = 0, j = aCounts.length; i < j && !isTimeToStop(); ++i)
+			{
+				int aCount =  aCounts[i];
+
+				// no need to evaluate, it includes the (aCounts[i] == 0) check,
+				//  assuming itsMinimumCoverage >= 1
+				if (aCount < itsMinimumCoverage)
+					continue;
+
+				// no useful refinement possible, counts are 0 for other values
+				if (aCount == aParentCoverage)
+					break;
+
+				Condition anAddedCondition = new Condition(theConditionBase, aDomain[i], i);
+				// always assign: returns null, aBestSugroup, or aNewSubgroup
+				aBestSubgroup = evaluateCandidate(theParent, anAddedCondition, aCount, aTPs[i], isAllStrategy, aBestSubgroup);
+			}
 		}
 		else if (anOperator == Operator.LESS_THAN_OR_EQUAL)
 		{
@@ -1831,19 +1746,17 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 				if (cover == aParentCoverage)
 					break;
 
-				// count true positives fort this value
-				tp += aRecords[i];
+				// count true positives up to this value
+				tp += aTPs[i];
 				// generally, when tp does not increase, AND last Subgroup was
 				// >= minimum coverage, the loop should ignore this Candidate
 				// but this requires a check on all (convex) quality measures
 				// FIXME (but profile and test current code first)
 
-				// no need to evaluate
 				if (cover < itsMinimumCoverage)
 					continue;
 
 				Condition aCondition = new Condition(theConditionBase, aDomain[i], i);
-				// always assign: returns null, aBestSugroup, or aNewSubgroup
 				aBestSubgroup = evaluateCandidate(theParent, aCondition, cover, tp, isAllStrategy, aBestSubgroup);
 			}
 		}
@@ -1869,11 +1782,11 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 
 				// before moving to next, subtract counts related to this value
 				cover -= aCount;
-				tp -= aRecords[i];
+				tp -= aTPs[i];
 			}
 		}
 		else
-			throw new AssertionError("SubgroupDiscovery.evaluateNumericRegular() + " + anOperator);
+			throw new AssertionError("SubgroupDiscovery.evaluateNumericRegularSingleBinary() + " + anOperator);
 
 		if (!isAllStrategy && (aBestSubgroup != null))
 			bestAdd(aBestSubgroup, aParentCoverage);
@@ -1881,7 +1794,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 
 	// NOTE for comparison bugs in original code are deliberately reproduced atm
 	@SuppressWarnings("unused") // suppress warnings when DEBUG_POC_BINS = false
-	private final void evaluateNumericRegularCoarse(Subgroup theParent, ConditionBase theConditionBase, ValueInfo theValueInfo)
+	private final void evaluateNumericRegularSingleBinaryCoarse(Subgroup theParent, ConditionBase theConditionBase, ValueInfo theValueInfo)
 	{
 		NumericStrategy ns = itsSearchParameters.getNumericStrategy();
 		assert (ns == NumericStrategy.NUMERIC_BEST_BINS || ns == NumericStrategy.NUMERIC_BINS);
@@ -1898,7 +1811,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		long aParentCoverage = theParent.getCoverage();
 		float[] aDomain = theConditionBase.getColumn().SORTED;
 		int[] aCounts = theValueInfo.itsCounts;
-		int[] aRecords = theValueInfo.itsRecords; // holds true positive counts
+		int[] aTPs= theValueInfo.itsRecords; // holds true positive counts
 		boolean isAllStrategy = (ns == NumericStrategy.NUMERIC_BINS);
 		Subgroup aBestSubgroup = null;
 
@@ -1907,10 +1820,72 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		List<Float> aCheck = DEBUG_POC_BINS ? new ArrayList<Float>() : null;
 		List<Float> aValid = DEBUG_POC_BINS ? new ArrayList<Float>() : null;
 
-		if  (anOperator == Operator.EQUALS)
+		// ColumnConditionBasesBuilder replaces Operator.EQUALS for (BEST_)BINS
+		if (anOperator == Operator.BETWEEN)
 		{
-			// eat this
-			throw new AssertionError("numericHalfIntervals() + " + Operator.EQUALS);
+//			SortedMap<Interval, Integer> anIntervals = theConditionBase.getColumn().getUniqueSplitPointsBounded(theParent.getMembers(), (int) aParentCoverage, (int) aNrBins-1);
+
+			// last cover and tp used for evaluation, and last lower bound
+			int last_cover = 0;
+			int last_tp = 0;
+			float f = Float.NEGATIVE_INFINITY;
+			for (int i = 0, j = 1, next = ((int) (aParentCoverage / aNrBins)), cover = 0, tp = 0; i < aCounts.length && j < (int) aNrBins && !isTimeToStop(); ++i)
+			{
+				int aCount = aCounts[i];
+				if (aCount == 0)
+					continue;
+
+				cover += aCount;
+				tp += aTPs[i];
+
+				// for debugging do not continue on (cover < itsMinimumCoverage)
+				if (cover <= next  || (!DEBUG_POC_BINS && (cover < itsMinimumCoverage)))
+					continue;
+
+				// for debugging do not break on (cover == anOldCoverage)
+				if (!DEBUG_POC_BINS && (cover == aParentCoverage))
+					break;
+
+				float n = aDomain[i];
+				Condition anAddedCondition = new Condition(theConditionBase, new Interval(f, n));
+				aBestSubgroup = evaluateCandidate(theParent, anAddedCondition, (cover-last_cover), (tp-last_tp), isAllStrategy, aBestSubgroup);
+
+				last_cover = cover;
+				last_tp = tp;
+				f = n;
+
+				while (((next = ((int) ((++j * aParentCoverage) / aNrBins)))) <= cover-1)
+					; // deliberately empty
+
+				// debug only
+				if (DEBUG_POC_BINS)
+				{
+					aCheck.add(aDomain[i]);
+					if (!((cover < itsMinimumCoverage) || (cover == aParentCoverage)))
+						aValid.add(aDomain[i]);
+				}
+			}
+			// POSITIVE_INFINITY should never be present, as this type of value
+			// should not be in the data, but this is copied from the original
+			// code, moreover Column.add() does not guard against +/- infinity,
+			// -0.0 and NaN
+			//
+			// if there is already a Condition for POSITIVE_INFINITY, do not add
+			// another one, it should be the last value anyway, and have a
+			// correct count, if it exists (though Arrays.sort() would put NaNs
+			// after it)
+			//
+			// if it is not in present(), two situations could occur
+			// 1. the sum of the value.counts is equal to aParentCoverage (for a
+			// half-interval: <= f would select all data, and be useless), or
+			// 2. the sum is lower: add Interval that selects the remaining data
+			if ((last_cover != aParentCoverage) && (Float.compare(Float.POSITIVE_INFINITY, f) != 0))
+			{
+				Condition anAddedCondition = new Condition(theConditionBase, new Interval(f, Float.POSITIVE_INFINITY));
+				last_cover = (((int) aParentCoverage) - last_cover);
+				last_tp = (((int) theParent.getTertiaryStatistic()) - last_tp);
+				aBestSubgroup = evaluateCandidate(theParent, anAddedCondition, last_cover, last_tp, isAllStrategy, aBestSubgroup);
+			}
 		}
 		else if (anOperator == Operator.LESS_THAN_OR_EQUAL)
 		{
@@ -1921,10 +1896,9 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 					continue;
 
 				cover += aCount;
-				tp += aRecords[i];
+				tp += aTPs[i];
 
 				// for debugging do not continue on (cover < itsMinimumCoverage)
-
 				if (cover <= next  || (!DEBUG_POC_BINS && (cover < itsMinimumCoverage)))
 					continue;
 
@@ -1981,11 +1955,11 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 
 				// before moving to next, subtract counts related to this value
 				cover -= aCount;
-				tp -= aRecords[i];
+				tp -= aTPs[i];
 			}
 		}
 		else
-			throw new AssertionError("SubgroupDiscovery.evaluateNumericRegularCoarse() + " + anOperator);
+			throw new AssertionError("SubgroupDiscovery.evaluateNumericRegularSingleBinaryCoarse() + " + anOperator);
 
 		if (DEBUG_POC_BINS)
 		{
@@ -1996,11 +1970,11 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 				check[i] = aCheck.get(i);
 			if (!Arrays.equals(orig, check))
 			{
-				StringBuilder sb = new StringBuilder((int) Math.min(Integer.MAX_VALUE, (aCounts.length + aRecords.length + orig.length + check.length + aValid.size()) * 8L));
-				sb.append("WARNING: evaluateNumericRegularCoarse()");
+				StringBuilder sb = new StringBuilder((int) Math.min(Integer.MAX_VALUE, (aCounts.length + aTPs.length + orig.length + check.length + aValid.size()) * 8L));
+				sb.append("WARNING: evaluateNumericRegularSingleBinaryCoarse()");
 				sb.append(String.format("%n%s AND %s [value] (anOldCoverage=%d)%n", theParent, theConditionBase, aParentCoverage));
 				sb.append(Arrays.toString(aCounts));
-				sb.append(Arrays.toString(aRecords));
+				sb.append(Arrays.toString(aTPs));
 				sb.append("");
 				sb.append("\t orig: " + Arrays.toString(orig));
 				sb.append("\tcheck: " + Arrays.toString(check));
@@ -2064,78 +2038,6 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			return aNewSubgroup; // if the new subgroup is better
 		else
 			return theBestSubgroup; // if the old subgroup is better (or null)
-	}
-
-	////////////////////////////////////////////////////////////////////////////
-	////////////////////////////////////////////////////////////////////////////
-	///// numeric consecutive intervals                                    /////
-	////////////////////////////////////////////////////////////////////////////
-	////////////////////////////////////////////////////////////////////////////
-
-//	private void evaluateNumericConsecutiveIntervals(BitSet theParentMembers, int theParentCoverage, Refinement theRefinement)
-	private final void evaluateNumericConsecutiveIntervals(Subgroup theParent, BitSet theParentMembers, ColumnConditionBasesNumericIntervals theColumnConditionBases)
-	{
-		NumericStrategy aNumericStrategy = itsSearchParameters.getNumericStrategy();
-		assert (aNumericStrategy == NumericStrategy.NUMERIC_VIKAMINE_CONSECUTIVE_ALL || aNumericStrategy == NumericStrategy.NUMERIC_VIKAMINE_CONSECUTIVE_BEST);
-
-		////////////////////////////////////////////////////////////////////////
-		boolean isFilterNull = (itsFilter == null);
-		int aParentCoverage = theParent.getCoverage();
-		// members-based domain, no empty Subgroups will occur
-		ConditionBase aConditionBase = theColumnConditionBases.get(0);
-		Column aColumn = aConditionBase.getColumn();
-		ConditionListA aParentConditions = (isFilterNull ? null : theParent.getConditions());
-		// might require update when more strategies are added
-		boolean isAllStrategy = (aNumericStrategy == NumericStrategy.NUMERIC_VIKAMINE_CONSECUTIVE_ALL);
-		Subgroup aBestSubgroup = null;
-		////////////////////////////////////////////////////////////////////////
-
-		int aNrSplitPoints = itsSearchParameters.getNrBins() - 1;
-		// useless, Column.getSplitPointsBounded() would return an empty array
-		if (aNrSplitPoints <= 0)
-			return;
-		//SortedSet<Interval> anIntervals = aConditionBase.getColumn().getUniqueSplitPointsBounded(theParentMembers, aNrSplitPoints);
-		SortedMap<Interval, Integer> anIntervals = aColumn.getUniqueSplitPointsBounded(theParentMembers, aParentCoverage, aNrSplitPoints);
-		// can happen for aNrSplitPoints >= 1: the underlying algorithm had bugs
-		if (anIntervals.size() <= 1)
-			return;
-
-		//for (Interval anInterval : anIntervals)
-		for (Entry<Interval, Integer> e : anIntervals.entrySet())
-		{
-			if (isTimeToStop())
-				break;
-
-			int aCount = e.getValue();
-
-			if (aCount < itsMinimumCoverage)
-				continue;
-
-			if (aCount == aParentCoverage)
-				break;
-
-			Condition aCondition = new Condition(aConditionBase, e.getKey());
-
-			if (!isFilterNull && !itsFilter.isUseful(aParentConditions, aCondition))
-				continue;
-
-			Subgroup aChild = theParent.getRefinedSubgroup(aCondition);
-
-			if (isAllStrategy)
-			{
-				//addToBuffer(aNewSubgroup);
-				checkAndLog(aChild, aParentCoverage);
-			}
-			else
-			{
-				// more clear than using else-if
-				if (isValidAndBest(aChild, aParentCoverage, aBestSubgroup))
-					aBestSubgroup = aChild;
-			}
-		}
-
-		if (!isAllStrategy && (aBestSubgroup != null))
-			bestAdd(aBestSubgroup, aParentCoverage);
 	}
 
 	////////////////////////////////////////////////////////////////////////////
@@ -3646,5 +3548,198 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			if (sum < theMinimumCoverage)
 				theSplitPoints.clear();
 		}
+	}
+
+	// XXX see more recent comment at evaluateNumericConsecutiveInterval bolow
+	//
+	// for SINGLE_NOMINAL this could call getUniqueNumericDomainMap
+	// because EQUAL was treated as NOMINAL no 'best' version exists, also the
+	// GUI is a mess, it is not clear what ALL/BEST/BEST_BINS/BINS mean for
+	// EQUALS, for example: BINS with EQUALS could be interpreted as what is
+	// currently CONSECUTIVE bins
+	// TODO when finished -> update isPOCSetting() related codes
+	//
+	//
+	// NOTE
+	// historically, numeric equals was treated as a nominal Refinement
+	// this should be considered a bug
+	// when user selects numeric operator setting NUMERIC_ALL (=, <=, >=), both
+	// <= and >= use bins when NumericStrategy.NUMERIC_(BEST_)BINS is used, but
+	// = does not, it always evaluated all numeric values in a domain
+	//
+	// so for NumericOperatorSetting.NUMERIC_EQ, which uses Operator.EQUALS, the
+	// NumericStrategy is not respected
+	// the behaviour is always like NumericStrategy.NUMERIC_ALL
+	// there is no NUMERIC_BEST, NUMERIC_BEST_BINS and NUMERIC_BINS alternative
+	@Deprecated
+	private final void evaluateNumericEqualsRefinements(BitSet theParentMembers, int theParentCoverage, Refinement theRefinement)
+	{
+		//NumericStrategy aNumericStrategy = itsSearchParameters.getNumericStrategy();
+		NumericStrategy THIS_IS_A_FAKE = NumericStrategy.NUMERIC_ALL;
+		assert (itsSearchParameters.getNumericOperatorSetting().includesEquals());
+
+		////////////////////////////////////////////////////////////////////////
+		boolean isFilterNull = (itsFilter == null);
+		Subgroup aParent = theRefinement.getSubgroup();
+
+		// members-based domain, no empty Subgroups will occur
+		ConditionBase aConditionBase = theRefinement.getConditionBase();
+		Column aColumn = aConditionBase.getColumn();
+		ConditionListA aParentConditions = (isFilterNull ? null : aParent.getConditions());
+		Operator anOperator = aConditionBase.getOperator();
+
+		assert (anOperator == Operator.EQUALS);
+
+		// FIXME this is why this is such a weird strategy - leave it for now
+		// might require update when more strategies are added
+		//boolean isAllStrategy = (aNumericStrategy == NumericStrategy.NUMERIC_ALL || aNumericStrategy == NumericStrategy.NUMERIC_BINS);
+
+		//Subgroup aBestSubgroup = null;
+		////////////////////////////////////////////////////////////////////////
+
+		// POCSetting ensures a sorted NUMERIC domain for SINGLE_NOMINAL
+		// DirectSetting is implied
+		// NUMERIC_VIKAMINE_CONSECUTIVE_ALL|BEST are currently not a POCSetting
+		boolean direct = isPOCSetting();
+		// final: ensure value is set before use in loop
+		final int aSize;
+		final float [] aDomain;
+		final int[] aCounts;
+		final int[] aTPs;
+
+		// split code paths, for most SINGLE_NOMINAL settings versus the rest
+		if (direct)
+		{
+			ValueInfo via = aColumn.getUniqueNumericDomainMap(theParentMembers);
+			aDomain = aColumn.SORTED;
+			aCounts = via.itsCounts;
+			aSize = aDomain.length;
+			aTPs = via.itsRecords; // this is the TruePositive count
+		}
+		else
+		{
+//			DomainMapNumeric m = getDomainMapD(theParentMembers, theParentCoverage, aNumericStrategy, aColumn, itsSearchParameters.getNrBins(), anOperator);
+			DomainMapNumeric m = getDomainMapD(theParentMembers, theParentCoverage, THIS_IS_A_FAKE, aColumn, 0, anOperator);
+			aDomain = m.itsDomain;
+			aCounts = m.itsCounts;
+			aSize = m.itsSize;
+			aTPs = null;
+			if (aSize <= 1)
+				return;
+		}
+
+		for (int i = 0; i < aSize && !isTimeToStop(); ++i)
+		{
+			int aCoverage = aCounts[i];
+
+			// for ValueInfo this includes the (aCounts[i] == 0) check
+			if (aCoverage < itsMinimumCoverage)
+				continue;
+
+			// NOTE latter check not required for aDomainMap as size would be 1
+			if (direct && (aCoverage == theParentCoverage))
+				break;
+
+			Condition anAddedCondition = new Condition(aConditionBase, aDomain[i]);
+
+			if (!isFilterNull && !itsFilter.isUseful(aParentConditions, anAddedCondition))
+				continue;
+
+			final Subgroup aChild;
+			if (direct)
+				aChild = directComputation(aParent, anAddedCondition, itsQualityMeasure, aCoverage, aTPs[i]);
+			else
+				aChild = aParent.getRefinedSubgroup(anAddedCondition);
+
+			checkAndLog(aChild, theParentCoverage);
+		}
+	}
+
+	////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////
+	///// numeric consecutive intervals                                    /////
+	////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////
+
+	// NOTE
+	// NUMERIC_VIKAMINE_CONSECUTIVE_ALL and NUMERIC_VIKAMINE_CONSECUTIVE_BEST
+	// will be removed
+	// the inconsistent behaviour of NumericOperatorSettings NUMERIC_EQ and
+	// NUMERIC_ALL has been corrected
+	// the original behaviour would test and return results for all numeric
+	// bounds for =, and did not respect the ALL|BEST distinction
+	// also, all bounds were tested, even when BEST_BINS|BINS was selected
+	// this was especially inconsistent for NUMERIC_ALL (<=,=,>=), where both
+	// <= and >= would perform binning and use a reduced number of bound, but in
+	// the same setting = did not
+	//
+	// to get the behaviour of NUMERIC_VIKAMINE_CONSECUTIVE_ALL use BINS and =
+	// for NUMERIC_VIKAMINE_CONSECUTIVE_BEST use BEST_BINS and =
+	//
+//	private void evaluateNumericConsecutiveIntervals(BitSet theParentMembers, int theParentCoverage, Refinement theRefinement)
+	@Deprecated
+	private final void evaluateNumericConsecutiveIntervals(Subgroup theParent, BitSet theParentMembers, ColumnConditionBasesNumericIntervals theColumnConditionBases)
+	{
+		NumericStrategy aNumericStrategy = itsSearchParameters.getNumericStrategy();
+		assert (aNumericStrategy == NumericStrategy.NUMERIC_VIKAMINE_CONSECUTIVE_ALL || aNumericStrategy == NumericStrategy.NUMERIC_VIKAMINE_CONSECUTIVE_BEST);
+
+		////////////////////////////////////////////////////////////////////////
+		boolean isFilterNull = (itsFilter == null);
+		int aParentCoverage = theParent.getCoverage();
+		// members-based domain, no empty Subgroups will occur
+		ConditionBase aConditionBase = theColumnConditionBases.get(0);
+		Column aColumn = aConditionBase.getColumn();
+		ConditionListA aParentConditions = (isFilterNull ? null : theParent.getConditions());
+		// might require update when more strategies are added
+		boolean isAllStrategy = (aNumericStrategy == NumericStrategy.NUMERIC_VIKAMINE_CONSECUTIVE_ALL);
+		Subgroup aBestSubgroup = null;
+		////////////////////////////////////////////////////////////////////////
+
+		int aNrSplitPoints = itsSearchParameters.getNrBins() - 1;
+		// useless, Column.getSplitPointsBounded() would return an empty array
+		if (aNrSplitPoints <= 0)
+			return;
+		//SortedSet<Interval> anIntervals = aConditionBase.getColumn().getUniqueSplitPointsBounded(theParentMembers, aNrSplitPoints);
+		SortedMap<Interval, Integer> anIntervals = aColumn.getUniqueSplitPointsBounded(theParentMembers, aParentCoverage, aNrSplitPoints);
+		// can happen for aNrSplitPoints >= 1: the underlying algorithm had bugs
+		if (anIntervals.size() <= 1)
+			return;
+
+		//for (Interval anInterval : anIntervals)
+		for (Entry<Interval, Integer> e : anIntervals.entrySet())
+		{
+			if (isTimeToStop())
+				break;
+
+			int aCount = e.getValue();
+
+			if (aCount < itsMinimumCoverage)
+				continue;
+
+			if (aCount == aParentCoverage)
+				break;
+
+			Condition aCondition = new Condition(aConditionBase, e.getKey());
+
+			if (!isFilterNull && !itsFilter.isUseful(aParentConditions, aCondition))
+				continue;
+
+			Subgroup aChild = theParent.getRefinedSubgroup(aCondition);
+
+			if (isAllStrategy)
+			{
+				//addToBuffer(aNewSubgroup);
+				checkAndLog(aChild, aParentCoverage);
+			}
+			else
+			{
+				// more clear than using else-if
+				if (isValidAndBest(aChild, aParentCoverage, aBestSubgroup))
+					aBestSubgroup = aChild;
+			}
+		}
+
+		if (!isAllStrategy && (aBestSubgroup != null))
+			bestAdd(aBestSubgroup, aParentCoverage);
 	}
 }
