@@ -6,6 +6,7 @@ package nl.liacs.subdisc;
  */
 public class Statistics
 {
+	// FIXME replace all floats, they produce incorrect results
 	private int itsCoverage;
 	private int itsComplementCoverage;
 	private float itsSubgroupSum = Float.NaN;
