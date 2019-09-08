@@ -2872,7 +2872,7 @@ public class Column implements XMLNodeInterface
 	// NOTE: in svn revision 3430 USE_NEW_BINNING = true; in git revision ad14cb3 USE_NEW_BINNING = false;
 	public static boolean USE_NEW_BINNING = false;
 	@Deprecated
-	float[] getUniqueSplitPoints(BitSet theBitSet, int theNrSplits, Operator theOperator) throws IllegalArgumentException
+	public float[] getUniqueSplitPoints(BitSet theBitSet, int theNrSplits, Operator theOperator) throws IllegalArgumentException
 	{
 		if (!USE_NEW_BINNING)
 			return getSplitPoints(theBitSet, theNrSplits);
