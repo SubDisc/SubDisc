@@ -845,12 +845,11 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 				else if (c instanceof ColumnConditionBasesNominalEquals)
 					evaluateNominalEquals(itsSubgroup, aMembers, (ColumnConditionBasesNominalEquals) c);
 				else if (c instanceof ColumnConditionBasesNumericRegular)
-					evaluateNumeric(itsSubgroup, aMembers, c);
+					evaluateNumericRegular(itsSubgroup, aMembers, (ColumnConditionBasesNumericRegular) c);
 				else if (c instanceof ColumnConditionBasesNumericIntervals)
-					evaluateNumeric(itsSubgroup, aMembers, c);
+					evaluateNumericIntervals(itsSubgroup, aMembers, (ColumnConditionBasesNumericIntervals) c);
 				else
 					throw new AssertionError("Test.run() unexpected subclass of ColumnConditionBasesNumeric");
-
 			}
 
 			itsSemaphore.release();
@@ -1515,16 +1514,23 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		}
 	}
 
-	// this proxy method will be removed
+	// kept for historic reasons, will be removed soon
 	@Deprecated
-	private final void evaluateNumeric(Subgroup theParent, BitSet theParentMembers, ColumnConditionBases theColumnConditionBases)
+	private final void numericHalfIntervals(BitSet theParentMembers, int theParentCoverage, Refinement theRefinement)
 	{
-		if (theColumnConditionBases instanceof ColumnConditionBasesNumericRegular)
-			evaluateNumericRegular(theParent, theParentMembers, (ColumnConditionBasesNumericRegular) theColumnConditionBases);
-		else if (theColumnConditionBases instanceof ColumnConditionBasesNumericIntervals)
-			evaluateNumericIntervals(theParent, theParentMembers, (ColumnConditionBasesNumericIntervals) theColumnConditionBases);
+		Subgroup aParent = theRefinement.getSubgroup();
+		ConditionBase aConditionBase = theRefinement.getConditionBase();
+
+		// currently only for SINGLE_NOMINAL (and not for propensity scores)
+		if (!isPOCSetting())
+		{
+			evaluateNumericRegularHelper(aParent, theParentMembers, aConditionBase);
+		}
 		else
-			throw new AssertionError("SubgroupDiscovery.evaluateNumeric() unexpected subclass of ColumnConditionBasesNumeric");
+		{
+			ValueInfo via = aConditionBase.getColumn().getUniqueNumericDomainMap(theParentMembers);
+			evaluateNumericRegularSingleBinary(aParent, aConditionBase, via);
+		}
 	}
 
 	private final void evaluateNumericRegular(Subgroup theParent, BitSet theParentMembers, ColumnConditionBasesNumericRegular theColumnConditionBases)
@@ -1558,9 +1564,25 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		}
 		else
 		{
-			if (doEq_Test) numericHalfIntervals(theParentMembers, theParent.getCoverage(), new Refinement(e, theParent));
-			if (doLeqTest) numericHalfIntervals(theParentMembers, theParent.getCoverage(), new Refinement(l, theParent));
-			if (doGeqTest) numericHalfIntervals(theParentMembers, theParent.getCoverage(), new Refinement(g, theParent));
+			NumericStrategy ns = itsSearchParameters.getNumericStrategy();
+			int aParentCoverage = theParent.getCoverage();
+
+			if ((ns == NumericStrategy.NUMERIC_ALL) || (ns == NumericStrategy.NUMERIC_BEST))
+			{
+				// can all use the same DomainMapNumeric: evaluateNumericRegular
+				DomainMapNumeric m = aColumn.getUniqueNumericDomainMap(theParentMembers, aParentCoverage);
+				if (doEq_Test) evaluateNumericRegular(theParent, e, m);
+				if (doLeqTest) evaluateNumericRegular(theParent, l, m);
+				if (doGeqTest) evaluateNumericRegular(theParent, g, m);
+			}
+			else
+			{
+				// FIXME these currently CAN NOT use the same DomainMapNumeric
+				// FIXME BETWEEN is new and unimplemented for this setting
+				if (doEq_Test) evaluateNumericRegularHelper(theParent, theParentMembers, e);
+				if (doLeqTest) evaluateNumericRegularHelper(theParent, theParentMembers, l);
+				if (doGeqTest) evaluateNumericRegularHelper(theParent, theParentMembers, g);
+			}
 		}
 	}
 
@@ -1580,45 +1602,77 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			evaluateNumericConsecutiveIntervals(theParent, theParentMembers, theColumnConditionBases);
 	}
 
-	// FIXME MM historically numeric EQUALS uses nominal code, it should change
-	private final void numericHalfIntervalsDomainMapNumeric(BitSet theParentMembers, int theParentCoverage, Refinement theRefinement)
+	// generic version, evaluateNumericRegularSingleBinary is for SINGLE_NOMINAL
+	// currently, different Operators use different domains, this will change
+	// all will use a ValueInfo type Object
+	// NOTE NUMERIC_(BEST_)BINS combined with BETWEEN did not exist before
+	private final void evaluateNumericRegularHelper(Subgroup theParent, BitSet theParentMembers, ConditionBase theConditionBase)
 	{
-		// evaluateNumericRefinements() should prevent getting here for
-		// NUMERIC_INTERVALS and NUMERIC_VIKAMINE_CONSECUTIVE_ALL|BEST
+		NumericStrategy aNumericStrategy = itsSearchParameters.getNumericStrategy();
+		assert (EnumSet.of(NumericStrategy.NUMERIC_BEST_BINS, NumericStrategy.NUMERIC_BINS).contains(aNumericStrategy));
+
+		////////////////////////////////////////////////////////////////////////
+		int aParentCoverage = theParent.getCoverage();
+		// members-based domain, no empty Subgroups will occur
+		Column aColumn = theConditionBase.getColumn();
+		Operator anOperator = theConditionBase.getOperator();
+		assert (EnumSet.of(Operator.LESS_THAN_OR_EQUAL, Operator.GREATER_THAN_OR_EQUAL, Operator.BETWEEN).contains(anOperator));
+		////////////////////////////////////////////////////////////////////////
+
+		// FIXME needs a split for BETWEEN, this was recently introduces
+		//       to get the Domain for BETWEEN, using <= is sufficient
+		if (anOperator == Operator.BETWEEN)
+		{
+			System.out.format("SubgroupDiscovery.evaluateNumericRegularHelper(): '%s' is not yet implemented for '%s'%n", anOperator, aNumericStrategy);
+			return;
+		}
+
+		DomainMapNumeric m = aColumn.getUniqueSplitPointsMap(theParentMembers, aParentCoverage, itsSearchParameters.getNrBins()-1, anOperator);
+		evaluateNumericRegular(theParent, theConditionBase, m);
+	}
+
+	// generic version, evaluateNumericRegularSingleBinary is for SINGLE_NOMINAL
+	private final void evaluateNumericRegular(Subgroup theParent, ConditionBase theConditionBase, DomainMapNumeric theDomainMap)
+	{
+		NumericStrategy ns = itsSearchParameters.getNumericStrategy();
+		Operator anOperator = theConditionBase.getOperator();
+
 		assert (EnumSet.of(NumericStrategy.NUMERIC_ALL, NumericStrategy.NUMERIC_BEST,
-							NumericStrategy.NUMERIC_BEST_BINS, NumericStrategy.NUMERIC_BINS).contains(itsSearchParameters.getNumericStrategy()));
+				NumericStrategy.NUMERIC_BEST_BINS, NumericStrategy.NUMERIC_BINS).contains(ns));
+		assert (EnumSet.of(Operator.EQUALS, Operator.LESS_THAN_OR_EQUAL, Operator.GREATER_THAN_OR_EQUAL).contains(anOperator));
 
 		////////////////////////////////////////////////////////////////////////
 		boolean isFilterNull = (itsFilter == null);
-		Subgroup aParent = theRefinement.getSubgroup();
-
+		int aParentCoverage = theParent.getCoverage();
 		// members-based domain, no empty Subgroups will occur
-		ConditionBase aConditionBase = theRefinement.getConditionBase();
-		Column aColumn = aConditionBase.getColumn();
-		ConditionListA aParentConditions = (isFilterNull ? null : aParent.getConditions());
-		Operator anOperator = aConditionBase.getOperator();
-
-		// (cover-update and check) order relies on binary choice <= or >=
-		assert (anOperator == Operator.LESS_THAN_OR_EQUAL || anOperator == Operator.GREATER_THAN_OR_EQUAL);
-
+		ConditionListA aParentConditions = (isFilterNull ? null : theParent.getConditions());
 		// might require update when more strategies are added
-		NumericStrategy aNumericStrategy = itsSearchParameters.getNumericStrategy();
-		boolean isAllStrategy = (aNumericStrategy == NumericStrategy.NUMERIC_ALL || aNumericStrategy == NumericStrategy.NUMERIC_BINS);
-
+		boolean isAllStrategy = (ns == NumericStrategy.NUMERIC_ALL || ns == NumericStrategy.NUMERIC_BINS);
 		Subgroup aBestSubgroup = null;
 		////////////////////////////////////////////////////////////////////////
 
-		DomainMapNumeric m = getDomainMapD(theParentMembers, theParentCoverage, aNumericStrategy, aColumn, itsSearchParameters.getNrBins(), anOperator);
-		float[] aDomain = m.itsDomain;
-		int[] aCounts = m.itsCounts;
+		float[] aDomain = theDomainMap.itsDomain;
+		int[] aCounts = theDomainMap.itsCounts;
 
 		// code paths might be split one day, to avoid isLEQ check inside loop
 		boolean isLEQ = (anOperator == Operator.LESS_THAN_OR_EQUAL);
 		// for bins: <= with last value, >= with first, might select all data
-		boolean selectsAllData = (m.itsCountsSum == theParentCoverage);
+		boolean selectsAllData = (theDomainMap.itsCountsSum == aParentCoverage);
 		int s = (!isLEQ && selectsAllData ? 1 : 0);
-		int e = ( isLEQ && selectsAllData ? m.itsSize-1 : m.itsSize);
-		int c = (isLEQ ? 0 : (!selectsAllData ? m.itsCountsSum : (m.itsCountsSum-aCounts[0])));
+		int e = ( isLEQ && selectsAllData ? theDomainMap.itsSize-1 : theDomainMap.itsSize);
+		int c = (isLEQ ? 0 : (!selectsAllData ? theDomainMap.itsCountsSum : (theDomainMap.itsCountsSum-aCounts[0])));
+
+		// this setting will move to another method for now
+		// boolean isBetween = (anOperator == Operator.BETWEEN);
+
+		// EQUALS has just been introduced, it overwrites all settings
+		boolean isEQ = (anOperator == Operator.EQUALS);
+		if (isEQ)
+		{
+			s = 0;
+			e = theDomainMap.itsSize;
+			c = -1; // ignored for this setting
+		}
 
 		//System.out.format("%s AND %s [value]%n", anOldSubgroup, aConditionBase);
 		for (int i = s, j = e, cover = c; i < j && !isTimeToStop(); ++i)
@@ -1627,7 +1681,12 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			assert (cnt != 0);
 			//System.out.format("m.size=%d m.countSum=%d s=%d e=%d c=%d i=%d cnt=%d v=%f%n", m.itsSize, m.itsCountsSum, s, e, c, i, cnt, aDomain[i]);
 
-			if (isLEQ)
+			if (isEQ)
+			{
+				if (cnt < itsMinimumCoverage)
+					continue;
+			}
+			else if (isLEQ)
 			{
 				cover += cnt;
 				if (cover < itsMinimumCoverage)
@@ -1640,52 +1699,28 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 				cover -= cnt;
 			}
 
-			Condition aCondition = new Condition(aConditionBase, aDomain[i]);
+			Condition aCondition = new Condition(theConditionBase, aDomain[i]);
 
 			if (!isFilterNull && !itsFilter.isUseful(aParentConditions, aCondition))
 				continue;
 
-			Subgroup aNewSubgroup = aParent.getRefinedSubgroup(aCondition);
+			Subgroup aChild = theParent.getRefinedSubgroup(aCondition);
 
 			if (isAllStrategy)
 			{
-				//addToBuffer(aNewSubgroup);
-				checkAndLog(aNewSubgroup, theParentCoverage);
+				//addToBuffer(aChild);
+				checkAndLog(aChild, aParentCoverage);
 			}
 			else
 			{
 				// more clear than using else-if
-				if (isValidAndBest(aNewSubgroup, theParentCoverage, aBestSubgroup))
-					aBestSubgroup = aNewSubgroup;
+				if (isValidAndBest(aChild, aParentCoverage, aBestSubgroup))
+					aBestSubgroup = aChild;
 			}
 		}
 
 		if (!isAllStrategy && (aBestSubgroup != null))
-			bestAdd(aBestSubgroup, theParentCoverage);
-	}
-
-	// kept for historic reasons, will be removed soon
-	@Deprecated
-	private final void numericHalfIntervals(BitSet theParentMembers, int theParentCoverage, Refinement theRefinement)
-	{
-		// currently only for SINGLE_NOMINAL (and not for propensity scores)
-		if (!isPOCSetting())
-		{
-			numericHalfIntervalsDomainMapNumeric(theParentMembers, theParentCoverage, theRefinement);
-			return;
-		}
-
-		////////////////////////////////////////////////////////////////////////
-		Subgroup aParent = theRefinement.getSubgroup();
-
-		// members-based domain, no empty Subgroups will occur
-		ConditionBase aConditionBase = theRefinement.getConditionBase();
-		Column aColumn = aConditionBase.getColumn();
-		////////////////////////////////////////////////////////////////////////
-
-		ValueInfo via = aColumn.getUniqueNumericDomainMap(theParentMembers);
-
-		evaluateNumericRegularSingleBinary(aParent, aConditionBase, via);
+			bestAdd(aBestSubgroup, aParentCoverage);
 	}
 
 	private final void evaluateNumericRegularSingleBinary(Subgroup theParent, ConditionBase theConditionBase, ValueInfo theValueInfo)
@@ -2210,25 +2245,6 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	///// numeric domain code - some methods now bypass these methods      /////
 	////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////
-
-	// called by numericHalfIntervalsDomainMapNumeric()
-	private static final DomainMapNumeric getDomainMapD(BitSet theMembers, int theMembersCardinality, NumericStrategy theNumericStrategy, Column theColumn, int theNrBins, Operator theOperator)
-	{
-		switch (theNumericStrategy)
-		{
-			case NUMERIC_ALL	: return theColumn.getUniqueNumericDomainMap(theMembers, theMembersCardinality);
-			case NUMERIC_BEST	: return theColumn.getUniqueNumericDomainMap(theMembers, theMembersCardinality);
-			case NUMERIC_BINS	: return theColumn.getUniqueSplitPointsMap(theMembers, theMembersCardinality, theNrBins-1, theOperator);
-			case NUMERIC_BEST_BINS	: return theColumn.getUniqueSplitPointsMap(theMembers, theMembersCardinality, theNrBins-1, theOperator);
-			case NUMERIC_INTERVALS	:
-			{
-				throw new AssertionError("NUMERIC_STRATEGY NOT IMPLEMENTED: " + theNumericStrategy);
-				//return theColumn.getUniqueNumericDomainMap(theMembers);
-			}
-			default :
-				throw new AssertionError("invalid Numeric Strategy: " + theNumericStrategy);
-		}
-	}
 
 	private final boolean isValidAndBest(Subgroup theNewSubgroup, int theOldCoverage, Subgroup theBestSubgroup)
 	{
@@ -3373,6 +3389,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////
 
+	@Deprecated
 	private final void evaluateNominalRefinementsObsolete(BitSet theParentMembers, int theParentCoverage, Refinement theRefinement)
 	{
 		// evaluateNominalRefinements() should prevent getting here for ValueSet
@@ -3416,6 +3433,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	}
 
 	// this method is currently unnecessary, but addToBuffer will return one day
+	@Deprecated
 	private final void bestAdd(Subgroup theBestSubgroup, int theOldCoverage)
 	{
 		assert (theBestSubgroup != null);
@@ -3425,6 +3443,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	}
 
 	// NOTE this is the original code, it remains for debugging
+	@Deprecated
 	private final void numericHalfIntervalsObsolete(BitSet theParentMembers, Refinement theRefinement)
 	{
 		// evaluateNumericRefinements() should prevent getting here for
@@ -3488,7 +3507,27 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			bestAdd(aBestSubgroup, aParentCoverage);
 	}
 
+	@Deprecated
+	private static final DomainMapNumeric getDomainMapD(BitSet theMembers, int theMembersCardinality, NumericStrategy theNumericStrategy, Column theColumn, int theNrBins, Operator theOperator)
+	{
+		switch (theNumericStrategy)
+		{
+			case NUMERIC_ALL	: return theColumn.getUniqueNumericDomainMap(theMembers, theMembersCardinality);
+			case NUMERIC_BEST	: return theColumn.getUniqueNumericDomainMap(theMembers, theMembersCardinality);
+			case NUMERIC_BINS	: return theColumn.getUniqueSplitPointsMap(theMembers, theMembersCardinality, theNrBins-1, theOperator);
+			case NUMERIC_BEST_BINS	: return theColumn.getUniqueSplitPointsMap(theMembers, theMembersCardinality, theNrBins-1, theOperator);
+			case NUMERIC_INTERVALS	:
+			{
+				throw new AssertionError("NUMERIC_STRATEGY NOT IMPLEMENTED: " + theNumericStrategy);
+				//return theColumn.getUniqueNumericDomainMap(theMembers);
+			}
+			default :
+				throw new AssertionError("invalid Numeric Strategy: " + theNumericStrategy);
+		}
+	}
+
 	// called by numericIntervals() - it does not use value counts at the moment
+	@Deprecated
 	private static final float[] getDomain(BitSet theMembers, int theMembersCardinality, NumericStrategy theNumericStrategy, Column theColumn, int theNrBins, Operator theOperator)
 	{
 		switch (theNumericStrategy)
@@ -3506,6 +3545,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	}
 
 	// see comment theColumn.getUniqueSplitPoints()
+	@Deprecated
 	private static final float[] getUniqueSplitPoints(BitSet theMembers, Column theColumn, int theNrSplits, Operator theOperator)
 	{
 		float[] aSplitPoints = theColumn.getUniqueSplitPoints(theMembers, theNrSplits, theOperator);
@@ -3519,6 +3559,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 
 	// TODO method is never used, but EQUALS and BETWEEN might benefit from the
 	// technique, leave it in; current code already does these check for <=, >=
+	@Deprecated
 	private final void filterDomain(NavigableMap<Float, Integer> theSplitPoints, Operator theOperator, int theMinimumCoverage)
 	{
 		if (!(theOperator == Operator.EQUALS || theOperator == Operator.BETWEEN))
