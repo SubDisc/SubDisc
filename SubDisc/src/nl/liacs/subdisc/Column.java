@@ -1721,6 +1721,7 @@ public class Column implements XMLNodeInterface
 
 	// account for d>1, where _new will not be the same as old
 	// every bit set in new, must also be set in old, and no more
+	@SuppressWarnings("unused") // keep, evaluate() will change, and be tested
 	private static final boolean postTest(BitSet _new, BitSet old)
 	{
 		// do not modify _new, as it is needed as result
@@ -2011,6 +2012,9 @@ public class Column implements XMLNodeInterface
 			}
 			case NUMERIC :
 			{
+				// FIXME profile: probably the following is faster:
+				//       for (float f : Function.getUniqueValues(theArray))
+				//         aResult.add(Float.toString(f));
 				TreeSet<String> aResult = new TreeSet<String>();
 				for (float f : itsFloatz)
 					aResult.add(Float.toString(f));
@@ -2206,419 +2210,6 @@ public class Column implements XMLNodeInterface
 		return new ValueInfo(aCnt, aPos);
 	}
 
-	// FIXME MM - temporary hack for better bins
-	// for GEQ: the old code is correct
-	// for LEQ: the old code is incorrect
-	//          each split point would always select (1/bins) too much data
-	//
-	// new code returns expected bin boundaries
-	// for GEQ, behaves as old code
-	// for LEQ, same code as GEQ, just loop over selected domain backwards
-	//
-	// examples of what happens in old code:
-	//
-	// data = [1,2,3,4] ; bins = 2 -> split-points { 3 }
-	//                    >= 3 -> 50% is correct
-	//                    <= 3 -> 75% is incorrect (1/bins) too much
-	//                         -> should be <= 2
-	//
-	// data = [1,2,3,4] ; bins = 4 -> split-points { 2,3,4 }
-	//                    >= 2 -> 75% is correct
-	//                    >= 3 -> 50% is correct
-	//                    >= 4 -> 25% is correct
-	//
-	//                    <= 2 ->  50% is incorrect (1/b) too much -> (<= 1)
-	//                    <= 3 ->  75% is incorrect (1/b) too much -> (<= 2)
-	//                    <= 4 -> 100% is incorrect (1/b) too much -> (<= 3)
-	//                         -> 100% is useless anyway
-	//
-	// leave false in svn - set to true by code that needs it
-	// NOTE: in svn revision 3430 USE_NEW_BINNING = true; in git revision ad14cb3 USE_NEW_BINNING = false;
-	public static boolean USE_NEW_BINNING = false;
-	public float[] getUniqueSplitPoints(BitSet theBitSet, int theNrSplits, Operator theOperator) throws IllegalArgumentException
-	{
-		if (!USE_NEW_BINNING)
-			return getSplitPoints(theBitSet, theNrSplits);
-
-		// should never happen when (USE_NEW_BINNING == true)
-		if (theOperator != Operator.LESS_THAN_OR_EQUAL && theOperator != Operator.GREATER_THAN_OR_EQUAL)
-			throw new AssertionError("FIX new getSplitPoints()");
-
-// MM - COPY OF OLD CODE STARTS HERE
-		if (!isValidCall("getSplitPoints", theBitSet))
-			return new float[0];
-
-		if (theNrSplits < 0)
-			throw new IllegalArgumentException(theNrSplits + " (theNrSplits) < 0");
-		// valid, but useless
-		if (theNrSplits == 0)
-			return new float[0];
-
-		int size = theBitSet.cardinality();
-
-		// new - removed error in old code, see comment there
-		// prevent crash in aSplitPoints populating loop
-		if (size == 0)
-			return new float[0];
-
-		float[] aDomain = new float[size];
-		for (int i = theBitSet.nextSetBit(0), j = -1; i >= 0; i = theBitSet.nextSetBit(i + 1))
-			aDomain[++j] = itsFloatz[i];
-
-		Arrays.sort(aDomain);
-
-		// new - for LEQ, reverse sorted domain, then run old code on it
-		if (theOperator == Operator.LESS_THAN_OR_EQUAL)
-			reverse(aDomain);
-
-		float[] aSplitPoints = new float[theNrSplits];
-
-		// the (old) code below basically determines a step size:
-		// (size / (theNrSplits+1)) it is equivalent to (size / nrBins)
-		// and selects indexes using x*step_size, with x = 1..(nrBins-1)
-		// selected indexes are always [ >= 0 ; < size ]
-		// NOTE can cause integer overflow on large data
-		// N.B. Order matters to prevent integer division from yielding zero.
-//		for (int j=0; j<theNrSplits; j++)
-//			aSplitPoints[j] = aDomain[size*(j+1)/(theNrSplits+1)];
-
-		// as above - but safe
-		// avoid integer overflow
-		//   theNrSplits + 1 : could overflow int -> use long nrBins
-		//   (i+1)           : safe as i < theNrSplits (i+1 <= MAX_INT)
-		//   size * (i+1)    : could overflow int
-		//   size_L * (i+1)  : safe as (MAX_INT * MAX_INT) < MAX_LONG
-		//
-		// range for nrBins:
-		//   (theNrSplits > 0) is checked above, so nrBins >= 2
-		//
-		// range for i:
-		//   i     = [ 0 ; (theNrSplits-1) ] = [ 0 ; (nrBins-2) ]
-		//   (i+1) = [ 1 ; (nrBins-1) ]
-		//
-		// aDomain[ idx ] is within int range, so safe to casts:
-		//   idx = [ (size / nrBins)  ; ((size * (nrBins-1)) / nrBins) ]
-		//   idx = [ (size / nrBins)  ;  (size * ((nrBins-1) / nrBins) ]
-		//   idx = [ >= 0 && <=size/2 ; < size (as nrBins_factor < 1)  ]
-		long nrBins = theNrSplits + 1;
-		long size_L = size;
-		for (int i = 0; i < theNrSplits; ++i)
-			aSplitPoints[i] = aDomain[(int) ((size_L * (i+1)) / nrBins)];
-
-		// remove duplicates, re-assign to aSplitPoints
-		aSplitPoints = getUniqueValues(aSplitPoints);
-
-		// new - not strictly needed, but return data in ascending order
-		if (theOperator == Operator.LESS_THAN_OR_EQUAL)
-			reverse(aSplitPoints);
-
-		return aSplitPoints;
-	}
-
-	private static final void reverse(float[] theArray)
-	{
-		// generates null pointer exception on null input
-		int size = theArray.length;
-
-		// does nothing on sizes 0 and 1 (does not enter loop) 
-		for (int i = 0, j = size - 1; i < size / 2; ++i, --j)
-		{
-			float aTemp = theArray[i];
-			theArray[i] = theArray[j];
-			theArray[j] = aTemp;
-		}
-	}
-
-	// used by getUniqueSplitPoints()
-	// TODO MM - also use this in getSplitPoints(), getUniqueNumericDomain()
-	static final float[] getUniqueValues(float[] theArray)
-	{
-		int aLast = 0;
-		for (int i = 1, j = theArray.length; i < j; ++i)
-			if (theArray[aLast] != theArray[i])
-				theArray[++aLast] = theArray[i];
-
-		return Arrays.copyOf(theArray, ++aLast);
-	}
-
-	/**
-	 * Returns the split-points for Columns of
-	 * {@link AttributeType} {@link AttributeType#NUMERIC} and
-	 * {@link AttributeType#ORDINAL}, this method is used for the creation
-	 * of equal-height bins ({@link NumericStrategy#NUMERIC_BINS} and
-	 * {@link NumericStrategy#NUMERIC_BESTBINS}).
-	 *
-	 * The bits set in the BitSet supplied as argument indicate which values
-	 * of the Column should be used for the creation of the split-points.
-	 * When the BitSet represents the members of a {@link Subgroup}, this
-	 * method returns the split-points relevant to that Subgroup.
-	 *
-	 * The resulting float[] has the size of the supplied theNrSplits
-	 * parameter. If
-	 * {@link java.util.BitSet#cardinality() theBitSet.cardinality()} is
-	 * {@code 0}, the {@code float[theNrSplits]} will contain only
-	 * {@code 0.0f}'s.
-	 * If the BitSet is {@code null} a {@code new float[0]} is returned.
-	 *
-	 * When the Column is not of {@link AttributeType}
-	 * {@link AttributeType#NUMERIC} or {@link AttributeType#ORDINAL} a
-	 * {@code new float[0]} will be returned.
-	 *
-	 * @param theBitSet the BitSet indicating what values of this Column to
-	 * use for the creation of the split-points.
-	 *
-	 * @param theNrSplits the number of split-point to return.
-	 *
-	 * @return a float[], holding the (possibly non-distinct) split-points.
-	 *
-	 * @throws IllegalArgumentException when theNrSplits < 0.
-	 *
-	 * @see AttributeType
-	 * @see Subgroup
-	 * @see NumericStrategy
-	 * @see java.util.BitSet
-	 */
-	// instead, use new getSplitPoints(BitSet, int, Operator)
-	@Deprecated
-	public float[] getSplitPoints(BitSet theBitSet, int theNrSplits) throws IllegalArgumentException
-	{
-		if (!isValidCall("getSplitPoints", theBitSet))
-			return new float[0];
-
-		if (theNrSplits < 0)
-			throw new IllegalArgumentException(theNrSplits + " (theNrSplits) < 0");
-		// valid, but useless
-		if (theNrSplits == 0)
-			return new float[0];
-
-		final float[] aSplitPoints = new float[theNrSplits];
-		final int size = theBitSet.cardinality();
-
-		// FIXME MM
-		// (size == 0) check is incorrect
-		// it would return an array of 0's
-		// and then 0 would be considered to be a bin boundary
-		// more generally the code below leads to awkward results when
-		// (theNrSplits > theBitSet.cardinality())
-		// as the aSplitPoints[] will be populated with 0's
-		// for every index >= theBitSet.cardinality(), the values will
-		// not be set to anything else
-
-		// prevent crash in aSplitPoints populating loop
-		if (size == 0)
-			return aSplitPoints;
-
-		float[] aDomain = new float[size];
-		for (int i = theBitSet.nextSetBit(0), j = -1; i >= 0; i = theBitSet.nextSetBit(i + 1))
-			aDomain[++j] = itsFloatz[i];
-
-		Arrays.sort(aDomain);
-
-		// N.B. Order matters to prevent integer division from yielding zero.
-		for (int j=0; j<theNrSplits; j++)
-			aSplitPoints[j] = aDomain[(size*(j+1)) / (theNrSplits+1)];
-
-		return aSplitPoints;
-	}
-
-	// NOTE
-	// for historic comparison and evaluation this implementation should be
-	// exactly equal to getSplitPoints(), and have the same bugs
-	// but not all faulty behaviour can be reproduced using a map implementation
-	// as invalid split point values would have a count of 0 and are ignored,
-	// whereas with getSplitPoints() they would lead to evaluated Conditions
-	// also the final (alternative) implementation will change and be based on
-	// the new getUniqueNumericDomainMap() code (and a better bin strategy)
-	// BUG1: returns an array with 0s when theBitSet is empty (note that in that
-	//       case the result will not be used, as the subgroup selects no data)
-	//       so for the search result keeping or removing this bug has no effect
-	//       therefore it is left in code for now
-	//       note: the current implementation returns an empty SortedSet in this
-	//       scenario, such that the return of this method is slightly different
-	// BUG2: like above, but when there are less members than split points the
-	//       original getSplitPoints() returns an array with 0s at
-	//       indexes >= theBitSet.cardinality()
-	//       in this case the 0s will: (incorrectly) be considered to be valid
-	//       split points; be used in Conditions; and effect the search result
-	//       the map implementation can not cause such errors, as the counts for
-	//       invalid split points are 0, causing them to be ignored
-	// BUG3: for example, when data has two values, and the first covers more
-	//       than half of the records, then using two bins results in a split
-	//       point that selects all data when using operator >=
-	//       as such the condition using this split point does not select less
-	//       records, and is therefore considered to be no valid refinement
-	//       thus, effectively, no condition is created for this Column and >=
-	//       (the same holds for <= and less than half of the data)
-	// BUG4: the final loop could yield an array that contains the same split
-	//       points multiple times, the SortedSet does not reproduce this
-	//       the search algorithm already checked for this situation, so it has no
-	//       effect on the search result, just on the returned split point array
-	// NOTE
-	// the returned split points should be considered differently for <= and >=
-	// this setup allows identical loop behaviour for getUniqueSplitPointsMap()/
-	// getUniqueNumericDomainMap() in SybgroupDiscovery.numericHalfIntervals()
-	// for <= the split points in the array are inclusive end points
-	//        and the count for this split point represents the bin count for
-	//        the interval (exclusive-previous-split-point, this-split-point]
-	// for >= the split points in the array are inclusive start points
-	//        and the count for this split point represents the bin count for
-	//        the interval [this-split-point, exclusive-next-split-point)
-	@Deprecated
-	SortedMap<Float, Integer> getUniqueSplitPointsMapX(BitSet theBitSet, int theBitSetCardinality, int theNrSplits, Operator theOperator) throws IllegalArgumentException
-	{
-		assert (theOperator == Operator.LESS_THAN_OR_EQUAL || theOperator == Operator.GREATER_THAN_OR_EQUAL);
-
-		if (!isValidCall("getSplitPointsMap", theBitSet))
-			return Collections.emptySortedMap();
-
-		if (theNrSplits < 0)
-			throw new IllegalArgumentException(theNrSplits + " (theNrSplits) < 0");
-		// valid, but useless
-		if (theNrSplits == 0)
-			return Collections.emptySortedMap();
-
-		SortedMap<Float, Integer> aSplitPointsMap = new TreeMap<Float, Integer>();
-		final int size = theBitSetCardinality;
-
-		// SEE NOTE ON BUG1 ABOVE
-		if (size == 0)
-			return Collections.emptySortedMap();
-
-		float[] aDomain = new float[size];
-		for (int i = theBitSet.nextSetBit(0), j = -1; i >= 0; i = theBitSet.nextSetBit(i + 1))
-			aDomain[++j] = itsFloatz[i];
-
-		Arrays.sort(aDomain);
-
-		// SEE NOTE ON BUG2, BUG3, BUG4 ABOVE
-		// N.B. Order matters to prevent integer division from yielding zero.
-//		for (int j=0; j<theNrSplits; j++)
-//			aSplitPoints[j] = aDomain[size*(j+1)/(theNrSplits+1)];
-
-		// NOTE
-		// the goal is an output with the same values as getSplitPoints() even
-		// even if it is incorrect
-		// NOTE
-		// code is not based on getUniqueNumericDomainMap(), and then used to
-		// select only a limited number of values from those returned by adding
-		// intermediate counts
-		// here, only theNrSplits values are checked, corrected for possible
-		// duplicates (the inner for-loop with int m)
-		// NOTE
-		// the final equal height histogram code will use all values and counts
-		// like getUniqueNumericDomainMap(), such that bins can be filled in a
-		// more balanced way (also avoiding BUG3)
-		// NOTE
-		// Column.add(float) allows NaN, -0.0, and 0.0, values to be added
-		// the == and Float.compare() checks for floats differ for these values
-		// (NaN == NaN) returns false; this is incorrect, as they are the same
-		// (-0.0 == 0.0) returns true; assuming -0.0 numerically equal to 0.0 *
-		// Float.compare(NaN, NaN) returns 0; this is correct, they are the same
-		// Float.compare(-0.0, 0.0) returns -1; assuming -0.0 smaller than 0.0 *
-		//
-		// * so to correctly deal with NaN, Float.compare() is required
-		//   but for data containing both -0.0 and 0.0 this results in two
-		//   different boundaries, with different counts
-		//   for the algorithm the choice of whether to allow NaN, -0.0, and 0.0
-		//   is of major importance, and will have effects everywhere
-		//   many (model) classes use either == or Float.compare()
-		//   so, a choice should be made what values to allow, as currently the
-		//   code has inconsistent behaviour, and all code needs a review
-		//   the case for assuming that -0.0 and 0.0 are the same is that they
-		//   are numerically equal
-		//   the case for considering -0.0 smaller that 0.0 is to allow complete
-		//   ordering of floats, and that the user might intent these values to
-		//   be considered different, expecting them to be treated as such
-		//   to best resolve this issue, the final solution lies with the values
-		//   Column.add(float) allows
-		//   in case it changes -0.0 to 0.0, users should be made aware of this
-		//   and could be suggested to modify their data and use some very small
-		//   value -0.00...00001 as substitute for  -0.0
-		//
-		// NOTE Arrays.sort() uses DualPivotQuicksort.sort(float[]), which puts:
-		//      all NaN values at the end of the array
-		//      -0.0 before 0.0, like Float.compare() behaviour
-		//
-		// FIXME review all code
-		//       the evaluation code needs to be checked, as it might not deal
-		//       correctly with the NaN, -0.0, and 0.0 situations
-		//
-		// the code below assumes the data does not contain both -0.0 and 0.0
-		long nrBins = theNrSplits + 1;
-		long size_L = size;
-		if (theOperator == Operator.LESS_THAN_OR_EQUAL)
-		{
-			for (int i = 1, j = 0; i <= theNrSplits; ++i)
-			{
-				int k = (int)((size_L*i)/nrBins);
-				if (k < j)
-					continue;
-
-				float aSplitPoint = aDomain[k];
-
-				// produce correct count for value
-				for (int m = k+1; m < size; ++m)
-					if (Float.compare(aSplitPoint, aDomain[m]) == 0) // NOTE -0.0 is smaller than 0.0
-						++k;
-
-				// 0-based index, so size is index +1
-				aSplitPointsMap.put(aSplitPoint, (k-j+1));
-				j = (k+1);
-			}
-		}
-		else // theOperator == Operator.GREATER_THAN_OR_EQUAL
-		{
-			// NOTE
-			// at i=1 the first Float.compare() should not return 0, so aLast is
-			// set to a value that is unequal to aDomain[0]
-			// checking aDomain[0] is safe as aDomain.length > 0, as size > 0
-			Float aLast = (Float.isNaN(aDomain[0]) ? 0.0f : Float.NaN);
-			for (int i = 1, j = size; i <= theNrSplits; ++i)
-			{
-				int k = (int)((size_L*i)/nrBins);
-
-				float aSplitPoint = aDomain[k];
-
-				// check is faster than aSplitPointsMap.containsKey(aSplitPoint)
-				if (Float.compare(aSplitPoint, aLast) == 0) // NOTE -0.0 is smaller than 0.0
-					continue;
-
-				// produce correct count for value
-				for (int m = k-1; m >= 0; --m)
-					if (Float.compare(aSplitPoint, aDomain[m]) == 0) // NOTE -0.0 is smaller than 0.0
-						--k;
-
-				j = (size-k);
-				aSplitPointsMap.put(aSplitPoint, j);
-				if (i > 1)
-					aSplitPointsMap.put(aLast, aSplitPointsMap.get(aLast)-j);
-				// only now set aLast to aSplitPoint, aLast was needed above
-				aLast = aSplitPoint;
-			}
-		}
-
-		if (false)
-		{
-			int sum = 0;
-			for (int i : aSplitPointsMap.values())
-				sum += i;
-			if (sum > theBitSetCardinality)
-				throw new AssertionError(String.format("%s.getSplitPointsMap() sum=%d > theBitSetCardinality=%d%n%s%n", this.getClass().getName(), sum, theBitSetCardinality, aSplitPointsMap));
-
-			float[] fa = getSplitPoints(theBitSet, theNrSplits);
-			for (float f : fa)
-			{
-				if (aSplitPointsMap.get(f) == null)
-				{
-					System.out.println("WARNING: getSplitPoinsMap() does not contain value = " + f + " (could be bug in original code)");
-					System.out.format("SortedMap != getSplitPoints():%n%s%n%s%n", aSplitPointsMap, Arrays.toString(fa));
-				}
-			}
-		}
-
-		return aSplitPointsMap;
-	}
-
 	// NOTE
 	// this setup differs from the SortedMap implementation
 	// FIXME make the two equal, as it is easier to understand
@@ -2629,14 +2220,19 @@ public class Column implements XMLNodeInterface
 	//
 	// the returned split points should be considered differently for <= and >=
 	// this setup allows identical loop behaviour for getUniqueSplitPointsMap()/
-	// getUniqueNumericDomainMap() in SybgroupDiscovery.numericHalfIntervals()
+	// getUniqueNumericDomainMap() in SubgroupDiscovery.numericHalfIntervals()
 	// for <= the split points in the array are inclusive end points
 	//        and the count for this split point represents the bin count for
 	//        the interval [input-domain-minimum-value, this-split-point]
 	// for >= the split points in the array are inclusive start points
 	//        and the count for this split point represents the bin count for
 	//        the interval [this-split-point, input-domain-maximum-value]
-	public DomainMapNumeric getUniqueSplitPointsMap(BitSet theBitSet, int theBitSetCardinality, int theNrSplits, Operator theOperator) throws IllegalArgumentException
+	//
+	// FIXME introduce new implementation, based on
+	// Column.getUniqueNumericDomainMap() and
+	// SubgroupDiscovery.evaluateNumericRegularSingleBinaryCoarse()
+	@Deprecated
+	DomainMapNumeric getUniqueSplitPointsMap(BitSet theBitSet, int theBitSetCardinality, int theNrSplits, Operator theOperator) throws IllegalArgumentException
 	{
 		assert (theOperator == Operator.LESS_THAN_OR_EQUAL || theOperator == Operator.GREATER_THAN_OR_EQUAL);
 
@@ -2779,183 +2375,6 @@ public class Column implements XMLNodeInterface
 		}
 
 		return new DomainMapNumeric(idx+1, sum, dDomain, dCounts);
-	}
-
-	/**
-	 * Returns the consecutive Intervals for Columns of
-	 * {@link AttributeType} {@link AttributeType#NUMERIC} and
-	 * {@link AttributeType#ORDINAL}, this method is used for the creation
-	 * of equal-height bounded intervals
-	 * ({@link NumericStrategy#NUMERIC_VIKAMINE_CONSECUTIVE_ALL} and
-	 * {@link NumericStrategy#NUMERIC_VIKAMINE_CONSECUTIVE_BEST}).
-	 *
-	 * The bits set in the BitSet supplied as argument indicate which values
-	 * of the Column should be used for the creation of the Intervals.
-	 * When the BitSet represents the members of a {@link Subgroup}, this
-	 * method returns the Intervals relevant to that Subgroup.
-	 *
-	 * The resulting Interval[] has the size of the supplied theNrSplits
-	 * parameter plus 1. If
-	 * {@link java.util.BitSet#cardinality() theBitSet.cardinality()} is
-	 * {@code 0}, the {@code Interval[theNrSplits+1]} will contain only
-	 * {@code null}'s.
-	 * If the BitSet is {@code null} a {@code new float[0]} is returned.
-	 *
-	 * When the Column is not of {@link AttributeType}
-	 * {@link AttributeType#NUMERIC} or {@link AttributeType#ORDINAL} a
-	 * {@code new Interval[0]} will be returned.
-	 *
-	 * @param theBitSet the BitSet indicating what values of this Column to
-	 * use for the creation of the Intervals.
-	 *
-	 * @param theNrSplits the number of split-point between Intervals.
-	 *
-	 * @return a SortedSet<Interval>, holding the Intervals.
-	 *
-	 * @throws IllegalArgumentException when theNrSplits < 0.
-	 *
-	 * @see AttributeType
-	 * @see Subgroup
-	 * @see NumericStrategy
-	 * @see java.util.BitSet
-	 */
-	public SortedMap<Interval, Integer> getUniqueSplitPointsBounded(BitSet theBitSet, int theBitSetCardinality, int theNrSplits) throws IllegalArgumentException
-	{
-		// for testing only, final version will supply theBitSetCardinality
-		int aCardinality = theBitSet.cardinality();
-		SortedSet<Interval> set = getUniqueSplitPointsBoundedOriginal(theBitSet, theNrSplits);
-		SortedMap<Interval, Integer> map = getUniqueSplitPointsBoundedMap(theBitSet, aCardinality, theNrSplits);
-
-		int aSum = 0;
-		Iterator<Interval> s = set.iterator();
-		Iterator<Map.Entry<Interval, Integer>> m = map.entrySet().iterator();
-		Log.logCommandLine("");
-		while (s.hasNext() || m.hasNext())
-		{
-			boolean sn = s.hasNext();
-			boolean mn = m.hasNext();
-
-			Interval si = (sn ? s.next() : null);
-			Map.Entry<Interval, Integer> me = (mn ? m.next() : null);
-
-			aSum += (mn ? me.getValue() : 0);
-
-			StringBuilder sb = new StringBuilder(128);
-			// when the same, both are true -> non-null
-			sb.append(sn ? si : "empty").append("\t");
-			sb.append(mn ? me : "empty");
-
-			sb.append(((sn != mn) || (si.compareTo(me.getKey()) != 0)) ? "\t<- NOTE" : "");
-
-			Log.logCommandLine(sb.toString());
-		}
-		Log.logCommandLine("BitSet.cardinality = " + aCardinality + "\n");
-
-		if (aCardinality != aSum)
-			throw new AssertionError("getUniqueSplitPointsBounded(): " + aCardinality + " != " + aSum);
-
-		return map;
-	}
-
-	private SortedMap<Interval, Integer> getUniqueSplitPointsBoundedMap(BitSet theBitSet, int theBitSetCardinality, int theNrSplits) throws IllegalArgumentException
-	{
-		if (!isValidCall("getSplitPointsBounded", theBitSet))
-			return Collections.emptySortedMap();
-
-		if (theNrSplits < 0)
-			throw new IllegalArgumentException(theNrSplits + " (theNrSplits) < 0");
-
-		// valid, but useless
-		if (theNrSplits == 0)
-			return Collections.emptySortedMap();
-
-		// NOTE
-		// the map version of this method does not have a USE_NEW_BINNING
-		// variant, but getUniqueSplitPointsMap() does take into account the
-		// Operator to manipulate the value counts which has similar effects
-		//
-		// this setting is not really used by anyone, and may be removed after
-		// the paper, even when not, it is not a successful strategy anyway, it
-		// should not be used, so not having it optimised is not a big problem
-		//
-		// this method uses the result of getUniqueSplitPointsMap(), and loops
-		// over it again, so it is not the most efficient
-		// but it is not too much of a problem, as getUniqueSplitPointsMap()
-		// is fast, O(nrBins) for high-cardinality data, and the loop over its
-		// result to establish the bounded intervals requires only O(nrBins)
-		//
-		// the rest of the comment below is from the original non-map version
-		//
-		// ##### ORIGINAL CODE STARTS HERE #####################################
-		// TODO use same procedure as pre-discretisation in MiningWindow
-		//boolean anOrig = Column.USE_NEW_BINNING ;
-		//Column.USE_NEW_BINNING = true;
-//		float[] aBounds = getUniqueSplitPoints(theBitSet, theNrSplits, Operator.LESS_THAN_OR_EQUAL);
-//		//Column.USE_NEW_BINNING = anOrig;
-//
-//		int aNrBounds = aBounds.length;
-//		if (aNrBounds == 0)
-//			return Collections.emptySortedMap();
-//
-//		if (aBounds[aNrBounds - 1] != Float.POSITIVE_INFINITY)
-//		{
-//			aBounds = Arrays.copyOf(aBounds, aNrBounds + 1);
-//			aBounds[aNrBounds] = Float.POSITIVE_INFINITY;
-//			++aNrBounds;
-//		}
-//
-//		SortedSet<Interval> set = new TreeSet<Interval>();
-//		for (int i = 0; i < aNrBounds; ++i)
-//			set.add(new Interval(i == 0 ? Float.NEGATIVE_INFINITY : aBounds[i-1], aBounds[i]));
-		// ##### ORIGINAL CODE ENDS HERE #######################################
-
-		SortedMap<Float, Integer> aMap = getUniqueSplitPointsMapX(theBitSet, theBitSetCardinality, theNrSplits, Operator.LESS_THAN_OR_EQUAL);
-		if (aMap.isEmpty())
-			return Collections.emptySortedMap();
-
-		SortedMap<Interval, Integer> aResult = new TreeMap<Interval, Integer>();
-		Iterator<Map.Entry<Float, Integer>> it = aMap.entrySet().iterator();
-		int aSum = 0;
-
-		// special treatment for first value, as the -infinity bound is used
-		Map.Entry<Float, Integer> e = it.next(); // safe as !aMap.isEmpty()
-		float f = e.getKey();
-		Integer i = e.getValue();
-		aSum += i; // auto cast, the put() does not
-		aResult.put(new Interval(Float.NEGATIVE_INFINITY, f), i);
-
-		while (it.hasNext())
-		{
-			e = it.next();
-			float n = e.getKey();
-			i = e.getValue();
-			aSum += i;
-			if (aSum == theBitSetCardinality)
-				aResult.put(new Interval(f, Float.POSITIVE_INFINITY), i);
-			else
-				aResult.put(new Interval(f, n), i);
-			f = n;
-		}
-
-		// POSITIVE_INFINITY should never be present, as this type of value
-		// should not be in the data, but this is copied from the original code
-		// moreover Column.add() does not guard against +/- infinity, -0 and NaN
-		//
-		// if there is already a key for POSITIVE_INFINITY, do not overwrite it
-		// it should be the last value anyway, and have a correct count, if it
-		// exists (though Arrays.sort() would put NaNs after it)
-		//
-		// if it is not in getUniqueSplitPointsMap(), two situations could occur
-		// 1. the sum of the value.counts for the map entries is equal to
-		// theBitSetCardinality (for a half-interval: <= lastKey() would select
-		// the whole data, and be useless), or 2. the sum is lower
-		//
-		// the former case is handled by the loop, it replaces the last value
-		// in the latter case, add the Interval that selects the remaining data
-		if ((aSum != theBitSetCardinality) && (Float.compare(Float.POSITIVE_INFINITY, aMap.lastKey()) != 0))
-			aResult.put(new Interval(f, Float.POSITIVE_INFINITY), (theBitSetCardinality - aSum));
-
-		return aResult;
 	}
 
 	/**
@@ -3423,6 +2842,422 @@ public class Column implements XMLNodeInterface
 		return aResult;
 	}
 
+	// FIXME MM - temporary hack for better bins
+	// for GEQ: the old code is correct
+	// for LEQ: the old code is incorrect
+	//          each split point would always select (1/bins) too much data
+	//
+	// new code returns expected bin boundaries
+	// for GEQ, behaves as old code
+	// for LEQ, same code as GEQ, just loop over selected domain backwards
+	//
+	// examples of what happens in old code:
+	//
+	// data = [1,2,3,4] ; bins = 2 -> split-points { 3 }
+	//                    >= 3 -> 50% is correct
+	//                    <= 3 -> 75% is incorrect (1/bins) too much
+	//                         -> should be <= 2
+	//
+	// data = [1,2,3,4] ; bins = 4 -> split-points { 2,3,4 }
+	//                    >= 2 -> 75% is correct
+	//                    >= 3 -> 50% is correct
+	//                    >= 4 -> 25% is correct
+	//
+	//                    <= 2 ->  50% is incorrect (1/b) too much -> (<= 1)
+	//                    <= 3 ->  75% is incorrect (1/b) too much -> (<= 2)
+	//                    <= 4 -> 100% is incorrect (1/b) too much -> (<= 3)
+	//                         -> 100% is useless anyway
+	//
+	// leave false in svn - set to true by code that needs it
+	// NOTE: in svn revision 3430 USE_NEW_BINNING = true; in git revision ad14cb3 USE_NEW_BINNING = false;
+	public static boolean USE_NEW_BINNING = false;
+	@Deprecated
+	float[] getUniqueSplitPoints(BitSet theBitSet, int theNrSplits, Operator theOperator) throws IllegalArgumentException
+	{
+		if (!USE_NEW_BINNING)
+			return getSplitPoints(theBitSet, theNrSplits);
+
+		// should never happen when (USE_NEW_BINNING == true)
+		if (theOperator != Operator.LESS_THAN_OR_EQUAL && theOperator != Operator.GREATER_THAN_OR_EQUAL)
+			throw new AssertionError("FIX new getSplitPoints()");
+
+// MM - COPY OF OLD CODE STARTS HERE
+		if (!isValidCall("getSplitPoints", theBitSet))
+			return new float[0];
+
+		if (theNrSplits < 0)
+			throw new IllegalArgumentException(theNrSplits + " (theNrSplits) < 0");
+		// valid, but useless
+		if (theNrSplits == 0)
+			return new float[0];
+
+		int size = theBitSet.cardinality();
+
+		// new - removed error in old code, see comment there
+		// prevent crash in aSplitPoints populating loop
+		if (size == 0)
+			return new float[0];
+
+		float[] aDomain = new float[size];
+		for (int i = theBitSet.nextSetBit(0), j = -1; i >= 0; i = theBitSet.nextSetBit(i + 1))
+			aDomain[++j] = itsFloatz[i];
+
+		Arrays.sort(aDomain);
+
+		// new - for LEQ, reverse sorted domain, then run old code on it
+		if (theOperator == Operator.LESS_THAN_OR_EQUAL)
+			reverse(aDomain);
+
+		float[] aSplitPoints = new float[theNrSplits];
+
+		// the (old) code below basically determines a step size:
+		// (size / (theNrSplits+1)) it is equivalent to (size / nrBins)
+		// and selects indexes using x*step_size, with x = 1..(nrBins-1)
+		// selected indexes are always [ >= 0 ; < size ]
+		// NOTE can cause integer overflow on large data
+		// N.B. Order matters to prevent integer division from yielding zero.
+//		for (int j=0; j<theNrSplits; j++)
+//			aSplitPoints[j] = aDomain[size*(j+1)/(theNrSplits+1)];
+
+		// as above - but safe
+		// avoid integer overflow
+		//   theNrSplits + 1 : could overflow int -> use long nrBins
+		//   (i+1)           : safe as i < theNrSplits (i+1 <= MAX_INT)
+		//   size * (i+1)    : could overflow int
+		//   size_L * (i+1)  : safe as (MAX_INT * MAX_INT) < MAX_LONG
+		//
+		// range for nrBins:
+		//   (theNrSplits > 0) is checked above, so nrBins >= 2
+		//
+		// range for i:
+		//   i     = [ 0 ; (theNrSplits-1) ] = [ 0 ; (nrBins-2) ]
+		//   (i+1) = [ 1 ; (nrBins-1) ]
+		//
+		// aDomain[ idx ] is within int range, so safe to casts:
+		//   idx = [ (size / nrBins)  ; ((size * (nrBins-1)) / nrBins) ]
+		//   idx = [ (size / nrBins)  ;  (size * ((nrBins-1) / nrBins) ]
+		//   idx = [ >= 0 && <=size/2 ; < size (as nrBins_factor < 1)  ]
+		long nrBins = theNrSplits + 1;
+		long size_L = size;
+		for (int i = 0; i < theNrSplits; ++i)
+			aSplitPoints[i] = aDomain[(int) ((size_L * (i+1)) / nrBins)];
+
+		// remove duplicates, re-assign to aSplitPoints
+		aSplitPoints = getUniqueValues(aSplitPoints);
+
+		// new - not strictly needed, but return data in ascending order
+		if (theOperator == Operator.LESS_THAN_OR_EQUAL)
+			reverse(aSplitPoints);
+
+		return aSplitPoints;
+	}
+
+	@Deprecated
+	private static final void reverse(float[] theArray)
+	{
+		// generates null pointer exception on null input
+		int size = theArray.length;
+
+		// does nothing on sizes 0 and 1 (does not enter loop) 
+		for (int i = 0, j = size - 1; i < size / 2; ++i, --j)
+		{
+			float aTemp = theArray[i];
+			theArray[i] = theArray[j];
+			theArray[j] = aTemp;
+		}
+	}
+
+	// used by getUniqueSplitPoints()
+	// TODO MM - also use this in getSplitPoints(), getUniqueNumericDomain()
+	@Deprecated
+	static final float[] getUniqueValues(float[] theArray)
+	{
+		int aLast = 0;
+		for (int i = 1, j = theArray.length; i < j; ++i)
+			if (theArray[aLast] != theArray[i])
+				theArray[++aLast] = theArray[i];
+
+		return Arrays.copyOf(theArray, ++aLast);
+	}
+
+	/**
+	 * Returns the split-points for Columns of
+	 * {@link AttributeType} {@link AttributeType#NUMERIC} and
+	 * {@link AttributeType#ORDINAL}, this method is used for the creation
+	 * of equal-height bins ({@link NumericStrategy#NUMERIC_BINS} and
+	 * {@link NumericStrategy#NUMERIC_BESTBINS}).
+	 *
+	 * The bits set in the BitSet supplied as argument indicate which values
+	 * of the Column should be used for the creation of the split-points.
+	 * When the BitSet represents the members of a {@link Subgroup}, this
+	 * method returns the split-points relevant to that Subgroup.
+	 *
+	 * The resulting float[] has the size of the supplied theNrSplits
+	 * parameter. If
+	 * {@link java.util.BitSet#cardinality() theBitSet.cardinality()} is
+	 * {@code 0}, the {@code float[theNrSplits]} will contain only
+	 * {@code 0.0f}'s.
+	 * If the BitSet is {@code null} a {@code new float[0]} is returned.
+	 *
+	 * When the Column is not of {@link AttributeType}
+	 * {@link AttributeType#NUMERIC} or {@link AttributeType#ORDINAL} a
+	 * {@code new float[0]} will be returned.
+	 *
+	 * @param theBitSet the BitSet indicating what values of this Column to
+	 * use for the creation of the split-points.
+	 *
+	 * @param theNrSplits the number of split-point to return.
+	 *
+	 * @return a float[], holding the (possibly non-distinct) split-points.
+	 *
+	 * @throws IllegalArgumentException when theNrSplits < 0.
+	 *
+	 * @see AttributeType
+	 * @see Subgroup
+	 * @see NumericStrategy
+	 * @see java.util.BitSet
+	 */
+	// instead, use new getSplitPoints(BitSet, int, Operator)
+	@Deprecated
+	public float[] getSplitPoints(BitSet theBitSet, int theNrSplits) throws IllegalArgumentException
+	{
+		if (!isValidCall("getSplitPoints", theBitSet))
+			return new float[0];
+
+		if (theNrSplits < 0)
+			throw new IllegalArgumentException(theNrSplits + " (theNrSplits) < 0");
+		// valid, but useless
+		if (theNrSplits == 0)
+			return new float[0];
+
+		final float[] aSplitPoints = new float[theNrSplits];
+		final int size = theBitSet.cardinality();
+
+		// FIXME MM
+		// (size == 0) check is incorrect
+		// it would return an array of 0's
+		// and then 0 would be considered to be a bin boundary
+		// more generally the code below leads to awkward results when
+		// (theNrSplits > theBitSet.cardinality())
+		// as the aSplitPoints[] will be populated with 0's
+		// for every index >= theBitSet.cardinality(), the values will
+		// not be set to anything else
+
+		// prevent crash in aSplitPoints populating loop
+		if (size == 0)
+			return aSplitPoints;
+
+		float[] aDomain = new float[size];
+		for (int i = theBitSet.nextSetBit(0), j = -1; i >= 0; i = theBitSet.nextSetBit(i + 1))
+			aDomain[++j] = itsFloatz[i];
+
+		Arrays.sort(aDomain);
+
+		// N.B. Order matters to prevent integer division from yielding zero.
+		for (int j=0; j<theNrSplits; j++)
+			aSplitPoints[j] = aDomain[(size*(j+1)) / (theNrSplits+1)];
+
+		return aSplitPoints;
+	}
+
+	// NOTE
+	// for historic comparison and evaluation this implementation should be
+	// exactly equal to getSplitPoints(), and have the same bugs
+	// but not all faulty behaviour can be reproduced using a map implementation
+	// as invalid split point values would have a count of 0 and are ignored,
+	// whereas with getSplitPoints() they would lead to evaluated Conditions
+	// also the final (alternative) implementation will change and be based on
+	// the new getUniqueNumericDomainMap() code (and a better bin strategy)
+	// BUG1: returns an array with 0s when theBitSet is empty (note that in that
+	//       case the result will not be used, as the subgroup selects no data)
+	//       so for the search result keeping or removing this bug has no effect
+	//       therefore it is left in code for now
+	//       note: the current implementation returns an empty SortedSet in this
+	//       scenario, such that the return of this method is slightly different
+	// BUG2: like above, but when there are less members than split points the
+	//       original getSplitPoints() returns an array with 0s at
+	//       indexes >= theBitSet.cardinality()
+	//       in this case the 0s will: (incorrectly) be considered to be valid
+	//       split points; be used in Conditions; and effect the search result
+	//       the map implementation can not cause such errors, as the counts for
+	//       invalid split points are 0, causing them to be ignored
+	// BUG3: for example, when data has two values, and the first covers more
+	//       than half of the records, then using two bins results in a split
+	//       point that selects all data when using operator >=
+	//       as such the condition using this split point does not select less
+	//       records, and is therefore considered to be no valid refinement
+	//       thus, effectively, no condition is created for this Column and >=
+	//       (the same holds for <= and less than half of the data)
+	// BUG4: the final loop could yield an array that contains the same split
+	//       points multiple times, the SortedSet does not reproduce this
+	//       the search algorithm already checked for this situation, so it has no
+	//       effect on the search result, just on the returned split point array
+	// NOTE
+	// the returned split points should be considered differently for <= and >=
+	// this setup allows identical loop behaviour for getUniqueSplitPointsMap()/
+	// getUniqueNumericDomainMap() in SubgroupDiscovery.numericHalfIntervals()
+	// for <= the split points in the array are inclusive end points
+	//        and the count for this split point represents the bin count for
+	//        the interval (exclusive-previous-split-point, this-split-point]
+	// for >= the split points in the array are inclusive start points
+	//        and the count for this split point represents the bin count for
+	//        the interval [this-split-point, exclusive-next-split-point)
+	@Deprecated
+	private SortedMap<Float, Integer> getUniqueSplitPointsMapX(BitSet theBitSet, int theBitSetCardinality, int theNrSplits, Operator theOperator) throws IllegalArgumentException
+	{
+		assert (theOperator == Operator.LESS_THAN_OR_EQUAL || theOperator == Operator.GREATER_THAN_OR_EQUAL);
+
+		if (!isValidCall("getSplitPointsMap", theBitSet))
+			return Collections.emptySortedMap();
+
+		if (theNrSplits < 0)
+			throw new IllegalArgumentException(theNrSplits + " (theNrSplits) < 0");
+		// valid, but useless
+		if (theNrSplits == 0)
+			return Collections.emptySortedMap();
+
+		SortedMap<Float, Integer> aSplitPointsMap = new TreeMap<Float, Integer>();
+		final int size = theBitSetCardinality;
+
+		// SEE NOTE ON BUG1 ABOVE
+		if (size == 0)
+			return Collections.emptySortedMap();
+
+		float[] aDomain = new float[size];
+		for (int i = theBitSet.nextSetBit(0), j = -1; i >= 0; i = theBitSet.nextSetBit(i + 1))
+			aDomain[++j] = itsFloatz[i];
+
+		Arrays.sort(aDomain);
+
+		// SEE NOTE ON BUG2, BUG3, BUG4 ABOVE
+		// N.B. Order matters to prevent integer division from yielding zero.
+//		for (int j=0; j<theNrSplits; j++)
+//			aSplitPoints[j] = aDomain[size*(j+1)/(theNrSplits+1)];
+
+		// NOTE
+		// the goal is an output with the same values as getSplitPoints() even
+		// even if it is incorrect
+		// NOTE
+		// code is not based on getUniqueNumericDomainMap(), and then used to
+		// select only a limited number of values from those returned by adding
+		// intermediate counts
+		// here, only theNrSplits values are checked, corrected for possible
+		// duplicates (the inner for-loop with int m)
+		// NOTE
+		// the final equal height histogram code will use all values and counts
+		// like getUniqueNumericDomainMap(), such that bins can be filled in a
+		// more balanced way (also avoiding BUG3)
+		// NOTE
+		// Column.add(float) allows NaN, -0.0, and 0.0, values to be added
+		// the == and Float.compare() checks for floats differ for these values
+		// (NaN == NaN) returns false; this is incorrect, as they are the same
+		// (-0.0 == 0.0) returns true; assuming -0.0 numerically equal to 0.0 *
+		// Float.compare(NaN, NaN) returns 0; this is correct, they are the same
+		// Float.compare(-0.0, 0.0) returns -1; assuming -0.0 smaller than 0.0 *
+		//
+		// * so to correctly deal with NaN, Float.compare() is required
+		//   but for data containing both -0.0 and 0.0 this results in two
+		//   different boundaries, with different counts
+		//   for the algorithm the choice of whether to allow NaN, -0.0, and 0.0
+		//   is of major importance, and will have effects everywhere
+		//   many (model) classes use either == or Float.compare()
+		//   so, a choice should be made what values to allow, as currently the
+		//   code has inconsistent behaviour, and all code needs a review
+		//   the case for assuming that -0.0 and 0.0 are the same is that they
+		//   are numerically equal
+		//   the case for considering -0.0 smaller that 0.0 is to allow complete
+		//   ordering of floats, and that the user might intent these values to
+		//   be considered different, expecting them to be treated as such
+		//   to best resolve this issue, the final solution lies with the values
+		//   Column.add(float) allows
+		//   in case it changes -0.0 to 0.0, users should be made aware of this
+		//   and could be suggested to modify their data and use some very small
+		//   value -0.00...00001 as substitute for  -0.0
+		//
+		// NOTE Arrays.sort() uses DualPivotQuicksort.sort(float[]), which puts:
+		//      all NaN values at the end of the array
+		//      -0.0 before 0.0, like Float.compare() behaviour
+		//
+		// FIXME review all code
+		//       the evaluation code needs to be checked, as it might not deal
+		//       correctly with the NaN, -0.0, and 0.0 situations
+		//
+		// the code below assumes the data does not contain both -0.0 and 0.0
+		long nrBins = theNrSplits + 1;
+		long size_L = size;
+		if (theOperator == Operator.LESS_THAN_OR_EQUAL)
+		{
+			for (int i = 1, j = 0; i <= theNrSplits; ++i)
+			{
+				int k = (int)((size_L*i)/nrBins);
+				if (k < j)
+					continue;
+
+				float aSplitPoint = aDomain[k];
+
+				// produce correct count for value
+				for (int m = k+1; m < size; ++m)
+					if (Float.compare(aSplitPoint, aDomain[m]) == 0) // NOTE -0.0 is smaller than 0.0
+						++k;
+
+				// 0-based index, so size is index +1
+				aSplitPointsMap.put(aSplitPoint, (k-j+1));
+				j = (k+1);
+			}
+		}
+		else // theOperator == Operator.GREATER_THAN_OR_EQUAL
+		{
+			// NOTE
+			// at i=1 the first Float.compare() should not return 0, so aLast is
+			// set to a value that is unequal to aDomain[0]
+			// checking aDomain[0] is safe as aDomain.length > 0, as size > 0
+			Float aLast = (Float.isNaN(aDomain[0]) ? 0.0f : Float.NaN);
+			for (int i = 1, j = size; i <= theNrSplits; ++i)
+			{
+				int k = (int)((size_L*i)/nrBins);
+
+				float aSplitPoint = aDomain[k];
+
+				// check is faster than aSplitPointsMap.containsKey(aSplitPoint)
+				if (Float.compare(aSplitPoint, aLast) == 0) // NOTE -0.0 is smaller than 0.0
+					continue;
+
+				// produce correct count for value
+				for (int m = k-1; m >= 0; --m)
+					if (Float.compare(aSplitPoint, aDomain[m]) == 0) // NOTE -0.0 is smaller than 0.0
+						--k;
+
+				j = (size-k);
+				aSplitPointsMap.put(aSplitPoint, j);
+				if (i > 1)
+					aSplitPointsMap.put(aLast, aSplitPointsMap.get(aLast)-j);
+				// only now set aLast to aSplitPoint, aLast was needed above
+				aLast = aSplitPoint;
+			}
+		}
+
+		if (false)
+		{
+			int sum = 0;
+			for (int i : aSplitPointsMap.values())
+				sum += i;
+			if (sum > theBitSetCardinality)
+				throw new AssertionError(String.format("%s.getSplitPointsMap() sum=%d > theBitSetCardinality=%d%n%s%n", this.getClass().getName(), sum, theBitSetCardinality, aSplitPointsMap));
+
+			float[] fa = getSplitPoints(theBitSet, theNrSplits);
+			for (float f : fa)
+			{
+				if (aSplitPointsMap.get(f) == null)
+				{
+					System.out.println("WARNING: getSplitPoinsMap() does not contain value = " + f + " (could be bug in original code)");
+					System.out.format("SortedMap != getSplitPoints():%n%s%n%s%n", aSplitPointsMap, Arrays.toString(fa));
+				}
+			}
+		}
+
+		return aSplitPointsMap;
+	}
+
 	@Deprecated
 	private SortedSet<Interval> getUniqueSplitPointsBoundedOriginal(BitSet theBitSet, int theNrSplits) throws IllegalArgumentException
 	{
@@ -3458,5 +3293,185 @@ public class Column implements XMLNodeInterface
 			set.add(new Interval(i == 0 ? Float.NEGATIVE_INFINITY : aBounds[i-1], aBounds[i]));
 
 		return set;
+	}
+
+	/**
+	 * Returns the consecutive Intervals for Columns of
+	 * {@link AttributeType} {@link AttributeType#NUMERIC} and
+	 * {@link AttributeType#ORDINAL}, this method is used for the creation
+	 * of equal-height bounded intervals
+	 * ({@link NumericStrategy#NUMERIC_VIKAMINE_CONSECUTIVE_ALL} and
+	 * {@link NumericStrategy#NUMERIC_VIKAMINE_CONSECUTIVE_BEST}).
+	 *
+	 * The bits set in the BitSet supplied as argument indicate which values
+	 * of the Column should be used for the creation of the Intervals.
+	 * When the BitSet represents the members of a {@link Subgroup}, this
+	 * method returns the Intervals relevant to that Subgroup.
+	 *
+	 * The resulting Interval[] has the size of the supplied theNrSplits
+	 * parameter plus 1. If
+	 * {@link java.util.BitSet#cardinality() theBitSet.cardinality()} is
+	 * {@code 0}, the {@code Interval[theNrSplits+1]} will contain only
+	 * {@code null}'s.
+	 * If the BitSet is {@code null} a {@code new float[0]} is returned.
+	 *
+	 * When the Column is not of {@link AttributeType}
+	 * {@link AttributeType#NUMERIC} or {@link AttributeType#ORDINAL} a
+	 * {@code new Interval[0]} will be returned.
+	 *
+	 * @param theBitSet the BitSet indicating what values of this Column to
+	 * use for the creation of the Intervals.
+	 *
+	 * @param theNrSplits the number of split-point between Intervals.
+	 *
+	 * @return a SortedSet<Interval>, holding the Intervals.
+	 *
+	 * @throws IllegalArgumentException when theNrSplits < 0.
+	 *
+	 * @see AttributeType
+	 * @see Subgroup
+	 * @see NumericStrategy
+	 * @see java.util.BitSet
+	 */
+	// FIXME 
+	@Deprecated
+	SortedMap<Interval, Integer> getUniqueSplitPointsBounded(BitSet theBitSet, int theBitSetCardinality, int theNrSplits) throws IllegalArgumentException
+	{
+		// for testing only, final version will supply theBitSetCardinality
+		int aCardinality = theBitSet.cardinality();
+		SortedSet<Interval> set = getUniqueSplitPointsBoundedOriginal(theBitSet, theNrSplits);
+		SortedMap<Interval, Integer> map = getUniqueSplitPointsBoundedMap(theBitSet, aCardinality, theNrSplits);
+
+		int aSum = 0;
+		Iterator<Interval> s = set.iterator();
+		Iterator<Map.Entry<Interval, Integer>> m = map.entrySet().iterator();
+		Log.logCommandLine("");
+		while (s.hasNext() || m.hasNext())
+		{
+			boolean sn = s.hasNext();
+			boolean mn = m.hasNext();
+
+			Interval si = (sn ? s.next() : null);
+			Map.Entry<Interval, Integer> me = (mn ? m.next() : null);
+
+			aSum += (mn ? me.getValue() : 0);
+
+			StringBuilder sb = new StringBuilder(128);
+			// when the same, both are true -> non-null
+			sb.append(sn ? si : "empty").append("\t");
+			sb.append(mn ? me : "empty");
+
+			sb.append(((sn != mn) || (si.compareTo(me.getKey()) != 0)) ? "\t<- NOTE" : "");
+
+			Log.logCommandLine(sb.toString());
+		}
+		Log.logCommandLine("BitSet.cardinality = " + aCardinality + "\n");
+
+		if (aCardinality != aSum)
+			throw new AssertionError("getUniqueSplitPointsBounded(): " + aCardinality + " != " + aSum);
+
+		return map;
+	}
+
+	@Deprecated
+	private SortedMap<Interval, Integer> getUniqueSplitPointsBoundedMap(BitSet theBitSet, int theBitSetCardinality, int theNrSplits) throws IllegalArgumentException
+	{
+		if (!isValidCall("getSplitPointsBounded", theBitSet))
+			return Collections.emptySortedMap();
+
+		if (theNrSplits < 0)
+			throw new IllegalArgumentException(theNrSplits + " (theNrSplits) < 0");
+
+		// valid, but useless
+		if (theNrSplits == 0)
+			return Collections.emptySortedMap();
+
+		// NOTE
+		// the map version of this method does not have a USE_NEW_BINNING
+		// variant, but getUniqueSplitPointsMap() does take into account the
+		// Operator to manipulate the value counts which has similar effects
+		//
+		// this setting is not really used by anyone, and may be removed after
+		// the paper, even when not, it is not a successful strategy anyway, it
+		// should not be used, so not having it optimised is not a big problem
+		//
+		// this method uses the result of getUniqueSplitPointsMap(), and loops
+		// over it again, so it is not the most efficient
+		// but it is not too much of a problem, as getUniqueSplitPointsMap()
+		// is fast, O(nrBins) for high-cardinality data, and the loop over its
+		// result to establish the bounded intervals requires only O(nrBins)
+		//
+		// the rest of the comment below is from the original non-map version
+		//
+		// ##### ORIGINAL CODE STARTS HERE #####################################
+		// TODO use same procedure as pre-discretisation in MiningWindow
+		//boolean anOrig = Column.USE_NEW_BINNING ;
+		//Column.USE_NEW_BINNING = true;
+//		float[] aBounds = getUniqueSplitPoints(theBitSet, theNrSplits, Operator.LESS_THAN_OR_EQUAL);
+//		//Column.USE_NEW_BINNING = anOrig;
+//
+//		int aNrBounds = aBounds.length;
+//		if (aNrBounds == 0)
+//			return Collections.emptySortedMap();
+//
+//		if (aBounds[aNrBounds - 1] != Float.POSITIVE_INFINITY)
+//		{
+//			aBounds = Arrays.copyOf(aBounds, aNrBounds + 1);
+//			aBounds[aNrBounds] = Float.POSITIVE_INFINITY;
+//			++aNrBounds;
+//		}
+//
+//		SortedSet<Interval> set = new TreeSet<Interval>();
+//		for (int i = 0; i < aNrBounds; ++i)
+//			set.add(new Interval(i == 0 ? Float.NEGATIVE_INFINITY : aBounds[i-1], aBounds[i]));
+		// ##### ORIGINAL CODE ENDS HERE #######################################
+
+		SortedMap<Float, Integer> aMap = getUniqueSplitPointsMapX(theBitSet, theBitSetCardinality, theNrSplits, Operator.LESS_THAN_OR_EQUAL);
+		if (aMap.isEmpty())
+			return Collections.emptySortedMap();
+
+		SortedMap<Interval, Integer> aResult = new TreeMap<Interval, Integer>();
+		Iterator<Map.Entry<Float, Integer>> it = aMap.entrySet().iterator();
+		int aSum = 0;
+
+		// special treatment for first value, as the -infinity bound is used
+		Map.Entry<Float, Integer> e = it.next(); // safe as !aMap.isEmpty()
+		float f = e.getKey();
+		Integer i = e.getValue();
+		aSum += i; // auto cast, the put() does not
+		aResult.put(new Interval(Float.NEGATIVE_INFINITY, f), i);
+
+		while (it.hasNext())
+		{
+			e = it.next();
+			float n = e.getKey();
+			i = e.getValue();
+			aSum += i;
+			if (aSum == theBitSetCardinality)
+				aResult.put(new Interval(f, Float.POSITIVE_INFINITY), i);
+			else
+				aResult.put(new Interval(f, n), i);
+			f = n;
+		}
+
+		// POSITIVE_INFINITY should never be present, as this type of value
+		// should not be in the data, but this is copied from the original code
+		// moreover Column.add() does not guard against +/- infinity, -0 and NaN
+		//
+		// if there is already a key for POSITIVE_INFINITY, do not overwrite it
+		// it should be the last value anyway, and have a correct count, if it
+		// exists (though Arrays.sort() would put NaNs after it)
+		//
+		// if it is not in getUniqueSplitPointsMap(), two situations could occur
+		// 1. the sum of the value.counts for the map entries is equal to
+		// theBitSetCardinality (for a half-interval: <= lastKey() would select
+		// the whole data, and be useless), or 2. the sum is lower
+		//
+		// the former case is handled by the loop, it replaces the last value
+		// in the latter case, add the Interval that selects the remaining data
+		if ((aSum != theBitSetCardinality) && (Float.compare(Float.POSITIVE_INFINITY, aMap.lastKey()) != 0))
+			aResult.put(new Interval(f, Float.POSITIVE_INFINITY), (theBitSetCardinality - aSum));
+
+		return aResult;
 	}
 }
