@@ -39,6 +39,10 @@ public enum ColumnConditionBasesBuilder
 		boolean useEquals = (!isInterval && o.contains(Operator.EQUALS));
 		boolean useLeq    = (!isInterval && o.contains(Operator.LESS_THAN_OR_EQUAL));
 		boolean useGeq    = (!isInterval && o.contains(Operator.GREATER_THAN_OR_EQUAL));
+		// special case for NUMERIC_EQ, when used with (BEST_)BINS: use BETWEEN
+		NumericStrategy s = theSearchParameters.getNumericStrategy();
+		assert (!s.isDiscretiser() || ((s == NumericStrategy.NUMERIC_BEST_BINS) || (s == NumericStrategy.NUMERIC_BINS)));
+		Operator e = (!useEquals ? null : (s.isDiscretiser() ? Operator.BETWEEN : Operator.EQUALS));
 
 		List<ColumnConditionBases> result = new ArrayList<ColumnConditionBases>(theTable.getNrColumns());
 
@@ -65,7 +69,7 @@ public enum ColumnConditionBasesBuilder
 				case NUMERIC :
 				{
 					if (!isInterval)
-						result.add(FACTORY.new ColumnConditionBasesNumericRegular(c, useEquals, useLeq, useGeq));
+						result.add(FACTORY.new ColumnConditionBasesNumericRegular(c, e, useLeq, useGeq));
 					else
 						result.add(FACTORY.new ColumnConditionBasesNumericIntervals(c));
 					break;
@@ -220,11 +224,11 @@ public enum ColumnConditionBasesBuilder
 		private final ConditionBase itsConditionBaseLEQ;
 		private final ConditionBase itsConditionBaseGEQ;
 
-		private ColumnConditionBasesNumericRegular(Column theColumn, boolean useEquals, boolean useLeq, boolean useGeq)
+		private ColumnConditionBasesNumericRegular(Column theColumn, Operator equals, boolean useLeq, boolean useGeq)
 		{
-			itsConditionBaseEquals = useEquals ? new ConditionBase(theColumn, Operator.EQUALS)                : null;
-			itsConditionBaseLEQ    = useLeq    ? new ConditionBase(theColumn, Operator.LESS_THAN_OR_EQUAL)    : null;
-			itsConditionBaseGEQ    = useGeq    ? new ConditionBase(theColumn, Operator.GREATER_THAN_OR_EQUAL) : null;
+			itsConditionBaseEquals = equals != null ? new ConditionBase(theColumn, equals)                         : null;
+			itsConditionBaseLEQ    = useLeq         ? new ConditionBase(theColumn, Operator.LESS_THAN_OR_EQUAL)    : null;
+			itsConditionBaseGEQ    = useGeq         ? new ConditionBase(theColumn, Operator.GREATER_THAN_OR_EQUAL) : null;
 		}
 
 		@Override
