@@ -565,7 +565,7 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 		Subgroup aStart = new Subgroup(ConditionListBuilder.emptyList(), itsResult.getAllDataBitSetClone(), itsResult);
 
 		// set number of true positives for dataset
-		if (isPOCSetting())
+		if (isDirectSingleBinary())
 			aStart.setTertiaryStatistic(itsQualityMeasure.getNrPositives());
 
 		if ((itsSearchParameters.getBeamSeed() == null) || (theNrThreads < 0))
@@ -573,7 +573,8 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 		else
 			itsCandidateQueue = getCandidateQueueFromBeamSeed();
 
-		prepareData(isPOCSetting(), itsBinaryTarget, itsTable.getColumns());
+		// SINGLE_NOMINAL with propensity scores does not use direct computation
+		prepareData(isPOCSetting(), isDirectSingleBinary() ? itsBinaryTarget : null, itsTable.getColumns());
 
 		long anEndTime = theBeginTime + (long) (((double) itsSearchParameters.getMaximumTime()) * 60.0 * 1000.0);
 		itsEndTime = (anEndTime <= theBeginTime) ? Long.MAX_VALUE : anEndTime;
@@ -607,28 +608,39 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 
 	private static final void prepareData(boolean isPOCSetting, BitSet theBinaryTarget, List<Column> theColumns)
 	{
-		// just wraps itsDistinctValues in a shared unmodifiable Collection
-		for (Column c : theColumns)
-			if (c.getType() == AttributeType.NOMINAL)
-				c.buildSharedDomain();
-
-		// some settings should always build a sorted domain for all TargetTypes
-
-		// currently numeric with EQUALS is not a valid setting
-		if (!isPOCSetting)
-			return;
-
 		Timer aTotal = new Timer();
 
 		for (Column c : theColumns)
 		{
-			if (c.getType() != AttributeType.NUMERIC)
-				continue;
-
-			Log.logCommandLine(c.getName());
-			Timer t = new Timer();
-			c.buildSorted(theBinaryTarget); // build SORTED and SORT_INDEX
-			Log.logCommandLine("sorted domain build: " + t.getElapsedTimeString());
+			switch (c.getType())
+			{
+				// FIXME sort itsDistinctValues, reset indexes, create return
+				// wraps itsDistinctValues in shared unmodifiable Collection
+				case NOMINAL :
+				{
+					c.buildSharedDomain();
+					break;
+				}
+				case NUMERIC :
+				{
+					Log.logCommandLine(c.getName());
+					Timer t = new Timer();
+					c.buildSorted(theBinaryTarget); // build SORTED + SORT_INDEX
+					Log.logCommandLine("sorted domain build: " + t.getElapsedTimeString());
+					break;
+				}
+				case ORDINAL :
+				{
+					throw new AssertionError("SubgroupDiscovery.prepareData(): " + c.getType());
+				}
+				// nothing for now, but this will change for SINGLE_NOMINAL
+				case BINARY :
+				{
+					break;
+				}
+				default :
+					throw new AssertionError("SubgroupDiscovery.prepareData(): " + c.getType());
+			}
 		}
 
 		Log.logCommandLine("total sorting time : " + aTotal.getElapsedTimeString());
@@ -637,13 +649,13 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 	// direct computation is relevant only for a SINGLE_NOMINAL target as it
 	// relates to tracking the true positive counts
 	// evaluateBinary(): for BINARY description Attributes use directComputation
-	//                   for other types this is not possible
+	//                   for other model types this is not possible
 	// evaluateNominalBestValueSet(): description Attribute is always NOMINAL
 	//                                and directComputation is possible
 	// numericIntervals(): see evaluateNominalBestValueSet()
 	//
 	// for PROP_SCORE_WRACC/PROP_SCORE_RATIO directComputation is not possible
-	private final boolean isDirectSetting()
+	private final boolean isDirectSingleBinary()
 	{
 		EnumSet<QM> anInvalid = EnumSet.of(QM.PROP_SCORE_WRACC, QM.PROP_SCORE_RATIO);
 
@@ -685,10 +697,7 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 	private static final void deleteSortData(List<Column> theColumns)
 	{
 		for (Column c : theColumns)
-		{
-			c.SORTED = null;
-			c.SORT_INDEX = null;
-		}
+			c.removeSorted();
 	}
 
 	private final CandidateQueue getCandidateQueueFromBeamSeed()
@@ -1125,7 +1134,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	private static final int INVALID_NR_TRUE_POSITIVES = -1;
 	private final int evaluateBinaryRefinementsHelper(Subgroup theParent, Condition theAddedCondition, BitSet theChildMembers, int theChildCoverage)
 	{
-		boolean isDirectSetting = isDirectSetting();
+		boolean isDirectSetting = isDirectSingleBinary();
 		final Subgroup aChild;
 		int aNrTruePositives = INVALID_NR_TRUE_POSITIVES;
 
@@ -1241,7 +1250,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		// currently BestValueSet implies the target type is SINGLE_NOMINAL
 		assert (itsSearchParameters.getTargetType() == TargetType.SINGLE_NOMINAL);
 		assert (itsSearchParameters.getNominalSets());
-		assert (isDirectSetting());
+		assert (isDirectSingleBinary());
 		assert (theColumnConditionBases.get(0).getOperator() == Operator.ELEMENT_OF);
 
 		ConditionBase aConditionBase = theColumnConditionBases.get(0);
@@ -1736,13 +1745,13 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 
 		////////////////////////////////////////////////////////////////////////
 		int aParentCoverage = theParent.getCoverage();
+		Column aColumn = theConditionBase.getColumn();
 		Operator anOperator = theConditionBase.getOperator();
 		// might require update when more strategies are added
 		boolean isAllStrategy = (ns == NumericStrategy.NUMERIC_ALL);
 		Subgroup aBestSubgroup = null;
 		////////////////////////////////////////////////////////////////////////
 
-		float[] aDomain =  theConditionBase.getColumn().SORTED;
 		int[] aCounts = theValueInfo.itsCounts;
 		int[] aTPs = theValueInfo.itsRecords; // this is the TruePositive count
 
@@ -1763,7 +1772,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 				if (aCount == aParentCoverage)
 					break;
 
-				Condition anAddedCondition = new Condition(theConditionBase, aDomain[i], i);
+				Condition anAddedCondition = new Condition(theConditionBase, aColumn.getSortedValue(i), i);
 				// always assign: returns null, aBestSugroup, or aNewSubgroup
 				aBestSubgroup = evaluateCandidate(theParent, anAddedCondition, aCount, aTPs[i], isAllStrategy, aBestSubgroup);
 			}
@@ -1791,7 +1800,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 				if (cover < itsMinimumCoverage)
 					continue;
 
-				Condition aCondition = new Condition(theConditionBase, aDomain[i], i);
+				Condition aCondition = new Condition(theConditionBase, aColumn.getSortedValue(i), i);
 				aBestSubgroup = evaluateCandidate(theParent, aCondition, cover, tp, isAllStrategy, aBestSubgroup);
 			}
 		}
@@ -1811,7 +1820,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 				// old tp and cover, as counts for this value should be included
 				if (cover != aParentCoverage)
 				{
-					Condition aCondition = new Condition(theConditionBase, aDomain[i], i);
+					Condition aCondition = new Condition(theConditionBase, aColumn.getSortedValue(i), i);
 					aBestSubgroup = evaluateCandidate(theParent, aCondition, cover, tp, isAllStrategy, aBestSubgroup);
 				}
 
@@ -1844,7 +1853,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 
 		// long to prevent overflow for multiplication
 		long aParentCoverage = theParent.getCoverage();
-		float[] aDomain = theConditionBase.getColumn().SORTED;
+		Column aColumn = theConditionBase.getColumn();
 		int[] aCounts = theValueInfo.itsCounts;
 		int[] aTPs= theValueInfo.itsRecords; // holds true positive counts
 		boolean isAllStrategy = (ns == NumericStrategy.NUMERIC_BINS);
@@ -1881,7 +1890,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 				if (!DEBUG_POC_BINS && (cover == aParentCoverage))
 					break;
 
-				float n = aDomain[i];
+				float n = aColumn.getSortedValue(i);
 				Condition anAddedCondition = new Condition(theConditionBase, new Interval(f, n));
 				aBestSubgroup = evaluateCandidate(theParent, anAddedCondition, (cover-last_cover), (tp-last_tp), isAllStrategy, aBestSubgroup);
 
@@ -1895,9 +1904,9 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 				// debug only
 				if (DEBUG_POC_BINS)
 				{
-					aCheck.add(aDomain[i]);
+					aCheck.add(aColumn.getSortedValue(i));
 					if (!((cover < itsMinimumCoverage) || (cover == aParentCoverage)))
-						aValid.add(aDomain[i]);
+						aValid.add(aColumn.getSortedValue(i));
 				}
 			}
 			// POSITIVE_INFINITY should never be present, as this type of value
@@ -1941,7 +1950,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 				if (!DEBUG_POC_BINS && (cover == aParentCoverage))
 					break;
 
-				Condition aCondition = new Condition(theConditionBase, aDomain[i], i);
+				Condition aCondition = new Condition(theConditionBase, aColumn.getSortedValue(i), i);
 				aBestSubgroup = evaluateCandidate(theParent, aCondition, cover, tp, isAllStrategy, aBestSubgroup);
 
 				while (((next = ((int) ((++j * aParentCoverage) / aNrBins)))) <= cover-1)
@@ -1950,9 +1959,9 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 				// debug only
 				if (DEBUG_POC_BINS)
 				{
-					aCheck.add(aDomain[i]);
+					aCheck.add(aColumn.getSortedValue(i));
 					if (!((cover < itsMinimumCoverage) || (cover == aParentCoverage)))
-						aValid.add(aDomain[i]);
+						aValid.add(aColumn.getSortedValue(i));
 				}
 			}
 		}
@@ -1974,7 +1983,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 				// for debugging: no 'continue' on (cover < itsMinimumCoverage)
 				if (((cover-aCount) < next) && (DEBUG_POC_BINS || (cover != aParentCoverage)))
 				{
-					Condition aCondition = new Condition(theConditionBase, aDomain[i], i);
+					Condition aCondition = new Condition(theConditionBase, aColumn.getSortedValue(i), i);
 					aBestSubgroup = evaluateCandidate(theParent, aCondition, cover, tp, isAllStrategy, aBestSubgroup);
 
 					while ((next = (int) (aParentCoverage - ((++j * aParentCoverage) / aNrBins))) > (cover-aCount))
@@ -1982,9 +1991,9 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 
 					if (DEBUG_POC_BINS)
 					{
-						aCheck.add(aDomain[i]);
+						aCheck.add(aColumn.getSortedValue(i));
 						if ((cover >= itsMinimumCoverage) && (cover != aParentCoverage))
-							aValid.add(aDomain[i]);
+							aValid.add(aColumn.getSortedValue(i));
 					}
 				}
 
@@ -2091,7 +2100,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	{
 		// currently BestIntervals implies the target type is SINGLE_NOMINAL
 		assert (itsSearchParameters.getTargetType() == TargetType.SINGLE_NOMINAL);
-		assert (isDirectSetting());
+		assert (isDirectSingleBinary());
 		assert (theColumnConditionBases.get(0).getOperator() == Operator.BETWEEN);
 		assert (itsSearchParameters.getNumericOperatorSetting() == NumericOperatorSetting.NUMERIC_INTERVALS);
 		// this method is a deviant case, but ValueInfo relies on isPOCSetting
@@ -2105,7 +2114,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		////////////////////////////////////////////////////////////////////////
 
 		// copy, as RealBaseIntervalCrossTable will modify the supplied array
-		float [] aDomain = Arrays.copyOf(aColumn.SORTED, aColumn.SORTED.length);
+		float [] aDomain = aColumn.getSortedValuesCopy();
 		ValueInfo via = aColumn.getUniqueNumericDomainMap(theParentMembers);
 
 		RealBaseIntervalCrossTable aRBICT = new RealBaseIntervalCrossTable(aParentCoverage, (int) theParent.getTertiaryStatistic(), aDomain, via);
@@ -2369,7 +2378,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			// final: ensure value is set before aResultAddition-check
 			final float aQuality;
 
-			if ((lastAdded == AttributeType.BINARY) && isDirectSetting())
+			if ((lastAdded == AttributeType.BINARY) && isDirectSingleBinary())
 			{
 				// NOTE this path already performed the isValid-coverage check
 				aQuality = (float) theChild.getMeasureValue();
@@ -3532,13 +3541,13 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	{
 		switch (theNumericStrategy)
 		{
-			case NUMERIC_ALL	: return theColumn.getUniqueNumericDomainTest(theMembers, theMembersCardinality);
-			case NUMERIC_BEST	: return theColumn.getUniqueNumericDomainTest(theMembers, theMembersCardinality);
-			case NUMERIC_BINS	: return getUniqueSplitPoints(theMembers, theColumn, theNrBins-1, theOperator);
-			case NUMERIC_BEST_BINS	: return getUniqueSplitPoints(theMembers, theColumn, theNrBins-1, theOperator);
-//			case NUMERIC_BINS	: return theColumn.getUniqueSplitPoints(theMembers, theNrBins-1, theOperator);
-//			case NUMERIC_BEST_BINS	: return theColumn.getUniqueSplitPoints(theMembers, theNrBins-1, theOperator);
-			case NUMERIC_INTERVALS	: return theColumn.getUniqueNumericDomainTest(theMembers, theMembersCardinality);
+//			case NUMERIC_ALL	: return theColumn.getUniqueNumericDomainTest(theMembers, theMembersCardinality);
+//			case NUMERIC_BEST	: return theColumn.getUniqueNumericDomainTest(theMembers, theMembersCardinality);
+//			case NUMERIC_BINS	: return getUniqueSplitPoints(theMembers, theColumn, theNrBins-1, theOperator);
+//			case NUMERIC_BEST_BINS	: return getUniqueSplitPoints(theMembers, theColumn, theNrBins-1, theOperator);
+////			case NUMERIC_BINS	: return theColumn.getUniqueSplitPoints(theMembers, theNrBins-1, theOperator);
+////			case NUMERIC_BEST_BINS	: return theColumn.getUniqueSplitPoints(theMembers, theNrBins-1, theOperator);
+//			case NUMERIC_INTERVALS	: return theColumn.getUniqueNumericDomainTest(theMembers, theMembersCardinality);
 			default :
 				throw new AssertionError("invalid Numeric Strategy: " + theNumericStrategy);
 		}
@@ -3652,7 +3661,8 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		if (direct)
 		{
 			ValueInfo via = aColumn.getUniqueNumericDomainMap(theParentMembers);
-			aDomain = aColumn.SORTED;
+			// copy is not efficient, but this code is obsolete anyway
+			aDomain = aColumn.getSortedValuesCopy();
 			aCounts = via.itsCounts;
 			aSize = aDomain.length;
 			aTPs = via.itsRecords; // this is the TruePositive count

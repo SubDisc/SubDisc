@@ -2157,14 +2157,20 @@ public class Column implements XMLNodeInterface
 		return new DomainMapNumeric(idx+1, theBitSetCardinality, aDomain, aCounts);
 	}
 
+	// returning a single copy of SORTED once would be enough to work with for
+	// SubgroupDiscovery, but some of this functionality might change and
+	// calling getSortedValue() is unlikely to be a performance problem
+	//
 	// XXX profiling suggest that MASK is faster than bit invert (~)
 	//     probably because numericLEQ|GEQ can unconditionally apply MASK_OFF
 	private static final int MASK_ON  = 0x80000000;
 	private static final int MASK_OFF = 0x7fffffff;
-	public float[] SORTED;   // public for now, will create getters later
-	public int[] SORT_INDEX;
-	public void buildSorted(BitSet theTarget)
+	private float[] SORTED;
+	private int[] SORT_INDEX;
+	final void buildSorted(BitSet theTarget)
 	{
+		boolean isTargetNull = (theTarget != null);
+
 		SORTED = Function.getUniqueValues(itsFloatz);
 
 		// determine sort-index for each value in Column.itsFloatz
@@ -2172,9 +2178,14 @@ public class Column implements XMLNodeInterface
 		for (int i = 0; i < itsFloatz.length; ++i)
 		{
 			int idx = Arrays.binarySearch(SORTED, itsFloatz[i]);
-			SORT_INDEX[i] = theTarget.get(i) ? idx : (MASK_ON | idx);
+			SORT_INDEX[i] = (isTargetNull || theTarget.get(i)) ? idx : (MASK_ON | idx);
 		}
 	}
+	// should not be called during mining, could use Lock obtained and released
+	// by SubgroupDiscovery.mine(), but for now trust that everything goes well
+	final void removeSorted() { SORTED = null; SORT_INDEX = null; }
+	final float getSortedValue(int index) { return SORTED[index]; }
+	final float[] getSortedValuesCopy() { return Arrays.copyOf(SORTED, SORTED.length); }
 
 	static class ValueInfo
 	{
