@@ -1757,6 +1757,7 @@ public class Column implements XMLNodeInterface
 	 */
 	private BitSet nominalEquals(BitSet theMembers, String theValue, BitSet theResult)
 	{
+		// TODO set index in Condition: not even the HashMap lookup is required
 		int v = itsDistinctValuesMap.get(theValue);
 		for (int i = theMembers.nextSetBit(0); i >= 0; i = theMembers.nextSetBit(i + 1))
 			if (itsNominalz[i] == v)
@@ -1765,6 +1766,7 @@ public class Column implements XMLNodeInterface
 		return theResult;
 	}
 
+	// FIXME this can start using SORT_INDEX
 	private BitSet numericEquals(BitSet theMembers, float theValue, BitSet theResult)
 	{
 		for (int i = theMembers.nextSetBit(0); i >= 0; i = theMembers.nextSetBit(i + 1))
