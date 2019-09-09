@@ -246,6 +246,11 @@ public class SubgroupSet extends TreeSet<Subgroup>
 			return true;
 		}
 	}
+	// includes equal scores, as new Subgroups with the same score might be
+	// ordered before the old one, pushing the old one out
+	// note that this is an unsynchronised check, might use AtomicDouble one day
+	// isNaN() check is needed as itsLowestScore starts out like that -> FIXME
+	boolean hasPotential(float theQuality) { return (Double.isNaN(itsLowestScore) ||  (theQuality >= itsLowestScore)); }
 
 	public BinaryTable getBinaryTable(Table theTable)
 	{
