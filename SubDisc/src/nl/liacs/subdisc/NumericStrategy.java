@@ -7,8 +7,8 @@ import java.util.*;
  */
 public enum NumericStrategy implements EnumInterface
 {
-	NUMERIC_BEST_BINS("best-bins", true, true, true),
 	NUMERIC_BINS("bins", true, true, true),
+	NUMERIC_BEST_BINS("best-bins", true, true, true),
 	NUMERIC_BEST("best", true, false, true),
 	NUMERIC_ALL("all", true, false, true),
 	NUMERIC_INTERVALS("intervals", false, false, false), // only valid for SINGLE_NOMINAL
@@ -20,7 +20,9 @@ public enum NumericStrategy implements EnumInterface
 	//
 	// all = allow all candidates through
 	// best = allow only best scoring candidate through
+	@Deprecated
 	NUMERIC_VIKAMINE_CONSECUTIVE_ALL("vm-consecutive-all", true, true, false),
+	@Deprecated
 	NUMERIC_VIKAMINE_CONSECUTIVE_BEST("vm-consecutive-best", true, true, false);
 //	NUMERIC_VIKAMINE_CARTESIAN_ALL("vm-cartesian-all", true, true, false),
 //	NUMERIC_VIKAMINE_CARTESIAN_BEST("vm-cartesian-best", true, true, false);
@@ -72,15 +74,7 @@ public enum NumericStrategy implements EnumInterface
 			if (n.GUI_TEXT.equalsIgnoreCase(theText))
 				return n;
 
-		/*
-		 * theType cannot be resolved to a NumericStrategy. Log error and
-		 * return default.
-		 */
-		Log.logCommandLine(
-			String.format("'%s' is not a valid NumericStrategy. Returning '%s'.",
-					theText,
-					NumericStrategy.getDefault().GUI_TEXT));
-		return NumericStrategy.getDefault();
+		throw new IllegalArgumentException("NumericStrategy.fromString(): unknown NumericStrategy " + theText);
 	}
 
 	/**
@@ -93,16 +87,6 @@ public enum NumericStrategy implements EnumInterface
 	public static Set<NumericStrategy> getNormalValues()
 	{
 		return NORMAL_VALUES;
-	}
-
-	/**
-	 * Returns the default NumericStrategy.
-	 *
-	 * @return the default NumericStrategy.
-	 */
-	public static NumericStrategy getDefault()
-	{
-		return NumericStrategy.NUMERIC_BEST_BINS;
 	}
 
 	/**
