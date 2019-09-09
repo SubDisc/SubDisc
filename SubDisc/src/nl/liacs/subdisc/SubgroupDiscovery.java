@@ -11,8 +11,13 @@ import java.util.concurrent.locks.*;
 import javax.swing.*;
 
 import nl.liacs.subdisc.Column.DomainMapNumeric;
-import nl.liacs.subdisc.Column.ValueInfo;
-import nl.liacs.subdisc.ColumnConditionBasesBuilder.*;
+import nl.liacs.subdisc.Column.ValueCountTP;
+import nl.liacs.subdisc.ColumnConditionBasesBuilder.ColumnConditionBases;
+import nl.liacs.subdisc.ColumnConditionBasesBuilder.ColumnConditionBasesBinary;
+import nl.liacs.subdisc.ColumnConditionBasesBuilder.ColumnConditionBasesNominalElementOf;
+import nl.liacs.subdisc.ColumnConditionBasesBuilder.ColumnConditionBasesNominalEquals;
+import nl.liacs.subdisc.ColumnConditionBasesBuilder.ColumnConditionBasesNumericIntervals;
+import nl.liacs.subdisc.ColumnConditionBasesBuilder.ColumnConditionBasesNumericRegular;
 import nl.liacs.subdisc.ConditionListBuilder.ConditionListA;
 import nl.liacs.subdisc.ConvexHull.HullPoint;
 import nl.liacs.subdisc.gui.*;
@@ -1537,7 +1542,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		}
 		else
 		{
-			ValueInfo via = aConditionBase.getColumn().getUniqueNumericDomainMap(theParentMembers);
+			ValueCountTP via = aConditionBase.getColumn().getUniqueNumericDomainMap(theParentMembers);
 			evaluateNumericRegularSingleBinary(aParent, aConditionBase, via);
 		}
 	}
@@ -1566,7 +1571,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		// but expect there to be more optimised settings, so keep split here
 		if (isPOCSetting())
 		{
-			ValueInfo via = aColumn.getUniqueNumericDomainMap(theParentMembers);
+			ValueCountTP via = aColumn.getUniqueNumericDomainMap(theParentMembers);
 			if (doEq_Test) evaluateNumericRegularSingleBinary(theParent, e, via);
 			if (doLeqTest) evaluateNumericRegularSingleBinary(theParent, l, via);
 			if (doGeqTest) evaluateNumericRegularSingleBinary(theParent, g, via);
@@ -1732,7 +1737,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			bestAdd(aBestSubgroup, aParentCoverage);
 	}
 
-	private final void evaluateNumericRegularSingleBinary(Subgroup theParent, ConditionBase theConditionBase, ValueInfo theValueInfo)
+	private final void evaluateNumericRegularSingleBinary(Subgroup theParent, ConditionBase theConditionBase, ValueCountTP theValueInfo)
 	{
 		NumericStrategy ns = itsSearchParameters.getNumericStrategy();
 
@@ -1753,7 +1758,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		////////////////////////////////////////////////////////////////////////
 
 		int[] aCounts = theValueInfo.itsCounts;
-		int[] aTPs = theValueInfo.itsRecords; // this is the TruePositive count
+		int[] aTPs = theValueInfo.itsTruePositives;
 
 		// a lot of code, but keep it together for now, loops differ in subtle
 		// ways, keeping them together for now aids interpretation
@@ -1838,7 +1843,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 
 	// NOTE for comparison bugs in original code are deliberately reproduced atm
 	@SuppressWarnings("unused") // suppress warnings when DEBUG_POC_BINS = false
-	private final void evaluateNumericRegularSingleBinaryCoarse(Subgroup theParent, ConditionBase theConditionBase, ValueInfo theValueInfo)
+	private final void evaluateNumericRegularSingleBinaryCoarse(Subgroup theParent, ConditionBase theConditionBase, ValueCountTP theValueInfo)
 	{
 		NumericStrategy ns = itsSearchParameters.getNumericStrategy();
 		assert (ns == NumericStrategy.NUMERIC_BEST_BINS || ns == NumericStrategy.NUMERIC_BINS);
@@ -1855,7 +1860,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		long aParentCoverage = theParent.getCoverage();
 		Column aColumn = theConditionBase.getColumn();
 		int[] aCounts = theValueInfo.itsCounts;
-		int[] aTPs= theValueInfo.itsRecords; // holds true positive counts
+		int[] aTPs= theValueInfo.itsTruePositives;
 		boolean isAllStrategy = (ns == NumericStrategy.NUMERIC_BINS);
 		Subgroup aBestSubgroup = null;
 
@@ -2115,7 +2120,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 
 		// copy, as RealBaseIntervalCrossTable will modify the supplied array
 		float [] aDomain = aColumn.getSortedValuesCopy();
-		ValueInfo via = aColumn.getUniqueNumericDomainMap(theParentMembers);
+		ValueCountTP via = aColumn.getUniqueNumericDomainMap(theParentMembers);
 
 		RealBaseIntervalCrossTable aRBICT = new RealBaseIntervalCrossTable(aParentCoverage, (int) theParent.getTertiaryStatistic(), aDomain, via);
 
@@ -2391,6 +2396,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 				//      check refer to the methods for comments on this issue
 				aQuality = (float) theChild.getMeasureValue();
 			}
+			// FIXME this should be isDirectSingleBinary()
 			else if (isLastNumeric && isPOCSetting())
 			{
 				// currently only for SINGLE_NOMINAL (and no propensity scores)
@@ -3650,6 +3656,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		// POCSetting ensures a sorted NUMERIC domain for SINGLE_NOMINAL
 		// DirectSetting is implied
 		// NUMERIC_VIKAMINE_CONSECUTIVE_ALL|BEST are currently not a POCSetting
+		// FIXME this should be isDirectSingleBinary()
 		boolean direct = isPOCSetting();
 		// final: ensure value is set before use in loop
 		final int aSize;
@@ -3660,12 +3667,12 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		// split code paths, for most SINGLE_NOMINAL settings versus the rest
 		if (direct)
 		{
-			ValueInfo via = aColumn.getUniqueNumericDomainMap(theParentMembers);
+			ValueCountTP via = aColumn.getUniqueNumericDomainMap(theParentMembers);
 			// copy is not efficient, but this code is obsolete anyway
 			aDomain = aColumn.getSortedValuesCopy();
 			aCounts = via.itsCounts;
 			aSize = aDomain.length;
-			aTPs = via.itsRecords; // this is the TruePositive count
+			aTPs = via.itsTruePositives;
 		}
 		else
 		{

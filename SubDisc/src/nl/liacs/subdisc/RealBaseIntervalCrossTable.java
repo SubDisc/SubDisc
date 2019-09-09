@@ -1,6 +1,6 @@
 package nl.liacs.subdisc;
 
-import nl.liacs.subdisc.Column.ValueInfo;
+import nl.liacs.subdisc.Column.ValueCountTP;
 
 //Michael says: this is basically a copy of NominalCrossTable
 
@@ -14,14 +14,14 @@ public class RealBaseIntervalCrossTable
 	private final int itsNegativeCount; // sum
 	private final boolean itsUseNegInfty;
 
-	public RealBaseIntervalCrossTable(int theTotalCount, int theTotalNrTruePositives, float[] theDomainCopy, ValueInfo theValueInfo)
+	public RealBaseIntervalCrossTable(int theTotalCount, int theTotalNrTruePositives, float[] theDomainCopy, ValueCountTP theValueInfo)
 	{
 		itsPositiveCount = theTotalNrTruePositives;
 		itsNegativeCount = (theTotalCount - theTotalNrTruePositives);
 
 		// compact arrays first, count aNrDistinct, array-copy; (abuse counts)
 		int[] aCounts = theValueInfo.itsCounts;
-		int[] aRecords = theValueInfo.itsRecords; // the TruePositive count
+		int[] aTPs = theValueInfo.itsTruePositives;
 
 		int aNrDistinct = 0;
 		for (int i = 0, j = aCounts.length; i < j; ++i)
@@ -31,8 +31,8 @@ public class RealBaseIntervalCrossTable
 				continue;
 
 			theDomainCopy[aNrDistinct] = theDomainCopy[i];
-			aRecords[aNrDistinct]      = aRecords[i];
-			aCounts [aNrDistinct]      = (aCount - aRecords[i]);
+			aTPs[aNrDistinct]          = aTPs[i];
+			aCounts [aNrDistinct]      = (aCount - aTPs[i]);
 			++aNrDistinct;
 
 			if ((theTotalCount -= aCount) == 0)
@@ -51,7 +51,7 @@ public class RealBaseIntervalCrossTable
 			itsSplitPoints[0] = Float.NEGATIVE_INFINITY;
 
 		System.arraycopy(theDomainCopy, 0, itsSplitPoints, offset, aNrDistinct);
-		System.arraycopy(aRecords,      0, itsPositiveCounts, offset, aNrDistinct);
+		System.arraycopy(aTPs,          0, itsPositiveCounts, offset, aNrDistinct);
 		System.arraycopy(aCounts,       0, itsNegativeCounts, offset, aNrDistinct);
 	}
 

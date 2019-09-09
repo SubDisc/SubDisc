@@ -2187,22 +2187,22 @@ public class Column implements XMLNodeInterface
 	final float getSortedValue(int index) { return SORTED[index]; }
 	final float[] getSortedValuesCopy() { return Arrays.copyOf(SORTED, SORTED.length); }
 
-	static class ValueInfo
+	static class ValueCountTP
 	{
-		final int[] itsCounts;  // of size column.cardinality
-		final int[] itsRecords; // of size column.cardinality
+		final int[] itsCounts;        // of size column.cardinality
+		final int[] itsTruePositives; // of size column.cardinality
 
-		ValueInfo(int[] theCounts, int[] theRecords)
+		ValueCountTP(int[] theCounts, int[] theTruePositives)
 		{
-			itsCounts = theCounts;
-			itsRecords = theRecords;
+			itsCounts        = theCounts;
+			itsTruePositives = theTruePositives;
 		}
 	}
 
-	public ValueInfo getUniqueNumericDomainMap(BitSet theBitSet)
+	public ValueCountTP getUniqueNumericDomainMap(BitSet theBitSet)
 	{
 		if (!isValidCall("getUniqueNumericDomainMap", theBitSet))
-			return new ValueInfo(new int[0], new int[0]);
+			return new ValueCountTP(new int[0], new int[0]);
 
 		// NOTE (SORTED.length == itsCardinality)
 		int[] aCnt = new int[SORTED.length];
@@ -2220,7 +2220,7 @@ public class Column implements XMLNodeInterface
 				++aCnt[(MASK_OFF & idx)];
 		}
 
-		return new ValueInfo(aCnt, aPos);
+		return new ValueCountTP(aCnt, aPos);
 	}
 
 	// NOTE
