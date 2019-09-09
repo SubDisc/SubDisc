@@ -448,6 +448,9 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 	/* use theNrThreads < 0 to run old mine(theBeginTime) */
 	public void mine(long theBeginTime, int theNrThreads)
 	{
+		// FIXME TMP
+		itsSynchronizedCount = new AtomicLong();
+
 		// not a member field, final and unmodifiable, good for concurrency
 		final ConditionBaseSet aConditions = preMining(theBeginTime, theNrThreads);
 
@@ -553,7 +556,11 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 		while (!es.isTerminated()) {};
 
 		postMining(System.currentTimeMillis() - theBeginTime);
+
+// FIXME DEBUG ONLY
+//System.out.println("itsSynchronizedCount = " + itsSynchronizedCount);
 	}
+	private AtomicLong itsSynchronizedCount;
 
 	private final ConditionBaseSet preMining(long theBeginTime, int theNrThreads)
 	{
@@ -791,7 +798,7 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 			for (int i = 0, j = itsColumnConditionBasesSet.size(); i < j && !isTimeToStop(); ++i)
 			{
 				ColumnConditionBases c = itsColumnConditionBasesSet.get(i);
-
+System.out.println("NEXT: " + c.get(1));
 				if (c instanceof ColumnConditionBasesBinary)
 					evaluateBinary(itsSubgroup, aMembers, (ColumnConditionBasesBinary) c);
 				else if (c instanceof ColumnConditionBasesNominalElementOf)
@@ -1769,6 +1776,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		int[] aCounts = theValueInfo.itsCounts;
 		int[] aTPs = theValueInfo.itsTruePositives;
 
+System.out.println("HERE 1: " + theConditionBase);
 		// a lot of code, but keep it together for now, loops differ in subtle
 		// ways, keeping them together for now aids interpretation
 		if (anOperator == Operator.EQUALS)
@@ -2426,8 +2434,6 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 				theChild.setMeasureValue(aQuality);
 			}
 
-			Candidate aCandidate = new Candidate(theChild);
-
 			// FIXME to avoid excessive locking, itsResult and itsCandidateQueue
 			//       should have a (dirty) hasPotential() method, such that if
 			//       there is no chance at all that the Subgroup would be added
@@ -2436,22 +2442,28 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			// NOTE at this point isValid = true, so the following two hold:
 			//      (aChildCoverage >= itsMinimumCoverage)
 			//      (aChildCoverage < theParentCoverage)
-			boolean aResultAddition = false;
-			// if quality should be ignored or is enough
-			// and the coverage is not too high
-			if ((ignoreQualityMinimum || aQuality > itsQualityMeasureMinimum) && (aChildCoverage <= itsMaximumCoverage))
-				aResultAddition = true;
+			boolean aResultAddition    = ((ignoreQualityMinimum || (aQuality > itsQualityMeasureMinimum)) && (aChildCoverage <= itsMaximumCoverage));
+			// latter two are checked by CandidateQueue but prevent useless lock
+			boolean aCandidateAddition = ((aDepth < itsSearchParameters.getSearchDepth()) && (aChildCoverage > 1));
 
-			// performed as a logical unit, see REQUIREMENT 1
-			// all logic is performed outside of synchronized block
-			// to keep it as small as possible
-			synchronized (itsCheckLock)
+			if (aResultAddition || aCandidateAddition)
 			{
-				if (aResultAddition)
-					itsResult.add(theChild);
+				Candidate aCandidate = (aCandidateAddition ? new Candidate(theChild) : null);
 
-				itsCandidateQueue.add(aCandidate);
+				// performed as a logical unit, see REQUIREMENT 1
+				// all logic is performed outside of synchronized block
+				// to keep it as small as possible
+				synchronized (itsCheckLock)
+				{
+					itsSynchronizedCount.incrementAndGet();
+					if (aResultAddition)
+						itsResult.add(theChild);
+
+					if (aCandidateAddition)
+						itsCandidateQueue.add(aCandidate);
+				}
 			}
+
 		}
 
 		// prevent OutOfMemory / GC Overhead Limit errors, some code paths
