@@ -27,7 +27,6 @@ public class SubgroupDiscovery
 {
 	// log slows down mining a lot, but leave NO_CANDIDATE_LOG at false in git
 	private static final boolean NO_CANDIDATE_LOG = false;
-	private static final boolean ENABLE_POC_SETTINGS = true;
 	private static final boolean DEBUG_POC_BINS = true;
 	// leave TEMPORARY_CODE at false in git
 	// when true, creates PMF instead of PDF in single numeric H^2 setting
@@ -580,7 +579,7 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 			itsCandidateQueue = getCandidateQueueFromBeamSeed();
 
 		// SINGLE_NOMINAL with propensity scores does not use direct computation
-		prepareData(isPOCSetting(), isDirectSingleBinary() ? itsBinaryTarget : null, itsTable.getColumns());
+		prepareData(isDirectSingleBinary() ? itsBinaryTarget : null, itsTable.getColumns());
 
 		long anEndTime = theBeginTime + (long) (((double) itsSearchParameters.getMaximumTime()) * 60.0 * 1000.0);
 		itsEndTime = (anEndTime <= theBeginTime) ? Long.MAX_VALUE : anEndTime;
@@ -612,7 +611,7 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 		Log.logCommandLine(theConditionBaseSet.toString());
 	}
 
-	private static final void prepareData(boolean isPOCSetting, BitSet theBinaryTarget, List<Column> theColumns)
+	private static final void prepareData(BitSet theBinaryTarget, List<Column> theColumns)
 	{
 		Timer aTotal = new Timer();
 
@@ -653,14 +652,14 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 	}
 
 	// direct computation is relevant only for a SINGLE_NOMINAL target as it
-	// relates to tracking the true positive counts
-	// evaluateBinary(): for BINARY description Attributes use directComputation
-	//                   for other model types this is not possible
-	// evaluateNominalBestValueSet(): description Attribute is always NOMINAL
-	//                                and directComputation is possible
-	// numericIntervals(): see evaluateNominalBestValueSet()
+	// relates to tracking the true positive counts, methods using this setting:
 	//
-	// for PROP_SCORE_WRACC/PROP_SCORE_RATIO directComputation is not possible
+	// evaluateBinary()                    : for BINARY description Attributes
+	// evaluateNominalElementOf()          : for NOMINAL description Attributes
+	// evaluateNumericRegularSingleBinary(): for NUMERIC description Attributes
+	// evaluateNumericBestInterval         : for NUMERIC description Attributes
+	//
+	// for PROP_SCORE_WRACC/PROP_SCORE_RATIO directComputation() is not possible
 	private final boolean isDirectSingleBinary()
 	{
 		EnumSet<QM> anInvalid = EnumSet.of(QM.PROP_SCORE_WRACC, QM.PROP_SCORE_RATIO);
@@ -669,35 +668,6 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 		SearchParameters s = itsSearchParameters;
 		return ((s.getTargetType() == TargetType.SINGLE_NOMINAL) && !anInvalid.contains(s.getQualityMeasure())
 				&& (s.getNumericStrategy() != NumericStrategy.NUMERIC_VIKAMINE_CONSECUTIVE_ALL && s.getNumericStrategy() != NumericStrategy.NUMERIC_VIKAMINE_CONSECUTIVE_BEST));
-	}
-
-	// POCSetting relates to model updates for numeric half-intervals, and it
-	// requires sorted numeric domains to be available for all NUMERIC Columns
-	//
-	// currently only an implementation for SINGLE_NOMINAL is available, it
-	// requires the number of TruePositives to be set for the parent, most
-	// notably for the initial Start Subgroup (preMining should take care of it)
-	//
-	// future updates will add other TargetTypes
-	//
-	// NOTE
-	// aValid includes NUMERIC_INTERVALS, as it requires sorted NUMERIC domains
-	// it does not use model updates (at least not like the half-intervals)
-	private final boolean isPOCSetting()
-	{
-		EnumSet<NumericStrategy> aValid = EnumSet.of(
-											NumericStrategy.NUMERIC_ALL,
-											NumericStrategy.NUMERIC_BEST,
-											NumericStrategy.NUMERIC_BEST_BINS,
-											NumericStrategy.NUMERIC_BINS,
-											NumericStrategy.NUMERIC_INTERVALS);
-
-		EnumSet<QM> anInvalid = EnumSet.of(QM.PROP_SCORE_WRACC, QM.PROP_SCORE_RATIO);
-
-		SearchParameters s = itsSearchParameters;
-		return (aValid.contains(s.getNumericStrategy()) &&
-				((s.getTargetType() == TargetType.SINGLE_NOMINAL) && !anInvalid.contains(s.getQualityMeasure())) &&
-				ENABLE_POC_SETTINGS);
 	}
 
 	private static final void deleteSortData(List<Column> theColumns)
@@ -1475,8 +1445,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 
 		// currently only for SINGLE_NOMINAL (and not for propensity scores)
 		// but expect there to be more optimised settings, so keep split here
-		// FIXME change this to isDirectSingleBinary
-		if (isPOCSetting())
+		if (isDirectSingleBinary())
 		{
 			ValueCountTP v = aColumn.getUniqueNumericDomainMap(theParentMembers);
 			if (doEq_Test) evaluateNumericRegularSingleBinary(theParent, e, v);
@@ -2110,7 +2079,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	private Subgroup evaluateCandidate(Subgroup theParent, Condition theAddedCondition, int theChildCoverage, int theNrTruePositives, boolean isAllStrategy, Subgroup theBestSubgroup)
 	{
 		// currently only for SINGLE_NOMINAL (and not for propensity scores)
-		assert (isPOCSetting());
+		assert (isDirectSingleBinary());
 
 		if ((itsFilter != null) && !itsFilter.isUseful(theParent.getConditions(), theAddedCondition))
 			return theBestSubgroup; // null or the best so far
@@ -2152,8 +2121,6 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		assert (isDirectSingleBinary());
 		assert (theColumnConditionBases.get(0).getOperator() == Operator.BETWEEN);
 		assert (itsSearchParameters.getNumericOperatorSetting() == NumericOperatorSetting.NUMERIC_INTERVALS);
-		// this method is a deviant case, but ValueInfo relies on isPOCSetting
-		assert (isPOCSetting());
 
 		////////////////////////////////////////////////////////////////////////
 		int aParentCoverage = theParent.getCoverage();
@@ -2404,6 +2371,8 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		// FIXME MM this check should be made obsolete
 		int aChildCoverage = theChild.getCoverage();
 		boolean isValid = (aChildCoverage >= itsMinimumCoverage && aChildCoverage < theParentCoverage);
+		//
+		int aDepth = theChild.getDepth();
 
 		if (isValid)
 		{
@@ -2416,27 +2385,20 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 																NumericStrategy.NUMERIC_BEST_BINS,
 																NumericStrategy.NUMERIC_VIKAMINE_CONSECUTIVE_BEST,
 																NumericStrategy.NUMERIC_INTERVALS);
-			AttributeType lastAdded = theChild.getConditions().get(theChild.getDepth()-1).getColumn().getType();
+			AttributeType lastAdded = theChild.getConditions().get(aDepth-1).getColumn().getType();
 			boolean isLastNumeric = (lastAdded == AttributeType.NUMERIC);
 
 			// final: ensure value is set before aResultAddition-check
 			final float aQuality;
 
+			// FIXME this is becoming a mess, probably better add a parameter:
+			//       isQualityAlreadyComputed
 			if ((lastAdded == AttributeType.BINARY) && isDirectSingleBinary())
 			{
 				// NOTE this path already performed the isValid-coverage check
 				aQuality = (float) theChild.getMeasureValue();
 			}
-			else if ((lastAdded == AttributeType.NOMINAL) && itsSearchParameters.getNominalSets())
-			{
-				// BestValueset already set quality (BestInterval did also, but
-				// is picked up by the BEST* check below)
-				// NOTE both code paths did not performed the isValid-coverage
-				//      check refer to the methods for comments on this issue
-				aQuality = (float) theChild.getMeasureValue();
-			}
-			// FIXME this should be isDirectSingleBinary()
-			else if (isLastNumeric && isPOCSetting())
+			else if (isLastNumeric && isDirectSingleBinary())
 			{
 				// currently only for SINGLE_NOMINAL (and no propensity scores)
 				// NOTE this path already performed the isValid-coverage check
@@ -2450,6 +2412,14 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 				// check, and BestInterval does not perform one at all
 				aQuality = (float) theChild.getMeasureValue();
 			}
+			else if ((lastAdded == AttributeType.NOMINAL) && itsSearchParameters.getNominalSets())
+			{
+				// BestValueset already set quality (BestInterval did also, but
+				// is picked up by the BEST* check below)
+				// NOTE both code paths did not performed the isValid-coverage
+				//      check refer to the methods for comments on this issue
+				aQuality = (float) theChild.getMeasureValue();
+			}
 			else
 			{
 				aQuality = evaluateCandidate(theChild);
@@ -2458,14 +2428,21 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 
 			Candidate aCandidate = new Candidate(theChild);
 
+			// FIXME to avoid excessive locking, itsResult and itsCandidateQueue
+			//       should have a (dirty) hasPotential() method, such that if
+			//       there is no chance at all that the Subgroup would be added
+			//       no lock is ever acquired
+
+			// NOTE at this point isValid = true, so the following two hold:
+			//      (aChildCoverage >= itsMinimumCoverage)
+			//      (aChildCoverage < theParentCoverage)
 			boolean aResultAddition = false;
 			// if quality should be ignored or is enough
 			// and the coverage is not too high
 			if ((ignoreQualityMinimum || aQuality > itsQualityMeasureMinimum) && (aChildCoverage <= itsMaximumCoverage))
 				aResultAddition = true;
 
-			// FIXME check cases where aCandidate will never be added
-
+			// performed as a logical unit, see REQUIREMENT 1
 			// all logic is performed outside of synchronized block
 			// to keep it as small as possible
 			synchronized (itsCheckLock)
@@ -3694,11 +3671,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		//Subgroup aBestSubgroup = null;
 		////////////////////////////////////////////////////////////////////////
 
-		// POCSetting ensures a sorted NUMERIC domain for SINGLE_NOMINAL
-		// DirectSetting is implied
-		// NUMERIC_VIKAMINE_CONSECUTIVE_ALL|BEST are currently not a POCSetting
-		// FIXME this should be isDirectSingleBinary()
-		boolean direct = isPOCSetting();
+		boolean direct = isDirectSingleBinary();
 		// final: ensure value is set before use in loop
 		final int aSize;
 		final float [] aDomain;
@@ -3807,7 +3780,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		ConditionBase aConditionBase = theRefinement.getConditionBase();
 
 		// currently only for SINGLE_NOMINAL (and not for propensity scores)
-		if (!isPOCSetting())
+		if (!isDirectSingleBinary())
 		{
 			evaluateNumericRegularHelper(aParent, theParentMembers, aConditionBase);
 		}
