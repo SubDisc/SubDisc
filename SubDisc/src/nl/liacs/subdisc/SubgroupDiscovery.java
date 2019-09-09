@@ -448,9 +448,6 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 	/* use theNrThreads < 0 to run old mine(theBeginTime) */
 	public void mine(long theBeginTime, int theNrThreads)
 	{
-		// FIXME TMP
-		itsSynchronizedCount = new AtomicLong();
-
 		// not a member field, final and unmodifiable, good for concurrency
 		final ConditionBaseSet aConditions = preMining(theBeginTime, theNrThreads);
 
@@ -556,11 +553,7 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 		while (!es.isTerminated()) {};
 
 		postMining(System.currentTimeMillis() - theBeginTime);
-
-// FIXME DEBUG ONLY
-//System.out.println("itsSynchronizedCount = " + itsSynchronizedCount);
 	}
-	private AtomicLong itsSynchronizedCount;
 
 	private final ConditionBaseSet preMining(long theBeginTime, int theNrThreads)
 	{
@@ -798,7 +791,7 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 			for (int i = 0, j = itsColumnConditionBasesSet.size(); i < j && !isTimeToStop(); ++i)
 			{
 				ColumnConditionBases c = itsColumnConditionBasesSet.get(i);
-System.out.println("NEXT: " + c.get(1));
+
 				if (c instanceof ColumnConditionBasesBinary)
 					evaluateBinary(itsSubgroup, aMembers, (ColumnConditionBasesBinary) c);
 				else if (c instanceof ColumnConditionBasesNominalElementOf)
@@ -1776,7 +1769,6 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		int[] aCounts = theValueInfo.itsCounts;
 		int[] aTPs = theValueInfo.itsTruePositives;
 
-System.out.println("HERE 1: " + theConditionBase);
 		// a lot of code, but keep it together for now, loops differ in subtle
 		// ways, keeping them together for now aids interpretation
 		if (anOperator == Operator.EQUALS)
@@ -2443,6 +2435,9 @@ System.out.println("HERE 1: " + theConditionBase);
 			//      (aChildCoverage >= itsMinimumCoverage)
 			//      (aChildCoverage < theParentCoverage)
 			boolean aResultAddition    = ((ignoreQualityMinimum || (aQuality > itsQualityMeasureMinimum)) && (aChildCoverage <= itsMaximumCoverage));
+			// currently not a synchronised call, but perform separately anyway
+			if (aResultAddition)
+				aResultAddition &= itsResult.hasPotential(aQuality);
 			// latter two are checked by CandidateQueue but prevent useless lock
 			boolean aCandidateAddition = ((aDepth < itsSearchParameters.getSearchDepth()) && (aChildCoverage > 1));
 
@@ -2455,7 +2450,6 @@ System.out.println("HERE 1: " + theConditionBase);
 				// to keep it as small as possible
 				synchronized (itsCheckLock)
 				{
-					itsSynchronizedCount.incrementAndGet();
 					if (aResultAddition)
 						itsResult.add(theChild);
 
@@ -3825,7 +3819,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		//       to get the Domain for BETWEEN, using <= is sufficient
 		if (anOperator == Operator.BETWEEN)
 		{
-			System.out.format("SubgroupDiscovery.evaluateNumericRegularHelper(): '%s' is not yet implemented for '%s'%n", anOperator, aNumericStrategy);
+			Log.logCommandLine(String.format("SubgroupDiscovery.evaluateNumericRegularHelper(): '%s' is not yet implemented for '%s'%n", anOperator, aNumericStrategy));
 			return;
 		}
 
