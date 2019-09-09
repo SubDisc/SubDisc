@@ -2169,7 +2169,7 @@ public class Column implements XMLNodeInterface
 	private int[] SORT_INDEX;
 	final void buildSorted(BitSet theTarget)
 	{
-		boolean isTargetNull = (theTarget != null);
+		boolean isTargetNull = (theTarget == null);
 
 		SORTED = Function.getUniqueValues(itsFloatz);
 
@@ -2187,16 +2187,41 @@ public class Column implements XMLNodeInterface
 	final float getSortedValue(int index) { return SORTED[index]; }
 	final float[] getSortedValuesCopy() { return Arrays.copyOf(SORTED, SORTED.length); }
 
-	static class ValueCountTP
+	// a more generic version of this type of classes will follow later
+	static final class ValueCount
+	{
+		final int[] itsCounts;        // of size column.cardinality
+
+		private ValueCount(int[] theCounts)
+		{
+			itsCounts        = theCounts;
+		}
+	}
+
+	static final class ValueCountTP
 	{
 		final int[] itsCounts;        // of size column.cardinality
 		final int[] itsTruePositives; // of size column.cardinality
 
-		ValueCountTP(int[] theCounts, int[] theTruePositives)
+		private ValueCountTP(int[] theCounts, int[] theTruePositives)
 		{
 			itsCounts        = theCounts;
 			itsTruePositives = theTruePositives;
 		}
+	}
+
+	public ValueCount getValueCount(BitSet theBitSet)
+	{
+		if (!isValidCall("getValueCount", theBitSet))
+			return new ValueCount(new int[0]);
+
+		// NOTE (SORTED.length == itsCardinality)
+		int[] aCnt = new int[SORTED.length];
+
+		for (int i = theBitSet.nextSetBit(0); i >= 0; i = theBitSet.nextSetBit(i + 1))
+			++aCnt[SORT_INDEX[i]];
+
+		return new ValueCount(aCnt);
 	}
 
 	public ValueCountTP getUniqueNumericDomainMap(BitSet theBitSet)
