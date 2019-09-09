@@ -135,6 +135,7 @@ public class CandidateQueue
 	// this is left to SubgroupDiscovery.check(), which is bad design
 	public boolean add(Candidate theCandidate)
 	{
+		// these are checked by SubgroupDiscovery.checkAndLog(), but leave it in
 		Subgroup aSubgroup = theCandidate.getSubgroup();
 		if (aSubgroup.getDepth() >= itsMaxDepth)
 			return false;
