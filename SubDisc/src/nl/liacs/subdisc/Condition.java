@@ -8,12 +8,14 @@ package nl.liacs.subdisc;
  * In that case each ConditionX needs to hold only one value member field 
  * specific for that Condition (Column) type.
  * This need not be exposed to the external API, that just sees a Condition.
- * Conditions would be smaller, and safer to compare, copy etcetera.
+ * Conditions would be smaller, and safer to compare, copy and so forth.
  */
 public class Condition implements Comparable<Condition>
 {
-	private final Column itsColumn;
+	private final Column   itsColumn;
 	private final Operator itsOperator;
+	// for non-String/non-float based Column.evaluate() (use index instead)
+	private final int      itsSortIndex; // ColumnType = NUMERIC (for now) Integer.MIN_VALUE
 
 	// value member fields, all final
 	// forces constructors to set a value instead of relying on default
@@ -23,8 +25,6 @@ public class Condition implements Comparable<Condition>
 	private final float    itsNumericValue;    // ColumnType = NUMERIC NaN
 	private final Interval itsInterval;        // ColumnType = NUMERIC null
 	private final boolean  itsBinaryValue;     // ColumnType = BINARY  false
-	// HACK to allow for non-float based evaluation code (use int index instead)
-	final int itsSortIndex;                    // ColumnType = NUMERIC (for now) Integer.MIN_VALUE
 
 	// defaults for uninitialised value member fields
 	private static final String   UNINITIALISED_NOMINAL     = null;
@@ -33,7 +33,7 @@ public class Condition implements Comparable<Condition>
 	private static final Interval UNINITIALISED_INTERVAL    = null;
 	private static final boolean  UNINITIALISED_BINARY      = false;
 	// NOTE relies on the fact that MIN_VALUE is smaller than -MAX_VALUE
-	//      MAX_VALUE is the largest valid index that could occur
+	//      MAX_VALUE is the largest valid (sort) index that can occur
 	static final int              UNINITIALISED_SORT_INDEX  = Integer.MIN_VALUE;
 
 	/*
@@ -70,16 +70,16 @@ public class Condition implements Comparable<Condition>
 		if (theValue == null)
 			throw exception(String.class.getSimpleName(), "null");
 
-		itsColumn = theConditionBase.getColumn();
-		itsOperator = theConditionBase.getOperator();
-		itsNominalValue = theValue;
+		itsColumn          = theConditionBase.getColumn();
+		itsOperator        = theConditionBase.getOperator();
+		itsNominalValue    = theValue;
 
 		// set non used value member fields to uninitialised default
 		itsNominalValueSet = UNINITIALISED_NOMINAL_SET;
-		itsNumericValue = UNINITIALISED_NUMERIC;
-		itsInterval = UNINITIALISED_INTERVAL;
-		itsBinaryValue = UNINITIALISED_BINARY;
-		itsSortIndex = UNINITIALISED_SORT_INDEX;
+		itsNumericValue    = UNINITIALISED_NUMERIC;
+		itsInterval        = UNINITIALISED_INTERVAL;
+		itsBinaryValue     = UNINITIALISED_BINARY;
+		itsSortIndex       = UNINITIALISED_SORT_INDEX;
 	}
 
 	/** Condition for NOMINAL Column, ValueSet. */
@@ -100,16 +100,16 @@ public class Condition implements Comparable<Condition>
 		if (theValueSet == null)
 			throw exception(ValueSet.class.getSimpleName(), "null");
 
-		itsColumn = theConditionBase.getColumn();
-		itsOperator = theConditionBase.getOperator();
+		itsColumn          = theConditionBase.getColumn();
+		itsOperator        = theConditionBase.getOperator();
 		itsNominalValueSet = theValueSet;
 
 		// set non used value member fields to uninitialised default
-		itsNominalValue = UNINITIALISED_NOMINAL;
-		itsNumericValue = UNINITIALISED_NUMERIC;
-		itsInterval = UNINITIALISED_INTERVAL;
-		itsBinaryValue = UNINITIALISED_BINARY;
-		itsSortIndex = UNINITIALISED_SORT_INDEX;
+		itsNominalValue    = UNINITIALISED_NOMINAL;
+		itsNumericValue    = UNINITIALISED_NUMERIC;
+		itsInterval        = UNINITIALISED_INTERVAL;
+		itsBinaryValue     = UNINITIALISED_BINARY;
+		itsSortIndex       = UNINITIALISED_SORT_INDEX;
 	}
 
 	/** Condition for BINARY Column. */
@@ -124,16 +124,16 @@ public class Condition implements Comparable<Condition>
 		// there is only one possibility
 		assert (theConditionBase.getOperator() == Operator.EQUALS);
 
-		itsColumn = aColumn;
-		itsOperator = theConditionBase.getOperator();
-		itsBinaryValue = theValue;
+		itsColumn          = aColumn;
+		itsOperator        = theConditionBase.getOperator();
+		itsBinaryValue     = theValue;
 
 		// set non used value member fields to uninitialised default
-		itsNominalValue = UNINITIALISED_NOMINAL;
+		itsNominalValue    = UNINITIALISED_NOMINAL;
 		itsNominalValueSet = UNINITIALISED_NOMINAL_SET;
-		itsNumericValue = UNINITIALISED_NUMERIC;
-		itsInterval = UNINITIALISED_INTERVAL;
-		itsSortIndex = UNINITIALISED_SORT_INDEX;
+		itsNumericValue    = UNINITIALISED_NUMERIC;
+		itsInterval        = UNINITIALISED_INTERVAL;
+		itsSortIndex       = UNINITIALISED_SORT_INDEX;
 	}
 
 	/** Condition for NUMERIC Column, Interval. */
@@ -154,18 +154,19 @@ public class Condition implements Comparable<Condition>
 		if (theInterval == null)
 			throw exception(Interval.class.getSimpleName(), "null");
 
-		itsColumn = aColumn;
-		itsOperator = anOperator;
-		itsInterval = theInterval;
+		itsColumn          = aColumn;
+		itsOperator        = anOperator;
+		itsInterval        = theInterval;
 
 		// set non used value member fields to uninitialised default
-		itsNominalValue = UNINITIALISED_NOMINAL;
+		itsNominalValue    = UNINITIALISED_NOMINAL;
 		itsNominalValueSet = UNINITIALISED_NOMINAL_SET;
-		itsNumericValue = UNINITIALISED_NUMERIC;
-		itsBinaryValue = UNINITIALISED_BINARY;
-		itsSortIndex = UNINITIALISED_SORT_INDEX;
+		itsNumericValue    = UNINITIALISED_NUMERIC;
+		itsBinaryValue     = UNINITIALISED_BINARY;
+		itsSortIndex       = UNINITIALISED_SORT_INDEX;
 	}
 
+	// Column.evaluate(BitSet, Condition): only 1 NUMERIC Constructor must exist
 	/** Condition for NUMERIC Column, single value, NaN is not allowed. */
 	Condition(ConditionBase theConditionBase, float theValue, int theIndex)
 	{
@@ -195,16 +196,16 @@ public class Condition implements Comparable<Condition>
 		if (Float.isNaN(theValue))
 			throw exception("float value", "NaN");
 
-		itsColumn = aColumn;
-		itsOperator = anOperator;
-		itsNumericValue = theValue;
-		itsSortIndex = theIndex;
+		itsColumn          = aColumn;
+		itsOperator        = anOperator;
+		itsNumericValue    = theValue;
+		itsSortIndex       = theIndex;
 
 		// set non used value member fields to uninitialised default
-		itsNominalValue = UNINITIALISED_NOMINAL;
+		itsNominalValue    = UNINITIALISED_NOMINAL;
 		itsNominalValueSet = UNINITIALISED_NOMINAL_SET;
-		itsInterval = UNINITIALISED_INTERVAL;
-		itsBinaryValue = UNINITIALISED_BINARY;
+		itsInterval        = UNINITIALISED_INTERVAL;
+		itsBinaryValue     = UNINITIALISED_BINARY;
 	}
 
 	private static final IllegalArgumentException exception(String pre, String post)
@@ -212,16 +213,15 @@ public class Condition implements Comparable<Condition>
 		return new IllegalArgumentException(pre + " can not be " + post);
 	}
 
-	public Column getColumn() { return itsColumn; }
-
-	public Operator getOperator() { return itsOperator; }
-
+	public Column getColumn()            { return itsColumn; }
+	public Operator getOperator()        { return itsOperator; }
+	public int getSortIndex()            { return itsSortIndex; }
 	// no type validity checks are performed
-	public String getNominalValue() { return itsNominalValue; }
+	public String getNominalValue()      { return itsNominalValue; }
 	public ValueSet getNominalValueSet() { return itsNominalValueSet; }
-	public float getNumericValue() { return itsNumericValue; }
+	public float getNumericValue()       { return itsNumericValue; }
 	public Interval getNumericInterval() { return itsInterval; }
-	public boolean getBinaryValue() { return itsBinaryValue; }
+	public boolean getBinaryValue()      { return itsBinaryValue; }
 
 	/* Assumes values are set in constructor, and per Column/Operator type*/
 	private String getValue()
@@ -343,7 +343,7 @@ public class Condition implements Comparable<Condition>
 
 	////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////
-	///// start of obsolete code - will be removed as soon                 /////
+	///// start of obsolete code - will be removed soon                    /////
 	////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////
 

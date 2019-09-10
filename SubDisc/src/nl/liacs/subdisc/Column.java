@@ -1541,7 +1541,7 @@ public class Column implements XMLNodeInterface
 	 */
 	// XXX MM - should be replaced by evaluate(BitSet, Condition)
 	@Deprecated
-	public BitSet evaluate(Condition theCondition) throws IllegalArgumentException
+	BitSet evaluate(Condition theCondition) throws IllegalArgumentException
 	{
 		// XXX evaluation logic is deeply flawed, this hack is needed
 		if (theCondition.getColumn() != this)
@@ -1640,16 +1640,18 @@ public class Column implements XMLNodeInterface
 			{
 				aResult = new BitSet(itsSize);
 
+				// the Condition constructor with float always sets sort index
+				// the Condition constructor with Interval does not
 				switch (anOperator)
 				{
 					case EQUALS :
-						numericEquals(theBitSet, theCondition.getNumericValue(), aResult);
+						numericEquals(theBitSet, theCondition.getNumericValue(), theCondition.getSortIndex(), aResult);
 						break;
 					case LESS_THAN_OR_EQUAL :
-						numericLEQ(theBitSet, theCondition.getNumericValue(), theCondition.itsSortIndex, aResult);
+						numericLEQ(theBitSet, theCondition.getNumericValue(), theCondition.getSortIndex(), aResult);
 						break;
 					case GREATER_THAN_OR_EQUAL :
-						numericGEQ(theBitSet, theCondition.getNumericValue(), theCondition.itsSortIndex, aResult);
+						numericGEQ(theBitSet, theCondition.getNumericValue(), theCondition.getSortIndex(), aResult);
 						break;
 					case BETWEEN :
 						numericBetween(theBitSet, theCondition.getNumericInterval(), aResult);
@@ -1766,7 +1768,6 @@ public class Column implements XMLNodeInterface
 		return theResult;
 	}
 
-	// FIXME this can start using SORT_INDEX
 	private BitSet numericEquals(BitSet theMembers, float theValue, BitSet theResult)
 	{
 		for (int i = theMembers.nextSetBit(0); i >= 0; i = theMembers.nextSetBit(i + 1))
@@ -1776,12 +1777,31 @@ public class Column implements XMLNodeInterface
 		return theResult;
 	}
 
-	private BitSet numericLEQ(BitSet theMembers, float theValue, int theIndex, BitSet theResult)
+	// only SINGLE_NOMINAL needs MASK_OFF, unlikely to be a performance problem
+	private BitSet numericEquals(BitSet theMembers, float theValue, int theValueSortIndex, BitSet theResult)
 	{
-		if (SORT_INDEX != null)
+		if ((SORT_INDEX != null) && (theValueSortIndex != Condition.UNINITIALISED_SORT_INDEX))
 		{
 			for (int i = theMembers.nextSetBit(0); i >= 0; i = theMembers.nextSetBit(i + 1))
-				if ((MASK_OFF & SORT_INDEX[i]) <= theIndex)
+				if ((MASK_OFF & SORT_INDEX[i]) == theValueSortIndex)
+					theResult.set(i);
+		}
+		else
+		{
+			for (int i = theMembers.nextSetBit(0); i >= 0; i = theMembers.nextSetBit(i + 1))
+				if (itsFloatz[i] == theValue)
+					theResult.set(i);
+		}
+
+		return theResult;
+	}
+
+	private BitSet numericLEQ(BitSet theMembers, float theValue, int theValueSortIndex, BitSet theResult)
+	{
+		if ((SORT_INDEX != null) && (theValueSortIndex != Condition.UNINITIALISED_SORT_INDEX))
+		{
+			for (int i = theMembers.nextSetBit(0); i >= 0; i = theMembers.nextSetBit(i + 1))
+				if ((MASK_OFF & SORT_INDEX[i]) <= theValueSortIndex)
 					theResult.set(i);
 		}
 		else
@@ -1794,14 +1814,14 @@ public class Column implements XMLNodeInterface
 		return theResult;
 	}
 
-	private BitSet numericGEQ(BitSet theMembers, float theValue, int theIndex, BitSet theResult)
+	private BitSet numericGEQ(BitSet theMembers, float theValue, int theValueSortIndex, BitSet theResult)
 	{
 		// others use SORT_INDEX, NUM5A/NUM5B/NUM6/NUM7 set index in Conditions
 		// when SubgroupDiscovery.mine() ends SORT_INDEX is always set to null
-		if (SORT_INDEX != null)
+		if ((SORT_INDEX != null) && (theValueSortIndex != Condition.UNINITIALISED_SORT_INDEX))
 		{
 			for (int i = theMembers.nextSetBit(0); i >= 0; i = theMembers.nextSetBit(i + 1))
-				if ((MASK_OFF & SORT_INDEX[i]) >= theIndex)
+				if ((MASK_OFF & SORT_INDEX[i]) >= theValueSortIndex)
 					theResult.set(i);
 		}
 		else
@@ -2163,6 +2183,11 @@ public class Column implements XMLNodeInterface
 	//
 	// XXX profiling suggest that MASK is faster than bit invert (~)
 	//     probably because numericLEQ|GEQ can unconditionally apply MASK_OFF
+	// XXX update: all NUMERIC Conditions now set sort index, Column.evaluate()
+	//     relies on it
+	//     Condition.UNINTIALISE_SORT_INDEX is Integer.MIN_VALUE, such that it
+	//     is outside of the range valid sort indexes (MIN_VALUE < -MAX_VALUE)
+	//     this also means bit invert is no longer even a possibility
 	private static final int MASK_ON  = 0x80000000;
 	private static final int MASK_OFF = 0x7fffffff;
 	private float[] SORTED;
