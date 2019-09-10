@@ -3522,7 +3522,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 
 		for (int i = 0, j = aDomain.length; i < j && !isTimeToStop(); ++i)
 		{
-			Condition aCondition = new Condition(aConditionBase, aDomain[i]);
+			Condition aCondition = new Condition(aConditionBase, aDomain[i], Condition.UNINITIALISED_SORT_INDEX);
 
 			if (!isFilterNull && !itsFilter.isUseful(aParentConditions, aCondition))
 				continue;
@@ -3718,7 +3718,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			if (direct && (aCoverage == theParentCoverage))
 				break;
 
-			Condition anAddedCondition = new Condition(aConditionBase, aDomain[i]);
+			Condition anAddedCondition = new Condition(aConditionBase, aDomain[i], (direct ? i : Condition.UNINITIALISED_SORT_INDEX));
 
 			if (!isFilterNull && !itsFilter.isUseful(aParentConditions, anAddedCondition))
 				continue;
@@ -3896,7 +3896,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 				cover -= cnt;
 			}
 
-			Condition aCondition = new Condition(theConditionBase, aDomain[i]);
+			Condition aCondition = new Condition(theConditionBase, aDomain[i], Condition.UNINITIALISED_SORT_INDEX);
 
 			if (!isFilterNull && !itsFilter.isUseful(aParentConditions, aCondition))
 				continue;

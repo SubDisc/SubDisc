@@ -124,7 +124,8 @@ public class ExternalKnowledgeFileLoader
 						aCondition = new Condition(b, aValue);
 						break;
 					case NUMERIC :
-						aCondition = new Condition(b, Float.parseFloat(aValue));
+						// Column data unknown, so can not set sort index
+						aCondition = new Condition(b, Float.parseFloat(aValue), Condition.UNINITIALISED_SORT_INDEX);
 						break;
 					case ORDINAL :
 						throw new AssertionError(AttributeType.ORDINAL);

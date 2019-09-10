@@ -722,7 +722,8 @@ public class Validation
 					float aValue = (aMin + 0.1f*aRange + 0.8f*aRange*theRandom.nextFloat());
 
 					aConditionBase = new ConditionBase(aColumn, anOperator);
-					aCondition = new Condition(aConditionBase, aValue);
+					// value may not occur in Column, so can not set sort index
+					aCondition = new Condition(aConditionBase, aValue, Condition.UNINITIALISED_SORT_INDEX);
 					break;
 				}
 				case BINARY :
