@@ -2,6 +2,8 @@ package nl.liacs.subdisc;
 
 import java.util.*;
 
+import nl.liacs.subdisc.ConditionListBuilder.ConditionListA;
+
 /*
  * Class that creates the base conditions just once.
  * After that, Refinement(List)s are created using different Subgroups, but
@@ -114,6 +116,7 @@ class ConditionBaseSet
 //		throw new AssertionError(theCondition);
 //	}
 
+	// see isInConditionBaseOrder() about order of ConditionBases and Conditions
 	private static final List<ConditionBase> getBaseConditions(Table theTable, SearchParameters theSearchParameters)
 	{
 		TargetConcept aTC = theSearchParameters.getTargetConcept();
@@ -166,5 +169,66 @@ class ConditionBaseSet
 
 		result.trimToSize();
 		return result;
+	}
+
+	// there is no logical equivalence between the order of ConditionsBases in a
+	// ConditionBaseSet, and those in a ConditionListA, although both use
+	// Column.getIndex() and Operator.ordinal(), such behaviour not guaranteed,
+	// so SubgroupDiscovery.mine() and Test() use this method in an assert
+	//
+	// FIXME functionality this class will be replaced by ColumnConditionBases
+	//       in which case this method should be implemented elsewhere
+	static final boolean isInConditionBaseOrder(ConditionBaseSet theConditionBases, ConditionListA theConditionList)
+	{
+		if (theConditionList.size() <= 1)
+			return true;
+
+		List<ConditionBase> aList = theConditionBases.itsConditionBases;
+		int aSize = aList.size();
+		Condition[] aCanonicalOrder = ConditionListBuilder.toCanonicalOrder(theConditionList);
+
+		for (int i = 0, next = 0; i < aSize && next < aCanonicalOrder.length; ++i)
+		{
+			ConditionBase cb = aList.get(i);
+			int ci = cb.getColumn().getIndex();
+
+			int cmp = (ci - aCanonicalOrder[next].getColumn().getIndex());
+
+			if (cmp < 0)
+				continue;
+			else if (cmp == 0)
+			{
+				int oo = cb.getOperator().ordinal();
+				int cmp2 = (oo - aCanonicalOrder[next].getOperator().ordinal());
+				if (cmp2 < 0)
+					continue;
+				else if (cmp2 == 0)
+				{
+					++next;
+					continue;
+				}
+				else
+					return false;
+			}
+			else
+				return false;
+		}
+
+		if (aCanonicalOrder.length <= aSize)
+			return true;
+
+		// unlikely case where ConditionListA is larger than ConditionBaseSet
+		ConditionBase aLast = aList.get(aSize - 1);
+		int aLastColumnIndex = aLast.getColumn().getIndex();
+		int aLastOperatorOrdinal = aLast.getOperator().ordinal();
+
+		for (int i = aSize; i < aCanonicalOrder.length; ++i)
+		{
+			Condition c = aCanonicalOrder[i];
+			if ((c.getColumn().getIndex() != aLastColumnIndex) || (c.getOperator().ordinal() != aLastOperatorOrdinal))
+				return false;
+		}
+
+		return true;
 	}
 }
