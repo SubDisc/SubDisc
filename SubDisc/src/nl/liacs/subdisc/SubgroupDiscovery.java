@@ -27,11 +27,28 @@ public class SubgroupDiscovery
 {
 	// log slows down mining a lot, but leave NO_CANDIDATE_LOG at false in git
 	private static final boolean NO_CANDIDATE_LOG = false;
-	private static final boolean DEBUG_POC_BINS = true;
+	private static final boolean DEBUG_POC_BINS   = true;
+	// old algorithm creates many useless Refinements, set these to true to
+	// avoid this for various scenarios, leave at false in git
+	private static final boolean BEST_VALUESET_AT_LAST_POSITION_SKIP = false;
+	private static final boolean BEST_INTERVAL_AT_LAST_POSITION_SKIP = false;
+	private static final boolean BEST_VALUESET_NO_REFINEMENT_SKIP    = false;
+	private static final boolean BEST_INTERVAL_NO_REFINEMENT_SKIP    = false;
+	// for nominal class labels only, irrelevant for ValueSet-scenario
+	private static final boolean BINARY_NOMINAL_EQUALS_SKIP          = false;
+	// for numeric ALL|BEST + only EQUALS (not LEQ/GEQ), not for (Best)Intervals
+	private static final boolean NUMERIC_EQ_SKIP                     = false;
+	// data set/search parameter specific filter will replace all of the above
+	// SET just tests /reports redundant refinements, USE actually skips them
+	private static final boolean SET_SKIP_FILTER                     = false;
+	private static final boolean USE_SKIP_FILTER                     = false;
+	private static final boolean DEBUG_PRINTS_FOR_SKIP               = false;
+	private static final boolean DEBUG_PRINTS_FOR_WARN               = false;
+
 	// leave TEMPORARY_CODE at false in git
 	// when true, creates PMF instead of PDF in single numeric H^2 setting
-	static boolean TEMPORARY_CODE = false;
-	static int TEMPORARY_CODE_NR_SPLIT_POINTS = -1;
+	static boolean TEMPORARY_CODE                 = false;
+	static int     TEMPORARY_CODE_NR_SPLIT_POINTS = -1;
 	static boolean TEMPORARY_CODE_USE_EQUAL_WIDTH = false;
 
 	private final SearchParameters itsSearchParameters;
@@ -444,16 +461,14 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 		postMining(System.currentTimeMillis() - theBeginTime);
 	}
 
-	private List<ColumnConditionBases> itsColumnConditionBasesSet;
 	/* use theNrThreads < 0 to run old mine(theBeginTime) */
 	public void mine(long theBeginTime, int theNrThreads)
 	{
 		// not a member field, final and unmodifiable, good for concurrency
 		final ConditionBaseSet aConditions = preMining(theBeginTime, theNrThreads);
-
-		// FIXME for testing, obtain another set again, ignore preMining version
-		// make it a member field, so Test signature need not be changed
-		itsColumnConditionBasesSet = ColumnConditionBasesBuilder.FACTORY.getColumnConditionBasesSet(itsTable, itsSearchParameters);
+		// FIXME obtain another set again, ignore preMining version
+		final List<ColumnConditionBases> aColumnConditionBasesSet = ColumnConditionBasesBuilder.FACTORY.getColumnConditionBasesSet(itsTable, itsSearchParameters);
+		final Fltr aFilter = Fltr.get(aColumnConditionBasesSet, itsSearchParameters);
 
 		if (theNrThreads < 0)
 		{
@@ -525,7 +540,7 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 				assert (aSubgroup.getDepth() < aSearchDepth);
 				assert (aSubgroup.getCoverage() > 1);
 
-				es.execute(new Test(aSubgroup, s, aConditions));
+				es.execute(new Test(aSubgroup, s, aColumnConditionBasesSet, aFilter));
 			}
 			// queue was empty, but other threads were running, they
 			// may be in the process of adding new Candidates
@@ -553,7 +568,11 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 		while (!es.isTerminated()) {};
 
 		postMining(System.currentTimeMillis() - theBeginTime);
+
+		if (DEBUG_PRINTS_FOR_SKIP)
+			Log.logCommandLine("SKIP COUNT: " + itsSkipCount);
 	}
+	private AtomicLong itsSkipCount = new AtomicLong(0);
 
 	private final ConditionBaseSet preMining(long theBeginTime, int theNrThreads)
 	{
@@ -569,7 +588,7 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 		// make subgroup to start with, containing all elements
 		Subgroup aStart = new Subgroup(ConditionListBuilder.emptyList(), itsResult.getAllDataBitSetClone(), itsResult);
 
-		// set number of true positives for dataset
+		// set number of true positives for data set
 		if (isDirectSingleBinary())
 			aStart.setTertiaryStatistic(itsQualityMeasure.getNrPositives());
 
@@ -771,39 +790,366 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 	{
 		private final Subgroup itsSubgroup;
 		private final Semaphore itsSemaphore;
-		private final ConditionBaseSet itsConditionBaseSet;
+		private final List<ColumnConditionBases> itsColumnConditionBasesSet;
+		private final Fltr itsFilter;
 
-		public Test(Subgroup theSubgroup, Semaphore theSemaphore, ConditionBaseSet theConditionBaseSet)
+//		public Test(Subgroup theSubgroup, Semaphore theSemaphore, ConditionBaseSet theConditionBaseSet)
+		public Test(Subgroup theSubgroup, Semaphore theSemaphore, List<ColumnConditionBases> theColumnConditionBasesSet, Fltr theFilter)
 		{
-			itsSubgroup = theSubgroup;
-			itsSemaphore = theSemaphore;
-			itsConditionBaseSet = theConditionBaseSet;
+			itsSubgroup                = theSubgroup;
+			itsSemaphore               = theSemaphore;
+			itsColumnConditionBasesSet = theColumnConditionBasesSet;
+			itsFilter                  = theFilter;
 		}
 
 		@Override
 		public void run()
 		{
+			if (false) { runX(); return; }
+
 			// Subgroup.getMembers() creates expensive clone, reuse
-			final BitSet aMembers = itsSubgroup.getMembers();
-			final int aCoverage = itsSubgroup.getCoverage();
-			assert (aMembers.cardinality() == aCoverage);
+			BitSet aParentMembers = itsSubgroup.getMembers();
+			int aParentCoverage   = itsSubgroup.getCoverage();
+			assert (aParentMembers.cardinality() == aParentCoverage);
+
+			ConditionListA aConditionList = itsSubgroup.getConditions();
+			int nextSkipSG = itsFilter.nextSkip(aConditionList, 0);
+			assert ((nextSkipSG == Fltr.NOTHING_TO_SKIP) || ((nextSkipSG >= 0) && (nextSkipSG < aConditionList.size())));
+			Column toSkip = (nextSkipSG != Fltr.NOTHING_TO_SKIP ?  aConditionList.getCanonical(nextSkipSG).getColumn() : null);
+//System.out.format("SG=%s\tSKIP=%d\tCONDITION=%s\tCOLUMN=%s%n", aConditionList, nextSkipSG, (nextSkipSG != Fltr.NOTHING_TO_SKIP ? aConditionList.getCanonical(nextSkipSG) : "null"), (toSkip != null) ? toSkip.getName() : "null");
 
 			for (int i = 0, j = itsColumnConditionBasesSet.size(); i < j && !isTimeToStop(); ++i)
 			{
-				ColumnConditionBases c = itsColumnConditionBasesSet.get(i);
+				ColumnConditionBases ccb = itsColumnConditionBasesSet.get(i);
+				// FIXME one time operation per mine(), but cumbersome, optimise
+				ConditionBase cb = ccb.get(0);
+				if (cb == null) cb = ccb.get(1);
+				if (cb == null) cb = ccb.get(2);
 
-				if (c instanceof ColumnConditionBasesBinary)
-					evaluateBinary(itsSubgroup, aMembers, (ColumnConditionBasesBinary) c);
-				else if (c instanceof ColumnConditionBasesNominalElementOf)
-					evaluateNominalElementOf(itsSubgroup, aMembers, (ColumnConditionBasesNominalElementOf) c);
-				else if (c instanceof ColumnConditionBasesNominalEquals)
-					evaluateNominalEquals(itsSubgroup, aMembers, (ColumnConditionBasesNominalEquals) c);
-				else if (c instanceof ColumnConditionBasesNumericRegular)
-					evaluateNumericRegular(itsSubgroup, aMembers, (ColumnConditionBasesNumericRegular) c);
-				else if (c instanceof ColumnConditionBasesNumericIntervals)
-					evaluateNumericIntervals(itsSubgroup, aMembers, (ColumnConditionBasesNumericIntervals) c);
+				// temporary: during testing do not actually continue OUT
+				boolean skipThisCB = false;
+				if (cb.getColumn() == toSkip)
+				{
+					skipThisCB = true;
+					itsSkipCount.incrementAndGet();
+					nextSkipSG = itsFilter.nextSkip(aConditionList, nextSkipSG+1);
+					assert ((nextSkipSG == Fltr.NOTHING_TO_SKIP) || ((nextSkipSG >= 0) && (nextSkipSG < aConditionList.size())));
+					toSkip = (nextSkipSG != Fltr.NOTHING_TO_SKIP ?  aConditionList.getCanonical(nextSkipSG).getColumn() : null);
+					if (DEBUG_PRINTS_FOR_SKIP)
+						Log.logCommandLine(String.format("EC-SKIP\t%s AND %s%n", itsSubgroup, cb));
+//System.out.format("SG=%s\tSKIP=%d\tCONDITION=%s\tCOLUMN=%s%n", aConditionList, nextSkipSG, (nextSkipSG != Fltr.NOTHING_TO_SKIP ? aConditionList.getCanonical(nextSkipSG) : "null"), (toSkip != null) ? toSkip.getName() : "null");
+					if (USE_SKIP_FILTER)
+						continue;
+				}
+
+				if (!skipThisCB && DEBUG_PRINTS_FOR_SKIP)
+					Log.logCommandLine(String.format("NO-SKIP\t%s AND %s%n", itsSubgroup, cb));
+
+				// using a TestFactory some of the if-checks could be removed
+				// ValueSets would never occur when !useBestValueSets
+				// for BestInterval the reasoning is the same
+				// TODO assert mutual-exclusivity of:
+				//   ClassLabel+EQUALS                v. ValueSet+ELEMENT_OF
+				//   regular+(EQUALS/BETWEEN,LEQ,GEQ) v. BestInterval+BETWEEN
+				if (ccb instanceof ColumnConditionBasesBinary)
+					evaluateBinary(itsSubgroup, aParentMembers, (ColumnConditionBasesBinary) ccb);
+				else if (ccb instanceof ColumnConditionBasesNominalEquals)
+					evaluateNominalEquals(itsSubgroup, aParentMembers, (ColumnConditionBasesNominalEquals) ccb);
+				else if (ccb instanceof ColumnConditionBasesNominalElementOf)
+					evaluateNominalElementOf(itsSubgroup, aParentMembers, (ColumnConditionBasesNominalElementOf) ccb);
+				else if (ccb instanceof ColumnConditionBasesNumericRegular)
+					evaluateNumericRegular(itsSubgroup, aParentMembers, (ColumnConditionBasesNumericRegular) ccb, -1, -1, -1);
+				else if (ccb instanceof ColumnConditionBasesNumericIntervals)
+					evaluateNumericIntervals(itsSubgroup, aParentMembers, (ColumnConditionBasesNumericIntervals) ccb);
 				else
-					throw new AssertionError("Test.run() unexpected subclass of ColumnConditionBasesNumeric");
+					throw new AssertionError("Test.run() unexpected subclass of ColumnConditionBases");
+			}
+
+			itsSemaphore.release();
+		}
+
+		public void runX()
+		{
+			// NOTE
+			// checking this all the time is wasteful, could be parameters to
+			// constructor, but this version is for debug only, run() will be
+			// the final implementation after testing, it has lower complexity
+			boolean useBestValueSets        = itsSearchParameters.getNominalSets();
+			NumericStrategy ns              = itsSearchParameters.getNumericStrategy();
+			boolean useBestIntervals        = (ns == NumericStrategy.NUMERIC_INTERVALS);
+			EnumSet<NumericStrategy> ab     = EnumSet.of(NumericStrategy.NUMERIC_ALL, NumericStrategy.NUMERIC_BEST);
+//			EnumSet<NumericStrategy> bbbi   = EnumSet.of(NumericStrategy.NUMERIC_BEST_BINS, NumericStrategy.NUMERIC_BINS, NumericStrategy.NUMERIC_INTERVALS);
+			boolean isAllBest               = ab.contains(ns);
+			boolean isBestBinsBins          = EnumSet.of(NumericStrategy.NUMERIC_BEST_BINS, NumericStrategy.NUMERIC_BINS).contains(ns);
+			// currently the choice between ALL|BEST and BEST_BINS|BINS|INTERVAL
+			// is not binary, because of the (deprecated) consecutive bins
+			// when the consecutive bins option are removed the following assert
+			// can be used to check the (then) binary situation
+			// such that a single boolean for NumericStrategy is sufficient
+//			boolean isBestBinsBinsIntervals = bbbi.contains(ns);
+//			assert (EnumSet.allOf(NumericStrategy.class).complementOf(ab).equals(bbbi));
+
+			// Subgroup.getMembers() creates expensive clone, reuse
+			BitSet aParentMembers = itsSubgroup.getMembers();
+			int aParentCoverage   = itsSubgroup.getCoverage();
+			assert (aParentMembers.cardinality() == aParentCoverage);
+
+			// NOTE toCanonicalOrder() would be replaced by getCanonical(index)
+			ConditionListA aParentConditions = itsSubgroup.getConditions();
+			Condition[] ca = ConditionListBuilder.toCanonicalOrder(aParentConditions);
+			int size = ca.length;
+			Condition last = ((size == 0) ? null : aParentConditions.get(size-1));
+			// NOTE getNominalValueSet() returns null when last conjunct is not
+			//      a ValueSet-Condition, likewise for getNumericInterval()
+			Column biColumn = (                      useBestIntervals && (last != null) && (last.getNumericInterval() != null)) ? last.getColumn() : null;
+			Column vsColumn = ((biColumn == null) && useBestValueSets && (last != null) && (last.getNominalValueSet() != null)) ? last.getColumn() : null;
+
+			int NO_EQ_LEQ_GEQ_CHECK = -1;
+		OUT: for (int i = 0, j = itsColumnConditionBasesSet.size(), k = ca.length; i < j && !isTimeToStop(); ++i)
+			{
+				ColumnConditionBases ccb = itsColumnConditionBasesSet.get(i);
+				ConditionBase cb = ccb.get(0);
+				boolean cbEqualsOrElementOfOrBetween = (cb != null);
+				// TODO assert
+
+				// TODO based on these checks, set a value outside the loop that
+				//      indicated whether evaluate*() should check for duplicate
+				//      Conjuncts, based on the added Condition.VALUE
+				//      as the check is performed on the VALUE, it can not occur
+				//      here, on the ConditionBase (as it has no VALUE)
+				// this situation can arise for:
+				// ValueSet when a Column occurs in aParentConditions, but not
+				//          as last search-order conjunct (which is handled by
+				//          the IN-SKIP) and the to-be-added ConditionBase
+				//          concerns the same Column the added ValueSet VALUE
+				//          added ValueSet VALUE might be the same, or smaller
+				//          than, the existing one, requiring a check
+				// BestInterval as for ValueSet
+				//
+				// temporary: during testing do not actually continue OUT
+				boolean skipThisCB = false;
+				int eq_WarningAtIndex = NO_EQ_LEQ_GEQ_CHECK;
+				int leqWarningAtIndex = NO_EQ_LEQ_GEQ_CHECK;
+				int geqWarningAtIndex = NO_EQ_LEQ_GEQ_CHECK;
+
+				if (cbEqualsOrElementOfOrBetween)
+				{
+					Column cbc = cb.getColumn();
+					// when the last conjunct in a ConditionList is a ValueSet,
+					// adding another ValueSet for the same Column never leads
+					// to a valid refinement, the algorithm just selects the
+					// exact same ValueSet
+					// for BestInterval the reasoning is the same
+					//
+					// FIXME assert that only one Operator is used for
+					// BestValueSet and BestInterval: use of EQUALS and BETWEEN
+					// must be exclusive
+					if ((cbc == biColumn) || (cbc == vsColumn))
+					{
+						skipThisCB = true;
+						itsSkipCount.incrementAndGet();
+						if (DEBUG_PRINTS_FOR_SKIP)
+							Log.logCommandLine(String.format("IN-SKIP\t%s AND %s%n", itsSubgroup, cb));
+						if (skipThisCB && (BEST_VALUESET_AT_LAST_POSITION_SKIP || BEST_INTERVAL_AT_LAST_POSITION_SKIP))
+							continue OUT;
+					}
+					// NOTE when enabling continue OUT above: remove !skipThisCB
+					if (!skipThisCB)
+					{
+						Operator cbo = cb.getOperator();
+						boolean isCBOEquals = (cbo == Operator.EQUALS);
+
+						// NOTE binary choice in the loop below relies on this
+						assert (
+								(isCBOEquals && (
+												(                     (cbc.getType() == AttributeType.BINARY )) ||
+												(!useBestValueSets && (cbc.getType() == AttributeType.NOMINAL)) ||
+												(!useBestIntervals && (cbc.getType() == AttributeType.NUMERIC) && isAllBest))
+								)
+								|| // !isEquals
+								(
+												( useBestValueSets && (cbc.getType() == AttributeType.NOMINAL) && (cbo == Operator.ELEMENT_OF)) ||
+												( useBestIntervals && (cbc.getType() == AttributeType.NUMERIC) && (cbo == Operator.BETWEEN   )) ||
+												(!useBestIntervals && (cbc.getType() == AttributeType.NUMERIC) && (cbo == Operator.BETWEEN   ) && (EnumSet.of(NumericStrategy.NUMERIC_BEST_BINS, NumericStrategy.NUMERIC_BINS).contains(ns)))
+								)
+								);
+
+						// NOTE alternative run() avoids loop by using ordering
+						for (int l = 0; l < k; ++l)
+						{
+							Condition sgCondition = ca[l];
+							Column sgColumn       = sgCondition.getColumn();
+							if (cbc != sgColumn)
+								continue;
+
+							AttributeType sgColumnType = sgColumn.getType();
+							Operator sgOperator        = sgCondition.getOperator();
+
+							// skipThisCB is used only for testing, as
+							// 'continue OUT' is disabled for now
+							// EQUALS on same Column is never useful for BINARY
+							// and NOMINAL, and for NUMERIC in combination with
+							// NumericOperatorSetting.NUMERIC_EQ (where EQUALS
+							// is the only Operator used, for NUMERIC_ALL, which
+							// also includesEquals(), the refinement is useful
+							// as it might reduce the Subgroup size, for example
+							// 'Age <= 32 AND Age = 32')
+							// NOTE that BEST_BINS|BINS uses BETWEEN, not EQUALS
+							if ((sgColumnType == AttributeType.BINARY) || ((sgColumnType == AttributeType.NOMINAL) && !useBestValueSets))
+							{
+								assert (isCBOEquals && (sgOperator == Operator.EQUALS));
+								skipThisCB = true;
+								itsSkipCount.incrementAndGet();
+								if (DEBUG_PRINTS_FOR_SKIP)
+									Log.logCommandLine(String.format("EC-SKIP\t%s AND %s%n", itsSubgroup, cb));
+								if (skipThisCB && BINARY_NOMINAL_EQUALS_SKIP)
+									continue OUT;
+								break;
+							}
+//							if ((sgColumnType == AttributeType.NOMINAL) && useBestValueSets)
+//							{
+//								// ValueSet at last position should have been
+//								// caught above
+//								// FIXME the ValueSet check can be removed, it
+//								//       is redundant, the ValueSet code now
+//								//       always checks whether a child coverage
+//								//       is smaller than the parent coverage
+//								//       BEFORE a new ValueSet Condition is
+//								//       created
+//								//       that check handles both equal ValueSets
+//								//       and unequal ones, no warning required
+//								assert (l < (k-1));
+//								assert (!isCBOEquals && (sgOperator == Operator.ELEMENT_OF));
+//								eq_WarningAtIndex = l;
+//								System.out.format("VSWARN%d\t%s AND %s%n", l, itsSubgroup, cb);
+//								break; // DO NOT continue OUT;
+//							}
+//							if ((sgColumnType == AttributeType.NUMERIC) && useBestIntervals)
+//							{
+//								// BestInterval: see comments for ValueSet above
+//								assert (l < (k-1));
+//								assert (!isCBOEquals && (sgOperator == Operator.BETWEEN));
+//								eq_WarningAtIndex = l;
+//								System.out.format("BIWARN%d\t%s AND %s%n", l, itsSubgroup, cb);
+//								// continue OUT is disabled for now
+//								break; // DO NOT continue OUT;
+//							}
+							if ((sgColumnType == AttributeType.NUMERIC) && !useBestIntervals && isAllBest)
+							{
+								// no Refinement possible for this Column
+								if (sgOperator == Operator.EQUALS)
+								{
+									assert (EnumSet.of(NumericOperatorSetting.NUMERIC_ALL, NumericOperatorSetting.NUMERIC_EQ).contains(itsSearchParameters.getNumericOperatorSetting()));
+									skipThisCB = true;
+									itsSkipCount.incrementAndGet();
+									if (DEBUG_PRINTS_FOR_SKIP)
+										Log.logCommandLine(String.format("EC-SKIP\t%s AND %s%n", itsSubgroup, cb));
+									if (skipThisCB && NUMERIC_EQ_SKIP)
+										continue OUT;
+									break;
+								}
+								else // not required after break, but more clear
+								{
+									// FIXME
+									// this check can be removed, it is
+									// redundant, both
+									// evaluateNumericRegularGeneric() and
+									// evaluateNumericRegularSingleBinary()
+									// always check whether a child coverage is
+									// smaller than the parent coverage BEFORE
+									// a new Condition is created
+									// technically this check is correct, and it
+									// can be performed slightly before the size
+									// check (by one or two statement)
+									// but setting up the warning and performing
+									// the if-checks all the time costs more
+									// than it saves
+									assert (EnumSet.of(Operator.LESS_THAN_OR_EQUAL, Operator.GREATER_THAN_OR_EQUAL).contains(sgOperator) && EnumSet.of(NumericOperatorSetting.NUMERIC_NORMAL, NumericOperatorSetting.NUMERIC_LEQ, NumericOperatorSetting.NUMERIC_GEQ, NumericOperatorSetting.NUMERIC_ALL).contains(itsSearchParameters.getNumericOperatorSetting()));
+									eq_WarningAtIndex = l;
+									if (DEBUG_PRINTS_FOR_WARN)
+										Log.logCommandLine(String.format("EQWARN%d\t%s AND %s%n", l, itsSubgroup, cb));
+									break; // DO NOT continue OUT;
+								}
+							}
+							// see NOTE above on non-binary allBest/BestBinsBins
+							// FIXME this check can be removed, see above
+							if ((sgColumnType == AttributeType.NUMERIC) && !useBestIntervals && isBestBinsBins)
+							{
+								// warn, never skip
+								assert (!isCBOEquals && (EnumSet.of(Operator.BETWEEN, Operator.LESS_THAN_OR_EQUAL, Operator.GREATER_THAN_OR_EQUAL).contains(sgOperator) && EnumSet.of(NumericOperatorSetting.NUMERIC_NORMAL, NumericOperatorSetting.NUMERIC_LEQ, NumericOperatorSetting.NUMERIC_GEQ, NumericOperatorSetting.NUMERIC_ALL).contains(itsSearchParameters.getNumericOperatorSetting())));
+								eq_WarningAtIndex = l;
+								if (DEBUG_PRINTS_FOR_WARN)
+									Log.logCommandLine(String.format("INWARN%d\t%s AND %s%n", l, itsSubgroup, cb));
+								break; // DO NOT continue OUT;
+							}
+						}
+					}
+				}
+				// FIXME these checks can be removed, see above
+				else // !cbEqualsOrElementOfOrBetween
+				{
+					boolean hasLEQ = (ccb.get(1) != null);
+					boolean hasGEQ = (ccb.get(2) != null);
+					cb = (hasLEQ ? ccb.get(1) : ccb.get(2));
+					Column cbc   = cb.getColumn();
+
+					// only NUMERIC + LEQ|GEQ (for cb, sg can be anything)
+					assert (!useBestIntervals && (EnumSet.of(Operator.LESS_THAN_OR_EQUAL, Operator.GREATER_THAN_OR_EQUAL).contains(cb.getOperator())));
+
+					// FIXME do not loop by implementing ConditionBase.id
+					for (int l = 0; l < k; ++l)
+					{
+						if (cbc != ca[l].getColumn())
+							continue;
+
+						Operator cao = ca[l].getOperator();
+
+						if (hasLEQ && (cao == Operator.LESS_THAN_OR_EQUAL))
+						{
+							leqWarningAtIndex = l;
+							if (DEBUG_PRINTS_FOR_WARN)
+								Log.logCommandLine(String.format("LEWARN%d\t%s AND %s %s%n", l, itsSubgroup, cbc.getName(), cao));
+							if (!hasGEQ)
+								break; // DO NOT continue OUT;
+							continue;
+						}
+
+						assert (hasGEQ);
+						if (cao == Operator.GREATER_THAN_OR_EQUAL)
+						{
+							geqWarningAtIndex = l;
+							if (DEBUG_PRINTS_FOR_WARN)
+								Log.logCommandLine(String.format("GEWARN%d\t%s AND %s %s%n", l, itsSubgroup, cbc.getName(), cao));
+							if (!hasLEQ)
+								break; // DO NOT continue OUT;
+							continue;
+						}
+					}
+				}
+				if (cbEqualsOrElementOfOrBetween && !skipThisCB && DEBUG_PRINTS_FOR_SKIP)
+					Log.logCommandLine(String.format("NO-SKIP\t%s AND %s%n", itsSubgroup, cb));
+				// test code; should be split over AttributeTypes and settings
+				if (((eq_WarningAtIndex != NO_EQ_LEQ_GEQ_CHECK) || (leqWarningAtIndex != NO_EQ_LEQ_GEQ_CHECK) || (geqWarningAtIndex != NO_EQ_LEQ_GEQ_CHECK)) && DEBUG_PRINTS_FOR_SKIP)
+					Log.logCommandLine(String.format("EQ=%d\tLEQ=%d\tGEQ=%d%n", eq_WarningAtIndex, leqWarningAtIndex, geqWarningAtIndex));
+
+				// using a TestFactory some of the if-checks could be removed
+				// ValueSets would never occur when !useBestValueSets
+				// for BestInterval the reasoning is the same
+				// TODO assert mutual-exclusivity of:
+				//   ClassLabel+EQUALS                v. ValueSet+ELEMENT_OF
+				//   regular+(EQUALS/BETWEEN,LEQ,GEQ) v. BestInterval+BETWEEN
+				if (ccb instanceof ColumnConditionBasesBinary)
+					evaluateBinary(itsSubgroup, aParentMembers, (ColumnConditionBasesBinary) ccb);
+				else if (!useBestValueSets && ccb instanceof ColumnConditionBasesNominalEquals)
+					evaluateNominalEquals(itsSubgroup, aParentMembers, (ColumnConditionBasesNominalEquals) ccb);
+				else if ( useBestValueSets && ccb instanceof ColumnConditionBasesNominalElementOf)
+					evaluateNominalElementOf(itsSubgroup, aParentMembers, (ColumnConditionBasesNominalElementOf) ccb);
+				else if (!useBestIntervals && ccb instanceof ColumnConditionBasesNumericRegular)
+					evaluateNumericRegular(itsSubgroup, aParentMembers, (ColumnConditionBasesNumericRegular) ccb, eq_WarningAtIndex, leqWarningAtIndex, geqWarningAtIndex);
+				else if ( useBestIntervals && ccb instanceof ColumnConditionBasesNumericIntervals)
+					evaluateNumericIntervals(itsSubgroup, aParentMembers, (ColumnConditionBasesNumericIntervals) ccb);
+				else
+					throw new AssertionError("Test.run() unexpected subclass of ColumnConditionBases");
 			}
 
 			itsSemaphore.release();
@@ -1118,7 +1464,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	private static final Subgroup directComputation(Subgroup theParent, Condition theAddedCondition, double theQualityScore, int theChildCoverage, int theNrTruePositives)
 	{
 		// FIXME MM q is only cast to float to make historic results comparable
-		float q = (float) theQualityScore;
+		float  q = (float) theQualityScore;
 		double s = ((double) theNrTruePositives) / theChildCoverage;
 		double t = ((double) theNrTruePositives);
 
@@ -1197,7 +1543,12 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		assert (itsSearchParameters.getNominalSets());
 		assert (isDirectSingleBinary());
 		assert (theColumnConditionBases.get(0).getOperator() == Operator.ELEMENT_OF);
+		// when last added Condition is 'Column_x in ValueSet', ConditionBase
+		// for Column_x should be skipped, as no useful Refinement is possible
+		// assumes only one Operator for Columns in ValueSet-scenario
+		assert (!BEST_VALUESET_AT_LAST_POSITION_SKIP || (ConditionListBuilder.toCanonicalOrder(theParent.getConditions())[theParent.getDepth()-1].getColumn() != (theColumnConditionBases.get(0).getColumn())));
 
+		int aParentCoverage = theParent.getCoverage();
 		ConditionBase aConditionBase = theColumnConditionBases.get(0);
 
 		// as for BestIntervals -> use new half-interval code, it is 70x faster
@@ -1206,7 +1557,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 
 		// final: if-else is long, ensure value is set before creating Subgroup
 		final int aCountHeadBody;
-		final int aCoverage;
+		final int aChildCoverage;
 		final double aFinalBestQuality;
 
 		QM aQualityMeasure = itsSearchParameters.getQualityMeasure();
@@ -1252,9 +1603,27 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			if (aDomainBestSubSet.size() == 0)
 				return;
 
-			aCountHeadBody = aP;
-			aCoverage = (aP + aN);
-			aFinalBestQuality = itsQualityMeasure.calculate(aCountHeadBody, aCoverage);
+			// NOTE
+			// when (aDomainBestSubSet.size() == oldValueSet.size()) the
+			// subgroup size or ratios might have changed, yielding a different
+			// aFinalBestQuality
+			//
+			// when (aDomainBestSubSet.size() < oldValueSet.size()) the new
+			// ValueSet might still be a redundant addition, when an
+			// 'intermediate' Condition has reduced the domain of oldValueSet,
+			// the size-check below essentially includes a test for that also
+			if ((aP + aN) == aParentCoverage) // (aP + aN) is aChildCoverage
+			{
+				itsSkipCount.incrementAndGet();
+				if (DEBUG_PRINTS_FOR_SKIP)
+					Log.logCommandLine(String.format("SZ-SKIP\t%s AND %s%n", theParent, aDomainBestSubSet));
+				if (BEST_VALUESET_NO_REFINEMENT_SKIP)
+					return;
+			}
+
+			aCountHeadBody    = aP;
+			aChildCoverage    = (aP + aN);
+			aFinalBestQuality = itsQualityMeasure.calculate(aCountHeadBody, aChildCoverage);
 		}
 		else // not WRACC
 		{
@@ -1359,8 +1728,26 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			if (aDomainBestSubSet.size() == 0)
 				return;
 
-			aCountHeadBody = aBestP;
-			aCoverage = (aBestP + aBestN);
+			// NOTE
+			// when (aDomainBestSubSet.size() == oldValueSet.size()) the
+			// subgroup size or ratios might have changed, yielding a different
+			// aFinalBestQuality
+			//
+			// when (aDomainBestSubSet.size() < oldValueSet.size()) the new
+			// ValueSet might still be a redundant addition, when an
+			// 'intermediate' Condition has reduced the domain of oldValueSet,
+			// the size-check below essentially includes a test for that also
+			if ((aP + aN) == aParentCoverage) // (aP + aN) is aChildCoverage
+			{
+				itsSkipCount.incrementAndGet();
+				if (DEBUG_PRINTS_FOR_SKIP)
+					Log.logCommandLine(String.format("SZ-SKIP\t%s AND %s%n", theParent, aDomainBestSubSet));
+				if (BEST_VALUESET_NO_REFINEMENT_SKIP)
+					return;
+			}
+
+			aCountHeadBody    = aBestP;
+			aChildCoverage    = (aBestP + aBestN);
 			aFinalBestQuality = aBestQuality;
 		}
 
@@ -1393,8 +1780,8 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		// CandidateSet
 		ValueSet aBestSubset = new ValueSet(aDomainBestSubSet);
 		Condition anAddedCondition = new Condition(aConditionBase, aBestSubset);
-		Subgroup aChild = directComputation(theParent, anAddedCondition, aFinalBestQuality, aCoverage, aCountHeadBody);
-		checkAndLog(aChild, theParent.getCoverage());
+		Subgroup aChild = directComputation(theParent, anAddedCondition, aFinalBestQuality, aChildCoverage, aCountHeadBody);
+		checkAndLog(aChild, aParentCoverage);
 	}
 
 	////////////////////////////////////////////////////////////////////////////
@@ -1423,7 +1810,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	 * for <= the first, and therefore smallest best Subgroup is retained
 	 * for >= the first, and therefore largest best Subgroup is retained
 	 */
-	private final void evaluateNumericRegular(Subgroup theParent, BitSet theParentMembers, ColumnConditionBasesNumericRegular theColumnConditionBases)
+	private final void evaluateNumericRegular(Subgroup theParent, BitSet theParentMembers, ColumnConditionBasesNumericRegular theColumnConditionBases, int eq_WarningAtIndex, int leqWarningAtIndex, int geqWarningAtIndex)
 	{
 		assert (EnumSet.of(NumericStrategy.NUMERIC_ALL, NumericStrategy.NUMERIC_BEST,
 							NumericStrategy.NUMERIC_BEST_BINS, NumericStrategy.NUMERIC_BINS).contains(itsSearchParameters.getNumericStrategy()));
@@ -1581,6 +1968,12 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 
 		// for debugging, code currently reproduces faulty behaviour of original
 		// leave this in to evaluate how correct behaviour changes output
+		//
+		// NOTE
+		// a (DEBUG_POC_BINS = true) setting prevents BETWEEN/LEQ/GEQ loops from
+		// avoiding useless Refinements when (aChild.size == aParent.size)
+		// therefore the check is performed in evaluateCandidate()
+		// and the DEBUG_POC_BINS code can still indicate bin-selection changes
 		List<Float> aCheck = DEBUG_POC_BINS ? new ArrayList<Float>() : null;
 		List<Float> aValid = DEBUG_POC_BINS ? new ArrayList<Float>() : null;
 
@@ -1875,6 +2268,12 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 
 		// for debugging, code currently reproduces faulty behaviour of original
 		// leave this in to evaluate how correct behaviour changes output
+		//
+		// NOTE
+		// a (DEBUG_POC_BINS = true) setting prevents BETWEEN/LEQ/GEQ loops from
+		// avoiding useless Refinements when (aChild.size == aParent.size)
+		// therefore the check is performed in evaluateCandidate()
+		// and the DEBUG_POC_BINS code can still indicate bin-selection changes
 		List<Float> aCheck = DEBUG_POC_BINS ? new ArrayList<Float>() : null;
 		List<Float> aValid = DEBUG_POC_BINS ? new ArrayList<Float>() : null;
 
@@ -1957,7 +2356,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 				tp += aTPs[i];
 
 				// for debugging do not continue on (cover < itsMinimumCoverage)
-				if (cover <= next  || (!DEBUG_POC_BINS && (cover < itsMinimumCoverage)))
+				if (cover <= next || (!DEBUG_POC_BINS && (cover < itsMinimumCoverage)))
 					continue;
 
 				// for debugging do not break on (cover == anOldCoverage)
@@ -2048,16 +2447,30 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			bestAdd(aBestSubgroup, (int) aParentCoverage);
 	}
 
+	// this is the version used by evaluateNumericRegularGeneric(Coarse)
 	// FIXME temporarily a separate method, will merge both evaluateCandidates
 	// return is only relevant (and non-null) in BEST and BEST_BINS settings
 	private Subgroup evaluateCandidate(Subgroup theParent, Condition theAddedCondition, int theChildCoverage, boolean isAllStrategy, Subgroup theBestSubgroup)
 	{
-//		Condition aCondition = new Condition(theConditionBase, aDomain[i]);
-
 		if ((itsFilter != null) && !itsFilter.isUseful(theParent.getConditions(), theAddedCondition))
 			return theBestSubgroup; // null or the best so far
 
 		int aParentCoverage = theParent.getCoverage();
+		assert (itsSearchParameters.getNumericStrategy().isDiscretiser() || (theChildCoverage < aParentCoverage));
+		// the NOTE below is a copy of evaluateNumericRegularGenericCoarse
+		// for evaluateNumericRegularGeneric (child.size == parent.size) is
+		// checked already, so redundant at this point, but the check is cheap
+		// and enables correct behaviour in the coarse setting
+		// also, the DEBUG_POC_BINS setting is temporary, and will be removed
+		// completely after testing
+		//
+		// NOTE
+		// a (DEBUG_POC_BINS = true) setting prevents BETWEEN/LEQ/GEQ loops from
+		// avoiding useless Refinements when (aChild.size == aParent.size)
+		// therefore the check is performed in evaluateCandidate()
+		// and the DEBUG_POC_BINS code can still indicate bin-selection changes
+		if (theChildCoverage == aParentCoverage)
+			return theBestSubgroup; // null or the best so far
 		Subgroup aChild = theParent.getRefinedSubgroup(theAddedCondition);
 
 		// ALL or BINS
@@ -2075,6 +2488,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			return theBestSubgroup; // if the old subgroup is better (or null)
 	}
 
+	// this is the version used by evaluateNumericRegularSingleBinary(Coarse)
 	// return is only relevant (and non-null) in BEST and BEST_BINS settings
 	private Subgroup evaluateCandidate(Subgroup theParent, Condition theAddedCondition, int theChildCoverage, int theNrTruePositives, boolean isAllStrategy, Subgroup theBestSubgroup)
 	{
@@ -2085,6 +2499,21 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			return theBestSubgroup; // null or the best so far
 
 		int aParentCoverage = theParent.getCoverage();
+		assert (itsSearchParameters.getNumericStrategy().isDiscretiser() || (theChildCoverage < aParentCoverage));
+		// the NOTE below is a copy of evaluateNumericRegularSingleBinaryCoarse
+		// for evaluateNumericRegularSingleBinary (child.size == parent.size) is
+		// checked already, so redundant at this point, but the check is cheap
+		// and enables correct behaviour in the coarse setting
+		// also, the DEBUG_POC_BINS setting is temporary, and will be removed
+		// completely after testing
+		//
+		// NOTE
+		// a (DEBUG_POC_BINS = true) setting prevents BETWEEN/LEQ/GEQ loops from
+		// avoiding useless Refinements when (aChild.size == aParent.size)
+		// therefore the check is performed in evaluateCandidate()
+		// and the DEBUG_POC_BINS code can still indicate bin-selection changes
+		if (theChildCoverage == aParentCoverage)
+			return theBestSubgroup; // null or the best so far
 		Subgroup aChild = directComputation(theParent, theAddedCondition, itsQualityMeasure, theChildCoverage, theNrTruePositives);
 
 		// ALL or BINS
@@ -2121,6 +2550,10 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		assert (isDirectSingleBinary());
 		assert (theColumnConditionBases.get(0).getOperator() == Operator.BETWEEN);
 		assert (itsSearchParameters.getNumericOperatorSetting() == NumericOperatorSetting.NUMERIC_INTERVALS);
+		// when last added Condition is 'Column_x in Interval', ConditionBase
+		// for Column_x should be skipped, as no useful Refinement is possible
+		// assumes only one Operator for Columns in BestInterval-scenario
+		assert (!BEST_INTERVAL_AT_LAST_POSITION_SKIP || (ConditionListBuilder.toCanonicalOrder(theParent.getConditions())[theParent.getDepth()-1].getColumn() != (theColumnConditionBases.get(0).getColumn())));
 
 		////////////////////////////////////////////////////////////////////////
 		int aParentCoverage = theParent.getCoverage();
@@ -2260,8 +2693,26 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			}
 		}
 
+		// NOTE
+		// when (aBestInterval.compareTo(oldInterval) == 0) the subgroup size or
+		// ratios might have changed, yielding a different final quality
+		//
+		// when (aBestInterval < oldInterval) the new BestInterval might still
+		// be a redundant addition, when an 'intermediate' Condition has reduced
+		// the domain of oldInterval, the size-check below essentially includes
+		// a test for that also
+		int aChildCoverage = (aBestNrTruePositives + aBestNrFalsePositives);
+		if (aChildCoverage == aParentCoverage)
+		{
+			itsSkipCount.incrementAndGet();
+			if (DEBUG_PRINTS_FOR_SKIP)
+				Log.logCommandLine(String.format("SZ-SKIP\t%s AND %s%n", theParent, aBestInterval));
+			if (BEST_INTERVAL_NO_REFINEMENT_SKIP)
+				return;
+		}
+
 		Condition anAddedCondition = new Condition(aConditionBase, aBestInterval);
-		Subgroup aChild = directComputation(theParent, anAddedCondition, aBestQuality, (aBestNrTruePositives + aBestNrFalsePositives), aBestNrTruePositives);
+		Subgroup aChild = directComputation(theParent, anAddedCondition, aBestQuality, aChildCoverage, aBestNrTruePositives);
 		checkAndLog(aChild, aParentCoverage);
 	}
 
@@ -2913,6 +3364,658 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	public RegressionMeasure getRegressionMeasureBase()
 	{
 		return itsBaseRM;
+	}
+
+	////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////
+	///// remove useless refinements - replaces Filter class below         /////
+	///// 18 combinations, tailored to the AttributeTypes occurring in the /////
+	///// data, and the search parameters                                  /////
+	///// + NEVER_SKIP: always returns false, to never skip any refinement /////
+	/////                                                                  /////
+	///// one of the Fltrs is selected at the start of mine(), thereafter  /////
+	///// it is reused by all Tests for every Refinement of every Subgroup /////
+	///// enums are immutable and can freely be shared among all Threads   /////
+	/////                                                                  /////
+	///// TODO assert mutual-exclusivity of:                               /////
+	/////   ClassLabel+EQUALS                v. ValueSet+ELEMENT_OF        /////
+	/////   regular+(EQUALS/BETWEEN,LEQ,GEQ) v. BestInterval+BETWEEN       /////
+	////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////
+	private static enum Fltr
+	{
+		// 1 - none of the data set/subgroup possibilities allow a skip
+		NOBIN__NONOM__NONUMEQBI
+		{
+			@Override
+			int nextSkip(ConditionListA theConditionList, int fromIndex)
+			{
+				// omit assert that verifies that all Columns are NUMERIC
+				return NOTHING_TO_SKIP;
+			}
+		},
+		// 2 - skip first Condition with Operator.EQUALS (must be NUMERIC)
+		NOBIN__NONOM__NUMEQ
+		{
+			@Override
+			int nextSkip(ConditionListA theConditionList, int fromIndex)
+			{
+				for (int i = fromIndex, j = theConditionList.size(); i < j; ++i)
+				{
+					Condition c = theConditionList.getCanonical(i);
+					assert (c.getColumn().getType() == AttributeType.NUMERIC);
+
+					// Operator is any of LEQ/GEQ/EQUALS, depending on setting
+					if (c.getOperator() == Operator.EQUALS)
+						return i;
+				}
+
+				// no NUMERIC equals found, nothing to skip
+				return NOTHING_TO_SKIP;
+			}
+		},
+		// 3 - skip, for any non-empty ConditionLists this setting implies that
+		//     a BestInterval (NUMERIC) occurs at the last search-order position
+		NOBIN__NONOM__NUMBI
+		{
+			@Override
+			int nextSkip(ConditionListA theConditionList, int fromIndex)
+			{
+				int size = theConditionList.size();
+
+				assert ((size == 0) ||
+						(theConditionList.get(size-1).getColumn().getType() == AttributeType.NUMERIC && theConditionList.get(size-1).getNumericInterval() != null));
+
+				// NOTE for (size == 0) this is out of range / NOTHING_TO_SKIP
+				return size-1;
+			}
+		},
+		// 4 - skip first Condition with Operator.EQUALS (must be NOMINAL)
+		NOBIN__NOMCL__NONUMEQBI
+		{
+			@Override
+			int nextSkip(ConditionListA theConditionList, int fromIndex)
+			{
+				for (int i = fromIndex, j = theConditionList.size(); i < j; ++i)
+				{
+					Condition c = theConditionList.getCanonical(i);
+					assert (EnumSet.of(AttributeType.NOMINAL, AttributeType.NUMERIC).contains(c.getColumn().getType()));
+
+					if (c.getOperator() == Operator.EQUALS)
+					{
+						assert (c.getColumn().getType() == AttributeType.NOMINAL);
+						return i;
+					}
+				}
+
+				return NOTHING_TO_SKIP;
+			}
+		},
+		// 5 - skip first Condition with Operator.EQUALS (NOMINAL|NUMERIC)
+		//     same loop as 4. except for the missing assert in the if-check
+		NOBIN__NOMCL__NUMEQ
+		{
+			@Override
+			int nextSkip(ConditionListA theConditionList, int fromIndex)
+			{
+				for (int i = fromIndex, j = theConditionList.size(); i < j; ++i)
+				{
+					Condition c = theConditionList.getCanonical(i);
+					assert (EnumSet.of(AttributeType.NOMINAL, AttributeType.NUMERIC).contains(c.getColumn().getType()));
+
+					if (c.getOperator() == Operator.EQUALS)
+						return i;
+				}
+
+				return NOTHING_TO_SKIP;
+			}
+		},
+		// 6 - skip first Condition with Operator.EQUALS (NOMINAL) or when
+		//     BestInterval (NUMERIC) occurs at the last search-order position
+		NOBIN__NOMCL__NUMBI
+		{
+			@Override
+			int nextSkip(ConditionListA theConditionList, int fromIndex)
+			{
+				// avoid IndexOutOfBoundsException() for EMPTY_LIST
+				int size = theConditionList.size();
+				if (size == 0)
+					return NOTHING_TO_SKIP;
+
+				Condition last = theConditionList.get(size-1);
+				int bi = (last.getNumericInterval() == null) ? NOTHING_TO_SKIP : size-1;
+				int eq = NOTHING_TO_SKIP;
+
+				// loop over all remaining Conditions to search for EQUALS
+				for (int i = fromIndex, j = size; i < j; ++i)
+				{
+					Condition c = theConditionList.getCanonical(i);
+					assert (EnumSet.of(AttributeType.NOMINAL, AttributeType.NUMERIC).contains(c.getColumn().getType()));
+
+					if (c.getOperator() == Operator.EQUALS)
+					{
+						assert (c.getColumn().getType() == AttributeType.NOMINAL);
+						eq = i;
+						break;
+					}
+				}
+
+				// check that NOTHING_TO_SKIP is strictly smaller than fromIndex
+				assert ((fromIndex >= 0) && (NOTHING_TO_SKIP < 0));
+
+				if ((bi >= fromIndex) && (eq >= fromIndex))
+					return Math.min(bi, eq);
+				else if (bi >= fromIndex)
+					return bi;
+				else if (eq >= fromIndex)
+					return eq;
+				return NOTHING_TO_SKIP;
+			}
+		},
+		// 7 - skip only when a BestValueSet (NOMINAL) occurs at the last
+		//     search-order position
+		NOBIN__NOMVS__NONUMEQBI
+		{
+			@Override
+			int nextSkip(ConditionListA theConditionList, int fromIndex)
+			{
+				// avoid IndexOutOfBoundsException for EMPTY_LIST
+				int size = theConditionList.size();
+				if (size == 0)
+					return NOTHING_TO_SKIP;
+
+				Condition c = theConditionList.get(size-1);
+				if (c.getNominalValueSet() == null)
+				{
+					assert (c.getColumn().getType() == AttributeType.NUMERIC);
+					return NOTHING_TO_SKIP;
+				}
+
+				assert (c.getColumn().getType() == AttributeType.NOMINAL);
+				int vs = size-1;
+				return (vs >= fromIndex) ? vs : NOTHING_TO_SKIP;
+			}
+		},
+		// 8 - skip first Condition with Operator.EQUALS (NUMERIC) or when
+		//     BestValueSet (NOMINAL) occurs at the last search-order position
+		NOBIN__NOMVS__NUMEQ
+		{
+			@Override
+			int nextSkip(ConditionListA theConditionList, int fromIndex)
+			{
+				// avoid IndexOutOfBoundsException() for EMPTY_LIST
+				int size = theConditionList.size();
+				if (size == 0)
+					return NOTHING_TO_SKIP;
+
+				Condition last = theConditionList.get(size-1);
+				int vs = (last.getNominalValueSet() == null) ? NOTHING_TO_SKIP : size-1;
+				int eq = NOTHING_TO_SKIP;
+
+				// loop over all remaining Conditions to search for EQUALS
+				for (int i = fromIndex, j = size; i < j; ++i)
+				{
+					Condition c = theConditionList.getCanonical(i);
+					assert (EnumSet.of(AttributeType.NOMINAL, AttributeType.NUMERIC).contains(c.getColumn().getType()));
+
+					if (c.getOperator() == Operator.EQUALS)
+					{
+						assert (c.getColumn().getType() == AttributeType.NUMERIC);
+						eq = i;
+						break;
+					}
+				}
+
+				// check that NOTHING_TO_SKIP is strictly smaller than fromIndex
+				assert ((fromIndex >= 0) && (NOTHING_TO_SKIP < 0));
+
+				if ((vs >= fromIndex) && (eq >= fromIndex))
+					return Math.min(vs, eq);
+				else if (vs >= fromIndex)
+					return vs;
+				else if (eq >= fromIndex)
+					return eq;
+				return NOTHING_TO_SKIP;
+			}
+		},
+		// 9 - skip, for any non-empty ConditionLists this setting implies that
+		//     either a BestValueSet (NOMINAL) or a BestInterval (NUMErIC)
+		//     occurs at the last search-order position
+		NOBIN__NOMVS__NUMBI
+		{
+			@Override
+			int nextSkip(ConditionListA theConditionList, int fromIndex)
+			{
+				int size = theConditionList.size();
+
+				assert ((size == 0) ||
+						(theConditionList.get(size-1).getColumn().getType() == AttributeType.NOMINAL && theConditionList.get(size-1).getNominalValueSet() != null) ||
+						(theConditionList.get(size-1).getColumn().getType() == AttributeType.NUMERIC && theConditionList.get(size-1).getNumericInterval() != null));
+
+				// NOTE for (size == 0) this is out of range / NOTHING_TO_SKIP
+				return size-1;
+			}
+		},
+		// 10 - skip first Condition with Operator.EQUALS (must be BINARY)
+		BIN__NONOM__NONUMEQBI
+		{
+			@Override
+			int nextSkip(ConditionListA theConditionList, int fromIndex)
+			{
+				for (int i = fromIndex, j = theConditionList.size(); i < j; ++i)
+				{
+					Condition c = theConditionList.getCanonical(i);
+					assert (EnumSet.of(AttributeType.BINARY, AttributeType.NUMERIC).contains(c.getColumn().getType()));
+
+					if (c.getOperator() == Operator.EQUALS)
+					{
+						assert (c.getColumn().getType() == AttributeType.BINARY);
+						return i;
+					}
+				}
+
+				return NOTHING_TO_SKIP;
+			}
+		},
+		// 11 - skip first Condition with Operator.EQUALS (BINARY|NUMERIC)
+		//      same loop as 10. except for the missing assert in the if-check
+		BIN__NONOM__NUMEQ
+		{
+			@Override
+			int nextSkip(ConditionListA theConditionList, int fromIndex)
+			{
+				for (int i = fromIndex, j = theConditionList.size(); i < j; ++i)
+				{
+					Condition c = theConditionList.getCanonical(i);
+					assert (EnumSet.of(AttributeType.BINARY, AttributeType.NUMERIC).contains(c.getColumn().getType()));
+
+					if (c.getOperator() == Operator.EQUALS)
+						return i;
+				}
+
+				return NOTHING_TO_SKIP;
+			}
+		},
+		// 12 - skip first Condition with Operator.EQUALS (BINARY) or when
+		//      BestInterval (NUMERIC) occurs at last search-order position
+		BIN__NONOM__NUMBI
+		{
+			@Override
+			int nextSkip(ConditionListA theConditionList, int fromIndex)
+			{
+				// avoid IndexOutOfBoundsException() for EMPTY_LIST
+				int size = theConditionList.size();
+				if (size == 0)
+					return NOTHING_TO_SKIP;
+
+				Condition last = theConditionList.get(size-1);
+				int bi = (last.getNumericInterval() == null) ? NOTHING_TO_SKIP : size-1;
+				int eq = NOTHING_TO_SKIP;
+
+				// loop over all remaining Conditions to search for EQUALS
+				for (int i = fromIndex, j = size; i < j; ++i)
+				{
+					Condition c = theConditionList.getCanonical(i);
+					assert (EnumSet.of(AttributeType.BINARY, AttributeType.NUMERIC).contains(c.getColumn().getType()));
+
+					if (c.getOperator() == Operator.EQUALS)
+					{
+						assert (c.getColumn().getType() == AttributeType.BINARY);
+						eq = i;
+						break;
+					}
+				}
+
+				// check that NOTHING_TO_SKIP is strictly smaller than fromIndex
+				assert ((fromIndex >= 0) && (NOTHING_TO_SKIP < 0));
+
+				if ((bi >= fromIndex) && (eq >= fromIndex))
+					return Math.min(bi, eq);
+				else if (bi >= fromIndex)
+					return bi;
+				else if (eq >= fromIndex)
+					return eq;
+				return NOTHING_TO_SKIP;
+			}
+		},
+		// 13 - skip first Condition with Operator.EQUALS (BINARY|NOMINAL)
+		BIN__NOMCL__NONUMEQBI
+		{
+			@Override
+			int nextSkip(ConditionListA theConditionList, int fromIndex)
+			{
+				for (int i = fromIndex, j = theConditionList.size(); i < j; ++i)
+				{
+					Condition c = theConditionList.getCanonical(i);
+					assert (EnumSet.of(AttributeType.BINARY, AttributeType.NOMINAL, AttributeType.NUMERIC).contains(c.getColumn().getType()));
+
+					if (c.getOperator() == Operator.EQUALS)
+					{
+						assert (EnumSet.of(AttributeType.BINARY, AttributeType.NOMINAL).contains(c.getColumn().getType()));
+						return i;
+					}
+				}
+
+				return NOTHING_TO_SKIP;
+			}
+		},
+		// 14 - skip first Condition with Operator.EQUALS BINARY|NOMINAL|NUMERIC
+		//      same loop as 13. except for the missing assert in the if-check
+		BIN__NOMCL__NUMEQ
+		{
+			@Override
+			int nextSkip(ConditionListA theConditionList, int fromIndex)
+			{
+				for (int i = fromIndex, j = theConditionList.size(); i < j; ++i)
+				{
+					Condition c = theConditionList.getCanonical(i);
+					assert (EnumSet.of(AttributeType.BINARY, AttributeType.NOMINAL, AttributeType.NUMERIC).contains(c.getColumn().getType()));
+
+					if (c.getOperator() == Operator.EQUALS)
+						return i;
+				}
+
+				return NOTHING_TO_SKIP;
+			}
+		},
+		// 15 - skip first Condition with Operator.EQUALS (BINARY|NOMINAL) or
+		//      when BestInterval (NUMERIC) occurs at last search-order position
+		BIN__NOMCL__NUMBI
+		{
+			@Override
+			int nextSkip(ConditionListA theConditionList, int fromIndex)
+			{
+				// avoid IndexOutOfBoundsException() for EMPTY_LIST
+				int size = theConditionList.size();
+				if (size == 0)
+					return NOTHING_TO_SKIP;
+
+				Condition last = theConditionList.get(size-1);
+				int bi = (last.getNumericInterval() == null) ? NOTHING_TO_SKIP : size-1;
+				int eq = NOTHING_TO_SKIP;
+
+				// loop over all remaining Conditions to search for EQUALS
+				for (int i = fromIndex, j = size; i < j; ++i)
+				{
+					Condition c = theConditionList.getCanonical(i);
+					assert (EnumSet.of(AttributeType.BINARY, AttributeType.NOMINAL, AttributeType.NUMERIC).contains(c.getColumn().getType()));
+
+					if (c.getOperator() == Operator.EQUALS)
+					{
+						assert (EnumSet.of(AttributeType.BINARY, AttributeType.NOMINAL).contains(c.getColumn().getType()));
+						eq = i;
+						break;
+					}
+				}
+
+				// check that NOTHING_TO_SKIP is strictly smaller than fromIndex
+				assert ((fromIndex >= 0) && (NOTHING_TO_SKIP < 0));
+
+				if ((bi >= fromIndex) && (eq >= fromIndex))
+					return Math.min(bi, eq);
+				else if (bi >= fromIndex)
+					return bi;
+				else if (eq >= fromIndex)
+					return eq;
+				return NOTHING_TO_SKIP;
+			}
+		},
+		// 16 - skip first Condition with Operator.EQUALS (BINARY) or when
+		//      BestValueSet (NOMINAL)occurs at last search-order position
+		BIN__NOMVS__NONUMEQBI
+		{
+			@Override
+			int nextSkip(ConditionListA theConditionList, int fromIndex)
+			{
+				// avoid IndexOutOfBoundsException() for EMPTY_LIST
+				int size = theConditionList.size();
+				if (size == 0)
+					return NOTHING_TO_SKIP;
+
+				Condition last = theConditionList.get(size-1);
+				int vs = (last.getNominalValueSet() == null) ? NOTHING_TO_SKIP : size-1;
+				int eq = NOTHING_TO_SKIP;
+
+				// loop over all remaining Conditions to search for EQUALS
+				for (int i = fromIndex, j = size; i < j; ++i)
+				{
+					Condition c = theConditionList.getCanonical(i);
+					assert (EnumSet.of(AttributeType.BINARY, AttributeType.NOMINAL, AttributeType.NUMERIC).contains(c.getColumn().getType()));
+
+					if (c.getOperator() == Operator.EQUALS)
+					{
+						assert (EnumSet.of(AttributeType.BINARY).contains(c.getColumn().getType()));
+						eq = i;
+						break;
+					}
+				}
+
+				// check that NOTHING_TO_SKIP is strictly smaller than fromIndex
+				assert ((fromIndex >= 0) && (NOTHING_TO_SKIP < 0));
+
+				if ((vs >= fromIndex) && (eq >= fromIndex))
+					return Math.min(vs, eq);
+				else if (vs >= fromIndex)
+					return vs;
+				else if (eq >= fromIndex)
+					return eq;
+				return NOTHING_TO_SKIP;
+			}
+		},
+		// 17 - skip first Condition with Operator.EQUALS (BINARY|NUMERIC) or
+		//      when BestValueSet (NOMINAL) occurs at last search-order position
+		//      same loop as 16. except for different assert in the if-check
+		BIN__NOMVS__NUMEQ
+		{
+			@Override
+			int nextSkip(ConditionListA theConditionList, int fromIndex)
+			{
+				// avoid IndexOutOfBoundsException() for EMPTY_LIST
+				int size = theConditionList.size();
+				if (size == 0)
+					return NOTHING_TO_SKIP;
+
+				Condition last = theConditionList.get(size-1);
+				int vs = (last.getNominalValueSet() == null) ? NOTHING_TO_SKIP : size-1;
+				int eq = NOTHING_TO_SKIP;
+
+				// loop over all remaining Conditions to search for EQUALS
+				for (int i = fromIndex, j = size; i < j; ++i)
+				{
+					Condition c = theConditionList.getCanonical(i);
+					assert (EnumSet.of(AttributeType.BINARY, AttributeType.NOMINAL, AttributeType.NUMERIC).contains(c.getColumn().getType()));
+
+					if (c.getOperator() == Operator.EQUALS)
+					{
+						assert (EnumSet.of(AttributeType.BINARY, AttributeType.NUMERIC).contains(c.getColumn().getType()));
+						eq = i;
+						break;
+					}
+				}
+
+				// check that NOTHING_TO_SKIP is strictly smaller than fromIndex
+				assert ((fromIndex >= 0) && (NOTHING_TO_SKIP < 0));
+
+				if ((vs >= fromIndex) && (eq >= fromIndex))
+					return Math.min(vs, eq);
+				else if (vs >= fromIndex)
+					return vs;
+				else if (eq >= fromIndex)
+					return eq;
+				return NOTHING_TO_SKIP;
+			}
+		},
+		// 18 - skip first Condition with Operator.EQUALS (BINARY) or when
+		//      either a BestValueSet (NOMINAL) of BestInterval (NUMERIC) occurs
+		//      at last search-order position
+		//      similar to 16/17., but different asserts for mx and in if-check
+		BIN__NOMVS__NUMBI
+		{
+			@Override
+			int nextSkip(ConditionListA theConditionList, int fromIndex)
+			{
+				// avoid IndexOutOfBoundsException for EMPTY_LIST.get(0)
+				int size = theConditionList.size();
+				if (size == 0)
+					return NOTHING_TO_SKIP;
+
+				Condition last = theConditionList.get(size-1);
+				int mx = ((last.getNominalValueSet() == null) && (last.getNumericInterval() == null)) ? NOTHING_TO_SKIP : size-1;
+				assert (((mx != NOTHING_TO_SKIP) && EnumSet.of(AttributeType.NOMINAL, AttributeType.NUMERIC).contains(last.getColumn().getType())) ||
+						((mx == NOTHING_TO_SKIP) && EnumSet.of(AttributeType.BINARY).contains(last.getColumn().getType())));
+				int eq = NOTHING_TO_SKIP;
+
+				// loop over all remaining Conditions to search for EQUALS
+				for (int i = fromIndex, j = size; i < j; ++i)
+				{
+					Condition c = theConditionList.getCanonical(i);
+					assert (EnumSet.of(AttributeType.BINARY, AttributeType.NOMINAL, AttributeType.NUMERIC).contains(c.getColumn().getType()));
+
+					if (c.getOperator() == Operator.EQUALS)
+					{
+						assert (EnumSet.of(AttributeType.BINARY).contains(c.getColumn().getType()));
+						eq = i;
+						break;
+					}
+				}
+
+				// check that NOTHING_TO_SKIP is strictly smaller than fromIndex
+				assert ((fromIndex >= 0) && (NOTHING_TO_SKIP < 0));
+
+				if ((mx >= fromIndex) && (eq >= fromIndex))
+					return Math.min(mx, eq);
+				else if (mx >= fromIndex)
+					return mx;
+				else if (eq >= fromIndex)
+					return eq;
+				return NOTHING_TO_SKIP;
+			}
+		},
+		// 19 - debug option, never skip any (Column)ConditionBases
+		NEVER_SKIP
+		{
+			@Override
+			int nextSkip(ConditionListA theConditionList, int fromIndex)
+			{
+				return NOTHING_TO_SKIP;
+			}
+		};
+
+		// fromIndex = canonicalFromIndex, for SG.CanonicalConditions order
+		abstract int nextSkip(ConditionListA theConditionList, int fromIndex);
+
+		// must be out of valid fromIndex range, and smaller than 0
+		private static final int NOTHING_TO_SKIP = -1;
+
+		static Fltr get(List<ColumnConditionBases> aColumnConditionBasesSet, SearchParameters theSearchParameters)
+		{
+			assert (!aColumnConditionBasesSet.isEmpty());
+
+			if (!SET_SKIP_FILTER)
+				return NEVER_SKIP;
+
+			boolean dataHasBinary  = false;
+			boolean dataHasNominal = false;
+			boolean dataHasNumeric = false;
+
+			for (ColumnConditionBases ccbs : aColumnConditionBasesSet)
+			{
+				// FIXME one time operation per mine(), but cumbersome, optimise
+				ConditionBase   cb = ccbs.get(0);
+				if (cb == null) cb = ccbs.get(1);
+				if (cb == null) cb = ccbs.get(2);
+
+				Column c = cb.getColumn();
+				switch (c.getType())
+				{
+					// always (re)set, cheap enough
+					case BINARY  : dataHasBinary  = true; break;
+					case NOMINAL : dataHasNominal = true; break;
+					case NUMERIC : dataHasNumeric = true; break;
+					default      : throw new AssertionError("Fltr.get(): unknown Column.getType() " + c.getType());
+				}
+
+				if (dataHasBinary && dataHasNominal && dataHasNumeric)
+					break;
+			}
+
+			if (!dataHasBinary && !dataHasNominal && !dataHasNumeric)
+				throw new AssertionError("Fltr.get(): no Columns found of AttributeType BINARY/NOMINAL/NUMERIC");
+
+			boolean useBestValueSets = theSearchParameters.getNominalSets();
+			NumericStrategy ns       = theSearchParameters.getNumericStrategy();
+			boolean useBestIntervals = (ns == NumericStrategy.NUMERIC_INTERVALS);
+			boolean useNumericEquals = false;
+			if (!useBestIntervals) // assumes mutual-exclusivity
+			{
+				// only ALL|BEST use Operator.EQUALS, BEST_BINS|BINS use BETWEEN
+				// but all use NumericOperatorSetting NUMERIC_ALL|NUMERIC_EQ
+				// so latter check is required
+				boolean includesEquals = EnumSet.of(NumericOperatorSetting.NUMERIC_ALL, NumericOperatorSetting.NUMERIC_EQ).contains(theSearchParameters.getNumericOperatorSetting());
+				boolean isAllBest      = EnumSet.of(NumericStrategy.NUMERIC_ALL, NumericStrategy.NUMERIC_BEST).contains(ns);
+				useNumericEquals = (includesEquals && isAllBest);
+			}
+
+			// test mutual-exclusivity, can not both be true at the same time
+			assert (!(useNumericEquals && useBestIntervals));
+
+			// first 9 scenarios where data does not contain BINARY Columns
+			// then  9 scenarios where data does     contain BINARY Columns
+			if (!dataHasBinary)
+			{
+				// 3 possibilities for NOMINAL
+				if (!dataHasNominal)
+				{
+					// 3 possibilities for NUMERIC
+					if (!useNumericEquals && !useBestIntervals) return NOBIN__NONOM__NONUMEQBI;
+					else if (useNumericEquals)                  return NOBIN__NONOM__NUMEQ;
+					else if (useBestIntervals)                  return NOBIN__NONOM__NUMBI;
+					else throw new AssertionError(); // logically impossible
+				}
+				else if (!useBestValueSets)
+				{
+					if (!useNumericEquals && !useBestIntervals) return NOBIN__NOMCL__NONUMEQBI;
+					else if (useNumericEquals)                  return NOBIN__NOMCL__NUMEQ;
+					else if (useBestIntervals)                  return NOBIN__NOMCL__NUMBI;
+					else throw new AssertionError(); // logically impossible
+				}
+				else if (useBestValueSets)
+				{
+					if (!useNumericEquals && !useBestIntervals) return NOBIN__NOMVS__NONUMEQBI;
+					else if (useNumericEquals)                  return NOBIN__NOMVS__NUMEQ;
+					else if (useBestIntervals)                  return NOBIN__NOMVS__NUMBI;
+					else throw new AssertionError(); // logically impossible
+				}
+				else
+					throw new AssertionError("Fltr.get(): !dataHasBinary + unknown NOMINAL setting (dataHasNominal && !(!useBestValueSets || useBestValueSets))");
+			}
+			else
+			{
+				if (!dataHasNominal)
+				{
+					if (!useNumericEquals && !useBestIntervals) return BIN__NONOM__NONUMEQBI;
+					else if (useNumericEquals)                  return BIN__NONOM__NUMEQ;
+					else if (useBestIntervals)                  return BIN__NONOM__NUMBI;
+					else throw new AssertionError(); // logically impossible
+				}
+				else if (!useBestValueSets)
+				{
+					if (!useNumericEquals && !useBestIntervals) return BIN__NOMCL__NONUMEQBI;
+					else if (useNumericEquals)                  return BIN__NOMCL__NUMEQ;
+					else if (useBestIntervals)                  return BIN__NOMCL__NUMBI;
+					else throw new AssertionError(); // logically impossible
+				}
+				else if (useBestValueSets)
+				{
+					if (!useNumericEquals && !useBestIntervals) return BIN__NOMVS__NONUMEQBI;
+					else if (useNumericEquals)                  return BIN__NOMVS__NUMEQ;
+					else if (useBestIntervals)                  return BIN__NOMVS__NUMBI;
+					else throw new AssertionError(); // logically impossible
+				}
+				else
+					throw new AssertionError("Fltr.get(): dataHasBinary + unknown NOMINAL setting (dataHasNominal && !(!useBestValueSets || useBestValueSets))");
+			}
+		}
 	}
 
 	/* *********************************************************************
