@@ -217,26 +217,25 @@ public class Subgroup implements Comparable<Subgroup>
 	}
 
 	// for direct computation of qualities scores, bypass BitSet evaluation
-	Subgroup getRefinedSubgroup(Condition theCondition, double theQuality, double theSecondaryStatistic, double theTertiaryStatistic, int theCoverage)
+	Subgroup getRefinedSubgroup(Condition theAddedCondition, double theQuality, double theSecondaryStatistic, double theTertiaryStatistic, int theChildCoverage)
 	{
-
 		// not a public method, assert is enough
-		assert (theCondition != null);
-		assert (theCoverage > 0);
-		assert (theCondition.getColumn().evaluate(getMembersUnsafe(), theCondition).cardinality() == theCoverage);
+		assert (theAddedCondition != null);
+		assert (theChildCoverage > 0);
+		assert (theAddedCondition.getColumn().evaluate(getMembersUnsafe(), theAddedCondition).cardinality() == theChildCoverage);
 
-		return new Subgroup(this, theCondition, theQuality, theSecondaryStatistic, theTertiaryStatistic, theCoverage);
+		return new Subgroup(this, theAddedCondition, theQuality, theSecondaryStatistic, theTertiaryStatistic, theChildCoverage);
 	}
 
-	private Subgroup(Subgroup theSubgroup, Condition theCondition, double theQuality, double theSecondaryStatistic, double theTertiaryStatistic, int theCoverage)
+	private Subgroup(Subgroup theParent, Condition theAddedCondition, double theQuality, double theSecondaryStatistic, double theTertiaryStatistic, int theChildCoverage)
 	{
-		itsConditions         = ConditionListBuilder.createList(theSubgroup.itsConditions, theCondition);
+		itsConditions         = ConditionListBuilder.createList(theParent.itsConditions, theAddedCondition);
 		itsMeasureValue       = theQuality;
 		itsSecondaryStatistic = theSecondaryStatistic;
 		itsTertiaryStatistic  = theTertiaryStatistic;
-		itsParentSet          = theSubgroup.itsParentSet;
+		itsParentSet          = theParent.itsParentSet;
 
-		itsCoverage = theCoverage;
+		itsCoverage = theChildCoverage;
 	}
 
 	// private, for use within this class only, do no expose members
