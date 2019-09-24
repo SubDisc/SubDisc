@@ -119,6 +119,9 @@ public enum ConditionListBuilder
 
 		public abstract Condition get(int index);
 
+		// FIXME lazy implementation for now, will create get(idx, searchOrder)
+		public abstract Condition getCanonical(int index);
+
 		@Override
 		public abstract int compareTo(ConditionListA theConditionList);
 
@@ -136,6 +139,12 @@ public enum ConditionListBuilder
 
 		@Override
 		public final Condition get(int index)
+		{
+			throw new IndexOutOfBoundsException();
+		}
+
+		@Override
+		public final Condition getCanonical(int index)
 		{
 			throw new IndexOutOfBoundsException();
 		}
@@ -183,6 +192,15 @@ public enum ConditionListBuilder
 
 		@Override
 		public final Condition get(int index)
+		{
+			if (index != 0)
+				throw new IndexOutOfBoundsException();
+
+			return itsCondition;
+		}
+
+		@Override
+		public final Condition getCanonical(int index)
 		{
 			if (index != 0)
 				throw new IndexOutOfBoundsException();
@@ -255,6 +273,15 @@ System.out.format("ERROR ConditionList2: duplicate conjuncts%n\t%s%n\t%s%n", the
 			if (index == 0)
 				return isInSearchOrder ? itsFirst: itsSecond;
 			return isInSearchOrder ? itsSecond : itsFirst;
+		}
+
+		@Override
+		public final Condition getCanonical(int index)
+		{
+			if (index != 0 && index != 1)
+				throw new IndexOutOfBoundsException();
+
+			return (index == 0) ? itsFirst: itsSecond;
 		}
 
 		// throws NullPointerException if supplied argument is null
@@ -404,6 +431,15 @@ System.out.format("ERROR ConditionList3: duplicate conjuncts%n\t%s%n\t%s%n", the
 				throw new IndexOutOfBoundsException();
 
 			return find(index);
+		}
+
+		@Override
+		public final Condition getCanonical(int index)
+		{
+			if (index != 0 && index != 1 && index != 2)
+				throw new IndexOutOfBoundsException();
+
+			return (index == 0) ? itsFirst : (index == 1) ? itsSecond : itsThird;
 		}
 
 		// throws NullPointerException if supplied argument is null
@@ -558,6 +594,13 @@ System.out.format("ERROR ConditionListN-3: duplicate conjuncts%n\t%s%n\t%s%n", t
 		public final Condition get(int index)
 		{
 			return itsSearchOrder[index];
+		}
+
+		// throws IndexOutOfBoundsException when !(0 <= index < size)
+		@Override
+		public final Condition getCanonical(int index)
+		{
+			return itsCanonicalOrder[index];
 		}
 
 		// throws NullPointerException if supplied argument is null
