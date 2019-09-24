@@ -512,10 +512,10 @@ public class MiningWindow extends JFrame implements ActionListener
 
 		// search conditions
 		setSearchDepthMaximum("1");
-		setSearchCoverageMinimum("2");
-		setSearchCoverageMaximum("1.0");
-		setSubgroupsMaximum("0");
-		setSearchTimeMaximum("1.0");
+		setSearchCoverageMinimum(Integer.toString(((itsTable.getNrRows() / 10) + ((itsTable.getNrRows() % 10 == 0) ? 0 : 1))));
+		setSearchCoverageMaximum("0.9");
+		setSubgroupsMaximum("1000");
+		setSearchTimeMaximum("0.0");
 
 		// search strategy
 		setStrategyWidth("100");
