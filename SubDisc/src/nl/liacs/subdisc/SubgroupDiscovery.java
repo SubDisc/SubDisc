@@ -27,7 +27,7 @@ public class SubgroupDiscovery
 {
 	// log slows down mining a lot, but leave NO_CANDIDATE_LOG at false in git
 	private static final boolean NO_CANDIDATE_LOG = false;
-	private static final boolean DEBUG_POC_BINS   = true;
+	private static final boolean DEBUG_POC_BINS   = false; // FIXME true in git
 	// old algorithm creates many useless Refinements, set these to true to
 	// avoid this for various scenarios, leave at false in git
 	private static final boolean BEST_VALUESET_AT_LAST_POSITION_SKIP = false;
@@ -46,7 +46,8 @@ public class SubgroupDiscovery
 	private static final boolean DEBUG_PRINTS_FOR_WARN               = false;
 	// print how often Best Candidate differs from Best Result, see checkBest()
 	private static final boolean DEBUG_PRINTS_FOR_BEST               = true;
-	private static final boolean USE_ONLY_BEST_RESULT_IE_LIKE_BEFORE = false;
+	// when false: both BestForResultSet and BestForCandidateSet are used
+	private static final boolean USE_SINGLE_BEST_RESULT_LIKE_BEFORE  = false;
 
 	// statistics for debugging - related to booleans above
 	private AtomicLong itsBestPairs       = new AtomicLong(0);
@@ -577,7 +578,7 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 
 		postMining(System.currentTimeMillis() - theBeginTime);
 
-		if (DEBUG_PRINTS_FOR_BEST)
+		if (DEBUG_PRINTS_FOR_BEST && EnumSet.of(NumericStrategy.NUMERIC_BEST, NumericStrategy.NUMERIC_BEST_BINS).contains(itsSearchParameters.getNumericStrategy()))
 			Log.logCommandLine("TWO DIFFERENT BEST SUBGROUPS: " + itsBestPairsDiffer + "/" + itsBestPairs);
 		if (DEBUG_PRINTS_FOR_SKIP)
 			Log.logCommandLine("SKIP COUNT: " + itsSkipCount);
@@ -1875,7 +1876,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		Operator anOperator = theConditionBase.getOperator();
 		// might require update when more strategies are added
 		boolean isAllStrategy = (ns == NumericStrategy.NUMERIC_ALL);
-		Subgroup aBestSubgroup = null;
+//		Subgroup aBestSubgroup = null;
 		BestSubgroupsForCandidateSetAndResultSet aBestSubgroups = (isAllStrategy ? null : new BestSubgroupsForCandidateSetAndResultSet());
 		////////////////////////////////////////////////////////////////////////
 
@@ -1899,8 +1900,8 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 					break;
 
 				Condition anAddedCondition = new Condition(theConditionBase, aColumn.getSortedValue(i), i);
-				// always assign: returns null, aBestSugroup, or aNewSubgroup
-				aBestSubgroup = evaluateCandidate(theParent, anAddedCondition, aCount, isAllStrategy, aBestSubgroup);
+//				// always assign: returns null, aBestSugroup, or aNewSubgroup
+//				aBestSubgroup = evaluateCandidate(theParent, anAddedCondition, aCount, isAllStrategy, aBestSubgroup);
 				                evaluateCandidate(theParent, anAddedCondition, aCount, isAllStrategy, aBestSubgroups);
 			}
 		}
@@ -1921,7 +1922,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 					continue;
 
 				Condition anAddedCondition = new Condition(theConditionBase, aColumn.getSortedValue(i), i);
-				aBestSubgroup = evaluateCandidate(theParent, anAddedCondition, cover, isAllStrategy, aBestSubgroup);
+//				aBestSubgroup = evaluateCandidate(theParent, anAddedCondition, cover, isAllStrategy, aBestSubgroup);
 				                evaluateCandidate(theParent, anAddedCondition, cover, isAllStrategy, aBestSubgroups);
 			}
 		}
@@ -1941,7 +1942,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 				if (cover != aParentCoverage)
 				{
 					Condition anAddedCondition = new Condition(theConditionBase, aColumn.getSortedValue(i), i);
-					aBestSubgroup = evaluateCandidate(theParent, anAddedCondition, cover, isAllStrategy, aBestSubgroup);
+//					aBestSubgroup = evaluateCandidate(theParent, anAddedCondition, cover, isAllStrategy, aBestSubgroup);
 					                evaluateCandidate(theParent, anAddedCondition, cover, isAllStrategy, aBestSubgroups);
 				}
 
@@ -1952,11 +1953,14 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		else
 			throw new AssertionError("SubgroupDiscovery.evaluateNumericRegularGeneric() + " + anOperator);
 
-		if (!isAllStrategy && (aBestSubgroup != null))
-			bestAdd(aBestSubgroup, aParentCoverage);
-
-		// FIXME temporary checks
-		if (!isAllStrategy) debugBest(theParent, aBestSubgroup, aBestSubgroups);
+//		if (!isAllStrategy && (aBestSubgroup != null))
+//			bestAdd(aBestSubgroup, aParentCoverage);
+		if (!isAllStrategy)
+		{
+			checkAndLogBest(aBestSubgroups, aParentCoverage);
+			// FIXME temporary checks
+//			debugBest(theParent, aBestSubgroup, aBestSubgroups);
+		}
 	}
 
 	// generic version, use plain ValueCount, no model-specific info
@@ -1980,7 +1984,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		Column aColumn = theConditionBase.getColumn();
 		int[] aCounts = theValueInfo.itsCounts;
 		boolean isAllStrategy = (ns == NumericStrategy.NUMERIC_BINS);
-		Subgroup aBestSubgroup = null;
+//		Subgroup aBestSubgroup = null;
 		BestSubgroupsForCandidateSetAndResultSet aBestSubgroups = (isAllStrategy ? null : new BestSubgroupsForCandidateSetAndResultSet());
 
 		// for debugging, code currently reproduces faulty behaviour of original
@@ -2018,9 +2022,8 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 
 				float n = aColumn.getSortedValue(i);
 				Condition anAddedCondition = new Condition(theConditionBase, new Interval(f, n));
-				aBestSubgroup = evaluateCandidate(theParent, anAddedCondition, (cover-last_cover), isAllStrategy, aBestSubgroup);
+//				aBestSubgroup = evaluateCandidate(theParent, anAddedCondition, (cover-last_cover), isAllStrategy, aBestSubgroup);
 				                evaluateCandidate(theParent, anAddedCondition, (cover-last_cover), isAllStrategy, aBestSubgroups);
-
 
 				last_cover = cover;
 				f = n;
@@ -2054,7 +2057,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			{
 				Condition anAddedCondition = new Condition(theConditionBase, new Interval(f, Float.POSITIVE_INFINITY));
 				last_cover = (((int) aParentCoverage) - last_cover);
-				aBestSubgroup = evaluateCandidate(theParent, anAddedCondition, last_cover, isAllStrategy, aBestSubgroup);
+//				aBestSubgroup = evaluateCandidate(theParent, anAddedCondition, last_cover, isAllStrategy, aBestSubgroup);
 				                evaluateCandidate(theParent, anAddedCondition, last_cover, isAllStrategy, aBestSubgroups);
 			}
 		}
@@ -2077,7 +2080,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 					break;
 
 				Condition aCondition = new Condition(theConditionBase, aColumn.getSortedValue(i), i);
-				aBestSubgroup = evaluateCandidate(theParent, aCondition, cover, isAllStrategy, aBestSubgroup);
+//				aBestSubgroup = evaluateCandidate(theParent, aCondition, cover, isAllStrategy, aBestSubgroup);
 				                evaluateCandidate(theParent, aCondition, cover, isAllStrategy, aBestSubgroups);
 
 				while (((next = ((int) ((++j * aParentCoverage) / aNrBins)))) <= cover-1)
@@ -2111,7 +2114,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 				if (((cover-aCount) < next) && (DEBUG_POC_BINS || (cover != aParentCoverage)))
 				{
 					Condition aCondition = new Condition(theConditionBase, aColumn.getSortedValue(i), i);
-					aBestSubgroup = evaluateCandidate(theParent, aCondition, cover, isAllStrategy, aBestSubgroup);
+//					aBestSubgroup = evaluateCandidate(theParent, aCondition, cover, isAllStrategy, aBestSubgroup);
 					                evaluateCandidate(theParent, aCondition, cover, isAllStrategy, aBestSubgroups);
 
 					while ((next = (int) (aParentCoverage - ((++j * aParentCoverage) / aNrBins))) > (cover-aCount))
@@ -2156,11 +2159,14 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			}
 		}
 
-		if (!isAllStrategy && (aBestSubgroup != null))
-			bestAdd(aBestSubgroup, (int) aParentCoverage);
-
-		// FIXME temporary checks
-		if (!isAllStrategy) debugBest(theParent, aBestSubgroup, aBestSubgroups);
+//		if (!isAllStrategy && (aBestSubgroup != null))
+//			bestAdd(aBestSubgroup, aParentCoverage);
+		if (!isAllStrategy)
+		{
+			checkAndLogBest(aBestSubgroups, (int) aParentCoverage);
+			// FIXME temporary checks
+//			debugBest(theParent, aBestSubgroup, aBestSubgroups);
+		}
 	}
 
 	// this version includes true positive counts, and direct computation
@@ -2181,7 +2187,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		Operator anOperator = theConditionBase.getOperator();
 		// might require update when more strategies are added
 		boolean isAllStrategy = (ns == NumericStrategy.NUMERIC_ALL);
-		Subgroup aBestSubgroup = null;
+//		Subgroup aBestSubgroup = null;
 		BestSubgroupsForCandidateSetAndResultSet aBestSubgroups = (isAllStrategy ? null : new BestSubgroupsForCandidateSetAndResultSet());
 		////////////////////////////////////////////////////////////////////////
 
@@ -2206,8 +2212,8 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 					break;
 
 				Condition anAddedCondition = new Condition(theConditionBase, aColumn.getSortedValue(i), i);
-				// always assign: returns null, aBestSugroup, or aNewSubgroup
-				aBestSubgroup = evaluateCandidate(theParent, anAddedCondition, aCount, aTPs[i], isAllStrategy, aBestSubgroup);
+//				// always assign: returns null, aBestSugroup, or aNewSubgroup
+//				aBestSubgroup = evaluateCandidate(theParent, anAddedCondition, aCount, aTPs[i], isAllStrategy, aBestSubgroup);
 				                evaluateCandidate(theParent, anAddedCondition, aCount, aTPs[i], isAllStrategy, aBestSubgroups);
 			}
 		}
@@ -2235,7 +2241,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 					continue;
 
 				Condition aCondition = new Condition(theConditionBase, aColumn.getSortedValue(i), i);
-				aBestSubgroup = evaluateCandidate(theParent, aCondition, cover, tp, isAllStrategy, aBestSubgroup);
+//				aBestSubgroup = evaluateCandidate(theParent, aCondition, cover, tp, isAllStrategy, aBestSubgroup);
 				                evaluateCandidate(theParent, aCondition, cover, tp, isAllStrategy, aBestSubgroups);
 			}
 		}
@@ -2256,7 +2262,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 				if (cover != aParentCoverage)
 				{
 					Condition aCondition = new Condition(theConditionBase, aColumn.getSortedValue(i), i);
-					aBestSubgroup = evaluateCandidate(theParent, aCondition, cover, tp, isAllStrategy, aBestSubgroup);
+//					aBestSubgroup = evaluateCandidate(theParent, aCondition, cover, tp, isAllStrategy, aBestSubgroup);
 					                evaluateCandidate(theParent, aCondition, cover, tp, isAllStrategy, aBestSubgroups);
 				}
 
@@ -2268,11 +2274,14 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		else
 			throw new AssertionError("SubgroupDiscovery.evaluateNumericRegularSingleBinary() + " + anOperator);
 
-		if (!isAllStrategy && (aBestSubgroup != null))
-			bestAdd(aBestSubgroup, aParentCoverage);
-
-		// FIXME temporary checks
-		if (!isAllStrategy) debugBest(theParent, aBestSubgroup, aBestSubgroups);
+//		if (!isAllStrategy && (aBestSubgroup != null))
+//			bestAdd(aBestSubgroup, aParentCoverage);
+		if (!isAllStrategy)
+		{
+			checkAndLogBest(aBestSubgroups, (int) aParentCoverage);
+			// FIXME temporary checks
+//			debugBest(theParent, aBestSubgroup, aBestSubgroups);
+		}
 	}
 
 	// NOTE for comparison bugs in original code are deliberately reproduced atm
@@ -2296,7 +2305,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		int[] aCounts = theValueInfo.itsCounts;
 		int[] aTPs= theValueInfo.itsTruePositives;
 		boolean isAllStrategy = (ns == NumericStrategy.NUMERIC_BINS);
-		Subgroup aBestSubgroup = null;
+//		Subgroup aBestSubgroup = null;
 		BestSubgroupsForCandidateSetAndResultSet aBestSubgroups = (isAllStrategy ? null : new BestSubgroupsForCandidateSetAndResultSet());
 
 		// for debugging, code currently reproduces faulty behaviour of original
@@ -2338,7 +2347,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 
 				float n = aColumn.getSortedValue(i);
 				Condition anAddedCondition = new Condition(theConditionBase, new Interval(f, n));
-				aBestSubgroup = evaluateCandidate(theParent, anAddedCondition, (cover-last_cover), (tp-last_tp), isAllStrategy, aBestSubgroup);
+//				aBestSubgroup = evaluateCandidate(theParent, anAddedCondition, (cover-last_cover), (tp-last_tp), isAllStrategy, aBestSubgroup);
 				                evaluateCandidate(theParent, anAddedCondition, (cover-last_cover), (tp-last_tp), isAllStrategy, aBestSubgroups);
 
 				last_cover = cover;
@@ -2375,7 +2384,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 				Condition anAddedCondition = new Condition(theConditionBase, new Interval(f, Float.POSITIVE_INFINITY));
 				last_cover = (((int) aParentCoverage) - last_cover);
 				last_tp = (((int) theParent.getTertiaryStatistic()) - last_tp);
-				aBestSubgroup = evaluateCandidate(theParent, anAddedCondition, last_cover, last_tp, isAllStrategy, aBestSubgroup);
+//				aBestSubgroup = evaluateCandidate(theParent, anAddedCondition, last_cover, last_tp, isAllStrategy, aBestSubgroup);
 				                evaluateCandidate(theParent, anAddedCondition, last_cover, last_tp, isAllStrategy, aBestSubgroups);
 			}
 		}
@@ -2399,7 +2408,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 					break;
 
 				Condition aCondition = new Condition(theConditionBase, aColumn.getSortedValue(i), i);
-				aBestSubgroup = evaluateCandidate(theParent, aCondition, cover, tp, isAllStrategy, aBestSubgroup);
+//				aBestSubgroup = evaluateCandidate(theParent, aCondition, cover, tp, isAllStrategy, aBestSubgroup);
 				                evaluateCandidate(theParent, aCondition, cover, tp, isAllStrategy, aBestSubgroups);
 
 				while (((next = ((int) ((++j * aParentCoverage) / aNrBins)))) <= cover-1)
@@ -2433,7 +2442,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 				if (((cover-aCount) < next) && (DEBUG_POC_BINS || (cover != aParentCoverage)))
 				{
 					Condition aCondition = new Condition(theConditionBase, aColumn.getSortedValue(i), i);
-					aBestSubgroup = evaluateCandidate(theParent, aCondition, cover, tp, isAllStrategy, aBestSubgroup);
+//					aBestSubgroup = evaluateCandidate(theParent, aCondition, cover, tp, isAllStrategy, aBestSubgroup);
 					                evaluateCandidate(theParent, aCondition, cover, tp, isAllStrategy, aBestSubgroups);
 
 					while ((next = (int) (aParentCoverage - ((++j * aParentCoverage) / aNrBins))) > (cover-aCount))
@@ -2480,55 +2489,18 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			}
 		}
 
-		if (!isAllStrategy && (aBestSubgroup != null))
-			bestAdd(aBestSubgroup, (int) aParentCoverage);
-
-		// FIXME temporary checks
-		if (!isAllStrategy) debugBest(theParent, aBestSubgroup, aBestSubgroups);
+//		if (!isAllStrategy && (aBestSubgroup != null))
+//			bestAdd(aBestSubgroup, aParentCoverage);
+		if (!isAllStrategy)
+		{
+			checkAndLogBest(aBestSubgroups, (int) aParentCoverage);
+			// FIXME temporary checks
+//			debugBest(theParent, aBestSubgroup, aBestSubgroups);
+		}
 	}
 
 	// this is the version used by evaluateNumericRegularGeneric(Coarse)
-	// FIXME temporarily a separate method, will merge both evaluateCandidates
-	// return is only relevant (and non-null) in BEST and BEST_BINS settings
-	private Subgroup evaluateCandidate(Subgroup theParent, Condition theAddedCondition, int theChildCoverage, boolean isAllStrategy, Subgroup theBestSubgroup)
-	{
-		if ((itsFilter != null) && !itsFilter.isUseful(theParent.getConditions(), theAddedCondition))
-			return theBestSubgroup; // null or the best so far
-
-		int aParentCoverage = theParent.getCoverage();
-		assert (itsSearchParameters.getNumericStrategy().isDiscretiser() || (theChildCoverage < aParentCoverage));
-		// the NOTE below is a copy of evaluateNumericRegularGenericCoarse
-		// for evaluateNumericRegularGeneric (child.size == parent.size) is
-		// checked already, so redundant at this point, but the check is cheap
-		// and enables correct behaviour in the coarse setting
-		// also, the DEBUG_POC_BINS setting is temporary, and will be removed
-		// completely after testing
-		//
-		// NOTE
-		// a (DEBUG_POC_BINS = true) setting prevents BETWEEN/LEQ/GEQ loops from
-		// avoiding useless Refinements when (aChild.size == aParent.size)
-		// therefore the check is performed in evaluateCandidate()
-		// and the DEBUG_POC_BINS code can still indicate bin-selection changes
-		if (theChildCoverage == aParentCoverage)
-			return theBestSubgroup; // null or the best so far
-		Subgroup aChild = theParent.getRefinedSubgroup(theAddedCondition);
-
-		// ALL or BINS
-		if (isAllStrategy)
-		{
-			//addToBuffer(aChild);
-			checkAndLog(aChild, aParentCoverage);
-			return null; // always null in this setting
-		}
-
-		// BEST or BESTBINS
-		if (isValidAndBest(aChild, aParentCoverage, theBestSubgroup))
-			return aChild;          // if the new subgroup is better
-		else
-			return theBestSubgroup; // if the old subgroup is better (or null)
-	}
-
-	// FIXME new Best-2 version for evaluateNumericRegularGeneric(Coarse)
+	// FIXME temporarily a separate method, will merge both evaluateCandidates()
 	private final void evaluateCandidate(Subgroup theParent, Condition theAddedCondition, int theChildCoverage, boolean isAllStrategy, BestSubgroupsForCandidateSetAndResultSet theBestSubgroups)
 	{
 		if ((itsFilter != null) && !itsFilter.isUseful(theParent.getConditions(), theAddedCondition))
@@ -2572,52 +2544,8 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	}
 
 	// this is the version used by evaluateNumericRegularSingleBinary(Coarse)
-	// return is only relevant (and non-null) in BEST and BEST_BINS settings
-	private Subgroup evaluateCandidate(Subgroup theParent, Condition theAddedCondition, int theChildCoverage, int theNrTruePositives, boolean isAllStrategy, Subgroup theBestSubgroup)
-	{
-		// currently only for SINGLE_NOMINAL (and not for propensity scores)
-		assert (isDirectSingleBinary());
-
-		if ((itsFilter != null) && !itsFilter.isUseful(theParent.getConditions(), theAddedCondition))
-			return theBestSubgroup; // null or the best so far
-
-		int aParentCoverage = theParent.getCoverage();
-		assert (itsSearchParameters.getNumericStrategy().isDiscretiser() || (theChildCoverage < aParentCoverage));
-		// the NOTE below is a copy of evaluateNumericRegularSingleBinaryCoarse
-		// for evaluateNumericRegularSingleBinary (child.size == parent.size) is
-		// checked already, so redundant at this point, but the check is cheap
-		// and enables correct behaviour in the coarse setting
-		// also, the DEBUG_POC_BINS setting is temporary, and will be removed
-		// completely after testing
-		//
-		// NOTE
-		// a (DEBUG_POC_BINS = true) setting prevents BETWEEN/LEQ/GEQ loops from
-		// avoiding useless Refinements when (aChild.size == aParent.size)
-		// therefore the check is performed in evaluateCandidate()
-		// and the DEBUG_POC_BINS code can still indicate bin-selection changes
-		if (theChildCoverage == aParentCoverage)
-			return theBestSubgroup; // null or the best so far
-
-		Subgroup aChild = directComputation(theParent, theAddedCondition, itsQualityMeasure, theChildCoverage, theNrTruePositives);
-
-		// ALL or BINS
-		if (isAllStrategy)
-		{
-			//addToBuffer(aChild);
-			checkAndLog(aChild, aParentCoverage);
-			return null; // always null in this setting
-		}
-
-		// BEST or BESTBINS
-		if (isValidAndBest(aChild, aParentCoverage, theBestSubgroup))
-			return aChild;          // if the new subgroup is better
-		else
-			return theBestSubgroup; // if the old subgroup is better (or null)
-	}
-
-	// FIXME new Best-2 version for evaluateNumericRegularSingleBinary(Coarse)
+	// FIXME temporarily a separate method, will merge both evaluateCandidates()
 	private final void evaluateCandidate(Subgroup theParent, Condition theAddedCondition, int theChildCoverage, int theNrTruePositives, boolean isAllStrategy, BestSubgroupsForCandidateSetAndResultSet theBestSubgroups)
-
 	{
 		// currently only for SINGLE_NOMINAL (and not for propensity scores)
 		assert (isDirectSingleBinary());
@@ -2846,50 +2774,6 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		checkAndLog(aChild, aParentCoverage);
 	}
 
-	// this method is currently unnecessary, but addToBuffer will return one day
-	@Deprecated
-	private final void bestAdd(Subgroup theBestSubgroup, int theOldCoverage)
-	{
-		assert (theBestSubgroup != null);
-
-		//addToBuffer(aBestSubgroup);
-		checkAndLog(theBestSubgroup, theOldCoverage);
-	}
-
-	private final boolean isValidAndBest(Subgroup theNewSubgroup, int theOldCoverage, Subgroup theBestSubgroup)
-	{
-		int aNewCoverage = theNewSubgroup.getCoverage();
-
-		// FIXME MM the first and second check should be made obsolete
-		// numericConsecutive bins should check this, then they can be removed
-		//
-		// FIXME this method is not consistent with its non-best equivalent
-		// the <= itsMaximumCoverage check does not occur for all-strategies
-		// the check below should be considered a bug, but resolving it makes
-		// all historic results obsolete
-		// the solution should distinguish between the best subgroup for the
-		// current Refinement, and use that for the current level (ResultSet)
-		// but for the next level (CandidateQueue) another subgroup might be
-		// appropriate, as it could score better that the best subgroup, but be
-		// the big to be considered to be included in the ResultSet
-		//
-		// is theNewSubgroup valid
-		if (aNewCoverage >= itsMinimumCoverage && aNewCoverage < theOldCoverage && aNewCoverage <= itsMaximumCoverage)
-		{
-			// FIXME do not call evaluateCandidate() when it is computed already
-			float aQuality = evaluateCandidate(theNewSubgroup);
-
-			// is theNewSubgroup better than theBestSubgroup
-			if ((theBestSubgroup == null) || (aQuality > theBestSubgroup.getMeasureValue()))
-			{
-				theNewSubgroup.setMeasureValue(aQuality);
-				return true;
-			}
-		}
-
-		return false;
-	}
-
 	private static final class BestSubgroupsForCandidateSetAndResultSet
 	{
 		// NOTE these will often be the same Subgroup
@@ -2908,7 +2792,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	//       such that Subgroup.setQuality(NaN) is possible
 	//       obviously, a separate hasQuality() is not the preferred solution
 	//       and should be replaced in a final implementation
-	private final void checkForBest(Subgroup theChild, int theParentCoverage, BestSubgroupsForCandidateSetAndResultSet theBests, boolean hasQualityBeenComputed)
+	private final void checkForBest(Subgroup theChild, int theParentCoverage, BestSubgroupsForCandidateSetAndResultSet theBestChilds, boolean hasQualityBeenComputed)
 	{
 		int aChildCoverage = theChild.getCoverage();
 
@@ -2923,11 +2807,11 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 
 		double aQuality = theChild.getMeasureValue();
 
-		if (isUsefulForCandidateSet && ((theBests.itsBestForCandidateSet == null) || (aQuality > theBests.itsBestForCandidateSet.getMeasureValue())))
-			theBests.itsBestForCandidateSet = theChild;
+		if (isUsefulForCandidateSet && ((theBestChilds.itsBestForCandidateSet == null) || (aQuality > theBestChilds.itsBestForCandidateSet.getMeasureValue())))
+			theBestChilds.itsBestForCandidateSet = theChild;
 
-		if (isUsefulForResultSet    && ((theBests.itsBestForResultSet == null)    || (aQuality > theBests.itsBestForResultSet.getMeasureValue())))
-			theBests.itsBestForResultSet = theChild;
+		if (isUsefulForResultSet    && ((theBestChilds.itsBestForResultSet == null)    || (aQuality > theBestChilds.itsBestForResultSet.getMeasureValue())))
+			theBestChilds.itsBestForResultSet = theChild;
 	}
 
 	private static final boolean isUsefulForCandidateSet(int theChildCoverage, int theParentCoverage, int theMinimumCoverage, int theChildDepth, int theMaximumDepth)
@@ -2960,24 +2844,26 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 				(theChildCoverage <= theMaximumCoverage));
 	}
 
-	private final void debugBest(Subgroup theParent, Subgroup theBestSubgroup, BestSubgroupsForCandidateSetAndResultSet theBestSubgroups)
+	// replacement of bestAdd(Subgroup, theParentCoverage) - allows two bests
+	private final void checkAndLogBest(BestSubgroupsForCandidateSetAndResultSet theBestChildSubgroups, int theParentCoverage)
 	{
-		Subgroup c = theBestSubgroups.itsBestForCandidateSet;
-		Subgroup r = theBestSubgroups.itsBestForResultSet;
-		assert ((theBestSubgroup == null) || (theBestSubgroup.compareTo(r) == 0));
+		// original - NOTE behaviour of addToBuffer() needs to be reconsidered
+//		assert (theBestSubgroup != null);
+//
+//		//addToBuffer(aBestSubgroup);
+//		checkAndLog(theBestSubgroup, theOldCoverage);
 
-		boolean cIsNull    = (c == null);
-		boolean rIsNull    = (r == null);
-		boolean isMaxDepth = (theParent.getDepth() == itsSearchParameters.getSearchDepth()-1);
-		assert (cIsNull || !isMaxDepth);
+		// new
+		assert (theBestChildSubgroups != null);
 
-		itsBestPairs.incrementAndGet();
-		if (!isMaxDepth && (c != r))
-		{
-			itsBestPairsDiffer.incrementAndGet();
-			if (DEBUG_PRINTS_FOR_BEST)
-				Log.logCommandLine(String.format("NOTE TWO DIFFERENT BEST SUBGROUPS:%nfor CandidateSet: size=%d %s%nfor ResultSet   : size=%d %s%n", (cIsNull ? 0 : c.getCoverage()), (cIsNull ? "" : c), (rIsNull ? 0 : r.getCoverage()), (rIsNull ? "" : r)));
-		}
+		if (theBestChildSubgroups.itsBestForResultSet != null)
+			checkAndLog(theBestChildSubgroups.itsBestForResultSet, theParentCoverage);
+
+		if (USE_SINGLE_BEST_RESULT_LIKE_BEFORE)
+			return;
+
+		if (theBestChildSubgroups.itsBestForCandidateSet != null && (theBestChildSubgroups.itsBestForResultSet != theBestChildSubgroups.itsBestForCandidateSet))
+			checkAndLog(theBestChildSubgroups.itsBestForCandidateSet, theParentCoverage);
 	}
 
 	////////////////////////////////////////////////////////////////////////////
@@ -5376,5 +5262,162 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			++aCount;
 
 		return aCount;
+	}
+
+	// this is the version used by evaluateNumericRegularGeneric(Coarse)
+	// FIXME temporarily a separate method, will merge both evaluateCandidates
+	// return is only relevant (and non-null) in BEST and BEST_BINS settings
+	@Deprecated
+	private Subgroup evaluateCandidate(Subgroup theParent, Condition theAddedCondition, int theChildCoverage, boolean isAllStrategy, Subgroup theBestSubgroup)
+	{
+		if ((itsFilter != null) && !itsFilter.isUseful(theParent.getConditions(), theAddedCondition))
+			return theBestSubgroup; // null or the best so far
+
+		int aParentCoverage = theParent.getCoverage();
+		assert (itsSearchParameters.getNumericStrategy().isDiscretiser() || (theChildCoverage < aParentCoverage));
+		// the NOTE below is a copy of evaluateNumericRegularGenericCoarse
+		// for evaluateNumericRegularGeneric (child.size == parent.size) is
+		// checked already, so redundant at this point, but the check is cheap
+		// and enables correct behaviour in the coarse setting
+		// also, the DEBUG_POC_BINS setting is temporary, and will be removed
+		// completely after testing
+		//
+		// NOTE
+		// a (DEBUG_POC_BINS = true) setting prevents BETWEEN/LEQ/GEQ loops from
+		// avoiding useless Refinements when (aChild.size == aParent.size)
+		// therefore the check is performed in evaluateCandidate()
+		// and the DEBUG_POC_BINS code can still indicate bin-selection changes
+		if (theChildCoverage == aParentCoverage)
+			return theBestSubgroup; // null or the best so far
+		Subgroup aChild = theParent.getRefinedSubgroup(theAddedCondition);
+
+		// ALL or BINS
+		if (isAllStrategy)
+		{
+			//addToBuffer(aChild);
+			checkAndLog(aChild, aParentCoverage);
+			return null; // always null in this setting
+		}
+
+		// BEST or BESTBINS
+		if (isValidAndBest(aChild, aParentCoverage, theBestSubgroup))
+			return aChild;          // if the new subgroup is better
+		else
+			return theBestSubgroup; // if the old subgroup is better (or null)
+	}
+
+	// this is the version used by evaluateNumericRegularSingleBinary(Coarse)
+	// return is only relevant (and non-null) in BEST and BEST_BINS settings
+	@Deprecated
+	private Subgroup evaluateCandidate(Subgroup theParent, Condition theAddedCondition, int theChildCoverage, int theNrTruePositives, boolean isAllStrategy, Subgroup theBestSubgroup)
+	{
+		// currently only for SINGLE_NOMINAL (and not for propensity scores)
+		assert (isDirectSingleBinary());
+
+		if ((itsFilter != null) && !itsFilter.isUseful(theParent.getConditions(), theAddedCondition))
+			return theBestSubgroup; // null or the best so far
+
+		int aParentCoverage = theParent.getCoverage();
+		assert (itsSearchParameters.getNumericStrategy().isDiscretiser() || (theChildCoverage < aParentCoverage));
+		// the NOTE below is a copy of evaluateNumericRegularSingleBinaryCoarse
+		// for evaluateNumericRegularSingleBinary (child.size == parent.size) is
+		// checked already, so redundant at this point, but the check is cheap
+		// and enables correct behaviour in the coarse setting
+		// also, the DEBUG_POC_BINS setting is temporary, and will be removed
+		// completely after testing
+		//
+		// NOTE
+		// a (DEBUG_POC_BINS = true) setting prevents BETWEEN/LEQ/GEQ loops from
+		// avoiding useless Refinements when (aChild.size == aParent.size)
+		// therefore the check is performed in evaluateCandidate()
+		// and the DEBUG_POC_BINS code can still indicate bin-selection changes
+		if (theChildCoverage == aParentCoverage)
+			return theBestSubgroup; // null or the best so far
+
+		Subgroup aChild = directComputation(theParent, theAddedCondition, itsQualityMeasure, theChildCoverage, theNrTruePositives);
+
+		// ALL or BINS
+		if (isAllStrategy)
+		{
+			//addToBuffer(aChild);
+			checkAndLog(aChild, aParentCoverage);
+			return null; // always null in this setting
+		}
+
+		// BEST or BESTBINS
+		if (isValidAndBest(aChild, aParentCoverage, theBestSubgroup))
+			return aChild;          // if the new subgroup is better
+		else
+			return theBestSubgroup; // if the old subgroup is better (or null)
+	}
+
+	// XXX replaced by checkForBest()
+	@Deprecated
+	private final boolean isValidAndBest(Subgroup theNewSubgroup, int theOldCoverage, Subgroup theBestSubgroup)
+	{
+		int aNewCoverage = theNewSubgroup.getCoverage();
+
+		// FIXME MM the first and second check should be made obsolete
+		// numericConsecutive bins should check this, then they can be removed
+		//
+		// FIXME this method is not consistent with its non-best equivalent
+		// the <= itsMaximumCoverage check does not occur for all-strategies
+		// the check below should be considered a bug, but resolving it makes
+		// all historic results obsolete
+		// the solution should distinguish between the best subgroup for the
+		// current Refinement, and use that for the current level (ResultSet)
+		// but for the next level (CandidateQueue) another subgroup might be
+		// appropriate, as it could score better that the best subgroup, but be
+		// the big to be considered to be included in the ResultSet
+		//
+		// is theNewSubgroup valid
+		if (aNewCoverage >= itsMinimumCoverage && aNewCoverage < theOldCoverage && aNewCoverage <= itsMaximumCoverage)
+		{
+			// FIXME do not call evaluateCandidate() when it is computed already
+			float aQuality = evaluateCandidate(theNewSubgroup);
+
+			// is theNewSubgroup better than theBestSubgroup
+			if ((theBestSubgroup == null) || (aQuality > theBestSubgroup.getMeasureValue()))
+			{
+				theNewSubgroup.setMeasureValue(aQuality);
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	// this method is currently unnecessary, but addToBuffer will return one day
+	// XXX replaced by checkAndLogBest()
+	@Deprecated
+	private final void bestAdd(Subgroup theBestChild, int theParentCoverage)
+	{
+		assert (theBestChild != null);
+
+		//addToBuffer(aBestSubgroup);
+		checkAndLog(theBestChild, theParentCoverage);
+	}
+
+	// XXX leave it in for now
+	@SuppressWarnings("unused")
+	@Deprecated
+	private final void debugBest(Subgroup theParent, Subgroup theBestSubgroup, BestSubgroupsForCandidateSetAndResultSet theBestSubgroups)
+	{
+		Subgroup c = theBestSubgroups.itsBestForCandidateSet;
+		Subgroup r = theBestSubgroups.itsBestForResultSet;
+		assert ((theBestSubgroup == null) || (theBestSubgroup.compareTo(r) == 0));
+
+		boolean cIsNull    = (c == null);
+		boolean rIsNull    = (r == null);
+		boolean isMaxDepth = (theParent.getDepth() == itsSearchParameters.getSearchDepth()-1);
+		assert (cIsNull || !isMaxDepth);
+
+		itsBestPairs.incrementAndGet();
+		if (!isMaxDepth && (c != r))
+		{
+			itsBestPairsDiffer.incrementAndGet();
+			if (DEBUG_PRINTS_FOR_BEST)
+				Log.logCommandLine(String.format("NOTE TWO DIFFERENT BEST SUBGROUPS:%nfor CandidateSet: size=%d %s%nfor ResultSet   : size=%d %s%n", (cIsNull ? 0 : c.getCoverage()), (cIsNull ? "" : c), (rIsNull ? 0 : r.getCoverage()), (rIsNull ? "" : r)));
+		}
 	}
 }
