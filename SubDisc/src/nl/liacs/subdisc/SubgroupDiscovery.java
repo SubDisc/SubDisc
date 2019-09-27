@@ -45,7 +45,7 @@ public class SubgroupDiscovery
 	private static final boolean DEBUG_PRINTS_FOR_SKIP               = false;
 	private static final boolean DEBUG_PRINTS_FOR_WARN               = false;
 	// print how often Best Candidate differs from Best Result, see checkBest()
-	private static final boolean DEBUG_PRINTS_FOR_BEST               = true;
+	private static final boolean DEBUG_PRINTS_FOR_BEST               = false;
 	// when false: both BestForResultSet and BestForCandidateSet are used
 	private static final boolean USE_SINGLE_BEST_RESULT_LIKE_BEFORE  = false;
 
@@ -868,7 +868,7 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 				else if (ccb instanceof ColumnConditionBasesNominalElementOf)
 					evaluateNominalElementOf(itsSubgroup, aParentMembers, (ColumnConditionBasesNominalElementOf) ccb);
 				else if (ccb instanceof ColumnConditionBasesNumericRegular)
-					evaluateNumericRegular(itsSubgroup, aParentMembers, (ColumnConditionBasesNumericRegular) ccb, -1, -1, -1);
+					evaluateNumericRegular(itsSubgroup, aParentMembers, (ColumnConditionBasesNumericRegular) ccb);
 				else if (ccb instanceof ColumnConditionBasesNumericIntervals)
 					evaluateNumericIntervals(itsSubgroup, aParentMembers, (ColumnConditionBasesNumericIntervals) ccb);
 				else
@@ -1155,7 +1155,7 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 				else if ( useBestValueSets && ccb instanceof ColumnConditionBasesNominalElementOf)
 					evaluateNominalElementOf(itsSubgroup, aParentMembers, (ColumnConditionBasesNominalElementOf) ccb);
 				else if (!useBestIntervals && ccb instanceof ColumnConditionBasesNumericRegular)
-					evaluateNumericRegular(itsSubgroup, aParentMembers, (ColumnConditionBasesNumericRegular) ccb, eq_WarningAtIndex, leqWarningAtIndex, geqWarningAtIndex);
+					evaluateNumericRegular(itsSubgroup, aParentMembers, (ColumnConditionBasesNumericRegular) ccb);
 				else if ( useBestIntervals && ccb instanceof ColumnConditionBasesNumericIntervals)
 					evaluateNumericIntervals(itsSubgroup, aParentMembers, (ColumnConditionBasesNumericIntervals) ccb);
 				else
@@ -1820,7 +1820,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	 * for <= the first, and therefore smallest best Subgroup is retained
 	 * for >= the first, and therefore largest best Subgroup is retained
 	 */
-	private final void evaluateNumericRegular(Subgroup theParent, BitSet theParentMembers, ColumnConditionBasesNumericRegular theColumnConditionBases, int eq_WarningAtIndex, int leqWarningAtIndex, int geqWarningAtIndex)
+	private final void evaluateNumericRegular(Subgroup theParent, BitSet theParentMembers, ColumnConditionBasesNumericRegular theColumnConditionBases)
 	{
 		assert (EnumSet.of(NumericStrategy.NUMERIC_ALL, NumericStrategy.NUMERIC_BEST,
 							NumericStrategy.NUMERIC_BEST_BINS, NumericStrategy.NUMERIC_BINS).contains(itsSearchParameters.getNumericStrategy()));
@@ -1959,7 +1959,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		{
 			checkAndLogBest(aBestSubgroups, aParentCoverage);
 			// FIXME temporary checks
-//			debugBest(theParent, aBestSubgroup, aBestSubgroups);
+			debugBest(theParent, null, aBestSubgroups);
 		}
 	}
 
@@ -2165,7 +2165,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		{
 			checkAndLogBest(aBestSubgroups, (int) aParentCoverage);
 			// FIXME temporary checks
-//			debugBest(theParent, aBestSubgroup, aBestSubgroups);
+			debugBest(theParent, null, aBestSubgroups);
 		}
 	}
 
@@ -2280,7 +2280,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		{
 			checkAndLogBest(aBestSubgroups, (int) aParentCoverage);
 			// FIXME temporary checks
-//			debugBest(theParent, aBestSubgroup, aBestSubgroups);
+			debugBest(theParent, null, aBestSubgroups);
 		}
 	}
 
@@ -2495,7 +2495,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		{
 			checkAndLogBest(aBestSubgroups, (int) aParentCoverage);
 			// FIXME temporary checks
-//			debugBest(theParent, aBestSubgroup, aBestSubgroups);
+			debugBest(theParent, null, aBestSubgroups);
 		}
 	}
 
@@ -5403,6 +5403,9 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	@Deprecated
 	private final void debugBest(Subgroup theParent, Subgroup theBestSubgroup, BestSubgroupsForCandidateSetAndResultSet theBestSubgroups)
 	{
+		if (!DEBUG_PRINTS_FOR_BEST)
+			return;
+
 		Subgroup c = theBestSubgroups.itsBestForCandidateSet;
 		Subgroup r = theBestSubgroups.itsBestForResultSet;
 		assert ((theBestSubgroup == null) || (theBestSubgroup.compareTo(r) == 0));
