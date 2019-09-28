@@ -50,9 +50,13 @@ public class SubgroupDiscovery
 	private static final boolean USE_SINGLE_BEST_RESULT_LIKE_BEFORE  = false;
 
 	// statistics for debugging - related to booleans above
-	private AtomicLong itsBestPairs       = new AtomicLong(0);
+	private AtomicLong itsBestPairsCount  = new AtomicLong(0);
 	private AtomicLong itsBestPairsDiffer = new AtomicLong(0);
 	private AtomicLong itsSkipCount       = new AtomicLong(0);
+	// BestInterval debugging - abuses BestSubgroupsForCandidateSetAndResultSet
+	private AtomicLong itsBestIntervalsCount  = new AtomicLong(0);
+	private AtomicLong itsBestIntervalsDiffer = new AtomicLong(0);
+	private Queue<BestSubgroupsForCandidateSetAndResultSet> itsBestIntervalsErrors = new ConcurrentLinkedQueue<>();
 
 	// leave TEMPORARY_CODE at false in git
 	// when true, creates PMF instead of PDF in single numeric H^2 setting
@@ -579,9 +583,29 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 		postMining(System.currentTimeMillis() - theBeginTime);
 
 		if (DEBUG_PRINTS_FOR_BEST && EnumSet.of(NumericStrategy.NUMERIC_BEST, NumericStrategy.NUMERIC_BEST_BINS).contains(itsSearchParameters.getNumericStrategy()))
-			Log.logCommandLine("TWO DIFFERENT BEST SUBGROUPS: " + itsBestPairsDiffer + "/" + itsBestPairs);
+			Log.logCommandLine("TWO DIFFERENT BEST SUBGROUPS: " + itsBestPairsDiffer + "/" + itsBestPairsCount);
 		if (DEBUG_PRINTS_FOR_SKIP)
 			Log.logCommandLine("SKIP COUNT: " + itsSkipCount);
+		// super temporary - no boolean controlling logging output
+		if (NumericStrategy.NUMERIC_INTERVALS == itsSearchParameters.getNumericStrategy())
+		{
+			Log.logCommandLine("BEST INTERVAL ERRORS: " + itsBestIntervalsDiffer  + "/" + itsBestIntervalsCount);
+
+			DecimalFormat df = new DecimalFormat("0", DecimalFormatSymbols.getInstance(Locale.ENGLISH));
+			df.setMaximumFractionDigits(340); // 340 = DecimalFormat.DOUBLE_FRACTION_DIGITS
+
+			String txt = "quality=%s\tcoverage=%d\ttrue_positives=%d\t%s";
+			for (BestSubgroupsForCandidateSetAndResultSet b : itsBestIntervalsErrors)
+			{
+				Subgroup sg = b.itsBestForCandidateSet;
+				String tail = (sg == null) ? "null" : String.format(txt, df.format(sg.getMeasureValue()), sg.getCoverage(), (int) sg.getTertiaryStatistic(), sg);
+				Log.logCommandLine("brute force: " + tail);
+				//
+				sg   = b.itsBestForResultSet;
+				tail = (sg == null) ? "null" : String.format(txt, df.format(sg.getMeasureValue()), sg.getCoverage(), (int) sg.getTertiaryStatistic(), sg);
+				Log.logCommandLine("linear algo: " + tail);
+			}
+		}
 	}
 
 	private final ConditionBaseSet preMining(long theBeginTime, int theNrThreads)
@@ -2601,7 +2625,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	////////////////////////////////////////////////////////////////////////////
 
 //	private void numericIntervals(BitSet theParentMembers, int theParentCoverage, Refinement theRefinement)
-	private void evaluateNumericBestInterval(Subgroup theParent, BitSet theParentMembers, ColumnConditionBasesNumericIntervals theColumnConditionBases)
+	private final void evaluateNumericBestInterval(Subgroup theParent, BitSet theParentMembers, ColumnConditionBasesNumericIntervals theColumnConditionBases)
 	{
 		// currently BestIntervals implies the target type is SINGLE_NOMINAL
 		assert (itsSearchParameters.getTargetType() == TargetType.SINGLE_NOMINAL);
@@ -2674,8 +2698,9 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		}
 		else // not WRAcc
 		{
-			// brute force method, keep for now for testing purposes
+			// MM - DO NOT REMOVE THIS ORIGINAL - MY VERSION BELOW IS TEMPORARY
 			/*
+			// brute force method, keep for now for testing purposes
 			aSplitPoints = aRBICT.getSplitPoints();
 			for (int i=0; i<aSplitPoints.length; i++)
 			{
@@ -2703,52 +2728,140 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 						aBestInterval = aNewInterval;
 					}
 				}
-			}*/
-
-			// the linear algo
-			ConvexHull [] aHulls = new ConvexHull[aRBICT.getNrBaseIntervals()];
-			int aPi = 0;
-			int aNi = 0;
-			for (int l = 0; l < aRBICT.getNrSplitPoints(); l++)
-			{
-				aPi += aRBICT.getPositiveCount(l);
-				aNi += aRBICT.getNegativeCount(l);
-				aHulls[l] = new ConvexHull(aNi, aPi, aRBICT.getSplitPoint(l), Float.NEGATIVE_INFINITY);
 			}
-			aHulls[aRBICT.getNrBaseIntervals()-1] = new ConvexHull(aRBICT.getNegativeCount(), aRBICT.getPositiveCount(), Float.POSITIVE_INFINITY, Float.NEGATIVE_INFINITY);
-
-			for (int k = aRBICT.getNrBaseIntervals(); k > 1; k = (k+1)/2)
+			*/
+//			/*
+			////////////////////////////////////////////////////////////////////
+			// MM - slightly adapted brute force method
+			//      does not use direct computation, keeping track of the number
+			//      of positives and subgroup size would allow to do so, but
+			//      current implementation is a lazy hack for bug hunting only
+			Subgroup aBestSubgroup = null;
+			float[] aSplitPoints = aRBICT.getSplitPoints();
+			for (int i=0; i<aSplitPoints.length; i++)
 			{
-				for (int l = 0; l+1 < k; l += 2)
+				Interval aNewInterval = new Interval(aSplitPoints[i], Float.POSITIVE_INFINITY);
+				Subgroup aNewSubgroup = theParent.getRefinedSubgroup(new Condition(aConditionBase, aNewInterval));
+				double aQuality = evaluateCandidate(aNewSubgroup);
+				if (aQuality > aBestQuality) {
+					aBestQuality = aQuality;
+					aBestInterval = aNewInterval;
+					aBestSubgroup = aNewSubgroup;
+				}
+				aNewInterval = new Interval(Float.NEGATIVE_INFINITY, aSplitPoints[i]);
+				aNewSubgroup = theParent.getRefinedSubgroup(new Condition(aConditionBase, aNewInterval));
+				// MM - comparisons to NaN always return false
+				//      if (itsUseNegInfty == true) first Interval = (-Inf,-Inf)
+				aQuality = (aNewSubgroup.getCoverage() == 0) ? Double.NaN : evaluateCandidate(aNewSubgroup);
+				if (aQuality > aBestQuality) {
+					aBestQuality = aQuality;
+					aBestInterval = aNewInterval;
+					aBestSubgroup = aNewSubgroup;
+				}
+				for (int j=i+1; j<aSplitPoints.length; j++)
 				{
-					ConvexHull aMinkDiff = aHulls[l].minkowskiDifference(aHulls[l+1], true);
-					for (int aSide = 0; aSide < 2; aSide++)
-					{
-						for (int i = 0; i < aMinkDiff.getSize(aSide) && !isTimeToStop(); i++)
-						{
-							if (aSide == 1 && (i == 0 || i == aMinkDiff.getSize(aSide)-1) )
-								continue; // no need to check duplicate hull points
-
-							HullPoint aCandidate = aMinkDiff.getPoint(aSide, i);
-							double aQuality = itsQualityMeasure.calculate(aCandidate.itsY, (aCandidate.itsX + aCandidate.itsY));
-
-							if (aQuality > aBestQuality)
-							{
-								aBestQuality = aQuality;
-								aBestNrFalsePositives = aCandidate.itsX;
-								aBestNrTruePositives = aCandidate.itsY;
-								aBestInterval = new Interval(aCandidate.getLabel2(), aCandidate.itsLabel1);
-							}
-						}
+					aNewInterval = new Interval(aSplitPoints[i], aSplitPoints[j]);
+					aNewSubgroup = theParent.getRefinedSubgroup(new Condition(aConditionBase, aNewInterval));
+					aQuality = evaluateCandidate(aNewSubgroup);
+					if (aQuality > aBestQuality) {
+						aBestQuality = aQuality;
+						aBestInterval = aNewInterval;
+						aBestSubgroup = aNewSubgroup;
 					}
 				}
-
-				for (int l = 0; l+1 < k; l += 2)
-					aHulls[l/2] = aHulls[l].concatenate(aHulls[l+1]);
-
-				if (k % 2 == 1)
-					aHulls[k/2] = aHulls[k-1];
 			}
+			// MM - these numbers are required for direct computation below
+			//      do not use getTruePositiveRate(): might give rounding errors
+			if (aBestSubgroup == null)
+				return;
+			BitSet aClone = aBestSubgroup.getMembers();
+			aClone.and(itsBinaryTarget);
+			aBestNrTruePositives  = aClone.cardinality();
+			if (aBestNrTruePositives != (int) aBestSubgroup.getTertiaryStatistic())
+				throw new AssertionError("TP count is off!");
+			aBestNrFalsePositives = (aBestSubgroup.getCoverage() - aBestNrTruePositives);
+
+//			// super temporary
+			itsBestIntervalsCount.incrementAndGet();
+			aBestSubgroup.setMeasureValue(aBestQuality);
+//			Subgroup sg = aBestSubgroup;
+//			Log.logCommandLine(String.format("%nquality=%f\tcoverage=%d\ttrue_positives=%d\t%s", sg.getMeasureValue(), sg.getCoverage(), (int) sg.getTertiaryStatistic(), sg));
+			Subgroup aBestBruteForce = evaluateNumericBestIntervalBruteForceMM(theParent, aConditionBase, aRBICT);
+			if (aBestSubgroup.compareTo(aBestBruteForce) != 0)
+			{
+				itsBestIntervalsDiffer.incrementAndGet();
+
+				// abuse this class to put pairs of Subgroups in the Queue
+				// all errors are collected and printed at the end of mine()
+				BestSubgroupsForCandidateSetAndResultSet b = new BestSubgroupsForCandidateSetAndResultSet();
+				b.itsBestForCandidateSet = aBestSubgroup;
+				b.itsBestForResultSet    = aBestBruteForce;
+				itsBestIntervalsErrors.add(b);
+			}
+//			// compare to output of linear algorithm
+//			itsBestIntervalsCount.incrementAndGet();
+//			aBestSubgroup.setMeasureValue(evaluateCandidate(aBestSubgroup));
+//			Subgroup aBestLinearSg = evaluateNumericBestIntervalLinear(theParent, aConditionBase, aRBICT);
+//			if (aBestSubgroup.compareTo(aBestLinearSg) != 0)
+//			{
+//				itsBestIntervalsDiffer.incrementAndGet();
+//
+//				// abuse this class to put pairs of Subgroups in the Queue
+//				// all errors are collected and printed at the end of mine()
+//				BestSubgroupsForCandidateSetAndResultSet b = new BestSubgroupsForCandidateSetAndResultSet();
+//				b.itsBestForCandidateSet = aBestSubgroup;
+//				b.itsBestForResultSet    = aBestLinearSg;
+//				itsBestIntervalsErrors.add(b);
+//			}
+
+			///// END OF MM VERSION ////////////////////////////////////////////
+//			*/
+
+			// MM - FOR DEBUGGING: COPIED TO evaluateNumericBestIntervalLinear()
+//			// the linear algo
+//			ConvexHull [] aHulls = new ConvexHull[aRBICT.getNrBaseIntervals()];
+//			int aPi = 0;
+//			int aNi = 0;
+//			for (int l = 0; l < aRBICT.getNrSplitPoints(); l++)
+//			{
+//				aPi += aRBICT.getPositiveCount(l);
+//				aNi += aRBICT.getNegativeCount(l);
+//				aHulls[l] = new ConvexHull(aNi, aPi, aRBICT.getSplitPoint(l), Float.NEGATIVE_INFINITY);
+//			}
+//			aHulls[aRBICT.getNrBaseIntervals()-1] = new ConvexHull(aRBICT.getNegativeCount(), aRBICT.getPositiveCount(), Float.POSITIVE_INFINITY, Float.NEGATIVE_INFINITY);
+//
+//			for (int k = aRBICT.getNrBaseIntervals(); k > 1; k = (k+1)/2)
+//			{
+//				for (int l = 0; l+1 < k; l += 2)
+//				{
+//					ConvexHull aMinkDiff = aHulls[l].minkowskiDifference(aHulls[l+1], true);
+//					for (int aSide = 0; aSide < 2; aSide++)
+//					{
+//						for (int i = 0; i < aMinkDiff.getSize(aSide) && !isTimeToStop(); i++)
+//						{
+//							if (aSide == 1 && (i == 0 || i == aMinkDiff.getSize(aSide)-1) )
+//								continue; // no need to check duplicate hull points
+//
+//							HullPoint aCandidate = aMinkDiff.getPoint(aSide, i);
+//							double aQuality = itsQualityMeasure.calculate(aCandidate.itsY, (aCandidate.itsX + aCandidate.itsY));
+//
+//							if (aQuality > aBestQuality)
+//							{
+//								aBestQuality = aQuality;
+//								aBestNrFalsePositives = aCandidate.itsX;
+//								aBestNrTruePositives = aCandidate.itsY;
+//								aBestInterval = new Interval(aCandidate.getLabel2(), aCandidate.itsLabel1);
+//							}
+//						}
+//					}
+//				}
+//
+//				for (int l = 0; l+1 < k; l += 2)
+//					aHulls[l/2] = aHulls[l].concatenate(aHulls[l+1]);
+//
+//				if (k % 2 == 1)
+//					aHulls[k/2] = aHulls[k-1];
+//			}
 		}
 
 		// NOTE
@@ -2774,6 +2887,146 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		checkAndLog(aChild, aParentCoverage);
 	}
 
+	// NOTE comparison is problematic when user presses s/max time is reached
+	private final Subgroup evaluateNumericBestIntervalBruteForceMM(Subgroup theParent, ConditionBase theConditionBase, RealBaseIntervalCrossTable theRBICT)
+	{
+		// code below relies on the the fact that these are both smaller than 0
+		int unset       = Integer.MIN_VALUE;
+		int useInfinite = -1;
+
+		double aBestQuality      = Double.NEGATIVE_INFINITY;
+		int aBestLo              = unset;
+		int aBestHi              = unset;
+		int aBestNrTruePositives = unset;
+		int aBestCoverage        = unset;
+
+		int aNrSplitPoints  = theRBICT.getNrSplitPoints();
+		int aParentCoverage = theParent.getCoverage();
+		int aParentTPsCount = (int) theParent.getTertiaryStatistic();
+
+		for (int i = 0, head_cover = 0, head_tp = 0; i < aNrSplitPoints; ++i)
+		{
+			int aPi     = theRBICT.getPositiveCount(i);
+			head_cover += (aPi + theRBICT.getNegativeCount(i));
+			head_tp    += aPi;
+
+			// NOTE (float) cast required for comparison to original code only
+			// from this split point to Infinity
+			//double aQuality = (float) itsQualityMeasure.calculate(tail_tp, tail_cover);
+			double aQuality = (float) itsQualityMeasure.calculate(aParentTPsCount-head_tp, aParentCoverage-head_cover);
+			if (aQuality > aBestQuality) {
+				aBestQuality = aQuality;
+				aBestLo = i+1;
+				aBestHi = useInfinite;
+				aBestNrTruePositives = (aParentTPsCount-head_tp);
+				aBestCoverage        = (aParentCoverage-head_cover);
+			}
+
+			// from -Infinity to this split point
+			// if (itsUseNegInfty == true) first Interval is (-Inf, -Inf)
+			aQuality = (head_cover == 0) ? Double.NaN : (float) itsQualityMeasure.calculate(head_tp, head_cover);
+			if (aQuality > aBestQuality) {
+				aBestQuality = aQuality;
+				aBestLo = useInfinite;
+				aBestHi = i;
+				aBestNrTruePositives = head_tp;
+				aBestCoverage        = head_cover;
+			}
+
+			// from this split point to all subsequent split points
+			// i is the left exclusive end point: all its counts are discarded
+			for (int lo = i+1, j = lo, cover = 0, tp = 0; j < aNrSplitPoints; ++j)
+			{
+				int aPj = theRBICT.getPositiveCount(j);
+				cover  += (aPj + theRBICT.getNegativeCount(j));
+				tp     += aPj;
+				aQuality = (float) itsQualityMeasure.calculate(tp, cover);
+				if (aQuality > aBestQuality) {
+					aBestQuality = aQuality;
+					aBestLo = lo;
+					aBestHi = j;
+					aBestNrTruePositives = tp;
+					aBestCoverage        = cover;
+				}
+			}
+		}
+
+		// FIXME MM - getSplitPoints() is extremely inefficient: creates a copy
+		//            of split points array, better create getSplitPoint(index)
+		float[] aSplitPoints = ((aBestLo == unset) && (aBestLo == unset)) ? null : theRBICT.getSplitPoints();
+		float l = (aBestLo < 0) ? Float.NEGATIVE_INFINITY : aSplitPoints[aBestLo-1]; // -1 should not be a problem with -Infinite
+		float h = (aBestHi < 0) ? Float.POSITIVE_INFINITY : aSplitPoints[aBestHi];
+
+		// MM - ignore the SKIP part for now
+		Condition anAddedCondition = new Condition(theConditionBase, new Interval(l, h));
+		Subgroup aChild = directComputation(theParent, anAddedCondition, aBestQuality, aBestCoverage, aBestNrTruePositives);
+
+		return aChild;
+	}
+
+	// NOTE comparison is problematic when user presses stop/max time is reached
+	private final Subgroup evaluateNumericBestIntervalLinear(Subgroup theParent, ConditionBase aConditionBase, RealBaseIntervalCrossTable aRBICT)
+	{
+		double aBestQuality = Double.NEGATIVE_INFINITY;
+		int aBestNrFalsePositives = Integer.MIN_VALUE;
+		int aBestNrTruePositives = Integer.MIN_VALUE;
+		Interval aBestInterval = new Interval(Float.NEGATIVE_INFINITY, Float.POSITIVE_INFINITY);
+
+		ConvexHull [] aHulls = new ConvexHull[aRBICT.getNrBaseIntervals()];
+		int aPi = 0;
+		int aNi = 0;
+		for (int l = 0; l < aRBICT.getNrSplitPoints(); l++)
+		{
+			aPi += aRBICT.getPositiveCount(l);
+			aNi += aRBICT.getNegativeCount(l);
+			aHulls[l] = new ConvexHull(aNi, aPi, aRBICT.getSplitPoint(l), Float.NEGATIVE_INFINITY);
+		}
+		aHulls[aRBICT.getNrBaseIntervals()-1] = new ConvexHull(aRBICT.getNegativeCount(), aRBICT.getPositiveCount(), Float.POSITIVE_INFINITY, Float.NEGATIVE_INFINITY);
+
+		for (int k = aRBICT.getNrBaseIntervals(); k > 1; k = (k+1)/2)
+		{
+			for (int l = 0; l+1 < k; l += 2)
+			{
+				ConvexHull aMinkDiff = aHulls[l].minkowskiDifference(aHulls[l+1], true);
+				for (int aSide = 0; aSide < 2; aSide++)
+				{
+					for (int i = 0; i < aMinkDiff.getSize(aSide) && !isTimeToStop(); i++)
+					{
+						if (aSide == 1 && (i == 0 || i == aMinkDiff.getSize(aSide)-1) )
+							continue; // no need to check duplicate hull points
+
+						HullPoint aCandidate = aMinkDiff.getPoint(aSide, i);
+						double aQuality = itsQualityMeasure.calculate(aCandidate.itsY, (aCandidate.itsX + aCandidate.itsY));
+
+						if (aQuality > aBestQuality)
+						{
+							aBestQuality = aQuality;
+							aBestNrFalsePositives = aCandidate.itsX;
+							aBestNrTruePositives = aCandidate.itsY;
+							aBestInterval = new Interval(aCandidate.getLabel2(), aCandidate.itsLabel1);
+						}
+					}
+				}
+			}
+
+			for (int l = 0; l+1 < k; l += 2)
+				aHulls[l/2] = aHulls[l].concatenate(aHulls[l+1]);
+
+			if (k % 2 == 1)
+				aHulls[k/2] = aHulls[k-1];
+		}
+
+		int aChildCoverage = (aBestNrTruePositives + aBestNrFalsePositives);
+		// MM ignore the SKIP part for now
+		Condition anAddedCondition = new Condition(aConditionBase, aBestInterval);
+		Subgroup aChild = directComputation(theParent, anAddedCondition, aBestQuality, aChildCoverage, aBestNrTruePositives);
+//		checkAndLog(aChild, theParent.getCoverage());
+
+		return aChild;
+	}
+
+	// temporary class to create pairs of Subgroups, will be removed, one Object
+	// is created for each parent Subgroups that is refined, which is wasteful
 	private static final class BestSubgroupsForCandidateSetAndResultSet
 	{
 		// NOTE these will often be the same Subgroup
@@ -5415,7 +5668,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		boolean isMaxDepth = (theParent.getDepth() == itsSearchParameters.getSearchDepth()-1);
 		assert (cIsNull || !isMaxDepth);
 
-		itsBestPairs.incrementAndGet();
+		itsBestPairsCount.incrementAndGet();
 		if (!isMaxDepth && (c != r))
 		{
 			itsBestPairsDiffer.incrementAndGet();
