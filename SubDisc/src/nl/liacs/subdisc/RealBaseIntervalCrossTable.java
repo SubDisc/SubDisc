@@ -1,5 +1,7 @@
 package nl.liacs.subdisc;
 
+import java.util.*;
+
 import nl.liacs.subdisc.Column.ValueCountTP;
 
 //Michael says: this is basically a copy of NominalCrossTable
@@ -21,7 +23,7 @@ public class RealBaseIntervalCrossTable
 
 		// compact arrays first, count aNrDistinct, array-copy; (abuse counts)
 		int[] aCounts = theValueInfo.itsCounts;
-		int[] aTPs = theValueInfo.itsTruePositives;
+		int[] aTPs    = theValueInfo.itsTruePositives;
 
 		int aNrDistinct = 0;
 		for (int i = 0, j = aCounts.length; i < j; ++i)
@@ -32,7 +34,7 @@ public class RealBaseIntervalCrossTable
 
 			theDomainCopy[aNrDistinct] = theDomainCopy[i];
 			aTPs[aNrDistinct]          = aTPs[i];
-			aCounts [aNrDistinct]      = (aCount - aTPs[i]);
+			aCounts[aNrDistinct]       = (aCount - aTPs[i]);
 			++aNrDistinct;
 
 			if ((theTotalCount -= aCount) == 0)
@@ -40,17 +42,17 @@ public class RealBaseIntervalCrossTable
 		}
 
 		itsUseNegInfty = true;
-		int offset = itsUseNegInfty ? 1 : 0;
+		int offset     = itsUseNegInfty ? 1 : 0;
 
 		itsSplitPointCount = aNrDistinct + offset;
-		itsSplitPoints    = new float[itsSplitPointCount];
-		itsPositiveCounts = new int[getNrBaseIntervals()];
-		itsNegativeCounts = new int[getNrBaseIntervals()];
+		itsSplitPoints     = new float[itsSplitPointCount];
+		itsPositiveCounts  = new int[getNrBaseIntervals()];
+		itsNegativeCounts  = new int[getNrBaseIntervals()];
 
 		if (itsUseNegInfty)
 			itsSplitPoints[0] = Float.NEGATIVE_INFINITY;
 
-		System.arraycopy(theDomainCopy, 0, itsSplitPoints, offset, aNrDistinct);
+		System.arraycopy(theDomainCopy, 0, itsSplitPoints,    offset, aNrDistinct);
 		System.arraycopy(aTPs,          0, itsPositiveCounts, offset, aNrDistinct);
 		System.arraycopy(aCounts,       0, itsNegativeCounts, offset, aNrDistinct);
 	}
@@ -132,6 +134,7 @@ public class RealBaseIntervalCrossTable
 		return itsSplitPoints[theIndex];
 	}
 
+	// leave this in, used in evaluateNumericBestInterval disabled WRACC code
 	public Interval getBaseInterval(int theIndex)
 	{
 		if (itsSplitPointCount == 0)
@@ -174,10 +177,11 @@ public class RealBaseIntervalCrossTable
 		return itsSplitPointCount + 1; 
 	}
 
-//	public float[] getSplitPoints()
-//	{
-//		return Arrays.copyOfRange(itsSplitPoints, 0, itsSplitPointCount);
-//	}
+	// leave this in, used in evaluateNumericBestInterval brute force test code
+	public float[] getSplitPoints()
+	{
+		return Arrays.copyOfRange(itsSplitPoints, 0, itsSplitPointCount);
+	}
 
 	// eliminate split points that separate base intervals with equal distributions
 	// only to be used for convex quality measures
@@ -186,6 +190,7 @@ public class RealBaseIntervalCrossTable
 		int aPruneCnt = 0;
 		for (int i = (itsUseNegInfty ? 1: 0); i < itsSplitPointCount; i++)
 		{
+			// MM - multiplication overflow not a problem, essential part is: ==
 			if ( itsPositiveCounts[i] * itsNegativeCounts[i+1] == itsPositiveCounts[i+1] * itsNegativeCounts[i] )
 			{
 				itsPositiveCounts[i-aPruneCnt] += itsPositiveCounts[i+1];
@@ -201,8 +206,6 @@ public class RealBaseIntervalCrossTable
 		}
 
 		itsSplitPointCount -= aPruneCnt;
-
-		return;
 	}
 
 //	public void print()
