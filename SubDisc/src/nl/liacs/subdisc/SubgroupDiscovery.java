@@ -2698,39 +2698,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		}
 		else // not WRAcc
 		{
-			// MM - DO NOT REMOVE THIS ORIGINAL - MY VERSION BELOW IS TEMPORARY
 			/*
-			// brute force method, keep for now for testing purposes
-			aSplitPoints = aRBICT.getSplitPoints();
-			for (int i=0; i<aSplitPoints.length; i++)
-			{
-				Interval aNewInterval = new Interval(aSplitPoints[i], Float.POSITIVE_INFINITY);
-				Subgroup aNewSubgroup = theRefinement.getRefinedSubgroup(aNewInterval);
-				double aQuality = evaluateCandidate(aNewSubgroup);
-				if (aQuality > aBestQuality) {
-					aBestQuality = aQuality;
-					aBestInterval = aNewInterval;
-				}
-				aNewInterval = new Interval(Float.NEGATIVE_INFINITY, aSplitPoints[i]);
-				aNewSubgroup = theRefinement.getRefinedSubgroup(aNewInterval);
-				aQuality = evaluateCandidate(aNewSubgroup);
-				if (aQuality > aBestQuality) {
-					aBestQuality = aQuality;
-					aBestInterval = aNewInterval;
-				}
-				for (int j=i+1; j<aSplitPoints.length; j++)
-				{
-					aNewInterval = new Interval(aSplitPoints[i], aSplitPoints[j]);
-					aNewSubgroup = theRefinement.getRefinedSubgroup(aNewInterval);
-					aQuality = evaluateCandidate(aNewSubgroup);
-					if (aQuality > aBestQuality) {
-						aBestQuality = aQuality;
-						aBestInterval = aNewInterval;
-					}
-				}
-			}
-			*/
-//			/*
 			////////////////////////////////////////////////////////////////////
 			// MM - slightly adapted brute force method
 			//      does not use direct computation, keeping track of the number
@@ -2770,18 +2738,14 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 					}
 				}
 			}
-			// MM - these numbers are required for direct computation below
-			//      do not use getTruePositiveRate(): might give rounding errors
 			if (aBestSubgroup == null)
 				return;
-			BitSet aClone = aBestSubgroup.getMembers();
-			aClone.and(itsBinaryTarget);
-			aBestNrTruePositives  = aClone.cardinality();
-			if (aBestNrTruePositives != (int) aBestSubgroup.getTertiaryStatistic())
-				throw new AssertionError("TP count is off!");
+			// MM - these numbers are required for direct computation below
+			//      do not use getTruePositiveRate(): might give rounding errors
+			aBestNrTruePositives  = (int) aBestSubgroup.getTertiaryStatistic();
 			aBestNrFalsePositives = (aBestSubgroup.getCoverage() - aBestNrTruePositives);
 
-//			// super temporary
+			// super temporary
 			itsBestIntervalsCount.incrementAndGet();
 			aBestSubgroup.setMeasureValue(aBestQuality);
 //			Subgroup sg = aBestSubgroup;
@@ -2815,7 +2779,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 //			}
 
 			///// END OF MM VERSION ////////////////////////////////////////////
-//			*/
+			*/
 
 			// MM - FOR DEBUGGING: COPIED TO evaluateNumericBestIntervalLinear()
 //			// the linear algo
@@ -2862,6 +2826,16 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 //				if (k % 2 == 1)
 //					aHulls[k/2] = aHulls[k-1];
 //			}
+			// long way around, but this is debug code
+			Subgroup aBestSubgroup = evaluateNumericBestIntervalBruteForceMM(theParent, aConditionBase, aRBICT);
+			if (aBestSubgroup == null)
+				return;
+			// MM - these numbers are required for direct computation below
+			//      do not use getTruePositiveRate(): might give rounding errors
+			aBestNrTruePositives  = (int) aBestSubgroup.getTertiaryStatistic();
+			aBestNrFalsePositives = (aBestSubgroup.getCoverage() - aBestNrTruePositives);
+			aBestInterval         = aBestSubgroup.getConditions().get(aBestSubgroup.getDepth()-1).getNumericInterval();
+			aBestQuality          = aBestSubgroup.getMeasureValue();
 		}
 
 		// NOTE
@@ -2887,7 +2861,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		checkAndLog(aChild, aParentCoverage);
 	}
 
-	// NOTE comparison is problematic when user presses s/max time is reached
+	// NOTE comparison is problematic when user presses stop/max time is reached
 	private final Subgroup evaluateNumericBestIntervalBruteForceMM(Subgroup theParent, ConditionBase theConditionBase, RealBaseIntervalCrossTable theRBICT)
 	{
 		// code below relies on the the fact that these are both smaller than 0
