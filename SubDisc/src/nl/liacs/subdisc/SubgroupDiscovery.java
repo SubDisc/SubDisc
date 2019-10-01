@@ -32,8 +32,9 @@ public class SubgroupDiscovery
 	// avoid this for various scenarios, leave at false in git
 	private static final boolean BEST_VALUESET_AT_LAST_POSITION_SKIP = false;
 	private static final boolean BEST_INTERVAL_AT_LAST_POSITION_SKIP = false;
-	private static final boolean BEST_VALUESET_NO_REFINEMENT_SKIP    = false;
-	private static final boolean BEST_INTERVAL_NO_REFINEMENT_SKIP    = false;
+	// these two have been extensively tested, leave at true (gather statistics)
+	private static final boolean BEST_VALUESET_NO_REFINEMENT_SKIP    = true;
+	private static final boolean BEST_INTERVAL_NO_REFINEMENT_SKIP    = true;
 	// for nominal class labels only, irrelevant for ValueSet-scenario
 	private static final boolean BINARY_NOMINAL_EQUALS_SKIP          = false;
 	// for numeric ALL|BEST + only EQUALS (not LEQ/GEQ), not for (Best)Intervals
@@ -48,6 +49,8 @@ public class SubgroupDiscovery
 	private static final boolean DEBUG_PRINTS_FOR_BEST               = false;
 	// when false: both BestForResultSet and BestForCandidateSet are used
 	private static final boolean USE_SINGLE_BEST_RESULT_LIKE_BEFORE  = false;
+	// not used anymore, but will be again when debugging linear algorithm
+	private static final boolean DEBUG_PRINTS_FOR_BEST_INTERVAL      = false;
 
 	// statistics for debugging - related to booleans above
 	private AtomicLong itsBestPairsCount  = new AtomicLong(0);
@@ -582,12 +585,13 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 
 		postMining(System.currentTimeMillis() - theBeginTime);
 
+		// statistics - will move to a separate RunTimeStats class of some sort
 		if (DEBUG_PRINTS_FOR_BEST && EnumSet.of(NumericStrategy.NUMERIC_BEST, NumericStrategy.NUMERIC_BEST_BINS).contains(itsSearchParameters.getNumericStrategy()))
 			Log.logCommandLine("TWO DIFFERENT BEST SUBGROUPS: " + itsBestPairsDiffer + "/" + itsBestPairsCount);
 		if (DEBUG_PRINTS_FOR_SKIP)
 			Log.logCommandLine("SKIP COUNT: " + itsSkipCount);
 		// super temporary - no boolean controlling logging output
-		if (NumericStrategy.NUMERIC_INTERVALS == itsSearchParameters.getNumericStrategy())
+		if (DEBUG_PRINTS_FOR_BEST_INTERVAL && NumericStrategy.NUMERIC_INTERVALS == itsSearchParameters.getNumericStrategy())
 		{
 			Log.logCommandLine("BEST INTERVAL ERRORS: " + itsBestIntervalsDiffer  + "/" + itsBestIntervalsCount);
 
@@ -1649,8 +1653,8 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			if ((aP + aN) == aParentCoverage) // (aP + aN) is aChildCoverage
 			{
 				itsSkipCount.incrementAndGet();
-				if (DEBUG_PRINTS_FOR_SKIP)
-					Log.logCommandLine(String.format("SZ-SKIP\t%s AND %s%n", theParent, aDomainBestSubSet));
+//				if (DEBUG_PRINTS_FOR_SKIP)
+//					Log.logCommandLine(String.format("SZ-SKIP\t%s AND %s%n", theParent, aDomainBestSubSet));
 				if (BEST_VALUESET_NO_REFINEMENT_SKIP)
 					return;
 			}
@@ -1774,8 +1778,8 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			if ((aP + aN) == aParentCoverage) // (aP + aN) is aChildCoverage
 			{
 				itsSkipCount.incrementAndGet();
-				if (DEBUG_PRINTS_FOR_SKIP)
-					Log.logCommandLine(String.format("SZ-SKIP\t%s AND %s%n", theParent, aDomainBestSubSet));
+//				if (DEBUG_PRINTS_FOR_SKIP)
+//					Log.logCommandLine(String.format("SZ-SKIP\t%s AND %s%n", theParent, aDomainBestSubSet));
 				if (BEST_VALUESET_NO_REFINEMENT_SKIP)
 					return;
 			}
@@ -2850,8 +2854,6 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		if (aChildCoverage == aParentCoverage)
 		{
 			itsSkipCount.incrementAndGet();
-			if (DEBUG_PRINTS_FOR_SKIP)
-				Log.logCommandLine(String.format("SZ-SKIP\t%s AND %s%n", theParent, aBestInterval));
 			if (BEST_INTERVAL_NO_REFINEMENT_SKIP)
 				return;
 		}
@@ -2886,7 +2888,6 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 
 			// NOTE (float) cast required for comparison to original code only
 			// from this split point to Infinity
-			//double aQuality = (float) itsQualityMeasure.calculate(tail_tp, tail_cover);
 			double aQuality = (float) itsQualityMeasure.calculate(aParentTPsCount-head_tp, aParentCoverage-head_cover);
 			if (aQuality > aBestQuality) {
 				aBestQuality = aQuality;
