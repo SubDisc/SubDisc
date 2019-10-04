@@ -5,6 +5,8 @@ import java.util.*;
 public class Candidate implements Comparable<Candidate>
 {
 	private final Subgroup itsSubgroup;
+	// TODO not having this final is a very bad design, will change this, and
+	// remove setPriority() method
 	private double itsPriority;
 
 	// FIXME MM disallow Candidates of size 0 and 1, they can not be refined
