@@ -77,36 +77,38 @@ public class CoverBasedSubgroupSelection
 		Log.logCommandLine("loop 0");
 		update(isForCandidateSet, aUsed, aCandidates, aMembers, aCoverCounts, aResult, 0, 1.0, aLastQualities[0]);
 
-		for (int i = 1, min = Math.min(aSize, theTopK), unset = -1, aBestIndex = unset; i < min; ++i, aBestIndex = unset)
+		// keep unset outside of the valid range of indexes (so not 0)
+		for (int i = 1, min = Math.min(aSize, theTopK), unset = -1; i < min; ++i)
 		{
 			Log.logCommandLine("loop " + i);
 
-			// FIXME
+			// always use unset, both NEGATIVE_INFINITY and NaN are possible
+			// priorities/qualities, as some model classes do not check them
+			// and NEGATIVE_INFINITY might be a valid result for some
+			//
 			// the use of (aQuality > aMaxQuality) would ignore all values
 			// that are equal to Double.NEGATIVE_INFINITY, which is incorrect
 			// behaviour, and would lead to too few Candidates in aResult
 			//
-			// this can be fixed by adding the unset status in this check, such
-			// that aMaxQuality is set based on the first (remaining) Candidate
-			// then (aLastQualities[j] < aMaxQuality) also requires unset status
-			double aMaxQuality          = Double.NEGATIVE_INFINITY;
+			// the values below could be set using the first clear index, such
+			// that the unset-checks can be removed from loop, but this is fine
+			int    aBestIndex           = unset;
+			double aMaxQuality          = Double.NaN;
 			double aBestCandidateWeight = Double.NaN;
 
-			// a minor optimisation would keep track of the smallest unset index
+			// a minor optimisation would keep track of the smallest clear index
 			// and start at that index, instead of 1 (index 0 is always set)
 			for (int j = aUsed.nextClearBit(1); j < aSize; j = aUsed.nextClearBit(j+1))
 			{
 				// score can not get better than last time, so if that would not
 				// have been good enough there is no use in checking Candidate
 				//
-				// do not use <= here, when all (remaining) values in
-				// aLastQualities are equal to aMaxQuality, the loop would not
-				// select a best Candidate
-				// also, a Candidate (value) might be skipped for a number of
+				// do not use <= here
+				// a Candidate (value) might be skipped for a number of
 				// loop-iterations, by the time it is used, multiple (remaining)
 				// values in aLastQualities might be equal, but not all based on
 				// the last state of the cover counts, and need to be updated
-				if (aLastQualities[j] < aMaxQuality)
+				if ((aBestIndex != unset) && (aLastQualities[j] < aMaxQuality))
 					continue;
 
 				Candidate aCandidate = aCandidates[j];
@@ -124,20 +126,15 @@ public class CoverBasedSubgroupSelection
 				// Thread execution and time-slicing
 				// these are out of the control of the algorithm/Cortana/JVM
 				// TODO check: the new algorithm should be invocation-invariant
-				if (aQuality > aMaxQuality)
+				if ((aBestIndex == unset) || (aQuality > aMaxQuality))
 				{
 					aBestIndex           = j;
 					aMaxQuality          = aQuality;
 					aBestCandidateWeight = aWeight;
 				}
 			}
-//System.out.println("loop=" + i + " chosen=" + aBestIndex + "\tbest=" + aCandidates[aBestIndex] + "\tstart=" + aCandidates[aBestIndex]);
 
-			// all priorities can be NEGATIVE_INFINITY, it is a possible result
-			// for some quality measures (whether it is valid is something else)
-			// see comment above
-			if (aBestIndex != unset)
-				update(isForCandidateSet, aUsed, aCandidates, aMembers, aCoverCounts, aResult, aBestIndex, aBestCandidateWeight, aMaxQuality);
+			update(isForCandidateSet, aUsed, aCandidates, aMembers, aCoverCounts, aResult, aBestIndex, aBestCandidateWeight, aMaxQuality);
 		}
 
 		Log.logCommandLine("========================================================");
