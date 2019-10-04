@@ -5,6 +5,7 @@ import java.util.concurrent.locks.*;
 
 import nl.liacs.subdisc.ConditionListBuilder.ConditionListA;
 
+// TODO update
 /**
  * A Subgroup contains a number of instances from the original data.
  * 
@@ -25,23 +26,34 @@ import nl.liacs.subdisc.ConditionListBuilder.ConditionListA;
  */
 public class Subgroup implements Comparable<Subgroup>
 {
-//	private ConditionList itsConditions;
+	// FIXME make these fields final where possible
+	// required fiels
 	private ConditionListA itsConditions;
-	private BitSet itsMembers;
-	// not a ReadWriteLock, members may be nulled at any moment
-	private final Lock itsMembersLock = new ReentrantLock();
-	private int itsID = 0;
 	private int itsCoverage; // crucial to keep it in sync with itsMembers
-	private DAG itsDAG;
-	private LabelRanking itsLabelRanking;
-	private LabelRankingMatrix itsLabelRankingMatrix;
-	private double itsMeasureValue = 0.0;
-	private double itsSecondaryStatistic = 0.0;
-	private double itsTertiaryStatistic = 0.0;
+	// not strictly required - used for itsParentSet.getAllDataBitSetClone()
 	private final SubgroupSet itsParentSet;
+	// FIXME the defaults for these three statistics are wrong
+	// required - but in many settings the quality is not set upon construction
+	private double itsMeasureValue       = 0.0;
+	// optional - only used in ResultSet, could be removed
+	private double itsSecondaryStatistic = 0.0;
+	// required - used directly by single binary (others wise only in ResultSet)
+	private double itsTertiaryStatistic  = 0.0;
+	// not strictly required - but easier in current setup, might change one day
+	private BitSet itsMembers;
+	// required for members (can be null at any moment, so not a ReadWriteLock)
+	private final Lock itsMembersLock = new ReentrantLock();
+	// not strictly required - but easier in current setup, might change one day
+	private int itsID = 0;
+	// optional - to be replaced by PValue Object (1 pointer, mostly null), note
+	// that that setup allows: isPValueComputed() { return PValue != null; }
 	// XXX not strictly needed when setting itsPValue to NaN
 	private boolean isPValueComputed;
 	private double itsPValue;
+	// optional - not used for most settings, to be replaced by single ModelInfo
+	private DAG itsDAG;
+	private LabelRanking itsLabelRanking;
+	private LabelRankingMatrix itsLabelRankingMatrix;
 	private String itsRegressionModel;
 
 	/*
@@ -88,16 +100,19 @@ public class Subgroup implements Comparable<Subgroup>
 			throw new IllegalArgumentException("Subgroups must have members");
 
 		itsConditions = theConditions;
-
+		// sets itsMembers and itsCoverage
 		constructorMembersInit(theMembers);
-
-		itsParentSet = theSubgroupSet;
-
-		itsMeasureValue = 0.0f;
-		itsDAG = null;	//not set yet
-		itsLabelRanking = null;
+		itsParentSet          = theSubgroupSet;
+		itsMeasureValue       = 0.0;
+		// itsSecondaryStatistic 
+		// itsTertiaryStatistic
+		// itsId
+		isPValueComputed      = false;
+		// itsPValue
+		itsDAG                = null;
+		itsLabelRanking       = null;
 		itsLabelRankingMatrix = null;
-		isPValueComputed = false;
+		// itsRegressionModel
 	}
 
 	/*
@@ -116,11 +131,20 @@ public class Subgroup implements Comparable<Subgroup>
 		if (theMembers.length() == 0)
 			throw new IllegalArgumentException("Subgroups must have members");
 
+		// itsConditions
+		// sets itsMembers and itsCoverage
 		constructorMembersInit(theMembers);
-		itsDAG = null;
-
-		// final, needs to be set
-		itsParentSet = null;
+		itsParentSet          = null;
+		// itsMeasureValue
+		// itsSecondaryStatistic 
+		// itsTertiaryStatistic
+		// itsId
+		// isPValueComputed
+		// itsPValue
+		itsDAG                = null;
+		// itsLabelRanking
+		// itsLabelRankingMatrix
+		// itsRegressionModel
 	}
 
 	// XXX MM - NOTE
@@ -139,26 +163,26 @@ public class Subgroup implements Comparable<Subgroup>
 	private Subgroup(Subgroup theSubgroup, Condition theCondition)
 	{
 		// constructorMembersInit() creates itsMembers based on this
-		itsConditions = ConditionListBuilder.createList(theSubgroup.itsConditions, theCondition);
-		// itsID		ignored
-		// itsMembers		set through constructorMembersInit below
-		// itsCoverage		set through constructorMembersInit below
-		// itsDag		ignored
-		// itsLabelRanking	ignored
+		itsConditions         = ConditionListBuilder.createList(theSubgroup.itsConditions, theCondition);
+		// itsCoverage           set through constructorMembersInit below
+		itsParentSet          = theSubgroup.itsParentSet;
+		itsMeasureValue       = theSubgroup.itsMeasureValue;       // see NOTE
+		itsSecondaryStatistic = theSubgroup.itsSecondaryStatistic; // see NOTE
+		itsTertiaryStatistic  = theSubgroup.itsTertiaryStatistic;  // see NOTE
+		// itsMembers            set through constructorMembersInit below
+		// itsID                 ignored
+		// isPValueComputed      ignored
+		// itsPValue             ignored
+		// itsDag                ignored
+		// itsLabelRanking       ignored
 		// itsLabelRankingMatrix ignored
-		itsMeasureValue		= theSubgroup.itsMeasureValue;		// see NOTE
-		itsSecondaryStatistic	= theSubgroup.itsSecondaryStatistic;	// see NOTE
-		itsTertiaryStatistic	= theSubgroup.itsTertiaryStatistic;	// see NOTE
-		itsParentSet		= theSubgroup.itsParentSet; 
-		// isPValueComputed	ignored
-		// itsPValue		ignored
-		// itsRegressionModel	ignored
+		// itsRegressionModel    ignored
 
 		// set itsMembers and itsCoverage based on new Condition
 		// evaluate() should not modify input, else use getMembers()
-		int check = theSubgroup.itsCoverage;
-		Column c = theCondition.getColumn();
-		BitSet aParentBitSet = theSubgroup.getMembersUnsafe();
+		int check             = theSubgroup.itsCoverage;
+		Column c              = theCondition.getColumn();
+		BitSet aParentBitSet  = theSubgroup.getMembersUnsafe();
 
 		constructorMembersInit(c.evaluate(aParentBitSet, theCondition));
 
@@ -171,7 +195,7 @@ public class Subgroup implements Comparable<Subgroup>
 		try
 		{
 			// TODO MM a copy of theMembers would be safer
-			itsMembers = theMembers;
+			itsMembers  = theMembers;
 			itsCoverage = itsMembers.cardinality();
 		}
 		finally
@@ -205,14 +229,25 @@ public class Subgroup implements Comparable<Subgroup>
 	private Subgroup(Subgroup theSubgroup, Condition theCondition, BitSet theNewSubgroupMembers, int theCoverage)
 	{
 		itsConditions = ConditionListBuilder.createList(theSubgroup.itsConditions, theCondition);
-		itsParentSet  = theSubgroup.itsParentSet;
 		itsCoverage   = theCoverage;
+		itsParentSet  = theSubgroup.itsParentSet;
+		// itsMeasureValue
+		// itsSecondaryStatistic 
+		// itsTertiaryStatistic
+		// itsMembers is set below
+		// itsId
+		// isPValueComputed
+		// itsPValue
+		// itsDAG
+		// itsLabelRanking
+		// itsLabelRankingMatrix
+		// itsRegressionModel
 
 		// not setting these fields, see NOTE at Subgroup(Subgroup, Condition)
 		// itsMeasureValue, itsSecondaryStatistic, theSecondaryStatistic
 
 		itsMembersLock.lock();
-		try { itsMembers = theNewSubgroupMembers; }
+		try     { itsMembers = theNewSubgroupMembers; }
 		finally { itsMembersLock.unlock(); }
 	}
 
@@ -230,12 +265,19 @@ public class Subgroup implements Comparable<Subgroup>
 	private Subgroup(Subgroup theParent, Condition theAddedCondition, double theQuality, double theSecondaryStatistic, double theTertiaryStatistic, int theChildCoverage)
 	{
 		itsConditions         = ConditionListBuilder.createList(theParent.itsConditions, theAddedCondition);
+		itsCoverage           = theChildCoverage;
+		itsParentSet          = theParent.itsParentSet;
 		itsMeasureValue       = theQuality;
 		itsSecondaryStatistic = theSecondaryStatistic;
 		itsTertiaryStatistic  = theTertiaryStatistic;
-		itsParentSet          = theParent.itsParentSet;
-
-		itsCoverage = theChildCoverage;
+		// itsMembers
+		// itsId
+		// isPValueComputed
+		// itsPValue
+		// itsDAG
+		// itsLabelRanking
+		// itsLabelRankingMatrix
+		// itsRegressionModel
 	}
 
 	// private, for use within this class only, do no expose members
@@ -276,6 +318,20 @@ public class Subgroup implements Comparable<Subgroup>
 		}
 	}
 
+	public ConditionListA getConditions() { return itsConditions; }
+	public int getDepth()                 { return itsConditions.size(); }
+	// could be out of sync with itsMembers in between addCondition() update
+	public int getCoverage()              { return itsCoverage; }
+	// used to determine TP/FP
+	public SubgroupSet getParentSet()     { return itsParentSet; }
+
+	public double getMeasureValue()                                 { return itsMeasureValue; }
+	public void setMeasureValue(double theMeasureValue)             { itsMeasureValue = theMeasureValue; }
+	public double getSecondaryStatistic()                           { return itsSecondaryStatistic; }
+	public void setSecondaryStatistic(double theSecondaryStatistic) { itsSecondaryStatistic = theSecondaryStatistic; }
+	public double getTertiaryStatistic()                            { return itsTertiaryStatistic; }
+	public void setTertiaryStatistic(double theTertiaryStatistic)   { itsTertiaryStatistic = theTertiaryStatistic; }
+
 	/**
 	 * Returns a {@link BitSet} where each set bits represents a member of
 	 * this Subgroup.
@@ -307,41 +363,41 @@ public class Subgroup implements Comparable<Subgroup>
 	 * Refinements that is evaluated for the Subgroup
 	 * so the re-evaluation does not substantially impact performance
 	 */
-	void killMembers()
-	{
-		itsMembersLock.lock();
-		try { itsMembers = null; }
-		finally { itsMembersLock.unlock(); }
-	}
-	void reviveMembers() { getMembersUnsafe(); }
-
+	void killMembers()                { itsMembersLock.lock(); try { itsMembers = null; } finally { itsMembersLock.unlock(); }}
+	void reviveMembers()              { getMembersUnsafe(); }
 	public boolean covers(int theRow) { return getMembersUnsafe().get(theRow); }
 
-	public int getID() { return itsID; }
-	public void setID(int theID) { itsID = theID; }
+	public int getID()                { return itsID; }
+	public void setID(int theID)      { itsID = theID; }
 
-	public double getMeasureValue() { return itsMeasureValue; }
-	public void setMeasureValue(double theMeasureValue) { itsMeasureValue = theMeasureValue; }
-	public double getSecondaryStatistic() { return itsSecondaryStatistic; }
-	public void setSecondaryStatistic(double theSecondaryStatistic) { itsSecondaryStatistic = theSecondaryStatistic; }
-	public double getTertiaryStatistic() { return itsTertiaryStatistic; }
-	public void setTertiaryStatistic(double theTertiaryStatistic) { itsTertiaryStatistic = theTertiaryStatistic; }
+	public double getPValue()                           { return (isPValueComputed ? itsPValue : Double.NaN); }
+	// FIXME MM find better solution for this
+	void setPValue(double theFakePValue)                { isPValueComputed = true; itsPValue = theFakePValue; }
+	public void setPValue(NormalDistribution theDistro) { isPValueComputed = true; itsPValue = 1.0 - theDistro.calcCDF(itsMeasureValue); }
+	// TODO this should not perform any computation, only set value
+	public void setEmpiricalPValue(double[] theQualities)
+	{
+		isPValueComputed = true;
+		int aLength = theQualities.length;
+		double aP = 0.0;
+		for (int i=0; i<aLength; i++)
+		{
+			if (theQualities[i]>=itsMeasureValue)
+				aP++;
+		}
+		itsPValue = aP/aLength;
+	}
+	public void renouncePValue()                        { isPValueComputed = false; }
 
-	public void setDAG(DAG theDAG) { itsDAG = theDAG; }
-	public DAG getDAG() { return itsDAG; }
-
-	public void setLabelRanking(LabelRanking theLabelRanking) { itsLabelRanking = theLabelRanking; }
-	public LabelRanking getLabelRanking() { return itsLabelRanking; }
+	// model specific information
+	public void setDAG(DAG theDAG)                                              { itsDAG = theDAG; }
+	public DAG getDAG()                                                         { return itsDAG; }
+	public void setLabelRanking(LabelRanking theLabelRanking)                   { itsLabelRanking = theLabelRanking; }
+	public LabelRanking getLabelRanking()                                       { return itsLabelRanking; }
 	public void setLabelRankingMatrix(LabelRankingMatrix theLabelRankingMatrix) { itsLabelRankingMatrix = theLabelRankingMatrix; }
-	public LabelRankingMatrix getLabelRankingMatrix() { return itsLabelRankingMatrix; }
-
-	// could be out of sync with itsMembers in between addCondition() update
-	public int getCoverage() { return itsCoverage; }
-
-	//public ConditionList getConditions() { return itsConditions; }
-	public ConditionListA getConditions() { return itsConditions; }
-
-	public int getDepth() { return itsConditions.size(); }
+	public LabelRankingMatrix getLabelRankingMatrix()                           { return itsLabelRankingMatrix; }
+	public String getRegressionModel()                                          { return itsRegressionModel; }
+	public void setRegressionModel(String theRegressionModel)                   { itsRegressionModel = theRegressionModel; }
 
 	/**
 	 * NOTE For now this equals implementation is only used for the ROCList
@@ -413,7 +469,7 @@ public class Subgroup implements Comparable<Subgroup>
 
 		itsMembersLock.lock();
 		// throughout countCommon() itsMembers must not be modified
-		try { return countCommon(getMembersUnsafe(), theBitSet); }
+		try     { return countCommon(getMembersUnsafe(), theBitSet); }
 		finally { itsMembersLock.unlock(); }
 	}
 
@@ -441,12 +497,6 @@ public class Subgroup implements Comparable<Subgroup>
 		}
 
 		return aCount;
-	}
-
-	// used to determine TP/FP
-	public SubgroupSet getParentSet()
-	{
-		return itsParentSet;
 	}
 
 	/**
@@ -513,37 +563,6 @@ public class Subgroup implements Comparable<Subgroup>
 		// (FP / !H)
 		return ((double)(itsCoverage - tmp.cardinality())) / aNotHead;
 	}
-
-	public double getPValue()
-	{
-		return (isPValueComputed ? itsPValue : Double.NaN);
-	}
-
-	// FIXME MM find better solution for this
-	void setPValue(double theFakePValue) { isPValueComputed = true; itsPValue = theFakePValue; }
-	public void setPValue(NormalDistribution theDistro)
-	{
-		isPValueComputed = true;
-		itsPValue = 1 - theDistro.calcCDF(itsMeasureValue);
-	}
-
-	public void setEmpiricalPValue(double[] theQualities)
-	{
-		isPValueComputed = true;
-		int aLength = theQualities.length;
-		double aP = 0.0;
-		for (int i=0; i<aLength; i++)
-		{
-			if (theQualities[i]>=itsMeasureValue)
-				aP++;
-		}
-		itsPValue = aP/aLength;
-	}
-
-	public void renouncePValue() { isPValueComputed = false; }
-
-	public String getRegressionModel() { return itsRegressionModel; }
-	public void setRegressionModel(String theModel) { itsRegressionModel = theModel; }
 
 	/*
 	 * Compare two Subgroups based on (in order) measureValue, coverage,
