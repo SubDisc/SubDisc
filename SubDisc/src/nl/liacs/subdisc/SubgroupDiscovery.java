@@ -51,6 +51,8 @@ public class SubgroupDiscovery
 	private static final boolean USE_SINGLE_BEST_RESULT_LIKE_BEFORE  = false;
 	// not used anymore, but will be again when debugging linear algorithm
 	private static final boolean DEBUG_PRINTS_FOR_BEST_INTERVAL      = false;
+	//
+	private static final boolean DEBUG_PRINTS_NEXT_LEVEL_CANDIDATES  = false;
 
 	// statistics for debugging - related to booleans above
 	private AtomicLong itsBestPairsCount  = new AtomicLong(0);
@@ -60,6 +62,8 @@ public class SubgroupDiscovery
 	private AtomicLong itsBestIntervalsCount  = new AtomicLong(0);
 	private AtomicLong itsBestIntervalsDiffer = new AtomicLong(0);
 	private Queue<BestSubgroupsForCandidateSetAndResultSet> itsBestIntervalsErrors = new ConcurrentLinkedQueue<>();
+	// only ever called by a single Thread, but make Thread-safe anyway
+	private Queue<Integer> itsCandidateQueueSizes = new ConcurrentLinkedQueue<>();
 
 	// leave TEMPORARY_CODE at false in git
 	// when true, creates PMF instead of PDF in single numeric H^2 setting
@@ -542,7 +546,17 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 				// obviously (currentLevelQueueSize <= 0)
 				// take solely when this is only active thread
 				else if ((aTotalSize > 0) && alone)
+				{
 					aCandidate = itsCandidateQueue.removeFirst();
+					if (DEBUG_PRINTS_NEXT_LEVEL_CANDIDATES)
+					{
+						SearchStrategy ss = itsSearchParameters.getSearchStrategy();
+						boolean levelwise =  ss.isBeam() || (ss  == SearchStrategy.BREADTH_FIRST);
+						// first Candidate was just taken from the Queue
+						if (levelwise && (itsSearchParameters.getSearchDepth() > 1))
+							itsCandidateQueueSizes.add(itsCandidateQueue.currentLevelQueueSize() + 1);
+					}
+				}
 				// no other thread can add new candidates
 				else if ((aTotalSize == 0) && alone)
 					break;
@@ -610,6 +624,8 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 				Log.logCommandLine("linear algo: " + tail);
 			}
 		}
+		if (DEBUG_PRINTS_NEXT_LEVEL_CANDIDATES && !itsCandidateQueueSizes.isEmpty())
+			Log.logCommandLine("NR CANDIDATES FOR NEXT LEVEL: " + itsCandidateQueueSizes);
 	}
 
 	private final ConditionBaseSet preMining(long theBeginTime, int theNrThreads)
