@@ -39,10 +39,10 @@ public class CoverBasedSubgroupSelection
 		Candidate[] aCandidates = theCandidates.toArray(new Candidate[0]);
 		// in each iteration of the loop, a Candidate will be added to aResult
 		// and the cover counts go up, so the multiplicative weights go down
-		// thus for each iteration the maximum quality a Candidate can attain is
-		// upper bounded by the quality attained in a previous iteration
+		// thus for each iteration the maximum score a Candidate can attain is
+		// upper bounded by the score attained in a previous iteration
 		// this allows for a useful optimisation, see main loop below
-		double[] aLastQualities = new double[aSize];
+		double[] aLastScores = new double[aSize];
 		// cache BitSets, as each call to Subgroup.getMembers() creates a clone
 		// TODO
 		// when aSize or aNrRows are very high, this uses a lot of memory
@@ -52,9 +52,10 @@ public class CoverBasedSubgroupSelection
 		int idx = -1;
 		for (Candidate c : theCandidates)
 		{
-			aCandidates[++idx]  = c;
-			aLastQualities[idx] = c.getPriority();
-			aMembers[idx]       = c.getSubgroup().getMembers();
+			++idx;
+			aCandidates[idx] = c;
+			aLastScores[idx] = c.getPriority();
+			aMembers[idx]    = c.getSubgroup().getMembers();
 		}
 
 		int aNrRows = theCandidates.first().getSubgroup().getParentSet().getTotalCoverage();
@@ -75,7 +76,7 @@ public class CoverBasedSubgroupSelection
 		// and its new priority = 1.0 * c.getPriority()
 		// therefore the first iteration is taken out of the loop
 		Log.logCommandLine("loop 0");
-		update(isForCandidateSet, aUsed, aCandidates, aMembers, aCoverCounts, aResult, 0, 1.0, aLastQualities[0]);
+		update(isForCandidateSet, aUsed, aCandidates, aMembers, aCoverCounts, aResult, 0, 1.0, aLastScores[0]);
 
 		// keep unset outside of the valid range of indexes (so not 0)
 		for (int i = 1, min = Math.min(aSize, theTopK), unset = -1; i < min; ++i)
@@ -86,14 +87,14 @@ public class CoverBasedSubgroupSelection
 			// priorities/qualities, as some model classes do not check them
 			// and NEGATIVE_INFINITY might be a valid result for some
 			//
-			// the use of (aQuality > aMaxQuality) would ignore all values
+			// the use of (aQuality > aMaxScore) would ignore all values
 			// that are equal to Double.NEGATIVE_INFINITY, which is incorrect
 			// behaviour, and would lead to too few Candidates in aResult
 			//
 			// the values below could be set using the first clear index, such
 			// that the unset-checks can be removed from loop, but this is fine
 			int    aBestIndex           = unset;
-			double aMaxQuality          = Double.NaN;
+			double aMaxScore            = Double.NaN;
 			double aBestCandidateWeight = Double.NaN;
 
 			// a minor optimisation would keep track of the smallest clear index
@@ -108,14 +109,14 @@ public class CoverBasedSubgroupSelection
 				// loop-iterations, by the time it is used, multiple (remaining)
 				// values in aLastQualities might be equal, but not all based on
 				// the last state of the cover counts, and need to be updated
-				if ((aBestIndex != unset) && (aLastQualities[j] < aMaxQuality))
+				if ((aBestIndex != unset) && (aLastScores[j] < aMaxScore))
 					continue;
 
 				Candidate aCandidate = aCandidates[j];
 				double aPriority     = aCandidate.getPriority();
 				double aWeight       = computeMultiplicativeWeight(aMembers[j], aCandidate.getSubgroup().getCoverage(), aCoverCounts);
-				double aQuality      = aPriority - ((1.0 - aWeight) * aPriority);
-				aLastQualities[j]    = aQuality;
+				double aScore        = aPriority - ((1.0 - aWeight) * aPriority);
+				aLastScores[j]       = aScore;
 
 				// the use of > causes the first (encountered) of multiple
 				// equal-scoring (remaining) Candidates to be selected
@@ -126,15 +127,15 @@ public class CoverBasedSubgroupSelection
 				// Thread execution and time-slicing
 				// these are out of the control of the algorithm/Cortana/JVM
 				// TODO check: the new algorithm should be invocation-invariant
-				if ((aBestIndex == unset) || (aQuality > aMaxQuality))
+				if ((aBestIndex == unset) || (aScore > aMaxScore))
 				{
 					aBestIndex           = j;
-					aMaxQuality          = aQuality;
+					aMaxScore            = aScore;
 					aBestCandidateWeight = aWeight;
 				}
 			}
 
-			update(isForCandidateSet, aUsed, aCandidates, aMembers, aCoverCounts, aResult, aBestIndex, aBestCandidateWeight, aMaxQuality);
+			update(isForCandidateSet, aUsed, aCandidates, aMembers, aCoverCounts, aResult, aBestIndex, aBestCandidateWeight, aMaxScore);
 		}
 
 		Log.logCommandLine("========================================================");
@@ -149,7 +150,7 @@ public class CoverBasedSubgroupSelection
 	}
 
 	// hope JVM inlines this
-	private static final void update(boolean isForCandidateSet, BitSet theUsed, Candidate[] theCandidates, BitSet[] theMembers, int[] theCoverCounts, SortedSet<Candidate> theResult, int theBestIndex, double theBestCandidateWeight, double theMaxQuality)
+	private static final void update(boolean isForCandidateSet, BitSet theUsed, Candidate[] theCandidates, BitSet[] theMembers, int[] theCoverCounts, SortedSet<Candidate> theResult, int theBestIndex, double theBestCandidateWeight, double theMaxScore)
 	{
 		DecimalFormat df = new DecimalFormat("0", DecimalFormatSymbols.getInstance(Locale.ENGLISH));
 		df.setMaximumFractionDigits(340); // 340 = DecimalFormat.DOUBLE_FRACTION_DIGITS
@@ -157,9 +158,9 @@ public class CoverBasedSubgroupSelection
 		theUsed.set(theBestIndex);
 		Candidate c = theCandidates[theBestIndex];
 		Log.logCommandLine(c.getSubgroup().toString());
-		Log.logCommandLine(String.format("best (%d): %s, %s, %s%n", theBestIndex, df.format(c.getPriority()), df.format(theBestCandidateWeight), df.format(theMaxQuality)));
+		Log.logCommandLine(String.format("best (%d): %s, %s, %s%n", theBestIndex, df.format(c.getPriority()), df.format(theBestCandidateWeight), df.format(theMaxScore)));
 		if (isForCandidateSet) // could be unconditional, ResultSet ignores it
-			c.setPriority(theMaxQuality);
+			c.setPriority(theMaxScore);
 		theResult.add(c);
 		updateCoverCounts(theMembers[theBestIndex], theCoverCounts);
 	}
