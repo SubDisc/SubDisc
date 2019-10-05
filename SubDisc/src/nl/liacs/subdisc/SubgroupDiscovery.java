@@ -3205,21 +3205,26 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			// final: ensure value is set before aResultAddition-check
 			final float aQuality;
 
-			// FIXME this is becoming a mess, probably better add a parameter:
-			//       isQualityAlreadyComputed
+			// this is becoming a mess: to be replaced by Subgroup.hasQuality()
 			if ((lastAdded == AttributeType.BINARY) && isDirectSingleBinary())
 			{
+				assert theChild.hasQuality();
+
 				// NOTE this path already performed the isValid-coverage check
 				aQuality = (float) theChild.getMeasureValue();
 			}
 			else if (isLastNumeric && isDirectSingleBinary())
 			{
+				assert theChild.hasQuality();
+
 				// currently only for SINGLE_NOMINAL (and no propensity scores)
 				// NOTE this path already performed the isValid-coverage check
 				aQuality = (float) theChild.getMeasureValue();
 			}
 			else if (isLastNumeric && aNumericBest.contains(itsSearchParameters.getNumericStrategy()))
 			{
+				assert theChild.hasQuality();
+
 				// NOTE for BEST* Subgroup is already evaluated and quality is
 				// set by isValidAndBest() or numericIntervals() (BestInterval)
 				// NOTE isValidAndBest() performs an incorrect isValid-coverage
@@ -3228,6 +3233,8 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			}
 			else if ((lastAdded == AttributeType.NOMINAL) && itsSearchParameters.getNominalSets())
 			{
+				assert theChild.hasQuality();
+
 				// BestValueset already set quality (BestInterval did also, but
 				// is picked up by the BEST* check below)
 				// NOTE both code paths did not performed the isValid-coverage
@@ -3236,6 +3243,8 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			}
 			else
 			{
+				assert !theChild.hasQuality();
+
 				aQuality = evaluateCandidate(theChild);
 				theChild.setMeasureValue(aQuality);
 			}
@@ -3266,7 +3275,6 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 						itsCandidateQueue.add(aCandidate);
 				}
 			}
-
 		}
 
 		// prevent OutOfMemory / GC Overhead Limit errors, some code paths
