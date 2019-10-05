@@ -22,9 +22,14 @@ import java.util.concurrent.*;
  * @see nl.liacs.subdisc.gui.ROCCurveWindow
  * @see Subgroup
  */
+// FIXME favour encapsulation over extension
 public class SubgroupSet extends TreeSet<Subgroup>
 {
 	private static final long serialVersionUID = 1L;
+	// the method is fundamentally flawed (in paper), and the code has a bug
+	private static final boolean USE_OLD_COVER_BASED_SUBGROUP_SELECTION = false;
+	// hard-code top-k, for CBSS maximum_subgroups must be set to 0 (unlimited)
+	private static final int COVER_BASED_SUBGROUP_SELECTION_TOP_K = 100;
 
 	// for SubgroupSet in nominal target setting (used for TPR/FPR in ROCList)
 	private final boolean nominalTargetSetting;
@@ -443,9 +448,22 @@ public class SubgroupSet extends TreeSet<Subgroup>
 	public SubgroupSet postProcess(SearchStrategy theSearchStrategy)
 	{
 		update();
-		if (theSearchStrategy != SearchStrategy.COVER_BASED_BEAM_SELECTION) //only valid for COVER_BASED_BEAM_SELECTION
+		if (theSearchStrategy != SearchStrategy.COVER_BASED_BEAM_SELECTION)
 			return this;
 
+		if (!USE_OLD_COVER_BASED_SUBGROUP_SELECTION)
+		{
+			// FIXME MM see constructor comment, it is not truly empty
+			SubgroupSet aCopy = new SubgroupSet(this); //make empty copy
+			for (Candidate c : CoverBasedSubgroupSelection.postProcessResultSet(this, COVER_BASED_SUBGROUP_SELECTION_TOP_K))
+				aCopy.add(c.getSubgroup()); // add not linear, but fine for now
+			aCopy.update();
+			aCopy.itsLowestScore = aCopy.last().getMeasureValue();
+
+			return aCopy;
+		}
+
+		// old code starts here
 		int aSize = 100; //TODO
 		Log.logCommandLine("subgroups found: " + size());
 		// FIXME MM see constructor comment, it is not truly empty
@@ -467,55 +485,6 @@ public class SubgroupSet extends TreeSet<Subgroup>
 					if (aQuality > aMaxQuality)
 					{
 						aMaxQuality = aQuality;
-						/*
-						 * MM hunge, to be followed up
-						 *
-						 * as a result of the line below
-						 * the present itsResult can never be removed by GC
-						 * as references to it (its members) remain
-						 * leading to both the old and new set remaining in memory
-						 * for each level
-						 * if after the next level ANY of the candidates remain
-						 * yet another set will be created, without allowing the GC
-						 * to clean up any old one
-						 *
-						 * 2 strategies to fix this:
-						 *
-						 * 1.
-						 * aBest = aSubgroup.copy()
-						 * allows GC to remove the old SubgroupSet
-						 * PRO: easy
-						 * CON: needs a lot of copying (up to aLoopSize)
-						 * 	and (temporarily) a lot of memory
-						 *
-						 * 2.
-						 * explicitly remove all non-used Subgroups from current SubgroupSet
-						 * after selecting all relevant ones (outer for-loop completes)
-						 * and return this SubgroupSet (make method void :) )
-						 *
-						 * int i = 0;
-						 * for (Subgroup s : this) // uses TreeSet iterator
-						 * 	if (!aUsed.get(i))
-						 * 		remove(s); // may not work on for-each loop
-						 *
-						 * but this requires another change:
-						 * computeMultiplicativeWeight(SubgroupSet, Subgroup) becomes
-						 * computeMultiplicativeWeight(BitSet aUsed, Subgroup)
-						 * where the loops in computeMultiplicativeWeight/ computeCover
-						 * does its magic only on Subgroups in the 'new SubgroupSet':
-						 *
-						 * int i = 0;
-						 * for (Subgroup s : this)
-						 * 	if (aUsed.get(i))
-						 * 		doMagic();
-						 *
-						 * PRO: super efficient
-						 * CON: more complex code changes
-						 *
-						 * NOTE loops can be aborted when
-						 * (aMember.nextSetBit() = -1) in computeMultiplicativeWeight
-						 * (aUsed.nextSetBit() = -1) in computeCoverCount
-						 */
 						aBest = aSubgroup;
 						aChosen = aCount;
 					}
