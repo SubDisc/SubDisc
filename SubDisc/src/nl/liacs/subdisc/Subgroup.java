@@ -26,12 +26,19 @@ import nl.liacs.subdisc.ConditionListBuilder.ConditionListA;
  */
 public class Subgroup implements Comparable<Subgroup>
 {
+	private static final int    unsetI = -1;
+	private static final double unsetD = Double.NaN;
+
 	// FIXME make these fields final where possible
-	// required fiels
+	// required fields
 	private ConditionListA itsConditions;
 	private int itsCoverage; // crucial to keep it in sync with itsMembers
 	// not strictly required - used for itsParentSet.getAllDataBitSetClone()
 	private final SubgroupSet itsParentSet;
+	// added to simplify SubgroupDiscovery.checkAndLog(), currently can not rely
+	// on (hasQuality = !isNaN(itsMeasureValue)) as most model classes/quality
+	// measures do not check the validity of their result
+	private boolean hasQuality           = false;
 	// FIXME the defaults for these three statistics are wrong
 	// required - but in many settings the quality is not set upon construction
 	private double itsMeasureValue       = 0.0;
@@ -103,8 +110,9 @@ public class Subgroup implements Comparable<Subgroup>
 		// sets itsMembers and itsCoverage
 		constructorMembersInit(theMembers);
 		itsParentSet          = theSubgroupSet;
+		hasQuality            = false;
 		itsMeasureValue       = 0.0;
-		// itsSecondaryStatistic 
+		// itsSecondaryStatistic
 		// itsTertiaryStatistic
 		// itsId
 		isPValueComputed      = false;
@@ -135,8 +143,9 @@ public class Subgroup implements Comparable<Subgroup>
 		// sets itsMembers and itsCoverage
 		constructorMembersInit(theMembers);
 		itsParentSet          = null;
+		hasQuality            = false;
 		// itsMeasureValue
-		// itsSecondaryStatistic 
+		// itsSecondaryStatistic
 		// itsTertiaryStatistic
 		// itsId
 		// isPValueComputed
@@ -160,12 +169,18 @@ public class Subgroup implements Comparable<Subgroup>
 	//
 	// private constructor, do not use outside class, no argument checks
 	// used for getRefinedSubgroup()
+	//
+	// FIXME
+	// this is only called by getRefinedSubgroup(Condition), and none of its
+	// callers uses itsMeasureValue, so the copied value of the parent is never
+	// used, this allows to make the code more safe, see NOTE
 	private Subgroup(Subgroup theSubgroup, Condition theCondition)
 	{
 		// constructorMembersInit() creates itsMembers based on this
 		itsConditions         = ConditionListBuilder.createList(theSubgroup.itsConditions, theCondition);
 		// itsCoverage           set through constructorMembersInit below
 		itsParentSet          = theSubgroup.itsParentSet;
+		hasQuality            = false;                             // yes false
 		itsMeasureValue       = theSubgroup.itsMeasureValue;       // see NOTE
 		itsSecondaryStatistic = theSubgroup.itsSecondaryStatistic; // see NOTE
 		itsTertiaryStatistic  = theSubgroup.itsTertiaryStatistic;  // see NOTE
@@ -231,8 +246,9 @@ public class Subgroup implements Comparable<Subgroup>
 		itsConditions = ConditionListBuilder.createList(theSubgroup.itsConditions, theCondition);
 		itsCoverage   = theCoverage;
 		itsParentSet  = theSubgroup.itsParentSet;
+		hasQuality    = false;
 		// itsMeasureValue
-		// itsSecondaryStatistic 
+		// itsSecondaryStatistic
 		// itsTertiaryStatistic
 		// itsMembers is set below
 		// itsId
@@ -267,6 +283,7 @@ public class Subgroup implements Comparable<Subgroup>
 		itsConditions         = ConditionListBuilder.createList(theParent.itsConditions, theAddedCondition);
 		itsCoverage           = theChildCoverage;
 		itsParentSet          = theParent.itsParentSet;
+		hasQuality            = true;
 		itsMeasureValue       = theQuality;
 		itsSecondaryStatistic = theSecondaryStatistic;
 		itsTertiaryStatistic  = theTertiaryStatistic;
@@ -325,8 +342,9 @@ public class Subgroup implements Comparable<Subgroup>
 	// used to determine TP/FP
 	public SubgroupSet getParentSet()     { return itsParentSet; }
 
-	public double getMeasureValue()                                 { return itsMeasureValue; }
-	public void setMeasureValue(double theMeasureValue)             { itsMeasureValue = theMeasureValue; }
+	boolean hasQuality()                                            { return hasQuality; }
+	public double getMeasureValue()                                 { return itsMeasureValue; }                               // FIXME IllegalArgumentException when !hasQuality
+	public void setMeasureValue(double theMeasureValue)             { itsMeasureValue = theMeasureValue; hasQuality = true; } // FIXME check (NaN) input
 	public double getSecondaryStatistic()                           { return itsSecondaryStatistic; }
 	public void setSecondaryStatistic(double theSecondaryStatistic) { itsSecondaryStatistic = theSecondaryStatistic; }
 	public double getTertiaryStatistic()                            { return itsTertiaryStatistic; }
@@ -373,9 +391,9 @@ public class Subgroup implements Comparable<Subgroup>
 	public double getPValue()                           { return (isPValueComputed ? itsPValue : Double.NaN); }
 	// FIXME MM find better solution for this
 	void setPValue(double theFakePValue)                { isPValueComputed = true; itsPValue = theFakePValue; }
-	public void setPValue(NormalDistribution theDistro) { isPValueComputed = true; itsPValue = 1.0 - theDistro.calcCDF(itsMeasureValue); }
+	public void setPValue(NormalDistribution theDistro) { isPValueComputed = true; itsPValue = 1.0 - theDistro.calcCDF(itsMeasureValue); } // FIXME IllegalArgumentException when !hasQuality
 	// TODO this should not perform any computation, only set value
-	public void setEmpiricalPValue(double[] theQualities)
+	public void setEmpiricalPValue(double[] theQualities) // FIXME IllegalArgumentException when !hasQuality
 	{
 		isPValueComputed = true;
 		int aLength = theQualities.length;
@@ -587,7 +605,7 @@ public class Subgroup implements Comparable<Subgroup>
 			return 0;
 
 		// Subgroups that score better come first
-		int cmp = Double.compare(this.itsMeasureValue, theSubgroup.itsMeasureValue);
+		int cmp = Double.compare(this.itsMeasureValue, theSubgroup.itsMeasureValue); // FIXME IllegalArgumentException when !hasQuality
 		if (cmp != 0)
 			return -cmp;
 
