@@ -27,14 +27,17 @@ import java.util.*;
  */
 public class CandidateQueue
 {
+	// the method is fundamentally flawed (in paper), and the code has a bug
+	private static final boolean USE_OLD_COVER_BASED_SUBGROUP_SELECTION = false;
+
 	private final SearchStrategy itsSearchStrategy;
 	private final boolean isBeamSearchStrategy;
 	private final int itsMaxDepth;
 	private TreeSet<Candidate> itsQueue;
 	private TreeSet<Candidate> itsNextQueue;
 	private ConvexHullROCNaive itsNextQueueConvexHullROC;
-	private ROCList itsNextQueueROCList;		// debug only
-	private ConvexHullROC itsNextQueueROCBeam;	// debug only
+//	private ROCList itsNextQueueROCList;		// debug only
+//	private ConvexHullROC itsNextQueueROCBeam;	// debug only
 	private TreeSet<Candidate> itsTempQueue;
 	private final int itsMaximumQueueSize;
 
@@ -72,8 +75,8 @@ public class CandidateQueue
 			{
 				itsQueue = new TreeSet<Candidate>();
 				itsNextQueueConvexHullROC = new ConvexHullROCNaive();
-				itsNextQueueROCList = new ROCList();
-				itsNextQueueROCBeam = new ConvexHullROC(true);
+//				itsNextQueueROCList = new ROCList();
+//				itsNextQueueROCBeam = new ConvexHullROC(true);
 				break;
 			}
 			case COVER_BASED_BEAM_SELECTION :
@@ -142,7 +145,7 @@ public class CandidateQueue
 
 		// no useful Refinement from this can result
 		if (aSubgroup.getCoverage() <= 1)
-			return false;;
+			return false;
 
 		// kill members in all settings for now
 		// COVER_BASED_BEAM_SELECTION actually still needs the members
@@ -159,10 +162,9 @@ public class CandidateQueue
 			{
 				final SubgroupROCPoint p =
 					new SubgroupROCPoint(theCandidate.getSubgroup());
-				boolean isAdded =
-				itsNextQueueConvexHullROC.add(p);
-				itsNextQueueROCList.add(p);
-				itsNextQueueROCBeam.add(new CandidateROCPoint(theCandidate));
+				boolean isAdded = itsNextQueueConvexHullROC.add(p);
+//				itsNextQueueROCList.add(p);
+//				itsNextQueueROCBeam.add(new CandidateROCPoint(theCandidate));
 
 // FIXME MM debug check
 if (Process.ROC_BEAM_TEST)
@@ -196,15 +198,15 @@ if (Process.ROC_BEAM_TEST)
 	//add candidate and trim queue to specified size itsMaximumQueueSize
 	private boolean addToQueue(TreeSet<Candidate> theQueue, Candidate theCandidate)
 	{
-		boolean isAdded;
 		synchronized (theQueue)
 		{
-			isAdded = theQueue.add(theCandidate);
+			boolean isAdded = theQueue.add(theCandidate);
 
 			if (isAdded && (theQueue.size() > itsMaximumQueueSize))
 				theQueue.pollLast();
+
+			return isAdded;
 		}
-		return isAdded;
 	}
 
 	/**
@@ -269,8 +271,8 @@ itsNextQueueConvexHullROC.debug();
 }
 					itsQueue = itsNextQueueConvexHullROC.toTreeSet();
 					itsNextQueueConvexHullROC = new ConvexHullROCNaive();
-					itsNextQueueROCList = new ROCList();
-					itsNextQueueROCBeam = new ConvexHullROC(true);
+//					itsNextQueueROCList = new ROCList();
+//					itsNextQueueROCBeam = new ConvexHullROC(true);
 				}
 				break;
 			}
@@ -280,47 +282,55 @@ itsNextQueueConvexHullROC.debug();
 				// synchronized (itsQueue) done by removeFirst()
 				synchronized (itsNextQueue) {
 				synchronized (itsTempQueue) {
-					postProcessCBBS();
-/*
-					Log.logCommandLine("candidates: " + itsTempQueue.size());
-					int aLoopSize = Math.min(itsMaximumQueueSize, itsTempQueue.size());
-					BitSet aUsed = new BitSet(itsTempQueue.size());
-					for (int i=0; i<aLoopSize; i++) //copy candidates into itsNextQueue
+					if (!USE_OLD_COVER_BASED_SUBGROUP_SELECTION)
 					{
-						Log.logCommandLine("loop " + i);
-						Candidate aBestCandidate = null;
-						double aMaxQuality = Float.NEGATIVE_INFINITY;
-						int aCount = 0;
-						int aChosen = 0;
-						for (Candidate aCandidate : itsTempQueue)
-						{
-							if (!aUsed.get(aCount)) //is this one still available
-							{
-								double aQuality = computeMultiplicativeWeight(aCandidate) * aCandidate.getPriority();
-								if (aQuality > aMaxQuality)
-								{
-									aMaxQuality = aQuality;
-									aBestCandidate = aCandidate;
-									aChosen = aCount;
-								}
-							}
-							aCount++;
-						}
-						Log.logCommandLine("best (" + aChosen + "): " + aBestCandidate.getPriority() + ", " + computeMultiplicativeWeight(aBestCandidate) + ", " + aMaxQuality);
-						aUsed.set(aChosen, true);
-						aBestCandidate.setPriority(aMaxQuality);
-						addToQueue(itsNextQueue, aBestCandidate);
+						itsQueue     = (TreeSet<Candidate>) CoverBasedSubgroupSelection.postProcessCandidateSet(itsTempQueue, itsMaximumQueueSize);
+						itsNextQueue = new TreeSet<Candidate>();
+						itsTempQueue = new TreeSet<Candidate>();
+						// old optimised code - used up till Cortana.3138.jar
+						// postProcessCBBS();
 					}
-					itsQueue = itsNextQueue;
+					else
+					{
+						Log.logCommandLine("candidates: " + itsTempQueue.size());
+						int aLoopSize = Math.min(itsMaximumQueueSize, itsTempQueue.size());
+						BitSet aUsed = new BitSet(itsTempQueue.size());
+						for (int i=0; i<aLoopSize; i++) //copy candidates into itsNextQueue
+						{
+							Log.logCommandLine("loop " + i);
+							Candidate aBestCandidate = null;
+							double aMaxQuality = Float.NEGATIVE_INFINITY;
+							int aCount = 0;
+							int aChosen = 0;
+							for (Candidate aCandidate : itsTempQueue)
+							{
+								if (!aUsed.get(aCount)) //is this one still available
+								{
+									double aQuality = computeMultiplicativeWeight(aCandidate) * aCandidate.getPriority();
+									if (aQuality > aMaxQuality)
+									{
+										aMaxQuality = aQuality;
+										aBestCandidate = aCandidate;
+										aChosen = aCount;
+									}
+								}
+								aCount++;
+							}
+							Log.logCommandLine("best (" + aChosen + "): " + aBestCandidate.getPriority() + ", " + computeMultiplicativeWeight(aBestCandidate) + ", " + aMaxQuality);
+							aUsed.set(aChosen, true);
+							aBestCandidate.setPriority(aMaxQuality);
+							addToQueue(itsNextQueue, aBestCandidate);
+						}
+						itsQueue = itsNextQueue;
 
-					Log.logCommandLine("========================================================");
-					Log.logCommandLine("used: " + aUsed.toString());
-					for (Candidate aCandidate : itsQueue)
-						Log.logCommandLine("priority: " + aCandidate.getPriority());
+						Log.logCommandLine("========================================================");
+						Log.logCommandLine("used: " + aUsed.toString());
+						for (Candidate aCandidate : itsQueue)
+							Log.logCommandLine("priority: " + aCandidate.getPriority());
 
-					itsNextQueue = new TreeSet<Candidate>();
-					itsTempQueue = new TreeSet<Candidate>();
-*/
+						itsNextQueue = new TreeSet<Candidate>();
+						itsTempQueue = new TreeSet<Candidate>();
+					}
 				}
 				}
 				break;
@@ -410,10 +420,44 @@ itsNextQueueConvexHullROC.debug();
 		synchronized (itsQueue) { return itsQueue.size(); }
 	}
 
+	////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////
+	///// start of obsolete code - replaced by CoverBasedSubgroupSelection /////
+	/////                                                                  /////
+	///// the CBSS technique, as presented in the papers, is fundamentally /////
+	///// flawed                                                           /////
+	///// it can not properly handle quality measures that might yield a   /////
+	///// negative quality                                                 /////
+	///// among these are the WRAcc and Numeric WRAcc measures as offered  /////
+	///// in the papers                                                    /////
+	///// for negative qualities the technique does the exact opposite of  /////
+	///// what it claims to do: selecting Subgroups with HIGH cover counts /////
+	///// and for a quality of 0, the cover counts are ignored completely  /////
+	/////                                                                  /////
+	///// the original implementation by Arno called the two methods below /////
+	///// from the (now) unused code in moveToNextLevel()                  /////
+	/////   computeCoverCount(int)                                         /////
+	/////   computeMultiplicativeWeight(Candidate)                         /////
+	///// it is extremely slow, and flawed as in the paper                 /////
+	///// it also contains a bug                                           /////
+	/////                                                                  /////
+	///// the optimised implementation consists of                         /////
+	/////   postProcessCBBS()                                              /////
+	/////   updateCoverCounts(int[], Candidate)                            /////
+	/////   computeMultiplicativeWeight(Candidate, int[])                  /////
+	///// it is based on the original code                                 /////
+	///// it is much faster, flawed as in the paper, contains the same bug /////
+	/////                                                                  /////
+	///// the correct, bug-free CoverBasedSubgroupSelection is based on it /////
+	/////                                                                  /////
+	////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////
+
 	/**
 	* Computes the cover count of a particular example: the number of times this example is a member of a subgroup. \n
 	* See van Leeuwen & Knobbe, ECML PKDD 2011. \n
 	*/
+	@Deprecated
 	private int computeCoverCount(int theRow)
 	{
 		int aResult = 0;
@@ -432,6 +476,7 @@ itsNextQueueConvexHullROC.debug();
 	* Computes the multiplicative weight of a subgroup \n
 	* See van Leeuwen & Knobbe, ECML PKDD 2011. \n
 	*/
+	@Deprecated
 	private double computeMultiplicativeWeight(Candidate theCandidate)
 	{
 		double aResult = 0;
@@ -452,8 +497,6 @@ itsNextQueueConvexHullROC.debug();
 		return aResult/aSubgroup.getCoverage();
 	}
 
-/******************************************************************************/
-
 	/*
 	 * TODO MM
 	 * from here on itsTempQueue is not needed as Tree structure anymore
@@ -461,73 +504,96 @@ itsNextQueueConvexHullROC.debug();
 	 * faster to access, as it can be better predicted by the cpu
 	 * and avoids the use of extra positioning variables
 	 */
+	@Deprecated
 	private final void postProcessCBBS()
 	{
 		int aSize = itsTempQueue.size();
-		int[] aCoverCounts = createCoverCounts(itsTempQueue);
+
+		if (aSize == 0)
+		{
+			Log.logCommandLine("========================================================");
+			itsQueue = itsNextQueue;
+			itsNextQueue = new TreeSet<Candidate>();
+			itsTempQueue = new TreeSet<Candidate>();
+			return;
+		}
+
+		// first() is safe when itsTempQueue is not empty
+		int aNrRows = itsTempQueue.first().getSubgroup().getParentSet().getTotalCoverage();
+		int[] aCoverCounts = new int[aNrRows];
 
 		// in each execution of the loop, a Candidate will be added to
-		// itsNextQueue, and the covercounts go up
-		// as covercounts go up, multiplicative weights go down
+		// itsNextQueue, and the cover counts go up
+		// as cover counts go up, multiplicative weights go down
 		// so for each round, the maximum score a Candidate can attain
 		// is upper bounded by the score attained in the previous round
 		// this is useful for pruning, see main loop below
 		// the scores are initiates to c.getPriority()
 		// see the comment on the first loop below
-		double[] aLastWeight = new double[aSize];
+		double[] aLastQuality = new double[aSize];
 		int idx = -1;
 		for (Candidate c : itsTempQueue)
-			aLastWeight[++idx] = c.getPriority();
+			aLastQuality[++idx] = c.getPriority();
 
 		int aLoopSize = Math.min(itsMaximumQueueSize, aSize);
 		BitSet aUsed = new BitSet(aSize);
 
-		// the first loop is special, as there are no Candidates in
-		// itsNextQueue yet, the multiplicative weight for each
-		// Candidate is equal to 1.0
+		Log.logCommandLine("candidates: " + aSize);
+		// the first loop is special, as there are no Candidates in itsNextQueue
+		// yet, the multiplicative weight for each Candidate is equal to 1.0
 		// so the Candidate with the highest priority wins
 		// and its new quality = 1.0 * c.getPriority()
 		// therefore the first execution of the loop is taken out
 		Log.logCommandLine("loop 0");
-		Log.logCommandLine(String.format("best (0): %f, 1.0, %1$f", aLastWeight[0]));
+		Log.logCommandLine(String.format("best (0): %f, 1.0, %1$f", aLastQuality[0]));
 		Candidate aFirst = itsTempQueue.first();
 		aUsed.set(0);
 		addToQueue(itsNextQueue, aFirst);
 		updateCoverCounts(aCoverCounts, aFirst);
 
-		Log.logCommandLine("candidates: " + aSize);
-		for (int i = 1; i < aLoopSize; ++i) //copy candidates into itsNextQueue
+		// copy candidates into itsNextQueue
+		for (int i = 1; i < aLoopSize; ++i)
 		{
 			Log.logCommandLine("loop " + i);
-			Candidate aBestCandidate = null;
-			double aMaxQuality = Double.NEGATIVE_INFINITY;
-			int aCount = -1;
-			int aChosen = -1;
+
+			// TODO MM - check the following suspicion
+			// all qualities can be NEGATIVE_INFINITY, it is a possible result
+			// for some quality measures (whether it is valid is something else)
+			// then <= aMaxQuality would always be true, and the loop does not
+			// select any Candidate, causing NullPointerExceptions below
+			double aMaxQuality          = Double.NEGATIVE_INFINITY;
+			Candidate aBestCandidate    = null;
+			double aBestCandidateWeight = Double.NaN;
+			int aCount                  = -1;
+			int aChosen                 = -1;
+
+			// it might be faster to copy Candidates to array or List first
+			// and then use index-based access using first clear Bit of used
 			for (Candidate aCandidate : itsTempQueue)
 			{
-				++aCount;
-
-				if (aUsed.get(aCount))
+				if (aUsed.get(++aCount))
 					continue;
 
-				// score can not get better than last time, so
-				// if that would not have been good enough
-				// there is no use in checking this Candidate
-				if (aLastWeight[aCount] <= aMaxQuality)
+				// score can not get better than last time, so if that would not
+				// have been good enough there is no use in checking Candidate
+				if (aLastQuality[aCount] <= aMaxQuality)
 					continue;
 
 				// could get members here and reuse for update()
-				double aQuality = computeMultiplicativeWeight(aCandidate, aCoverCounts) * aCandidate.getPriority();
-				aLastWeight[aCount] = aQuality;
+				double aWeight       = computeMultiplicativeWeight(aCandidate, aCoverCounts);
+				double aQuality      = (aWeight * aCandidate.getPriority());
+				aLastQuality[aCount] = aQuality;
 
 				if (aQuality > aMaxQuality)
 				{
-					aMaxQuality = aQuality;
-					aBestCandidate = aCandidate;
-					aChosen = aCount;
+					aMaxQuality          = aQuality;
+					aBestCandidate       = aCandidate;
+					aBestCandidateWeight = aWeight;
+					aChosen              = aCount;
 				}
 			}
-			Log.logCommandLine(String.format("best (%d): %f, %f, %f", aChosen, aBestCandidate.getPriority(), aLastWeight[aChosen], aMaxQuality));
+
+			Log.logCommandLine(String.format("best (%d): %f, %f, %f", aChosen, aBestCandidate.getPriority(), aBestCandidateWeight, aMaxQuality));
 			aUsed.set(aChosen);
 			aBestCandidate.setPriority(aMaxQuality);
 			addToQueue(itsNextQueue, aBestCandidate);
@@ -544,17 +610,7 @@ itsNextQueueConvexHullROC.debug();
 		itsTempQueue = new TreeSet<Candidate>();
 	}
 
-	private static final int[] createCoverCounts(TreeSet<Candidate> theTempQueue)
-	{
-		if (theTempQueue.size() == 0)
-			return new int[0];
-
-		// first() is safe as theTempQueue is not empty
-		int aNrRows = theTempQueue.first().getSubgroup().getMembers().size();
-		int[] aCoverCounts = new int[aNrRows];
-		return aCoverCounts;
-	}
-
+	@Deprecated
 	private static final void updateCoverCounts(int[] theCoverCounts, Candidate theCandidate)
 	{
 		BitSet b = theCandidate.getSubgroup().getMembers();
@@ -564,9 +620,12 @@ itsNextQueueConvexHullROC.debug();
 	}
 
 	private static final double ALPHA = 0.9;
+	@Deprecated
 	private static final double computeMultiplicativeWeight(Candidate theCandidate, int[] theCoverCounts)
 	{
 		Subgroup aSubgroup = theCandidate.getSubgroup();
+		// this creates a clone of the members BitSet every time in the loop
+		// the BitSet should be cached
 		BitSet b = aSubgroup.getMembers();
 
 		double aResult = 0.0;
@@ -576,4 +635,3 @@ itsNextQueueConvexHullROC.debug();
 		return aResult / aSubgroup.getCoverage();
 	}
 }
-
