@@ -441,9 +441,120 @@ public class SubgroupSet extends TreeSet<Subgroup>
 			s.setID(++aCount);
 	}
 
+	// obviously should not be called while mining...
+	/** topK must be > 0, only joint entropy is returned (CR is printed) */
+	public double postProcessGetCoverRedundancyAndJointEntropy(int topK)
+	{
+		if (topK <= 0)
+			throw new IllegalArgumentException(getClass().getName() + ".postProcessGetCoverRedundancyAndJointEntropy() invalid topK: " + topK);
+
+		update();
+
+		int max = Math.min(topK, super.size());
+		if (max == 0) // when size == 0
+			return 0.0;
+
+		// lazy implementation - use BitSets for now (move to long[] later)
+		// the BitSet member fields are unnecessary overhead and the BitSet
+		// methods cardinality() and size() are needlessly expensive, and slow
+		// but required for sorting, a custom class would improve performance
+		BitSet[] aRows      = new BitSet[itsTotalCoverage];
+		int[] aCoverCounts  = new int[itsTotalCoverage];
+		long aCoverCountSum = 0L;
+		for (int i = 0, j = itsTotalCoverage; i < j; ++i)
+			aRows[i] = new BitSet(max);
+
+		int idx = -1;
+		for (Subgroup s : this)
+		{
+			if (++idx == max)
+				break;
+
+			BitSet b = s.getMembers();
+			// no s.killMembers(); when called from ResultWindow members are set
+			// because a Table modification would make it impossible to evaluate
+			// the Subgroups (due to changed missing value, AttributeType, ...)
+
+			for (int i = b.nextSetBit(0); i >= 0; i = b.nextSetBit(i+1))
+			{
+				aRows[i].set(idx);
+				++aCoverCounts[i];
+				++aCoverCountSum;
+			}
+		}
+
+		double aTotalCount          = itsTotalCoverage;
+		double anExpectedCoverCount = (aCoverCountSum / aTotalCount);
+		double aCoverRedundancy     = 0.0;
+		for (int i : aCoverCounts)
+			aCoverRedundancy += (Math.abs(i - anExpectedCoverCount));
+		aCoverRedundancy = (aCoverRedundancy/anExpectedCoverCount/aTotalCount);
+
+		// TODO
+		// when there are many duplicates, a HashSet/TreeSet might be more
+		// efficient, as they allow to prevent duplicate rows permutations
+		// but these Sets (or Map<rowPermutation, count>) use a lot of memory
+		// and are often not faster, because of array data locality
+		// so the current n log n sorting + n count loop might well be faster
+		// than a Hash structure based O(n + n)
+		// a Tree would be O(n log m + n), where m = nrDistinctRowsPermutations
+		// it would need proper profiling to find the trade-off
+		BitSetComperator bc = new BitSetComperator();
+		Arrays.sort(aRows, bc);
+
+		double anEntropy = 0.0;
+		for (int i = 0, j = 0; ; )
+		{
+			if (bc.compare(aRows[i], aRows[j]) != 0)
+			{
+				double aFraction = (j-i) / aTotalCount;
+				anEntropy += (-aFraction * Math.log(aFraction));
+				i = j;
+			}
+			else if (++j == itsTotalCoverage)
+			{
+				double aFraction = (j-i) / aTotalCount;
+				anEntropy += (-aFraction * Math.log(aFraction));
+				break;
+			}
+		}
+		anEntropy /= Math.log(2.0);
+
+		Log.logCommandLine(String.format("CR(%d)=%f\tH(%1$d)=%f", max, aCoverRedundancy, anEntropy));
+
+		return anEntropy;
+	}
+
+	private static final class BitSetComperator implements Comparator<BitSet>
+	{
+		@Override
+		public int compare(BitSet a, BitSet b)
+		{
+			if (a == b)
+				return 0;
+
+			int cmp = (a.cardinality() - b.cardinality());
+			if (cmp != 0)
+				return cmp;
+
+			// NOTE size could be larger than topK, but BitSets will be replaced
+			for (int i = 0, j = a.size(); i < j; ++i)
+			{
+				boolean ai = a.get(i);
+				if (ai ^ b.get(i))
+					return (ai ? -1 : 1);
+			}
+
+			// all bits the same, enforce total ordering not required for array
+			return 0;
+		}
+	}
+
 	public SubgroupSet getPatternTeam(Table theTable, int k)
 	{
-		BinaryTable aBinaryTable = getBinaryTable(theTable);
+		// FIXME this should start with update()
+
+		BinaryTable aBinaryTable = new BinaryTable(theTable, this);
 		ItemSet aSubset = aBinaryTable.getApproximateMiki(k);
 		// FIXME MM see constructor comment, it is not truly empty
 		SubgroupSet aResult = new SubgroupSet(this); //make empty copy
@@ -460,6 +571,7 @@ public class SubgroupSet extends TreeSet<Subgroup>
 
 		aResult.itsJointEntropy = aSubset.getJointEntropy();
 		aResult.update();
+
 		return aResult;
 	}
 
