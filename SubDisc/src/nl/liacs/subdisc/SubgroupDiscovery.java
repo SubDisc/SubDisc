@@ -53,6 +53,8 @@ public class SubgroupDiscovery
 	private static final boolean DEBUG_PRINTS_FOR_BEST_INTERVAL      = false;
 	//
 	private static final boolean DEBUG_PRINTS_NEXT_LEVEL_CANDIDATES  = false;
+	// print CoverRedundancy and JointEntropy for topK for For Real paper
+	private static final int[] FOR_REAL_PRINTS = {};//{ 10, 100, 1000 };
 
 	// statistics for debugging - related to booleans above
 	private AtomicLong itsBestPairsCount  = new AtomicLong(0);
@@ -71,6 +73,7 @@ public class SubgroupDiscovery
 	static int     TEMPORARY_CODE_NR_SPLIT_POINTS = -1;
 	static boolean TEMPORARY_CODE_USE_EQUAL_WIDTH = false;
 
+	// FIXME remove itsSearchParameters, to not allow changes after construction
 	private final SearchParameters itsSearchParameters;
 	private final Table itsTable;
 	private final int itsNrRows;          // itsTable.getNrRows()
@@ -626,6 +629,8 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 		}
 		if (DEBUG_PRINTS_NEXT_LEVEL_CANDIDATES && !itsCandidateQueueSizes.isEmpty())
 			Log.logCommandLine("NR CANDIDATES FOR NEXT LEVEL: " + itsCandidateQueueSizes);
+		for (int topK : FOR_REAL_PRINTS)
+			itsResult.postProcessGetCoverRedundancyAndJointEntropy(topK);
 	}
 
 	private final ConditionBaseSet preMining(long theBeginTime, int theNrThreads)
