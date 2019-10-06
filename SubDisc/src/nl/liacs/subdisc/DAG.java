@@ -120,6 +120,10 @@ public class DAG
 
 	private boolean cyclicTst(ItemSet ch)
 	{
+		// FIXME this is not (strictly) the same as ItemSet.itsDimensions, often
+		//       size() will be higher: (BitSet.wordsInUse * BITS_PER_WORD)
+		//       this why one should favour encapsulation over extension
+		//       this mistake would not have been possible
 		int aSize = ch.size();
 
 		for(int l=0; l<aSize; l++)
