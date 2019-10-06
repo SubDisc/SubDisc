@@ -3,10 +3,13 @@ package nl.liacs.subdisc;
 import java.util.*;
 
 // FIXME @author, this class redefines default BitSet methods, why?
+// FIXME favour encapsulation over extension
+//       this class allows a number of bugs, mostly related to this extends
+//       there is no way to guarantee that super.cardinality() == getItemCount()
 public class ItemSet extends BitSet
 {
 	private static final long serialVersionUID = 1L;
-	private int itsDimensions;	// MM BitSet.size() ?
+	private int itsDimensions;
 	private double itsJointEntropy = Double.NaN;
 
 	//empty itemset
@@ -28,10 +31,16 @@ public class ItemSet extends BitSet
 			set(0, theCount);
 	}
 
-	// MM did you mean BitSet.size() ?
-	public int getDimensions()
+	// MM could/ should be defined in terms of BitSet.xor()
+	// ((BitSet)theSet.clone()).xor(this);
+	public ItemSet symmetricDifference(ItemSet theSet)
 	{
-		return itsDimensions;
+		ItemSet aSet = new ItemSet(itsDimensions);
+
+		for (int i=0; i<itsDimensions; i++)
+			if (get(i) ^ theSet.get(i))
+				aSet.set(i);
+		return aSet;
 	}
 
 	// MM did you mean  BitSet.cardinality() ?
@@ -47,6 +56,28 @@ public class ItemSet extends BitSet
 		return aCount;
 	}
 
+	public int getDimensions()
+	{
+		return itsDimensions;
+	}
+
+	public ItemSet getExtension(int theIndex)
+	{
+		// NOTE only clones BitSet, not itsDimensions and itsEntropy
+		ItemSet aSet = (ItemSet) clone();
+		aSet.set(theIndex);
+		return aSet;
+	}
+
+	final double getJointEntropy()                     { return itsJointEntropy; }
+	final void setJointEntropy(double theJointEntropy) { itsJointEntropy = theJointEntropy; }
+
+	////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////
+	///// start of obsolete code                                           /////
+	////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////
+
 	/**
 	 * Returns the index of the <em>n</em>-th set bit.
 	 * 
@@ -55,7 +86,6 @@ public class ItemSet extends BitSet
 	 * @return the index of the <em>n</em>-th set bit, or <code>-1</code> if
 	 * it can not be found.
 	 */
-	// never used
 	@Deprecated
 	private int getItem(int theIndex)
 	{
@@ -81,27 +111,6 @@ public class ItemSet extends BitSet
 		return -1;
 	}
 
-	// MM could/ should be defined in terms of BitSet.xor()
-	// ((BitSet)theSet.clone()).xor(this);
-	public ItemSet symmetricDifference(ItemSet theSet)
-	{
-		ItemSet aSet = new ItemSet(itsDimensions);
-
-		for (int i=0; i<itsDimensions; i++)
-			if (get(i) ^ theSet.get(i))
-				aSet.set(i);
-		return aSet;
-	}
-
-	public ItemSet getExtension(int theIndex)
-	{
-		// NOTE only clones BitSet, not itsDimensions and itsEntropy
-		ItemSet aSet = (ItemSet) clone();
-		aSet.set(theIndex);
-		return aSet;
-	}
-
-	// never used
 	@Deprecated
 	private ItemSet getNextItemSet()
 	{
@@ -214,8 +223,4 @@ public class ItemSet extends BitSet
 		else
 			return aSet;
 	}
-
-	public double getJointEntropy() { return itsJointEntropy; }
-	// FIXME MM private / remove
-	public void setJointEntropy(double theJointEntropy) { itsJointEntropy = theJointEntropy; }
 }
