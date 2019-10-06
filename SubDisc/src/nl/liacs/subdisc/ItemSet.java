@@ -9,30 +9,79 @@ import java.util.*;
 public class ItemSet extends BitSet
 {
 	private static final long serialVersionUID = 1L;
+	// TODO make itsDimensions final
 	private int itsDimensions;
 	private double itsJointEntropy = Double.NaN;
 
 	//empty itemset
 	public ItemSet(int theDimensions)
 	{
-		super(theDimensions);
+		super(theDimensions); // itsCardinality = 0; itsBitSet = new BitSet(theDimensions);
 		itsDimensions = theDimensions;
 	}
 
 	//itemset with first theCount items set.
+	// FIXME why is no IllegalArgumentException thrown when count > dimensions
 	public ItemSet(int theDimensions, int theCount)
 	{
-		super(theDimensions);
+		super(theDimensions); // itsBitSet = new BitSet(theDimensions);
 		itsDimensions = theDimensions;
 
+		// itsCardinality = Math.min(itsDimensions, theCount);
+		// itsBitSet.set(0, itsCardinality)
 		if (theCount>itsDimensions)
 			set(0, itsDimensions);
 		else
 			set(0, theCount);
 	}
 
+// FIXME LEAVE IN - THIS CLASS WILL BE UPDATED TO MAKE IT MORE SAFE AND FASTER
+//	private final BitSet itsBitSet;
+//	private int itsCardinality = -1;
+//
+//	final boolean get(int theIndex)
+//	{
+//		checkIndex(theIndex, itsDimensions, "get");
+//
+//		return itsBitSet.get(theIndex);
+//	}
+//
+//	final void set(int theIndex)
+//	{
+//		checkIndex(theIndex, itsDimensions, "set");
+//
+//		if (!itsBitSet.get(theIndex))
+//		{
+//			itsBitSet.set(theIndex);
+//			++itsCardinality;
+//		}
+//	}
+//
+//	final void clear(int theIndex)
+//	{
+//		checkIndex(theIndex, itsDimensions, "clear");
+//
+//		if (itsBitSet.get(theIndex))
+//		{
+//			itsBitSet.clear(theIndex);
+//			--itsCardinality;
+//		}
+//	}
+//
+//	private static final void checkIndex(int theIndex, int theDimensions, String theMethod)
+//	{
+//		if (theIndex < 0 || theIndex >= theDimensions)
+//			throw new IllegalArgumentException(String.format("%s.%s(): invalid index %d", ItemSet.class.getName(), theMethod, theIndex));
+//	}
+
 	// MM could/ should be defined in terms of BitSet.xor()
 	// ((BitSet)theSet.clone()).xor(this);
+	// TODO
+	// method is only called by Basysian.rcar() and scoreNext(), all these need
+	// to know is whether there is exactly one mutually exclusive bit (xor)
+	// and that it is at a certain position
+	// so this method can be replaced by one that is much simpler, efficient
+	// and only returns a boolean
 	public ItemSet symmetricDifference(ItemSet theSet)
 	{
 		ItemSet aSet = new ItemSet(itsDimensions);
@@ -44,6 +93,7 @@ public class ItemSet extends BitSet
 	}
 
 	// MM did you mean  BitSet.cardinality() ?
+	// TODO encapsulation allows to easily track this number, withou computation
 	public int getItemCount()
 	{
 		int aCount = 0;
@@ -61,9 +111,10 @@ public class ItemSet extends BitSet
 		return itsDimensions;
 	}
 
+	// NOTE only clones BitSet, not itsDimensions and itsEntropy
+	// FIXME especially the former seems wrong
 	public ItemSet getExtension(int theIndex)
 	{
-		// NOTE only clones BitSet, not itsDimensions and itsEntropy
 		ItemSet aSet = (ItemSet) clone();
 		aSet.set(theIndex);
 		return aSet;
