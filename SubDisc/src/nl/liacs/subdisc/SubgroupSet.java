@@ -175,7 +175,6 @@ public class SubgroupSet extends TreeSet<Subgroup>
 	//	itsMaximumSize = 1;
 	//}
 
-
 	/**
 	 * Tries to add the {@link Subgroup Subgroup} passed in as parameter to
 	 * this SubgroupSet. Also ensures this SubgroupSet never exceeds its
@@ -251,37 +250,15 @@ public class SubgroupSet extends TreeSet<Subgroup>
 			return true;
 		}
 	}
+
 	// includes equal scores, as new Subgroups with the same score might be
 	// ordered before the old one, pushing the old one out
 	// note that this is an unsynchronised check, might use AtomicDouble one day
-	// isNaN() check is needed as itsLowestScore starts out like that -> FIXME
-	boolean hasPotential(float theQuality) { return (Double.isNaN(itsLowestScore) ||  (theQuality >= itsLowestScore)); }
-
-	public BinaryTable getBinaryTable(Table theTable)
+	// isNaN() check is needed as itsLowestScore starts out like that
+	// FIXME use isEmpty() instead of NaN check
+	boolean hasPotential(float theQuality)
 	{
-		return new BinaryTable(theTable, this);
-	}
-
-	public SubgroupSet getPatternTeam(Table theTable, int k)
-	{
-		BinaryTable aBinaryTable = getBinaryTable(theTable);
-		ItemSet aSubset = aBinaryTable.getApproximateMiki(k);
-		// FIXME MM see constructor comment, it is not truly empty
-		SubgroupSet aResult = new SubgroupSet(this); //make empty copy
-		int index = 0;
-
-		Iterator<Subgroup> anIterator = this.iterator();
-		while (anIterator.hasNext())
-		{
-			Subgroup aSubgroup = anIterator.next();
-			if (aSubset.get(index))
-				aResult.add(aSubgroup);
-			index++;
-		}
-
-		aResult.itsJointEntropy = aSubset.getJointEntropy();
-		aResult.update();
-		return aResult;
+		return (Double.isNaN(itsLowestScore) || (theQuality >= itsLowestScore));
 	}
 
 	private void update()
@@ -306,103 +283,35 @@ public class SubgroupSet extends TreeSet<Subgroup>
 		}
 	}
 
-	public double getBestScore()
+	////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////
+	///// general methods to return information about this instance        /////
+	////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////
+
+	public int getTotalCoverage()
 	{
-		update();
-		return isEmpty() ? Float.NaN : first().getMeasureValue();
+		return itsTotalCoverage;
 	}
 
-	public void setIDs()
+	// FIXME remove if-check, just call itsBinaryTarget.cardinality (causes NPE)
+	/** Throws NullPointerException when not in a nominal setting. */
+	public int getTotalTargetCoverage()
 	{
-		update();
-		int aCount = 0;
-		for (Subgroup s : this)
-			s.setID(++aCount);
-	}
-
-	public void print()
-	{
-		update();
-		for (Subgroup s : this)
-			Log.logCommandLine(String.format("%d,%d,%d",
-								s.getID(),
-								s.getCoverage(),
-								s.getMeasureValue()));
-	}
-
-	public void saveExtent(BufferedWriter theWriter, Table theTable, BitSet theSubset, TargetConcept theTargetConcept)
-	{
-		update();
-		Log.logCommandLine("saving extent...");
-		try
-		{
-			// get SubgroupMembers only once
-			List<BitSet> aMembers = new ArrayList<BitSet>(this.size());
-			for (Subgroup s : this)
-				aMembers.add(s.getMembers());
-
-			// row length = 5 + size()*(,1) + \n
-			int aNrChars = this.size()*2 + 6;
-
-			StringBuilder aRow = new StringBuilder(aNrChars);
-			aRow.append("test ");
-			for (int i = 0, j = this.size(); i < j; ++i)
-				aRow.append(",0");
-			String aTestRow = aRow.append("\n").toString();
-
-			for (int i = 0, j = theTable.getNrRows(), k = 0; i < j; ++i)
-			{
-				// add subgroup extents to current row
-				// since Cross-Validation Columns are shorter
-				// than the original Columns, we need to pad
-				if (theSubset.get(i))
-				{
-					aRow = new StringBuilder(aNrChars);
-					aRow.append("train");
-					for (BitSet b : aMembers)
-						aRow.append(b.get(k) ? ",1" : ",0");
-					theWriter.write(aRow.append("\n").toString());
-					++k;
-				}
-				else
-					theWriter.write(aTestRow);
-			}
-		}
-		catch (IOException e)
-		{
-			Log.logCommandLine("SubgroupSet.saveExtent(): error on file: " + e.getMessage());
-		}
-	}
-
-	/*
-	 * ROCList functions.
-	 * TODO update a single ROCList instance?
-	 */
-	/**
-	 * Returns a <b>copy of</b> this SubgroupSets' BinaryTarget
-	 * <code>BitSet</code>. SubgroupSets only have a BinaryTarget
-	 * <code>BitSet<code> in a nominal target setting, meaning the
-	 * {@link nl.liacs.subdisc.AttributeType AttributeType} of the
-	 * PrimaryTarget in the {@link TargetConcept TargetConcept} is of type
-	 * AttributeType.NOMINAL.
-	 *
-	 * @return a clone of this SubgroupSets' BinaryTarget <code>BitSet</code>,
-	 * or <code>null</code> if this SubgroupSet has no BinaryTarget
-	 * <code>BitSet</code>.
-	 */
-	public BitSet getBinaryTargetClone()
-	{
-		// TODO not so wise may break other code
-		//if (!nominalTargetSetting || itsBinaryTarget == null)
-		if (itsBinaryTarget == null)
-			return null;
-		else
-			return (BitSet) itsBinaryTarget.clone();
+		if (!nominalTargetSetting)
+			throw new NullPointerException("only available in nominal setting");
+		return itsBinaryTarget.cardinality();
 	}
 
 	final BitSet getAllDataBitSetClone()
 	{
 		return (BitSet) itsAllDataBitSet.clone();
+	}
+
+	public double getBestScore()
+	{
+		update();
+		return isEmpty() ? Double.NaN : first().getMeasureValue();
 	}
 
 	/**
@@ -417,15 +326,34 @@ public class SubgroupSet extends TreeSet<Subgroup>
 		itsBinaryTarget = theBinaryTarget;
 	}
 
-	public int getTotalCoverage() { return itsTotalCoverage; }
-
-	/** Throws NullPointerException when not in a nominal setting. */
-	public int getTotalTargetCoverage()
+	// FIXME this is why a SubgroupSet should NOT extend a TreeSet: encapsulate
+	/*
+	 * NOTE since the copy-through-constructor creates a shallow copy of
+	 * itsROCList, calling this method may have side effects.
+	 * All clones of this SubgroupSet will be affected.
+	 */
+	@Override
+	public void clear()
 	{
-		if (!nominalTargetSetting)
-			throw new NullPointerException("only available in nominal setting");
-		return itsBinaryTarget.cardinality();
+		super.clear();
+		if (itsROCList != null)
+			itsROCList.clear();
+		itsLowestScore = Double.NaN;
+		itsJointEntropy = Double.NaN;
 	}
+
+	@Override
+	public int size()
+	{
+		update();
+		return super.size();
+	}
+
+	////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////
+	///// start of post-processing code                                    /////
+	////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////
 
 	/*
 	 * FIXME MM
@@ -505,38 +433,106 @@ public class SubgroupSet extends TreeSet<Subgroup>
 		return aResult;
 	}
 
-	/**
-	* Computes the cover count of a particular example: the number of times
-	* this example is a member of a subgroup.<br>
-	* See van Leeuwen & Knobbe, ECML PKDD 2011
-	*/
-	private int computeCoverCount(SubgroupSet theSet, int theRow)
+	public void setIDs()
 	{
-		int aResult = 0;
-		for (Subgroup aSubgroup : theSet)
+		update();
+		int aCount = 0;
+		for (Subgroup s : this)
+			s.setID(++aCount);
+	}
+
+	public SubgroupSet getPatternTeam(Table theTable, int k)
+	{
+		BinaryTable aBinaryTable = getBinaryTable(theTable);
+		ItemSet aSubset = aBinaryTable.getApproximateMiki(k);
+		// FIXME MM see constructor comment, it is not truly empty
+		SubgroupSet aResult = new SubgroupSet(this); //make empty copy
+		int index = 0;
+
+		Iterator<Subgroup> anIterator = this.iterator();
+		while (anIterator.hasNext())
 		{
-			if (aSubgroup.covers(theRow))
-				aResult++;
+			Subgroup aSubgroup = anIterator.next();
+			if (aSubset.get(index))
+				aResult.add(aSubgroup);
+			index++;
 		}
+
+		aResult.itsJointEntropy = aSubset.getJointEntropy();
+		aResult.update();
 		return aResult;
 	}
 
-	/**
-	* Computes the multiplicative weight of a subgroup.<br>
-	* See van Leeuwen & Knobbe, ECML PKDD 2011.
-	*/
-	private double computeMultiplicativeWeight(SubgroupSet theSet, Subgroup theSubgroup)
-	{
-		double aResult = 0;
-		double anAlpha = 0.9;
-		BitSet aMember = theSubgroup.getMembers();
+	public double getJointEntropy() { return itsJointEntropy; }
 
-		for(int i=aMember.nextSetBit(0); i>=0; i=aMember.nextSetBit(i+1))
+	public void saveExtent(BufferedWriter theWriter, Table theTable, BitSet theSubset, TargetConcept theTargetConcept)
+	{
+		update();
+		Log.logCommandLine("saving extent...");
+		try
 		{
-			int aCoverCount = computeCoverCount(theSet, i);
-			aResult += Math.pow(anAlpha, aCoverCount);
+			// get SubgroupMembers only once
+			List<BitSet> aMembers = new ArrayList<BitSet>(this.size());
+			for (Subgroup s : this)
+				aMembers.add(s.getMembers());
+
+			// row length = 5 + size()*(,1) + \n
+			int aNrChars = this.size()*2 + 6;
+
+			StringBuilder aRow = new StringBuilder(aNrChars);
+			aRow.append("test ");
+			for (int i = 0, j = this.size(); i < j; ++i)
+				aRow.append(",0");
+			String aTestRow = aRow.append("\n").toString();
+
+			for (int i = 0, j = theTable.getNrRows(), k = 0; i < j; ++i)
+			{
+				// add subgroup extents to current row
+				// since Cross-Validation Columns are shorter
+				// than the original Columns, we need to pad
+				if (theSubset.get(i))
+				{
+					aRow = new StringBuilder(aNrChars);
+					aRow.append("train");
+					for (BitSet b : aMembers)
+						aRow.append(b.get(k) ? ",1" : ",0");
+					theWriter.write(aRow.append("\n").toString());
+					++k;
+				}
+				else
+					theWriter.write(aTestRow);
+			}
 		}
-		return aResult/theSubgroup.getCoverage();
+		catch (IOException e)
+		{
+			Log.logCommandLine("SubgroupSet.saveExtent(): error on file: " + e.getMessage());
+		}
+	}
+
+	/*
+	 * ROCList functions.
+	 * TODO update a single ROCList instance?
+	 */
+	/**
+	 * Returns a <b>copy of</b> this SubgroupSets' BinaryTarget
+	 * <code>BitSet</code>. SubgroupSets only have a BinaryTarget
+	 * <code>BitSet<code> in a nominal target setting, meaning the
+	 * {@link nl.liacs.subdisc.AttributeType AttributeType} of the
+	 * PrimaryTarget in the {@link TargetConcept TargetConcept} is of type
+	 * AttributeType.NOMINAL.
+	 *
+	 * @return a clone of this SubgroupSets' BinaryTarget <code>BitSet</code>,
+	 * or <code>null</code> if this SubgroupSet has no BinaryTarget
+	 * <code>BitSet</code>.
+	 */
+	public BitSet getBinaryTargetClone()
+	{
+		// TODO not so wise may break other code
+		//if (!nominalTargetSetting || itsBinaryTarget == null)
+		if (itsBinaryTarget == null)
+			return null;
+		else
+			return (BitSet) itsBinaryTarget.clone();
 	}
 
 	/**
@@ -644,30 +640,6 @@ Log.logCommandLine("\nAUC: " + itsROCList.getAreaUnderCurve());
 		return aResult;
 	}
 
-	/*
-	 * NOTE since the copy-through-constructor creates a shallow copy of
-	 * itsROCList, calling this method may have side effects.
-	 * All clones of this SubgroupSet will be affected.
-	 */
-	@Override
-	public void clear()
-	{
-		super.clear();
-		if (itsROCList != null)
-			itsROCList.clear();
-		itsLowestScore = Double.NaN;
-		itsJointEntropy = Double.NaN;
-	}
-
-	@Override
-	public int size()
-	{
-		update();
-		return super.size();
-	}
-
-	public double getJointEntropy() { return itsJointEntropy; }
-
 	public static final boolean CHECK_FOR_ALTERNATIVE_DESCRIPTIONS = false;
 	public final void markAlternativeDescriptions()
 	{
@@ -765,5 +737,65 @@ Log.logCommandLine("\nAUC: " + itsROCList.getAreaUnderCurve());
 				sk.setPValue(id);
 			}
 		}
+	}
+
+	////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////
+	///// start of obsolete code                                           /////
+	////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////
+
+	@Deprecated
+	public BinaryTable getBinaryTable(Table theTable)
+	{
+		return new BinaryTable(theTable, this);
+	}
+
+	@Deprecated
+	public void print()
+	{
+		update();
+		for (Subgroup s : this)
+			Log.logCommandLine(String.format("%d,%d,%d",
+								s.getID(),
+								s.getCoverage(),
+								s.getMeasureValue()));
+	}
+
+	// see extensive comment on CBSS implementation at bottom of CandidateQueue
+	/**
+	 * Computes the cover count of a particular example: the number of times
+	 * this example is a member of a subgroup.<br>
+	 * See van Leeuwen & Knobbe, ECML PKDD 2011
+	 */
+	@Deprecated
+	private int computeCoverCount(SubgroupSet theSet, int theRow)
+	{
+		int aResult = 0;
+		for (Subgroup aSubgroup : theSet)
+		{
+			if (aSubgroup.covers(theRow))
+				aResult++;
+		}
+		return aResult;
+	}
+
+	/**
+	 * Computes the multiplicative weight of a subgroup.<br>
+	 * See van Leeuwen & Knobbe, ECML PKDD 2011.
+	 */
+	@Deprecated
+	private double computeMultiplicativeWeight(SubgroupSet theSet, Subgroup theSubgroup)
+	{
+		double aResult = 0;
+		double anAlpha = 0.9;
+		BitSet aMember = theSubgroup.getMembers();
+
+		for(int i=aMember.nextSetBit(0); i>=0; i=aMember.nextSetBit(i+1))
+		{
+			int aCoverCount = computeCoverCount(theSet, i);
+			aResult += Math.pow(anAlpha, aCoverCount);
+		}
+		return aResult/theSubgroup.getCoverage();
 	}
 }
