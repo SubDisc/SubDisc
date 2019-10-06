@@ -55,7 +55,13 @@ public class CoverBasedSubgroupSelection
 			++idx;
 			aCandidates[idx] = c;
 			aLastScores[idx] = c.getPriority();
-			aMembers[idx]    = c.getSubgroup().getMembers();
+			Subgroup s       = c.getSubgroup();
+			aMembers[idx]    = s.getMembers();
+			// NOTE when called from ResultWindow members are set because a
+			// Table modification would make it impossible to evaluate the
+			// Subgroups (due to changed missing value, AttributeType, ...)
+			if (isForCandidateSet)
+				s.killMembers();
 		}
 
 		int aNrRows = theCandidates.first().getSubgroup().getParentSet().getTotalCoverage();
