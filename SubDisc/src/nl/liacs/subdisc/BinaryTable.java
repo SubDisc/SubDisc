@@ -105,23 +105,6 @@ public class BinaryTable
 		return new BinaryTable(aNewTargets, aNrMembers);
 	}
 
-	public CrossCube countCrossCube()
-	{
-		CrossCube aCrossCube = new CrossCube(itsColumns.size());
-		BitSet aBitSet = new BitSet(itsColumns.size());
-
-		for (int i = 0; i < itsNrRecords ; i++)
-		{
-			aBitSet.clear();
-			for (int j = 0; j < itsColumns.size(); j++)
-				aBitSet.set(j, itsColumns.get(j).get(i));
-
-			aCrossCube.incrementCount(aBitSet);
-		}
-
-		return aCrossCube;
-	}
-
 	public double computeBDeuFaster()
 	{
 		int aDimensions = itsColumns.size();
@@ -179,7 +162,7 @@ public class BinaryTable
 	{
 		long aCount = 0;
 		ItemSet aMaximallyInformativeItemSet = new ItemSet(getNrColumns(), 0);
-		double aMaximalEntropy = 0;
+		double aMaximalEntropy = 0.0;
 
 		Log.logCommandLine("finding approximate " + k + "-itemsets");
 		for (int i=1; i<=k; i++)
@@ -209,6 +192,24 @@ public class BinaryTable
 
 		Log.logCommandLine("nr of column scans: " + aCount);
 		return aMaximallyInformativeItemSet;
+	}
+
+	private final CrossCube countCrossCube()
+	{
+		CrossCube aCrossCube = new CrossCube(itsColumns.size());
+		BitSet aBitSet = new BitSet(itsColumns.size());
+
+		for (int i = 0; i < itsNrRecords ; i++)
+		{
+			// TODO clear() might not be faster than using new BitSet: profile
+			aBitSet.clear();
+			for (int j = 0; j < itsColumns.size(); j++)
+				aBitSet.set(j, itsColumns.get(j).get(i));
+
+			aCrossCube.incrementCount(aBitSet);
+		}
+
+		return aCrossCube;
 	}
 
 	public void print()
