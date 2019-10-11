@@ -20,19 +20,13 @@ public class Miki
 		// size can be inferred using variable i in main loop but it is used for
 		// direct extension of bits + '1', this avoids array/Hash/Tree lookups
 		Permutation extenedWithOne = null;
-
-		@Override
-		public String toString()
-		{
-			return String.format("%s\t%d\t%d", asBinary(size, bits), sum, one);
-		}
 	}
 
 	//  upper bound number combinations: min( 2^(min(k, aNrColumns)) , aNrRows )
 	static final double getMiki(SortedSet<Subgroup> theSubgroups, int k)
 	{
 Timer t = new Timer();
-		// package private, still check; but max NrRows (2^31) limits aMaxCombis 
+		// package private, still check; but max NrRows (2^31) limits MaxCombis
 		if (k <= 0 || k > 32)
 			throw new IllegalArgumentException("Miki: 0 < k <= 32 required; k = " + k);
 
@@ -116,7 +110,7 @@ Timer t = new Timer();
 				{
 					aMaxH = H;
 					aBest = j;
-					aMikis.set(aBest);   // for easy of printing
+					aMikis.set(aBest);   // for ease of printing
 					Log.logCommandLine("found a new maximum: " + aMikis + ": " + (aMaxH / Math.log(2.0)));
 					aMikis.clear(aBest); // <-- VERY IMPORTANT
 				}
@@ -186,7 +180,6 @@ System.out.println(t.getElapsedTimeString());
 		}
 	}
 
-	// the addition to thePermutations is crucial here
 	private static final Permutation extend(List<Permutation> thePermutations, Permutation theExtendee, int theMask, int theNewSize)
 	{
 		Permutation pe             = new Permutation();
@@ -194,16 +187,7 @@ System.out.println(t.getElapsedTimeString());
 		pe.size                    = theNewSize;
 		pe.sum                     = 0;
 		theExtendee.extenedWithOne = pe;
-		thePermutations.add(pe);
+		thePermutations.add(pe); // the addition to thePermutations is crucial
 		return pe;
-	}
-
-	// Integer/Long.toBinaryString() do not print leading zeros
-	private static final String asBinary(int theSize, int theBits)
-	{
-		StringBuilder s = new StringBuilder(theSize);
-		for (int i = 31, j = (i - theSize); i > j; --i)
-			s.append(((theBits >>> i) & 1) == 0 ? "0" : "1");
-		return s.toString();
 	}
 }
