@@ -76,10 +76,8 @@ Timer t = new Timer();
 		}
 
 		// computation starts here, first item sets up/is taken out of the loop
-//		BitSet aMikis= new BitSet(aNrColumns);
-//		aMikis.set(aBest);
-		int[] aMiki  = new int[aMaxNrBits];
-		aMiki[0]     = aBest;
+		BitSet aMikis= new BitSet(aNrColumns);
+		aMikis.set(aBest);
 		double aMaxH = 0.0;
 		double N     = aNrRows;
 
@@ -105,13 +103,8 @@ Timer t = new Timer();
 		{
 			aBest = NOT_SET;
 
-			for (int j = 0; j < aNrColumns; ++j)
+			for (int j = aMikis.nextClearBit(0); j < aNrColumns; j = aMikis.nextClearBit(j + 1))
 			{
-				// adds complexity of k*(nrColumns*k/2): introduce BitSet isUsed
-				if (contains(aMiki, j))
-					continue;
-//			for (int j = aMikis.nextClearBit(0); j < aNrColumns; j = aMikis.nextClearBit(j + 1))
-//			{
 				b = aBitSets[j];
 				for (int l = b.nextSetBit(0); l >= 0; l = b.nextSetBit(l + 1))
 					++aRows[l].one;
@@ -123,27 +116,23 @@ Timer t = new Timer();
 				{
 					aMaxH = H;
 					aBest = j;
-					String s = "found a new maximum: " + asBitSet(i, aMiki, aBest);
-					Log.logCommandLine(s + ": " + (aMaxH / Math.log(2.0)));
-//					aMikis.set(aBest);
-//					Log.logCommandLine("found a new maximum: " + aMikis + ": " + (aMaxH / Math.log(2.0)));
-//					aMikis.clear(aBest);
+					aMikis.set(aBest);   // for easy of printing
+					Log.logCommandLine("found a new maximum: " + aMikis + ": " + (aMaxH / Math.log(2.0)));
+					aMikis.clear(aBest); // <-- VERY IMPORTANT
 				}
 			}
 
 			if (aBest == NOT_SET)
 				break;
 
-			insert(aMiki, aBest, i);
-//			aMikis.set(aBest);
+			aMikis.set(aBest);
 
 			extendPermutations(aRows, aPermutations, aBitSets[aBest], i);
 		}
 
-System.out.println("Miki="+ Arrays.toString(aMiki) + " H=" + (aMaxH / Math.log(2.0)));
-//System.out.println("Miki="+ aMikis + " H=" + (aMaxH / Math.log(2.0)));
+System.out.println("Miki="+ aMikis + " H=" + (aMaxH / Math.log(2.0)));
 System.out.println(t.getElapsedTimeString());
-		// aCount, aMiki to ItemSet, set entropy
+		// aMiki to ItemSet + set entropy - determine what to return
 		return (aMaxH / Math.log(2.0));
 	}
 
@@ -154,10 +143,8 @@ System.out.println(t.getElapsedTimeString());
 
 		for (Permutation p : thePermutations)
 		{
-//			H += fraction(p.zero, N);
 			H += fraction(p.sum - p.one, N);
 			H += fraction(        p.one, N);
-//			p.zero = 0;
 			p.one = 0;
 		}
 
@@ -185,17 +172,17 @@ System.out.println(t.getElapsedTimeString());
 
 			if (!theExtension.get(i))
 			{
-//				p.size = n; // unconditionally
 				++p.sum;
-				continue;
 			}
-
-			Permutation pe = p.extenedWithOne;
-			if ((pe == null) || (pe.size <= theCurrentSize) || ((pe.bits & m) == 0))
-				theRows[i] = extend(thePermutations, p, m, n);
 			else
-				theRows[i] = pe;
-			++theRows[i].sum;
+			{
+				Permutation pe = p.extenedWithOne;
+				if ((pe == null) || (pe.size <= theCurrentSize) || ((pe.bits & m) == 0))
+					theRows[i] = extend(thePermutations, p, m, n);
+				else
+					theRows[i] = pe;
+				++theRows[i].sum;
+			}
 		}
 	}
 
@@ -214,61 +201,9 @@ System.out.println(t.getElapsedTimeString());
 	// Integer/Long.toBinaryString() do not print leading zeros
 	private static final String asBinary(int theSize, int theBits)
 	{
-		// Sting s = "00000000000000000000000000000000";
-		// return (s + Integer.toBinaryString(theBits)).substring(32 - theSize);
 		StringBuilder s = new StringBuilder(theSize);
 		for (int i = 31, j = (i - theSize); i > j; --i)
 			s.append(((theBits >>> i) & 1) == 0 ? "0" : "1");
 		return s.toString();
 	}
-
-	private static final boolean contains(int[] theMiki, int theColumn)
-	{
-		// a bit over the top... aMiki is very small
-		for (int i = 0; i < theMiki.length; ++i)
-		{
-			int m = theMiki[i];
-
-			if (theColumn < m)
-				return false;
-			else if (theColumn == m)
-				return true;
-			// else theColumn > m, check next value in aMiki if available
-		}
-
-		return false;
-	}
-
-	// do not actually add extension to miki, would require removal afterwards 
-	private static final String asBitSet(int theSize, int[] theMiki, int theExtension)
-	{
-		StringBuilder s = new StringBuilder(theSize << 3);
-		s.append("{");
-		for (int i = 0, j = theSize; i < j; ++i)
-			s.append(theMiki[i]).append(", ");
-		return s.append("+").append(theExtension).append("}").toString();
-	}
-
-	private static final void insert(int[] theMiki, int theBest, int theSize)
-	{
-		// a bit over the top... aMiki is very small, keep it sorted
-		int i = -1;
-		while (theBest > theMiki[++i] && i < theSize); // NOTE ;
-		System.arraycopy(theMiki, i, theMiki, i + 1, theMiki.length - i - 1);
-		theMiki[i] = theBest;
-	}
-
-	// after cnt/pos only implementation the two line nextSetBit loop is enough
-//	private static final void countPermutations(Permutation[] theRows, BitSet theExtension)
-//	{
-//		for (int i = 0; i < theRows.length; ++i)
-//		{
-//			if (!theExtension.get(i))
-//				++theRows[i].zero;
-//			else
-//				++theRows[i].one;
-//		}
-//		for (int i = theExtension.nextSetBit(0); i >= 0; i = theExtension.nextSetBit(i + 1))
-//			++theRows[i].one;
-//	}
 }
