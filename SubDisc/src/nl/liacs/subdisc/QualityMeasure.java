@@ -1084,6 +1084,11 @@ public class QualityMeasure
 				aReturn = -aSum/aCoverage;
 				break;
 			}
+			case ABS_AVERAGE :
+			{
+				aReturn = Math.abs(aSum/aCoverage);
+				break;
+			}
 			case QM_SUM :
 			{
 				aReturn = aSum;
