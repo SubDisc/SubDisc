@@ -39,6 +39,7 @@ public enum QM implements EnumInterface
 	ABS_Z_SCORE		("Abs Z-Score",		"1.0",	TargetType.SINGLE_NUMERIC),
 	AVERAGE			("Average",		"0.0",	TargetType.SINGLE_NUMERIC),	// bogus minimum value, should come from data
 	INVERSE_AVERAGE		("Inverse Average",	"0.0",	TargetType.SINGLE_NUMERIC),	// bogus minimum value, should come from data
+	ABS_AVERAGE		("Abs Average",	"0.0",	TargetType.SINGLE_NUMERIC),	// bogus minimum value, should come from data
 	QM_SUM			("Sum",			"0.0",	TargetType.SINGLE_NUMERIC),	// bogus minimum value, should come from data, note the irregular name, to avoid conflict with SUM
 	INVERSE_SUM		("Inverse Sum",		"0.0",	TargetType.SINGLE_NUMERIC),	// bogus minimum value, should come from data
 	MEAN_TEST		("Mean Test",		"0.01",	TargetType.SINGLE_NUMERIC),
@@ -286,6 +287,7 @@ public enum QM implements EnumInterface
 			case ABS_Z_SCORE :		return SUM;
 			case AVERAGE :			return SUM;
 			case INVERSE_AVERAGE :		return SUM;
+			case ABS_AVERAGE :		return SUM;
 			case QM_SUM :			return SUM;
 			case INVERSE_SUM :		return SUM;
 			case MEAN_TEST :		return SUM;
@@ -337,5 +339,5 @@ public enum QM implements EnumInterface
 	}
 
 	@Override
-	public String toString() { return GUI_TEXT; };
+	public String toString() { return GUI_TEXT; }
 }
