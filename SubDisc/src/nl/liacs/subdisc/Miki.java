@@ -70,8 +70,8 @@ Timer t = new Timer();
 		}
 
 		// computation starts here, first item sets up/is taken out of the loop
-		BitSet aMikis= new BitSet(aNrColumns);
-		aMikis.set(aBest);
+		BitSet aMiki = new BitSet(aNrColumns);
+		aMiki.set(aBest);
 		double aMaxH = 0.0;
 		double N     = aNrRows;
 
@@ -97,34 +97,42 @@ Timer t = new Timer();
 		{
 			aBest = NOT_SET;
 
-			for (int j = aMikis.nextClearBit(0); j < aNrColumns; j = aMikis.nextClearBit(j + 1))
+			for (int j = aMiki.nextClearBit(0); j < aNrColumns; j = aMiki.nextClearBit(j + 1))
 			{
 				b = aBitSets[j];
 				for (int l = b.nextSetBit(0); l >= 0; l = b.nextSetBit(l + 1))
 					++aRows[l].one;
 
 				// do not loop aRows, aPermutations is smaller (no duplicates)
+				// XXX this might not be true at some point, such that looping
+				//     over rows becomes cheaper
+				//     this is is because branches (Permutations) that die out
+				//     (have a count of 0) are not removed, but are always
+				//     extended with a 0, adjusting this behaviour would require
+				//     checking that over the the whole of the round before the
+				//     previous one a Permutation has not been used
+				//     (needs not always setting size, and size = currentSize-2)
 				double H = computeEntropy(aPermutations, N);
 
 				if (H > aMaxH)
 				{
 					aMaxH = H;
 					aBest = j;
-					aMikis.set(aBest);   // for ease of printing
-					Log.logCommandLine("found a new maximum: " + aMikis + ": " + (aMaxH / Math.log(2.0)));
-					aMikis.clear(aBest); // <-- VERY IMPORTANT
+					aMiki.set(aBest);   // for ease of printing
+					Log.logCommandLine("found a new maximum: " + aMiki + ": " + (aMaxH / Math.log(2.0)));
+					aMiki.clear(aBest); // <-- VERY IMPORTANT
 				}
 			}
 
 			if (aBest == NOT_SET)
 				break;
 
-			aMikis.set(aBest);
+			aMiki.set(aBest);
 
 			extendPermutations(aRows, aPermutations, aBitSets[aBest], i);
 		}
 
-System.out.println("Miki="+ aMikis + " H=" + (aMaxH / Math.log(2.0)));
+System.out.println("Miki="+ aMiki + " H=" + (aMaxH / Math.log(2.0)));
 System.out.println(t.getElapsedTimeString());
 		// aMiki to ItemSet + set entropy - determine what to return
 		return (aMaxH / Math.log(2.0));
