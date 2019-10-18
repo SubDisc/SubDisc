@@ -5,7 +5,8 @@ import java.util.*;
 
 public class CoverBasedSubgroupSelection
 {
-	private static final double ALPHA = 0.9;
+	private static final boolean USE_CORRECTED_MEASURE = true; // true in git
+	private static final double  ALPHA                 = 0.9;  // as in papers
 
 	static final SortedSet<Candidate> postProcessCandidateSet(SortedSet<Candidate> theCandidates, int theTopK)
 	{
@@ -45,7 +46,7 @@ public class CoverBasedSubgroupSelection
 		double[] aLastScores = new double[aSize];
 		// cache BitSets, as each call to Subgroup.getMembers() creates a clone
 		// TODO
-		// when aSize or aNrRows are very high, this uses a lot of memory
+		// when aSize or aNrRows is very high, this uses a lot of memory
 		// Runtime.maxMemory/totalMemory/freeMemory can be used to estimate
 		// how many of the BitSets can be cached without OutOfMemory errors
 		BitSet[] aMembers = new BitSet[aSize];
@@ -57,9 +58,10 @@ public class CoverBasedSubgroupSelection
 			aLastScores[idx] = c.getPriority();
 			Subgroup s       = c.getSubgroup();
 			aMembers[idx]    = s.getMembers();
-			// NOTE when called from ResultWindow members are set because a
+			// NOTE when called from ResultWindow, members are set because a
 			// Table modification would make it impossible to evaluate the
 			// Subgroups (due to changed missing value, AttributeType, ...)
+			// currently there is no way to find out if this is a GUI-based call
 			if (isForCandidateSet)
 				s.killMembers();
 		}
@@ -121,7 +123,7 @@ public class CoverBasedSubgroupSelection
 				Candidate aCandidate = aCandidates[j];
 				double aPriority     = aCandidate.getPriority();
 				double aWeight       = computeMultiplicativeWeight(aMembers[j], aCandidate.getSubgroup().getCoverage(), aCoverCounts);
-				double aScore        = aPriority - ((1.0 - aWeight) * aPriority);
+				double aScore        = (USE_CORRECTED_MEASURE ? (aPriority - ((1.0 - aWeight) * aPriority)) : (aWeight * aPriority));
 				aLastScores[j]       = aScore;
 
 				// the use of > causes the first (encountered) of multiple
@@ -181,7 +183,7 @@ public class CoverBasedSubgroupSelection
 	{
 		double aResult = 0.0;
 
-		for (int i = theMembers.nextSetBit(0); i >= 0; i =  theMembers.nextSetBit(i+1))
+		for (int i = theMembers.nextSetBit(0); i >= 0; i = theMembers.nextSetBit(i+1))
 			aResult += Math.pow(ALPHA, theCoverCounts[i]);
 
 		return aResult / theCoverage;
