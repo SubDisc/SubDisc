@@ -42,9 +42,9 @@ public class Subgroup implements Comparable<Subgroup>
 	// FIXME the defaults for these three statistics are wrong
 	// required - but in many settings the quality is not set upon construction
 	private double itsMeasureValue       = 0.0;
-	// optional - only used in ResultSet, could be removed
+	// required - used by ResultWindow and written out to file for auto-run
 	private double itsSecondaryStatistic = 0.0;
-	// required - used directly by single binary (others wise only in ResultSet)
+	// required - as above, and used directly by single binary during mining
 	private double itsTertiaryStatistic  = 0.0;
 	// not strictly required - but easier in current setup, might change one day
 	private BitSet itsMembers;
@@ -52,14 +52,17 @@ public class Subgroup implements Comparable<Subgroup>
 	private final Lock itsMembersLock = new ReentrantLock();
 	// not strictly required - but easier in current setup, might change one day
 	private int itsID = 0;
-	// optional - to be replaced by PValue Object (1 pointer, mostly null), note
-	// that that setup allows: isPValueComputed() { return PValue != null; }
+	// optional - to be replaced by Double itsPValue (1 pointer, mostly null)
+	// note such a setup allows: isPValueComputed() { return PValue != null; }
+	// also, when not used, this will often use _less_ memory, as the pointer
+	// will be 32-bits for heap spaces < 32 GB, when used, Double uses 16 or 24
+	// bytes (compared to the 12 or 16 in the current setup)
 	// XXX not strictly needed when setting itsPValue to NaN
 	private boolean isPValueComputed;
 	private double itsPValue;
 	// optional - not used for most settings, to be replaced by single ModelInfo
 	private DAG itsDAG;
-	private LabelRanking itsLabelRanking;
+	private LabelRanking itsLabelRanking; // LabelRanking* always comes together
 	private LabelRankingMatrix itsLabelRankingMatrix;
 	private String itsRegressionModel;
 
