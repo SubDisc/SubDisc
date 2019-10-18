@@ -35,6 +35,9 @@ public class CoverBasedSubgroupSelection
 		if (aSize == 0)
 			return Collections.emptySortedSet();
 
+		if (aSize <= theTopK)
+			return theCandidates;
+
 		BitSet aUsed = new BitSet(aSize);
 		// make copy to allow index-based access, making the loop more efficient
 		Candidate[] aCandidates = theCandidates.toArray(new Candidate[0]);
