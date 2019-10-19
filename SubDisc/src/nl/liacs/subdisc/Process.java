@@ -373,11 +373,14 @@ public class Process
 				theBitSet.clear(k);
 	}
 
+	@Deprecated // never used
 	public static void echoMiningStart()
 	{
 		Log.logCommandLine("Mining process started");
 	}
 
+	// FIXME called only through SubgroupDiscovery.mine() -> postMining()
+	//       so this should be a SubgroupDiscovery method
 	public static void echoMiningEnd(long theMilliSeconds, int theNumberOfSubgroups)
 	{
 		long minutes = theMilliSeconds / 60_000l;
