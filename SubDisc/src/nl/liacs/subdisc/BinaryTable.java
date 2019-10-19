@@ -29,8 +29,8 @@ public class BinaryTable
 
 		for (Subgroup aSubgroup : theSubgroups)
 		{
-			// FIXME MM is this not aSubgroup.getMembers()
-			BitSet aColumn = theTable.evaluate(aSubgroup.getConditions());
+			BitSet aColumn = aSubgroup.getMembers();
+			assert (aColumn.equals(theTable.evaluate(aSubgroup.getConditions())));
 			itsColumns.add(aColumn);
 		}
 	}
@@ -160,6 +160,9 @@ public class BinaryTable
 
 	public ItemSet getApproximateMiki(int k)
 	{
+if (MIKI_TEST) mikiPrint("NEW: " + getApproximateMiki(itsColumns, itsNrRecords, k));
+Timer t = new Timer();
+
 		long aCount = 0;
 		ItemSet aMaximallyInformativeItemSet = new ItemSet(getNrColumns(), 0);
 		double aMaximalEntropy = 0.0;
@@ -186,11 +189,17 @@ public class BinaryTable
 					}
 				}
 			}
+			// FIXME MM break if (aMaximallyInformativeItemSet == aTempItemSet)
+			if (aMaximallyInformativeItemSet == aTempItemSet)
+				Log.logCommandLine("no change for i = " + i);
 			aMaximallyInformativeItemSet = aTempItemSet;
 		}
 		aMaximallyInformativeItemSet.setJointEntropy(aMaximalEntropy);
 
 		Log.logCommandLine("nr of column scans: " + aCount);
+
+if (MIKI_TEST) mikiPrint("OLD: " + t.getElapsedTimeString() + "\nOLD: " + aMaximalEntropy);
+
 		return aMaximallyInformativeItemSet;
 	}
 
@@ -233,4 +242,190 @@ public class BinaryTable
 	//public void removeColumn(BitSet theBitSet) {itsColumns.remove(theBitSet);}
 	//public void removeColumn(int theIndex) {itsColumns.remove(theIndex);}
 	//public void setColumn(BitSet theBitSet, int theIndex) {itsColumns.set(theIndex, theBitSet);}
+
+	////////////////////////////////////////////////////////////////////////////
+	// MIKI TEST: NOTE implementation in Miki.java is much faster, use that   //
+	////////////////////////////////////////////////////////////////////////////
+	private static final boolean MIKI_TEST       = false;
+	private static final boolean DEBUG_ROW_PRINT = false;
+
+	// there is a small chance (unlikely) that a long[] with 64 different bit
+	// patterns is faster than the shifts used in the row and MIKI loops: test
+	private static final double getApproximateMiki(List<BitSet> theColumns, int theNrRecords, int k)
+	{
+		Log.logCommandLine("finding approximate " + k + "-itemsets");
+
+		// original code is column based, but miki computation is row oriented
+		int aNrColumns = theColumns.size();
+		int aNrWords   = (aNrColumns >> 6) + 1;
+		long[][] aRows = new long[theNrRecords][aNrWords];
+
+		// prepare row array, more convenient for loop below
+		for (int i = 0; i < theNrRecords; ++i)
+			aRows[i] = new long[aNrWords];
+
+		// stores bits starting at MSB, the reverse of ordinary BitSets
+		for (int i = 0; i < aNrColumns; ++i)
+		{
+			BitSet b = theColumns.get(i);
+			long j   = (0x8000_0000_0000_0000L >>> (i & 63));
+			for (int l = b.nextSetBit(0), m = (i >> 6); l >= 0; l = b.nextSetBit(l+1))
+				aRows[l][m] |= j;
+		}
+
+		if (DEBUG_ROW_PRINT)
+			for (long[] row : aRows)
+				for (int i = 0, j = row.length-1; i <= j; ++i)
+					System.out.print(asBinary((i == j ? (aNrColumns & 63) : 64), row[i]) + (i == j ? "\n" : " "));
+
+//		BitSet[] aRowInfo = new BitSet[theNrRecords];
+//		for (int i = 0; i < theNrRecords; ++i)
+//			aRowInfo[i] = new BitSet(Math.min(aNrColumns, k));
+		int[] aRowInfo = new int[theNrRecords];
+
+		// time from here: original set up itsColumn setup during construction
+		Timer t = new Timer();
+
+		long aCount            = 0L;
+		int[] aBest            = new int[Math.min(Math.min(aNrColumns, k), 30)];
+		double aMaximalEntropy = 0.0;
+
+		Arrays.fill(aBest, Integer.MAX_VALUE); // assume aNrColumns < MAX_VALUE
+
+		for (int i = 0, j = 0; i < k; ++i, ++j)   // j=nrSelected
+		{
+			int aTmp = -1;
+		col: for (int l = 0; l < aNrColumns; ++l) // l=column
+			{
+				for (int m = 0; m < j; ++m)
+				{
+					int n = aBest[m];
+					if (l < n)
+						break;
+					else if (l == n)
+						continue col;
+					// else l > n, check next value if available
+				}
+
+				++aCount;
+
+				double anEntropy = getEntropy3(aRows, aBest, j, l, aRowInfo, false);
+				if (anEntropy > aMaximalEntropy)
+				{
+					aTmp = l;
+					aMaximalEntropy = anEntropy;
+					Log.logCommandLine("found a new maximum: " + asBitSet(j, aBest, l) + ": " + aMaximalEntropy);
+				}
+			}
+			if (aTmp == -1)
+				break;
+			getEntropy3(aRows, aBest, j, aTmp, aRowInfo, true); // reset info for best
+			aBest[j] = aTmp;
+			Arrays.sort(aBest, 0, j+1);
+		}
+
+		Log.logCommandLine("nr of column scans: " + aCount);
+
+		mikiPrint("NEW: " + t.getElapsedTimeString());
+
+		return aMaximalEntropy;
+	}
+
+	@SuppressWarnings("unused") // for archival purposes, will be removed
+	private static final double getEntropy2(long[][] theRows, int[] theBest, int theNrSelected, int theExtension, BitSet[] theBitSets)
+	{
+		// CrossCube code cross-over to follow original implementation
+		CrossCube aCrossCube = new CrossCube(theNrSelected + 1);
+
+		for (int i = 0, j = theRows.length; i < j; ++i)
+		{
+			BitSet b = theBitSets[i];
+			b.set(theNrSelected, (theRows[i][theExtension >> 6] & (0x8000_0000_0000_0000L >>> (theExtension & 63))) != 0L);
+			aCrossCube.incrementCount(b);
+		}
+
+		return aCrossCube.getEntropy();
+	}
+
+	@SuppressWarnings("unused") // for archival purposes, will be removed
+	private static final double getEntropy3(long[][] theRows, int[] theBest, int theNrSelected, int theExtension, BitSet[] theBitSets)
+	{
+		int[] aCounts = new int[(int) Math.pow(2.0, (theNrSelected+1))];
+
+		for (int i = 0, j = theRows.length; i < j; ++i)
+		{
+			BitSet b = theBitSets[i];
+			b.set(theNrSelected, (theRows[i][theExtension >> 6] & (0x8000_0000_0000_0000L >>> (theExtension & 63))) != 0L);
+			long[] la = b.toLongArray();
+			++aCounts[la.length == 0 ? 0 : (int) la[0]];
+		}
+
+		double aTotalCount = theRows.length;
+		double d = 0.0;
+		for (int i : aCounts)
+		{
+			if (i == 0)
+				continue;
+			double aFraction = (i /  aTotalCount);
+			d += (-aFraction * Math.log(aFraction));
+		}
+
+		return d / Math.log(2.0);
+	}
+
+	// lazy - combines two modes: (prospective) evaluation and data modification
+	// will be split when final
+	private static final double getEntropy3(long[][] theRows, int[] theBest, int theNrSelected, int theExtension, int[] theRowInfos, boolean modify)
+	{
+		int[] aCounts = modify ? null : new int[(int) Math.pow(2.0, (theNrSelected+1))];
+
+		for (int i = 0, j = theRows.length, k = (1 << theNrSelected), l = ~k; i < j; ++i)
+		{
+			int aRowInfo = theRowInfos[i];
+			if ((theRows[i][theExtension >> 6] & (0x8000_0000_0000_0000L >>> (theExtension & 63))) != 0L)
+				aRowInfo |= k;
+			else
+				aRowInfo &= l; // no longer needed, data is manipulated once
+
+			if (modify)
+				theRowInfos[i] = aRowInfo;
+			else
+				++aCounts[aRowInfo];
+		}
+		if (modify)
+			return Double.NaN;
+
+		double aTotalCount = theRows.length;
+		double d = 0.0;
+		for (int i : aCounts)
+		{
+			if (i == 0)
+				continue;
+			double aFraction = (i / aTotalCount);
+			d += (-aFraction * Math.log(aFraction));
+		}
+
+		return d / Math.log(2.0);
+	}
+
+	private static final void mikiPrint(String s) { System.out.println(s); }
+
+	// Long.toBinaryString(long) does not print leading zeros
+	private static final String asBinary(int aNrColumns, long theLong)
+	{
+		StringBuilder s = new StringBuilder(aNrColumns);
+		for (int i = 63, j = (i-aNrColumns); i > j; --i)
+			s.append(((theLong >>> i) & 1L) == 0L ? "0" : "1");
+		return s.toString();
+	}
+
+	// might copy theColumns, add theExtension, sort, then print
+	private static final String asBitSet(int aNrColumns, int[] theColumns, int theExtension)
+	{
+		StringBuilder s = new StringBuilder(aNrColumns << 3);
+		s.append("{");
+		for (int i = 0, j = aNrColumns; i < j; ++i)
+			s.append(theColumns[i]).append(", ");
+		return s.append(theExtension).append("}").toString();
+	}
 }
