@@ -489,6 +489,7 @@ public class SubgroupSet extends TreeSet<Subgroup>
 		for (int i : aCoverCounts)
 			aCoverRedundancy += (Math.abs(i - anExpectedCoverCount));
 		aCoverRedundancy = (aCoverRedundancy/anExpectedCoverCount/aTotalCount);
+//		aCoverRedundancy = (aCoverRedundancy/(anExpectedCoverCount*aTotalCount));
 
 		// TODO
 		// when there are many duplicates, a HashSet/TreeSet might be more
@@ -520,7 +521,12 @@ public class SubgroupSet extends TreeSet<Subgroup>
 		}
 		anEntropy /= Math.log(2.0);
 
-		Log.logCommandLine(String.format("CR(%d)=%f\tH(%1$d)=%f", max, aCoverRedundancy, anEntropy));
+		// prints topK (not max), fixed value is easier for log file parsing
+		// the value for max is logged as:
+		//   for !CBSS: number of subgroups
+		//   for  CBSS: NR CANDIDATES FOR NEXT LEVEL (last entry, with a -)
+//		Log.logCommandLine(String.format("CR(%d)=%f\tH(%1$d)=%f", max, aCoverRedundancy, anEntropy));
+		Log.logCommandLine(String.format("CCSUM=%d\tN=%d\tCCEXPECTED=%f\tCR(%d)=%f\tH(%4$d)=%f", aCoverCountSum, itsTotalCoverage, anExpectedCoverCount, topK, aCoverRedundancy, anEntropy));
 
 		return anEntropy;
 	}
@@ -552,7 +558,7 @@ public class SubgroupSet extends TreeSet<Subgroup>
 
 	public SubgroupSet getPatternTeam(Table theTable, int k)
 	{
-		// FIXME this should start with update()
+		update();
 
 		BinaryTable aBinaryTable = new BinaryTable(theTable, this);
 		ItemSet aSubset = aBinaryTable.getApproximateMiki(k);
@@ -571,6 +577,11 @@ public class SubgroupSet extends TreeSet<Subgroup>
 
 		aResult.itsJointEntropy = aSubset.getJointEntropy();
 		aResult.update();
+
+// first call prints entropy of top-10 (of the ranking, not best PatternTeam)
+//postProcessGetCoverRedundancyAndJointEntropy(10);
+//Miki.getMiki(this, k);
+//System.out.println(aResult.itsJointEntropy);
 
 		return aResult;
 	}
