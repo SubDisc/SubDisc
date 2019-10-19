@@ -6,6 +6,7 @@ import java.util.*;
 public class CoverBasedSubgroupSelection
 {
 	private static final boolean USE_CORRECTED_MEASURE = true; // true in git
+	private static final boolean DEBUG_PRINTS          = true; // true in git
 	private static final double  ALPHA                 = 0.9;  // as in papers
 
 	static final SortedSet<Candidate> postProcessCandidateSet(SortedSet<Candidate> theCandidates, int theTopK)
@@ -31,6 +32,8 @@ public class CoverBasedSubgroupSelection
 		// technically a Tree could hold more nodes than Integer.MAX_VALUE
 		// but a lot of code would crash everywhere, so assume aSize is in range
 		int aSize = theCandidates.size();
+
+		Log.logCommandLine("cbss temporary queue: " + aSize);
 
 		if (aSize == 0)
 			return Collections.emptySortedSet();
@@ -80,19 +83,18 @@ public class CoverBasedSubgroupSelection
 		// call addAllForTreeSet(), see the java source code for that
 		SortedSet<Candidate> aResult = new TreeSet<>();
 
-		Log.logCommandLine("subgroups: " + aSize);
 		// the first loop is special, as there are no Subgroups in aResult yet,
 		// the multiplicative weight for each Candidate is equal to 1.0
 		// so the Candidate with the highest priority wins
 		// and its new priority = 1.0 * c.getPriority()
 		// therefore the first iteration is taken out of the loop
-		Log.logCommandLine("loop 0");
+		print("loop 0");
 		update(isForCandidateSet, aUsed, aCandidates, aMembers, aCoverCounts, aResult, 0, 1.0, aLastScores[0]);
 
 		// keep unset outside of the valid range of indexes (so not 0)
 		for (int i = 1, min = Math.min(aSize, theTopK), unset = -1; i < min; ++i)
 		{
-			Log.logCommandLine("loop " + i);
+			print("loop " + i);
 
 			// always use unset, both NEGATIVE_INFINITY and NaN are possible
 			// priorities/qualities, as some model classes do not check them
@@ -149,13 +151,13 @@ public class CoverBasedSubgroupSelection
 			update(isForCandidateSet, aUsed, aCandidates, aMembers, aCoverCounts, aResult, aBestIndex, aBestCandidateWeight, aMaxScore);
 		}
 
-		Log.logCommandLine("========================================================");
-		Log.logCommandLine("used: " + aUsed.toString());
-
-		String s = (isForCandidateSet ? "priority: " : "result: ");
-		for (Candidate aCandidate : aResult)
-			Log.logCommandLine(s + (isForCandidateSet ? aCandidate.getPriority() :
-														aCandidate.getSubgroup().getMeasureValue()));
+		if (DEBUG_PRINTS)
+		{
+			print(String.format("used: %s%n", aUsed));
+			String s = (isForCandidateSet ? "priority: " : "result: ");
+			for (Candidate aCandidate : aResult)
+				print(s + (isForCandidateSet ? aCandidate.getPriority() : aCandidate.getSubgroup().getMeasureValue()));
+		}
 
 		return aResult;
 	}
@@ -168,8 +170,8 @@ public class CoverBasedSubgroupSelection
 
 		theUsed.set(theBestIndex);
 		Candidate c = theCandidates[theBestIndex];
-		Log.logCommandLine(c.getSubgroup().toString());
-		Log.logCommandLine(String.format("best (%d): %s, %s, %s%n", theBestIndex, df.format(c.getPriority()), df.format(theBestCandidateWeight), df.format(theMaxScore)));
+		print(c.getSubgroup().toString());
+		print(String.format("best (%d): %s, %s, %s%n", theBestIndex, df.format(c.getPriority()), df.format(theBestCandidateWeight), df.format(theMaxScore)));
 		if (isForCandidateSet) // could be unconditional, ResultSet ignores it
 			c.setPriority(theMaxScore);
 		theResult.add(c);
@@ -190,5 +192,11 @@ public class CoverBasedSubgroupSelection
 			aResult += Math.pow(ALPHA, theCoverCounts[i]);
 
 		return aResult / theCoverage;
+	}
+
+	private static final void print(String theMessage)
+	{
+		if (DEBUG_PRINTS)
+			Log.logCommandLine(theMessage);
 	}
 }
