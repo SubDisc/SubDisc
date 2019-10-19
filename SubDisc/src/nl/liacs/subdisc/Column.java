@@ -2192,7 +2192,7 @@ public class Column implements XMLNodeInterface
 	private static final int MASK_OFF = 0x7fffffff;
 	private float[] SORTED;
 	private int[] SORT_INDEX;
-	final void buildSorted(BitSet theTarget)
+	public final void buildSorted(BitSet theTarget)
 	{
 		boolean isTargetNull = (theTarget == null);
 
@@ -2209,13 +2209,13 @@ public class Column implements XMLNodeInterface
 	// should not be called during mining, could use Lock obtained and released
 	// by SubgroupDiscovery.mine(), but for now trust that everything goes well
 	final void removeSorted() { SORTED = null; SORT_INDEX = null; }
-	final float getSortedValue(int index) { return SORTED[index]; }
+	public final float getSortedValue(int index) { return SORTED[index]; }
 	final float[] getSortedValuesCopy() { return Arrays.copyOf(SORTED, SORTED.length); }
 
 	// a more generic version of this type of classes will follow later
-	static final class ValueCount
+	public static final class ValueCount
 	{
-		final int[] itsCounts;        // of size column.cardinality
+		public final int[] itsCounts;        // of size column.cardinality
 
 		private ValueCount(int[] theCounts)
 		{
@@ -2249,7 +2249,7 @@ public class Column implements XMLNodeInterface
 		return new ValueCount(aCnt);
 	}
 
-	public ValueCountTP getUniqueNumericDomainMap(BitSet theBitSet)
+	ValueCountTP getUniqueNumericDomainMap(BitSet theBitSet)
 	{
 		if (!isValidCall("getUniqueNumericDomainMap", theBitSet))
 			return new ValueCountTP(new int[0], new int[0]);
