@@ -51,10 +51,10 @@ public class SubgroupDiscovery
 	private static final boolean USE_SINGLE_BEST_RESULT_LIKE_BEFORE  = false;
 	// not used anymore, but will be again when debugging linear algorithm
 	private static final boolean DEBUG_PRINTS_FOR_BEST_INTERVAL      = false;
-	//
+	// beam fill (not equal to nr. results at same level; for cbss includes -tmp
 	private static final boolean DEBUG_PRINTS_NEXT_LEVEL_CANDIDATES  = false;
 	// print CoverRedundancy and JointEntropy for topK for For Real paper
-	private static final int[] FOR_REAL_PRINTS = {};//{ 10, 100, 1000 };
+	private static final int[] FOR_REAL_PRINTS = {};//{ 10, 100 };
 
 	// statistics for debugging - related to booleans above
 	private AtomicLong itsBestPairsCount  = new AtomicLong(0);
@@ -548,16 +548,22 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 					aCandidate = itsCandidateQueue.removeFirst();
 				// obviously (currentLevelQueueSize <= 0)
 				// take solely when this is only active thread
+				// FIXME alone is not required for non-beam settings, optimise
 				else if ((aTotalSize > 0) && alone)
 				{
 					aCandidate = itsCandidateQueue.removeFirst();
 					if (DEBUG_PRINTS_NEXT_LEVEL_CANDIDATES)
 					{
 						SearchStrategy ss = itsSearchParameters.getSearchStrategy();
-						boolean levelwise =  ss.isBeam() || (ss  == SearchStrategy.BREADTH_FIRST);
-						// first Candidate was just taken from the Queue
+						boolean levelwise = (ss.isBeam() || (ss == SearchStrategy.BREADTH_FIRST));
 						if (levelwise && (itsSearchParameters.getSearchDepth() > 1))
-							itsCandidateQueueSizes.add(itsCandidateQueue.currentLevelQueueSize() + 1);
+						{
+							boolean cbss = (ss == SearchStrategy.COVER_BASED_BEAM_SELECTION);
+							// use - to indicate size of intermediate beam
+							itsCandidateQueueSizes.add(cbss ? -aTotalSize : aTotalSize);
+							// first Candidate was just taken from the Queue
+							if (cbss) itsCandidateQueueSizes.add(itsCandidateQueue.currentLevelQueueSize() + 1);
+						}
 					}
 				}
 				// no other thread can add new candidates
@@ -627,7 +633,8 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 				Log.logCommandLine("linear algo: " + tail);
 			}
 		}
-		if (DEBUG_PRINTS_NEXT_LEVEL_CANDIDATES && !itsCandidateQueueSizes.isEmpty())
+		// ease log parsing: always print, also maxDepth=1/non-level-wise search
+		if (DEBUG_PRINTS_NEXT_LEVEL_CANDIDATES)// && !itsCandidateQueueSizes.isEmpty())
 			Log.logCommandLine("NR CANDIDATES FOR NEXT LEVEL: " + itsCandidateQueueSizes);
 		for (int topK : FOR_REAL_PRINTS)
 			itsResult.postProcessGetCoverRedundancyAndJointEntropy(topK);
@@ -1223,7 +1230,17 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 
 	private void postMining(long theElapsedTime)
 	{
-		Process.echoMiningEnd(theElapsedTime, getNumberOfSubgroups());
+		int aNrSubgroups = getNumberOfSubgroups();
+
+		// before mining end: post-processing must be included in total run time
+		if (itsSearchParameters.getSearchStrategy() == SearchStrategy.COVER_BASED_BEAM_SELECTION)
+		{
+			itsCandidateQueueSizes.add(-aNrSubgroups);
+			postProcessCBSS();
+		}
+
+		// for CBSS this reports aNrSubgroups, not 100 (might change one day)
+		Process.echoMiningEnd(theElapsedTime, aNrSubgroups);
 
 		long aNrCandidates = itsCandidateCount.get();
 		setTitle(itsMainWindow, theElapsedTime, aNrCandidates);
@@ -1233,13 +1250,14 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 		// postProcessCook() output is supposed to go in between
 		Log.logCommandLine("number of candidates: " + aNrCandidates);
 		postProcessCook();
-		Log.logCommandLine("number of subgroups: " + getNumberOfSubgroups());
+		// for CBSS this reports 100, not aNrSubgroups
+		Log.logCommandLine("number of subgroups : " + getNumberOfSubgroups());
 
 		// assign 1 to n to subgroups, for future reference in subsets
 		itsResult.setIDs();
 
+		// TODO probably also should be called before Process.echoMiningEnd()
 		postProcessMultiLabelAutoRun(); // IDs must be set first,  might set new
-		postProcessCBBS();
 	}
 
 	private static final void setTitle(JFrame theMainWindow, long theElapsedTime, long theNrCandidates)
@@ -1303,10 +1321,11 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		itsBuffer = new TreeSet<Candidate>();
 	}
 
-	private void postProcessCBBS()
+	private void postProcessCBSS()
 	{
-		// just for cover-based beam search post selection, see note at
-		// SubgroupSet.postProcess(), all itsResults will remain in memory
+		assert (itsSearchParameters.getSearchStrategy() == SearchStrategy.COVER_BASED_BEAM_SELECTION);
+
+		// just for cover-based beam search post selection
 		SubgroupSet aSet = itsResult.postProcess(itsSearchParameters.getSearchStrategy());
 
 		// FIXME MM hack to deal with strange postProcess implementation
@@ -1315,8 +1334,8 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			// no reassign, we want itsResult to be final
 			itsResult.clear();
 			itsResult.addAll(aSet);
-			// in COVER_BASED_BEAM_SELECTION, subgroups may have been removed
-			itsResult.setIDs();
+//			// in COVER_BASED_BEAM_SELECTION, subgroups may have been removed
+//			itsResult.setIDs();
 		}
 	}
 
@@ -1350,6 +1369,12 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		// see comment in SubgroupSet.postProcess()
 		for (Subgroup s : itsResult)
 		{
+			// FIXME
+			// because s.getID() is used this method can not be called before
+			// Process.echoMiningEnd() in postMining()
+			// this is unnecessary, as the same output can be achieved by using
+			// an old style (non-enhanced) for loop replacing s.getId() by i+1
+			// then the post-processing time can be included in the run time
 			Log.logCommandLine("Postprocessing subgroup " + s.getID());
 			double aTotalQuality = 0.0;
 			BinaryTable aSubgroupTable = itsBinaryTable.selectRows(s.getMembers());
@@ -2062,7 +2087,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 				cover += aCount;
 
 				// for debugging do not continue on (cover < itsMinimumCoverage)
-				if (cover <= next  || (!DEBUG_POC_BINS && (cover < itsMinimumCoverage)))
+				if (cover <= next || (!DEBUG_POC_BINS && (cover < itsMinimumCoverage)))
 					continue;
 
 				// for debugging do not break on (cover == anOldCoverage)
@@ -2121,7 +2146,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 				cover += aCount;
 
 				// for debugging do not continue on (cover < itsMinimumCoverage)
-				if (cover <= next  || (!DEBUG_POC_BINS && (cover < itsMinimumCoverage)))
+				if (cover <= next || (!DEBUG_POC_BINS && (cover < itsMinimumCoverage)))
 					continue;
 
 				// for debugging do not break on (cover == anOldCoverage)
@@ -2387,7 +2412,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 				tp += aTPs[i];
 
 				// for debugging do not continue on (cover < itsMinimumCoverage)
-				if (cover <= next  || (!DEBUG_POC_BINS && (cover < itsMinimumCoverage)))
+				if (cover <= next || (!DEBUG_POC_BINS && (cover < itsMinimumCoverage)))
 					continue;
 
 				// for debugging do not break on (cover == anOldCoverage)
