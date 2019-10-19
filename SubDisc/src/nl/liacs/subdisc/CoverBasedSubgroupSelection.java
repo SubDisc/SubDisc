@@ -5,9 +5,9 @@ import java.util.*;
 
 public class CoverBasedSubgroupSelection
 {
-	private static final boolean USE_CORRECTED_MEASURE = true; // true in git
-	private static final boolean DEBUG_PRINTS          = true; // true in git
-	private static final double  ALPHA                 = 0.9;  // as in papers
+	private static final boolean USE_CORRECTED_MEASURE = true;  // true in git
+	private static final boolean DEBUG_PRINTS          = false; // false in git
+	private static final double  ALPHA                 = 0.9;   // as in papers
 
 	static final SortedSet<Candidate> postProcessCandidateSet(SortedSet<Candidate> theCandidates, int theTopK)
 	{
