@@ -39,9 +39,9 @@ public enum QM implements EnumInterface
 	ABS_Z_SCORE		("Abs Z-Score",		"1.0",	TargetType.SINGLE_NUMERIC),
 	AVERAGE			("Average",		"0.0",	TargetType.SINGLE_NUMERIC),	// bogus minimum value, should come from data
 	INVERSE_AVERAGE		("Inverse Average",	"0.0",	TargetType.SINGLE_NUMERIC),	// bogus minimum value, should come from data
-	ABS_AVERAGE		("Abs Average",	"0.0",	TargetType.SINGLE_NUMERIC),	// bogus minimum value, should come from data
 	QM_SUM			("Sum",			"0.0",	TargetType.SINGLE_NUMERIC),	// bogus minimum value, should come from data, note the irregular name, to avoid conflict with SUM
 	INVERSE_SUM		("Inverse Sum",		"0.0",	TargetType.SINGLE_NUMERIC),	// bogus minimum value, should come from data
+	ABS_DEVIATION	("Abs Deviation",	"0.0",	TargetType.SINGLE_NUMERIC),
 	MEAN_TEST		("Mean Test",		"0.01",	TargetType.SINGLE_NUMERIC),
 	INVERSE_MEAN_TEST	("Inverse Mean Test",	"0.01",	TargetType.SINGLE_NUMERIC),
 	ABS_MEAN_TEST		("Abs Mean Test",	"0.01",	TargetType.SINGLE_NUMERIC),
@@ -287,9 +287,9 @@ public enum QM implements EnumInterface
 			case ABS_Z_SCORE :		return SUM;
 			case AVERAGE :			return SUM;
 			case INVERSE_AVERAGE :		return SUM;
-			case ABS_AVERAGE :		return SUM;
 			case QM_SUM :			return SUM;
 			case INVERSE_SUM :		return SUM;
+			case ABS_DEVIATION :	return SUM;
 			case MEAN_TEST :		return SUM;
 			case INVERSE_MEAN_TEST :	return SUM;
 			case ABS_MEAN_TEST :		return SUM;

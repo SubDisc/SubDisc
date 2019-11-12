@@ -52,9 +52,9 @@ public class SubgroupDiscovery
 	// not used anymore, but will be again when debugging linear algorithm
 	private static final boolean DEBUG_PRINTS_FOR_BEST_INTERVAL      = false;
 	// beam fill (not equal to nr. results at same level; for cbss includes -tmp
-	private static final boolean DEBUG_PRINTS_NEXT_LEVEL_CANDIDATES  = false;
+	private static final boolean DEBUG_PRINTS_NEXT_LEVEL_CANDIDATES  = true;
 	// print CoverRedundancy and JointEntropy for topK for For Real paper
-	private static final int[] FOR_REAL_PRINTS = {};//{ 10, 100 };
+	private static final int[] FOR_REAL_PRINTS = { 10, 100 };
 
 	// statistics for debugging - related to booleans above
 	private AtomicLong itsBestPairsCount  = new AtomicLong(0);
@@ -481,7 +481,7 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 		//Log.logCommandLine("RefinementList.COUNT: " + RefinementList.COUNT);
 		//Log.logCommandLine("RefinementList.ADD: " + RefinementList.ADD);
 
-		postMining(System.currentTimeMillis() - theBeginTime);
+		postMining(theBeginTime);
 	}
 
 	/* use theNrThreads < 0 to run old mine(theBeginTime) */
@@ -606,7 +606,7 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 		// wait for last active threads to complete
 		while (!es.isTerminated()) {};
 
-		postMining(System.currentTimeMillis() - theBeginTime);
+		postMining(theBeginTime);
 
 		// statistics - will move to a separate RunTimeStats class of some sort
 		if (DEBUG_PRINTS_FOR_BEST && EnumSet.of(NumericStrategy.NUMERIC_BEST, NumericStrategy.NUMERIC_BEST_BINS).contains(itsSearchParameters.getNumericStrategy()))
@@ -1228,7 +1228,7 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 	////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////
 
-	private void postMining(long theElapsedTime)
+	private void postMining(long theBeginTime)
 	{
 		int aNrSubgroups = getNumberOfSubgroups();
 
@@ -1240,10 +1240,11 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 		}
 
 		// for CBSS this reports aNrSubgroups, not 100 (might change one day)
-		Process.echoMiningEnd(theElapsedTime, aNrSubgroups);
+		long anElapsedTime = (System.currentTimeMillis() - theBeginTime);
+		Process.echoMiningEnd(anElapsedTime, aNrSubgroups);
 
 		long aNrCandidates = itsCandidateCount.get();
-		setTitle(itsMainWindow, theElapsedTime, aNrCandidates);
+		setTitle(itsMainWindow, anElapsedTime, aNrCandidates);
 
 		deleteSortData(itsTable.getColumns());
 
@@ -2888,6 +2889,9 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			aBestQuality          = aBestSubgroup.getMeasureValue();
 		}
 
+		// FIXME both minimum and maximum coverage need to be checked
+		//       evaluateNumericBestIntervalBruteForceMM() now does so
+
 		// NOTE
 		// when (aBestInterval.compareTo(oldInterval) == 0) the subgroup size or
 		// ratios might have changed, yielding a different final quality
@@ -2932,26 +2936,39 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			head_cover += (aPi + theRBICT.getNegativeCount(i));
 			head_tp    += aPi;
 
-			// NOTE (float) cast required for comparison to original code only
 			// from this split point to Infinity
-			double aQuality = (float) itsQualityMeasure.calculate(aParentTPsCount-head_tp, aParentCoverage-head_cover);
-			if (aQuality > aBestQuality) {
-				aBestQuality = aQuality;
-				aBestLo = i+1;
-				aBestHi = useInfinite;
-				aBestNrTruePositives = (aParentTPsCount-head_tp);
-				aBestCoverage        = (aParentCoverage-head_cover);
+			//
+			// checking only ResultSet is not the best check, but fine for now
+			// follows the original algorithm, the alternative would also keep
+			// track of a Best for CandidateSet also (like Best/BestBins code)
+			// NOTE isUsefulForResultSet() uses a different count every time
+			if (isUsefulForResultSet((aParentCoverage-head_cover), aParentCoverage, itsMinimumCoverage, itsMaximumCoverage))
+			{
+				// NOTE float cast required for comparison to original code only
+				double aQuality = (float) itsQualityMeasure.calculate(aParentTPsCount-head_tp, aParentCoverage-head_cover);
+				if (aQuality > aBestQuality)
+				{
+					aBestQuality = aQuality;
+					aBestLo = i+1;
+					aBestHi = useInfinite;
+					aBestNrTruePositives = (aParentTPsCount-head_tp);
+					aBestCoverage        = (aParentCoverage-head_cover);
+				}
 			}
 
 			// from -Infinity to this split point
 			// if (itsUseNegInfty == true) first Interval is (-Inf, -Inf)
-			aQuality = (head_cover == 0) ? Double.NaN : (float) itsQualityMeasure.calculate(head_tp, head_cover);
-			if (aQuality > aBestQuality) {
-				aBestQuality = aQuality;
-				aBestLo = useInfinite;
-				aBestHi = i;
-				aBestNrTruePositives = head_tp;
-				aBestCoverage        = head_cover;
+			if (isUsefulForResultSet(head_cover, aParentCoverage, itsMinimumCoverage, itsMaximumCoverage))
+			{
+				double aQuality = (head_cover == 0) ? Double.NaN : (float) itsQualityMeasure.calculate(head_tp, head_cover);
+				if (aQuality > aBestQuality)
+				{
+					aBestQuality = aQuality;
+					aBestLo = useInfinite;
+					aBestHi = i;
+					aBestNrTruePositives = head_tp;
+					aBestCoverage        = head_cover;
+				}
 			}
 
 			// from this split point to all subsequent split points
@@ -2961,13 +2978,18 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 				int aPj = theRBICT.getPositiveCount(j);
 				cover  += (aPj + theRBICT.getNegativeCount(j));
 				tp     += aPj;
-				aQuality = (float) itsQualityMeasure.calculate(tp, cover);
-				if (aQuality > aBestQuality) {
-					aBestQuality = aQuality;
-					aBestLo = lo;
-					aBestHi = j;
-					aBestNrTruePositives = tp;
-					aBestCoverage        = cover;
+
+				if (isUsefulForResultSet(cover, aParentCoverage, itsMinimumCoverage, itsMaximumCoverage))
+				{
+					double aQuality = (float) itsQualityMeasure.calculate(tp, cover);
+					if (aQuality > aBestQuality)
+					{
+						aBestQuality = aQuality;
+						aBestLo = lo;
+						aBestHi = j;
+						aBestNrTruePositives = tp;
+						aBestCoverage        = cover;
+					}
 				}
 			}
 		}
