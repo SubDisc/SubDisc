@@ -2994,6 +2994,9 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			}
 		}
 
+		if (aBestCoverage == unset)
+			return null;
+
 		// FIXME MM - getSplitPoints() is extremely inefficient: creates a copy
 		//            of split points array, better create getSplitPoint(index)
 		float[] aSplitPoints = ((aBestLo == unset) && (aBestLo == unset)) ? null : theRBICT.getSplitPoints();
@@ -3002,9 +3005,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 
 		// MM - ignore the SKIP part for now
 		Condition anAddedCondition = new Condition(theConditionBase, new Interval(l, h));
-		Subgroup aChild = directComputation(theParent, anAddedCondition, aBestQuality, aBestCoverage, aBestNrTruePositives);
-
-		return aChild;
+		return directComputation(theParent, anAddedCondition, aBestQuality, aBestCoverage, aBestNrTruePositives);
 	}
 
 	// NOTE comparison is problematic when user presses stop/max time is reached
