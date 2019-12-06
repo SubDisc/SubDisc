@@ -6,6 +6,7 @@ import java.util.*;
 import java.util.List;
 
 import nl.liacs.subdisc.*;
+import nl.liacs.subdisc.FileHandler.Action;
 
 public class SubDisc
 {
@@ -44,47 +45,60 @@ public class SubDisc
 //		"org.knime.core.util_4.1.1.0034734.jar",
 	};
 
+	/*
+	 * There is a difference between the command line options:
+	 *   -Djava.awt.headless=true; and
+	 *   showWindows.
+	 *
+	 * The first is a java Toolkit option, and suppresses all GUI elements.
+	 *
+	 * The second is a Cortana option, and works only in a GraphicsEnvironment.
+	 * When an experiment is run from XML, the default is to write the result to
+	 * a file, and shutdown the program.
+	 * When showWindows is set to a 'true' value, the result is written to file,
+	 * but the application does not shutdown.
+	 * Instead, a ResultWindow is shown.
+	 * This allows for an immediate inspection of the result, and easy access to
+	 * additional functionality, like Browse, Pattern Team, and ROC.
+	 */
 	public static void main(String[] args)
 	{
 		checkLibs();
+
 		if (!GraphicsEnvironment.isHeadless() && (SplashScreen.getSplashScreen() != null))
 		{
-			// assume it is an XML-autorun experiment
-			if (args.length > 0)
-				SplashScreen.getSplashScreen().close();
-			else
+			// else assume it is an XML-autorun experiment and close immediately
+			if (args.length == 0)
 			{
 				try { Thread.sleep(3000); }
 				catch (InterruptedException e) {};
-				SplashScreen.getSplashScreen().close();
 			}
+
+			SplashScreen.getSplashScreen().close();
 		}
 
 		if (XMLAutoRun.autoRunSetting(args))
+			return;
+
+		// apparently starting with a file loader is problematic on OSX
+		// TODO check: the EDT code has changed, this might not be true anymore
+		if (System.getProperty("os.name").toLowerCase().indexOf("mac") >= 0)
 		{
-			// return;
-			// FIXME MM
-			// somehow AWT daemon threads are still running
-			// preventing the application from exiting on return
-			// no external application should call main()
-			System.exit(0);
-		}
-
-		new MiningWindow(); //simply open an empty window
-/*
-		//This old startup code started with a file loader, but this was problematic on OSX
-		
-		FileHandler aLoader = new FileHandler(Action.OPEN_FILE);
-		Table aTable = aLoader.getTable();
-		SearchParameters aSearchParameters = aLoader.getSearchParameters();
-
-		if (aTable == null)
 			new MiningWindow();
-		else if (aSearchParameters == null)
-			new MiningWindow(aTable);
+		}
 		else
-			new MiningWindow(aTable, aSearchParameters); //XML
-*/
+		{
+			FileHandler aLoader = new FileHandler(Action.OPEN_FILE);
+			Table aTable = aLoader.getTable();
+			SearchParameters aSearchParameters = aLoader.getSearchParameters();
+
+			if (aTable == null)
+				new MiningWindow();
+			else if (aSearchParameters == null)
+				new MiningWindow(aTable);
+			else
+				new MiningWindow(aTable, aSearchParameters); // XML
+		}
 	}
 
 	// may move to a separate class

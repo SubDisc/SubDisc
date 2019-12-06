@@ -67,7 +67,7 @@ public class Table implements XMLNodeInterface
 	}
 
 	// FileLoaderXML
-	public Table(Node theTableNode, String theXMLFileDirectory)
+	public Table(Node theTableNode, String theXMLFileDirectory, boolean showWindows)
 	{
 		NodeList aChildren = theTableNode.getChildNodes();
 		for (int i = 0, j = aChildren.getLength(); i < j; ++i)
@@ -85,7 +85,7 @@ public class Table implements XMLNodeInterface
 		 * now all columns are know, check if data (Columns) is valid by
 		 * loading actual data from itsSource
 		 */
-		new FileHandler(new File(theXMLFileDirectory + "/" + itsSource), this);
+		new FileHandler(new File(theXMLFileDirectory + "/" + itsSource), this, showWindows);
 	}
 
 	// PSR database

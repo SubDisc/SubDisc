@@ -35,7 +35,7 @@ public class FileHandler
 			case OPEN_FILE :
 			{
 				showFileChooser(theAction);
-				openFile();
+				openFile(true);
 				break;
 			}
 			case OPEN_DATABASE : openDatabase(); break;
@@ -66,7 +66,7 @@ public class FileHandler
 	}
 
 	// Populate Table from XML file
-	public FileHandler(File theFile, Table theTable)
+	public FileHandler(File theFile, Table theTable, boolean showWindows)
 	{
 		if (theFile == null || !theFile.exists())
 		{
@@ -77,17 +77,17 @@ public class FileHandler
 		{
 			Log.logCommandLine(
 				"FileHandler Constructor: Table is 'null', trying normal loading.");
-			openFile();
+			openFile(showWindows);
 		}
 		else
 		{
 			itsFile = theFile;
 			itsTable = theTable;
-			openFile();
+			openFile(showWindows);
 		}
 	}
 
-	private void openFile()
+	private void openFile(boolean showWindows)
 	{
 		if (itsFile == null || !itsFile.exists())
 		{
@@ -98,9 +98,8 @@ public class FileHandler
 		FileType aFileType = FileType.getFileType(itsFile);
 		Timer aTimer = new Timer();
 
-		JFrame aLoaderDialog = null;
-		if (!GraphicsEnvironment.isHeadless() && aFileType != FileType.XML)
-			aLoaderDialog = showFileLoaderDialog(itsFile);
+		boolean noDialog = (GraphicsEnvironment.isHeadless() || aFileType == FileType.XML || !showWindows);
+		JFrame aLoaderDialog = noDialog ? null : showFileLoaderDialog(itsFile);
 
 		switch (aFileType)
 		{
@@ -130,7 +129,7 @@ public class FileHandler
 			}
 			case XML :
 			{
-				FileLoaderXML aLoader = new FileLoaderXML(itsFile);
+				FileLoaderXML aLoader = new FileLoaderXML(itsFile, showWindows);
 				itsTable = aLoader.getTable();
 				itsSearchParameters = aLoader.getSearchParameters();
 				//itsTable.update();

@@ -9,7 +9,7 @@ public class FileLoaderXML implements FileLoaderInterface
 	private Table itsTable;
 	private SearchParameters itsSearchParameters;
 
-	public FileLoaderXML(File theFile)
+	public FileLoaderXML(File theFile, boolean showWindows)
 	{
 		if (theFile == null || !theFile.exists())
 		{
@@ -20,10 +20,10 @@ public class FileLoaderXML implements FileLoaderInterface
 			return;
 		}
 		else
-			loadFile(theFile);
+			loadFile(theFile, showWindows);
 	}
 
-	private void loadFile(File theFile)
+	private void loadFile(File theFile, boolean showWindows)
 	{
 		NodeList aSettings = XMLDocument.parseXMLFile(theFile)
 						.getLastChild()
@@ -36,7 +36,7 @@ public class FileLoaderXML implements FileLoaderInterface
 		{
 			String aNodeName = aSettings.item(i).getNodeName();
 			if ("table".equalsIgnoreCase(aNodeName))
-				itsTable = new Table(aSettings.item(i), theFile.getParent());
+				itsTable = new Table(aSettings.item(i), theFile.getParent(), showWindows);
 			else if ("search_parameters".equalsIgnoreCase(aNodeName))
 				itsSearchParameters = new SearchParameters(aSettings.item(i));
 			// NOTE order sensitive, SearchParameters must be set first
