@@ -148,34 +148,36 @@ public class XMLAutoRun
 	 */
 	public static boolean autoRunSetting(String[] args)
 	{
+		if (args.length == 0)
+			return false;
+
 		File aFile = null;
 		boolean showWindows = false;
 		int aNrThreads = Integer.MIN_VALUE;
 
-		if (args.length == 1 || args.length == 2 || args.length == 3)
-		{
-			if (!args[0].endsWith(".xml"))
-				showHelp();
-			else
-				aFile = new File(args[0]);
-
-			if (args.length >= 2)
-				showWindows = AttributeType.isValidBinaryTrueValue(args[1]);
-
-			if (args.length == 3)
-			{
-				try { aNrThreads = Integer.parseInt(args[2]); }
-				catch (NumberFormatException e) { showHelp(); }
-			}
-
-			runAllFromFile(aFile, showWindows, aNrThreads);
-			if (!showWindows)
-				return true;
-			// else returns only when all windows are closed
-			return true;
-		}
+		if (!args[0].endsWith(".xml") || args.length > 3)
+			showHelp();
 		else
-			return false;
+			aFile = new File(args[0]);
+
+		if (args.length >= 2)
+			showWindows = AttributeType.isValidBinaryTrueValue(args[1]);
+
+		if (args.length == 3)
+		{
+			try { aNrThreads = Integer.parseInt(args[2]); }
+			catch (NumberFormatException e) { showHelp(); }
+		}
+
+		runAllFromFile(aFile, showWindows, aNrThreads);
+
+//		// this seems unnecessary, there should be no windows in this case
+//		// though this deals with ErrorDialogs / incorrectly opened windows
+//		if (!showWindows)
+//			return true;
+
+		// returns only when all windows are closed
+		return true;
 	}
 
 	private static void runAllFromFile(File theFile, boolean showWindows, int theNrThreads)
