@@ -2353,7 +2353,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 //			bestAdd(aBestSubgroup, aParentCoverage);
 		if (!isAllStrategy)
 		{
-			checkAndLogBest(aBestSubgroups, (int) aParentCoverage);
+			checkAndLogBest(aBestSubgroups, aParentCoverage);
 			// FIXME temporary checks
 			debugBest(theParent, null, aBestSubgroups);
 		}
