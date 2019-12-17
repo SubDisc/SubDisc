@@ -11,9 +11,9 @@ import nl.liacs.subdisc.*;
 public class BrowseJTable extends JTable
 {
 	private static final long serialVersionUID = 1L;
-	private final BitSet MEMBERS;
-	private final BitSet TRUE_POSITIVES;
-	private final boolean NOMINAL; // fast
+	private final BitSet itsMembers;
+	private final BitSet itsTruePositives;
+	private final boolean isNominal; // fast
 	/*
 	 * TODO Hacked in for now. Used to bring column into focus in
 	 * findColumn(). Will be replaced with clean code.
@@ -21,33 +21,34 @@ public class BrowseJTable extends JTable
 	 */
 	private int[] itsOffsets;
 
-	@SuppressWarnings("unchecked")
 	public BrowseJTable(Table theTable, Subgroup theSubgroup)
 	{
 		if (theTable == null)
 		{
-			MEMBERS = null;
-			TRUE_POSITIVES = null;
-			NOMINAL = false;
+			itsMembers       = null;
+			itsTruePositives = null;
+			isNominal        = false;
 			return;	// warning
 		}
 		else if (theSubgroup == null)
 		{
-			MEMBERS = null;
-			TRUE_POSITIVES = null;
+			itsMembers       = null;
+			itsTruePositives = null;
 		}
 		else
 		{
-			MEMBERS = theSubgroup.getMembers();
-			TRUE_POSITIVES = theSubgroup.getParentSet().getBinaryTargetClone();
-			if (TRUE_POSITIVES != null)
-				TRUE_POSITIVES.and(MEMBERS);
+			itsMembers       = theSubgroup.getMembers();
+			itsTruePositives = theSubgroup.getParentSet().getBinaryTargetClone();
+			if (itsTruePositives != null)
+				itsTruePositives.and(itsMembers);
 		}
-		NOMINAL = (TRUE_POSITIVES != null);
+		isNominal = (itsTruePositives != null);
 
-		super.setModel(new BrowseTableModel(theTable));
-		super.setRowSorter(new TableRowSorter<TableModel>(super.getModel()));
-		((DefaultRowSorter<BrowseTableModel, Integer>) getRowSorter()).setRowFilter(new RowFilterBitSet(MEMBERS));
+		BrowseTableModel b                 = new BrowseTableModel(theTable);
+		TableRowSorter<BrowseTableModel> t = new TableRowSorter<>(new BrowseTableModel(theTable));
+		t.setRowFilter(new RowFilterBitSet(itsMembers));
+		super.setModel(b);
+		super.setRowSorter(t);
 
 		super.setRowSelectionAllowed(false);
 		super.setColumnSelectionAllowed(true);
@@ -66,7 +67,7 @@ public class BrowseJTable extends JTable
 		// Row color based on TruePositive/FalsePositive (NOMINAL only)
 		if (!isColumnSelected(column))
 		{
-			if (NOMINAL && !TRUE_POSITIVES.get(convertRowIndexToModel(row)))
+			if (isNominal && !itsTruePositives.get(convertRowIndexToModel(row)))
 				c.setBackground(GUI.RED);
 			else
 				c.setBackground(getBackground());
