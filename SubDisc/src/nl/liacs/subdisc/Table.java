@@ -25,7 +25,7 @@ public class Table implements XMLNodeInterface
 //	private int itsNrBinaries = 0;
 	//private Random itsRandomNumber = new Random(System.currentTimeMillis());
 	private Random itsRandomNumber = new Random(10);
-	private List<String> itsDomains;
+	private List<String> itsDomains;  // TODO better never null, but empty list
 	private List<Integer> itsDomainIndices; //allows for much faster removal
 
 	public String getName() { return itsName; }
@@ -233,16 +233,16 @@ public class Table implements XMLNodeInterface
 		}
 	}
 
-	public JList getDomainList()
+	public JList<String> getDomainList()
 	{
 		/*
 		 * MiningWindow should guarantee 'Remove' is only available when
 		 * itsDomains is not null/empty
 		 */
 		if (itsDomains == null)
-			return null;
+			return new JList<String>();
 		else
-			return new JList(itsDomains.toArray());
+			return new JList<String>(itsDomains.toArray(new String[0]));
 	}
 
 	/*

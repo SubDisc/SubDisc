@@ -7,7 +7,7 @@ public class MultiNumericTargetsWindow extends BasicJListWindow// implements Act
 	private static final long serialVersionUID = 1L;
 
 	private int[] itsOriginalSelection;
-	public MultiNumericTargetsWindow(JList theJList)
+	public MultiNumericTargetsWindow(JList<String> theJList)
 	{
 		super(theJList);
 

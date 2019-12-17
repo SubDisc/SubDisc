@@ -2,21 +2,20 @@ package nl.liacs.subdisc.gui;
 
 import java.awt.*;
 import java.awt.event.*;
-import java.util.*;
 
 import javax.swing.*;
 
 import nl.liacs.subdisc.*;
 
-public class BasicJListWindow extends JDialog implements ActionListener {
-
+public class BasicJListWindow extends JDialog implements ActionListener
+{
 	private static final long serialVersionUID = 1L;
 
-	protected final JList itsJList;
+	protected final JList<String> itsJList;
 	protected final int itsJListSize; // modality only blocks other WINDOWS
 	private JLabel itsFeedBackLabel = new JLabel();
 
-	public BasicJListWindow(JList theJList)
+	public BasicJListWindow(JList<String> theJList)
 	{
 		super.setModalityType(Dialog.DEFAULT_MODALITY_TYPE);
 		itsJList = theJList;
@@ -24,7 +23,7 @@ public class BasicJListWindow extends JDialog implements ActionListener {
 		if (itsJList == null)
 			itsJListSize = 0;
 		else if ((itsJListSize = itsJList.getModel().getSize()) == 0)
-			;
+			; // FIXME check why this is empty, update comment
 		else
 			initComponents();
 	}

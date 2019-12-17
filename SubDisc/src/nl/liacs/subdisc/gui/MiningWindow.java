@@ -268,7 +268,7 @@ public class MiningWindow extends JFrame implements ActionListener
 		jPanelTargetConceptFields = new JPanel();
 		// permanently maintained JLists
 		jListMultiRegressionTargets = new JList(new DefaultListModel());
-		jListMultiTargets = new JList(new DefaultListModel());
+		jListMultiTargets = new JList<>(new DefaultListModel<String>());
 
 		jPanelTargetConcept.setLayout(new BoxLayout(jPanelTargetConcept, BoxLayout.X_AXIS));
 		jPanelTargetConcept.setBorder(GUI.buildBorder("Target Concept"));
@@ -834,13 +834,14 @@ public class MiningWindow extends JFrame implements ActionListener
 	{
 		removeAllMultiTargetsItems();
 
-		AttributeType aType;
-		if (theTargetType == TargetType.MULTI_LABEL)
-			aType = AttributeType.BINARY;
-		else if (theTargetType == TargetType.MULTI_NUMERIC)
-			aType = AttributeType.NUMERIC;
-		else
-			throw new AssertionError("Unvalid TargetType: " + theTargetType);
+		final AttributeType aType;
+		switch (theTargetType)
+		{
+			case MULTI_LABEL   : aType = AttributeType.BINARY;  break;
+			case MULTI_NUMERIC : aType = AttributeType.NUMERIC; break;
+			default            : throw new AssertionError("Unvalid TargetType: " + theTargetType);
+		}
+
 		List<Column> aList = new ArrayList<Column>();
 		for (Column c: itsTable.getColumns())
 		{
@@ -1211,9 +1212,7 @@ public class MiningWindow extends JFrame implements ActionListener
 			{
 				new FileHandler(itsTable, theType);
 				update();
-				final JList aList = itsTable.getDomainList();
-				jMenuItemRemoveEnrichmentSource
-					.setEnabled(aList != null && aList.getComponentCount() > 0);
+				jMenuItemRemoveEnrichmentSource.setEnabled(itsTable.getDomainList().getComponentCount() > 0);
 			}
 		});
 	}
@@ -1224,7 +1223,7 @@ public class MiningWindow extends JFrame implements ActionListener
 		{
 			public void run()
 			{
-				JList aDomainList = itsTable.getDomainList();
+				JList<String> aDomainList = itsTable.getDomainList();
 				new RemoveDomainWindow(aDomainList);
 				int aComponentCount = aDomainList.getComponentCount();
 
@@ -1544,14 +1543,14 @@ public class MiningWindow extends JFrame implements ActionListener
 				throw new AssertionError(itsTargetConcept.getTargetType());
 		}
 
-		Object[] aSelection = jListMultiTargets.getSelectedValues();
-		int aNrSelected = aSelection.length;
+		List<String> aSelection = jListMultiTargets.getSelectedValuesList();
+		int aNrSelected = aSelection.size();
 		List<Column> aList = new ArrayList<Column>(aNrSelected);
 
 		// aSelection is in order and names always occur in itsColumns
 		for (int i = 0, j = 0; i < aNrSelected; ++j)
 		{
-			if (aSelection[i].equals(itsTable.getColumn(j).getName()))
+			if (aSelection.get(i).equals(itsTable.getColumn(j).getName()))
 			{
 				aList.add(itsTable.getColumn(j));
 				++i;
@@ -2417,8 +2416,8 @@ for (Interval interval : boundsList)
 	private void setMiscFieldName(String aValue) { jComboBoxMiscField.setSelectedItem(aValue); }
 
 	// target concept - jList secondary targets
-	private void addMultiTargetsItem(String theItem) { ((DefaultListModel) jListMultiTargets.getModel()).addElement(theItem); }
-	private void removeAllMultiTargetsItems() { ((DefaultListModel) jListMultiTargets.getModel()).clear(); }
+	private void addMultiTargetsItem(String theItem) { ((DefaultListModel<String>) jListMultiTargets.getModel()).addElement(theItem); }
+	private void removeAllMultiTargetsItems() { ((DefaultListModel<String>) jListMultiTargets.getModel()).clear(); }
 
 	// target concept - jList secondary targets
 	private void addMultiRegressionTargetsItem(String theItem) { ((DefaultListModel) jListMultiRegressionTargets.getModel()).addElement(theItem); }
@@ -2567,7 +2566,7 @@ for (Interval interval : boundsList)
 	private JButton jButtonMultiRegressionTargets;
 	private JList jListMultiRegressionTargets; // maintain list of targets
 	private JButton jButtonMultiTargets;
-	private JList jListMultiTargets; // maintain list of targets
+	private JList<String> jListMultiTargets; // maintain list of targets
 	private JLabel jLabelTargetInfoText;
 	private JButton jButtonBaseModel;
 

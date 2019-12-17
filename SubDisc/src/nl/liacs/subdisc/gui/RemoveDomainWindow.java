@@ -6,7 +6,7 @@ public class RemoveDomainWindow extends BasicJListWindow// implements ActionList
 {
 	private static final long serialVersionUID = 1L;
 
-	public RemoveDomainWindow(JList theJList)
+	public RemoveDomainWindow(JList<String> theJList)
 	{
 		super(theJList);
 
