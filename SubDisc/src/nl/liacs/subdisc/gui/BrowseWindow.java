@@ -22,7 +22,7 @@ public class BrowseWindow extends JFrame implements ActionListener//, MouseListe
 	private Table itsTable;
 	private BrowseJTable itsBrowseJTable;
 	private BitSet itsSubgroupMembers;	// for Table.save()
-	private JComboBox itsColumnsBox;
+	private JComboBox<String> itsColumnsBox;
 	// problematic in case of double columnNames
 	private Map<String, Integer> itsMap;
 
@@ -70,7 +70,7 @@ public class BrowseWindow extends JFrame implements ActionListener//, MouseListe
 			Column aColumn = itsTable.getColumn(i);
 			itsMap.put(aColumn.getName(), aColumn.getIndex());
 		}
-		itsColumnsBox = GUI.buildComboBox(itsMap.keySet().toArray(), this);
+		itsColumnsBox = GUI.buildComboBox(itsMap.keySet().toArray(new String[0]), this);
 		itsColumnsBox.setEditable(true);
 		itsColumnsBox.setPreferredSize(GUI.BUTTON_DEFAULT_SIZE);
 		aButtonPanel.add(itsColumnsBox);
@@ -85,7 +85,7 @@ public class BrowseWindow extends JFrame implements ActionListener//, MouseListe
 		{
 			itsSubgroupMembers = theSubgroup.getMembers();
 			String aName = theSubgroup.getConditions().get(0).getColumn().getName();
-			((JTextComponent)itsColumnsBox.getEditor().getEditorComponent()).setText(aName);
+			((JTextComponent) itsColumnsBox.getEditor().getEditorComponent()).setText(aName);
 			itsColumnsBox.setSelectedItem(aName);
 		}
 
@@ -115,7 +115,7 @@ public class BrowseWindow extends JFrame implements ActionListener//, MouseListe
 
 	private void updateItsColumnsBox()
 	{
-		String aText = ((JTextComponent)itsColumnsBox.getEditor().getEditorComponent()).getText();
+		String aText = ((JTextComponent) itsColumnsBox.getEditor().getEditorComponent()).getText();
 
 		if (itsMap.containsKey(aText))
 			itsBrowseJTable.focusColumn(itsMap.get(aText));
@@ -140,7 +140,7 @@ public class BrowseWindow extends JFrame implements ActionListener//, MouseListe
 			}
 			else
 			{
-				((JTextComponent)itsColumnsBox.getEditor().getEditorComponent()).setText(aText);
+				((JTextComponent) itsColumnsBox.getEditor().getEditorComponent()).setText(aText);
 				// if no column startsWith aText, colour aText
 				//((JTextField)itsColumnsBox.getEditor().getEditorComponent()).setForeground(GUI.RED);
 			}

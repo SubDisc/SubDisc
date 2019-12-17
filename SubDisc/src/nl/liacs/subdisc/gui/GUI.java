@@ -94,15 +94,15 @@ public class GUI
 		return aComboBox;
 	}
 
-	public static JComboBox buildComboBox(Object[] theItems, ActionListener theClass)
+	public static JComboBox<String> buildComboBox(String[] theItems, ActionListener theClass)
 	{
-		JComboBox aComboBox = new JComboBox();
+		JComboBox<String> aComboBox = new JComboBox<>();
 		aComboBox.setPreferredSize(TEXT_FIELD_DEFAULT_SIZE);
 		aComboBox.setMinimumSize(TEXT_FIELD_DEFAULT_SIZE);
 		aComboBox.setFont(DEFAULT_TEXT_FONT);
 
-		for (Object o : theItems)
-			aComboBox.addItem(o);
+		for (String s : theItems)
+			aComboBox.addItem(s);
 
 		aComboBox.addActionListener(theClass);
 		return aComboBox;
