@@ -33,8 +33,8 @@ public class HistogramWindow extends JFrame implements ActionListener, ChangeLis
 
 	private Table itsTable;
 	private ChartPanel itsChartPanel;
-	private JComboBox itsAttributeColumnsBox;
-	private JComboBox itsTargetColumnsBox;
+	private JComboBox<String> itsAttributeColumnsBox;
+	private JComboBox<String> itsTargetColumnsBox;
 	private Map<?, Integer> itsAMap;
 	private Map<?, Integer> itsTMap;
 	private JButton itsAttributePlotButton;
@@ -183,7 +183,7 @@ public class HistogramWindow extends JFrame implements ActionListener, ChangeLis
 	// with 4 use cases, instead of 9 (NOMINAL, NUMERIC, BINARY)^2
 	private void updateMap(boolean isAttributeChanged)
 	{
-		JComboBox aBox = isAttributeChanged ? itsAttributeColumnsBox : itsTargetColumnsBox;
+		JComboBox<String> aBox = isAttributeChanged ? itsAttributeColumnsBox : itsTargetColumnsBox;
 		Column aColumn = itsTable.getColumn(aBox.getSelectedIndex());
 		AttributeType aType = aColumn.getType();
 
@@ -494,6 +494,7 @@ public class HistogramWindow extends JFrame implements ActionListener, ChangeLis
 	 */
 
 	// TODO binarySearch also works on Object[], change aBins/tBins to Float[]
+	@Deprecated
 	private Float[] createBins(Map<?, Integer> theMap)
 	{
 		return theMap.keySet().toArray(new Float[0]);
@@ -512,6 +513,7 @@ public class HistogramWindow extends JFrame implements ActionListener, ChangeLis
 	//
 	// TODO for numeric attributes all values are now used as separate value
 	// should use bins
+	@Deprecated
 	private CategoryDataset createDatasetObsolete()
 	{
 		Column a = itsTable.getColumn(itsAttributeColumnsBox.getSelectedIndex());

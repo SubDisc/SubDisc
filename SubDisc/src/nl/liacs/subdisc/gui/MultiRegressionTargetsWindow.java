@@ -22,7 +22,7 @@ public class MultiRegressionTargetsWindow extends JFrame implements ActionListen
 	private final SearchParameters itsSearchParameters;
 	private JTable itsJTable;
 	private ButtonGroup aNewType                       = new ButtonGroup();
-	private JTextField aNewMissingValue                = new JTextField(AttributeType.getDefault().DEFAULT_MISSING_VALUE);
+//	private JTextField aNewMissingValue                = new JTextField(AttributeType.getDefault().DEFAULT_MISSING_VALUE);
 	private JComboBox<String> itsInterceptRelevanceBox = GUI.buildComboBox(new String[] { "No", "Yes" }, null);
 	private JLabel itsFeedBackLabel;
 
