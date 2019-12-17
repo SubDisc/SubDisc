@@ -147,11 +147,15 @@ public class VisualArc extends MShape
 		g2.fillPolygon(tmpPoly);
 	}
 
+	/* OBSOLETE ***************************************************************/
+
+	@Deprecated
 	public boolean containsFromShape(MShape aShape)
 	{
 		return itsFromNode.equals(aShape);
 	}
 
+	@Deprecated
 	public MShape getConnectedShape(MShape aShape)
 	{
 		if(itsFromNode.equals(aShape))

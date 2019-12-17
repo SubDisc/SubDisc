@@ -11,11 +11,11 @@ public class MShape extends JComponent implements MouseMotionListener, MouseList
 {
 	private static final long serialVersionUID = 1L;
 
-	Color itsColor = Color.green;
-	boolean setShadow = true;
-	protected JLabel itsComponent = null;
-	protected boolean dragging = false;
-	protected Point dragpoint = new Point();
+//	Color itsColor = Color.green;
+//	boolean setShadow = true;
+//	protected JLabel itsComponent = null;
+	private boolean dragging = false;
+	private Point dragpoint = new Point();
 
 	/** Creates new Shape */
 	public MShape(String label)
@@ -23,7 +23,7 @@ public class MShape extends JComponent implements MouseMotionListener, MouseList
 		super();
 		addMouseMotionListener(this);
 		addMouseListener(this);
-		itsComponent = new JLabel(label);
+//		itsComponent = new JLabel(label);
 		//add(itsComponent);
 		//itsComponent.addActionListener(this);
 		//this.addActionListener(this);
@@ -36,20 +36,7 @@ public class MShape extends JComponent implements MouseMotionListener, MouseList
 		return p;
 	}
 
-	public Dimension getPreferredSize()
-	{
-		Rectangle r = this.getBounds();
-		return new Dimension(r.width, r.height);
-	}
-
-	/** The minimum size of the Shape. */
-	public Dimension getMinimumSize()
-	{
-		Rectangle r = this.getBounds();
-		return new Dimension(r.width, r.height);
-	}
-
-	protected boolean mouseOnMe(MouseEvent e)
+	boolean mouseOnMe(MouseEvent e)
 	{
 		Rectangle r = this.getBounds();
 		if (e.getX() > r.x && r.x + r.width > e.getX())
@@ -58,12 +45,22 @@ public class MShape extends JComponent implements MouseMotionListener, MouseList
 		return false;
 	}
 
-	public void mouseMoved(java.awt.event.MouseEvent mouseEvent)
+	@Override
+	public Dimension getPreferredSize()
 	{
-		if (mouseOnMe(mouseEvent))
-			; // this does nothing
+		Rectangle r = this.getBounds();
+		return new Dimension(r.width, r.height);
 	}
 
+	/** The minimum size of the Shape. */
+	@Override
+	public Dimension getMinimumSize()
+	{
+		Rectangle r = this.getBounds();
+		return new Dimension(r.width, r.height);
+	}
+
+	@Override
 	public void mouseDragged(java.awt.event.MouseEvent mouseEvent)
 	{
 		if (mouseOnMe(mouseEvent) || dragging)
@@ -82,38 +79,18 @@ public class MShape extends JComponent implements MouseMotionListener, MouseList
 		}
 	}
 
-	public void mouseExited(java.awt.event.MouseEvent mouseEvent)
-	{
-		if (mouseOnMe(mouseEvent))
-			; // this does nothing
-	}
-
+	@Override
 	public void mouseReleased(java.awt.event.MouseEvent mouseEvent)
 	{
 		if (mouseOnMe(mouseEvent))
 			dragging = false;
 	}
 
-	public void mousePressed(java.awt.event.MouseEvent mouseEvent)
-	{
-		if (mouseOnMe(mouseEvent))
-			; // this does nothing
-	}
+	@Override public void mouseClicked(java.awt.event.MouseEvent mouseEvent) {}
+	@Override public void mouseEntered(java.awt.event.MouseEvent mouseEvent) {}
+	@Override public void mouseExited(java.awt.event.MouseEvent mouseEvent) {}
+	@Override public void mouseMoved(java.awt.event.MouseEvent mouseEvent) {}
+	@Override public void mousePressed(java.awt.event.MouseEvent mouseEvent) {}
 
-	public void mouseClicked(java.awt.event.MouseEvent mouseEvent)
-	{
-		if (mouseOnMe(mouseEvent))
-			; // this does nothing
-	}
-
-	public void mouseEntered(java.awt.event.MouseEvent mouseEvent)
-	{
-		if (mouseOnMe(mouseEvent))
-			; // this does nothing
-	}
-
-	public void actionPerformed(java.awt.event.ActionEvent actionEvent)
-	{
-		// this does nothing
-	}
+	@Override public void actionPerformed(java.awt.event.ActionEvent actionEvent) {}
 }
