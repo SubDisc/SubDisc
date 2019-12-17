@@ -2567,7 +2567,7 @@ for (Interval interval : boundsList)
 	private JComboBox<String> jComboBoxTargetAttribute;
 	private JComboBox<String> jComboBoxMiscField;
 	private JButton jButtonMultiRegressionTargets;
-	private JList jListMultiRegressionTargets; // maintain list of targets
+	private JList<String> jListMultiRegressionTargets; // maintain list of targets
 	private JButton jButtonMultiTargets;
 	private JList<String> jListMultiTargets; // maintain list of targets
 	private JLabel jLabelTargetInfoText;
