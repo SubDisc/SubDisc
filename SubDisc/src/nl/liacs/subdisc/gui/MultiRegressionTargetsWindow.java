@@ -19,20 +19,21 @@ public class MultiRegressionTargetsWindow extends JFrame implements ActionListen
 	private static final long serialVersionUID = 1L;
 	private final MiningWindow itsMiningWindow;
 	private final Table itsTable;
+	private final SearchParameters itsSearchParameters;
 	private JTable itsJTable;
 	private ButtonGroup aNewType                       = new ButtonGroup();
 	private JTextField aNewMissingValue                = new JTextField(AttributeType.getDefault().DEFAULT_MISSING_VALUE);
 	private JComboBox<String> itsInterceptRelevanceBox = GUI.buildComboBox(new String[] { "No", "Yes" }, null);
 	private JLabel itsFeedBackLabel;
-	private SearchParameters itsSearchParameters;
 
-	public MultiRegressionTargetsWindow(JList theMultiRegressionTargets, SearchParameters theSearchParameters, Table theTable, MiningWindow theMiningWindow)
+//	public MultiRegressionTargetsWindow(JList theMultiRegressionTargets, SearchParameters theSearchParameters, Table theTable, MiningWindow theMiningWindow)
+	public MultiRegressionTargetsWindow(SearchParameters theSearchParameters, Table theTable, MiningWindow theMiningWindow)
 	{
-		itsTable = theTable;
-		itsMiningWindow = theMiningWindow;
 		itsSearchParameters = theSearchParameters;
+		itsTable            = theTable;
+		itsMiningWindow     = theMiningWindow;
 
-		if (theTable == null || theMiningWindow == null)
+		if (itsSearchParameters == null || itsTable == null || itsMiningWindow == null)
 		{
 			Log.logCommandLine("MultiRegressionTargetsWindow Constructor: parameters can not be 'null'.");
 			return;
@@ -58,6 +59,7 @@ public class MultiRegressionTargetsWindow extends JFrame implements ActionListen
 
 		float aScalar = 0.3f;
 		int anAttributeWidth = (int)(aScalar * GUI.WINDOW_DEFAULT_SIZE.width);
+		// FIXME probably this does not do what it should, add parentheses
 		int anOtherWidth = (int)((1.0f - aScalar / MultiRegressionTargetsTableHeader.values().length -1) * GUI.WINDOW_DEFAULT_SIZE.width);
 
 		itsJTable.getColumnModel().getColumn(MultiRegressionTargetsTableHeader.ATTRIBUTE.columnNr).setPreferredWidth(anAttributeWidth);
@@ -99,7 +101,7 @@ public class MultiRegressionTargetsWindow extends JFrame implements ActionListen
 		aChangeTypePanel.add(Box.createVerticalGlue());
 		addCentered(aChangeTypePanel, GUI.buildButton("Change Target Status", 'C', "target status", this));
 		anActionPanel.add(aChangeTypePanel);
-		
+
 		// intercept panel
 		anInterceptPanel.setBorder(GUI.buildBorder("Include intercept in validation"));
 		anInterceptPanel.setLayout(new BoxLayout(anInterceptPanel, BoxLayout.PAGE_AXIS));
@@ -108,7 +110,7 @@ public class MultiRegressionTargetsWindow extends JFrame implements ActionListen
 //		JCheckBox aCheckBox = new JCheckBox("Include intercept");
 //		aCheckBox.setActionCommand("intercept check");
 //		anInterceptPanel.add(aCheckBox);
-		
+
 		anInterceptPanel.add(GUI.buildLabel("Include intercept", itsInterceptRelevanceBox));
 		itsInterceptRelevanceBox.setSelectedIndex(1);
 		anInterceptPanel.add(itsInterceptRelevanceBox);

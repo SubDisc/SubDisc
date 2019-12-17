@@ -267,7 +267,7 @@ public class MiningWindow extends JFrame implements ActionListener
 		jPanelTargetConceptLabels = new JPanel();
 		jPanelTargetConceptFields = new JPanel();
 		// permanently maintained JLists
-		jListMultiRegressionTargets = new JList(new DefaultListModel());
+		jListMultiRegressionTargets = new JList<>(new DefaultListModel<String>());
 		jListMultiTargets = new JList<>(new DefaultListModel<String>());
 
 		jPanelTargetConcept.setLayout(new BoxLayout(jPanelTargetConcept, BoxLayout.X_AXIS));
@@ -1522,7 +1522,8 @@ public class MiningWindow extends JFrame implements ActionListener
 	private void jButtonMultiRegressionTargetsActionPerformed()
 	{
 		itsTable.getColumn(getTargetAttributeName()).makePrimaryTarget();
-		new MultiRegressionTargetsWindow(jListMultiRegressionTargets, itsSearchParameters, itsTable, this);
+//		new MultiRegressionTargetsWindow(jListMultiRegressionTargets, itsSearchParameters, itsTable, this);
+		new MultiRegressionTargetsWindow(itsSearchParameters, itsTable, this);
 	}
 
 	private void jButtonMultiTargetsActionPerformed()
@@ -2422,8 +2423,8 @@ for (Interval interval : boundsList)
 	private void removeAllMultiTargetsItems() { ((DefaultListModel<String>) jListMultiTargets.getModel()).clear(); }
 
 	// target concept - jList secondary targets
-	private void addMultiRegressionTargetsItem(String theItem) { ((DefaultListModel) jListMultiRegressionTargets.getModel()).addElement(theItem); }
-	private void removeAllMultiRegressionTargetsItems() { ((DefaultListModel) jListMultiRegressionTargets.getModel()).clear(); }
+	private void addMultiRegressionTargetsItem(String theItem) { ((DefaultListModel<String>) jListMultiRegressionTargets.getModel()).addElement(theItem); }
+	private void removeAllMultiRegressionTargetsItems() { ((DefaultListModel<String>) jListMultiRegressionTargets.getModel()).clear(); }
 
 	// search conditions - search depth / refinement depth
 	private int getSearchDepthMaximum() { return getValue(1, jTextFieldSearchDepth.getText()); }
