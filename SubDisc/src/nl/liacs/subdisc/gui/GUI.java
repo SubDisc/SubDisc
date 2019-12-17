@@ -79,15 +79,15 @@ public class GUI
 		return aCheckBox;
 	}
 
-	public static JComboBox buildComboBox(Object[] theItems, String theActionCommand, ActionListener theClass)
+	public static JComboBox<String> buildComboBox(String[] theItems, String theActionCommand, ActionListener theClass)
 	{
-		JComboBox aComboBox = new JComboBox();
+		JComboBox<String> aComboBox = new JComboBox<>();
 		aComboBox.setPreferredSize(TEXT_FIELD_DEFAULT_SIZE);
 		aComboBox.setMinimumSize(TEXT_FIELD_DEFAULT_SIZE);
 		aComboBox.setFont(DEFAULT_TEXT_FONT);
 
-		for (Object o : theItems)
-			aComboBox.addItem(o);
+		for (String s : theItems)
+			aComboBox.addItem(s);
 
 		aComboBox.setActionCommand(theActionCommand);
 		aComboBox.addActionListener(theClass);

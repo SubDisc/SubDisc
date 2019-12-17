@@ -307,21 +307,21 @@ public class MiningWindow extends JFrame implements ActionListener
 		// TARGET CONCEPT - fields
 		jPanelTargetConceptFields.setLayout(new GridLayout(9, 1));
 
-		jComboBoxTargetType = GUI.buildComboBox(new Object[0], TARGET_TYPE_BOX, this);
+		jComboBoxTargetType = GUI.buildComboBox(new String[0], TARGET_TYPE_BOX, this);
 		jPanelTargetConceptFields.add(jComboBoxTargetType);
 
-		jComboBoxQualityMeasure = GUI.buildComboBox(new Object[0], QUALITY_MEASURE_BOX, this);
+		jComboBoxQualityMeasure = GUI.buildComboBox(new String[0], QUALITY_MEASURE_BOX, this);
 		jPanelTargetConceptFields.add(jComboBoxQualityMeasure);
 
 		jTextFieldQualityMeasureMinimum = GUI.buildTextField("0");
 		jPanelTargetConceptFields.add(jTextFieldQualityMeasureMinimum);
 
-		jComboBoxTargetAttribute = GUI.buildComboBox(new Object[0], TARGET_ATTRIBUTE_BOX, this);
+		jComboBoxTargetAttribute = GUI.buildComboBox(new String[0], TARGET_ATTRIBUTE_BOX, this);
 		jPanelTargetConceptFields.add(jComboBoxTargetAttribute);
 
 		// used for target value or secondary target
 		// note in cui setting this is often to small
-		jComboBoxMiscField = GUI.buildComboBox(new Object[0], MISC_FIELD_BOX, this);
+		jComboBoxMiscField = GUI.buildComboBox(new String[0], MISC_FIELD_BOX, this);
 		jPanelTargetConceptFields.add(jComboBoxMiscField);
 
 		jButtonMultiRegressionTargets = initButton(STD.SECONDARY_TERTIARY_TARGETS);
@@ -427,7 +427,7 @@ public class MiningWindow extends JFrame implements ActionListener
 		// SEARCH STRATEGY - fields
 		jPanelSearchStrategyFields.setLayout(new GridLayout(7, 1));
 
-		jComboBoxStrategyType = GUI.buildComboBox(new Object[0], SEARCH_TYPE_BOX, this);
+		jComboBoxStrategyType = GUI.buildComboBox(new String[0], SEARCH_TYPE_BOX, this);
 		jPanelSearchStrategyFields.add(jComboBoxStrategyType);
 
 		jTextFieldStrategyWidth = GUI.buildTextField("0");
@@ -436,10 +436,10 @@ public class MiningWindow extends JFrame implements ActionListener
 		jCheckBoxSetValuedNominals = new JCheckBox();
 		jPanelSearchStrategyFields.add(jCheckBoxSetValuedNominals);
 
-		jComboBoxNumericStrategy = GUI.buildComboBox(new Object[0], NUMERIC_STRATEGY_BOX, this);
+		jComboBoxNumericStrategy = GUI.buildComboBox(new String[0], NUMERIC_STRATEGY_BOX, this);
 		jPanelSearchStrategyFields.add(jComboBoxNumericStrategy);
 
-		jComboBoxNumericOperators = GUI.buildComboBox(new Object[0], NUMERIC_OPERATORS_BOX, this);
+		jComboBoxNumericOperators = GUI.buildComboBox(new String[0], NUMERIC_OPERATORS_BOX, this);
 		jPanelSearchStrategyFields.add(jComboBoxNumericOperators);
 
 		jTextFieldNumberOfBins = GUI.buildTextField("0");
@@ -697,12 +697,12 @@ public class MiningWindow extends JFrame implements ActionListener
 		for (AbstractButton a : aButtons)
 			a.setEnabled(theSetting);
 
-		// do the same for combo boxes
-		JComboBox[] aComboBoxArray = {	jComboBoxTargetType,
-						jComboBoxStrategyType,
-						jComboBoxNumericStrategy,
-						jComboBoxNumericOperators };
-		for (JComboBox c : aComboBoxArray)
+		// do the same for combo boxes (asList allows type check, [] does not)
+		List<JComboBox<String>> aComboBoxList = Arrays.asList(jComboBoxTargetType,
+																jComboBoxStrategyType,
+																jComboBoxNumericStrategy,
+																jComboBoxNumericOperators);
+		for (JComboBox<String> c : aComboBoxList)
 			c.setEnabled(theSetting);
 	}
 
@@ -1052,6 +1052,7 @@ public class MiningWindow extends JFrame implements ActionListener
 		// if SINGLE_NOMINAL add INTERVALS, else remove it
 		if (itsTargetConcept.getTargetType() == TargetType.SINGLE_NOMINAL)
 		{
+			// FIXME this is a horrible check, very likely to break -> replace!
 			if (jComboBoxNumericStrategy.getItemCount() == NumericStrategy.getNormalValues().size()) //is INTERVALS not present yet?
 				jComboBoxNumericStrategy.addItem(NumericStrategy.NUMERIC_INTERVALS.GUI_TEXT);
 		}
@@ -2199,7 +2200,7 @@ if (!Arrays.equals(check, bounds))
 	private void jButtonDiscretiseActionPerformed2(int bins)
 	{
 System.out.println("\nBINS: " + bins);
-		int aNrSplits = bins-1;
+//		int aNrSplits = bins-1;
 		int aNrRows = itsTable.getNrRows();
 
 		// create a BitSet that select the whole Table
@@ -2388,6 +2389,7 @@ for (Interval interval : boundsList)
 
 	/* FIELD METHODS OF CORTANA COMPONENTS */
 	// all setters take a String argument for now
+	// FIXME remove all (String) casts, use String.valueOf() or .toString()
 
 	// target concept - target type
 	private String getTargetTypeName() { return (String) jComboBoxTargetType.getSelectedItem(); }
@@ -2558,11 +2560,11 @@ for (Interval interval : boundsList)
 	private JLabel jLabelTargetInfo;
 	// TARGET CONCEPT - fields
 	private JPanel jPanelTargetConceptFields;
-	private JComboBox jComboBoxTargetType;
-	private JComboBox jComboBoxQualityMeasure;
+	private JComboBox<String> jComboBoxTargetType;
+	private JComboBox<String> jComboBoxQualityMeasure;
 	private JTextField jTextFieldQualityMeasureMinimum;
-	private JComboBox jComboBoxTargetAttribute;
-	private JComboBox jComboBoxMiscField;
+	private JComboBox<String> jComboBoxTargetAttribute;
+	private JComboBox<String> jComboBoxMiscField;
 	private JButton jButtonMultiRegressionTargets;
 	private JList jListMultiRegressionTargets; // maintain list of targets
 	private JButton jButtonMultiTargets;
@@ -2600,11 +2602,11 @@ for (Interval interval : boundsList)
 	private JLabel jLabelNumberOfThreads;
 	// SEARCH STRATEGY - fields
 	private JPanel jPanelSearchStrategyFields;
-	private JComboBox jComboBoxStrategyType;
+	private JComboBox<String> jComboBoxStrategyType;
 	private JTextField jTextFieldStrategyWidth;
 	private JCheckBox jCheckBoxSetValuedNominals;
-	private JComboBox jComboBoxNumericStrategy;
-	private JComboBox jComboBoxNumericOperators;
+	private JComboBox<String> jComboBoxNumericStrategy;
+	private JComboBox <String> jComboBoxNumericOperators;
 	private JTextField jTextFieldNumberOfBins;
 	private JTextField jTextFieldNumberOfThreads;
 
