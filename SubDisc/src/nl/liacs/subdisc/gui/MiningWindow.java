@@ -1797,6 +1797,14 @@ public class MiningWindow extends JFrame implements ActionListener
 		// eat event: user can only close this dialog by pressing Stop
 		aDialog.addWindowListener(new WindowAdapter() { public void windowClosing(WindowEvent we) {} });
 
+		// after pack: requires realised dialog; Escape alternative: e.consume()
+		optionPane.setFocusable(true);
+		optionPane.addKeyListener(new KeyListener() {
+			@Override public void keyPressed(KeyEvent e) { if (e.getKeyCode() == KeyEvent.VK_ESCAPE) { isCancelled = true; } }
+			@Override public void keyReleased(KeyEvent e) {}
+			@Override public void keyTyped(KeyEvent arg0) {}
+		});
+
 		optionPane.addPropertyChangeListener(new PropertyChangeListener() {
 			public void propertyChange(PropertyChangeEvent e) {
 				if (aDialog.isVisible() && (e.getSource() == optionPane) && (e.getPropertyName().equals(JOptionPane.VALUE_PROPERTY)))
