@@ -84,7 +84,7 @@ public class Bayesian
 
 				switch (itsDAG.getNode(j).isConnected(i))
 				{
-				 case 0: //we have i-/-j (not connected)
+					case 0: //we have i-/-j (not connected)
 					{
 						if(itsDAG.addArcAcyclic(i, j, false))
 						{
@@ -125,16 +125,16 @@ public class Bayesian
 					}
 					break;
 
-				 case 1: //we have i-->j
-					 {
+					case 1: //we have i-->j
+					{
 						int tmp = i;
 						i = j;
 						j = tmp;
 						chg = true;
-					 }
+					}
 					// NO BREAK!
 
-				 case 2: //we have i<--j
+					case 2: //we have i<--j // deliberate fall-through
 					{
 						itsDAG.removeArc(j, i, false);
 						qual = computeQuality(i);
