@@ -171,4 +171,123 @@ public class LocalKnowledge
 
 		return aSetStatisticsBayesRule;
 	}
+
+	////////////////////////////////////////////////////////////////////////////
+	///// NEW VERSION - CLEAN AND USING ConditionListA /////////////////////////
+	///// TODO - check with Rob whether HashSet would not give wrong results ///
+	////////////////////////////////////////////////////////////////////////////
+	// FIXME make final after testing
+	private Map<Column, List<ConditionListA>>        itsColumnToConditionListMap;
+	private Map<ConditionListA, BitSet>              itsConditionListToBitSetMap;
+	private Map<ConditionListA, StatisticsBayesRule> itsConditionListBayesRuleMap;
+
+	// FIXME pretty large for a constructor
+	public LocalKnowledge(BitSet theTarget, List<ConditionListA> theExplanatoryConditions)
+	{
+		if (theExplanatoryConditions.size() == 0)
+		{
+			itsColumnToConditionListMap  = Collections.emptyMap();
+			itsConditionListToBitSetMap  = Collections.emptyMap();
+			itsConditionListBayesRuleMap = Collections.emptyMap();
+			return;
+		}
+
+		Map<Column, List<ConditionListA>>        cm = new HashMap<>();
+		Map<ConditionListA, BitSet>              bm = new HashMap<>();
+		Map<ConditionListA, StatisticsBayesRule> sm = new HashMap<>();
+
+		for (ConditionListA cl : theExplanatoryConditions)
+		{
+			for (int i = 0, j = cl.size(); i < j; ++i)
+			{
+				Column c = cl.get(i).getColumn();
+				Log.logCommandLine("Local Knowledge variables");
+				Log.logCommandLine(c.getName());
+
+				List<ConditionListA> l = cm.get(c);
+				if (l == null)
+				{
+					l = new ArrayList<>();
+					cm.put(c, l);
+				}
+
+				l.add(cl);
+			}
+		}
+
+		int aNrRows = theExplanatoryConditions.get(0).get(0).getColumn().size();
+		BitSet all  = new BitSet(aNrRows);
+		all.set(0, aNrRows);
+
+		int aTargetCardilaity = theTarget.cardinality();
+		for (ConditionListA cl: theExplanatoryConditions)
+		{
+			// BitSet of ConditionList, also set the size, and all bits to 1
+			BitSet bs = (BitSet) all.clone();
+
+			for (int i = 0, j = cl.size(); i < j; ++i)
+			{
+				Condition c = cl.get(i);
+				BitSet aBitSetCondition = c.getColumn().evaluate(all, c); // all
+				bs.and(aBitSetCondition);
+				print("condition", aBitSetCondition.cardinality());
+			}
+
+			bm.put(cl, bs);
+			print("target", aTargetCardilaity); // MM - why, it never changes
+			print("known subgroup", bs.cardinality());
+			sm.put(cl, new StatisticsBayesRule(bs,theTarget));
+		}
+
+		itsColumnToConditionListMap  = Collections.unmodifiableMap(cm);
+		itsConditionListToBitSetMap  = Collections.unmodifiableMap(bm);
+		itsConditionListBayesRuleMap = Collections.unmodifiableMap(sm);
+	}
+
+	// returns BitSets corresponding to attributes involved in Subgroup
+	public Set<BitSet> getBitSets(ConditionListA theConditions)
+	{
+		Set<BitSet> s = new HashSet<BitSet>();
+
+		for (ConditionListA cl : getConditionLists(theConditions, itsColumnToConditionListMap, false))
+			s.add(itsConditionListToBitSetMap.get(cl));
+
+		return s;
+	}
+
+	// returns Statistics corresponding to attributes involved in Subgroup
+	public Set<StatisticsBayesRule> getStatisticsBayesRule(ConditionListA theConditions)
+	{
+		Set<StatisticsBayesRule> s = new HashSet<StatisticsBayesRule>();
+
+		for (ConditionListA cl : getConditionLists(theConditions, itsColumnToConditionListMap, true))
+			s.add(itsConditionListBayesRuleMap.get(cl));
+
+		return s;
+	}
+
+	// get ConditionLists that are involved with the Subgroup.ConditionListA
+	private static final Set<ConditionListA> getConditionLists(ConditionListA theConditions, Map<Column, List<ConditionListA>> theMap, boolean isBayes)
+	{
+		Set<ConditionListA> s = new HashSet<ConditionListA>();
+
+		for (int i = 0, j = theConditions.size(); i < j; ++i)
+		{
+			List<ConditionListA> l = theMap.get(theConditions.get(i).getColumn());
+			if (l != null)
+				s.addAll(l);
+
+			// FIXME MM - delete print after comparison - why was it here anyway
+			if (isBayes)
+				Log.logCommandLine(theConditions.get(i).getColumn().getName());
+		}
+
+		return s;
+	}
+
+	private static final void print(String theSubject, int theCardinality)
+	{
+		// FIXME after comparing, change to single line output
+		Log.logCommandLine(String.format("cardinality %s%n%d", theSubject, theCardinality));
+	}
 }

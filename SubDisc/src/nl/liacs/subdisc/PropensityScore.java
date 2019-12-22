@@ -210,8 +210,10 @@ public class PropensityScore
 	{
 		/* calculate Bayes Rule here */
 		Set<StatisticsBayesRule> aAllStatisticsBayesRule = new HashSet<StatisticsBayesRule>();
-		aAllStatisticsBayesRule.addAll(itsGlobalKn.getStatisticsBayesRule());
-		aAllStatisticsBayesRule.addAll(itsLocalKn.getStatisticsBayesRule(itsSubgroup));
+//		aAllStatisticsBayesRule.addAll(itsGlobalKn.getStatisticsBayesRule());
+//		aAllStatisticsBayesRule.addAll(itsLocalKn.getStatisticsBayesRule(itsSubgroup));
+		aAllStatisticsBayesRule.addAll(itsGlobalKn.getStatisticsBayesRule2());
+		aAllStatisticsBayesRule.addAll(itsLocalKn.getStatisticsBayesRule(itsSubgroup.getConditions()));
 		System.out.println("Size overlapping subgroups:");
 		System.out.println(aAllStatisticsBayesRule.size());
 
@@ -277,8 +279,10 @@ public class PropensityScore
 //		itsGlobalKn = theGlobalKn;
 //		itsPropensityScore = new double[itsTarget.size()];
 		Set<BitSet> explanatoryVariables = new HashSet<BitSet>();
-		explanatoryVariables.addAll(itsGlobalKn.getBitSets());
-		explanatoryVariables.addAll(itsLocalKn.getBitSets(itsSubgroup));
+//		explanatoryVariables.addAll(itsGlobalKn.getBitSets());
+//		explanatoryVariables.addAll(itsLocalKn.getBitSets(itsSubgroup));
+		explanatoryVariables.addAll(itsGlobalKn.getBitSets2());
+		explanatoryVariables.addAll(itsLocalKn.getBitSets(itsSubgroup.getConditions()));
 
 		//java.lang.String name, Fastvector attInfo, int capacity
 		//create attribute list with names
@@ -306,7 +310,7 @@ public class PropensityScore
 		//attribute list contains the information about attributes
 
 		//System.out.println("Fastvector with attributes created");
-		final int aTargetSize = itsTarget.size();
+		final int aTargetSize = itsTarget.size(); // FIXME MM - this is likely to be incorrect, size is not necessarily equal to Table.size()
 		final int anAttributeListSize = attributeList.size();
 		Instances data = new Instances("explanatoryVariables", attributeList, aTargetSize);
 		//System.out.println("empty instances created");

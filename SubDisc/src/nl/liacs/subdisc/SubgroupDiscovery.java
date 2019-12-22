@@ -642,14 +642,13 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 
 	private final ConditionBaseSet preMining(long theBeginTime, int theNrThreads)
 	{
-		// setup
-		// TODO this should not be here but in the SINGLE_NOMINAL constructor
-		loadExternalKnowledge();
-
 		// not in Constructor, Table / SearchParameters may change
 		// TODO not sure if this is still true
 		final ConditionBaseSet aConditions = new ConditionBaseSet(itsTable, itsSearchParameters);
 		logExperimentSettings(aConditions);
+
+		// uses ConditionBaseSet to check for irrelevant Conditions in knowledge
+		loadExternalKnowledge(aConditions);
 
 		// make subgroup to start with, containing all elements
 		Subgroup aStart = new Subgroup(ConditionListBuilder.emptyList(), itsResult.getAllDataBitSetClone(), itsResult);
@@ -672,19 +671,23 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 		return aConditions;
 	}
 
-	private final void loadExternalKnowledge()
+	private final void loadExternalKnowledge(ConditionBaseSet theConditionBaseSet)
 	{
 		QM aQualityMeasure = itsSearchParameters.getQualityMeasure();
 
 		// fill the conditionList of local and global knowledge, Rob
 		if (aQualityMeasure == QM.PROP_SCORE_WRACC || aQualityMeasure == QM.PROP_SCORE_RATIO)
 		{
-			ExternalKnowledgeFileLoader extKnowledge;
-			extKnowledge = new ExternalKnowledgeFileLoader(new File("").getAbsolutePath());
-			extKnowledge.createConditionListLocal(itsTable);
-			extKnowledge.createConditionListGlobal(itsTable);
-			itsLocalKnowledge = new LocalKnowledge(extKnowledge.getLocal(), itsBinaryTarget);
-			itsGlobalKnowledge = new GlobalKnowledge(extKnowledge.getGlobal(), itsBinaryTarget);
+//			ExternalKnowledgeFileLoader extKnowledge;
+//			extKnowledge = new ExternalKnowledgeFileLoader(new File("").getAbsolutePath());
+//			extKnowledge.createConditionListLocal(itsTable);
+//			extKnowledge.createConditionListGlobal(itsTable);
+//			itsLocalKnowledge = new LocalKnowledge(extKnowledge.getLocal(), itsBinaryTarget);
+//			itsGlobalKnowledge = new GlobalKnowledge(extKnowledge.getGlobal(), itsBinaryTarget);
+			ExternalKnowledgeFileLoader e = new ExternalKnowledgeFileLoader(itsTable, theConditionBaseSet);
+			itsLocalKnowledge  = new LocalKnowledge(itsBinaryTarget, e.getKnowledge(false));
+			itsGlobalKnowledge = new GlobalKnowledge(itsBinaryTarget, e.getKnowledge(true));
+			Log.logCommandLine("");
 		}
 	}
 
@@ -698,6 +701,9 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 
 	private static final void prepareData(BitSet theBinaryTarget, List<Column> theColumns)
 	{
+		Log.logCommandLine("SubgroupDiscovery.prepareData(): do not change data until mining completes");
+		Log.logCommandLine("  so no MetaDataWindow enable/disable attribute, attribute type, missing value\n");
+
 		Timer aTotal = new Timer();
 
 		for (Column c : theColumns)
@@ -716,7 +722,7 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 					Log.logCommandLine(c.getName());
 					Timer t = new Timer();
 					c.buildSorted(theBinaryTarget); // build SORTED + SORT_INDEX
-					Log.logCommandLine("sorted domain build: " + t.getElapsedTimeString());
+					Log.logCommandLine(t.getElapsedTimeString());
 					break;
 				}
 				case ORDINAL :
@@ -733,7 +739,8 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 			}
 		}
 
-		Log.logCommandLine("total sorting time : " + aTotal.getElapsedTimeString());
+		Log.logCommandLine("total preparation time:");
+		Log.logCommandLine(aTotal.getElapsedTimeString());
 	}
 
 	// direct computation is relevant only for a SINGLE_NOMINAL target as it
