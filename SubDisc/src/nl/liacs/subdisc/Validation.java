@@ -36,6 +36,10 @@ public class Validation
 		itsQualityMeasure = theQualityMeasure;
 	}
 
+	// FIXME MM - this method should not be separate from the constructor
+	//            the data can be changed in between, causing bugs
+	//            also, the whole class should consist of just static methods
+	//            of split constructor (not all TargetTypes use QuailtyMeasure)
 	public double[] getQualities(String[] theSetup)
 	{
 		if (!RandomQualitiesWindow.isValidRandomQualitiesSetup(theSetup))
@@ -118,8 +122,13 @@ public class Validation
 	// if forSubgroups is true, theDepth is ignored
 	private double[] getSingleNominalQualities(boolean forSubgroups, int theNrRepetitions, int theMinimumCoverage, Random theRandom, int theDepth)
 	{
-		final double[] aQualities = new double[theNrRepetitions];
-
+////////////////////////////////////////////////////////////////////////////////
+///// FIXME - WHY IS THIS HERE, itsBinaryTarget IS AVAILABLE ALREADY       /////
+/////         TECHNICALLY, IT IS ALSO WRONG -> BUG                         /////
+/////         WHEN DATA IS CHANGED AFTER THE ResultWindow IS CREATED, THE  /////
+/////         THE ORIGINAL Condition MIGHT NOT BE ABLE TO RECREATE THE     /////
+/////         SAME BitSet AS itsBinaryTarget, BUT THIS IS A WIDER PROBLEM  /////
+////////////////////////////////////////////////////////////////////////////////
 		// create a binary target
 		Column aTarget = itsTargetConcept.getPrimaryTarget();
 		ConditionBase aConditionBase = new ConditionBase(aTarget, Operator.EQUALS);
@@ -140,12 +149,14 @@ public class Validation
 				throw new AssertionError(aTarget.getType());
 		}
 
-		BitSet aBinaryTarget = aTarget.evaluate(aCondition);
-// TODO MM - use evaluate(BitSet, Condition), evaluate(Condition) is @Deprecated 
-//		BitSet b = new BitSet(itsTable.getNrRows());
-//		b.set(0, itsTable.getNrRows());
-//		b = aTarget.evaluate(b, aCondition);
-//		assert (aBinaryTarget.equals(b));
+		BitSet b = new BitSet(itsTable.getNrRows());
+		b.set(0, itsTable.getNrRows());
+		b = aTarget.evaluate(b, aCondition);
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+		final double[] aQualities = new double[theNrRepetitions];
 
 		for (int i = 0; i < theNrRepetitions; ++i)
 		{
@@ -159,7 +170,7 @@ public class Validation
 
 			BitSet aMembers = aSubgroup.getMembers();
 			// aMembers is a clone so this is safe
-			aMembers.and(aBinaryTarget);
+			aMembers.and(b);
 			int aCountHeadBody = aMembers.cardinality();
 
 			aQualities[i] = itsQualityMeasure.calculate(aCountHeadBody, aSubgroup.getCoverage());
@@ -370,7 +381,7 @@ public class Validation
 			aSubgroupSize = (int) (theRandom.nextDouble() * aNrRows);
 		while (aSubgroupSize < theMinimumCoverage || aSubgroupSize == aNrRows);
 
-		return new Subgroup(itsTable.getRandomSubgroupMembers(aSubgroupSize));
+		return new Subgroup(itsTable.getRandomBitSet(aSubgroupSize));
 	}
 
 	// for RANDOM_DESCRIPTIONS/Conditions, always uses the same Random value
@@ -585,97 +596,6 @@ public class Validation
 		return theRepetition;
 	}
 
-	private double performRegressionTest(double[] theQualities, int theK, SubgroupSet theSubgroupSet)
-	{
-		//extract average quality
-		double aTopKQuality = 0.0;
-		for (Subgroup aSubgroup : theSubgroupSet)
-			aTopKQuality += aSubgroup.getMeasureValue();
-		aTopKQuality /= theK;
-
-		// make deep copy of double array
-		//public static double[] copyOf(double[] original, int newLength)
-		int theNrRandomSubgroups = theQualities.length;
-		double[] aCopy = Arrays.copyOf(theQualities, theQualities.length);
-
-		// rescale all qualities between 0 and 1
-		// also compute some necessary statistics
-		Arrays.sort(aCopy);
-
-		double aMin = Math.min(aCopy[0], aTopKQuality);
-		double aMax = Math.max(aCopy[theNrRandomSubgroups-1], aTopKQuality);
-		double xBar = 0.5; // given our scaling this always holds
-		double yBar = 0.0; // initial value
-		for (int i=0; i<theNrRandomSubgroups; i++)
-		{
-			aCopy[i] = (aCopy[i]-aMin)/(aMax-aMin);
-			yBar += aCopy[i];
-		}
-		aTopKQuality = (aTopKQuality-aMin)/(aMax-aMin);
-		yBar = (yBar+aTopKQuality)/((double) theNrRandomSubgroups + 1);
-
-		// perform least squares linear regression on equidistant x-values and computed y-values
-		double xxBar = 0.25; // initial value: this equals the square of (the x-value of our subgroup minus xbar)
-		double xyBar = 0.5 * (aTopKQuality - yBar);
-		double[] anXs = new double[theNrRandomSubgroups];
-		for (int i=0; i<theNrRandomSubgroups; i++)
-		{
-			anXs[i] = ((double)i) / ((double)theNrRandomSubgroups);
-			Log.logCommandLine("" + anXs[i] + "\t" + aCopy[i]);
-		}
-
-		for (int i=0; i<theNrRandomSubgroups; i++)
-		{
-			xxBar += (anXs[i] - xBar) * (anXs[i] - xBar);
-			xyBar += (anXs[i] - xBar) * (aCopy[i] - yBar);
-		}
-		double beta1 = xyBar / xxBar;
-		double beta0 = yBar - beta1 * xBar;
-		// this gives us the regression line y = beta1 * x + beta0
-		Log.logCommandLine("Fitted regression line: y = " + beta1 + " * x + " + beta0);
-		double aScore = aTopKQuality - beta1 - beta0; // the regression test score now equals the average quality of the top-k subgroups, minus the regression value at x=1.
-		Log.logCommandLine("Regression test score: " + aScore);
-		return aScore;
-	}
-
-	public double[] performRegressionTest(double[] theQualities, SubgroupSet theSubgroupSet)
-	{
-		double aOne = performRegressionTest(theQualities, 1, theSubgroupSet);
-		double aTen = Math.PI;
-		if (theSubgroupSet.size()>=10)
-			aTen = performRegressionTest(theQualities, 10, theSubgroupSet);
-		double[] aResult = {aOne, aTen};
-		return aResult;
-	}
-
-	public double computeEmpiricalPValue(double[] theQualities, SubgroupSet theSubgroupSet)
-	{
-		//hardcoded
-		int aK = 1;
-
-		// extract average quality of top-k subgroups
-		Iterator<Subgroup> anIterator = theSubgroupSet.iterator();
-		double aTopKQuality = 0.0;
-		for (int i=0; i<aK; i++)
-		{
-			Subgroup aSubgroup = anIterator.next();
-			aTopKQuality += aSubgroup.getMeasureValue();
-		}
-		aTopKQuality /= aK;
-
-		int aCount = 0;
-		for (double aQuality : theQualities)
-			if (aQuality > aTopKQuality)
-				aCount++;
-
-		Arrays.sort(theQualities);
-		Log.logCommandLine("Empirical p-value: " + aCount/(double)theQualities.length);
-//		Log.logCommandLine("score at alpha = 1%: " + theQualities[theQualities.length-theQualities.length/100]);
-//		Log.logCommandLine("score at alpha = 5%: " + theQualities[theQualities.length-theQualities.length/20]);
-//		Log.logCommandLine("score at alpha = 10%: " + theQualities[theQualities.length-theQualities.length/10]);
-		return aCount/(double)theQualities.length;
-	}
-
 	//private ConditionList getRandomConditionList(int theDepth, Random theRandom)
 	private ConditionListA getRandomConditionList(int theDepth, Random theRandom)
 	{
@@ -739,5 +659,96 @@ public class Validation
 			aCL = ConditionListBuilder.createList(aCL, aCondition);
 		}
 		return aCL;
+	}
+
+	public static final double[] performRegressionTest(double[] theQualities, SubgroupSet theSubgroupSet)
+	{
+		double aOne = performRegressionTest(theQualities, 1, theSubgroupSet);
+		double aTen = Math.PI;
+		if (theSubgroupSet.size()>=10)
+			aTen = performRegressionTest(theQualities, 10, theSubgroupSet);
+		double[] aResult = {aOne, aTen};
+		return aResult;
+	}
+
+	private static final double performRegressionTest(double[] theQualities, int theK, SubgroupSet theSubgroupSet)
+	{
+		//extract average quality
+		double aTopKQuality = 0.0;
+		for (Subgroup aSubgroup : theSubgroupSet)
+			aTopKQuality += aSubgroup.getMeasureValue();
+		aTopKQuality /= theK;
+
+		// make deep copy of double array
+		//public static double[] copyOf(double[] original, int newLength)
+		int theNrRandomSubgroups = theQualities.length;
+		double[] aCopy = Arrays.copyOf(theQualities, theQualities.length);
+
+		// rescale all qualities between 0 and 1
+		// also compute some necessary statistics
+		Arrays.sort(aCopy);
+
+		double aMin = Math.min(aCopy[0], aTopKQuality);
+		double aMax = Math.max(aCopy[theNrRandomSubgroups-1], aTopKQuality);
+		double xBar = 0.5; // given our scaling this always holds
+		double yBar = 0.0; // initial value
+		for (int i=0; i<theNrRandomSubgroups; i++)
+		{
+			aCopy[i] = (aCopy[i]-aMin)/(aMax-aMin);
+			yBar += aCopy[i];
+		}
+		aTopKQuality = (aTopKQuality-aMin)/(aMax-aMin);
+		yBar = (yBar+aTopKQuality)/((double) theNrRandomSubgroups + 1);
+
+		// perform least squares linear regression on equidistant x-values and computed y-values
+		double xxBar = 0.25; // initial value: this equals the square of (the x-value of our subgroup minus xbar)
+		double xyBar = 0.5 * (aTopKQuality - yBar);
+		double[] anXs = new double[theNrRandomSubgroups];
+		for (int i=0; i<theNrRandomSubgroups; i++)
+		{
+			anXs[i] = ((double)i) / ((double)theNrRandomSubgroups);
+			Log.logCommandLine("" + anXs[i] + "\t" + aCopy[i]);
+		}
+
+		for (int i=0; i<theNrRandomSubgroups; i++)
+		{
+			xxBar += (anXs[i] - xBar) * (anXs[i] - xBar);
+			xyBar += (anXs[i] - xBar) * (aCopy[i] - yBar);
+		}
+		double beta1 = xyBar / xxBar;
+		double beta0 = yBar - beta1 * xBar;
+		// this gives us the regression line y = beta1 * x + beta0
+		Log.logCommandLine("Fitted regression line: y = " + beta1 + " * x + " + beta0);
+		double aScore = aTopKQuality - beta1 - beta0; // the regression test score now equals the average quality of the top-k subgroups, minus the regression value at x=1.
+		Log.logCommandLine("Regression test score: " + aScore);
+		return aScore;
+	}
+
+	public static final double computeEmpiricalPValue(double[] theQualities, SubgroupSet theSubgroupSet)
+	{
+		//hardcoded
+		int aK = 1;
+
+		// extract average quality of top-k subgroups
+		Iterator<Subgroup> anIterator = theSubgroupSet.iterator();
+		double aTopKQuality = 0.0;
+		for (int i=0; i<aK; i++)
+		{
+			Subgroup aSubgroup = anIterator.next();
+			aTopKQuality += aSubgroup.getMeasureValue();
+		}
+		aTopKQuality /= aK;
+
+		int aCount = 0;
+		for (double aQuality : theQualities)
+			if (aQuality > aTopKQuality)
+				aCount++;
+
+		Arrays.sort(theQualities);
+		Log.logCommandLine("Empirical p-value: " + aCount/(double)theQualities.length);
+//		Log.logCommandLine("score at alpha = 1%: " + theQualities[theQualities.length-theQualities.length/100]);
+//		Log.logCommandLine("score at alpha = 5%: " + theQualities[theQualities.length-theQualities.length/20]);
+//		Log.logCommandLine("score at alpha = 10%: " + theQualities[theQualities.length-theQualities.length/10]);
+		return aCount / ((double) theQualities.length);
 	}
 }

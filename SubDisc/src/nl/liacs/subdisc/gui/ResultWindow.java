@@ -770,8 +770,7 @@ public class ResultWindow extends JFrame implements ActionListener
 		double[] aQualities = obtainRandomQualities();
 		if (aQualities == null)
 			return;
-		Validation aValidation = new Validation(itsSearchParameters, itsTable, itsQualityMeasure);
-		double[] aRegressionTestScore = aValidation.performRegressionTest(aQualities, itsSubgroupSet);
+		double[] aRegressionTestScore = Validation.performRegressionTest(aQualities, itsSubgroupSet);
 		setBusy(false);
 		JOptionPane.showMessageDialog(null, "The regression test score equals\nfor k =  1 : "+aRegressionTestScore[0]+"\nfor k = 10 : "+aRegressionTestScore[1]);
 	}
@@ -784,8 +783,7 @@ public class ResultWindow extends JFrame implements ActionListener
 		if ( aQualities == null)
 			return;
 
-		Validation aValidation = new Validation(itsSearchParameters, itsTable, itsQualityMeasure);
-		double aPValue = aValidation.computeEmpiricalPValue(aQualities, itsSubgroupSet);
+		double aPValue = Validation.computeEmpiricalPValue(aQualities, itsSubgroupSet);
 		JOptionPane.showMessageDialog(this, "The empirical p-value is p = " + aPValue);
 
 		for (Subgroup aSubgroup : itsSubgroupSet)
