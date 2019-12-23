@@ -1150,10 +1150,7 @@ public class MiningWindow extends JFrame implements ActionListener
 			System.out.println("selected table (or view): " + aTable);
 
 			//load table
-			SelectStatement aStatement = new SelectStatement();
-			aStatement.addSelectClause("*");
-			aStatement.addFromClause(aTable);
-			ResultSet aSet = itsDBC.executeStatement(aStatement.toString(), true, false);
+			ResultSet aSet = itsDBC.executeStatement("SELECT * FROM " + aTable, true, false);
 			itsTable = new Table(aSet, aTable);
 			//TODO update GUI?
 		}
@@ -2084,14 +2081,15 @@ System.out.println("\nBINS: " + bins);
 			{
 				// use exact same code as:
 				// SubgroupDiscovery#evaluateNumericRegularGenericCoarse()
-				int aParentCoverage    = aNrRows;
+				// long to prevent overflow for multiplication
+				long aParentCoverage   = aNrRows;
 				int aNrBins            = bins;
 				boolean isTimeToStop   = false;
-				int[] aCounts = c.getValueCount(bs).itsCounts;
+				int[] aCounts          = c.getValueCount(bs).itsCounts;
 				boolean DEBUG_POC_BINS = false;
 				int itsMinimumCoverage = Integer.MIN_VALUE;
 				List<Float> boundsList = new ArrayList<>(aNrBins);
-				for (int i = 0, j = 1, next = ((int) (aParentCoverage / aNrBins)), cover = 0; j < (int) aNrBins && !isTimeToStop; ++i)
+				for (int i = 0, j = 1, next = ((int) (aParentCoverage / aNrBins)), cover = 0; j < aNrBins && !isTimeToStop; ++i)
 				{
 					int aCount = aCounts[i];
 					if (aCount == 0)
@@ -2230,7 +2228,8 @@ System.out.println("\nBINS: " + bins);
 				// use exact same code as:
 				// SubgroupDiscovery#evaluateNumericRegularGenericCoarse()
 				// Operator.LESS_THAN_OR_EQUAL
-				int aParentCoverage    = aNrRows;
+				// long to prevent overflow for multiplication
+				long aParentCoverage   = aNrRows;
 				int aNrBins            = bins;
 				boolean isTimeToStop   = false;
 				int[] aCounts = c.getValueCount(bs).itsCounts;
@@ -2240,7 +2239,7 @@ List<Interval> boundsList = new ArrayList<>(aNrBins);
 				// last cover used for evaluation, and last lower bound
 				int last_cover = 0;
 				float f = Float.NEGATIVE_INFINITY;
-				for (int i = 0, j = 1, next = ((int) (aParentCoverage / aNrBins)), cover = 0; i < aCounts.length && j < (int) aNrBins && !isTimeToStop; ++i)
+				for (int i = 0, j = 1, next = ((int) (aParentCoverage / aNrBins)), cover = 0; i < aCounts.length && j < aNrBins && !isTimeToStop; ++i)
 				{
 					int aCount = aCounts[i];
 					if (aCount == 0)

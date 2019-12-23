@@ -12,7 +12,6 @@ import javax.swing.*;
 
 import nl.liacs.subdisc.*;
 import nl.liacs.subdisc.FileHandler.Action;
-import nl.liacs.subdisc.Timer;
 
 public class ResultWindow extends JFrame implements ActionListener
 {
