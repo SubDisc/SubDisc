@@ -320,55 +320,20 @@ public class Table implements XMLNodeInterface
 		return aCounts;
 	}
 
-
-
-	/*
-	 * This method is too expensive in most cases,
-	 * Validation.randomConditions and SubgroupDiscovery.makeNewSubgroup use
-	 * it, as well as the constructor BinaryTable(Table, Subgroup).
-	 * Actually, when making a refinement (in makeNewSubgroup), the new
-	 * BitSet can be created from
-	 * old_Subgroup.getMembers().and(new_condition.getAttribute.evaluate(new_condition))
-	 * This makes the algorithm much faster, as only a single loop over the
-	 * new_condition.getAttribute() is needed + 1 and(), instead of the
-	 * current conditionList.size() loops + and()'s.
-	 * Also it prevents the need to reload all Columns that occur in the
-	 * Condition that form the ConditionList.
-	 */
-	// as above but only checks type once
-//	public BitSet evaluate(ConditionList theList)
-//	{
-//		// Validation.randomConditions does not check for null
-//		if (theList == null || theList.isEmpty())
-//			return new BitSet(0);
-//
-//		// these 3 lines replace all code below, slightly less efficient
-//		BitSet aSet = theList.get(0).getColumn().evaluate(theList.get(0));
-//		for (int i = 1, j =  theList.size(); i < j; ++i)
-//			aSet.and(theList.get(i).getColumn().evaluate(theList.get(i)));
-//
-//		return aSet;
-//	}
-
+	// TODO merge various evaluate methods in Table/Column/Subgroup/Validation..
+	/** @throws NullPointerException when theList is null. */
 	public BitSet evaluate(ConditionListA theList)
 	{
-		// Validation.randomConditions does not check for null
-		if (theList == null || theList.size() == 0)
+		if (theList.size() == 0)
 			return new BitSet(0);
 
-		// these 3 lines replace all code below, slightly less efficient
-		BitSet aSet = theList.get(0).getColumn().evaluate(theList.get(0));
-		for (int i = 1, j =  theList.size(); i < j; ++i)
-			aSet.and(theList.get(i).getColumn().evaluate(theList.get(i)));
+		// reassign b, size decreases faster, no need for and()
+		BitSet b = new BitSet(itsNrRows);
+		b.set(0, itsNrRows);
+		for (int i = 0, j =  theList.size(); i < j; ++i)
+			b = theList.get(i).getColumn().evaluate(b, theList.get(i));
 
-		// XXX MM - reassign b, size decreases faster, no need for and()
-//		BitSet b = new BitSet(itsNrRows);
-//		b.set(0, itsNrRows);
-//		for (int i = 0, j =  theList.size(); i < j; ++i)
-//			b = theList.get(i).getColumn().evaluate(b, theList.get(i));
-//		assert (aSet.equals(b));
-
-		return aSet;
+		return b;
 	}
 
 	//Data Model ===========================================================================
@@ -418,7 +383,8 @@ public class Table implements XMLNodeInterface
 
 	// Misc ===============================
 
-	public BitSet getRandomSubgroupMembers(int theSize)
+	/** Returns a BitSet of size Table.size(), with theNrBitsToSet bits set. */
+	public BitSet getRandomBitSet(int theNrBitsToSet)
 	{
 		BitSet aSample = new BitSet(itsNrRows);
 		int m = 0;
@@ -426,7 +392,7 @@ public class Table implements XMLNodeInterface
 
 		for (int i = 0; i < itsNrRows; i++)
 		{
-			double aThresholdValue1 = theSize - m;
+			double aThresholdValue1 = theNrBitsToSet - m;
 			double aThresholdValue2 = itsNrRows - t;
 
 			if ((aThresholdValue2 * itsRandomNumber.nextDouble()) < aThresholdValue1)
@@ -434,7 +400,7 @@ public class Table implements XMLNodeInterface
 				aSample.set(i);
 				m++;
 				t++;
-				if (m >= theSize)
+				if (m >= theNrBitsToSet)
 					break;
 			}
 			else
@@ -483,37 +449,56 @@ public class Table implements XMLNodeInterface
 	 */
 	public void swapRandomizeTarget(TargetConcept theTC)
 	{
-		List<Column> aTargets = new ArrayList<Column>(2);
 		TargetType aType = theTC.getTargetType();
 
-		//find all targets
-		switch (aType)
-		{
-			case DOUBLE_REGRESSION : // deliberate fall-through
-			case DOUBLE_CORRELATION :
-				aTargets.add(theTC.getSecondaryTarget());
-				//no break
-			case SINGLE_NOMINAL : // deliberate fall-through
-			case SINGLE_NUMERIC :
-			case LABEL_RANKING :
-				aTargets.add(theTC.getPrimaryTarget());
-				break;
-			case MULTI_LABEL :
-				aTargets = theTC.getMultiTargets();
-				break;
+		String e = "%s.swapRandomizeTarget(): !Validation.isValidRandomQualitiesTargetType(%s)";
+		if (!Validation.isValidRandomQualitiesTargetType(aType))
+			throw new IllegalArgumentException(String.format(e, Table.class.getSimpleName(), aType));
 
-			// unimplemented TargetTypes
-			case SINGLE_ORDINAL :
-			case MULTI_BINARY_CLASSIFICATION :
-			default :
-			{
-				throw new AssertionError(
-						String.format("%s.swapRandomizeTarget(): unimplemented %s '%s'",
-								this.getClass().getSimpleName(),
-								TargetType.class.getSimpleName(),
-								aType));
-			}
-		}
+		EnumSet<TargetType> s = EnumSet.of(TargetType.SINGLE_NOMINAL, TargetType.SINGLE_NUMERIC, TargetType.LABEL_RANKING);
+		EnumSet<TargetType> d = EnumSet.of(TargetType.DOUBLE_REGRESSION, TargetType.DOUBLE_CORRELATION);
+
+		final List<Column> aTargets;
+		if (s.contains(aType))
+			aTargets = Arrays.asList(new Column[] { theTC.getPrimaryTarget() });
+		else if (d.contains(aType))
+			aTargets = Arrays.asList(new Column[] { theTC.getPrimaryTarget(), theTC.getSecondaryTarget() });
+		else if (aType == TargetType.MULTI_LABEL)
+			aTargets = theTC.getMultiTargets();
+		else
+			throw new AssertionError(String.format("%s.swapRandomizeTarget(): unimplemented %s '%s'",
+										Table.class.getSimpleName(),
+										TargetType.class.getSimpleName(),
+										aType));
+
+//		//find all targets
+//		switch (aType)
+//		{
+//			case DOUBLE_REGRESSION : // deliberate fall-through
+//			case DOUBLE_CORRELATION :
+//				aTargets.add(theTC.getSecondaryTarget());
+//				//no break
+//			case SINGLE_NOMINAL : // deliberate fall-through
+//			case SINGLE_NUMERIC :
+//			case LABEL_RANKING :
+//				aTargets.add(theTC.getPrimaryTarget());
+//				break;
+//			case MULTI_LABEL :
+//				aTargets = theTC.getMultiTargets();
+//				break;
+//
+//			// unimplemented TargetTypes
+//			case SINGLE_ORDINAL :
+//			case MULTI_BINARY_CLASSIFICATION :
+//			default :
+//			{
+//				throw new AssertionError(
+//						String.format("%s.swapRandomizeTarget(): unimplemented %s '%s'",
+//								this.getClass().getSimpleName(),
+//								TargetType.class.getSimpleName(),
+//								aType));
+//			}
+//		}
 
 		int n = getNrRows();
 		//start with regular order
