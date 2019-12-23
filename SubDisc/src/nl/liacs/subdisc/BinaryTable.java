@@ -30,7 +30,6 @@ public class BinaryTable
 		for (Subgroup aSubgroup : theSubgroups)
 		{
 			BitSet aColumn = aSubgroup.getMembers();
-			assert (aColumn.equals(theTable.evaluate(aSubgroup.getConditions())));
 			itsColumns.add(aColumn);
 		}
 	}
