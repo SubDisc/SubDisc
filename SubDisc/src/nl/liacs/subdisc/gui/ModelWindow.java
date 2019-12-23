@@ -21,14 +21,15 @@ public class ModelWindow extends JFrame implements ActionListener
 	static final String BASE_MODEL_TEXT = "Base Model (all data)";
 
 	private JScrollPane itsJScrollPaneCenter = new JScrollPane();
-	private BitSet itsSample = null;
-	private final int SAMPLE_SIZE = 200000;
 	private Table itsTable;
 	private Column itsXColumn;
 	private Column itsYColumn;
 	private RegressionMeasure itsRM;
 	private Subgroup itsSubgroup;
 	private JFreeChart itsChart = null;
+	// FIXME review use - itSample is only used for SINGLE_NUMERIC (sometimes)
+	private BitSet itsSample = null;
+	private final int SAMPLE_SIZE = 200_000;
 
 //	// SINGLE_NUMERIC: show distribution over numeric target and Subgroup =====================================
 //	// SCAPE: show distribution of numeric target, for positives and negatives in binary target ===============
@@ -202,7 +203,7 @@ public class ModelWindow extends JFrame implements ActionListener
 		//sampling
 		int aSize = theTable.getNrRows();
 		if (aSize > SAMPLE_SIZE)
-			itsSample = theTable.getRandomSubgroupMembers(SAMPLE_SIZE);
+			itsSample = theTable.getRandomBitSet(SAMPLE_SIZE);
 
 		initComponents();
 		final boolean isRegression = (theRM != null);
