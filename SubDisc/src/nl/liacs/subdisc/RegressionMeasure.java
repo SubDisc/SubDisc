@@ -25,7 +25,7 @@ public class RegressionMeasure
 	private List<Point2D.Float> itsData;//Stores all the datapoints for this measure
 	private List<Point2D.Float> itsComplementData = new ArrayList<Point2D.Float>();//Stores all the datapoints for the complement
 
-	public static QM itsQualityMeasure; // FIXME MM this should not be static
+	final QM itsQualityMeasure;
 	private RegressionMeasure itsBase = null;
 
 	private Matrix itsDataMatrix;

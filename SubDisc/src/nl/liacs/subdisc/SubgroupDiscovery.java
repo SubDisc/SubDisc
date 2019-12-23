@@ -3486,7 +3486,8 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		BitSet aChildMembers = theChild.getMembers();
 		double aQuality;
 
-		// FIXME why is this a static member field
+		assert (itsSearchParameters.getQualityMeasure() == itsBaseRM.itsQualityMeasure);
+		// TODO MM - was static member field of RM (probably bad programming)
 		switch (itsBaseRM.itsQualityMeasure)
 		{
 			case REGRESSION_SSD_COMPLEMENT :
