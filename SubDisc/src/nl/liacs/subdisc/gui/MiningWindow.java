@@ -21,7 +21,7 @@ import nl.liacs.subdisc.cui.*;
 public class MiningWindow extends JFrame implements ActionListener
 {
 	// leave false in git
-	private static final boolean ADD_DISCRETISE_BUTTON = false;
+	private static final boolean ADD_DISCRETISE_BUTTON = true;
 
 	static final long serialVersionUID = 1L;
 
@@ -2058,17 +2058,16 @@ public class MiningWindow extends JFrame implements ActionListener
 	// lazy code - build new Table and re-use Table.toFile()
 	/* @see SubgroupDiscovery#evaluateNumericRegularGenericCoarse(Subgroup,
 	 *      ConditionBase, ValueCount) */
-	private void jButtonDiscretiseActionPerformed(int bins)
+	private void jButtonDiscretiseActionPerformed(int theNrBins)
 	{
-System.out.println("\nBINS: " + bins);
-		int aNrSplits = bins-1;
+		System.out.println("\nBINS: " + theNrBins);
 		int aNrRows = itsTable.getNrRows();
 
 		// create a BitSet that select the whole Table
 		BitSet bs = new BitSet(aNrRows);
 		bs.set(0, aNrRows);
 
-		String name = String.format("%s.b%04d", itsTable.getSource(), bins);
+		String name = String.format("%s.b%04d", itsTable.getSource(), theNrBins);
 		File file = new File(name + ".csv");
 		Table t = new Table(file, name, aNrRows, itsTable.getNrColumns());
 		List<Column> cs = t.getColumns();
@@ -2079,17 +2078,17 @@ System.out.println("\nBINS: " + bins);
 				cs.add(c);
 			else
 			{
+				List<Float> boundsList = new ArrayList<>(theNrBins);
+
 				// use exact same code as:
 				// SubgroupDiscovery#evaluateNumericRegularGenericCoarse()
+				long aNrBins           = theNrBins;
 				// long to prevent overflow for multiplication
 				long aParentCoverage   = aNrRows;
-				int aNrBins            = bins;
+				long b                 = 1L;
 				boolean isTimeToStop   = false;
 				int[] aCounts          = c.getValueCount(bs).itsCounts;
-				boolean DEBUG_POC_BINS = false;
-				int itsMinimumCoverage = Integer.MIN_VALUE;
-				List<Float> boundsList = new ArrayList<>(aNrBins);
-				for (int i = 0, j = 1, next = ((int) (aParentCoverage / aNrBins)), cover = 0; j < aNrBins && !isTimeToStop; ++i)
+				for (int i = 0, next = next(aParentCoverage, b, aNrBins), cover = 0; b < aNrBins && !isTimeToStop; ++i)
 				{
 					int aCount = aCounts[i];
 					if (aCount == 0)
@@ -2097,93 +2096,39 @@ System.out.println("\nBINS: " + bins);
 
 					cover += aCount;
 
-					// for debugging do not continue on (cover < itsMinimumCoverage)
-					if (cover <= next || (!DEBUG_POC_BINS && (cover < itsMinimumCoverage)))
+					if (cover <= next)
 						continue;
 
 boundsList.add(c.getSortedValue(i));
 
-//					// for debugging do not break on (cover == anOldCoverage)
-//					if (!DEBUG_POC_BINS && (cover == aParentCoverage))
-//						break;
-//
+					if (cover == aParentCoverage)
+						break;
+
 //					Condition aCondition = new Condition(theConditionBase, aColumn.getSortedValue(i), i);
-//					aBestSubgroup = evaluateCandidate(theParent, aCondition, cover, isAllStrategy, aBestSubgroup);
-//					                evaluateCandidate(theParent, aCondition, cover, isAllStrategy, aBestSubgroups);
-//
-					while (((next = ((int) ((++j * aParentCoverage) / aNrBins)))) <= cover-1)
+//					evaluateCandidate(theParent, aCondition, cover, isAllStrategy, aBestSubgroups);
+
+					while ((next = next(aParentCoverage, ++b, aNrBins)) <= cover-1)
 						; // deliberately empty
-//
-//					// debug only
-//					if (DEBUG_POC_BINS)
-//					{
-//						aCheck.add(aColumn.getSortedValue(i));
-//						if (!((cover < itsMinimumCoverage) || (cover == aParentCoverage)))
-//							aValid.add(aColumn.getSortedValue(i));
-//					}
 				}
-// binary search needs all upper bounds
-// bs selects all data, so c.getMax() is correct
-// add max to bounds only if it is not in there
-float x = c.getMax();
-if (boundsList.get(boundsList.size()-1) != x)
-	boundsList.add(x);
 
-				// use new getUniqueSplitPoints()
-				boolean orig = Column.USE_NEW_BINNING;
-				Column.USE_NEW_BINNING = true;
-				float[] bounds = c.getUniqueSplitPoints(bs, aNrSplits, Operator.LESS_THAN_OR_EQUAL);
-				Column.USE_NEW_BINNING = orig;
-
-				// nrBounds <= aNrSplits
-				int nrBounds = bounds.length;
-
-				// TODO MM - deal with this
-				if (nrBounds == 0)
-					throw new AssertionError("FIX jButtonDiscretiseActionPerformed()");
+				int prev = 0;
+				for (Float f : boundsList)
+				{
+					int cnt = 0;
+					for (float fc : c.getFloats())
+						if (fc <= f)
+							++cnt;
+					System.out.println(c.getName() + "\t" + f + "\t" + (cnt-prev));
+					prev = cnt;
+				}
 
 				// binary search needs all upper bounds
 				// bs selects all data, so c.getMax() is correct
 				// add max to bounds only if it is not in there
-				float max = c.getMax();
-				if (bounds[nrBounds-1] != max)
-				{
-					// reuse bounds 
-					bounds = Arrays.copyOf(bounds, nrBounds + 1);
-					bounds[nrBounds] = max; 
-				}
-float[] check = new float[boundsList.size()];
-for (int i = 0; i < check.length; ++i)
-	check[i] = boundsList.get(i);
-if (!Arrays.equals(check, bounds))
-{
-	System.out.println(c.getName());
-	System.out.println("OLD: " + Arrays.toString(bounds));
-	System.out.println("NEW: " + Arrays.toString(check));
-}
+				float x = c.getMax();
+				if (boundsList.get(boundsList.size()-1) != x)
+					boundsList.add(x);
 
-// MM - OLD CODE DO NOT USE, CALLS INCORRECT OLD getSplitPoints()
-//				float[] bounds = null;
-//				if (c.getCardinality() <= bins)
-//					bounds = c.getUniqueNumericDomain(bs);
-//				else
-//				{
-//					bounds = c.getSplitPoints(bs, aNrSplits);
-//
-//					// lazy method to remove possible duplicates
-//					Set<Float> set = new TreeSet<Float>();
-//					for (float f : bounds)
-//						set.add(Float.valueOf(f));
-//					// reuse bounds
-//					bounds = new float[set.size() + 1];
-//					int index = -1;
-//					for (Float f : set)
-//						bounds[++index] = f;
-//// FIXME MM
-//// MAX SHOULD NOT BE INCLUDED, INSTEAD ONLY THE SPLITPOINTS ARE REQUIRED
-//					bounds[++index] = c.getMax();
-//				}
-//
 				int size = c.size();
 				assert (aNrRows == size);
 				Column nc = new Column(c.getName(), c.getShort(), c.getType(), c.getIndex(), size);
@@ -2191,8 +2136,10 @@ if (!Arrays.equals(check, bounds))
 				for (int i = 0; i < size; ++i)
 				{
 					float f = c.getFloat(i);
-					int b = Arrays.binarySearch(bounds, f);
-					nc.add(bounds[b < 0 ? ~b : b]);
+//					int l = Arrays.binarySearch(check, f);
+//					nc.add(check[l < 0 ? ~l : l]);
+					int l = Collections.binarySearch(boundsList, f);
+					nc.add(boundsList.get(l < 0 ? ~l : l));
 				}
 
 				cs.add(nc);
@@ -2203,18 +2150,18 @@ if (!Arrays.equals(check, bounds))
 
 		System.out.println(file.getAbsolutePath());
 	}
+	private static final int next(long n, long b, long B) { return SubgroupDiscovery.next(n, b, B); }
 
-	private void jButtonDiscretiseActionPerformed2(int bins)
+	private void jButtonDiscretiseActionPerformed2(int theNrBins)
 	{
-System.out.println("\nBINS: " + bins);
-//		int aNrSplits = bins-1;
+		System.out.println("\nBINS: " + theNrBins);
 		int aNrRows = itsTable.getNrRows();
 
 		// create a BitSet that select the whole Table
 		BitSet bs = new BitSet(aNrRows);
 		bs.set(0, aNrRows);
 
-		String name = String.format("%s.n%04d", itsTable.getSource(), bins);
+		String name = String.format("%s.n%04d", itsTable.getSource(), theNrBins);
 		File file = new File(name + ".csv");
 		Table t = new Table(file, name, aNrRows, itsTable.getNrColumns());
 		List<Column> cs = t.getColumns();
@@ -2225,21 +2172,19 @@ System.out.println("\nBINS: " + bins);
 				cs.add(c);
 			else
 			{
+				List<Interval> boundsList = new ArrayList<>(theNrBins);
 				// use exact same code as:
 				// SubgroupDiscovery#evaluateNumericRegularGenericCoarse()
-				// Operator.LESS_THAN_OR_EQUAL
+				long aNrBins           = theNrBins;
 				// long to prevent overflow for multiplication
 				long aParentCoverage   = aNrRows;
-				int aNrBins            = bins;
+				long b                 = 1L;
 				boolean isTimeToStop   = false;
-				int[] aCounts = c.getValueCount(bs).itsCounts;
-				boolean DEBUG_POC_BINS = false;
-				int itsMinimumCoverage = Integer.MIN_VALUE;
-List<Interval> boundsList = new ArrayList<>(aNrBins);
+				int[] aCounts          = c.getValueCount(bs).itsCounts;
 				// last cover used for evaluation, and last lower bound
 				int last_cover = 0;
 				float f = Float.NEGATIVE_INFINITY;
-				for (int i = 0, j = 1, next = ((int) (aParentCoverage / aNrBins)), cover = 0; i < aCounts.length && j < aNrBins && !isTimeToStop; ++i)
+				for (int i = 0, next = next(aParentCoverage, b, aNrBins), cover = 0; i < aCounts.length && b < aNrBins && !isTimeToStop; ++i)
 				{
 					int aCount = aCounts[i];
 					if (aCount == 0)
@@ -2247,36 +2192,24 @@ List<Interval> boundsList = new ArrayList<>(aNrBins);
 
 					cover += aCount;
 
-					// for debugging do not continue on (cover < itsMinimumCoverage)
-					if (cover <= next || (!DEBUG_POC_BINS && (cover < itsMinimumCoverage)))
+					if (cover <= next)
 						continue;
 
 Column aColumn = c;
 boundsList.add(new Interval(f, aColumn.getSortedValue(i)));
 
-//					// for debugging do not break on (cover == anOldCoverage)
-//					if (!DEBUG_POC_BINS && (cover == aParentCoverage))
-//						break;
-//
-//
+					if (cover == aParentCoverage)
+						break;
+
 					float n = aColumn.getSortedValue(i);
 //					Condition anAddedCondition = new Condition(theConditionBase, new Interval(f, n));
-////					aBestSubgroup = evaluateCandidate(theParent, anAddedCondition, (cover-last_cover), isAllStrategy, aBestSubgroup);
-//					                evaluateCandidate(theParent, anAddedCondition, (cover-last_cover), isAllStrategy, aBestSubgroups);
+//					evaluateCandidate(theParent, anAddedCondition, (cover-last_cover), isAllStrategy, aBestSubgroups);
 
 					last_cover = cover;
 					f = n;
 
-					while (((next = ((int) ((++j * aParentCoverage) / aNrBins)))) <= cover-1)
+					while ((next = next(aParentCoverage, ++b, aNrBins)) <= cover-1)
 						; // deliberately empty
-
-//					// debug only
-//					if (DEBUG_POC_BINS)
-//					{
-//						aCheck.add(aColumn.getSortedValue(i));
-//						if (!((cover < itsMinimumCoverage) || (cover == aParentCoverage)))
-//							aValid.add(aColumn.getSortedValue(i));
-//					}
 				}
 				// POSITIVE_INFINITY should never be present, as this type of value
 				// should not be in the data, but this is copied from the original
@@ -2294,11 +2227,19 @@ boundsList.add(new Interval(f, aColumn.getSortedValue(i)));
 				// 2. the sum is lower: add Interval that selects the remaining data
 				if ((last_cover != aParentCoverage) && (Float.compare(Float.POSITIVE_INFINITY, f) != 0))
 				{
-boundsList.add(new Interval(f, Float.POSITIVE_INFINITY));
 //					Condition anAddedCondition = new Condition(theConditionBase, new Interval(f, Float.POSITIVE_INFINITY));
 //					last_cover = (((int) aParentCoverage) - last_cover);
-////					aBestSubgroup = evaluateCandidate(theParent, anAddedCondition, last_cover, isAllStrategy, aBestSubgroup);
-//					                evaluateCandidate(theParent, anAddedCondition, last_cover, isAllStrategy, aBestSubgroups);
+//					evaluateCandidate(theParent, anAddedCondition, last_cover, isAllStrategy, aBestSubgroups);
+boundsList.add(new Interval(f, Float.POSITIVE_INFINITY));
+				}
+
+				for (Interval interval : boundsList)
+				{
+					int cnt = 0;
+					for (float fc : c.getFloats())
+						if (interval.between(fc))
+							++cnt;
+					System.out.println(c.getName() + "\t" + interval + "\t" + cnt);
 				}
 
 				int size = c.size();
@@ -2307,17 +2248,14 @@ boundsList.add(new Interval(f, Float.POSITIVE_INFINITY));
 
 				for (int i = 0; i < size; ++i)
 				{
-for (Interval interval : boundsList)
-{
-	if (interval.between(c.getFloat(i)))
-	{
-//		System.out.println(interval + " " + c.getFloat(i));
-		nc.add(interval.toString().replace(", ", ";"));
-	}
-}
-//					float f = c.getFloat(i);
-//					int b = Arrays.binarySearch(bounds, f);
-//					nc.add(bounds[b < 0 ? ~b : b]);
+					for (Interval interval : boundsList)
+					{
+						if (interval.between(c.getFloat(i)))
+						{
+//							System.out.println(interval + " " + c.getFloat(i));
+							nc.add(interval.toString().replace(", ", ";"));
+						}
+					}
 				}
 
 				cs.add(nc);
