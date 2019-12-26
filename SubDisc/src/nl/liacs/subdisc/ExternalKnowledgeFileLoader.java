@@ -10,11 +10,6 @@ public class ExternalKnowledgeFileLoader
 	private static final String EXTERNAL_KNOWLEDGE_STANDARD_DIR = "";
 	private static final Set<String> OPERATORS; // " in ", " = ", " <= ", " >= "
 
-	private final List<ConditionList> externalInfoLocal;
-	private final List<ConditionList> externalInfoGlobal;
-	private final List<String> linesLocal;
-	private final List<String> linesGlobal;
-
 	static
 	{
 		Set<String> s = new TreeSet<String>();
@@ -25,6 +20,13 @@ public class ExternalKnowledgeFileLoader
 
 		OPERATORS = Collections.unmodifiableSet(s);
 	}
+
+/*
+	private final List<ConditionList> externalInfoLocal;
+	private final List<ConditionList> externalInfoGlobal;
+	private final List<String> linesLocal;
+	private final List<String> linesGlobal;
+
 
 	public ExternalKnowledgeFileLoader(String theStringF)
 	{
@@ -198,7 +200,7 @@ public class ExternalKnowledgeFileLoader
 	{
 		return externalInfoGlobal;
 	}
-
+*/
 	////////////////////////////////////////////////////////////////////////////
 	///// NEW VERSION - CLEAN AND USING ConditionListA /////////////////////////
 	////////////////////////////////////////////////////////////////////////////
@@ -217,11 +219,11 @@ public class ExternalKnowledgeFileLoader
 		itsExternalKnowledgeGlobal = knowledgeToConditions(theTable, theConsitionBases, g);
 		itsExternalKnowledgeLocal  = knowledgeToConditions(theTable, theConsitionBases, l);
 
-		// FIXME - to be removed, for testing only
-		externalInfoLocal  = null;
-		externalInfoGlobal = null;
-		linesLocal         = null;
-		linesGlobal        = null;
+//		// FIXME - to be removed, for testing only
+//		externalInfoLocal  = null;
+//		externalInfoGlobal = null;
+//		linesLocal         = null;
+//		linesGlobal        = null;
 	}
 
 	private static final List<String> addLinesFromFile(final String theExtention)
@@ -324,6 +326,29 @@ public class ExternalKnowledgeFileLoader
 
 		return Collections.unmodifiableList(cll);
 	}
+
+///// COPY - COPY - COPY - COPY - COPY - COPY - COPY - COPY - COPY - COPY //////
+	// TODO mapping a Condition back to its constituents should be made a
+	// Condition.method().
+	private static String[] disect(String theCondition)
+	{
+		// assume OPERATORS do not appear in column name
+		for (String s : OPERATORS)
+		{
+			if (theCondition.contains(s))
+			{
+				final String[] tmp = theCondition.split(s);
+				// remove outer quotes from column name
+//				tmp[0] = tmp[0].substring(1, tmp[0].length()-1);
+				if (tmp[1].startsWith("'") && tmp[1].endsWith("'"))
+					tmp[1] = tmp[1].substring(1, tmp[1].length()-1);
+				return new String[] { tmp[0] , s.trim(), tmp[1] };
+			}
+		}
+
+		throw new IllegalArgumentException(ExternalKnowledgeFileLoader.class.getSimpleName() + " can not parse: " + theCondition);
+	}
+////////////////////////////////////////////////////////////////////////////////
 
 	// reuse ConditionBases as much as possible, returns null when Column not in
 	// Table or Operator not used in current Mining session
