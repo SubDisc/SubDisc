@@ -21,7 +21,7 @@ import nl.liacs.subdisc.cui.*;
 public class MiningWindow extends JFrame implements ActionListener
 {
 	// leave false in git
-	private static final boolean ADD_DISCRETISE_BUTTON = true;
+	private static final boolean ADD_DISCRETISE_BUTTON = false;
 
 	static final long serialVersionUID = 1L;
 
@@ -2038,6 +2038,7 @@ public class MiningWindow extends JFrame implements ActionListener
 			//nl.liacs.discretisation.NumericRanges.foo(itsTable, itsTargetConcept.getPrimaryTarget(), b);
 
 			// TODO c.removeSorted()
+		System.out.println();
 	}
 
 	// the number of values in a column should be (at most) equal to 'bins'
@@ -2099,10 +2100,10 @@ public class MiningWindow extends JFrame implements ActionListener
 					if (cover <= next)
 						continue;
 
-boundsList.add(c.getSortedValue(i));
-
 					if (cover == aParentCoverage)
 						break;
+
+boundsList.add(c.getSortedValue(i));
 
 //					Condition aCondition = new Condition(theConditionBase, aColumn.getSortedValue(i), i);
 //					evaluateCandidate(theParent, aCondition, cover, isAllStrategy, aBestSubgroups);
@@ -2110,6 +2111,14 @@ boundsList.add(c.getSortedValue(i));
 					while ((next = next(aParentCoverage, ++b, aNrBins)) <= cover-1)
 						; // deliberately empty
 				}
+
+				// binary search needs all upper bounds
+				// bs selects all data, so c.getMax() is correct
+				// add max to bounds only if not in there (it should never be)
+				float x = c.getMax();
+				int s   = boundsList.size();
+				if ((s == 0) || (boundsList.get(s-1) != x))
+					boundsList.add(x);
 
 				int prev = 0;
 				for (Float f : boundsList)
@@ -2122,13 +2131,6 @@ boundsList.add(c.getSortedValue(i));
 					prev = cnt;
 				}
 
-				// binary search needs all upper bounds
-				// bs selects all data, so c.getMax() is correct
-				// add max to bounds only if it is not in there
-				float x = c.getMax();
-				if (boundsList.get(boundsList.size()-1) != x)
-					boundsList.add(x);
-
 				int size = c.size();
 				assert (aNrRows == size);
 				Column nc = new Column(c.getName(), c.getShort(), c.getType(), c.getIndex(), size);
@@ -2136,8 +2138,6 @@ boundsList.add(c.getSortedValue(i));
 				for (int i = 0; i < size; ++i)
 				{
 					float f = c.getFloat(i);
-//					int l = Arrays.binarySearch(check, f);
-//					nc.add(check[l < 0 ? ~l : l]);
 					int l = Collections.binarySearch(boundsList, f);
 					nc.add(boundsList.get(l < 0 ? ~l : l));
 				}
@@ -2195,11 +2195,11 @@ boundsList.add(c.getSortedValue(i));
 					if (cover <= next)
 						continue;
 
-Column aColumn = c;
-boundsList.add(new Interval(f, aColumn.getSortedValue(i)));
-
 					if (cover == aParentCoverage)
 						break;
+
+Column aColumn = c;
+boundsList.add(new Interval(f, aColumn.getSortedValue(i)));
 
 					float n = aColumn.getSortedValue(i);
 //					Condition anAddedCondition = new Condition(theConditionBase, new Interval(f, n));
@@ -2225,6 +2225,7 @@ boundsList.add(new Interval(f, aColumn.getSortedValue(i)));
 				// 1. the sum of the value.counts is equal to aParentCoverage (for a
 				// half-interval: <= f would select all data, and be useless), or
 				// 2. the sum is lower: add Interval that selects the remaining data
+				// TODO both conditions should never be true -> could be assert
 				if ((last_cover != aParentCoverage) && (Float.compare(Float.POSITIVE_INFINITY, f) != 0))
 				{
 //					Condition anAddedCondition = new Condition(theConditionBase, new Interval(f, Float.POSITIVE_INFINITY));
