@@ -2102,6 +2102,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			// 1. the sum of the value.counts is equal to aParentCoverage (for a
 			// half-interval: <= f would select all data, and be useless), or
 			// 2. the sum is lower: add Interval that selects the remaining data
+			// TODO both conditions should never be true -> could be assert
 			if ((last_cover != aParentCoverage) && (Float.compare(Float.POSITIVE_INFINITY, f) != 0))
 			{
 				Condition anAddedCondition = new Condition(theConditionBase, new Interval(f, Float.POSITIVE_INFINITY));
@@ -2353,6 +2354,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			// 1. the sum of the value.counts is equal to aParentCoverage (for a
 			// half-interval: <= f would select all data, and be useless), or
 			// 2. the sum is lower: add Interval that selects the remaining data
+			// TODO both conditions should never be true -> could be assert
 			if ((last_cover != aParentCoverage) && (Float.compare(Float.POSITIVE_INFINITY, f) != 0))
 			{
 				Condition anAddedCondition = new Condition(theConditionBase, new Interval(f, Float.POSITIVE_INFINITY));
