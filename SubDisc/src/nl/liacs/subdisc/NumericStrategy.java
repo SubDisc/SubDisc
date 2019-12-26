@@ -54,6 +54,9 @@ public enum NumericStrategy implements EnumInterface
 		for (NumericStrategy n : NumericStrategy.values())
 			if (n.isNormalValue)
 				aSet.add(n);
+		// TODO MM these two will be completely removed soon, do not show in GUI
+		aSet.remove(NUMERIC_VIKAMINE_CONSECUTIVE_ALL);
+		aSet.remove(NUMERIC_VIKAMINE_CONSECUTIVE_BEST);
 		NORMAL_VALUES = Collections.unmodifiableSet(aSet);
 	}
 
