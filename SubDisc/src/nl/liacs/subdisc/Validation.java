@@ -199,7 +199,8 @@ public class Validation
 
 			BitSet aMembers = aSubgroup.getMembers();
 
-			Statistics aStatistics = aTarget.getStatistics(aMembers, itsSearchParameters.getQualityMeasure() == QM.MMAD, true);
+			QM aQM = itsSearchParameters.getQualityMeasure();
+			Statistics aStatistics = aTarget.getStatistics(aMembers, aQM == QM.MMAD, QM.requiredStats(aQM).contains(Stat.COMPL));
 
 			ProbabilityDensityFunction aPDF = null;
 			// DEBUG

@@ -216,7 +216,7 @@ public class SubgroupDiscovery
 
 		BitSet aBitSet = new BitSet(itsNrRows);
 		aBitSet.set(0, itsNrRows);
-		Statistics aStatistics = itsNumericTarget.getStatistics(aBitSet, false, true); // no median, yes complement
+		Statistics aStatistics = itsNumericTarget.getStatistics(aBitSet, false, QM.requiredStats(itsSearchParameters.getQualityMeasure()).contains(Stat.COMPL));
 		ProbabilityDensityFunction aPDF;
 if (!TEMPORARY_CODE)
 {
@@ -3243,7 +3243,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			Set<Stat> aRequiredStats = QM.requiredStats(aQM);
 			//Statistics aStatistics = itsNumericTarget.getStatistics(aMembers, aRequiredStats);
 			// TODO MM - implement better solution than below two checks
-			Statistics aStatistics = itsNumericTarget.getStatistics(aChildMembers, aQM == QM.MMAD, true);
+			Statistics aStatistics = itsNumericTarget.getStatistics(aChildMembers, aQM == QM.MMAD, aRequiredStats.contains(Stat.COMPL));
 
 			ProbabilityDensityFunction aPDF = null;
 			if (aRequiredStats.contains(Stat.PDF))
