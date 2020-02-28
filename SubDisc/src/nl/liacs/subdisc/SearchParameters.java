@@ -67,6 +67,7 @@ public class SearchParameters implements XMLNodeInterface
 		itsPostProcessingDoAutoRun = true;
 	}
 
+	// FIXME MM -> NONE OF THESE METHODS PERFORM INPUT VALIDATION
 	/* QUALITY MEASURE */
 	public TargetConcept getTargetConcept() { return itsTargetConcept; }
 	public void setTargetConcept(TargetConcept theTargetConcept) { itsTargetConcept = theTargetConcept; }
@@ -80,7 +81,7 @@ public class SearchParameters implements XMLNodeInterface
 	public int getSearchDepth() { return itsSearchDepth; }
 	public void setSearchDepth(int theSearchDepth) { itsSearchDepth = theSearchDepth; }
 	public int getMinimumCoverage() { return itsMinimumCoverage; }
-	public void setMinimumCoverage(int theMinimumCoverage) { itsMinimumCoverage = theMinimumCoverage; }
+	public void setMinimumCoverage(int theMinimumCoverage) { if (theMinimumCoverage < 1) throw new IllegalArgumentException("theMinimumCoverage must be >= 1"); itsMinimumCoverage = theMinimumCoverage; }
 	public float getMaximumCoverageFraction() { return itsMaximumCoverageFraction; }
 	public void setMaximumCoverageFraction(float theMaximumCoverageFraction) { itsMaximumCoverageFraction = theMaximumCoverageFraction; }
 	public int getMaximumSubgroups() { return itsMaximumSubgroups; }
