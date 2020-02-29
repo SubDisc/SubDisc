@@ -1853,7 +1853,7 @@ public class MiningWindow extends JFrame implements ActionListener
 				aPDF.smooth();
 
 				aQualityMeasure = new QualityMeasure(
-						aQM, 
+						aQM,
 						aNrRows,
 						aStatistics.getSubgroupSum(),
 						aStatistics.getSubgroupSumSquaredDeviations(),
@@ -2082,8 +2082,9 @@ public class MiningWindow extends JFrame implements ActionListener
 			else
 			{
 				List<Float> boundsList = new ArrayList<>(theNrBins);
+				int itsMinimumCoverage = Integer.MIN_VALUE; // FAKE: never true
 
-				// use exact same code as:
+				// use exact same code as LESS_THAN_OR_EQUAL branch in
 				// SubgroupDiscovery#evaluateNumericRegularGenericCoarse()
 				long aNrBins           = theNrBins;
 				// long to prevent overflow for multiplication
@@ -2099,7 +2100,7 @@ public class MiningWindow extends JFrame implements ActionListener
 
 					cover += aCount;
 
-					if (cover <= next)
+					if ((cover <= next) || (cover < itsMinimumCoverage))
 						continue;
 
 					if (cover == aParentCoverage)
@@ -2175,7 +2176,9 @@ boundsList.add(c.getSortedValue(i));
 			else
 			{
 				List<Interval> boundsList = new ArrayList<>(theNrBins);
-				// use exact same code as:
+				int itsMinimumCoverage = Integer.MIN_VALUE; // FAKE: never true
+
+				// use exact same code as EQUALS branch in
 				// SubgroupDiscovery#evaluateNumericRegularGenericCoarse()
 				long aNrBins           = theNrBins;
 				// long to prevent overflow for multiplication
@@ -2194,7 +2197,7 @@ boundsList.add(c.getSortedValue(i));
 
 					cover += aCount;
 
-					if (cover <= next)
+					if ((cover <= next) || (cover < itsMinimumCoverage))
 						continue;
 
 					if (cover == aParentCoverage)
@@ -2228,7 +2231,12 @@ boundsList.add(new Interval(f, aColumn.getSortedValue(i)));
 				// half-interval: <= f would select all data, and be useless), or
 				// 2. the sum is lower: add Interval that selects the remaining data
 				// TODO both conditions should never be true -> could be assert
-				if ((last_cover != aParentCoverage) && (Float.compare(Float.POSITIVE_INFINITY, f) != 0))
+				//
+				// added: (last_cover != 0) check
+				// this happens when loop above breaks before last_cover is ever set
+				// because theParent covers only one value
+//				if (                     (last_cover != aParentCoverage) && (Float.compare(Float.POSITIVE_INFINITY, f) != 0))
+				if ((last_cover != 0) && (last_cover != aParentCoverage) && (Float.compare(Float.POSITIVE_INFINITY, f) != 0))
 				{
 //					Condition anAddedCondition = new Condition(theConditionBase, new Interval(f, Float.POSITIVE_INFINITY));
 //					last_cover = (((int) aParentCoverage) - last_cover);
