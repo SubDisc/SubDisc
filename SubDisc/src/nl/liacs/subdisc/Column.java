@@ -2215,7 +2215,7 @@ public class Column implements XMLNodeInterface
 	// a more generic version of this type of classes will follow later
 	public static final class ValueCount
 	{
-		public final int[] itsCounts;        // of size column.cardinality
+		public final int[] itsCounts; // of size column.cardinality
 
 		private ValueCount(int[] theCounts)
 		{
@@ -2232,6 +2232,33 @@ public class Column implements XMLNodeInterface
 		{
 			itsCounts        = theCounts;
 			itsTruePositives = theTruePositives;
+		}
+	}
+
+	static final class ValueCountSum
+	{
+		final int[]    itsCounts;     // of size column.cardinality
+		final double[] itsSums;       // of size column.cardinality
+
+		private ValueCountSum(int[] theCounts, double[] theSums)
+		{
+			itsCounts        = theCounts;
+			itsSums          = theSums;
+		}
+	}
+
+	// for t-statistic, maybe for explained variance
+	static final class ValueCountSumSquaresSum
+	{
+		final int[]    itsCounts;      // of size column.cardinality
+		final double[] itsSums;        // of size column.cardinality
+		final double[] itsSquaresSums; // of size column.cardinality
+
+		private ValueCountSumSquaresSum(int[] theCounts, double[] theSums, double[] theSquaresSums)
+		{
+			itsCounts        = theCounts;
+			itsSums          = theSums;
+			itsSquaresSums   = theSquaresSums;
 		}
 	}
 
@@ -2271,6 +2298,48 @@ public class Column implements XMLNodeInterface
 		}
 
 		return new ValueCountTP(aCnt, aPos);
+	}
+
+	ValueCountSum getUniqueNumericDomainMap(BitSet theBitSet, Column theTarget)
+	{
+		if (!isValidCall("getUniqueNumericDomainMap", theBitSet))
+			return new ValueCountSum(new int[0], new double[0]);
+
+		// NOTE (SORTED.length == itsCardinality)
+		int[]    aCnt = new int[SORTED.length];
+		double[] aSum = new double[SORTED.length];
+
+		for (int i = theBitSet.nextSetBit(0); i >= 0; i = theBitSet.nextSetBit(i + 1))
+		{
+			int idx = SORT_INDEX[i];
+			++aCnt[idx];
+			aSum[idx] += theTarget.itsFloatz[i];
+		}
+
+		return new ValueCountSum(aCnt, aSum);
+	}
+
+	// see comment SubgroupDiscovery.evaluateNumericRegularSingleNumericSumSSD()
+	ValueCountSumSquaresSum getUniqueNumericDomainMapSq(BitSet theBitSet, Column theTarget)
+	{
+		if (!isValidCall("getUniqueNumericDomainMap", theBitSet))
+			return new ValueCountSumSquaresSum(new int[0], new double[0], new double[0]);
+
+		// NOTE (SORTED.length == itsCardinality)
+		int[]    aCnt        = new int[SORTED.length];
+		double[] aSum        = new double[SORTED.length];
+		double[] aSquaresSum = new double[SORTED.length];
+
+		for (int i = theBitSet.nextSetBit(0); i >= 0; i = theBitSet.nextSetBit(i + 1))
+		{
+			int idx = SORT_INDEX[i];
+			++aCnt[idx];
+			double d          = theTarget.itsFloatz[i];
+			aSum[idx]        += d;
+			aSquaresSum[idx] += (d * d);
+		}
+
+		return new ValueCountSumSquaresSum(aCnt, aSum, aSquaresSum);
 	}
 
 	// NOTE
