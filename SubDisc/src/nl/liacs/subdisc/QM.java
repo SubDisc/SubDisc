@@ -33,7 +33,6 @@ public enum QM implements EnumInterface
 
 	// SINGLE_NUMERIC quality measures
 	// NOTE when adding a new SINGLE_NUMERIC QM -> add it to requiredStats()
-	EXPLAINED_VARIANCE	("Explained Variance",	"0.0",	TargetType.SINGLE_NUMERIC),
 	Z_SCORE			("Z-Score",		"1.0",	TargetType.SINGLE_NUMERIC),
 	INVERSE_Z_SCORE		("Inverse Z-Score",	"1.0",	TargetType.SINGLE_NUMERIC),
 	ABS_Z_SCORE		("Abs Z-Score",		"1.0",	TargetType.SINGLE_NUMERIC),
@@ -48,6 +47,7 @@ public enum QM implements EnumInterface
 	T_TEST			("t-Test",		"1.0",	TargetType.SINGLE_NUMERIC),
 	INVERSE_T_TEST		("Inverse t-Test",	"1.0",	TargetType.SINGLE_NUMERIC),
 	ABS_T_TEST		("Abs t-Test",		"1.0",	TargetType.SINGLE_NUMERIC),
+	EXPLAINED_VARIANCE	("Explained Variance",	"0.0",	TargetType.SINGLE_NUMERIC),
 	SQUARED_HELLINGER			("Squared Hellinger distance",		"0.0",	TargetType.SINGLE_NUMERIC),
 	SQUARED_HELLINGER_WEIGHTED		("Weighted Squared Hellinger distance",	"0.0",	TargetType.SINGLE_NUMERIC),
 	SQUARED_HELLINGER_WEIGHTED_ADJUSTED	("Adjusted Squared Hellinger distance",	"0.0",	TargetType.SINGLE_NUMERIC),
@@ -277,34 +277,34 @@ public enum QM implements EnumInterface
 		switch(theQM)
 		{
 			// SINGLE_NUMERIC
-			case EXPLAINED_VARIANCE :	return SUM_SSD_COMPL;
-			case Z_SCORE :			return SUM;
+			case Z_SCORE :				return SUM;
 			case INVERSE_Z_SCORE :		return SUM;
-			case ABS_Z_SCORE :		return SUM;
-			case AVERAGE :			return SUM;
+			case ABS_Z_SCORE :			return SUM;
+			case AVERAGE :				return SUM;
 			case INVERSE_AVERAGE :		return SUM;
-			case QM_SUM :			return SUM;
-			case INVERSE_SUM :		return SUM;
-			case ABS_DEVIATION :	return SUM;
-			case MEAN_TEST :		return SUM;
+			case QM_SUM :				return SUM;
+			case INVERSE_SUM :			return SUM;
+			case ABS_DEVIATION :		return SUM;
+			case MEAN_TEST :			return SUM;
 			case INVERSE_MEAN_TEST :	return SUM;
 			case ABS_MEAN_TEST :		return SUM;
-			case T_TEST :			return SUM_SSD;
+			case T_TEST :				return SUM_SSD;
 			case INVERSE_T_TEST :		return SUM_SSD;
-			case ABS_T_TEST :		return SUM_SSD;
-			case SQUARED_HELLINGER :			return PDF;
-			case SQUARED_HELLINGER_WEIGHTED :		return PDF;
+			case ABS_T_TEST :			return SUM_SSD;
+			case EXPLAINED_VARIANCE :	return SUM_SSD_COMPL;
+			case SQUARED_HELLINGER :					return PDF;
+			case SQUARED_HELLINGER_WEIGHTED :			return PDF;
 			case SQUARED_HELLINGER_WEIGHTED_ADJUSTED :	return PDF;
-			case KULLBACK_LEIBLER :				return PDF;
-			case KULLBACK_LEIBLER_WEIGHTED :		return PDF;
-			case CWRACC :					return PDF;
-			case CWRACC_UNWEIGHTED : 			return PDF;
+			case KULLBACK_LEIBLER :						return PDF;
+			case KULLBACK_LEIBLER_WEIGHTED :			return PDF;
+			case CWRACC :								return PDF;
+			case CWRACC_UNWEIGHTED : 					return PDF;
 			// SINGLE_ORDINAL
-			case AUC :			return SUM;
-			case WMW_RANKS :		return SUM;
+			case AUC :					return SUM;
+			case WMW_RANKS :			return SUM;
 			case INVERSE_WMW_RANKS :	return SUM;
 			case ABS_WMW_RANKS :		return SUM;
-			case MMAD :			return MEDIAN_MAD;
+			case MMAD :					return MEDIAN_MAD;
 			default :
 			{
 				// throws NullPointerException if theQM == null
