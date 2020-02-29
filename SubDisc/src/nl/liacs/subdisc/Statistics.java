@@ -59,7 +59,6 @@ public class Statistics
 	public float getSubgroupSum() { return itsSubgroupSum; }
 	public float getSubgroupAverage() { return itsSubgroupSum/itsCoverage; }
 	public float getSubgroupSumSquaredDeviations() { return itsSubgroupSumSquaredDeviations; }
-	public float getSubgroupStandardDeviation() { return (float) Math.sqrt(itsSubgroupSumSquaredDeviations/(double)itsCoverage); }
 	public float getMedian() { return itsMedian; }
 	public float getMedianAbsoluteDeviations() { return itsMedianAbsoluteDeviations; }
 
