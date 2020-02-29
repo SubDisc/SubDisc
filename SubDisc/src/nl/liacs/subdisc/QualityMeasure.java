@@ -18,10 +18,11 @@ public class QualityMeasure
 	//SINGLE_NOMINAL and SCAPE
 	private int itsTotalTargetCoverage;
 
+	// FIXME change to double
 	//SINGLE_NUMERIC and SINGLE_ORDINAL
-	private float itsTotalAverage = Float.NaN;
+	private float itsTotalAverage           = Float.NaN;
 	private float itsTotalStandardDeviation = Float.NaN;
-	private float itsTotalSSD = Float.NaN;
+//	private float itsTotalSSD               = Float.NaN;
 	private ProbabilityDensityFunction itsPDF; // pdf for entire dataset
 
 	// XXX MM - why are these static fields
@@ -90,7 +91,7 @@ public class QualityMeasure
 		itsQualityMeasure = theMeasure;
 		itsNrRecords = theTotalCoverage;
 		itsTotalAverage = theTotalSum/itsNrRecords;
-		itsTotalSSD = theTotalSSD;
+//		itsTotalSSD = theTotalSSD;
 		itsTotalStandardDeviation = (float)Math.sqrt(theTotalSSD/itsNrRecords);
 		itsPDF = theDataPDF;
 	}
@@ -907,8 +908,10 @@ public class QualityMeasure
 		return res;
 	}
 
-	public final int getNrRecords() { return itsNrRecords; }
-	public final int getNrPositives() { return itsTotalTargetCoverage; }
+	public final int    getNrRecords()         { return itsNrRecords; }
+	public final int    getNrPositives()       { return itsTotalTargetCoverage; }
+	public final double getAverage()           { return itsTotalAverage; }
+	public final double getStandardDeviation() { return itsTotalStandardDeviation; }
 
 	//get quality of upper left corner
 	public final double getROCHeaven()
@@ -1007,16 +1010,12 @@ public class QualityMeasure
 		return aSize * aDistance;
 	}
 
-
-
-
-
 	//SINGLE_NUMERIC =======================================================
 
 	/*
 	 * MEAN = sqrt(sampleSize)*(sampleAvg-dataAvg);
-	 * Z = MEAN / dataStdDev;
-	 * T = MEAN / sampleStdDev-1
+	 * Z = MEAN / dataStdDev;   // using   dataSumSquaredDeviations/N
+	 * T = MEAN / sampleStdDev; // using sampleSumSquaredDeviations/(n-1)
 	 */
 	/**
 	 * Calculates the quality for a sample, or {@link Subgroup}.
@@ -1030,12 +1029,14 @@ public class QualityMeasure
 	 * @see Column#getStatistics(java.util.BitSet, java.util.Set)
 	 * @see ProbabilityDensityFunction
 	 */
+	// FIXME this code should no longer be used, see correct alternative below
+	//       kept for historic reasons only: delete after comparative evaluation
 	public float calculate(Statistics theStatistics, ProbabilityDensityFunction thePDF)
 	{
-		int aCoverage  = theStatistics.getCoverage();
-		float aSum = theStatistics.getSubgroupSum();
-		float anSSD = theStatistics.getSubgroupSumSquaredDeviations();
-		float aMedian = theStatistics.getMedian();
+		int aCoverage   = theStatistics.getCoverage();
+		float aSum      = theStatistics.getSubgroupSum();
+		float anSSD     = theStatistics.getSubgroupSumSquaredDeviations();
+		float aMedian   = theStatistics.getMedian();
 		float aMedianAD = theStatistics.getMedianAbsoluteDeviations();
 
 		float aReturn = Float.NEGATIVE_INFINITY;
@@ -1047,7 +1048,8 @@ public class QualityMeasure
 				if (itsNrRecords <= 1)
 					aReturn = 0.0f;
 				else
-					aReturn = 1.0f - ((anSSD + theStatistics.getComplementSumSquaredDeviations()) / itsTotalSSD);
+//					aReturn = 1.0f - ((anSSD + theStatistics.getComplementSumSquaredDeviations()) / itsTotalSSD);
+					aReturn = (float) (1.0 - ((anSSD + theStatistics.getComplementSumSquaredDeviations()) / (calculatePowerTwo(itsTotalStandardDeviation) * itsNrRecords)));
 				break;
 			}
 			case Z_SCORE :
@@ -1119,7 +1121,7 @@ public class QualityMeasure
 				if(aCoverage <= 2)
 					aReturn = 0.0f;
 				else
-					aReturn = (float) ((Math.sqrt(aCoverage) * ((aSum/aCoverage) - itsTotalAverage)) / Math.sqrt(anSSD/(aCoverage-1)));
+					aReturn = (float) ((Math.sqrt(aCoverage) * ((aSum/aCoverage) - itsTotalAverage)) / Math.sqrt(anSSD/(aCoverage-1.0)));
 				break;
 			}
 			case INVERSE_T_TEST :
@@ -1127,7 +1129,7 @@ public class QualityMeasure
 				if(aCoverage <= 2)
 					aReturn = 0.0f;
 				else
-					aReturn = (float) -((Math.sqrt(aCoverage) * ((aSum/aCoverage) - itsTotalAverage)) / Math.sqrt(anSSD/(aCoverage-1)));
+					aReturn = (float) -((Math.sqrt(aCoverage) * ((aSum/aCoverage) - itsTotalAverage)) / Math.sqrt(anSSD/(aCoverage-1.0)));
 				break;
 			}
 			case ABS_T_TEST :
@@ -1135,7 +1137,7 @@ public class QualityMeasure
 				if(aCoverage <= 2)
 					aReturn = 0.0f;
 				else
-					aReturn = (float) (Math.abs((Math.sqrt(aCoverage) * (aSum/aCoverage - itsTotalAverage)) / Math.sqrt(anSSD/(aCoverage-1))));
+					aReturn = (float) (Math.abs((Math.sqrt(aCoverage) * (aSum/aCoverage - itsTotalAverage)) / Math.sqrt(anSSD/(aCoverage-1.0))));
 				break;
 			}
 			//ORDINAL
@@ -1318,6 +1320,316 @@ public class QualityMeasure
 				}
 				Log.logCommandLine("difference in PDF: " + aTotalDifference);
 				aReturn = (float) aTotalDifference;
+				break;
+			}
+			default :
+			{
+				/*
+				 * if the QM is valid for this TargetType
+				 * 	it is not implemented here
+				 * else
+				 * 	this method should not have been called
+				 */
+				if (QM.getQualityMeasures(TargetType.SINGLE_NUMERIC).contains(itsQualityMeasure) ||
+						QM.getQualityMeasures(TargetType.SINGLE_ORDINAL).contains(itsQualityMeasure))
+					throw new AssertionError(itsQualityMeasure);
+				else
+					throw new IllegalArgumentException("Invalid QM: " + itsQualityMeasure);
+			}
+		}
+
+		return aReturn;
+	}
+
+	// FOR FUTURE USE - many calculations above are incorrect for large N
+	//                  see comment on coverage for SingleBinary calculate
+	private final double calculate2(Statistics theStatistics, ProbabilityDensityFunction thePDF)
+	{
+		double aCoverage = theStatistics.getCoverage();
+		double aSum      = theStatistics.getSubgroupSum();
+		double anSSD     = theStatistics.getSubgroupSumSquaredDeviations();
+		double aMedian   = theStatistics.getMedian();
+		double aMedianAD = theStatistics.getMedianAbsoluteDeviations();
+
+		final double aReturn; // final to enforce each branch sets a value
+		switch (itsQualityMeasure)
+		{
+			//NUMERIC
+			case EXPLAINED_VARIANCE :
+			{
+				if (itsNrRecords <= 1)
+					aReturn = 0.0;
+				else
+					aReturn = 1.0 - ((anSSD + theStatistics.getComplementSumSquaredDeviations()) / (calculatePowerTwo(itsTotalStandardDeviation) * itsNrRecords));
+				break;
+			}
+			case Z_SCORE :
+			{
+				if (itsNrRecords <= 1)
+					aReturn = 0.0;
+				else
+					aReturn = (Math.sqrt(aCoverage) * ((aSum/aCoverage) - itsTotalAverage)) / itsTotalStandardDeviation;
+				break;
+			}
+			case INVERSE_Z_SCORE :
+			{
+				if (itsNrRecords <= 1)
+					aReturn = 0.0;
+				else
+					aReturn = -((Math.sqrt(aCoverage) * ((aSum/aCoverage) - itsTotalAverage)) / itsTotalStandardDeviation);
+				break;
+			}
+			case ABS_Z_SCORE :
+			{
+				if (itsNrRecords <= 1)
+					aReturn = 0.0;
+				else
+					aReturn = Math.abs((Math.sqrt(aCoverage) * (aSum/aCoverage - itsTotalAverage)) / itsTotalStandardDeviation);
+				break;
+			}
+			case AVERAGE :
+			{
+				aReturn = aSum/aCoverage;
+				break;
+			}
+			case INVERSE_AVERAGE :
+			{
+				aReturn = -aSum/aCoverage;
+				break;
+			}
+			case QM_SUM :
+			{
+				aReturn = aSum;
+				break;
+			}
+			case INVERSE_SUM :
+			{
+				aReturn = -aSum;
+				break;
+			}
+			case ABS_DEVIATION :
+			{
+				aReturn = Math.abs(aSum/aCoverage - itsTotalAverage);
+				break;
+			}
+			case MEAN_TEST :
+			{
+				aReturn = Math.sqrt(aCoverage) * ((aSum/aCoverage) - itsTotalAverage);
+				break;
+			}
+			case INVERSE_MEAN_TEST :
+			{
+				aReturn = -(Math.sqrt(aCoverage) * ((aSum/aCoverage) - itsTotalAverage));
+				break;
+			}
+			case ABS_MEAN_TEST :
+			{
+				aReturn = Math.abs(Math.sqrt(aCoverage) * ((aSum/aCoverage) - itsTotalAverage));
+				break;
+			}
+			case T_TEST :
+			{
+				if(aCoverage <= 2)
+					aReturn = 0.0;
+				else
+					aReturn = (Math.sqrt(aCoverage) * ((aSum/aCoverage) - itsTotalAverage)) / Math.sqrt(anSSD/(aCoverage-1.0));
+				break;
+			}
+			case INVERSE_T_TEST :
+			{
+				if(aCoverage <= 2)
+					aReturn = 0.0;
+				else
+					aReturn = -((Math.sqrt(aCoverage) * ((aSum/aCoverage) - itsTotalAverage)) / Math.sqrt(anSSD/(aCoverage-1.0)));
+				break;
+			}
+			case ABS_T_TEST :
+			{
+				if(aCoverage <= 2)
+					aReturn = 0.0;
+				else
+					aReturn = Math.abs((Math.sqrt(aCoverage) * (aSum/aCoverage - itsTotalAverage)) / Math.sqrt(anSSD/(aCoverage-1.0)));
+				break;
+			}
+			//ORDINAL
+			// MM note AUC = U / n1*n2
+			//         where U = (aSum-aSequenceSum)
+			//               n1 = aCoverage
+			//               n2 = aComplementCoverage
+			// U is Mann-Whitney U
+			case AUC :
+			{
+				double aComplementCoverage = itsNrRecords - aCoverage;
+				double aSequenceSum = aCoverage*(aCoverage+1.0) / 2.0; //sum of all positive ranks, assuming ideal case
+				aReturn = 1.0 + ((aSequenceSum-aSum) / (aCoverage*aComplementCoverage));
+				break;
+			}
+			// MM the name of this statistic is confusing
+			// this is the Wilcoxon rank sum test
+			// it is equivalent to the Mann-Whithey U test
+			case WMW_RANKS :
+			{
+				double aComplementCoverage = itsNrRecords - aCoverage;
+				double aMean  = (aCoverage*(aCoverage+aComplementCoverage+1.0))/2.0;
+				double aStDev = Math.sqrt((aCoverage*aComplementCoverage*(aCoverage+aComplementCoverage+1.0)) / 12.0);
+				aReturn = (aSum-aMean) / aStDev;
+				break;
+			}
+			case INVERSE_WMW_RANKS :
+			{
+				double aComplementCoverage = itsNrRecords - aCoverage;
+				double aMean  = (aCoverage*(aCoverage+aComplementCoverage+1.0)) / 2.0;
+				double aStDev = Math.sqrt((aCoverage*aComplementCoverage*(aCoverage+aComplementCoverage+1.0)) / 12.0);
+				aReturn = -((aSum-aMean) / aStDev);
+				break;
+			}
+			case ABS_WMW_RANKS :
+			{
+				double aComplementCoverage = itsNrRecords - aCoverage;
+				double aMean  = (aCoverage*(aCoverage+aComplementCoverage+1.0)) / 2.0;
+				double aStDev = Math.sqrt((aCoverage*aComplementCoverage*(aCoverage+aComplementCoverage+1.0)) / 12.0);
+				aReturn = Math.abs((aSum-aMean) / aStDev);
+				break;
+			}
+			case MMAD :
+			{
+				aReturn = aCoverage/(2.0*aMedian+aMedianAD);
+				break;
+			}
+			// DISTRIBUTION
+			// normal H^2 for continuous PDFs
+			case SQUARED_HELLINGER :
+			{
+				if (SubgroupDiscovery.TEMPORARY_CODE)
+				{
+					aReturn = ((ProbabilityMassFunction_ND) thePDF).itsScore;
+					break;
+				}
+
+				double aTotalSquaredDifference = 0.0;
+				for (int i = 0, j = itsPDF.size(); i < j; ++i)
+				{
+					double aDensity = (TEMPORARY_CODE_SG_VS_COMPLEMENT ? ((ProbabilityDensityFunction2) thePDF).getComplementDensity(i) : itsPDF.getDensity(i));
+					double aDensitySubgroup = thePDF.getDensity(i);
+					double aDifference = Math.sqrt(aDensity) - Math.sqrt(aDensitySubgroup);
+					aTotalSquaredDifference += (aDifference * aDifference);
+					//Log.logCommandLine("difference in PDF: " + aTotalSquaredDifference);
+				}
+				Log.logCommandLine("difference in PDF: " + aTotalSquaredDifference);
+				aReturn = 0.5 * aTotalSquaredDifference;
+				break;
+			}
+			case SQUARED_HELLINGER_WEIGHTED :
+			{
+				double aTotalSquaredDifference = 0.0;
+				for (int i = 0, j = itsPDF.size(); i < j; ++i)
+				{
+					double aDensity = itsPDF.getDensity(i);
+					double aDensitySubgroup = thePDF.getDensity(i);
+					double aDifference = Math.sqrt(aDensity) - Math.sqrt(aDensitySubgroup);
+					aTotalSquaredDifference += (aDifference * aDifference);
+					//Log.logCommandLine("difference in PDF: " + aTotalSquaredDifference);
+				}
+				Log.logCommandLine("difference in PDF: " + aTotalSquaredDifference);
+				aReturn = (0.5 * (aTotalSquaredDifference * aCoverage)) / itsNrRecords;
+				break;
+			}
+			case SQUARED_HELLINGER_WEIGHTED_ADJUSTED :
+			{
+				// SQUARED_HELLINGER
+				double aTotalSquaredDifference = 0.0;
+				for (int i = 0, j = itsPDF.size(); i < j; ++i)
+				{
+					double aDensity = itsPDF.getDensity(i);
+					double aDensitySubgroup = thePDF.getDensity(i);
+					double aDifference = Math.sqrt(aDensity) - Math.sqrt(aDensitySubgroup);
+					aTotalSquaredDifference += (aDifference * aDifference);
+					//Log.logCommandLine("difference in PDF: " + aTotalSquaredDifference);
+				}
+				Log.logCommandLine("difference in PDF: " + aTotalSquaredDifference);
+				double d = (0.5 * (aTotalSquaredDifference * aCoverage)) / itsNrRecords;
+
+				// now weight SQUARED_HELLINGER
+				// magic number = maximum possible score
+				// it lies at (5/9, 4/27)
+//				aReturn = (float) (aTotalSquaredDifference * (aCoverage / (2.0 * itsNrRecords)));
+				aReturn = d / (4.0/27.0);
+				break;
+			}
+			case KULLBACK_LEIBLER :
+			{
+				double aTotalDivergence = 0.0;
+				for (int i = 0, j = itsPDF.size(); i < j; ++i)
+				{
+					double aDensity = itsPDF.getDensity(i);
+					double aDensitySubgroup = thePDF.getDensity(i);
+					/*
+					 * avoid errors in Math.log() because of
+					 * (0 / x) or (x / 0)
+					 * returns 0 by definition according to
+					 * http://en.wikipedia.org/wiki/Kullback%E2%80%93Leibler_divergence
+					 * NOTE this also catches DIVIVE_BY_0
+					 * for (aDensity == 0) because
+					 * (aSubgroupDensity == 0) for at least
+					 * all situations where (aDenisity == 0)
+					 */
+					if (aDensitySubgroup == 0.0)
+						continue;
+					aTotalDivergence += (aDensitySubgroup * Math.log(aDensitySubgroup/aDensity));
+				}
+				aReturn = aTotalDivergence;
+				break;
+			}
+			case KULLBACK_LEIBLER_WEIGHTED :
+			{
+				double aTotalDivergence = 0.0;
+				for (int i = 0, j = itsPDF.size(); i < j; ++i)
+				{
+					double aDensity = itsPDF.getDensity(i);
+					double aDensitySubgroup = thePDF.getDensity(i);
+					/*
+					 * avoid errors in Math.log() because of
+					 * (0 / x) or (x / 0)
+					 * returns 0 by definition according to
+					 * http://en.wikipedia.org/wiki/Kullback%E2%80%93Leibler_divergence
+					 * NOTE this also catches DIVIVE_BY_0
+					 * for (aDensity == 0) because
+					 * (aSubgroupDensity == 0) for at least
+					 * all situations where (aDenisity == 0)
+					 */
+					if (aDensitySubgroup == 0.0)
+						continue;
+					aTotalDivergence += (aDensitySubgroup * Math.log(aDensitySubgroup/aDensity));
+				}
+				aReturn = (aTotalDivergence * aCoverage) / itsNrRecords;
+				break;
+			}
+			case CWRACC :
+			{
+				//some random code
+				// http://en.wikipedia.org/wiki/Total_variation_distance ?
+				double aTotalDifference = 0.0;
+				for (int i = 0, j = itsPDF.size(); i < j; ++i)
+				{
+					double aDensity = itsPDF.getDensity(i);
+					double aDensitySubgroup = thePDF.getDensity(i);
+					aTotalDifference += Math.abs(aDensity - aDensitySubgroup);
+				}
+				Log.logCommandLine("difference in PDF: " + aTotalDifference);
+				aReturn = (aTotalDifference * aCoverage) / itsNrRecords;
+				break;
+			}
+			case CWRACC_UNWEIGHTED :
+			{
+				double aTotalDifference = 0.0;
+				for (int i = 0, j = itsPDF.size(); i < j; ++i)
+				{
+					double aDensity = itsPDF.getDensity(i);
+					double aDensitySubgroup = thePDF.getDensity(i);
+					aTotalDifference += Math.abs(aDensity - aDensitySubgroup);
+				}
+				Log.logCommandLine("difference in PDF: " + aTotalDifference);
+				aReturn = aTotalDifference;
 				break;
 			}
 			default :
