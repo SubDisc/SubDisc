@@ -285,6 +285,7 @@ public class ModelWindow extends JFrame implements ActionListener
 		if (itsSubgroup != null)
 		{
 			BitSet aMembers = itsSubgroup.getMembers();
+			// FIXME MM and() is only safe because aMembers is a clone
 			if (itsSample != null)
 				aMembers.and(itsSample);
 			for (int i = 0, j = itsXColumn.size(); i < j; ++i)

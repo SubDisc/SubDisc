@@ -11,7 +11,7 @@ import nl.liacs.subdisc.*;
 public class BrowseJTable extends JTable
 {
 	private static final long serialVersionUID = 1L;
-	private final BitSet itsMembers;
+	private final BitSet itsMembers; // FIXME MM these are never used -> remove
 	private final BitSet itsTruePositives;
 	private final boolean isNominal; // fast
 	/*

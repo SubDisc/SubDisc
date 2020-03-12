@@ -5,6 +5,7 @@ import java.util.*;
 import javax.swing.*;
 import javax.swing.table.*;
 
+// FIXME MM: only used by BrowseJTable, make it a static member of that class
 public class RowFilterBitSet extends RowFilter<AbstractTableModel, Integer>
 {
 	private final BitSet MEMBERS;
