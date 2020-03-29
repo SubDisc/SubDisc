@@ -910,8 +910,6 @@ public class QualityMeasure
 
 	public final int    getNrRecords()         { return itsNrRecords; }
 	public final int    getNrPositives()       { return itsTotalTargetCoverage; }
-	public final double getAverage()           { return itsTotalAverage; }
-	public final double getStandardDeviation() { return itsTotalStandardDeviation; }
 
 	//get quality of upper left corner
 	public final double getROCHeaven()
@@ -1031,6 +1029,7 @@ public class QualityMeasure
 	 */
 	// FIXME this code should no longer be used, see correct alternative below
 	//       kept for historic reasons only: delete after comparative evaluation
+	// FIXME there is no input validation, possible divide by zero (coverage)
 	public float calculate(Statistics theStatistics, ProbabilityDensityFunction thePDF)
 	{
 		int aCoverage   = theStatistics.getCoverage();
@@ -1118,7 +1117,7 @@ public class QualityMeasure
 			}
 			case T_TEST :
 			{
-				if(aCoverage <= 2)
+				if(aCoverage <= 1)
 					aReturn = 0.0f;
 				else
 					aReturn = (float) ((Math.sqrt(aCoverage) * ((aSum/aCoverage) - itsTotalAverage)) / Math.sqrt(anSSD/(aCoverage-1.0)));
@@ -1126,7 +1125,7 @@ public class QualityMeasure
 			}
 			case INVERSE_T_TEST :
 			{
-				if(aCoverage <= 2)
+				if(aCoverage <= 1)
 					aReturn = 0.0f;
 				else
 					aReturn = (float) -((Math.sqrt(aCoverage) * ((aSum/aCoverage) - itsTotalAverage)) / Math.sqrt(anSSD/(aCoverage-1.0)));
@@ -1134,7 +1133,7 @@ public class QualityMeasure
 			}
 			case ABS_T_TEST :
 			{
-				if(aCoverage <= 2)
+				if(aCoverage <= 1)
 					aReturn = 0.0f;
 				else
 					aReturn = (float) (Math.abs((Math.sqrt(aCoverage) * (aSum/aCoverage - itsTotalAverage)) / Math.sqrt(anSSD/(aCoverage-1.0))));
@@ -1429,7 +1428,7 @@ public class QualityMeasure
 			}
 			case T_TEST :
 			{
-				if(aCoverage <= 2)
+				if(aCoverage <= 1)
 					aReturn = 0.0;
 				else
 					aReturn = (Math.sqrt(aCoverage) * ((aSum/aCoverage) - itsTotalAverage)) / Math.sqrt(anSSD/(aCoverage-1.0));
@@ -1437,7 +1436,7 @@ public class QualityMeasure
 			}
 			case INVERSE_T_TEST :
 			{
-				if(aCoverage <= 2)
+				if(aCoverage <= 1)
 					aReturn = 0.0;
 				else
 					aReturn = -((Math.sqrt(aCoverage) * ((aSum/aCoverage) - itsTotalAverage)) / Math.sqrt(anSSD/(aCoverage-1.0)));
@@ -1445,7 +1444,7 @@ public class QualityMeasure
 			}
 			case ABS_T_TEST :
 			{
-				if(aCoverage <= 2)
+				if(aCoverage <= 1)
 					aReturn = 0.0;
 				else
 					aReturn = Math.abs((Math.sqrt(aCoverage) * (aSum/aCoverage - itsTotalAverage)) / Math.sqrt(anSSD/(aCoverage-1.0)));

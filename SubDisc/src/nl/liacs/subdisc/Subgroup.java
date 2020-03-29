@@ -1,5 +1,6 @@
 package nl.liacs.subdisc;
 
+import java.nio.*;
 import java.util.*;
 import java.util.concurrent.locks.*;
 
@@ -318,7 +319,11 @@ public class Subgroup implements Comparable<Subgroup>
 				for (int i = 0, j = itsConditions.size(); i < j; ++i)
 				{
 					Condition c = itsConditions.get(i);
+					// FIXME MM for now leave 'true' in git, uses original code
+					//       so far, profiling showed not much difference
+					if (true) {
 					b = c.getColumn().evaluate(b, c);
+					} else { c.getColumn().doNotUse(b, c, true); }
 				}
 
 				// only assign to itsMembers when aBitSet is in
@@ -367,6 +372,33 @@ public class Subgroup implements Comparable<Subgroup>
 	 * @return a BitSet representing this Subgroups members.
 	 */
 	public BitSet getMembers() { return (BitSet) getMembersUnsafe().clone(); }
+	// MM: a lot of code calls this method, but the returned BitSet should never
+	//     be changed by any as it 'removes' the Subgroup members from the clone
+	//     check callers, as BitSetI purposefully crashes BiSet modifying calls
+	// BinaryTable                 DONE get(i)                (nextSetBit(i) only for new Miki code, which is replaced by Miki.java)
+	// Bayesian                    DONE get(i)                (via BinaryTable.getColumn())
+	// CandidateQueue              DONE nextSetBit(i)
+	// Column                      DONE get(i)
+	// CoverBasedSubgroupSelection DONE nextSetBit(i)
+	// Miki                        DONE get(i) nextSetBit(i)
+	// RegressionMeasure           DONE get(i)
+	// SubgroupDiscovery           TODO
+	// SubgroupDiscovery.Test      DONE cardinality()         (only for assert)
+	// SubgroupSet                 DONE get(i) nextSetBit(i)
+	// Validation                  TODO get(i) nextSetBit(i) (cardinality() get(i) via RegressionMeasure)
+	//                                  getSingleNominalQualities() uses BitSet.and() <- FIXME
+	// RegressionMeasure           DONE cardinality() get(i) (RegressionMeasure called via Validation)
+	// Statistics                  DONE cardinality() nextSetBit(i) clone() (+ flip() on clone) (Statistics called via Validation)
+	// ProbabilityDensityFunction  DONE cardinality() nextSetBit(i) (ProbabilityDensityFunction called via Validation)
+	// ProbabilityDensityFunction2 DONE cardinality() nextSetBit(i) clone() (+ flip() on clone) (ProbabilityDensityFunction2 called via Validation)
+	//
+	// BrowseJTable                DONE no methods are called on BitSet (TODO remove BrowseJTable.itsMembers from class)
+	// BrowseWindow                DONE no methods are called on BitSet -> Table.toFile(BitSet) -> nextSetBit(i)
+	// ModelWindow                 TODO get(i) and(i) <- FIXME
+	// ResultWindow                TODO
+	// RowFilterBitSet             DONE get(i) (RowFilterBitSet called via BrowseJTable, TODO make it a static member class of BrowseJTable)
+	//
+//	public BitSet getMembers() { return new BitSetI(getMembersUnsafe(), itsCoverage); }
 
 	/*
 	 * package private, called by CandidateQueue to reduce memory load
@@ -628,5 +660,50 @@ public class Subgroup implements Comparable<Subgroup>
 	public String toString()
 	{
 		return itsConditions.toString();
+	}
+
+	static class BitSetI extends BitSet
+	{
+		private final BitSet itsBitSet;
+		private final int    itsCardinality;
+
+		BitSetI(BitSet theBitSet, int theCardinality)
+		{
+			super(0);
+			itsBitSet      =  theBitSet;
+			itsCardinality = theCardinality;
+		}
+
+		public void    and(BitSet set)                                { throw new AssertionError("not implemented"); }
+		public void    andNot(BitSet set)                             { throw new AssertionError("not implemented"); }
+		public int     cardinality()                                  { return itsCardinality; }
+		public void    clear()                                        { throw new AssertionError("not implemented"); }
+		public void    clear(int bitIndex)                            { throw new AssertionError("not implemented"); }
+		public void    clear(int fromIndex, int toIndex)              { throw new AssertionError("not implemented"); }
+		public Object  clone()                                        { return new BitSetI(itsBitSet, itsCardinality); }
+		public boolean equals(Object obj)                             { return itsBitSet.equals(obj); }
+		public void    flip(int bitIndex)                             { throw new AssertionError("not implemented"); }
+		public void    flip(int fromIndex, int toIndex)               { throw new AssertionError("not implemented"); }
+		public boolean get(int bitIndex)                              { return itsBitSet.get(bitIndex); }
+		public BitSet  get(int fromIndex, int toIndex)                { return itsBitSet.get(fromIndex, toIndex); }
+		public int     hashCode()                                     { return itsBitSet.hashCode(); }
+		public boolean intersects(BitSet set)                         { return itsBitSet.intersects(set); }
+		public boolean isEmpty()                                      { return itsCardinality == 0; }
+		public int     length()                                       { return itsBitSet.length(); }
+		public int     nextClearBit(int fromIndex)                    { return itsBitSet.nextClearBit(fromIndex); }
+		public int     nextSetBit(int fromIndex)                      { return itsBitSet.nextSetBit(fromIndex); }
+		public void    or(BitSet set)                                 { throw new AssertionError("not implemented"); }
+		public int     previousClearBit(int fromIndex)                { return itsBitSet.previousClearBit(fromIndex); }
+		public int     previousSetBit(int fromIndex)                  { return itsBitSet.previousSetBit(fromIndex); }
+		public void    set(int bitIndex)                              { throw new AssertionError("not implemented"); }
+		public void    set(int bitIndex, boolean value)               { throw new AssertionError("not implemented"); }
+		public void    set(int fromIndex, int toIndex)                { throw new AssertionError("not implemented"); }
+		public void    set(int fromIndex, int toIndex, boolean value) { throw new AssertionError("not implemented"); }
+		public int     size()                                         { return itsBitSet.size(); }
+		public static  BitSet valueOf(byte[] bytes)                   { return BitSet.valueOf(bytes); }
+		public static  BitSet valueOf(ByteBuffer bb)                  { return BitSet.valueOf(bb); }
+		public static  BitSet valueOf(long[] longs)                   { return BitSet.valueOf(longs); }
+		public static  BitSet valueOf(LongBuffer lb)                  { return BitSet.valueOf(lb); }
+		public void    xor(BitSet set)                                { throw new AssertionError("not implemented"); }
 	}
 }

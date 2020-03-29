@@ -144,8 +144,8 @@ public enum QM implements EnumInterface
 				aSet.add(qm);
 
 		// remove non implemented methods
-//		aSet.remove(PROP_SCORE_WRACC);
-//		aSet.remove(PROP_SCORE_RATIO);
+		aSet.remove(PROP_SCORE_WRACC);
+		aSet.remove(PROP_SCORE_RATIO);
 		aSet.remove(COOKS_DISTANCE);
 
 		return aSet;
