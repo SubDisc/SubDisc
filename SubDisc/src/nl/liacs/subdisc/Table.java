@@ -456,7 +456,7 @@ public class Table implements XMLNodeInterface
 			throw new IllegalArgumentException(String.format(e, Table.class.getSimpleName(), aType));
 
 		EnumSet<TargetType> s = EnumSet.of(TargetType.SINGLE_NOMINAL, TargetType.SINGLE_NUMERIC, TargetType.LABEL_RANKING);
-		EnumSet<TargetType> d = EnumSet.of(TargetType.DOUBLE_REGRESSION, TargetType.DOUBLE_CORRELATION);
+		EnumSet<TargetType> d = EnumSet.of(TargetType.DOUBLE_REGRESSION, TargetType.DOUBLE_CORRELATION, TargetType.DOUBLE_BINARY);
 
 		final List<Column> aTargets;
 		if (s.contains(aType))

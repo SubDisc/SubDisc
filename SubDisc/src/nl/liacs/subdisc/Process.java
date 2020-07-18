@@ -74,11 +74,17 @@ public class Process
 				aSubgroupDiscovery = new SubgroupDiscovery(theSearchParameters, theTable, true, theMainWindow);
 				break;
 			}
-			case DOUBLE_CORRELATION :
-			{
-				aSubgroupDiscovery = new SubgroupDiscovery(theSearchParameters, theTable, false, theMainWindow);
-				break;
-			}
+            case DOUBLE_CORRELATION :
+            {
+                aSubgroupDiscovery = new SubgroupDiscovery(theSearchParameters, theTable, false, theMainWindow);
+                break;
+            }
+            case DOUBLE_BINARY :
+            {
+                // pass as if correlation
+                aSubgroupDiscovery = new SubgroupDiscovery(theSearchParameters, theTable, false, theMainWindow);
+                break;
+            }
 			case SCAPE :
 			{
 				aSubgroupDiscovery = new SubgroupDiscovery(theMainWindow, theSearchParameters, theTable);
@@ -129,18 +135,9 @@ public class Process
 		if (showWindows)
 		{
 			/*
-			 * Subgroup members need to be revived
-			 * if after this experiment the Table used for this
-			 * experiment is altered, it may be impossible to
-			 * (correctly) re-create the Subgroup members from the
-			 * Subgroup conditions
-			 * (for example, when the AttributeType of a
-			 * Condition.Column is altered, or the missing value for
-			 * a Column is altered)
-			 * reviving need not be done for other settings
-			 * as none will need access to (unmodified) members
-			 * when no window is shown, there is no danger of a
-			 * an altered Table (through the GUI at least)
+			 * Subgroup members need to be revived if after this experiment the Table used for this experiment is altered, it may be impossible to (correctly) re-create the Subgroup members from the
+			 * Subgroup conditions (for example, when the AttributeType of a Condition.Column is altered, or the missing value for a Column is altered) reviving need not be done for other settings
+			 * as none will need access to (unmodified) members when no window is shown, there is no danger of a an altered Table (through the GUI at least)
 			 */
 			for (Subgroup s : aSubgroupDiscovery.getResult())
 				s.reviveMembers();

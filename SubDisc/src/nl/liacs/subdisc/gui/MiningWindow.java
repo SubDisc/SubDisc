@@ -578,7 +578,8 @@ public class MiningWindow extends JFrame implements ActionListener
 				if (aTargetType == TargetType.SINGLE_NOMINAL)
 					aMiscField = itsTargetConcept.getTargetValue();
 				else if (aTargetType == TargetType.DOUBLE_REGRESSION ||
-						aTargetType == TargetType.DOUBLE_CORRELATION ||
+                        aTargetType == TargetType.DOUBLE_CORRELATION ||
+                        aTargetType == TargetType.DOUBLE_BINARY ||
 						//aTargetType == TargetType.MULTI_NUMERIC ||	//for the moment, when multi = 2
 						aTargetType == TargetType.SCAPE)
 					aMiscField = itsTargetConcept.getSecondaryTarget().getName();
@@ -604,7 +605,8 @@ public class MiningWindow extends JFrame implements ActionListener
 					itsTargetConcept.setTargetValue(aMiscField);
 				}
 				else if (aTargetType == TargetType.DOUBLE_REGRESSION ||
-						aTargetType == TargetType.DOUBLE_CORRELATION ||
+                        aTargetType == TargetType.DOUBLE_CORRELATION ||
+                        aTargetType == TargetType.DOUBLE_BINARY ||
 						//aTargetType == TargetType.MULTI_NUMERIC ||	//for the moment, when multi = 2
 						aTargetType == TargetType.SCAPE)
 				{
@@ -729,7 +731,8 @@ public class MiningWindow extends JFrame implements ActionListener
 		removeAllMultiRegressionTargetsItems();
 
 		boolean fillMiscField = (aTargetType == TargetType.DOUBLE_REGRESSION) ||
-					(aTargetType == TargetType.DOUBLE_CORRELATION) ||
+                    (aTargetType == TargetType.DOUBLE_CORRELATION) ||
+                    (aTargetType == TargetType.DOUBLE_BINARY) ||
 					//(aTargetType == TargetType.MULTI_NUMERIC) ||
 					(aTargetType == TargetType.SCAPE);
 		// primary target and (optional) MiscField
@@ -742,7 +745,8 @@ public class MiningWindow extends JFrame implements ActionListener
 				(aTargetType == TargetType.MULTI_NUMERIC && anAttributeType == AttributeType.NUMERIC) ||
 				(aTargetType == TargetType.SINGLE_ORDINAL && anAttributeType == AttributeType.NUMERIC) ||
 				(aTargetType == TargetType.DOUBLE_REGRESSION && anAttributeType == AttributeType.NUMERIC) ||
-				(aTargetType == TargetType.DOUBLE_CORRELATION && anAttributeType == AttributeType.NUMERIC) ||
+                (aTargetType == TargetType.DOUBLE_CORRELATION && anAttributeType == AttributeType.NUMERIC) ||
+                (aTargetType == TargetType.DOUBLE_BINARY && anAttributeType == AttributeType.BINARY) ||
 				//(aTargetType == TargetType.MULTI_LABEL && anAttributeType == AttributeType.NUMERIC) ||
 				(aTargetType == TargetType.LABEL_RANKING && anAttributeType == AttributeType.NOMINAL) ||
 				(aTargetType == TargetType.MULTI_BINARY_CLASSIFICATION && anAttributeType == AttributeType.BINARY) ||
@@ -959,17 +963,26 @@ public class MiningWindow extends JFrame implements ActionListener
 											aFormatter.format(aRM.getSlope())));
 				break;
 			}
-			case DOUBLE_CORRELATION :
-			{
-				Column aPrimaryColumn = itsTargetConcept.getPrimaryTarget();
-				Column aSecondaryColumn = itsTargetConcept.getSecondaryTarget();
+            case DOUBLE_CORRELATION :
+            {
+                Column aPrimaryColumn = itsTargetConcept.getPrimaryTarget();
+                Column aSecondaryColumn = itsTargetConcept.getSecondaryTarget();
 
-				CorrelationMeasure aCM =
-					new CorrelationMeasure(QM.CORRELATION_R, aPrimaryColumn, aSecondaryColumn);
-				jLabelTargetInfo.setText(" correlation");
-				jLabelTargetInfoText.setText(Double.toString(aCM.getEvaluationMeasureValue()));
-				break;
-			}
+                CorrelationMeasure aCM =
+                    new CorrelationMeasure(QM.CORRELATION_R, aPrimaryColumn, aSecondaryColumn);
+                jLabelTargetInfo.setText(" correlation");
+                jLabelTargetInfoText.setText(Double.toString(aCM.getEvaluationMeasureValue()));
+                break;
+            }
+            case DOUBLE_BINARY :
+            {
+                Column aPrimaryColumn = itsTargetConcept.getPrimaryTarget();
+                Column aSecondaryColumn = itsTargetConcept.getSecondaryTarget();
+
+                jLabelTargetInfo.setText(" fixme");
+                jLabelTargetInfoText.setText("value");
+                break;
+            }
 			case SCAPE :
 			{
 				Column aBinaryTarget = itsTargetConcept.getPrimaryTarget();
@@ -1344,7 +1357,9 @@ public class MiningWindow extends JFrame implements ActionListener
 		jLabelMiscField.setVisible(hasMiscField);
 		if (aTargetType == TargetType.SINGLE_NOMINAL)
 			jLabelMiscField.setText("target value");
-		else if (aTargetType == TargetType.DOUBLE_REGRESSION || aTargetType == TargetType.DOUBLE_CORRELATION)// || aTargetType == TargetType.MULTI_NUMERIC)
+		else if (aTargetType == TargetType.DOUBLE_REGRESSION ||
+                 aTargetType == TargetType.DOUBLE_CORRELATION ||
+                 aTargetType == TargetType.DOUBLE_BINARY)// || aTargetType == TargetType.MULTI_NUMERIC)
 			jLabelMiscField.setText("<html><u>s</u>econdary target");
 		else
 			jLabelMiscField.setText("");
@@ -1415,7 +1430,8 @@ public class MiningWindow extends JFrame implements ActionListener
 		 */
 		TargetType aTargetType = itsTargetConcept.getTargetType();
 		if (aTargetType != TargetType.DOUBLE_REGRESSION &&
-			aTargetType != TargetType.DOUBLE_CORRELATION &&
+            aTargetType != TargetType.DOUBLE_CORRELATION &&
+            aTargetType != TargetType.DOUBLE_BINARY &&
 			//aTargetType != TargetType.MULTI_NUMERIC &&
 			aTargetType != TargetType.SCAPE)
 			initTargetValues();
@@ -1457,11 +1473,16 @@ public class MiningWindow extends JFrame implements ActionListener
 				itsTargetConcept.setSecondaryTarget(itsTable.getColumn(getMiscFieldName()));
 				break;
 			}
-			case DOUBLE_CORRELATION :
-			{
-				itsTargetConcept.setSecondaryTarget(itsTable.getColumn(getMiscFieldName()));
-				break;
-			}
+            case DOUBLE_CORRELATION :
+            {
+                itsTargetConcept.setSecondaryTarget(itsTable.getColumn(getMiscFieldName()));
+                break;
+            }
+            case DOUBLE_BINARY :
+            {
+                itsTargetConcept.setSecondaryTarget(itsTable.getColumn(getMiscFieldName()));
+                break;
+            }
 			case SCAPE :
 			{
 				itsTargetConcept.setSecondaryTarget(itsTable.getColumn(getMiscFieldName()));
@@ -1871,12 +1892,17 @@ public class MiningWindow extends JFrame implements ActionListener
 				aQualityMeasure = null;
 				break;
 			}
-			case DOUBLE_CORRELATION :
-			{
-				aQualityMeasure = null;
-				break;
-			}
-			case SCAPE :
+            case DOUBLE_CORRELATION :
+            {
+                aQualityMeasure = null;
+                break;
+            }
+            case DOUBLE_BINARY :
+            {
+                aQualityMeasure = null;
+                break;
+            }
+            case SCAPE :
 			{
 				aQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), itsTable.getNrRows(), itsPositiveCount, itsTargetConcept.getPrimaryTarget(), itsTargetConcept.getSecondaryTarget());
 				break;

@@ -321,9 +321,9 @@ public class Subgroup implements Comparable<Subgroup>
 					Condition c = itsConditions.get(i);
 					// FIXME MM for now leave 'true' in git, uses original code
 					//       so far, profiling showed not much difference
-					if (true) {
+//					if (true) {
 					b = c.getColumn().evaluate(b, c);
-					} else { c.getColumn().doNotUse(b, c, true); }
+//					} else { c.getColumn().doNotUse(b, c, true); }
 				}
 
 				// only assign to itsMembers when aBitSet is in

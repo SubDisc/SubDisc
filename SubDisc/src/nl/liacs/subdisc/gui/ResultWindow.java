@@ -55,6 +55,7 @@ public class ResultWindow extends JFrame implements ActionListener
 
 		itsResultTableModel = new ResultTableModel(itsSubgroupSet, itsSearchParameters.getTargetConcept().getTargetType());
 		itsSubgroupTable = new JTable(itsResultTableModel);
+
 		if (!itsSubgroupSet.isEmpty())
 			itsSubgroupTable.addRowSelectionInterval(0, 0);
 		initialise();

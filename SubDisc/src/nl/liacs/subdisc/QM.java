@@ -96,12 +96,16 @@ public enum QM implements EnumInterface
 	CORRELATION_P		("p-Value Distance",	"0.0",	TargetType.DOUBLE_CORRELATION),
 	CORRELATION_ENTROPY	("Wtd Ent Distance",	"0.0",	TargetType.DOUBLE_CORRELATION),
 	ADAPTED_WRACC		("Adapted WRAcc",	"0.0",	TargetType.DOUBLE_CORRELATION),
-	COSTS_WRACC		("Costs WRAcc",		"0.0",	TargetType.DOUBLE_CORRELATION),
-	CWTPD			("CWTPD",		"0.0",	TargetType.DOUBLE_CORRELATION),
-	TMCC			("TMCC",		"0.0",	TargetType.DOUBLE_CORRELATION),
-	MCC			("MCC",			"0.0",	TargetType.DOUBLE_CORRELATION),
-	PDC			("PDC",			"0.0",	TargetType.DOUBLE_CORRELATION),
-	MVPDC			("MVPDC",		"0.0",	TargetType.DOUBLE_CORRELATION),
+	COSTS_WRACC		    ("Costs WRAcc",		"0.0",	TargetType.DOUBLE_CORRELATION),
+	CWTPD			    ("CWTPD",		"0.0",	TargetType.DOUBLE_CORRELATION),
+	TMCC			    ("TMCC",		"0.0",	TargetType.DOUBLE_CORRELATION),
+	MCC			        ("MCC",			"0.0",	TargetType.DOUBLE_CORRELATION),
+	PDC			        ("PDC",			"0.0",	TargetType.DOUBLE_CORRELATION),
+	MVPDC			    ("MVPDC",		"0.0",	TargetType.DOUBLE_CORRELATION),
+
+    // DOUBLE_BINARY
+    RELATIVE_RISK       ("Relative Risk", "0.0", TargetType.DOUBLE_BINARY),
+    ABSOLUTE_RISK       ("Absolute Risk", "0.0", TargetType.DOUBLE_BINARY),
 
 	// DOUBLE_REGRESSION quality measures
 	REGRESSION_SSD_COMPLEMENT	("Sign. of Slope Diff. (complement)",	"0.0",	TargetType.DOUBLE_REGRESSION),

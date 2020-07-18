@@ -86,10 +86,10 @@ public class SubgroupDiscovery
 	private BitSet itsBinaryTarget;                 // SINGLE_NOMINAL
 	private Column itsTargetRankings;               // SINGLE_NOMINAL (label ranking)
 	private Column itsNumericTarget;                // SINGLE_NUMERIC
-	private Column itsPrimaryColumn;                // DOUBLE_CORRELATION / DOUBLE_REGRESSION / SCAPE
-	private Column itsSecondaryColumn;              // DOUBLE_CORRELATION / DOUBLE_REGRESSION / SCAPE
+	private Column itsPrimaryColumn;                // DOUBLE_CORRELATION / DOUBLE_REGRESSION / DOUBLE_BINARY / SCAPE
+	private Column itsSecondaryColumn;              // DOUBLE_CORRELATION / DOUBLE_REGRESSION / DOUBLE_BINARY / SCAPE
 	private CorrelationMeasure itsBaseCM;           // DOUBLE_CORRELATION
-	private RegressionMeasure itsBaseRM;            // DOUBLE_REGRESSION
+    private RegressionMeasure itsBaseRM;            // DOUBLE_REGRESSION
 	private BinaryTable itsBinaryTable;             // MULTI_LABEL
 	private List<Column> itsTargets;                // MULTI_LABEL / MULTI_NUMERIC
 	public ProbabilityDensityFunction_ND itsPDF_ND; // MULTI_NUMERIC
@@ -243,10 +243,10 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 		itsResult = new SubgroupSet(itsSearchParameters.getMaximumSubgroups(), itsNrRows);
 	}
 
-	//DOUBLE_CORRELATION and DOUBLE_REGRESSION
+	//DOUBLE_CORRELATION, DOUBLE_REGRESSION, DOUBLE_BINARY
 	public SubgroupDiscovery(SearchParameters theSearchParameters, Table theTable, boolean isRegression, JFrame theMainWindow)
 	{
-		itsSearchParameters = theSearchParameters;
+        itsSearchParameters = theSearchParameters;
 		itsTable = theTable;
 		itsNrRows = itsTable.getNrRows();
 		itsMainWindow = theMainWindow;
@@ -270,36 +270,40 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 // TODO for stable jar, initiated here, SubgroupDiscovery revision 893 moved this to else below
 		itsPrimaryColumn = aTC.getPrimaryTarget();
 		itsSecondaryColumn = aTC.getSecondaryTarget();
-		if (isRegression)
-		{
+
+        if (theSearchParameters.getTargetType() != TargetType.DOUBLE_BINARY)
+        {
+            if (isRegression)
+            {
 // TODO RegressionMeasure revision 851 introduces the new RegressionMeasure constructor below (not mentioned in log)
-			itsBaseRM = new RegressionMeasure(itsSearchParameters.getQualityMeasure(), itsPrimaryColumn, itsSecondaryColumn);
+                itsBaseRM = new RegressionMeasure(itsSearchParameters.getQualityMeasure(), itsPrimaryColumn, itsSecondaryColumn);
 // TODO for stable jar, disabled, causes compile errors, reinstate later
-//			itsBaseRM = new RegressionMeasure(itsSearchParameters.getQualityMeasure(), aTC);
+//			    itsBaseRM = new RegressionMeasure(itsSearchParameters.getQualityMeasure(), aTC);
 
-			//initialize bounds
-			itsBoundSevenCount=0;
-			itsBoundSixCount=0;
-			itsBoundFiveCount=0;
-			itsBoundFourCount=0;
-			itsBoundSevenFired=0;
-			itsBoundSixFired=0;
-			itsBoundFiveFired=0;
-			itsBoundFourFired=0;
-			itsRankDefCount=0;
+                //initialize bounds
+                itsBoundSevenCount=0;
+                itsBoundSixCount=0;
+                itsBoundFiveCount=0;
+                itsBoundFourCount=0;
+                itsBoundSevenFired=0;
+                itsBoundSixFired=0;
+                itsBoundFiveFired=0;
+                itsBoundFourFired=0;
+                itsRankDefCount=0;
 
-			itsBuffer = new TreeSet<Candidate>();
+                itsBuffer = new TreeSet<Candidate>();
 
 // temp for testing
-			//generateBoundGraph();
-		}
-		else
-		{
+                //generateBoundGraph();
+            }
+            else
+            {
 // TODO for stable jar, disabled, initiated above, reinstate later as per SubgroupDiscovery revision 893
-//			itsPrimaryColumn = aTC.getPrimaryTarget();
-//			itsSecondaryColumn = aTC.getSecondaryTarget();
-			itsBaseCM = new CorrelationMeasure(itsSearchParameters.getQualityMeasure(), itsPrimaryColumn, itsSecondaryColumn);
-		}
+//			    itsPrimaryColumn = aTC.getPrimaryTarget();
+//			    itsSecondaryColumn = aTC.getSecondaryTarget();
+                itsBaseCM = new CorrelationMeasure(itsSearchParameters.getQualityMeasure(), itsPrimaryColumn, itsSecondaryColumn);
+            }
+        }
 
 		itsResult = new SubgroupSet(itsSearchParameters.getMaximumSubgroups(), itsNrRows);
 	}
@@ -3192,7 +3196,8 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			case SINGLE_NUMERIC     : return evaluateCandidateSingleNumeric(theChild);
 			case MULTI_NUMERIC      : return evaluateCandidateMultiNumeric(theChild);
 			case DOUBLE_REGRESSION  : return evaluateCandidateDoubleRegression(theChild);
-			case DOUBLE_CORRELATION : return evaluateCandidateDoubleCorrelation(theChild);
+            case DOUBLE_CORRELATION : return evaluateCandidateDoubleCorrelation(theChild);
+            case DOUBLE_BINARY      : return evaluateCandidateDoubleBinary(theChild);
 			case SCAPE              : return evaluateCandidateScape(theChild);
 			case MULTI_LABEL        : return evaluateCandidateMultiLabel(theChild);
 			case LABEL_RANKING      : return evaluateCandidateLabelRanking(theChild);
@@ -3261,7 +3266,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 
 			aQuality = itsQualityMeasure.calculate(aStatistics, aPDF);
 			theChild.setSecondaryStatistic(aStatistics.getSubgroupAverage());
-			theChild.setTertiaryStatistic(aStatistics.getSubgroupStandardDeviation());
+			theChild.setTertiaryStatistic(Math.sqrt(aStatistics.getSubgroupSumSquaredDeviations()/(theChild.getCoverage()-1.0))); // use n-1 like t-statistic
 		}
 		else
 		{
@@ -3432,20 +3437,82 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		return (float) aQuality;
 	}
 
-	private final float evaluateCandidateDoubleCorrelation(Subgroup theChild)
-	{
-		BitSet theChildMembers = theChild.getMembers();
-		CorrelationMeasure aCM = new CorrelationMeasure(itsBaseCM);
+    private final float evaluateCandidateDoubleCorrelation(Subgroup theChild)
+    {
+        BitSet theChildMembers = theChild.getMembers();
+        CorrelationMeasure aCM = new CorrelationMeasure(itsBaseCM);
 
-		for (int i = theChildMembers.nextSetBit(0); i >= 0; i = theChildMembers.nextSetBit(i+1))
-			aCM.addObservation(itsPrimaryColumn.getFloat(i), itsSecondaryColumn.getFloat(i));
+        for (int i = theChildMembers.nextSetBit(0); i >= 0; i = theChildMembers.nextSetBit(i+1))
+            aCM.addObservation(itsPrimaryColumn.getFloat(i), itsSecondaryColumn.getFloat(i));
 
-		theChild.setSecondaryStatistic(aCM.getCorrelation());
-		theChild.setTertiaryStatistic(aCM.computeCorrelationDistance()); // intercept
-		double aQuality = aCM.getEvaluationMeasureValue();
+        theChild.setSecondaryStatistic(aCM.getCorrelation());
+        theChild.setTertiaryStatistic(aCM.computeCorrelationDistance()); // intercept
+        double aQuality = aCM.getEvaluationMeasureValue();
 
-		return (float) aQuality;
-	}
+        return (float) aQuality;
+    }
+    
+    private final float evaluateCandidateDoubleBinary(Subgroup theChild)
+    {
+        BitSet theChildMembers = theChild.getMembers();
+        
+        //subgroup size
+        int aCoverage = theChild.getCoverage();
+        System.out.println("coverage: " + aCoverage);
+
+        //FIXME these general statistics don't change per subgroup, so could be obtained once and stored. Saves time
+        //dataset statistics
+        BitSet aPrimaryMembers = itsPrimaryColumn.getBinaries(); // dataset A
+        BitSet aSecondaryMembers = itsSecondaryColumn.getBinaries();
+        int aSizeA = aPrimaryMembers.cardinality();
+//        System.out.println("dataset: " + itsNrRows + ", Dataset A: " + aSizeA + ", Dataset B: " + (itsNrRows-aSizeA));
+
+        //target within A and B
+        aSecondaryMembers.and(aPrimaryMembers);
+        float aTargetA = aSecondaryMembers.cardinality()/(float)aSizeA;
+//        System.out.println("target A: " + aSecondaryMembers.cardinality() + " (" + aTargetA + ")");
+        aSecondaryMembers = itsSecondaryColumn.getBinaries();
+        aSecondaryMembers.andNot(aPrimaryMembers);
+        float aTargetB = aSecondaryMembers.cardinality()/(float)(itsNrRows-aSizeA);
+//        System.out.println("target B: " + aSecondaryMembers.cardinality() + " (" + aTargetB + ")");
+
+        //subgroup within A
+        BitSet aSubset = theChild.getMembers(); //subgroup
+        aSubset.and(aPrimaryMembers); //subgroup within A
+        int aSubgroupPrimaryCount = aSubset.cardinality();
+//        System.out.println("subgroup within A: " + aSubset.cardinality());
+        if (aSubgroupPrimaryCount == 0) //FIXME
+            return 0f;
+
+        //subgroup within A with target = true
+        aSubset.and(itsSecondaryColumn.getBinaries()); //subgroup within A with target = true
+        int aSubgroupPrimarySecondaryCount = aSubset.cardinality();
+        float aSubgroupTargetA = aSubgroupPrimarySecondaryCount/(float)aSubgroupPrimaryCount;
+//        System.out.println("subgroup within A with target = true: " + aSubgroupPrimarySecondaryCount + " (" + aSubgroupTargetA + ")");
+
+        //subgroup within B with target = true
+        aSubset = theChild.getMembers(); //subgroup
+        aSubset.andNot(aPrimaryMembers); //subgroup within B
+        aSubgroupPrimaryCount = aSubset.cardinality();
+        if (aSubgroupPrimaryCount == 0) //FIXME
+            return 0f;
+        aSubset.and(itsSecondaryColumn.getBinaries()); //subgroup within B with target = true
+        aSubgroupPrimarySecondaryCount = aSubset.cardinality();
+        float aSubgroupTargetB = aSubgroupPrimarySecondaryCount/(float)aSubgroupPrimaryCount;
+//        System.out.println("subgroup within B with target = true: " + aSubgroupPrimarySecondaryCount + " (" + aSubgroupTargetB + ")");
+
+        theChild.setSecondaryStatistic(2); // fixme
+        theChild.setTertiaryStatistic(3); // used?
+        double aQuality = 0;
+        if (itsSearchParameters.getQualityMeasure() == QM.RELATIVE_RISK)
+            aQuality = ((aSubgroupTargetA-aTargetA)/aTargetA) / ((aSubgroupTargetB-aTargetB)/aTargetB);
+        else if (itsSearchParameters.getQualityMeasure() == QM.ABSOLUTE_RISK)
+            aQuality = ((aSubgroupTargetA-aTargetA)/aTargetA) - ((aSubgroupTargetB-aTargetB)/aTargetB);
+
+//        System.out.println("Relative Risk: " + aQuality);
+
+        return (float) aQuality;
+    }
 
 	private final float evaluateCandidateScape(Subgroup theChild)
 	{

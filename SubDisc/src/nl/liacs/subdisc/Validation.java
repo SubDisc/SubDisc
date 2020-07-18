@@ -64,7 +64,8 @@ public class Validation
 		return theTargetType == TargetType.SINGLE_NOMINAL ||
 			theTargetType == TargetType.SINGLE_NUMERIC ||
 			theTargetType == TargetType.DOUBLE_REGRESSION ||
-			theTargetType == TargetType.DOUBLE_CORRELATION ||
+            theTargetType == TargetType.DOUBLE_CORRELATION ||
+            theTargetType == TargetType.DOUBLE_BINARY ||
 			theTargetType == TargetType.MULTI_LABEL ||
 			theTargetType == TargetType.LABEL_RANKING;
 	}
@@ -95,10 +96,14 @@ public class Validation
 			{
 				return getDoubleRegressionQualities(forSubgroups, theNrRepetitions, aMinimumCoverage, aRandom, aDepth);
 			}
-			case DOUBLE_CORRELATION :
-			{
-				return getDoubleCorrelationQualities(forSubgroups, theNrRepetitions, aMinimumCoverage, aRandom, aDepth);
-			}
+            case DOUBLE_CORRELATION :
+            {
+                return getDoubleCorrelationQualities(forSubgroups, theNrRepetitions, aMinimumCoverage, aRandom, aDepth);
+            }
+            case DOUBLE_BINARY :
+            {
+                return getDoubleBinaryQualities(forSubgroups, theNrRepetitions, aMinimumCoverage, aRandom, aDepth);
+            }
 			case MULTI_LABEL :
 			{
 				return getMultiLabelQualities(forSubgroups, theNrRepetitions, aMinimumCoverage, aRandom, aDepth);
@@ -280,6 +285,40 @@ public class Validation
 
 		return aQualities;
 	}
+
+    // if forSubgroups is true, create Subgroups, else create Conditions
+    // if forSubgroups is true, theDepth is ignored
+    private double[] getDoubleBinaryQualities(boolean forSubgroups, int theNrRepetitions, int theMinimumCoverage, Random theRandom, int theDepth)
+    {
+        final double[] aQualities = new double[theNrRepetitions];
+
+        Column aPrimaryColumn = itsTargetConcept.getPrimaryTarget();
+        Column aSecondaryColumn = itsTargetConcept.getSecondaryTarget();
+        CorrelationMeasure itsBaseCM =
+            new CorrelationMeasure(itsSearchParameters.getQualityMeasure(), aPrimaryColumn, aSecondaryColumn);
+
+        for (int i = 0; i < theNrRepetitions; ++i)
+        {
+            Subgroup aSubgroup;
+
+            // essential switch between Subgroups/ Conditions
+            if (forSubgroups)
+                aSubgroup = getValidSubgroup(theMinimumCoverage, theRandom);
+            else
+                aSubgroup = getValidSubgroup(theDepth, theMinimumCoverage, theRandom);
+
+            BitSet aMembers = aSubgroup.getMembers();
+
+            CorrelationMeasure aCM = new CorrelationMeasure(itsBaseCM);
+
+            for (int k = aMembers.nextSetBit(0); k >= 0; k = aMembers.nextSetBit(k))
+                aCM.addObservation(aPrimaryColumn.getFloat(k), aSecondaryColumn.getFloat(k));
+
+            aQualities[i] = aCM.getEvaluationMeasureValue();
+        }
+
+        return aQualities;
+    }
 
 	// if forSubgroups is true, create Subgroups, else create Conditions
 	// if forSubgroups is true, theDepth is ignored
@@ -514,7 +553,29 @@ public class Validation
 
 				break;
 			}
-			case MULTI_LABEL :
+            case DOUBLE_BINARY :
+            {
+                // back up columns that will be swap randomized
+                Column aPrimaryCopy = itsTargetConcept.getPrimaryTarget().copy();
+                Column aSecondaryCopy = itsTargetConcept.getSecondaryTarget().copy();
+
+                // generate swap randomized random results
+                for (int i = 0, j = theNrRepetitions; i < j; ++i)
+                {
+                    // swapRandomization should be performed before creating new SubgroupDiscovery
+                    itsTable.swapRandomizeTarget(itsTargetConcept);
+                    i = runSRSD(new SubgroupDiscovery(itsSearchParameters, itsTable, false, null), aQualities, i);
+                }
+
+                // restore columns that were swap randomized
+                itsTargetConcept.setPrimaryTarget(aPrimaryCopy);
+                itsTable.getColumns().set(aPrimaryCopy.getIndex(), aPrimaryCopy);
+                itsTargetConcept.setSecondaryTarget(aSecondaryCopy);
+                itsTable.getColumns().set(aSecondaryCopy.getIndex(), aSecondaryCopy);
+
+                break;
+            }
+            case MULTI_LABEL :
 			{
 				// back up columns that will be swap randomized
 				List<Column> aMultiCopy =

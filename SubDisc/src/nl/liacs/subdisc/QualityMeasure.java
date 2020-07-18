@@ -45,7 +45,7 @@ public class QualityMeasure
 	private LabelRankingMatrix itsAverageRankingMatrix = null;
 
 	//SINGLE_NOMINAL
-	// TODO MM also used by DOUBLE_CORRELATION and DOUBLE_REGRESSION
+	// TODO MM also used by DOUBLE_CORRELATION, DOUBLE_REGRESSION and DOUBLE_BINARY
 	public QualityMeasure(QM theMeasure, int theTotalCoverage, int theTotalTargetCoverage)
 	{
 		if (theMeasure == null)
@@ -54,9 +54,10 @@ public class QualityMeasure
 //			throw new IllegalArgumentException("QualityMeasure: not a SINGLE_NOMINAL measure");
 		// TODO MM - DOUBLE_CORRELATION + DOUBLE_CORRELATION constructor
 		if (!QM.getQualityMeasures(TargetType.SINGLE_NOMINAL).contains(theMeasure) &&
-				!QM.getQualityMeasures(TargetType.DOUBLE_CORRELATION).contains(theMeasure) &&
-				!QM.getQualityMeasures(TargetType.DOUBLE_REGRESSION).contains(theMeasure))
-			throw new IllegalArgumentException("QualityMeasure: not a SINGLE_NOMINAL, DOUBLE_CORRELATION or DOUBLE_REGRESSION measure");
+			!QM.getQualityMeasures(TargetType.DOUBLE_REGRESSION).contains(theMeasure) &&
+            !QM.getQualityMeasures(TargetType.DOUBLE_CORRELATION).contains(theMeasure) &&
+            !QM.getQualityMeasures(TargetType.DOUBLE_BINARY).contains(theMeasure))
+			throw new IllegalArgumentException("QualityMeasure: not a SINGLE_NOMINAL, DOUBLE_CORRELATION, DOUBLE_REGRESSION or DOUBLE_BINARY measure");
 		// N > 0
 		if (theTotalCoverage <= 0)
 			throw new IllegalArgumentException("QualityMeasure: theTotalCoverage must be > 0");
