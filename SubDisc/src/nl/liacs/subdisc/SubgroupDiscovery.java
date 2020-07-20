@@ -3482,27 +3482,33 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
         int aSubgroupPrimaryCount = aSubset.cardinality();
 //        System.out.println("subgroup within A: " + aSubset.cardinality());
         if (aSubgroupPrimaryCount == 0) //FIXME
+        {
+            theChild.setSecondaryStatistic(0);
             return 0f;
+        }
 
         //subgroup within A with target = true
         aSubset.and(itsSecondaryColumn.getBinaries()); //subgroup within A with target = true
         int aSubgroupPrimarySecondaryCount = aSubset.cardinality();
         float aSubgroupTargetA = aSubgroupPrimarySecondaryCount/(float)aSubgroupPrimaryCount;
 //        System.out.println("subgroup within A with target = true: " + aSubgroupPrimarySecondaryCount + " (" + aSubgroupTargetA + ")");
+        theChild.setTertiaryStatistic(aSubgroupTargetA); // used?
 
         //subgroup within B with target = true
         aSubset = theChild.getMembers(); //subgroup
         aSubset.andNot(aPrimaryMembers); //subgroup within B
         aSubgroupPrimaryCount = aSubset.cardinality();
         if (aSubgroupPrimaryCount == 0) //FIXME
+        {
+            theChild.setSecondaryStatistic(0);
             return 0f;
+        }
         aSubset.and(itsSecondaryColumn.getBinaries()); //subgroup within B with target = true
         aSubgroupPrimarySecondaryCount = aSubset.cardinality();
         float aSubgroupTargetB = aSubgroupPrimarySecondaryCount/(float)aSubgroupPrimaryCount;
 //        System.out.println("subgroup within B with target = true: " + aSubgroupPrimarySecondaryCount + " (" + aSubgroupTargetB + ")");
 
-        theChild.setSecondaryStatistic(2); // fixme
-        theChild.setTertiaryStatistic(3); // used?
+        theChild.setSecondaryStatistic(Math.signum((aSubgroupTargetA-aTargetA)/aTargetA));
         double aQuality = 0;
         if (itsSearchParameters.getQualityMeasure() == QM.RELATIVE_RISK)
             aQuality = ((aSubgroupTargetA-aTargetA)/aTargetA) / ((aSubgroupTargetB-aTargetB)/aTargetB);
