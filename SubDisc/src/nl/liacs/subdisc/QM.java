@@ -104,11 +104,11 @@ public enum QM implements EnumInterface
 	PDC			        ("PDC",			"0.0",	TargetType.DOUBLE_CORRELATION),
 	MVPDC			    ("MVPDC",		"0.0",	TargetType.DOUBLE_CORRELATION),
 
-    // DOUBLE_BINARY
-    RELATIVE_RISK       ("Relative Risk", "0.0", TargetType.DOUBLE_BINARY),
-    ABSOLUTE_RISK       ("Absolute Risk", "0.0", TargetType.DOUBLE_BINARY),
-    RELATIVE_WRACC      ("Relative WRAcc", "0.0", TargetType.DOUBLE_BINARY),
-    ABSOLUTE_WRACC      ("Absolute WRAcc", "0.0", TargetType.DOUBLE_BINARY),
+	// DOUBLE_BINARY
+	RELATIVE_WRACC      ("Relative WRAcc", "0.0", TargetType.DOUBLE_BINARY),
+	ABSOLUTE_WRACC      ("Absolute WRAcc", "0.0", TargetType.DOUBLE_BINARY),
+	RELATIVE_RISK       ("Relative Risk", "0.0", TargetType.DOUBLE_BINARY),
+	ABSOLUTE_RISK       ("Absolute Risk", "0.0", TargetType.DOUBLE_BINARY),
 
 	// DOUBLE_REGRESSION quality measures
 	REGRESSION_SSD_COMPLEMENT	("Sign. of Slope Diff. (complement)",	"0.0",	TargetType.DOUBLE_REGRESSION),

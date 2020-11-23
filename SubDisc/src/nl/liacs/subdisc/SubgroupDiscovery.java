@@ -3458,14 +3458,15 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
         
         //subgroup size
         int aCoverage = theChild.getCoverage();
-        System.out.println("coverage: " + aCoverage);
+//        System.out.println("coverage: " + aCoverage);
 
         //FIXME these general statistics don't change per subgroup, so could be obtained once and stored. Saves time
         //dataset statistics
         BitSet aPrimaryMembers = itsPrimaryColumn.getBinaries(); // dataset A
         BitSet aSecondaryMembers = itsSecondaryColumn.getBinaries();
         int aSizeA = aPrimaryMembers.cardinality();
-//        System.out.println("dataset: " + itsNrRows + ", Dataset A: " + aSizeA + ", Dataset B: " + (itsNrRows-aSizeA));
+	int aSizeB = itsNrRows-aSizeA;
+//        System.out.println("dataset: " + itsNrRows + ", Dataset A: " + aSizeA + ", Dataset B: " + aSizeB);
 
         //target within A and B
         aSecondaryMembers.and(aPrimaryMembers);
@@ -3473,15 +3474,15 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 //        System.out.println("target A: " + aSecondaryMembers.cardinality() + " (" + aTargetA + ")");
         aSecondaryMembers = itsSecondaryColumn.getBinaries();
         aSecondaryMembers.andNot(aPrimaryMembers);
-        float aTargetB = aSecondaryMembers.cardinality()/(float)(itsNrRows-aSizeA);
+        float aTargetB = aSecondaryMembers.cardinality()/(float)aSizeB;
 //        System.out.println("target B: " + aSecondaryMembers.cardinality() + " (" + aTargetB + ")");
 
         //subgroup within A
         BitSet aSubset = theChild.getMembers(); //subgroup
         aSubset.and(aPrimaryMembers); //subgroup within A
-        int aSubgroupPrimaryCount = aSubset.cardinality();
+        int aSubgroupPrimaryCountA = aSubset.cardinality();
 //        System.out.println("subgroup within A: " + aSubset.cardinality());
-        if (aSubgroupPrimaryCount == 0) //FIXME
+        if (aSubgroupPrimaryCountA == 0) //FIXME
         {
             theChild.setSecondaryStatistic(0);
             return 0f;
@@ -3489,32 +3490,38 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 
         //subgroup within A with target = true
         aSubset.and(itsSecondaryColumn.getBinaries()); //subgroup within A with target = true
-        int aSubgroupPrimarySecondaryCount = aSubset.cardinality();
-        float aSubgroupTargetA = aSubgroupPrimarySecondaryCount/(float)aSubgroupPrimaryCount;
-//        System.out.println("subgroup within A with target = true: " + aSubgroupPrimarySecondaryCount + " (" + aSubgroupTargetA + ")");
+        int aSubgroupPrimarySecondaryCountA = aSubset.cardinality();
+        float aSubgroupTargetA = aSubgroupPrimarySecondaryCountA/(float)aSubgroupPrimaryCountA;
+//        System.out.println("subgroup within A with target = true: " + aSubgroupPrimarySecondaryCountA + " (" + aSubgroupTargetA + ")");
         theChild.setTertiaryStatistic(aSubgroupTargetA); // used?
 
         //subgroup within B with target = true
         aSubset = theChild.getMembers(); //subgroup
         aSubset.andNot(aPrimaryMembers); //subgroup within B
-        aSubgroupPrimaryCount = aSubset.cardinality();
-        if (aSubgroupPrimaryCount == 0) //FIXME
+        int aSubgroupPrimaryCountB = aSubset.cardinality();
+        if (aSubgroupPrimaryCountB == 0) //FIXME
         {
             theChild.setSecondaryStatistic(0);
             return 0f;
         }
         aSubset.and(itsSecondaryColumn.getBinaries()); //subgroup within B with target = true
-        aSubgroupPrimarySecondaryCount = aSubset.cardinality();
-        float aSubgroupTargetB = aSubgroupPrimarySecondaryCount/(float)aSubgroupPrimaryCount;
-//        System.out.println("subgroup within B with target = true: " + aSubgroupPrimarySecondaryCount + " (" + aSubgroupTargetB + ")");
+        int aSubgroupPrimarySecondaryCountB = aSubset.cardinality();
+        float aSubgroupTargetB = aSubgroupPrimarySecondaryCountB/(float)aSubgroupPrimaryCountB;
+//        System.out.println("subgroup within B with target = true: " + aSubgroupPrimarySecondaryCountB + " (" + aSubgroupTargetB + ")");
 
         theChild.setSecondaryStatistic(Math.signum((aSubgroupTargetA-aTargetA)/aTargetA)); //relative lift of subgroup in A
-        //        System.out.println("Relative Risk: " + aQuality);
+
+	float aWRAccA = aSubgroupPrimarySecondaryCountA/(float)aSizeA - aTargetA*aSubgroupPrimaryCountA/(float)aSizeA;
+	float aWRAccB = aSubgroupPrimarySecondaryCountB/(float)aSizeB - aTargetB*aSubgroupPrimaryCountB/(float)aSizeB;
+//        System.out.println("WRAcc A: " + aWRAccA);
+//        System.out.println("WRAcc B: " + aWRAccB);
+
         switch (itsSearchParameters.getQualityMeasure())
         {
+            case RELATIVE_WRACC :    return (aWRAccB!=0) ? aWRAccA/aWRAccB : Float.MAX_VALUE;
+            case ABSOLUTE_WRACC :    return aWRAccA-aWRAccB;
             case RELATIVE_RISK :     return ((aSubgroupTargetA-aTargetA)/aTargetA) / ((aSubgroupTargetB-aTargetB)/aTargetB);
             case ABSOLUTE_RISK :     return ((aSubgroupTargetA-aTargetA)/aTargetA) - ((aSubgroupTargetB-aTargetB)/aTargetB);
-            case RELATIVE_WRACC :    return ((aSubgroupTargetA-aTargetA)/aTargetA) - ((aSubgroupTargetB-aTargetB)/aTargetB);
             default :                   return 0; //should not happen
         }
     }
