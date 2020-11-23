@@ -3508,16 +3508,15 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
         float aSubgroupTargetB = aSubgroupPrimarySecondaryCount/(float)aSubgroupPrimaryCount;
 //        System.out.println("subgroup within B with target = true: " + aSubgroupPrimarySecondaryCount + " (" + aSubgroupTargetB + ")");
 
-        theChild.setSecondaryStatistic(Math.signum((aSubgroupTargetA-aTargetA)/aTargetA));
-        double aQuality = 0;
-        if (itsSearchParameters.getQualityMeasure() == QM.RELATIVE_RISK)
-            aQuality = ((aSubgroupTargetA-aTargetA)/aTargetA) / ((aSubgroupTargetB-aTargetB)/aTargetB);
-        else if (itsSearchParameters.getQualityMeasure() == QM.ABSOLUTE_RISK)
-            aQuality = ((aSubgroupTargetA-aTargetA)/aTargetA) - ((aSubgroupTargetB-aTargetB)/aTargetB);
-
-//        System.out.println("Relative Risk: " + aQuality);
-
-        return (float) aQuality;
+        theChild.setSecondaryStatistic(Math.signum((aSubgroupTargetA-aTargetA)/aTargetA)); //relative lift of subgroup in A
+        //        System.out.println("Relative Risk: " + aQuality);
+        switch (itsSearchParameters.getQualityMeasure())
+        {
+            case RELATIVE_RISK :     return ((aSubgroupTargetA-aTargetA)/aTargetA) / ((aSubgroupTargetB-aTargetB)/aTargetB);
+            case ABSOLUTE_RISK :     return ((aSubgroupTargetA-aTargetA)/aTargetA) - ((aSubgroupTargetB-aTargetB)/aTargetB);
+            case RELATIVE_WRACC :    return ((aSubgroupTargetA-aTargetA)/aTargetA) - ((aSubgroupTargetB-aTargetB)/aTargetB);
+            default :                   return 0; //should not happen
+        }
     }
 
 	private final float evaluateCandidateScape(Subgroup theChild)

@@ -595,16 +595,24 @@ public class QualityMeasure
 				returnValue = calculateBayesianFactor(N, H, B, HB);
 				break;
 			}
-			case LIFT:
-			{
-				if (B == 0)
-					returnValue = 0.0;
-				else
-					returnValue = (HB * N) / (B * H);
-				// alternative has 3 divisions, but H/N is constant and could be cached
-				// returnValue = (theCountHeadBody / theCoverage) / (theTotalTargetCoverage / theTotalCoverage);
-				break;
-			}
+            case LIFT:
+            {
+                if (B == 0)
+                    returnValue = 0.0;
+                else
+                    returnValue = (HB * N) / (B * H);
+                // alternative has 3 divisions, but H/N is constant and could be cached
+                // returnValue = (theCountHeadBody / theCoverage) / (theTotalTargetCoverage / theTotalCoverage);
+                break;
+            }
+            case RELATIVE_LIFT:
+            {
+                if (B == 0)
+                    returnValue = 0.0;
+                else
+                    returnValue = (HB * N) / (B * H) - 1;
+                break;
+            }
 			default :
 			{
 				/*

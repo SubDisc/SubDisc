@@ -29,7 +29,8 @@ public enum QM implements EnumInterface
 	PROP_SCORE_WRACC	("Propensity score wracc",	"-0.25",	TargetType.SINGLE_NOMINAL),
 	PROP_SCORE_RATIO	("Propensity score ratio",	"1.0",		TargetType.SINGLE_NOMINAL),
 	BAYESIAN_SCORE		("Bayesian Score",	"0.0",	TargetType.SINGLE_NOMINAL),
-	LIFT			("Lift",		"1.0",	TargetType.SINGLE_NOMINAL),
+    LIFT            ("Lift",        "1.0",    TargetType.SINGLE_NOMINAL),
+    RELATIVE_LIFT   ("Relative Lift",        "1.0",    TargetType.SINGLE_NOMINAL),
 
 	// SINGLE_NUMERIC quality measures
 	// NOTE when adding a new SINGLE_NUMERIC QM -> add it to requiredStats()
@@ -106,6 +107,8 @@ public enum QM implements EnumInterface
     // DOUBLE_BINARY
     RELATIVE_RISK       ("Relative Risk", "0.0", TargetType.DOUBLE_BINARY),
     ABSOLUTE_RISK       ("Absolute Risk", "0.0", TargetType.DOUBLE_BINARY),
+    RELATIVE_WRACC      ("Relative WRAcc", "0.0", TargetType.DOUBLE_BINARY),
+    ABSOLUTE_WRACC      ("Absolute WRAcc", "0.0", TargetType.DOUBLE_BINARY),
 
 	// DOUBLE_REGRESSION quality measures
 	REGRESSION_SSD_COMPLEMENT	("Sign. of Slope Diff. (complement)",	"0.0",	TargetType.DOUBLE_REGRESSION),
@@ -223,7 +226,8 @@ public enum QM implements EnumInterface
 			case PROP_SCORE_WRACC	: return s + "1/0 # TODO";
 			case PROP_SCORE_RATIO	: return s + "1/0 # TODO";
 			case BAYESIAN_SCORE	: return s + "1/0 # TODO";
-			case LIFT		: return s + "(pos(y) * N) / (aCountBody(x,y) * p)";
+            case LIFT           : return s + "(pos(y) * N) / (aCountBody(x,y) * p)";
+            case RELATIVE_LIFT  : return s + "(pos(y) * N) / (aCountBody(x,y) * p)"; //FIXME, currently lift
 			default :
 			{
 				// throws NullPointerException if theQM == null
