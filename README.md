@@ -12,8 +12,14 @@ To package the code to a jar:
 mvn package
 ```
 
+#3 To run
+```bash
+java -jar target/cortana-1.x.x.jar
+```
+
 ## TODO
 
+* Set version number
 * Add licence
 * Extend testing
 * Update code to remove deprecated functions/classes
