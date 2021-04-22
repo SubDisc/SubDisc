@@ -21,6 +21,7 @@ java -jar target/cortana-1.x.x.jar
 
 * Set version number
 * Add licence
+* Set javadoc plugin in maven
 * Extend testing
 * Update code to remove deprecated functions/classes
 * Remove death code
