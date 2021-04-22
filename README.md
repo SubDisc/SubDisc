@@ -12,7 +12,7 @@ To package the code to a jar:
 mvn package
 ```
 
-#3 To run
+## To run
 ```bash
 java -jar target/cortana-1.x.x.jar
 ```
