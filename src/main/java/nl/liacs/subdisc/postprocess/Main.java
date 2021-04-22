@@ -34,7 +34,10 @@ public class Main
 		Map<Mean, Mean> pMap = pivot(aMeans, "dhea", 0);
 		Map<Map.Entry<Mean, Mean>, Double> rMap = relative(pMap);
 
-		Table aTable = toTable(rMap);
+		// The function toTable is not implemented. There is a skeleton of function
+		// but nothing concrete. Probably that this class/file is not used.
+		// For now I will only comment to remove the compilation error.
+		//Table aTable = toTable(rMap);
 
 //		MeanTable aMeanTable = new MeanTable(aMeans);
 //		aMeanTable.write(getFile(out + "mean-table-long-"));

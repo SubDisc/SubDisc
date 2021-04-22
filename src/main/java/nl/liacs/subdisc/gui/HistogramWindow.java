@@ -17,7 +17,7 @@ import org.jfree.chart.plot.*;
 import org.jfree.chart.renderer.category.*;
 import org.jfree.chart.title.*;
 import org.jfree.data.category.*;
-import org.jfree.ui.*;
+import org.jfree.chart.ui.*;
 
 public class HistogramWindow extends JFrame implements ActionListener, ChangeListener
 {

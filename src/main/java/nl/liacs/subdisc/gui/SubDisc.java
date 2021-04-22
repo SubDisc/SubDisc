@@ -63,7 +63,8 @@ public class SubDisc
 	 */
 	public static void main(String[] args)
 	{
-		checkLibs();
+		// Skipping libs check. Using Maven for dependency management.
+		// checkLibs();
 
 		if (!GraphicsEnvironment.isHeadless() && (SplashScreen.getSplashScreen() != null))
 		{
