@@ -132,45 +132,56 @@ public class DataLoaderTXT implements FileLoaderInterface
 			BitSet aFloats = new BitSet(aNrColumns);
 			String[] aTrueBinaryValues = new String[aNrColumns];
 			String[] aFalseBinaryValues = new String[aNrColumns];
-
-			for (int i = 0, j = aNrColumns; i < j; ++i)
+			// Scanner is faster for long lines, but it is harder to identify faulty lines. Using .split() this would be trivial.
+			Scanner aScanner = new Scanner(aLine).useDelimiter(getDelimiter());
+			//initialise the true and false binary values for the columns that appear to be binary
+			int aColumn = 0;
+			while (aScanner.hasNext() && aColumn < aNrColumns)
 			{
+
+				if (aColumns.get(aColumn).getType() == AttributeType.BINARY)
+				{
+					String s = aScanner.next();
+					removeQuotes(s);
+					if (AttributeType.isValidBinaryValue(s))
+					{
+						boolean aValue = AttributeType.isValidBinaryTrueValue(s);
+						if (aValue) //this was true
+							aTrueBinaryValues[aColumn] = s;
+						else
+							aFalseBinaryValues[aColumn] = s;
+					}
+				}
+				aColumn++;
+			}
+
+			for (int i=0; i<aNrColumns; i++)
 				if (AttributeType.BINARY == aColumns.get(i).getType())
 					aBinaries.set(i);
 				else if (AttributeType.NUMERIC == aColumns.get(i).getType())
 					aFloats.set(i);
-				// no use case yet
-				//else if (aColumns.get(i).isOrdinalType())
-				//	aFloats.set(i);
-			}
 
 			message("loadFile", "loading data");
 			// code ignores AttributeType.ORDINAL
 			while ((aLine = aReader.readLine()) != null)
 			{
-				++aLineNr;
+				aLineNr++;
 				if (aLine.isEmpty())
 					continue;
-
-				/*
-				 * Scanner is faster for long lines, but it is
-				 * harder to identify faulty lines.
-				 * Using .split() this would be trivial.
-				 */
-				Scanner aScanner = new Scanner(aLine).useDelimiter(getDelimiter());
+				aScanner = new Scanner(aLine).useDelimiter(getDelimiter());
 
 				//read fields
-				int aColumn = -1;
+				aColumn = -1;
 				while (aScanner.hasNext() && aColumn < aNrColumns)
 				{
-					++aColumn;
+					aColumn++;
 					String s = aScanner.next();
 					removeQuotes(s);
 
-					// is it currently set to binary? (this may change as more lines are read)
-					if (aBinaries.get(aColumn))
+
+					if (aBinaries.get(aColumn)) // is it currently set to binary? (this may change as more lines are read)
 					{
-						// TODO set itsMissing
+						// check if it is a missing value or a known binary value
 						if (isEmptyString(s))
 						{
 							aColumns.get(aColumn).add(aMissingBinary);
@@ -187,20 +198,28 @@ public class DataLoaderTXT implements FileLoaderInterface
 							continue;
 						}
 
-						// no longer a binary type
+						// if neither missing nor binary, then it shouldn't be binary
 						aBinaries.set(aColumn, false);
-						// set to numeric
-						aFloats.set(aColumn, true);
-						aColumns.get(aColumn).setType(AttributeType.NUMERIC);
-						// FALL THROUGH
-					}
-
-					// is it numeric
-					if (aFloats.get(aColumn))
-					{
-						try
+						
+						try //if it is a float
 						{
-							// TODO set itsMissing
+							float f = Float.parseFloat(s);
+							aFloats.set(aColumn, true);
+							aColumns.get(aColumn).setType(AttributeType.NUMERIC);
+							aColumns.get(aColumn).add(f);
+							Log.logCommandLine(aColumns.get(aColumn).getName() + " was binary, is numeric (line " + aLineNr + ")");
+						}
+						catch (NumberFormatException e) // guess it's a nominal then
+						{
+							aColumns.get(aColumn).toNominalType(aTrueBinaryValues[aColumn], aFalseBinaryValues[aColumn]);
+							Log.logCommandLine(aColumns.get(aColumn).getName() + " was binary, is nominal (line " + aLineNr + ")");
+						}
+							
+					}
+					else if (aFloats.get(aColumn))
+					{
+						try //if it is a float
+						{
 							if (isEmptyString(s))
 								aColumns.get(aColumn).add(aMissingNumeric);
 							else
@@ -208,27 +227,22 @@ public class DataLoaderTXT implements FileLoaderInterface
 								float f = Float.parseFloat(s);
 								aColumns.get(aColumn).add(f);
 							}
-							continue;
 						}
-						catch (NumberFormatException e)
+						catch (NumberFormatException e) // guess it's a nominal then
 						{
-							Log.logCommandLine(aColumns.get(aColumn).getName() + " was binary, is nominal");
-							Log.logCommandLine("true: " + aTrueBinaryValues[aColumn]);
-							Log.logCommandLine("false: " + aFalseBinaryValues[aColumn]);
 							aFloats.set(aColumn, false);
-							aColumns.get(aColumn).toNominalType(aTrueBinaryValues[aColumn], aFalseBinaryValues[aColumn]);
-							// FALL THROUGH
+							aColumns.get(aColumn).setType(AttributeType.NOMINAL);
+							aColumns.get(aColumn).add(s);
+							Log.logCommandLine(aColumns.get(aColumn).getName() + " was float, is nominal (line " + aLineNr + ")");
 						}
 					}
-
-					// is it ordinal
-					// NO USE CASE YET
-
-					// it is nominal
-					if (isEmptyString(s))
-						aColumns.get(aColumn).add(AttributeType.NOMINAL.DEFAULT_MISSING_VALUE);
-					else
-						aColumns.get(aColumn).add(s);
+					else //it was nominal
+					{
+						if (isEmptyString(s))
+							aColumns.get(aColumn).add(AttributeType.NOMINAL.DEFAULT_MISSING_VALUE);
+						else
+							aColumns.get(aColumn).add(s);
+					}
 				}
 				if (aColumn != aNrColumns-1)
 					message("loadFile", "incorrect number of fields on line " + aLineNr +". " + aNrColumns + " expected, " + (aColumn+1) + " found.");
@@ -245,6 +259,8 @@ public class DataLoaderTXT implements FileLoaderInterface
 					}
 				}
 			}
+			for (Column c : aColumns)
+				System.out.println("Column " + c.getName() + " (" + c.getType() + ")");
 
 			// one final check about the validity of the XML file
 			if (anOriginalTypes != null)
@@ -305,7 +321,7 @@ public class DataLoaderTXT implements FileLoaderInterface
 				if (!aLine.isEmpty())
 					++aNrDataLines;
 
-			message("analyse", aNrDataLines + " lines found");
+			message("analyse", aNrDataLines + " lines of data found");
 			itsNrLines = aNrDataLines;
 			aSuccess = true;
 		}

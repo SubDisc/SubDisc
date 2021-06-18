@@ -601,15 +601,9 @@ public class Column implements XMLNodeInterface
 	 */
 	public boolean setType(AttributeType theAttributeType)
 	{
-		// == is preferred on Enums and is null safe
 		if (itsType == theAttributeType)
 			return true;
 
-		/*
-		 * getAttributeType() always returns an AttributeType, even if
-		 * theType cannot be resolved. So null checks  are not needed in
-		 * the (private) toNewType() methods.
-		 */
 		switch (theAttributeType)
 		{
 			case NOMINAL : return toNominalType();
@@ -676,34 +670,6 @@ public class Column implements XMLNodeInterface
 				throw new AssertionError(itsType);
 			case BINARY :
 			{
-
-// this code is slightly faster, than the code at the bottom as it does not call
-// itsDistinctValuesMap.get(String) to determine existence of key
-// but switching of Column type is hardly ever done
-// and calling add(String) is more robust as it takes care of maintaining sane
-// internal state
-//				if (itsCardinality == 2)
-//				{
-//					itsDistinctValues.add("0");
-//					itsDistinctValuesMap.put("0", 0);
-//					itsDistinctValues.add("1");
-//					itsDistinctValuesMap.put("1", 1);
-//				}
-//				else if (itsBinaries.cardinality() == 0 && itsSize > 0)
-//				{
-//					itsDistinctValues.add("0");
-//					itsDistinctValuesMap.put("0", 0);
-//				}
-//				else if (itsSize > 0)
-//				{
-//					itsDistinctValues.add("1");
-//					itsDistinctValuesMap.put("1", 0);
-//				}
-//
-//				for (int i = 0, j = itsSize; i < j; ++i)
-//					itsNominals.add(itsBinaries.get(i) ? "1" : "0");
-
-				// new code, replaces all above
 				String f = AttributeType.DEFAULT_BINARY_FALSE_STRING;
 				String t = AttributeType.DEFAULT_BINARY_TRUE_STRING;
 				// NOTE uses this.add(String) to populate
@@ -733,46 +699,24 @@ public class Column implements XMLNodeInterface
 	 */
 	boolean toNominalType(String aTrue, String aFalse)
 	{
+		assert itsType == AttributeType.BINARY;
+
 		// relies on itsCardinality to be set at this time
 		itsDistinctValues = new ArrayList<String>(itsCardinality);
 		itsDistinctValuesMap = new HashMap<String, Integer>(itsCardinality);
 		itsNominalz = new int[itsSize];
 		itsMissingValue = AttributeType.NOMINAL.DEFAULT_MISSING_VALUE;
 
-// this code is slightly faster, than the code at the bottom as it does not call
-// itsDistinctValuesMap.get(String) to determine existence of key
-// but switching of Column type is hardly ever done
-// and calling add(String) is more robust as it takes care of maintaining sane
-// internal state
-//		if (aFalse != null)
-//		{
-//			itsDistinctValues.add(aFalse);
-//			itsDistinctValuesMap.add(aFalse);
-//		}
-//		if (aTrue != null)
-//		{
-//			itsDistinctValues.add(aTrue);
-//			itsDistinctValuesMap.add(aTrue);
-//		}
-//
-//		for (int i = 0, j = itsSize; i < j; ++i)
-//			if (aTrue == null && aFalse == null) //just missing values so far
-//				itsNominals.add(itsMissingValue);
-//			else
-//				itsNominals.add(itsFloatz[i] > 0.5f ? aTrue : aFalse);
-
-		// new code replaces all above
-		// NOTE uses this.add(String) to populate
-		// itsDistinctValues(Map), requires itsSize = 0;
+		// NOTE uses this.add(String) to populate itsDistinctValues(Map), requires itsSize = 0;
 		itsSize = 0;
-		for (int i = 0, j = itsNominalz.length; i < j; ++i)
-		{
-			// just missing values so far
-			if (aTrue == null && aFalse == null)
+
+		// just missing values so far
+		if (aTrue == null && aFalse == null)
+			for (int i = 0; i < itsNominalz.length; i++)
 				this.add(itsMissingValue);
-			else
-				this.add(itsFloatz[i] > 0.5f ? aTrue : aFalse);
-		}
+		else
+			for (int i = 0; i < itsNominalz.length; i++)
+				this.add(itsBinaries.get(i) ? aTrue : aFalse);
 
 		// Cleanup (for GarbageCollector).
 		itsBinaries = null;
