@@ -233,180 +233,8 @@ public class QualityMeasure
 	}
 
 	//SINGLE_NOMINAL =======================================================
-//	private static float calculate(QM theMeasure, int theTotalCoverage, float theTotalTargetCoverage, int theCountHeadBody, float theCoverage)
-//	{
-//		float aCountNotHeadBody			= theCoverage - theCountHeadBody;
-//		float aTotalTargetCoverageNotBody	= theTotalTargetCoverage - theCountHeadBody;
-//		float aCountNotHeadNotBody		= theTotalCoverage - (theTotalTargetCoverage + aCountNotHeadBody);
-//		float aCountBody			= aCountNotHeadBody + theCountHeadBody; // == theCoverage
-//
-//		float returnValue = Float.NaN;
-//		switch (theMeasure)
-//		{
-//			case WRACC:
-//			{
-//				returnValue = (theCountHeadBody/theTotalCoverage)-(theTotalTargetCoverage/theTotalCoverage)*(aCountBody/theTotalCoverage);
-//				break;
-//			}
-//			case MUTUAL_INFORMATION:
-//			{
-//				// redefine
-//				double N = theTotalCoverage;
-//				double H = theTotalTargetCoverage;
-//				double B = theCoverage;
-//
-//				double HB = theCountHeadBody / N;
-//				double nHB = (B-theCountHeadBody) / N;
-//				double HnB = (H-theCountHeadBody) / N;
-//				double nHnB = ((N-H)-(B-theCountHeadBody)) / N;
-//				// nHnB is equivalent to:
-//				// double nHnB = (N-HB-HnB-nHB) / N;
-//				// but N and H are constant and could be cached
-//
-//				returnValue = (float)(
-//				(
-//					mi(HB, HnB, nHB) +
-//					mi(nHB, nHnB, HB) +
-//					mi(HnB, HB, nHnB) +
-//					mi(nHnB, nHB, HnB)
-//				));
-////				System.out.println("*********************************************************");
-////				System.out.println("   N = " + N);
-////				System.out.println("   H = " + H);
-////				System.out.println("   B = " + B);
-////				System.out.println();
-////				System.out.println("  HB = " + HB);
-////				System.out.println(" !HB = " + nHB);
-////				System.out.println(" H!B = " + HnB);
-////				System.out.println("!H!B = " + nHnB);
-////				System.out.println(" SUM = " + (HB + nHB + HnB + nHnB));
-////				System.out.println("   MI= " + returnValue);
-////				System.out.println("WRACC= " + calculate(QM.WRACC, theTotalCoverage, theTotalTargetCoverage, theCountHeadBody, theCoverage));
-////				System.out.println("*********************************************************");
-//
-//				break;
-//			}
-//			case ABSWRACC:
-//			{
-//				returnValue = (theCountHeadBody/theTotalCoverage) - (theTotalTargetCoverage/theTotalCoverage)*(aCountBody/theTotalCoverage);
-//				returnValue = Math.abs(returnValue);
-//				break;
-//			}
-//			case CORTANA_QUALITY:
-//			{
-//				float aQuotient = theTotalTargetCoverage/theTotalCoverage;
-//				float aWRAcc = (theCountHeadBody/theTotalCoverage) - aQuotient*(aCountBody/theTotalCoverage);
-//				float aMaxWRAcc = aQuotient - aQuotient*aQuotient;
-//				returnValue = aWRAcc/aMaxWRAcc;
-//				break;
-//			}
-//			case CHI_SQUARED:
-//			{
-//				returnValue = calculateChiSquared(theTotalCoverage, theTotalTargetCoverage, aCountBody, theCountHeadBody);
-//				break;
-//			}
-//			case INFORMATION_GAIN:
-//			{
-//				returnValue = calculateInformationGain(theTotalCoverage, theTotalTargetCoverage, aCountBody, theCountHeadBody);
-//				break;
-//			}
-//			case BINOMIAL:
-//			{
-//				returnValue = ((float) Math.sqrt(aCountBody/theTotalCoverage)) * (theCountHeadBody/aCountBody - theTotalTargetCoverage/theTotalCoverage);
-//				break;
-//			}
-//			case JACCARD:
-//			{
-//				returnValue = theCountHeadBody / (aCountBody + aTotalTargetCoverageNotBody);
-//				break;
-//			}
-//			case COVERAGE:
-//			{
-//				returnValue = aCountBody;
-//				break;
-//			}
-//			case ACCURACY:
-//			{
-//				returnValue = theCountHeadBody /aCountBody;
-//				break;
-//			}
-//			case SPECIFICITY:
-//			{
-//				returnValue = aCountNotHeadNotBody / (theTotalCoverage - theTotalTargetCoverage);
-//				break;
-//			}
-//			case SENSITIVITY:
-//			{
-//				returnValue = theCountHeadBody / theTotalTargetCoverage;
-//				break;
-//			}
-//			case LAPLACE:
-//			{
-//				returnValue = (theCountHeadBody+1) / (aCountBody+2);
-//				break;
-//			}
-//			case F_MEASURE:
-//			{
-//				returnValue = theCountHeadBody / (aCountBody + theTotalTargetCoverage);
-//				break;
-//			}
-//			case G_MEASURE:
-//			{
-//				returnValue = theCountHeadBody / (aCountNotHeadBody + theTotalTargetCoverage);
-//				break;
-//			}
-//			case CORRELATION:
-//			{
-//				float aCountNotHead = theTotalCoverage-theTotalTargetCoverage;
-//				returnValue = (float) ((theCountHeadBody*aCountNotHead - theTotalTargetCoverage*aCountNotHeadBody) / Math.sqrt(theTotalTargetCoverage*aCountNotHead*aCountBody*(theTotalCoverage-aCountBody)));
-//				break;
-//			}
-//			case PURITY:
-//			{
-//				returnValue = theCountHeadBody/aCountBody;
-//				if (returnValue < 0.5f)
-//					returnValue = 1.0f - returnValue;
-//				break;
-//			}
-//			case BAYESIAN_SCORE:
-//			{
-//				returnValue = (float) calculateBayesianFactor(theTotalCoverage, theTotalTargetCoverage, aCountBody, theCountHeadBody);
-//				break;
-//			}
-//			case LIFT:
-//			{
-//				returnValue = (theCountHeadBody * theTotalCoverage) / (theCoverage * theTotalTargetCoverage);
-//				// alternative has 3 divisions, but TTC/N is constant and could be cached
-//				// returnValue = (theCountHeadBody / theCoverage) / (theTotalTargetCoverage / theTotalCoverage);
-//				break;
-//			}
-//			default :
-//			{
-//				/*
-//				 * if the QM is valid for this TargetType
-//				 * 	it is not implemented here
-//				 * else
-//				 * 	this method should not have been called
-//				 */
-//				if (QM.getQualityMeasures(TargetType.SINGLE_NOMINAL).contains(theMeasure))
-//					throw new AssertionError(theMeasure);
-//				else
-//					throw new IllegalArgumentException("Invalid argument: " + theMeasure);
-//			}
-//		}
-//		return returnValue;
-//	}
 	/*
-	 * int counts are casted to double inside this method
-	 * float should not be used to represent int counts
-	 * when int > 2^24 rounding errors occur on conversion to float
-	 * float has 23 significants, + 1 implicit, so it can represent
-	 * at most 16 million consecutive ints
-	 * the effect of using floats is made worse, as sometimes these
-	 * floats are also multiplied or divided
-	 * int conversion to double does not suffer from this as the largest
-	 * int is 2^31-1, and therefore smaller than what double can represent
-	 * exactly using its 52 (+1 implicit) significant bits
+	 * int counts are cast to double inside this method. Float should not be used to represent int counts
 	 * 
 	 * NOTE each case should check the input / result to avoid NaN returns
 	 */
@@ -418,8 +246,11 @@ public class QualityMeasure
 		assert (!(theMeasure == null));
 		assert (theTotalCoverage > 0);
 		//assert (theTotalCoverage <= Integer.MAX_VALUE-8); // JVM specific
-		assert (theTotalTargetCoverage > 0);
-		assert (theTotalTargetCoverage <= theTotalCoverage);
+
+		//check whether the target value is the only value, or whether it never occurs (not possible through GUI, but perhaps otherwise)
+		if (theTotalTargetCoverage == theTotalCoverage || theTotalTargetCoverage == 0)
+			return 0.0;	// perhaps not an ideal number for some QMs, but better than throwing an exception.
+
 		// should be checked by calculate(int, int)
 		//assert (theCoverage > 0); // TODO MM disabled for getROCHell()
 		assert (theCoverage <= theTotalCoverage);
@@ -595,24 +426,24 @@ public class QualityMeasure
 				returnValue = calculateBayesianFactor(N, H, B, HB);
 				break;
 			}
-            case LIFT:
-            {
-                if (B == 0)
-                    returnValue = 0.0;
-                else
-                    returnValue = (HB * N) / (B * H);
-                // alternative has 3 divisions, but H/N is constant and could be cached
-                // returnValue = (theCountHeadBody / theCoverage) / (theTotalTargetCoverage / theTotalCoverage);
-                break;
-            }
-            case RELATIVE_LIFT:
-            {
-                if (B == 0)
-                    returnValue = 0.0;
-                else
-                    returnValue = (HB * N) / (B * H) - 1;
-                break;
-            }
+			case LIFT:
+            		{
+				if (B == 0)
+					returnValue = 0.0;
+				else
+					returnValue = (HB * N) / (B * H);
+				// alternative has 3 divisions, but H/N is constant and could be cached
+				// returnValue = (theCountHeadBody / theCoverage) / (theTotalTargetCoverage / theTotalCoverage);
+				break;
+			}
+				case RELATIVE_LIFT:
+			{
+				if (B == 0)
+					returnValue = 0.0;
+				else
+					returnValue = (HB * N) / (B * H) - 1;
+				break;
+			}
 			default :
 			{
 				/*
@@ -628,8 +459,6 @@ public class QualityMeasure
 			}
 		}
 
-		// NOT an assert, this needs to be checked ALWAYS
-		// as it is not proven each case deals with exceptions well
 		if (Double.isNaN(returnValue))
 			throw new AssertionError("QualityMeasure.calculate() NaN return");
 		return returnValue;
