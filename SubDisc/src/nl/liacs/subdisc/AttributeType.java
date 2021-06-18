@@ -14,9 +14,9 @@ public enum AttributeType implements EnumInterface
 
 	// used for FileLoading/Column setMissingValue
 	private static final Set<String> BOOLEAN_POSITIVES =
-		new HashSet<String>(Arrays.asList(new String[] { "1", "true", "t", "yes" }));
+		new HashSet<String>(Arrays.asList(new String[] { "1", "true" }));
 	private static final Set<String> BOOLEAN_NEGATIVES =
-		new HashSet<String>(Arrays.asList(new String[] { "0", "false", "f", "no" }));
+		new HashSet<String>(Arrays.asList(new String[] { "0", "false" }));
 	static final String DEFAULT_BINARY_TRUE_STRING = "1";
 	static final String DEFAULT_BINARY_FALSE_STRING = "0";
 
