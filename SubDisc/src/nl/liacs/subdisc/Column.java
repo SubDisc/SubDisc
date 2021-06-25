@@ -2176,9 +2176,6 @@ public class Column implements XMLNodeInterface
 		{
 			itsCounts        = theCounts;
 			itsTruePositives = theTruePositives;
-			System.out.println("ValueCountTP");
-			for (int i=0; i<itsCounts.length; i++)
-				System.out.println("  " + i + ": " + itsCounts[i] + " (" + itsTruePositives[i] + ", " + (itsCounts[i] - itsTruePositives[i]) + ")");
 		}
 	}
 

@@ -2370,7 +2370,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		}
 		else if (anOperator == Operator.LESS_THAN_OR_EQUAL)
 		{
-			if (aCounts.length <= aNrBins) // fewer unique values than bins?
+			if (aCounts.length <= aNrBins) //fewer unique values than bins?
 			{
 				int cover = 0;
 				int tp = 0;
@@ -2395,13 +2395,11 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			}
 			else
 			{
-				System.out.println("----- n=" + aParentCoverage + ", aNrBins=" + aNrBins);
 				int next = next(aParentCoverage, b, aNrBins);
 				int cover = 0;
 				int tp = 0;
 				for (int i=0; b < aNrBins && !isTimeToStop(); i++)
 				{
-System.out.println("----- i=" + i + ", b=" + b + ", next=" + next);
 					int aCount = aCounts[i];
 					if (aCount == 0)
 						continue;
@@ -2409,7 +2407,7 @@ System.out.println("----- i=" + i + ", b=" + b + ", next=" + next);
 					cover += aCount;
 					tp += aTPs[i];
 
-					if ((cover <= next) || (cover < itsMinimumCoverage))
+					if (cover < itsMinimumCoverage || (cover <= next && aNrBins-b < aCounts.length-i-1))
 						continue;
 
 					if (cover == aParentCoverage)
@@ -2419,17 +2417,17 @@ System.out.println("----- i=" + i + ", b=" + b + ", next=" + next);
 					evaluateCandidate(theParent, aCondition, cover, tp, isAllStrategy, aBestSubgroups);
 
 					while ((next = next(aParentCoverage, ++b, aNrBins)) <= cover-1)
-						System.out.println("================== b=" + ", next=" + next); // deliberately empty
+						; // deliberately empty
 				}
 			}
 		}
 		else if (anOperator == Operator.GREATER_THAN_OR_EQUAL)
 		{
-			if (aCounts.length <= aNrBins) // fewer unique values than bins?
+			if (aCounts.length <= aNrBins) //fewer unique values than bins?
 			{
 				int cover = (int) aParentCoverage;
 				int tp = (int) theParent.getTertiaryStatistic();
-				for (int i=0; i<aCounts.length && !isTimeToStop(); ++i) //use all available cut points
+				for (int i=0; i<aCounts.length && !isTimeToStop(); i++) //use all available cut points
 				{
 					if (cover < itsMinimumCoverage)
 						break;
@@ -2450,7 +2448,11 @@ System.out.println("----- i=" + i + ", b=" + b + ", next=" + next);
 				}
 			}
 			else
-				for (int i = 0, next = (int) (aParentCoverage - (aParentCoverage / aNrBins)), cover = (int) aParentCoverage, tp = (int) theParent.getTertiaryStatistic(); b < aNrBins && !isTimeToStop(); i++)
+			{
+				int next = (int) (aParentCoverage - (aParentCoverage / aNrBins));
+				int cover = (int) aParentCoverage;
+				int tp = (int) theParent.getTertiaryStatistic();
+				for (int i=0; b<aNrBins && !isTimeToStop(); i++)
 				{
 					if (cover < itsMinimumCoverage)
 						break;
@@ -2460,7 +2462,7 @@ System.out.println("----- i=" + i + ", b=" + b + ", next=" + next);
 						continue;
 
 					// last value with required cover, use old cover and tp
-					if (((cover-aCount) < next) && (cover != aParentCoverage))
+					if (cover != aParentCoverage && (cover-aCount < next || aNrBins-b < aCounts.length-i-1))
 					{
 						Condition aCondition = new Condition(theConditionBase, aColumn.getSortedValue(i), i);
 						evaluateCandidate(theParent, aCondition, cover, tp, isAllStrategy, aBestSubgroups);
@@ -2473,6 +2475,7 @@ System.out.println("----- i=" + i + ", b=" + b + ", next=" + next);
 					cover -= aCount;
 					tp -= aTPs[i];
 				}
+			}
 		}
 		else
 			throw new AssertionError("SubgroupDiscovery.evaluateNumericRegularSingleBinaryCoarse() + " + anOperator);
