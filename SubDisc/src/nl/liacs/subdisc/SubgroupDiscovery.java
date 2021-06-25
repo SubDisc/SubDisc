@@ -50,7 +50,7 @@ public class SubgroupDiscovery
 	// not used anymore, but will be again when debugging linear algorithm
 	private static final boolean DEBUG_PRINTS_FOR_BEST_INTERVAL      = false;
 	// beam fill (not equal to nr. results at same level; for cbss includes -tmp
-	private static final boolean DEBUG_PRINTS_NEXT_LEVEL_CANDIDATES  = true;
+	private static final boolean DEBUG_PRINTS_NEXT_LEVEL_CANDIDATES  = false;
 	// print CoverRedundancy and JointEntropy for topK for For Real paper
 	private static final int[] FOR_REAL_PRINTS = { 10, 100 };
 
@@ -703,8 +703,8 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 
 	private static final void prepareData(BitSet theBinaryTarget, List<Column> theColumns)
 	{
-		Log.logCommandLine("SubgroupDiscovery.prepareData(): do not change data until mining completes");
-		Log.logCommandLine("  so no MetaDataWindow enable/disable attribute, attribute type, missing value\n");
+		//Log.logCommandLine("SubgroupDiscovery.prepareData(): do not change data until mining completes");
+		//Log.logCommandLine("  so no MetaDataWindow enable/disable attribute, attribute type, missing value\n");
 
 		Timer aTotal = new Timer();
 
@@ -724,7 +724,7 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 					Log.logCommandLine(c.getName());
 					Timer t = new Timer();
 					c.buildSorted(theBinaryTarget); // build SORTED + SORT_INDEX
-					Log.logCommandLine(t.getElapsedTimeString());
+					//Log.logCommandLine(t.getElapsedTimeString());
 					break;
 				}
 				case ORDINAL :
@@ -741,8 +741,8 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 			}
 		}
 
-		Log.logCommandLine("total preparation time:");
-		Log.logCommandLine(aTotal.getElapsedTimeString());
+		//Log.logCommandLine("total preparation time:");
+		//Log.logCommandLine(aTotal.getElapsedTimeString());
 	}
 
 	// direct computation is relevant only for a SINGLE_NOMINAL target as it
@@ -2150,6 +2150,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 				if (aCount == 0)
 					continue;
 
+
 				// last value with required cover, use old cover and tp
 				if (((cover-aCount) < next) && (cover != aParentCoverage))
 				{
@@ -2369,55 +2370,109 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		}
 		else if (anOperator == Operator.LESS_THAN_OR_EQUAL)
 		{
-			for (int i = 0, next = next(aParentCoverage, b, aNrBins), cover = 0, tp = 0; b < aNrBins && !isTimeToStop(); ++i)
+			if (aCounts.length <= aNrBins) // fewer unique values than bins?
 			{
-				int aCount = aCounts[i];
-				if (aCount == 0)
-					continue;
+				int cover = 0;
+				int tp = 0;
+				for (int i=0; i<aCounts.length && !isTimeToStop(); ++i) //use all available cut points
+				{
+					int aCount = aCounts[i];
+					if (aCount == 0)
+						continue;
 
-				cover += aCount;
-				tp += aTPs[i];
+					cover += aCount;
+					tp += aTPs[i];
 
-				if ((cover <= next) || (cover < itsMinimumCoverage))
-					continue;
+					if (cover < itsMinimumCoverage)
+						continue;
 
-				if (cover == aParentCoverage)
-					break;
+					if (cover == aParentCoverage)
+						break;
 
-				Condition aCondition = new Condition(theConditionBase, aColumn.getSortedValue(i), i);
-				evaluateCandidate(theParent, aCondition, cover, tp, isAllStrategy, aBestSubgroups);
+					Condition aCondition = new Condition(theConditionBase, aColumn.getSortedValue(i), i);
+					evaluateCandidate(theParent, aCondition, cover, tp, isAllStrategy, aBestSubgroups);
+				}
+			}
+			else
+			{
+				System.out.println("----- n=" + aParentCoverage + ", aNrBins=" + aNrBins);
+				int next = next(aParentCoverage, b, aNrBins);
+				int cover = 0;
+				int tp = 0;
+				for (int i=0; b < aNrBins && !isTimeToStop(); i++)
+				{
+System.out.println("----- i=" + i + ", b=" + b + ", next=" + next);
+					int aCount = aCounts[i];
+					if (aCount == 0)
+						continue;
 
-				while ((next = next(aParentCoverage, ++b, aNrBins)) <= cover-1)
-					; // deliberately empty
+					cover += aCount;
+					tp += aTPs[i];
+
+					if ((cover <= next) || (cover < itsMinimumCoverage))
+						continue;
+
+					if (cover == aParentCoverage)
+						break;
+
+					Condition aCondition = new Condition(theConditionBase, aColumn.getSortedValue(i), i);
+					evaluateCandidate(theParent, aCondition, cover, tp, isAllStrategy, aBestSubgroups);
+
+					while ((next = next(aParentCoverage, ++b, aNrBins)) <= cover-1)
+						System.out.println("================== b=" + ", next=" + next); // deliberately empty
+				}
 			}
 		}
 		else if (anOperator == Operator.GREATER_THAN_OR_EQUAL)
 		{
-			// NOTE getTertiaryStatistic() only works for SINGLE_NOMINAL
-			// NOTE division in old code rounds down for <= and >=
-			for (int i = 0, next = (int) (aParentCoverage - (aParentCoverage / aNrBins)), cover = (int) aParentCoverage, tp = (int) theParent.getTertiaryStatistic(); b < aNrBins && !isTimeToStop(); ++i)
+			if (aCounts.length <= aNrBins) // fewer unique values than bins?
 			{
-				if (cover < itsMinimumCoverage)
-					break;
-
-				int aCount = aCounts[i];
-				if (aCount == 0)
-					continue;
-
-				// last value with required cover, use old cover and tp
-				if (((cover-aCount) < next) && (cover != aParentCoverage))
+				int cover = (int) aParentCoverage;
+				int tp = (int) theParent.getTertiaryStatistic();
+				for (int i=0; i<aCounts.length && !isTimeToStop(); ++i) //use all available cut points
 				{
-					Condition aCondition = new Condition(theConditionBase, aColumn.getSortedValue(i), i);
-					evaluateCandidate(theParent, aCondition, cover, tp, isAllStrategy, aBestSubgroups);
+					if (cover < itsMinimumCoverage)
+						break;
 
-					while ((next = (int) (aParentCoverage - ((++b * aParentCoverage) / aNrBins))) > (cover-aCount))
-						; // deliberately empty
+					int aCount = aCounts[i];
+					if (aCount == 0)
+						continue;
+
+					if (cover != aParentCoverage)
+					{
+						Condition aCondition = new Condition(theConditionBase, aColumn.getSortedValue(i), i);
+						evaluateCandidate(theParent, aCondition, cover, tp, isAllStrategy, aBestSubgroups);
+					}
+
+					// before moving to next, subtract counts related to this value
+					cover -= aCount;
+					tp -= aTPs[i];
 				}
-
-				// before moving to next, subtract counts related to this value
-				cover -= aCount;
-				tp -= aTPs[i];
 			}
+			else
+				for (int i = 0, next = (int) (aParentCoverage - (aParentCoverage / aNrBins)), cover = (int) aParentCoverage, tp = (int) theParent.getTertiaryStatistic(); b < aNrBins && !isTimeToStop(); i++)
+				{
+					if (cover < itsMinimumCoverage)
+						break;
+
+					int aCount = aCounts[i];
+					if (aCount == 0)
+						continue;
+
+					// last value with required cover, use old cover and tp
+					if (((cover-aCount) < next) && (cover != aParentCoverage))
+					{
+						Condition aCondition = new Condition(theConditionBase, aColumn.getSortedValue(i), i);
+						evaluateCandidate(theParent, aCondition, cover, tp, isAllStrategy, aBestSubgroups);
+
+						while ((next = (int) (aParentCoverage - ((++b * aParentCoverage) / aNrBins))) > (cover-aCount))
+							; // deliberately empty
+					}
+
+					// before moving to next, subtract counts related to this value
+					cover -= aCount;
+					tp -= aTPs[i];
+				}
 		}
 		else
 			throw new AssertionError("SubgroupDiscovery.evaluateNumericRegularSingleBinaryCoarse() + " + anOperator);
@@ -5196,9 +5251,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 
 		// currently only for SINGLE_NOMINAL (and not for propensity scores)
 		if (!isDirectSingleBinary())
-		{
 			evaluateNumericRegularHelper(aParent, theParentMembers, aConditionBase);
-		}
 		else
 		{
 			ValueCountTP via = aConditionBase.getColumn().getUniqueNumericDomainMap(theParentMembers);
