@@ -1,0 +1,11 @@
+A,RINpersoons,BRPbron,geslacht,lft,GBAburgerlijkestaatnw,nietGBAverblijf,RINobjectnummer,soortobjectnummer,VBOwoningtype,aantalpershh,aantalkindhh,oplnivSOI2016agg1HBMETNIRWO,oplnivSOI2016agg2HBMETNIRWO,oplnivSOI2016agg3HBMETNIRWO,#veroordelingen_geweld,#veroordelingen_drugs,#veroordelingen_vermogen,#veroordelingen_zeden
+0,R,A,f,11,W,7767,47629,B,BOERDERIJ,3,1,3 Hoog,31 Hbo;wo-bachelor,122,0.0,0.0,0.0,0.0
+0,R,A,m,71,S,9579,82648,B,2-ONDER-1-KAPWONING,1,0,3 Hoog,21 Havo;vwo;mbo,211,0.0,0.0,0.0,0.0
+0,R,A,f,70,S,9556,13357,B,BEDRIJFS- OF DIENSTWONING,4,2,2 Middelbaar,21 Havo;vwo;mbo,213,0.0,0.0,0.0,0.0
+0,R,A,f,92,O,7047,40801,B,APPARTEMENT,6,4,1 Laag,12 Vmbo;havo-;vwo-onderbouw;mbo1,311,0.0,0.0,0.0,0.0
+0,R,B,f,86,H,8654,74971,B,BOERDERIJ,2,0,3 Hoog,31 Hbo;wo-bachelor,122,0.0,0.0,0.0,0.0
+0,R,B,o,40,S,3785,53390,B,GESCHAKELDE WONING,7,5,2 Middelbaar,21 Havo;vwo;mbo,121,0.0,0.0,0.0,0.0
+0,R,A,m,33,H,2527,47359,B,GESCHAKELDE WONING,4,2,2 Middelbaar,21 Havo;vwo;mbo,321,0.0,0.0,0.0,0.0
+0,R,A,f,49,H,1490,52480,B,2-ONDER-1-KAPWONING,4,2,1 Laag,31 Hbo;wo-bachelor,212,0.0,0.0,0.0,0.0
+0,R,B,o,83,H,1606,57779,B,BEDRIJFS- OF DIENSTWONING,1,0,1 Laag,21 Havo;vwo;mbo,321,0.0,0.0,0.0,0.0
+0,O,A,m,14,H,9592,25676,B,BOERDERIJ,4,2,3 Hoog,21 Havo;vwo;mbo,213,0.0,0.0,0.0,0.0
