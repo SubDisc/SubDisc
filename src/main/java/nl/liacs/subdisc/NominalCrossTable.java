@@ -56,7 +56,7 @@ public class NominalCrossTable
 	{
 		List<Integer> aSortedIndexList = new ArrayList<Integer>(itsValues.length);
 		for (int i = 0; i < itsValues.length; i++)
-			aSortedIndexList.add(new Integer(i));
+			aSortedIndexList.add(Integer.valueOf(i));
 
 		// as long a itsPositiveCounts / itsNegativeCounts do not change
 		// CrossTableComparator could be saved as member of this class,

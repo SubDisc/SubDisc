@@ -83,7 +83,7 @@ public final class DistributionBuilder
 			itsPDF = createPDF(itsColumn);
 		}
 
-		private static final Double ONE = new Double(1.0);
+		private static final Double ONE = Double.valueOf(1.0);
 		private static final Map<Float, Double> createPDF(Column theColumn)
 		{
 			final int size = theColumn.size();
@@ -167,7 +167,7 @@ public final class DistributionBuilder
 		}
 
 		// JSL guarantees no duplicates for values exist for [-128;127]
-		private static final Integer ONE = new Integer(1);
+		private static final Integer ONE = Integer.valueOf(1);
 		private static final Map<Float, PDFNode> createPDF(Column theColumn)
 		{
 			final int size = theColumn.size();
@@ -311,7 +311,7 @@ public final class DistributionBuilder
 			}
 		}
 
-		private static final Double ONE = new Double(1.0);
+		private static final Double ONE = Double.valueOf(1.0);
 		// XXX Not a PDF, but a Map<value, count> instead
 		private static final Map<Float, Double> createPDF(Column theColumn, BitSet theMembers)
 		{
@@ -412,7 +412,7 @@ public final class DistributionBuilder
 			itsDensities = createHisto(itsColumn, theMembers);
 		}
 
-		private static final Double ONE = new Double(1.0);
+		private static final Double ONE = Double.valueOf(1.0);
 		private static final Map<String, Double> createHisto(Column theColumn, BitSet theMembers)
 		{
 			final int size = theColumn.size();

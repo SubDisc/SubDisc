@@ -137,11 +137,11 @@ public class HistogramWindow extends JFrame implements ActionListener, ChangeLis
 		theSlider.setPaintLabels(true);
 		// labels (within range of MIN-MAX)
 		Hashtable<Integer, JLabel> aTable = new Hashtable<Integer, JLabel>();
-		aTable.put(new Integer(1), new JLabel(String.valueOf(1)));
-		aTable.put(new Integer(8), new JLabel(String.valueOf(8)));
-		aTable.put(new Integer(16), new JLabel(String.valueOf(16)));
-		aTable.put(new Integer(24), new JLabel(String.valueOf(24)));
-		aTable.put(new Integer(32), new JLabel(String.valueOf(32)));
+		aTable.put(Integer.valueOf(1), new JLabel(String.valueOf(1)));
+		aTable.put(Integer.valueOf(8), new JLabel(String.valueOf(8)));
+		aTable.put(Integer.valueOf(16), new JLabel(String.valueOf(16)));
+		aTable.put(Integer.valueOf(24), new JLabel(String.valueOf(24)));
+		aTable.put(Integer.valueOf(32), new JLabel(String.valueOf(32)));
 		theSlider.setLabelTable(aTable);
 		theSlider.setFont(GUI.DEFAULT_BUTTON_FONT);
 		theSlider.addChangeListener(this);

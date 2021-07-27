@@ -56,7 +56,7 @@ public class ProbabilityDensityFunctionContinuous
 	// this returns a sorted, unique domain, using PDFNodes
 	// NOTE that this method is only called once, at creation time
 	// so efficiency is not an issue
-	private static final Integer ONE = new Integer(1);
+	private static final Integer ONE = Integer.valueOf(1);
 	private static final Map<Float, PDFNode> createPDF(Column theData)
 	{
 		final int size = theData.size();

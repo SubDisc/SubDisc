@@ -20,9 +20,9 @@ public enum NumericStrategy implements EnumInterface
 	//
 	// all = allow all candidates through
 	// best = allow only best scoring candidate through
-	@Deprecated
+//	@Deprecated
 	NUMERIC_VIKAMINE_CONSECUTIVE_ALL("vm-consecutive-all", true, true, false),
-	@Deprecated
+//	@Deprecated
 	NUMERIC_VIKAMINE_CONSECUTIVE_BEST("vm-consecutive-best", true, true, false);
 //	NUMERIC_VIKAMINE_CARTESIAN_ALL("vm-cartesian-all", true, true, false),
 //	NUMERIC_VIKAMINE_CARTESIAN_BEST("vm-cartesian-best", true, true, false);

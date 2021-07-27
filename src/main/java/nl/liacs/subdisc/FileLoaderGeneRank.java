@@ -16,7 +16,7 @@ import nl.liacs.subdisc.gui.*;
 public class FileLoaderGeneRank implements FileLoaderInterface
 {
 	// TODO should come from GUI, values below threshold are set to 0.0f
-	public static final Float THRESHOLD = new Float(0.01);
+	public static final Float THRESHOLD = Float.valueOf(0.01f);
 
 	private static Map<String, Integer> itsCui2LineNrMap;	// TODO generify
 	private static Map<String, String> itsCui2NameMap;	// TODO generify

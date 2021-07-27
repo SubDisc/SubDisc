@@ -702,7 +702,7 @@ public class ResultWindow extends JFrame implements ActionListener
 		setBusy(true);
 		try
 		{
-			int aValue = new Integer(anInputString).intValue();
+			int aValue = Integer.valueOf(anInputString).intValue();
 			SubgroupSet aPatternTeam = itsSubgroupSet.getPatternTeam(itsTable, aValue);
 			new ResultWindow(this, aPatternTeam);
 		}
