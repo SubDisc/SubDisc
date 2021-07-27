@@ -16,6 +16,8 @@ public class ConditionWindow extends JFrame implements ActionListener, ChangeLis
 
 	JComboBox<String> itsComboBoxAttribute;
 	JComboBox<String> itsComboBoxOperator;
+	JTextField 	  itsTextFieldValue;
+	JComboBox<String> itsComboBoxValue;
 
 	ArrayList<Column> itsColumnList;
 	private static final String ATTRIBUTE_BOX = "attribute box";
@@ -45,7 +47,7 @@ public class ConditionWindow extends JFrame implements ActionListener, ChangeLis
 
 		// Labels Panel
 		JPanel aPanelLabels = new JPanel();
-		aPanelLabels.setLayout(new GridLayout(7, 1));
+		aPanelLabels.setLayout(new GridLayout(4, 1));
 		JLabel aLabelAttribute = new JLabel("attribute");
 		aPanelLabels.add(aLabelAttribute);
 		JLabel aLabelOperator = new JLabel("operator");
@@ -55,7 +57,7 @@ public class ConditionWindow extends JFrame implements ActionListener, ChangeLis
 
 		// Specifics Panel
 		JPanel aSpecificsLabels = new JPanel();
-		aSpecificsLabels.setLayout(new GridLayout(7, 1));
+		aSpecificsLabels.setLayout(new GridLayout(4, 1));
 
 		//attribute
 		itsComboBoxAttribute = GUI.buildComboBox(new String[0], ATTRIBUTE_BOX, this);
@@ -66,20 +68,25 @@ public class ConditionWindow extends JFrame implements ActionListener, ChangeLis
 		//operator
 		itsComboBoxOperator = GUI.buildComboBox(new String[0], OPERATOR_BOX, this);
 		aSpecificsLabels.add(itsComboBoxOperator);
-		//for (Operator anOperator : Operator.getOperators(AttributeType.NUMERIC))
-		for (Operator anOperator : Operator.set()) //TODO make this depend on the selected attribute
-			itsComboBoxOperator.addItem(anOperator.toString());
+		Column aColumn = itsColumnList.get(0);
+		for (Operator anOperator : Operator.getOperators(aColumn.getType()))
+			if (anOperator.isSimple())
+				itsComboBoxOperator.addItem(anOperator.toString());
 
-		//value
-		JTextField aTextFieldValue = GUI.buildTextField("0");
-		aSpecificsLabels.add(aTextFieldValue);
+		//value (numeric)
+		itsTextFieldValue = GUI.buildTextField("0");
+		aSpecificsLabels.add(itsTextFieldValue);
+		//value (nominal)
+		itsComboBoxValue = GUI.buildComboBox(new String[0], OPERATOR_BOX, this);
+		aSpecificsLabels.add(itsComboBoxValue);
+		for (String aValue : aColumn.getDomain())
+			itsComboBoxValue.addItem(aValue); 
 
 		aNorthPanel.add(aPanelLabels, BorderLayout.WEST);
 		aNorthPanel.add(aSpecificsLabels, BorderLayout.EAST);
 		add(aNorthPanel, BorderLayout.NORTH);
 
 		//buttons
-
 		JPanel aPanelButtons = new JPanel();
 		aPanelButtons.setMinimumSize(new Dimension(0, 30));
 		JButton aSelect = GUI.buildButton("Select", 'S', "select", this);
@@ -105,10 +112,35 @@ public class ConditionWindow extends JFrame implements ActionListener, ChangeLis
 					aColumn = aC;
 			Operator anOperator = Operator.fromString((String) itsComboBoxOperator.getSelectedItem());
 			ConditionBase aCB = new ConditionBase(aColumn, anOperator);
-			Condition aCondition = new Condition(aCB, 18f, 0);
+			Condition aCondition;
+			if (aColumn.getType() == AttributeType.NUMERIC)
+				aCondition = new Condition(aCB, Float.parseFloat(itsTextFieldValue.getText()), 0);
+			else
+				aCondition = new Condition(aCB, (String) itsComboBoxValue.getSelectedItem());
 			System.out.println(aCondition.toString());
 
 			dispose();			//TODO
+		}
+		if (anEvent.equals(ATTRIBUTE_BOX))
+		{
+			if (itsComboBoxOperator != null) //has it been properly initialised?
+			{
+				itsComboBoxOperator.removeAllItems();
+				itsComboBoxValue.removeAllItems();
+				Column aColumn = itsColumnList.get(0);
+				String anAttribute = (String) itsComboBoxAttribute.getSelectedItem();
+				for (Column aC : itsColumnList)
+					if (aC.getName().equals(anAttribute))
+						aColumn = aC;
+				for (Operator anOperator : Operator.getOperators(aColumn.getType()))
+					if (anOperator.isSimple())
+						itsComboBoxOperator.addItem(anOperator.toString());
+				if (aColumn.getType() == AttributeType.NOMINAL)
+					for (String aValue : aColumn.getDomain())
+						itsComboBoxValue.addItem(aValue); 
+
+			}
+
 		}
 	}
 

@@ -41,6 +41,137 @@ public class MiningWindow extends JFrame implements ActionListener
 	private SearchParameters itsSearchParameters = new SearchParameters();
 	private TargetConcept itsTargetConcept = new TargetConcept();
 
+	private static final String TARGET_TYPE_BOX = "target type box";
+	private static final String QUALITY_MEASURE_BOX = "quality measure box";
+	private static final String MISC_FIELD_BOX = "misc field box";
+	private static final String TARGET_ATTRIBUTE_BOX = "target attribute box";
+	private static final String SEARCH_TYPE_BOX = "search type box";
+	private static final String NUMERIC_STRATEGY_BOX = "numeric strategy box";
+	private static final String NUMERIC_OPERATORS_BOX = "numeric operators box";
+
+	// MENU
+	private JMenuBar jMiningWindowMenuBar;
+	// MENU - File
+	private JMenu jMenuFile;
+	private JMenuItem jMenuItemOpenFile;
+	private JMenuItem jMenuItemBrowse;
+	private JMenuItem jMenuItemExplore;
+	private JMenuItem jMenuItemMetaData;
+	private JMenuItem jMenuItemSelectSubset;
+	private JMenuItem jMenuItemSubgroupDiscovery;
+	private JMenuItem jMenuItemCreateAutorunFile;
+	private JMenuItem jMenuItemAddToAutorunFile;
+	private JMenuItem jMenuItemLoadSampledSubgroups;
+	// MENU - Enrichment
+	private JMenu jMenuEnrichment;
+	private JMenuItem jMenuItemAddCuiEnrichmentSource;
+	private JMenuItem jMenuItemAddGoEnrichmentSource;
+	private JMenuItem jMenuItemAddCustomEnrichmentSource;
+	private JMenuItem jMenuItemRemoveEnrichmentSource;
+	// Menu About
+	private JMenu jMenuAbout;
+	private JMenuItem jMenuItemAboutCortana;
+	private JMenu jMenuGui;	// for GUI debugging only, DO NOT REMOVE
+	private JMenuItem jMenuItemExit;
+
+	// 4 PANELS: DATASET, TARGET CONCEPT, SEARCH CONDITIONS, SEARCH STRATEGY
+	private JPanel jPanelCenter;
+
+	// DATA SET
+	private JPanel jPanelDataSet;
+	private JPanel jPanelDataSetLabels;
+	private JLabel jLabelTargetTable;
+	private JLabel jLabelNrExamples;
+	private JLabel jLabelNrAttributes;
+	private JLabel jLabelNrNominals;
+	private JLabel jLabelNrNumerics;
+	private JLabel jLabelNrBinaries;
+	private JPanel jPanelDataSetFields;
+	private JLabel jLabelTargetTableName;
+	private JLabel jLabelNrExamplesNr;
+	private JLabel jLabelNrAttributesNr;
+	private JLabel jLabelNrNominalsNr;
+	private JLabel jLabelNrNumericsNr;
+	private JLabel jLabelNrBinariesNr;
+	private JPanel jPanelDataSetButtons;
+	private JButton jButtonBrowse;
+	private JButton jButtonExplore;
+	private JButton jButtonMetaData;
+	private JButton jButtonSelectSubset;
+	private JButton jButtonDiscretiseData;
+
+	// TARGET CONCEPT
+	private JPanel jPanelTargetConcept;
+	// TARGET CONCEPT - labels
+	private JPanel jPanelTargetConceptLabels;
+	private JLabel jLabelTargetType;
+	private JLabel jLabelQualityMeasure;
+	private JLabel jLabelQualityMeasureMinimum;
+	private JLabel jLabelTargetAttribute;
+	private JLabel jLabelMiscField;	// also for secondary target
+	private JLabel jLabelMultiRegressionTargets;
+	private JLabel jLabelMultiTargets;
+	private JLabel jLabelTargetInfo;
+	// TARGET CONCEPT - fields
+	private JPanel jPanelTargetConceptFields;
+	private JComboBox<String> jComboBoxTargetType;
+	private JComboBox<String> jComboBoxQualityMeasure;
+	private JTextField jTextFieldQualityMeasureMinimum;
+	private JComboBox<String> jComboBoxTargetAttribute;
+	private JComboBox<String> jComboBoxMiscField;
+	private JButton jButtonMultiRegressionTargets;
+	private JList<String> jListMultiRegressionTargets; // maintain list of targets
+	private JButton jButtonMultiTargets;
+	private JList<String> jListMultiTargets; // maintain list of targets
+	private JLabel jLabelTargetInfoText;
+	private JButton jButtonBaseModel;
+
+	// SEARCH CONDITIONS
+	private JPanel jPanelSearchConditions;
+	// SEARCH CONDITIONS - labels
+	private JPanel jPanelSearchConditionsLabels;
+	private JLabel jLabelSearchDepth;
+	private JLabel jLabelSearchCoverageMinimum;
+	private JLabel jLabelSearchCoverageMaximum;
+	private JLabel jLabelSubgroupsMaximum;
+	private JLabel jLabelSearchTimeMaximum;
+	// SEARCH CONDITIONS - fields
+	private JPanel jPanelSearchParameterFields;
+	private JTextField jTextFieldSearchDepth;
+	private JTextField jTextFieldSearchCoverageMinimum;
+	private JTextField jTextFieldSearchCoverageMaximum;
+	private JTextField jTextFieldSubgroupsMaximum;
+	private JTextField jTextFieldSearchTimeMaximum;
+
+	// SEARCH STRATEGY
+	private JPanel jPanelSearchStrategy;
+	// SEARCH STRATEGY - labels
+	private JPanel jPanelSearchStrategyLabels;
+	private JLabel jLabelStrategyType;
+	private JLabel jLabelStrategyWidth;
+	private JLabel jLabelSetValuedNominals;
+	private JLabel jLabelNumericStrategy;
+	private JLabel jLabelNumericOperators;
+	private JLabel jLabelNumberOfBins;
+	private JLabel jLabelNumberOfThreads;
+	// SEARCH STRATEGY - fields
+	private JPanel jPanelSearchStrategyFields;
+	private JComboBox<String> jComboBoxStrategyType;
+	private JTextField jTextFieldStrategyWidth;
+	private JCheckBox jCheckBoxSetValuedNominals;
+	private JComboBox<String> jComboBoxNumericStrategy;
+	private JComboBox <String> jComboBoxNumericOperators;
+	private JTextField jTextFieldNumberOfBins;
+	private JTextField jTextFieldNumberOfThreads;
+
+	// SOUTH PANEL - MINING BUTTONS
+	private JPanel jPanelSouth;
+	private JPanel jPanelMineButtons;
+	private JButton jButtonSubgroupDiscovery;
+	private JButton jButtonSubgroupDiscoveryLoop;
+	private JButton jButtonCrossValidate;
+	private JButton jButtonComputeThreshold;
+
 	public MiningWindow()
 	{
 		initMiningWindow();
@@ -1248,14 +1379,15 @@ public class MiningWindow extends JFrame implements ActionListener
 			public void run()
 			{
 				System.out.println("========Select Subset=======");
-				ConditionBase aCB = new ConditionBase(itsTable.getColumns().get(0), Operator.GREATER_THAN_OR_EQUAL);
-				Condition aCondition = new Condition(aCB, 18f, 0);
-				System.out.println(aCondition.toString());
-				ConditionListA aCL = ConditionListBuilder.createList(aCondition);
-				BitSet aMembers = itsTable.evaluate(aCL);
-				System.out.println("size: " + aMembers.cardinality());
+//				ConditionBase aCB = new ConditionBase(itsTable.getColumns().get(0), Operator.GREATER_THAN_OR_EQUAL);
+//				Condition aCondition = new Condition(aCB, 18f, 0);
+//				System.out.println(aCondition.toString());
+//				ConditionListA aCL = ConditionListBuilder.createList(aCondition);
 
 				new ConditionWindow(itsTable.getColumns());
+
+//				BitSet aMembers = itsTable.evaluate(aCL);
+//				System.out.println("size: " + aMembers.cardinality());
 			}
 		});
 	}
@@ -1435,16 +1567,16 @@ public class MiningWindow extends JFrame implements ActionListener
 				itsTargetConcept.setSecondaryTarget(itsTable.getColumn(getMiscFieldName()));
 				break;
 			}
-            case DOUBLE_CORRELATION :
-            {
-                itsTargetConcept.setSecondaryTarget(itsTable.getColumn(getMiscFieldName()));
-                break;
-            }
-            case DOUBLE_BINARY :
-            {
-                itsTargetConcept.setSecondaryTarget(itsTable.getColumn(getMiscFieldName()));
-                break;
-            }
+			case DOUBLE_CORRELATION :
+			{
+				itsTargetConcept.setSecondaryTarget(itsTable.getColumn(getMiscFieldName()));
+				break;
+			}
+			case DOUBLE_BINARY :
+			{
+				itsTargetConcept.setSecondaryTarget(itsTable.getColumn(getMiscFieldName()));
+				break;
+			}
 			case SCAPE :
 			{
 				itsTargetConcept.setSecondaryTarget(itsTable.getColumn(getMiscFieldName()));
@@ -1463,7 +1595,6 @@ public class MiningWindow extends JFrame implements ActionListener
 				throw new AssertionError(itsTargetConcept.getTargetType());
 		}
 		itsSearchParameters.setTargetConcept(itsTargetConcept);
-
 		initTargetInfo();
 	}
 
@@ -2442,129 +2573,6 @@ boundsList.add(new Interval(f, Float.POSITIVE_INFINITY));
 			this.setCursor(Cursor.getDefaultCursor());
 	}
 
-	// MENU
-	private JMenuBar jMiningWindowMenuBar;
-	// MENU - File
-	private JMenu jMenuFile;
-	private JMenuItem jMenuItemOpenFile;
-	private JMenuItem jMenuItemBrowse;
-	private JMenuItem jMenuItemExplore;
-	private JMenuItem jMenuItemMetaData;
-	private JMenuItem jMenuItemSelectSubset;
-	private JMenuItem jMenuItemSubgroupDiscovery;
-	private JMenuItem jMenuItemCreateAutorunFile;
-	private JMenuItem jMenuItemAddToAutorunFile;
-	private JMenuItem jMenuItemLoadSampledSubgroups;
-	// MENU - Enrichment
-	private JMenu jMenuEnrichment;
-	private JMenuItem jMenuItemAddCuiEnrichmentSource;
-	private JMenuItem jMenuItemAddGoEnrichmentSource;
-	private JMenuItem jMenuItemAddCustomEnrichmentSource;
-	private JMenuItem jMenuItemRemoveEnrichmentSource;
-	// Menu About
-	private JMenu jMenuAbout;
-	private JMenuItem jMenuItemAboutCortana;
-	private JMenu jMenuGui;	// for GUI debugging only, DO NOT REMOVE
-	private JMenuItem jMenuItemExit;
-
-	// 4 PANELS: DATASET, TARGET CONCEPT, SEARCH CONDITIONS, SEARCH STRATEGY
-	private JPanel jPanelCenter;
-
-	// DATA SET
-	private JPanel jPanelDataSet;
-	private JPanel jPanelDataSetLabels;
-	private JLabel jLabelTargetTable;
-	private JLabel jLabelNrExamples;
-	private JLabel jLabelNrAttributes;
-	private JLabel jLabelNrNominals;
-	private JLabel jLabelNrNumerics;
-	private JLabel jLabelNrBinaries;
-	private JPanel jPanelDataSetFields;
-	private JLabel jLabelTargetTableName;
-	private JLabel jLabelNrExamplesNr;
-	private JLabel jLabelNrAttributesNr;
-	private JLabel jLabelNrNominalsNr;
-	private JLabel jLabelNrNumericsNr;
-	private JLabel jLabelNrBinariesNr;
-	private JPanel jPanelDataSetButtons;
-	private JButton jButtonBrowse;
-	private JButton jButtonExplore;
-	private JButton jButtonMetaData;
-	private JButton jButtonSelectSubset;
-	private JButton jButtonDiscretiseData;
-
-	// TARGET CONCEPT
-	private JPanel jPanelTargetConcept;
-	// TARGET CONCEPT - labels
-	private JPanel jPanelTargetConceptLabels;
-	private JLabel jLabelTargetType;
-	private JLabel jLabelQualityMeasure;
-	private JLabel jLabelQualityMeasureMinimum;
-	private JLabel jLabelTargetAttribute;
-	private JLabel jLabelMiscField;	// also for secondary target
-	private JLabel jLabelMultiRegressionTargets;
-	private JLabel jLabelMultiTargets;
-	private JLabel jLabelTargetInfo;
-	// TARGET CONCEPT - fields
-	private JPanel jPanelTargetConceptFields;
-	private JComboBox<String> jComboBoxTargetType;
-	private JComboBox<String> jComboBoxQualityMeasure;
-	private JTextField jTextFieldQualityMeasureMinimum;
-	private JComboBox<String> jComboBoxTargetAttribute;
-	private JComboBox<String> jComboBoxMiscField;
-	private JButton jButtonMultiRegressionTargets;
-	private JList<String> jListMultiRegressionTargets; // maintain list of targets
-	private JButton jButtonMultiTargets;
-	private JList<String> jListMultiTargets; // maintain list of targets
-	private JLabel jLabelTargetInfoText;
-	private JButton jButtonBaseModel;
-
-	// SEARCH CONDITIONS
-	private JPanel jPanelSearchConditions;
-	// SEARCH CONDITIONS - labels
-	private JPanel jPanelSearchConditionsLabels;
-	private JLabel jLabelSearchDepth;
-	private JLabel jLabelSearchCoverageMinimum;
-	private JLabel jLabelSearchCoverageMaximum;
-	private JLabel jLabelSubgroupsMaximum;
-	private JLabel jLabelSearchTimeMaximum;
-	// SEARCH CONDITIONS - fields
-	private JPanel jPanelSearchParameterFields;
-	private JTextField jTextFieldSearchDepth;
-	private JTextField jTextFieldSearchCoverageMinimum;
-	private JTextField jTextFieldSearchCoverageMaximum;
-	private JTextField jTextFieldSubgroupsMaximum;
-	private JTextField jTextFieldSearchTimeMaximum;
-
-	// SEARCH STRATEGY
-	private JPanel jPanelSearchStrategy;
-	// SEARCH STRATEGY - labels
-	private JPanel jPanelSearchStrategyLabels;
-	private JLabel jLabelStrategyType;
-	private JLabel jLabelStrategyWidth;
-	private JLabel jLabelSetValuedNominals;
-	private JLabel jLabelNumericStrategy;
-	private JLabel jLabelNumericOperators;
-	private JLabel jLabelNumberOfBins;
-	private JLabel jLabelNumberOfThreads;
-	// SEARCH STRATEGY - fields
-	private JPanel jPanelSearchStrategyFields;
-	private JComboBox<String> jComboBoxStrategyType;
-	private JTextField jTextFieldStrategyWidth;
-	private JCheckBox jCheckBoxSetValuedNominals;
-	private JComboBox<String> jComboBoxNumericStrategy;
-	private JComboBox <String> jComboBoxNumericOperators;
-	private JTextField jTextFieldNumberOfBins;
-	private JTextField jTextFieldNumberOfThreads;
-
-	// SOUTH PANEL - MINING BUTTONS
-	private JPanel jPanelSouth;
-	private JPanel jPanelMineButtons;
-	private JButton jButtonSubgroupDiscovery;
-	private JButton jButtonSubgroupDiscoveryLoop;
-	private JButton jButtonCrossValidate;
-	private JButton jButtonComputeThreshold;
-
 	// GUI defaults and convenience methods
 	private JMenu initMenu(STD theDefaults)
 	{
@@ -2633,14 +2641,6 @@ boundsList.add(new Interval(f, Float.POSITIVE_INFINITY));
 		catch (UnsupportedLookAndFeelException e) { e.printStackTrace(); }
 	}
 	// end GUI test
-
-	private static final String TARGET_TYPE_BOX = "target type box";
-	private static final String QUALITY_MEASURE_BOX = "quality measure box";
-	private static final String MISC_FIELD_BOX = "misc field box";
-	private static final String TARGET_ATTRIBUTE_BOX = "target attribute box";
-	private static final String SEARCH_TYPE_BOX = "search type box";
-	private static final String NUMERIC_STRATEGY_BOX = "numeric strategy box";
-	private static final String NUMERIC_OPERATORS_BOX = "numeric operators box";
 
 	private enum STD // for standard
 	{

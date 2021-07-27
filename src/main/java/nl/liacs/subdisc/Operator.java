@@ -113,12 +113,17 @@ public enum Operator
 	}
 
 	// for future code safety
-	static Set<Operator> getOperators(AttributeType theAttributeType)
+	public static Set<Operator> getOperators(AttributeType theAttributeType)
 	{
 		final EnumSet<Operator> set = EnumSet.noneOf(Operator.class);
 		for (Operator o : Operator.values())
 			if (o.isValidFor(theAttributeType))
 				set.add(o);
 		return Collections.unmodifiableSet(set);
+	}
+
+	public boolean isSimple() // is it =, <= or >=?
+	{
+		return (this == EQUALS || this == LESS_THAN_OR_EQUAL || this == GREATER_THAN_OR_EQUAL);
 	}
 }
