@@ -1,11 +1,11 @@
 package nl.liacs.subdisc;
 
-class ConditionBase
+public class ConditionBase
 {
 	private final Column itsColumn;
 	private final Operator itsOperator;
 
-	ConditionBase(Column theColumn, Operator theOperator)
+	public ConditionBase(Column theColumn, Operator theOperator)
 	{
 		if (theColumn == null)
 			throw new NullPointerException("ConditionBase: Column can not be null");
@@ -21,8 +21,8 @@ class ConditionBase
 		itsOperator = theOperator;
 	}
 
-	Column getColumn() { return itsColumn; }
-	Operator getOperator() { return itsOperator; }
+	public Column getColumn() { return itsColumn; }
+	public Operator getOperator() { return itsOperator; }
 
 	@Override
 	public String toString()

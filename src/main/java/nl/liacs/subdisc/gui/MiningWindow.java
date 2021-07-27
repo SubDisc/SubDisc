@@ -13,6 +13,7 @@ import javax.swing.*;
 import javax.swing.UIManager.LookAndFeelInfo;
 
 import nl.liacs.subdisc.*;
+import nl.liacs.subdisc.ConditionListBuilder.ConditionListA;
 import nl.liacs.subdisc.FileHandler.Action;
 import nl.liacs.subdisc.XMLAutoRun.AutoRun;
 import nl.liacs.subdisc.Process;
@@ -28,6 +29,7 @@ public class MiningWindow extends JFrame implements ActionListener
 	public static final Image ICON = new ImageIcon(Toolkit.getDefaultToolkit().getImage(MiningWindow.class.getResource("/icon.jpg"))).getImage();
 
 	private Table itsTable;
+	private BitSet itsSelection;	//this determines a subset of the available data, that can be set by the user. If NULL, there is no subset specified.
 	private DatabaseConnection itsDBC;
 
 	// target info
@@ -84,7 +86,7 @@ public class MiningWindow extends JFrame implements ActionListener
 		initTitle();
 		setIconImage(ICON);
 		setLocation(100, 100);
-		setSize(700, 600);
+		setSize(800, 600);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		initJMenuGui(); // for GUI debugging only, DO NOT REMOVE
 		setVisible(true);
@@ -97,25 +99,21 @@ public class MiningWindow extends JFrame implements ActionListener
 	{
 		// MENU BAR ====================================================
 		jMiningWindowMenuBar = new JMenuBar();
-		jMiningWindowMenuBar.setFont(GUI.DEFAULT_TEXT_FONT);
 
 		// MENU BAR - FILE
 		jMenuFile = initMenu(STD.FILE);
-
 		jMenuItemOpenFile = initMenuItem(STD.OPEN_FILE);
 		jMenuFile.add(jMenuItemOpenFile);
-
 		jMenuItemOpenFile = initMenuItem(STD.LOAD_DATABASE_TABLE);
 		jMenuFile.add(jMenuItemOpenFile);
-
 		jMenuItemBrowse = initMenuItem(STD.BROWSE);
 		jMenuFile.add(jMenuItemBrowse);
-
 		jMenuItemExplore = initMenuItem(STD.EXPLORE);
 		jMenuFile.add(jMenuItemExplore);
-
 		jMenuItemMetaData = initMenuItem(STD.META_DATA);
 		jMenuFile.add(jMenuItemMetaData);
+		jMenuItemSelectSubset = initMenuItem(STD.SELECT_SUBSET);
+		jMenuFile.add(jMenuItemSelectSubset);
 
 		jMenuFile.addSeparator();
 
@@ -126,10 +124,8 @@ public class MiningWindow extends JFrame implements ActionListener
 
 		jMenuItemCreateAutorunFile = initMenuItem(STD.CREATE_AUTORUN_FILE);
 		jMenuFile.add(jMenuItemCreateAutorunFile);
-
 		jMenuItemAddToAutorunFile = initMenuItem(STD.ADD_TO_AUTORUN_FILE);
 		jMenuFile.add(jMenuItemAddToAutorunFile);
-
 		jMenuItemLoadSampledSubgroups = initMenuItem(STD.LOAD_SAMPLED_SUBGROUPS);
 		jMenuFile.add(jMenuItemLoadSampledSubgroups);
 
@@ -161,7 +157,6 @@ public class MiningWindow extends JFrame implements ActionListener
 
 		// MENU BAR - GUI
 		jMenuGui = new JMenu();
-		jMenuGui.setFont(GUI.DEFAULT_TEXT_FONT);
 		jMenuGui.setText("Gui");
 		jMenuGui.setMnemonic('G');
 		if (GUI_DEBUG)
@@ -190,6 +185,7 @@ public class MiningWindow extends JFrame implements ActionListener
 		jButtonExplore = new JButton();
 		jButtonMetaData = new JButton();
 		jButtonDiscretiseData = new JButton();
+		jButtonSelectSubset = new JButton();
 
 		jPanelDataSet.setLayout(new BorderLayout(40, 0));
 		jPanelDataSet.setBorder(GUI.buildBorder("Dataset"));
@@ -199,19 +195,14 @@ public class MiningWindow extends JFrame implements ActionListener
 
 		jLabelTargetTable = initJLabel("target table");
 		jPanelDataSetLabels.add(jLabelTargetTable);
-
 		jLabelNrExamples = initJLabel("# examples");
 		jPanelDataSetLabels.add(jLabelNrExamples);
-
 		jLabelNrAttributes = initJLabel("# attributes");
 		jPanelDataSetLabels.add(jLabelNrAttributes);
-
 		jLabelNrNominals = initJLabel("# nominals");
 		jPanelDataSetLabels.add(jLabelNrNominals);
-
 		jLabelNrNumerics = initJLabel("# numerics");
 		jPanelDataSetLabels.add(jLabelNrNumerics);
-
 		jLabelNrBinaries = initJLabel("# binaries");
 		jPanelDataSetLabels.add(jLabelNrBinaries);
 
@@ -222,43 +213,36 @@ public class MiningWindow extends JFrame implements ActionListener
 
 		jLabelTargetTableName = initJLabel("");
 		jPanelDataSetFields.add(jLabelTargetTableName);
-
 		jLabelNrExamplesNr = initJLabel("");
 		jPanelDataSetFields.add(jLabelNrExamplesNr);
-
 		jLabelNrAttributesNr = initJLabel("");
 		jPanelDataSetFields.add(jLabelNrAttributesNr);
-
 		jLabelNrNominalsNr = initJLabel("");
 		jPanelDataSetFields.add(jLabelNrNominalsNr);
-
 		jLabelNrNumericsNr = initJLabel("");
 		jPanelDataSetFields.add(jLabelNrNumericsNr);
-
 		jLabelNrBinariesNr = initJLabel("");
 		jPanelDataSetFields.add(jLabelNrBinariesNr);
 
-		// DATA SET - buttons
 		jPanelDataSet.add(jPanelDataSetFields, BorderLayout.CENTER);
 
+		// DATA SET - buttons
 		final JPanel aButtonPanel = new JPanel();
 		aButtonPanel.setLayout(new GridLayout(2, 2));
 
 		jButtonBrowse = initButton(STD.BROWSE);
 		aButtonPanel.add(jButtonBrowse);
-
 		jButtonExplore = initButton(STD.EXPLORE);
 		aButtonPanel.add(jButtonExplore);
-
 		jButtonMetaData = initButton(STD.META_DATA);
 		aButtonPanel.add(jButtonMetaData);
-
+		jButtonSelectSubset = initButton(STD.SELECT_SUBSET);
+		aButtonPanel.add(jButtonSelectSubset);
 		jButtonDiscretiseData = initButton(STD.DISCRETISE);
 		if (ADD_DISCRETISE_BUTTON)
 			aButtonPanel.add(jButtonDiscretiseData);
 
 		jPanelDataSetButtons.add(aButtonPanel);
-
 		jPanelDataSet.add(jPanelDataSetButtons, BorderLayout.SOUTH);
 		jPanelCenter.add(jPanelDataSet);
 
@@ -278,66 +262,50 @@ public class MiningWindow extends JFrame implements ActionListener
 
 		jLabelTargetType = initJLabel("target type");
 		jPanelTargetConceptLabels.add(jLabelTargetType);
-
 		jLabelQualityMeasure = initJLabel("quality measure");
 		jPanelTargetConceptLabels.add(jLabelQualityMeasure);
-
 		jLabelQualityMeasureMinimum = initJLabel("measure minimum");
 		jPanelTargetConceptLabels.add(jLabelQualityMeasureMinimum);
-
 		jLabelTargetAttribute = initJLabel("<html><u>p</u>rimary target");
 		jPanelTargetConceptLabels.add(jLabelTargetAttribute);
 
 		// used for target value or secondary target
 		jLabelMiscField = initJLabel("");
 		jPanelTargetConceptLabels.add(jLabelMiscField);
-
 		jLabelMultiRegressionTargets = initJLabel("secondary/tertiary targets");
 		jPanelTargetConceptLabels.add(jLabelMultiRegressionTargets);
 		// TODO MM for stable jar, disable
 		jLabelMultiRegressionTargets.setVisible(false);
-
 		jLabelMultiTargets = initJLabel("targets and settings");
 		jPanelTargetConceptLabels.add(jLabelMultiTargets);
-
 		jLabelTargetInfo = initJLabel("");;
 		jPanelTargetConceptLabels.add(jLabelTargetInfo);
 		jPanelTargetConcept.add(jPanelTargetConceptLabels);
 
 		// TARGET CONCEPT - fields
 		jPanelTargetConceptFields.setLayout(new GridLayout(9, 1));
-
 		jComboBoxTargetType = GUI.buildComboBox(new String[0], TARGET_TYPE_BOX, this);
 		jPanelTargetConceptFields.add(jComboBoxTargetType);
-
 		jComboBoxQualityMeasure = GUI.buildComboBox(new String[0], QUALITY_MEASURE_BOX, this);
 		jPanelTargetConceptFields.add(jComboBoxQualityMeasure);
-
 		jTextFieldQualityMeasureMinimum = GUI.buildTextField("0");
 		jPanelTargetConceptFields.add(jTextFieldQualityMeasureMinimum);
-
 		jComboBoxTargetAttribute = GUI.buildComboBox(new String[0], TARGET_ATTRIBUTE_BOX, this);
 		jPanelTargetConceptFields.add(jComboBoxTargetAttribute);
-
 		// used for target value or secondary target
 		// note in cui setting this is often to small
 		jComboBoxMiscField = GUI.buildComboBox(new String[0], MISC_FIELD_BOX, this);
 		jPanelTargetConceptFields.add(jComboBoxMiscField);
-
 		jButtonMultiRegressionTargets = initButton(STD.SECONDARY_TERTIARY_TARGETS);
 		jPanelTargetConceptFields.add(jButtonMultiRegressionTargets);
 		// TODO MM for stable jar, disable
 		jButtonMultiRegressionTargets.setVisible(false);
-
 		jButtonMultiTargets = initButton(STD.TARGETS_AND_SETTINGS);
 		jPanelTargetConceptFields.add(jButtonMultiTargets);
-
 		jLabelTargetInfoText = initJLabel("");
 		jPanelTargetConceptFields.add(jLabelTargetInfoText);
-
 		jButtonBaseModel = initButton(STD.BASE_MODEL);
 		jPanelTargetConceptFields.add(jButtonBaseModel);
-
 		jPanelTargetConcept.add(jPanelTargetConceptFields);
 		jPanelCenter.add(jPanelTargetConcept);
 
@@ -354,16 +322,12 @@ public class MiningWindow extends JFrame implements ActionListener
 
 		jLabelSearchDepth = initJLabel("refinement depth");
 		jPanelSearchConditionsLabels.add(jLabelSearchDepth);
-
 		jLabelSearchCoverageMinimum = initJLabel("minimum coverage");
 		jPanelSearchConditionsLabels.add(jLabelSearchCoverageMinimum);
-
 		jLabelSearchCoverageMaximum = initJLabel("maximum coverage (fraction)");
 		jPanelSearchConditionsLabels.add(jLabelSearchCoverageMaximum);
-
 		jLabelSubgroupsMaximum = initJLabel("<html> maximum subgroups (0 = &#8734;)</html>)");
 		jPanelSearchConditionsLabels.add(jLabelSubgroupsMaximum);
-
 		jLabelSearchTimeMaximum = initJLabel("<html> maximum time (min) (0 = &#8734;)</html>)");
 		jPanelSearchConditionsLabels.add(jLabelSearchTimeMaximum);
 
@@ -374,16 +338,12 @@ public class MiningWindow extends JFrame implements ActionListener
 
 		jTextFieldSearchDepth = GUI.buildTextField("0");
 		jPanelSearchParameterFields.add(jTextFieldSearchDepth);
-
 		jTextFieldSearchCoverageMinimum = GUI.buildTextField("0");
 		jPanelSearchParameterFields.add(jTextFieldSearchCoverageMinimum);
-
 		jTextFieldSearchCoverageMaximum = GUI.buildTextField("0");
 		jPanelSearchParameterFields.add(jTextFieldSearchCoverageMaximum);
-
 		jTextFieldSubgroupsMaximum = GUI.buildTextField("0");
 		jPanelSearchParameterFields.add(jTextFieldSubgroupsMaximum);
-
 		jTextFieldSearchTimeMaximum = GUI.buildTextField("0");
 		jPanelSearchParameterFields.add(jTextFieldSearchTimeMaximum);
 
@@ -403,22 +363,16 @@ public class MiningWindow extends JFrame implements ActionListener
 
 		jLabelStrategyType = initJLabel("strategy type");
 		jPanelSearchStrategyLabels.add(jLabelStrategyType);
-
 		jLabelStrategyWidth = initJLabel("search width");
 		jPanelSearchStrategyLabels.add(jLabelStrategyWidth);
-
 		jLabelSetValuedNominals = initJLabel("set-valued nominals");
 		jPanelSearchStrategyLabels.add(jLabelSetValuedNominals);
-
 		jLabelNumericStrategy = initJLabel("numeric strategy");
 		jPanelSearchStrategyLabels.add(jLabelNumericStrategy);
-
 		jLabelNumericOperators = initJLabel("numeric operators");
 		jPanelSearchStrategyLabels.add(jLabelNumericOperators);
-
 		jLabelNumberOfBins = initJLabel("number of bins");
 		jPanelSearchStrategyLabels.add(jLabelNumberOfBins);
-
 		jLabelNumberOfThreads = initJLabel("threads (0 = all available)");
 		jPanelSearchStrategyLabels.add(jLabelNumberOfThreads);
 
@@ -429,22 +383,16 @@ public class MiningWindow extends JFrame implements ActionListener
 
 		jComboBoxStrategyType = GUI.buildComboBox(new String[0], SEARCH_TYPE_BOX, this);
 		jPanelSearchStrategyFields.add(jComboBoxStrategyType);
-
 		jTextFieldStrategyWidth = GUI.buildTextField("0");
 		jPanelSearchStrategyFields.add(jTextFieldStrategyWidth);
-
 		jCheckBoxSetValuedNominals = new JCheckBox();
 		jPanelSearchStrategyFields.add(jCheckBoxSetValuedNominals);
-
 		jComboBoxNumericStrategy = GUI.buildComboBox(new String[0], NUMERIC_STRATEGY_BOX, this);
 		jPanelSearchStrategyFields.add(jComboBoxNumericStrategy);
-
 		jComboBoxNumericOperators = GUI.buildComboBox(new String[0], NUMERIC_OPERATORS_BOX, this);
 		jPanelSearchStrategyFields.add(jComboBoxNumericOperators);
-
 		jTextFieldNumberOfBins = GUI.buildTextField("0");
 		jPanelSearchStrategyFields.add(jTextFieldNumberOfBins);
-
 		jTextFieldNumberOfThreads = GUI.buildTextField(Integer.toString(Runtime.getRuntime().availableProcessors()));
 		jPanelSearchStrategyFields.add(jTextFieldNumberOfThreads);
 
@@ -452,20 +400,14 @@ public class MiningWindow extends JFrame implements ActionListener
 		jPanelCenter.add(jPanelSearchStrategy);
 
 		// MINING BUTTONS
-		jPanelSouth.setFont(GUI.DEFAULT_TEXT_FONT);
-
 		jPanelMineButtons = new JPanel();
 		jPanelMineButtons.setMinimumSize(new Dimension(0, 40));
-
 		jButtonSubgroupDiscovery = initButton(STD.SUBGROUP_DISCOVERY);
 		jPanelMineButtons.add(jButtonSubgroupDiscovery);
-
 		jButtonSubgroupDiscoveryLoop = initButton(STD.SUBGROUP_DISCOVERY_LOOP);
 		jPanelMineButtons.add(jButtonSubgroupDiscoveryLoop);
-
 		jButtonCrossValidate = initButton(STD.CROSS_VALIDATE);
 		jPanelMineButtons.add(jButtonCrossValidate);
-
 		jButtonComputeThreshold = initButton(STD.COMPUTE_THRESHOLD);
 		jPanelMineButtons.add(jButtonComputeThreshold);
 
@@ -474,7 +416,6 @@ public class MiningWindow extends JFrame implements ActionListener
 		getContentPane().add(jPanelSouth, BorderLayout.SOUTH);
 		getContentPane().add(jPanelCenter, BorderLayout.CENTER);
 
-		setFont(GUI.DEFAULT_TEXT_FONT);
 		setJMenuBar(jMiningWindowMenuBar);
 	}
 
@@ -577,9 +518,7 @@ public class MiningWindow extends JFrame implements ActionListener
 			{
 				if (aTargetType == TargetType.SINGLE_NOMINAL)
 					aMiscField = itsTargetConcept.getTargetValue();
-				else if (aTargetType == TargetType.DOUBLE_REGRESSION ||
-                        aTargetType == TargetType.DOUBLE_CORRELATION ||
-                        aTargetType == TargetType.DOUBLE_BINARY ||
+				else if (aTargetType == TargetType.DOUBLE_REGRESSION || aTargetType == TargetType.DOUBLE_CORRELATION || aTargetType == TargetType.DOUBLE_BINARY ||
 						//aTargetType == TargetType.MULTI_NUMERIC ||	//for the moment, when multi = 2
 						aTargetType == TargetType.SCAPE)
 					aMiscField = itsTargetConcept.getSecondaryTarget().getName();
@@ -604,9 +543,7 @@ public class MiningWindow extends JFrame implements ActionListener
 					setMiscFieldName(aMiscField);
 					itsTargetConcept.setTargetValue(aMiscField);
 				}
-				else if (aTargetType == TargetType.DOUBLE_REGRESSION ||
-                        aTargetType == TargetType.DOUBLE_CORRELATION ||
-                        aTargetType == TargetType.DOUBLE_BINARY ||
+				else if (aTargetType == TargetType.DOUBLE_REGRESSION || aTargetType == TargetType.DOUBLE_CORRELATION || aTargetType == TargetType.DOUBLE_BINARY ||
 						//aTargetType == TargetType.MULTI_NUMERIC ||	//for the moment, when multi = 2
 						aTargetType == TargetType.SCAPE)
 				{
@@ -637,7 +574,10 @@ public class MiningWindow extends JFrame implements ActionListener
 		if (itsTable != null)
 		{
 			jLabelTargetTableName.setText(itsTable.getName());
-			jLabelNrExamplesNr.setText(String.valueOf(itsTable.getNrRows()));
+			if (itsSelection == null) // no selection specified
+				jLabelNrExamplesNr.setText(String.valueOf(itsTable.getNrRows()) + "\t(no selection specified)");
+			else
+				jLabelNrExamplesNr.setText(String.valueOf(itsTable.getNrRows()) + "\t(" + itsSelection.cardinality() + " in selection)");
 			int[][] aCounts = itsTable.getTypeCounts();
 			int[] aTotals = { itsTable.getNrColumns(), 0 };
 			for (int[] ia : aCounts)
@@ -677,6 +617,7 @@ public class MiningWindow extends JFrame implements ActionListener
 		AbstractButton[] aButtons = {	jMenuItemBrowse,
 						jMenuItemExplore,
 						jMenuItemMetaData,
+						jMenuItemSelectSubset,
 						jMenuItemSubgroupDiscovery,
 						jMenuItemCreateAutorunFile,
 						jMenuItemAddToAutorunFile,
@@ -687,6 +628,7 @@ public class MiningWindow extends JFrame implements ActionListener
 						jButtonBrowse,
 						jButtonExplore,
 						jButtonMetaData,
+						jButtonSelectSubset,
 						jButtonDiscretiseData,
 						jButtonCrossValidate,
 						jButtonSubgroupDiscovery,
@@ -745,8 +687,8 @@ public class MiningWindow extends JFrame implements ActionListener
 				(aTargetType == TargetType.MULTI_NUMERIC && anAttributeType == AttributeType.NUMERIC) ||
 				(aTargetType == TargetType.SINGLE_ORDINAL && anAttributeType == AttributeType.NUMERIC) ||
 				(aTargetType == TargetType.DOUBLE_REGRESSION && anAttributeType == AttributeType.NUMERIC) ||
-                (aTargetType == TargetType.DOUBLE_CORRELATION && anAttributeType == AttributeType.NUMERIC) ||
-                (aTargetType == TargetType.DOUBLE_BINARY && anAttributeType == AttributeType.BINARY) ||
+				(aTargetType == TargetType.DOUBLE_CORRELATION && anAttributeType == AttributeType.NUMERIC) ||
+				(aTargetType == TargetType.DOUBLE_BINARY && anAttributeType == AttributeType.BINARY) ||
 				//(aTargetType == TargetType.MULTI_LABEL && anAttributeType == AttributeType.NUMERIC) ||
 				(aTargetType == TargetType.LABEL_RANKING && anAttributeType == AttributeType.NOMINAL) ||
 				(aTargetType == TargetType.MULTI_BINARY_CLASSIFICATION && anAttributeType == AttributeType.BINARY) ||
@@ -1294,6 +1236,26 @@ public class MiningWindow extends JFrame implements ActionListener
 			public void run()
 			{
 				new MetaDataWindow(masterWindow, itsTable);
+			}
+		});
+	}
+
+	//not on Event Dispatching Thread, may take a long time to load
+	private void selectSubsetActionPerformed()
+	{
+		SwingUtilities.invokeLater(new Runnable()
+		{
+			public void run()
+			{
+				System.out.println("========Select Subset=======");
+				ConditionBase aCB = new ConditionBase(itsTable.getColumns().get(0), Operator.GREATER_THAN_OR_EQUAL);
+				Condition aCondition = new Condition(aCB, 18f, 0);
+				System.out.println(aCondition.toString());
+				ConditionListA aCL = ConditionListBuilder.createList(aCondition);
+				BitSet aMembers = itsTable.evaluate(aCL);
+				System.out.println("size: " + aMembers.cardinality());
+
+				new ConditionWindow(itsTable.getColumns());
 			}
 		});
 	}
@@ -2488,6 +2450,7 @@ boundsList.add(new Interval(f, Float.POSITIVE_INFINITY));
 	private JMenuItem jMenuItemBrowse;
 	private JMenuItem jMenuItemExplore;
 	private JMenuItem jMenuItemMetaData;
+	private JMenuItem jMenuItemSelectSubset;
 	private JMenuItem jMenuItemSubgroupDiscovery;
 	private JMenuItem jMenuItemCreateAutorunFile;
 	private JMenuItem jMenuItemAddToAutorunFile;
@@ -2527,6 +2490,7 @@ boundsList.add(new Interval(f, Float.POSITIVE_INFINITY));
 	private JButton jButtonBrowse;
 	private JButton jButtonExplore;
 	private JButton jButtonMetaData;
+	private JButton jButtonSelectSubset;
 	private JButton jButtonDiscretiseData;
 
 	// TARGET CONCEPT
@@ -2605,7 +2569,6 @@ boundsList.add(new Interval(f, Float.POSITIVE_INFINITY));
 	private JMenu initMenu(STD theDefaults)
 	{
 		JMenu aMenu = new JMenu(theDefaults.GUI_TEXT);
-		aMenu.setFont(GUI.DEFAULT_TEXT_FONT);
 		aMenu.setMnemonic(theDefaults.MNEMONIC);
 		return aMenu;
 	}
@@ -2622,7 +2585,6 @@ boundsList.add(new Interval(f, Float.POSITIVE_INFINITY));
 	private static JLabel initJLabel(String theName)
 	{
 		JLabel aJLable = new JLabel(theName);
-		aJLable.setFont(GUI.DEFAULT_TEXT_FONT);
 		return aJLable;
 	}
 
@@ -2690,6 +2652,7 @@ boundsList.add(new Interval(f, Float.POSITIVE_INFINITY));
 		BROWSE(			"Browse...",		KeyEvent.VK_B,	true),
 		EXPLORE(		"Explore...",		KeyEvent.VK_E,	true),
 		META_DATA(		"Meta Data...",		KeyEvent.VK_D,	true),
+		SELECT_SUBSET(		"Select Subset...",	KeyEvent.VK_Y,	true),
 		SUBGROUP_DISCOVERY(	"Subgroup Discovery",	KeyEvent.VK_S,	true),
 		SUBGROUP_DISCOVERY_LOOP("SD Loop",		KeyEvent.VK_L,	true),
 		CREATE_AUTORUN_FILE(	"Create Autorun File",	KeyEvent.VK_C,	true),
@@ -2748,6 +2711,8 @@ boundsList.add(new Interval(f, Float.POSITIVE_INFINITY));
 			exploreActionPerformed();
 		else if (STD.META_DATA.GUI_TEXT.equals(aCommand))
 			metaDataActionPerformed();
+		else if (STD.SELECT_SUBSET.GUI_TEXT.equals(aCommand))
+			selectSubsetActionPerformed();
 		else if (STD.SUBGROUP_DISCOVERY.GUI_TEXT.equals(aCommand))
 			subgroupDiscoveryActionPerformed();
 		else if (STD.SUBGROUP_DISCOVERY_LOOP.GUI_TEXT.equals(aCommand))

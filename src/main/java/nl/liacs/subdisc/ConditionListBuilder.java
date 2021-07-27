@@ -32,18 +32,17 @@ public enum ConditionListBuilder
 		return FACTORY.EMPTY_LIST;
 	}
 
-//	this method is never called in the current code base
-//	/**
-//	 * Returns a ConditionList the argument as its only Condition.
-//	 * 
-//	 * @return A ConditionList with one Condition.
-//	 * 
-//	 * @see Condition
-//	 */
-//	static final ConditionListA createList(Condition theCondition)
-//	{
-//		return FACTORY.new ConditionList1(theCondition);
-//	}
+	/**
+	 * Returns a ConditionList the argument as its only Condition.
+	 * 
+	 * @return A ConditionList with one Condition.
+	 * 
+	 * @see Condition
+	 */
+	static final public ConditionListA createList(Condition theCondition)
+	{
+		return FACTORY.new ConditionList1(theCondition);
+	}
 
 	/**
 	 * Returns a ConditionList with as conjuncts all of the Conditions in
