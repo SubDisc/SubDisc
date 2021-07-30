@@ -16,7 +16,7 @@ public class Log
 	public static boolean LOG = true;			// Basket of all the (...LOG = false) log attempts
 	public static boolean FORCECOMMANDLINELOG = false;	// If (LOG = false) all its content is put on the commandline
 
-	private static String LOGPATH = new String("../log/");	// NB: this path of direcories will be created
+	private static String LOGPATH = new String("./log/");	// NB: this path will be created
 
 	static java.io.OutputStream debugStream = System.out;
 	static java.io.OutputStream errorStream = System.err;
