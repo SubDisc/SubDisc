@@ -2,11 +2,13 @@ package nl.liacs.subdisc;
 
 // Testing lib
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 // Java lib
 import java.io.*;
@@ -33,6 +35,16 @@ public class DataLoaderTxtTest {
 
         assertNotNull(table);
 
+    }
+
+    @Test
+    @DisplayName("Check dimensions of long100k.txt")
+    public void sizeof100k(){
+        DataLoaderTXT dltxt = new DataLoaderTXT(new File("src/test/resources/long100k.txt"));
+        Table table = dltxt.getTable();
+
+        assertEquals(table.getNrRows(), 100000);
+        assertEquals(table.getNrColumns(), 19);
     }
 
 }
