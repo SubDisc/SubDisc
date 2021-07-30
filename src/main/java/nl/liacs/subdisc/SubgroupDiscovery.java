@@ -609,8 +609,6 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 			Log.logCommandLine("NR CANDIDATES FOR NEXT LEVEL: " + itsCandidateQueueSizes);
 		for (int topK : FOR_REAL_PRINTS)
 			itsResult.postProcessGetCoverRedundancyAndJointEntropy(topK);
-
-System.out.println("end mine()");
 	}
 
 	private final ConditionBaseSet preMining(long theBeginTime, int theNrThreads)

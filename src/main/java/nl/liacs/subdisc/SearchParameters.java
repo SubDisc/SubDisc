@@ -73,9 +73,9 @@ public class SearchParameters implements XMLNodeInterface
 	public void setTargetConcept(TargetConcept theTargetConcept) { itsTargetConcept = theTargetConcept; }
 	public TargetType getTargetType() { return itsTargetConcept.getTargetType(); }
 	public QM getQualityMeasure() { return itsQualityMeasure; }
+	public void setQualityMeasure(QM theQualityMeasure) { itsQualityMeasure = theQualityMeasure; }
 	public float getQualityMeasureMinimum() { return itsQualityMeasureMinimum; }
 	public void setQualityMeasureMinimum(float theQualityMeasureMinimum) { itsQualityMeasureMinimum = theQualityMeasureMinimum; }
-	public void setQualityMeasure(QM theQualityMeasure) { itsQualityMeasure = theQualityMeasure; }
 
 	/* SEARCH CONDITIONS */
 	public int getSearchDepth() { return itsSearchDepth; }

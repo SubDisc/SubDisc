@@ -9,8 +9,7 @@ public enum NumericOperatorSetting implements EnumInterface
 		@Override
 		EnumSet<Operator> getOperators()
 		{
-			return EnumSet.of(Operator.LESS_THAN_OR_EQUAL,
-						Operator.GREATER_THAN_OR_EQUAL);
+			return EnumSet.of(Operator.LESS_THAN_OR_EQUAL, Operator.GREATER_THAN_OR_EQUAL);
 		}
 
 		@Override
@@ -54,9 +53,7 @@ public enum NumericOperatorSetting implements EnumInterface
 		{
 			// XXX leave EQUALS first
 			// see SubgroupDiscovery.createsRedundantEquals()
-			return EnumSet.of(Operator.EQUALS,
-						Operator.LESS_THAN_OR_EQUAL,
-						Operator.GREATER_THAN_OR_EQUAL);
+			return EnumSet.of(Operator.EQUALS, Operator.LESS_THAN_OR_EQUAL,	Operator.GREATER_THAN_OR_EQUAL);
 		}
 
 		@Override
