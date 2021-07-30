@@ -1,0 +1,11 @@
+id,selector 1,selector 2,descriptor,target
+1,A,1,a,t
+2,A,2,a,t
+3,A,3,a,f
+4,A,4,b,t
+5,A,5,b,f
+6,B,6,a,f
+7,B,7,a,f
+8,B,8,b,f
+9,B,9,b,t
+10,B,10,b,t
