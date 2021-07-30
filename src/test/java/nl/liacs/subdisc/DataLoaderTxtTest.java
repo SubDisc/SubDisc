@@ -19,8 +19,8 @@ public class DataLoaderTxtTest {
         "src/test/resources/adult.txt", 
         "src/test/resources/dataloader no missing.txt",
         "src/test/resources/long10k.txt",
-        "src/test/resources/long1m.txt",
-        "src/test/resources/commas in fields.txt",
+//        "src/test/resources/long1m.txt",		//quite a large dataset. Primarily meant for scalability testing
+//        "src/test/resources/commas in fields.txt",
         "src/test/resources/discretisation.txt",
         "src/test/resources/long100k.txt",
         "src/test/resources/long10.txt",
