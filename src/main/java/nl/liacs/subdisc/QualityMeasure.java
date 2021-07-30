@@ -223,7 +223,13 @@ public class QualityMeasure
 		if (theCountHeadBody < 0)
 			throw new IllegalArgumentException("QualityMeasure: theCountHeadBody < 0");
 		if (theCountHeadBody < (theCoverage - (itsNrRecords - itsTotalTargetCoverage)))
+		{
+			System.out.println("itsNrRecords " + itsNrRecords);
+			System.out.println("itsTotalTargetCoverage " + itsTotalTargetCoverage);
+			System.out.println("theCoverage " + theCoverage);
+			System.out.println("theCountHeadBody " + theCountHeadBody);
 			throw new IllegalArgumentException("QualityMeasure: theCountHeadBody < theCoverage - (itsNrRecords - itsTotalTargetCoverage)");
+		}
 		if (theCountHeadBody > itsTotalTargetCoverage)
 			throw new IllegalArgumentException("QualityMeasure: theCountHeadBody > itsTotalTargetCoverage");
 		if (theCountHeadBody > theCoverage)

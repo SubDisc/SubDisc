@@ -9,8 +9,9 @@ import javax.swing.*;
 import javax.swing.event.*;
 
 import nl.liacs.subdisc.*;
+import nl.liacs.subdisc.ConditionListBuilder.ConditionListA;
 
-public class ConditionWindow extends JFrame implements ActionListener, ChangeListener
+public class ConditionWindow extends JDialog implements ActionListener, ChangeListener
 {
 	private static final long serialVersionUID = 1L;
 
@@ -20,16 +21,17 @@ public class ConditionWindow extends JFrame implements ActionListener, ChangeLis
 	JComboBox<String> itsComboBoxValue;
 
 	ArrayList<Column> itsColumnList;
+	Condition    	  itsCondition = null;
 	private static final String ATTRIBUTE_BOX = "attribute box";
 	private static final String OPERATOR_BOX = "operator box";
 
 	// TODO should be tied to parent window
-	public ConditionWindow(ArrayList<Column> theColumnList)
+	public ConditionWindow(JFrame theParent, ArrayList<Column> theColumnList)
 	{
+		super(theParent, "Specify Condition", true);
 		itsColumnList = theColumnList;
 		initComponents();
 
-		setTitle("Specify Condition");
 		setIconImage(MiningWindow.ICON);
 		setLocation(200, 200);
 		setSize(new Dimension(300, 200));
@@ -102,7 +104,10 @@ public class ConditionWindow extends JFrame implements ActionListener, ChangeLis
 		String anEvent = theEvent.getActionCommand();
 
 		if ("delete".equals(anEvent))
-			dispose();			//TODO
+		{
+			itsCondition = null; //let parent window know 'Delete' was selected
+			dispose();
+		}
 		else if (anEvent.equals("select"))
 		{
 			Column aColumn = itsColumnList.get(0);
@@ -112,14 +117,19 @@ public class ConditionWindow extends JFrame implements ActionListener, ChangeLis
 					aColumn = aC;
 			Operator anOperator = Operator.fromString((String) itsComboBoxOperator.getSelectedItem());
 			ConditionBase aCB = new ConditionBase(aColumn, anOperator);
-			Condition aCondition;
 			if (aColumn.getType() == AttributeType.NUMERIC)
-				aCondition = new Condition(aCB, Float.parseFloat(itsTextFieldValue.getText()), 0);
+			{
+				float aValue = Float.parseFloat(itsTextFieldValue.getText());
+				aColumn.buildSorted(new BitSet()); //provide empty BitSet as target. Irrelevant at the moment
+				int i = aColumn.getSortedIndex(aValue); //look up sort index
+				System.out.println("float: " + aValue + ", index: " + i);
+				itsCondition = new Condition(aCB, aValue, i); //store condition for parent window
+			}
 			else
-				aCondition = new Condition(aCB, (String) itsComboBoxValue.getSelectedItem());
-			System.out.println(aCondition.toString());
+				itsCondition = new Condition(aCB, (String) itsComboBoxValue.getSelectedItem());
+			System.out.println(itsCondition.toString());
 
-			dispose();			//TODO
+			dispose();
 		}
 		if (anEvent.equals(ATTRIBUTE_BOX))
 		{
@@ -148,5 +158,10 @@ public class ConditionWindow extends JFrame implements ActionListener, ChangeLis
 	public void stateChanged(ChangeEvent theEvent)
 	{
 		//TODO
+	}
+
+	public Condition getResult()
+	{
+		return itsCondition;
 	}
 }

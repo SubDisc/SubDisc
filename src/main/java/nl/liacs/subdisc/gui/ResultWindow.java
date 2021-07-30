@@ -18,20 +18,19 @@ public class ResultWindow extends JFrame implements ActionListener
 	private static final long serialVersionUID = 1L;
 
 	private Table itsTable;
+	private BitSet itsSelection;
 	private SearchParameters itsSearchParameters;
 	private SubgroupDiscovery itsSubgroupDiscovery;
 	private SubgroupSet itsSubgroupSet;
 	private QualityMeasure itsQualityMeasure;
 
 	private RegressionMeasure itsRegressionMeasureBase;
-	private int itsFold;
-	private BitSet itsBitSet;
 
 	private ResultTableModel itsResultTableModel;
 	private JTable itsSubgroupTable;
 
 	//from mining window
-	public ResultWindow(Table theTable, SubgroupDiscovery theSubgroupDiscovery, int theFold, BitSet theBitSet)
+	public ResultWindow(Table theTable, BitSet theSelection, SubgroupDiscovery theSubgroupDiscovery)
 	{
 		if (theTable == null || theSubgroupDiscovery == null)
 		{
@@ -40,6 +39,7 @@ public class ResultWindow extends JFrame implements ActionListener
 		}
 
 		itsTable = theTable;
+		itsSelection = theSelection;
 		itsSubgroupDiscovery = theSubgroupDiscovery;
 		itsSubgroupSet = theSubgroupDiscovery.getResult();
 		itsSearchParameters = theSubgroupDiscovery.getSearchParameters();
@@ -47,11 +47,6 @@ public class ResultWindow extends JFrame implements ActionListener
 
 		// only for DOUBLE_REGRESSION, avoids recalculation
 		itsRegressionMeasureBase = theSubgroupDiscovery.getRegressionMeasureBase();
-
-		// only used in MULTI_LABEL setting for now
-		// if theFold == 0, itsBitSet is never used
-		itsFold = theFold;
-		itsBitSet = theBitSet;
 
 		itsResultTableModel = new ResultTableModel(itsSubgroupSet, itsSearchParameters.getTargetConcept().getTargetType());
 		itsSubgroupTable = new JTable(itsResultTableModel);
@@ -65,6 +60,7 @@ public class ResultWindow extends JFrame implements ActionListener
 	public ResultWindow(ResultWindow theParentWindow, SubgroupSet thePatternTeam)
 	{
 		itsTable = theParentWindow.itsTable;
+		itsSelection = theParentWindow.itsSelection;
 		itsSubgroupDiscovery = theParentWindow.itsSubgroupDiscovery;
 		itsSubgroupSet = thePatternTeam;
 		itsSearchParameters = itsSubgroupDiscovery.getSearchParameters();
@@ -178,9 +174,6 @@ public class ResultWindow extends JFrame implements ActionListener
 		jButtonEmpirical = GUI.buildButton("Empirical p-Values", 'E', "empirical_p", this);
 		aSubgroupSetPanel.add(jButtonEmpirical);
 
-		jButtonFold = GUI.buildButton("Fold members", 'F', "fold", this);
-		aSubgroupSetPanel.add(jButtonFold);
-
 		//close *********************************
 
 		jButtonCloseWindow = GUI.buildButton("Close", 'C', "close", this);
@@ -220,8 +213,6 @@ public class ResultWindow extends JFrame implements ActionListener
 			else
 				s.append(itsSearchParameters.getTargetConcept().getSecondaryTarget().getName());
 		}
-		if (itsFold != 0)
-			s.append("; fold = " + itsFold);
 
 		s.append("; quality measure = ");
 		s.append(itsSearchParameters.getQualityMeasure().GUI_TEXT);
@@ -253,8 +244,6 @@ public class ResultWindow extends JFrame implements ActionListener
 			jButtonRegressionTestActionPerformed();
 		else if ("empirical_p".equals(aCommand))
 			jButtonEmpiricalActionPerformed();
-		else if ("fold".equals(aCommand))
-			jButtonFoldActionPerformed();
 		else if ("save".equals(aCommand))
 			jButtonSaveActionPerformed();
 		else if ("print".equals(aCommand))
@@ -275,7 +264,6 @@ public class ResultWindow extends JFrame implements ActionListener
 			jButtonPValues.setEnabled(false);
 			jButtonRegressionTest.setEnabled(false);
 			jButtonEmpirical.setEnabled(false);
-			jButtonFold.setEnabled(false);
 			jButtonSave.setEnabled(false);
 			jButtonPrint.setEnabled(false);
 			return;
@@ -286,8 +274,6 @@ public class ResultWindow extends JFrame implements ActionListener
 
 			jButtonShowModel.setVisible(TargetType.hasBaseModel(aTargetType));
 			jButtonROC.setVisible(aTargetType == TargetType.SINGLE_NOMINAL);
-
-			jButtonFold.setVisible(itsFold != 0);
 		}
 	}
 
@@ -793,12 +779,6 @@ public class ResultWindow extends JFrame implements ActionListener
 		setBusy(false);
 	}
 
-	private void jButtonFoldActionPerformed()
-	{
-		Log.logCommandLine("Members of the training set of fold " + itsFold);
-		Log.logCommandLine(itsBitSet.toString());
-	}
-
 	private double[] obtainRandomQualities()
 	{
 		String[] aSetup = new RandomQualitiesWindow(itsSearchParameters.getTargetType()).getSettings();
@@ -808,7 +788,7 @@ public class ResultWindow extends JFrame implements ActionListener
 			return null;
 
 		// Compute qualities
-		Validation aValidation = new Validation(itsSearchParameters, itsTable, itsQualityMeasure);
+		Validation aValidation = new Validation(itsSearchParameters, itsTable, itsSelection, itsQualityMeasure);
 		return aValidation.getQualities(aSetup);
 	}
 
@@ -890,7 +870,6 @@ public class ResultWindow extends JFrame implements ActionListener
 	private JButton jButtonShowModel;
 	private JButton jButtonBrowseSubgroups;
 	private JButton jButtonDeleteSubgroups;
-	private JButton jButtonFold;
 	private JButton jButtonPValues;
 	private JButton jButtonRegressionTest;
 	private JButton jButtonEmpirical;

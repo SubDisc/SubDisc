@@ -74,9 +74,10 @@ public class SubgroupDiscovery
 	// FIXME remove itsSearchParameters, to not allow changes after construction
 	private final SearchParameters itsSearchParameters;
 	private final Table itsTable;
-	private final int itsNrRows;          // itsTable.getNrRows()
-	private final int itsMinimumCoverage; // itsSearchParameters.getMinimumCoverage();
-	private final int itsMaximumCoverage; // itsNrRows * itsSearchParameters.getMaximumCoverageFraction();
+	private final BitSet itsSelection;
+	private final int itsNrRows;
+	private final int itsMinimumCoverage;
+	private final int itsMaximumCoverage;
 
 	private final QualityMeasure itsQualityMeasure;
 	private final float itsQualityMeasureMinimum;   // itsSearchParameters.getQualityMeasureMinimum();
@@ -89,7 +90,7 @@ public class SubgroupDiscovery
 	private Column itsPrimaryColumn;                // DOUBLE_CORRELATION / DOUBLE_REGRESSION / DOUBLE_BINARY / SCAPE
 	private Column itsSecondaryColumn;              // DOUBLE_CORRELATION / DOUBLE_REGRESSION / DOUBLE_BINARY / SCAPE
 	private CorrelationMeasure itsBaseCM;           // DOUBLE_CORRELATION
-    private RegressionMeasure itsBaseRM;            // DOUBLE_REGRESSION
+	private RegressionMeasure itsBaseRM;            // DOUBLE_REGRESSION
 	private BinaryTable itsBinaryTable;             // MULTI_LABEL
 	private List<Column> itsTargets;                // MULTI_LABEL / MULTI_NUMERIC
 	public ProbabilityDensityFunction_ND itsPDF_ND; // MULTI_NUMERIC
@@ -125,48 +126,13 @@ public class SubgroupDiscovery
 	private final Lock itsClockLock = new ReentrantLock();
 	private long itsThen = 0L;
 
-//	public SubgroupDiscovery(SearchParameters theSearchParameters, Table theTable, JFrame theMainWindow)
-//	{
-//// GENERIC
-//		super(theSearchParameters);
-//		itsTable = theTable;
-//		itsNrRows = itsTable.getNrRows();
-//		itsMainWindow = theMainWindow;
-//		TargetConcept aTC = itsSearchParameters.getTargetConcept();
-//		itsMinimumCoverage = itsSearchParameters.getMinimumCoverage();
-//		itsMaximumCoverage = (int) (itsNrRows * itsSearchParameters.getMaximumCoverageFraction());
-//
-//// TYPE SPECIFICS
-//// NOMINAL
-//// NUMERIC
-////		itsNumericTarget = aTC.getPrimaryTarget();
-//// DOUBLE CORRELATION
-//// DOUBLE REGRESSION
-//// SCAPE
-////		itsPrimaryColumn = aTC.getPrimaryTarget();
-////		itsSecondaryColumn = aTC.getSecondaryTarget();
-//// MULTI_LABEL
-////		itsBinaryTable = new BinaryTable(itsTable, itsTargets);
-////		Bayesian aBayesian = new Bayesian(itsBinaryTable, itsTargets);
-//// LABEL RANKING
-////		itsTargetRankings = aTC.getPrimaryTarget();
-////		LabelRanking aLR = itsTargetRankings.getAverageRanking(null); //average ranking over entire dataset
-////		LabelRankingMatrix aLRM = itsTargetRankings.getAverageRankingMatrix(null); //average ranking over entire dataset
-//// MULTI_NUMERIC
-////
-//
-//// GENERIC
-////		itsQualityMeasure
-////		itsQualityMeasureMinimum
-////		itsResult = new SubgroupSet()
-//	}
-
 	//SINGLE_NOMINAL
-	public SubgroupDiscovery(SearchParameters theSearchParameters, Table theTable, int theNrPositive, JFrame theMainWindow)
+	public SubgroupDiscovery(SearchParameters theSearchParameters, Table theTable, BitSet theSelection, int theNrPositive, JFrame theMainWindow)
 	{
 		itsSearchParameters = theSearchParameters;
 		itsTable = theTable;
-		itsNrRows = itsTable.getNrRows();
+		itsSelection = theSelection;
+		itsNrRows = (theSelection == null) ? itsTable.getNrRows() : theSelection.cardinality();
 		itsMainWindow = theMainWindow;
 		TargetConcept aTC = itsSearchParameters.getTargetConcept();
 		itsMinimumCoverage = itsSearchParameters.getMinimumCoverage();
@@ -196,18 +162,19 @@ public class SubgroupDiscovery
 				throw new AssertionError(aTarget.getType());
 		}
 
-		BitSet aBitSet = new BitSet(itsNrRows);
-		aBitSet.set(0, itsNrRows);
+		BitSet aBitSet = new BitSet(itsTable.getNrRows());
+		aBitSet.set(0, itsTable.getNrRows());
 		itsBinaryTarget = aTC.getPrimaryTarget().evaluate(aBitSet, aCondition);
-		itsResult = new SubgroupSet(itsSearchParameters.getMaximumSubgroups(), itsNrRows, itsBinaryTarget);
+		itsResult = new SubgroupSet(itsSearchParameters.getMaximumSubgroups(), theSelection, itsTable.getNrRows(), itsBinaryTarget);
 	}
 
 	//SINGLE_NUMERIC, float > signature differs from multi-label constructor
-	public SubgroupDiscovery(SearchParameters theSearchParameters, Table theTable, float theAverage, JFrame theMainWindow)
+	public SubgroupDiscovery(SearchParameters theSearchParameters, Table theTable, BitSet theSelection, float theAverage, JFrame theMainWindow)
 	{
 		itsSearchParameters = theSearchParameters;
 		itsTable = theTable;
-		itsNrRows = itsTable.getNrRows();
+		itsSelection = theSelection;
+		itsNrRows = (theSelection == null) ? itsTable.getNrRows() : theSelection.cardinality();
 		itsMainWindow = theMainWindow;
 		itsMinimumCoverage = itsSearchParameters.getMinimumCoverage();
 		itsMaximumCoverage = (int) (itsNrRows * itsSearchParameters.getMaximumCoverageFraction());
@@ -240,15 +207,16 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 			aPDF);
 		itsQualityMeasureMinimum = itsSearchParameters.getQualityMeasureMinimum();
 
-		itsResult = new SubgroupSet(itsSearchParameters.getMaximumSubgroups(), itsNrRows);
+		itsResult = new SubgroupSet(itsSearchParameters.getMaximumSubgroups(), theSelection, itsTable.getNrRows());
 	}
 
 	//DOUBLE_CORRELATION, DOUBLE_REGRESSION, DOUBLE_BINARY
-	public SubgroupDiscovery(SearchParameters theSearchParameters, Table theTable, boolean isRegression, JFrame theMainWindow)
+	public SubgroupDiscovery(SearchParameters theSearchParameters, Table theTable, BitSet theSelection, boolean isRegression, JFrame theMainWindow)
 	{
-        itsSearchParameters = theSearchParameters;
+		itsSearchParameters = theSearchParameters;
 		itsTable = theTable;
-		itsNrRows = itsTable.getNrRows();
+		itsSelection = theSelection;
+		itsNrRows = (theSelection == null) ? itsTable.getNrRows() : theSelection.cardinality();
 		itsMainWindow = theMainWindow;
 		itsMinimumCoverage = itsSearchParameters.getMinimumCoverage();
 		itsMaximumCoverage = (int) (itsNrRows * itsSearchParameters.getMaximumCoverageFraction());
@@ -262,58 +230,57 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 		{
 			Log.REFINEMENTLOG = true;
 			Log.openFileOutputStreams();
-//			Log.logRefinement("Bound graph for "+itsTable.getName());
-//			Log.logRefinement("SubgroupSize,AvgRegressionTime,AvgCook,AvgBoundSeven,AvgBoundSix,AvgBoundFive,AvgBoundFour,CookComputable,BoundSevenComputable,BoundSixComputable,BoundFiveComputable,BoundFourComputable");
+			//Log.logRefinement("Bound graph for "+itsTable.getName());
+			//Log.logRefinement("SubgroupSize,AvgRegressionTime,AvgCook,AvgBoundSeven,AvgBoundSix,AvgBoundFive,AvgBoundFour" +
+			//	",CookComputable,BoundSevenComputable,BoundSixComputable,BoundFiveComputable,BoundFourComputable");
 		}
 
 		TargetConcept aTC = itsSearchParameters.getTargetConcept();
-// TODO for stable jar, initiated here, SubgroupDiscovery revision 893 moved this to else below
+		// TODO for stable jar, initiated here, SubgroupDiscovery revision 893 moved this to else below
 		itsPrimaryColumn = aTC.getPrimaryTarget();
 		itsSecondaryColumn = aTC.getSecondaryTarget();
 
-        if (theSearchParameters.getTargetType() != TargetType.DOUBLE_BINARY)
-        {
-            if (isRegression)
-            {
-// TODO RegressionMeasure revision 851 introduces the new RegressionMeasure constructor below (not mentioned in log)
-                itsBaseRM = new RegressionMeasure(itsSearchParameters.getQualityMeasure(), itsPrimaryColumn, itsSecondaryColumn);
-// TODO for stable jar, disabled, causes compile errors, reinstate later
-//			    itsBaseRM = new RegressionMeasure(itsSearchParameters.getQualityMeasure(), aTC);
+		if (theSearchParameters.getTargetType() != TargetType.DOUBLE_BINARY)
+		{
+			if (isRegression)
+			{
+				// TODO RegressionMeasure revision 851 introduces the new RegressionMeasure constructor below (not mentioned in log)
+				itsBaseRM = new RegressionMeasure(itsSearchParameters.getQualityMeasure(), itsPrimaryColumn, itsSecondaryColumn);
+				// TODO for stable jar, disabled, causes compile errors, reinstate later
+				// itsBaseRM = new RegressionMeasure(itsSearchParameters.getQualityMeasure(), aTC);
 
-                //initialize bounds
-                itsBoundSevenCount=0;
-                itsBoundSixCount=0;
-                itsBoundFiveCount=0;
-                itsBoundFourCount=0;
-                itsBoundSevenFired=0;
-                itsBoundSixFired=0;
-                itsBoundFiveFired=0;
-                itsBoundFourFired=0;
-                itsRankDefCount=0;
+				//initialize bounds
+				itsBoundSevenCount=0;
+				itsBoundSixCount=0;
+				itsBoundFiveCount=0;
+				itsBoundFourCount=0;
+				itsBoundSevenFired=0;
+				itsBoundSixFired=0;
+				itsBoundFiveFired=0;
+				itsBoundFourFired=0;
+				itsRankDefCount=0;
 
-                itsBuffer = new TreeSet<Candidate>();
+				itsBuffer = new TreeSet<Candidate>();
+			}
+			else
+			{
+				// TODO for stable jar, disabled, initiated above, reinstate later as per SubgroupDiscovery revision 893
+				// itsPrimaryColumn = aTC.getPrimaryTarget();
+				// itsSecondaryColumn = aTC.getSecondaryTarget();
+                		itsBaseCM = new CorrelationMeasure(itsSearchParameters.getQualityMeasure(), itsPrimaryColumn, itsSecondaryColumn);
+			}
+        	}
 
-// temp for testing
-                //generateBoundGraph();
-            }
-            else
-            {
-// TODO for stable jar, disabled, initiated above, reinstate later as per SubgroupDiscovery revision 893
-//			    itsPrimaryColumn = aTC.getPrimaryTarget();
-//			    itsSecondaryColumn = aTC.getSecondaryTarget();
-                itsBaseCM = new CorrelationMeasure(itsSearchParameters.getQualityMeasure(), itsPrimaryColumn, itsSecondaryColumn);
-            }
-        }
-
-		itsResult = new SubgroupSet(itsSearchParameters.getMaximumSubgroups(), itsNrRows);
+		itsResult = new SubgroupSet(itsSearchParameters.getMaximumSubgroups(), theSelection, itsTable.getNrRows());
 	}
 
 	//SCAPE
-	public SubgroupDiscovery(JFrame theMainWindow, SearchParameters theSearchParameters, Table theTable)
+	public SubgroupDiscovery(JFrame theMainWindow, SearchParameters theSearchParameters, Table theTable, BitSet theSelection)
 	{
 		itsSearchParameters = theSearchParameters;
 		itsTable = theTable;
-		itsNrRows = itsTable.getNrRows();
+		itsSelection = theSelection;
+		itsNrRows = (theSelection == null) ? itsTable.getNrRows() : theSelection.cardinality();
 		itsMainWindow = theMainWindow;
 		itsMinimumCoverage = itsSearchParameters.getMinimumCoverage();
 		itsMaximumCoverage = (int) (itsNrRows * itsSearchParameters.getMaximumCoverageFraction());
@@ -324,20 +291,22 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 		itsPrimaryColumn = aTC.getPrimaryTarget();
 		itsSecondaryColumn = aTC.getSecondaryTarget();
 		// original code hack as default constructor would not work
-		//itsQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), itsNrRows, itsPrimaryColumn.getBinaries().cardinality(), itsPrimaryColumn, itsSecondaryColumn, itsSearchParameters.getOverallRankingLoss());
+		//itsQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), itsNrRows, itsPrimaryColumn.getBinaries().cardinality(), 
+		//					 itsPrimaryColumn, itsSecondaryColumn, itsSearchParameters.getOverallRankingLoss());
 		// unable to reproduce error MM
 		itsQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), itsNrRows, itsPrimaryColumn.getBinaries().cardinality(), itsPrimaryColumn, itsSecondaryColumn);
 		itsQualityMeasureMinimum = itsSearchParameters.getQualityMeasureMinimum();
 
-		itsResult = new SubgroupSet(itsSearchParameters.getMaximumSubgroups(), itsNrRows);
+		itsResult = new SubgroupSet(itsSearchParameters.getMaximumSubgroups(), theSelection, itsTable.getNrRows());
 	}
 
 	//MULTI_LABEL
-	public SubgroupDiscovery(SearchParameters theSearchParameters, Table theTable, JFrame theMainWindow)
+	public SubgroupDiscovery(SearchParameters theSearchParameters, Table theTable, BitSet theSelection, JFrame theMainWindow)
 	{
 		itsSearchParameters = theSearchParameters;
 		itsTable = theTable;
-		itsNrRows = itsTable.getNrRows();
+		itsSelection = theSelection;
+		itsNrRows = (theSelection == null) ? itsTable.getNrRows() : theSelection.cardinality();
 		itsMainWindow = theMainWindow;
 		itsMinimumCoverage = itsSearchParameters.getMinimumCoverage();
 		itsMaximumCoverage = (int) (itsNrRows * itsSearchParameters.getMaximumCoverageFraction());
@@ -354,15 +323,16 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 							itsNrRows);
 		itsQualityMeasureMinimum = itsSearchParameters.getQualityMeasureMinimum();
 
-		itsResult = new SubgroupSet(itsSearchParameters.getMaximumSubgroups(), itsNrRows);
+		itsResult = new SubgroupSet(itsSearchParameters.getMaximumSubgroups(), theSelection, itsTable.getNrRows());
 	}
 
 	//LABEL_RANKING
-	public SubgroupDiscovery(SearchParameters theSearchParameters, JFrame theMainWindow, Table theTable)
+	public SubgroupDiscovery(SearchParameters theSearchParameters, JFrame theMainWindow, Table theTable, BitSet theSelection)
 	{
 		itsSearchParameters = theSearchParameters;
 		itsTable = theTable;
-		itsNrRows = itsTable.getNrRows();
+		itsSelection = theSelection;
+		itsNrRows = (theSelection == null) ? itsTable.getNrRows() : theSelection.cardinality();
 		itsMainWindow = theMainWindow;
 		TargetConcept aTC = itsSearchParameters.getTargetConcept();
 
@@ -375,15 +345,16 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 		itsQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), itsNrRows, aLR, aLRM);
 		itsQualityMeasureMinimum = itsSearchParameters.getQualityMeasureMinimum();
 
-		itsResult = new SubgroupSet(itsSearchParameters.getMaximumSubgroups(), itsNrRows);
+		itsResult = new SubgroupSet(itsSearchParameters.getMaximumSubgroups(), theSelection, itsTable.getNrRows());
 	}
 
 	// MULTI_NUMERIC
-	public SubgroupDiscovery(Table theTable, JFrame theMainWindow, SearchParameters theSearchParameters)
+	public SubgroupDiscovery(Table theTable, BitSet theSelection, JFrame theMainWindow, SearchParameters theSearchParameters)
 	{
 		itsSearchParameters = theSearchParameters;
 		itsTable = theTable;
-		itsNrRows = itsTable.getNrRows();
+		itsSelection = theSelection;
+		itsNrRows = (theSelection == null) ? itsTable.getNrRows() : theSelection.cardinality();
 		itsMainWindow = theMainWindow;
 		itsMinimumCoverage = itsSearchParameters.getMinimumCoverage();
 		itsMaximumCoverage = (int) (itsNrRows * itsSearchParameters.getMaximumCoverageFraction());
@@ -395,7 +366,7 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 		itsQualityMeasure = null;
 		itsQualityMeasureMinimum = itsSearchParameters.getQualityMeasureMinimum();
 
-		itsResult = new SubgroupSet(itsSearchParameters.getMaximumSubgroups(), itsNrRows);
+		itsResult = new SubgroupSet(itsSearchParameters.getMaximumSubgroups(), theSelection, itsTable.getNrRows());
 	}
 
 	/*
@@ -545,12 +516,8 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 			{
 				int aTotalSize = itsCandidateQueue.size();
 				boolean alone = (s.availablePermits() == theNrThreads-1);
-				// take off first Candidate from Queue
 				if (itsCandidateQueue.currentLevelQueueSize() > 0)
 					aCandidate = itsCandidateQueue.removeFirst();
-				// obviously (currentLevelQueueSize <= 0)
-				// take solely when this is only active thread
-				// FIXME alone is not required for non-beam settings, optimise
 				else if ((aTotalSize > 0) && alone)
 				{
 					aCandidate = itsCandidateQueue.removeFirst();
@@ -616,6 +583,7 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 		if (DEBUG_PRINTS_FOR_SKIP)
 			Log.logCommandLine("SKIP COUNT: " + itsSkipCount);
 		// super temporary - no boolean controlling logging output
+
 		if (DEBUG_PRINTS_FOR_BEST_INTERVAL && NumericStrategy.NUMERIC_INTERVALS == itsSearchParameters.getNumericStrategy())
 		{
 			Log.logCommandLine("BEST INTERVAL ERRORS: " + itsBestIntervalsDiffer  + "/" + itsBestIntervalsCount);
@@ -635,11 +603,14 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 				Log.logCommandLine("linear algo: " + tail);
 			}
 		}
+
 		// ease log parsing: always print, also maxDepth=1/non-level-wise search
 		if (DEBUG_PRINTS_NEXT_LEVEL_CANDIDATES)// && !itsCandidateQueueSizes.isEmpty())
 			Log.logCommandLine("NR CANDIDATES FOR NEXT LEVEL: " + itsCandidateQueueSizes);
 		for (int topK : FOR_REAL_PRINTS)
 			itsResult.postProcessGetCoverRedundancyAndJointEntropy(topK);
+
+System.out.println("end mine()");
 	}
 
 	private final ConditionBaseSet preMining(long theBeginTime, int theNrThreads)
@@ -706,6 +677,7 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 		//Log.logCommandLine("SubgroupDiscovery.prepareData(): do not change data until mining completes");
 		//Log.logCommandLine("  so no MetaDataWindow enable/disable attribute, attribute type, missing value\n");
 
+System.out.println("prepareData " + theBinaryTarget.cardinality());
 		Timer aTotal = new Timer();
 
 		for (Column c : theColumns)
@@ -723,7 +695,7 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 				{
 					Log.logCommandLine(c.getName());
 					Timer t = new Timer();
-					c.buildSorted(theBinaryTarget); // build SORTED + SORT_INDEX
+					c.buildSorted(theBinaryTarget);
 					//Log.logCommandLine(t.getElapsedTimeString());
 					break;
 				}
@@ -858,8 +830,7 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 	////////////////////////////////////////////////////////////////////////////
 
 	/*
-	 * After Test is done, its releases its semaphore, so ExecutorService can
-	 * start a new Test.
+	 * After Test is done, it releases its semaphore, so ExecutorService can start a new Test.
 	 */
 	private class Test implements Runnable
 	{
@@ -885,13 +856,13 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 			// Subgroup.getMembers() creates expensive clone, reuse
 			BitSet aParentMembers = itsSubgroup.getMembers();
 			int aParentCoverage   = itsSubgroup.getCoverage();
+System.out.println("parent coverage: " + aParentCoverage);
 			assert (aParentMembers.cardinality() == aParentCoverage);
 
 			ConditionListA aConditionList = itsSubgroup.getConditions();
 			int nextSkipSG = itsFilter.nextSkip(aConditionList, 0);
 			assert ((nextSkipSG == Fltr.NOTHING_TO_SKIP) || ((nextSkipSG >= 0) && (nextSkipSG < aConditionList.size())));
 			Column toSkip = (nextSkipSG != Fltr.NOTHING_TO_SKIP ?  aConditionList.getCanonical(nextSkipSG).getColumn() : null);
-//System.out.format("SG=%s\tSKIP=%d\tCONDITION=%s\tCOLUMN=%s%n", aConditionList, nextSkipSG, (nextSkipSG != Fltr.NOTHING_TO_SKIP ? aConditionList.getCanonical(nextSkipSG) : "null"), (toSkip != null) ? toSkip.getName() : "null");
 
 			for (int i = 0, j = itsColumnConditionBasesSet.size(); i < j && !isTimeToStop(); ++i)
 			{
@@ -912,7 +883,6 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 					toSkip = (nextSkipSG != Fltr.NOTHING_TO_SKIP ?  aConditionList.getCanonical(nextSkipSG).getColumn() : null);
 					if (DEBUG_PRINTS_FOR_SKIP)
 						Log.logCommandLine(String.format("EC-SKIP\t%s AND %s%n", itsSubgroup, cb));
-//System.out.format("SG=%s\tSKIP=%d\tCONDITION=%s\tCOLUMN=%s%n", aConditionList, nextSkipSG, (nextSkipSG != Fltr.NOTHING_TO_SKIP ? aConditionList.getCanonical(nextSkipSG) : "null"), (toSkip != null) ? toSkip.getName() : "null");
 					if (USE_SKIP_FILTER)
 						continue;
 				}
@@ -1371,7 +1341,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		}
 
 		// Iterate over subgroups
-		SubgroupSet aNewSubgroupSet = new SubgroupSet(itsSearchParameters.getMaximumSubgroups(), itsNrRows);
+		SubgroupSet aNewSubgroupSet = new SubgroupSet(itsSearchParameters.getMaximumSubgroups(), itsSelection, itsNrRows);
 		// most methods of SubgroupSet are not thread save, but this is
 		// no problem for this method as it is run by a single thread
 		// however all itsResult sets, of all refinement depths,  will
@@ -2490,7 +2460,8 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 
 	// this is the version used by evaluateNumericRegularGeneric(Coarse)
 	// FIXME temporarily a separate method, will merge both evaluateCandidates()
-	private final void evaluateCandidate(Subgroup theParent, Condition theAddedCondition, int theChildCoverage, boolean isAllStrategy, BestSubgroupsForCandidateSetAndResultSet theBestSubgroups)
+	private final void evaluateCandidate(Subgroup theParent, Condition theAddedCondition, int theChildCoverage, boolean isAllStrategy, 
+					     BestSubgroupsForCandidateSetAndResultSet theBestSubgroups)
 	{
 		if ((itsFilter != null) && !itsFilter.isUseful(theParent.getConditions(), theAddedCondition))
 			return;
@@ -2513,7 +2484,8 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 
 	// this is the version used by evaluateNumericRegularSingleBinary(Coarse)
 	// FIXME temporarily a separate method, will merge both evaluateCandidates()
-	private final void evaluateCandidate(Subgroup theParent, Condition theAddedCondition, int theChildCoverage, int theNrTruePositives, boolean isAllStrategy, BestSubgroupsForCandidateSetAndResultSet theBestSubgroups)
+	private final void evaluateCandidate(Subgroup theParent, Condition theAddedCondition, int theChildCoverage, int theNrTruePositives, 
+					     boolean isAllStrategy, BestSubgroupsForCandidateSetAndResultSet theBestSubgroups)
 	{
 		// currently only for SINGLE_NOMINAL (and not for propensity scores)
 		assert (isDirectSingleBinary());

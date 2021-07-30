@@ -33,7 +33,7 @@ public class SubgroupSet extends TreeSet<Subgroup>
 
 	// for SubgroupSet in nominal target setting (used for TPR/FPR in ROCList)
 	private final boolean nominalTargetSetting;
-	private final int itsTotalCoverage;
+	private final int itsNrRows; //size of the original table, regardless of selection
 	private final BitSet itsAllDataBitSet; // for SubgroupDiscovery and Subgroup
 	private BitSet itsBinaryTarget;        // no longer final for CAUC
 	private int itsMaximumSize;
@@ -51,28 +51,21 @@ public class SubgroupSet extends TreeSet<Subgroup>
 			new ArrayBlockingQueue<Subgroup>(MAX_QUEUE_SIZE);
 
 	/* private, meant to be used within this class only */
-	private SubgroupSet(int theSize, int theTotalCoverage, BitSet theBinaryTarget, boolean theNominalTargetSetting)
+	private SubgroupSet(int theSize, BitSet theSelection, int theNrRows, BitSet theBinaryTarget, boolean theNominalTargetSetting)
 	{
-		// basic checks
-		if (theTotalCoverage <= 0)
-			throw new IllegalArgumentException("SubgroupSet<init>: theTotalCoverage must be > 0, not: " + theTotalCoverage);
-		if (theNominalTargetSetting)
-		{
-			if (theBinaryTarget == null)
-				throw new IllegalArgumentException("SubgroupSet<init>: theBinaryTarget can not be null");
-			if (theBinaryTarget.length() > theTotalCoverage)
-				throw new IllegalArgumentException("SubgroupSet<init>:  theBinaryTarget.length() > theTotalCoverage");
-		}
-		assert (!theNominalTargetSetting ^ theBinaryTarget != null);
-
 		itsMaximumSize = theSize <= 0 ? Integer.MAX_VALUE : theSize;
-		itsTotalCoverage = theTotalCoverage;
+		itsNrRows = theNrRows;
 		nominalTargetSetting = theNominalTargetSetting;
 		itsBinaryTarget = theBinaryTarget;
 
-		BitSet aBitSet = new BitSet(itsTotalCoverage);
-		aBitSet.set(0, itsTotalCoverage);
-		itsAllDataBitSet = aBitSet;
+		if (theSelection == null)
+		{
+			BitSet aBitSet = new BitSet(itsNrRows);
+			aBitSet.set(0, itsNrRows);
+			itsAllDataBitSet = aBitSet;
+		}
+		else
+			itsAllDataBitSet = theSelection;
 	}
 
 	/**
@@ -87,9 +80,9 @@ public class SubgroupSet extends TreeSet<Subgroup>
 	 * instances covered by the target value.
 	 */
 	// TODO optionally this class could take a MINSCORE threshold parameter
-	public SubgroupSet(int theSize, int theTotalCoverage)
+	public SubgroupSet(int theSize, BitSet theSelection, int theTotalCoverage)
 	{
-		this(theSize, theTotalCoverage, null, false);
+		this(theSize, theSelection, theTotalCoverage, null, false);
 	}
 
 	/**
@@ -104,9 +97,9 @@ public class SubgroupSet extends TreeSet<Subgroup>
 	 * instances covered by the target value.
 	 */
 	// TODO optionally this class could take a MINSCORE threshold parameter
-	public SubgroupSet(int theSize, int theTotalCoverage, BitSet theBinaryTarget)
+	public SubgroupSet(int theSize, BitSet theSelection, int theTotalCoverage, BitSet theBinaryTarget)
 	{
-		this(theSize, theTotalCoverage, theBinaryTarget, true);
+		this(theSize, theSelection, theTotalCoverage, theBinaryTarget, true);
 	}
 
 	// package-private, for CAUC(Heavy) setting only (see Process)
@@ -115,7 +108,7 @@ public class SubgroupSet extends TreeSet<Subgroup>
 		super(cmp);
 		nominalTargetSetting = false;
 		itsMaximumSize = Integer.MAX_VALUE;
-		itsTotalCoverage = -1;
+		itsNrRows = -1;
 		itsBinaryTarget = null;
 		// FIXME this class has the worst programming available in Cortana FIXME
 		itsAllDataBitSet = null;
@@ -125,7 +118,7 @@ public class SubgroupSet extends TreeSet<Subgroup>
 	 * Creates a SubgroupSet just like the argument, except empty.
 	 * The following members are copied:
 	 * itsMaximumSize,
-	 * itsTotalCoverage,
+	 * itsNrRows,
 	 * itsBinaryTarget,
 	 * nominalTargetSetting
 	 * itsROCList (shallow copy.)
@@ -149,14 +142,8 @@ public class SubgroupSet extends TreeSet<Subgroup>
 	 */
 	private SubgroupSet(SubgroupSet theOriginal)
 	{
-		this(theOriginal.itsMaximumSize,
-			theOriginal.itsTotalCoverage,
-			theOriginal.itsBinaryTarget,
-			theOriginal.nominalTargetSetting);
-		//itsTotalTargetCoverage = theOriginal.itsTotalTargetCoverage;
+		this(theOriginal.itsMaximumSize, null, theOriginal.itsNrRows, theOriginal.itsBinaryTarget, theOriginal.nominalTargetSetting);
 		itsROCList = theOriginal.itsROCList;
-		// needs to be set by postProcess()
-		//double itsLowestScore = Double.NaN;
 	}
 
 	/*
@@ -291,7 +278,7 @@ public class SubgroupSet extends TreeSet<Subgroup>
 
 	public int getTotalCoverage()
 	{
-		return itsTotalCoverage;
+		return itsNrRows;
 	}
 
 	// FIXME remove if-check, just call itsBinaryTarget.cardinality (causes NPE)
@@ -454,14 +441,10 @@ public class SubgroupSet extends TreeSet<Subgroup>
 		if (max == 0) // when size == 0
 			return 0.0;
 
-		// lazy implementation - use BitSets for now (move to long[] later)
-		// the BitSet member fields are unnecessary overhead and the BitSet
-		// methods cardinality() and size() are needlessly expensive, and slow
-		// but required for sorting, a custom class would improve performance
-		BitSet[] aRows      = new BitSet[itsTotalCoverage];
-		int[] aCoverCounts  = new int[itsTotalCoverage];
+		BitSet[] aRows      = new BitSet[itsNrRows];
+		int[] aCoverCounts  = new int[itsNrRows];
 		long aCoverCountSum = 0L;
-		for (int i = 0, j = itsTotalCoverage; i < j; ++i)
+		for (int i=0; i<itsNrRows; i++)
 			aRows[i] = new BitSet(max);
 
 		int idx = -1;
@@ -483,13 +466,12 @@ public class SubgroupSet extends TreeSet<Subgroup>
 			}
 		}
 
-		double aTotalCount          = itsTotalCoverage;
+		double aTotalCount          = itsNrRows;
 		double anExpectedCoverCount = (aCoverCountSum / aTotalCount);
 		double aCoverRedundancy     = 0.0;
 		for (int i : aCoverCounts)
 			aCoverRedundancy += (Math.abs(i - anExpectedCoverCount));
 		aCoverRedundancy = (aCoverRedundancy/anExpectedCoverCount/aTotalCount);
-//		aCoverRedundancy = (aCoverRedundancy/(anExpectedCoverCount*aTotalCount));
 
 		// TODO
 		// when there are many duplicates, a HashSet/TreeSet might be more
@@ -512,7 +494,7 @@ public class SubgroupSet extends TreeSet<Subgroup>
 				anEntropy += (-aFraction * Math.log(aFraction));
 				i = j;
 			}
-			else if (++j == itsTotalCoverage)
+			else if (++j == itsNrRows)
 			{
 				double aFraction = (j-i) / aTotalCount;
 				anEntropy += (-aFraction * Math.log(aFraction));
@@ -526,7 +508,7 @@ public class SubgroupSet extends TreeSet<Subgroup>
 		//   for !CBSS: number of subgroups
 		//   for  CBSS: NR CANDIDATES FOR NEXT LEVEL (last entry, with a -)
 //		Log.logCommandLine(String.format("CR(%d)=%f\tH(%1$d)=%f", max, aCoverRedundancy, anEntropy));
-		Log.logCommandLine(String.format("CCSUM=%d\tN=%d\tCCEXPECTED=%f\tCR(%d)=%f\tH(%4$d)=%f", aCoverCountSum, itsTotalCoverage, anExpectedCoverCount, topK, aCoverRedundancy, anEntropy));
+		Log.logCommandLine(String.format("CCSUM=%d\tN=%d\tCCEXPECTED=%f\tCR(%d)=%f\tH(%4$d)=%f", aCoverCountSum, itsNrRows, anExpectedCoverCount, topK, aCoverRedundancy, anEntropy));
 
 		return anEntropy;
 	}

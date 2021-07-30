@@ -51,6 +51,14 @@ public class Column implements XMLNodeInterface
 	private float itsMax = Float.NEGATIVE_INFINITY;
 	private boolean isEnabled = true;
 
+	// update: all NUMERIC Conditions now set sort index, Column.evaluate() relies on it
+	// Condition.UNINTIALISE_itsSortIndex is Integer.MIN_VALUE, such that it is outside of the range valid sort indexes (MIN_VALUE < -MAX_VALUE)
+	// This also means bit invert is no longer even a possibility
+	private static final int MASK_ON  = 0x80000000;
+	private static final int MASK_OFF = 0x7fffffff;
+	private float[] itsSortedFloats;
+	private int[] itsSortIndex;
+
 //	private static final String falseFloat = "[-+]?0*(\\.0+)?"; // DO NOT REMOVE
 	private static final String trueFloat = "\\+?0*1(\\.0+)?";
 	private static final String trueInteger = "[-+]?\\d+(\\.0+)?";
@@ -1724,10 +1732,10 @@ public class Column implements XMLNodeInterface
 	// only SINGLE_NOMINAL needs MASK_OFF, unlikely to be a performance problem
 	private BitSet numericEquals(BitSet theMembers, float theValue, int theValueSortIndex, BitSet theResult)
 	{
-		if ((SORT_INDEX != null) && (theValueSortIndex != Condition.UNINITIALISED_SORT_INDEX))
+		if ((itsSortIndex != null) && (theValueSortIndex != Condition.UNINITIALISED_SORT_INDEX))
 		{
 			for (int i = theMembers.nextSetBit(0); i >= 0; i = theMembers.nextSetBit(i + 1))
-				if ((MASK_OFF & SORT_INDEX[i]) == theValueSortIndex)
+				if ((MASK_OFF & itsSortIndex[i]) == theValueSortIndex)
 					theResult.set(i);
 		}
 		else
@@ -1742,10 +1750,10 @@ public class Column implements XMLNodeInterface
 
 	private BitSet numericLEQ(BitSet theMembers, float theValue, int theValueSortIndex, BitSet theResult)
 	{
-		if ((SORT_INDEX != null) && (theValueSortIndex != Condition.UNINITIALISED_SORT_INDEX))
+		if ((itsSortIndex != null) && (theValueSortIndex != Condition.UNINITIALISED_SORT_INDEX))
 		{
 			for (int i = theMembers.nextSetBit(0); i >= 0; i = theMembers.nextSetBit(i + 1))
-				if ((MASK_OFF & SORT_INDEX[i]) <= theValueSortIndex)
+				if ((MASK_OFF & itsSortIndex[i]) <= theValueSortIndex)
 					theResult.set(i);
 		}
 		else
@@ -1760,12 +1768,12 @@ public class Column implements XMLNodeInterface
 
 	private BitSet numericGEQ(BitSet theMembers, float theValue, int theValueSortIndex, BitSet theResult)
 	{
-		// others use SORT_INDEX, NUM5A/NUM5B/NUM6/NUM7 set index in Conditions
-		// when SubgroupDiscovery.mine() ends SORT_INDEX is always set to null
-		if ((SORT_INDEX != null) && (theValueSortIndex != Condition.UNINITIALISED_SORT_INDEX))
+		// others use itsSortIndex, NUM5A/NUM5B/NUM6/NUM7 set index in Conditions
+		// when SubgroupDiscovery.mine() ends itsSortIndex is always set to null
+		if ((itsSortIndex != null) && (theValueSortIndex != Condition.UNINITIALISED_SORT_INDEX))
 		{
 			for (int i = theMembers.nextSetBit(0); i >= 0; i = theMembers.nextSetBit(i + 1))
-				if ((MASK_OFF & SORT_INDEX[i]) >= theValueSortIndex)
+				if ((MASK_OFF & itsSortIndex[i]) >= theValueSortIndex)
 					theResult.set(i);
 		}
 		else
@@ -2121,40 +2129,38 @@ public class Column implements XMLNodeInterface
 		return new DomainMapNumeric(idx+1, theBitSetCardinality, aDomain, aCounts);
 	}
 
-	// returning a single copy of SORTED once would be enough to work with for
-	// SubgroupDiscovery, but some of this functionality might change and
-	// calling getSortedValue() is unlikely to be a performance problem
-	//
-	// XXX profiling suggest that MASK is faster than bit invert (~)
-	//     probably because numericLEQ|GEQ can unconditionally apply MASK_OFF
-	// XXX update: all NUMERIC Conditions now set sort index, Column.evaluate()
-	//     relies on it
-	//     Condition.UNINTIALISE_SORT_INDEX is Integer.MIN_VALUE, such that it
-	//     is outside of the range valid sort indexes (MIN_VALUE < -MAX_VALUE)
-	//     this also means bit invert is no longer even a possibility
-	private static final int MASK_ON  = 0x80000000;
-	private static final int MASK_OFF = 0x7fffffff;
-	private float[] SORTED;
-	private int[] SORT_INDEX;
 	public final void buildSorted(BitSet theTarget)
 	{
 		boolean isTargetNull = (theTarget == null);
 
-		SORTED = Function.getUniqueValues(itsFloatz);
-
+		itsSortedFloats = Function.getUniqueValues(itsFloatz);
+//		System.out.println("itsSortedFloats");
+//		for (int i=0; i<itsSortedFloats.length; i++)
+//			System.out.println("   " + i + ": " + itsSortedFloats[i]);
+		
 		// determine sort-index for each value in Column.itsFloatz
-		SORT_INDEX = new int[itsFloatz.length];
+		itsSortIndex = new int[itsFloatz.length];
+		int c = 0;
 		for (int i = 0; i < itsFloatz.length; ++i)
 		{
-			int idx = Arrays.binarySearch(SORTED, itsFloatz[i]);
-			SORT_INDEX[i] = (isTargetNull || theTarget.get(i)) ? idx : (MASK_ON | idx);
+			int idx = Arrays.binarySearch(itsSortedFloats, itsFloatz[i]);
+			itsSortIndex[i] = (isTargetNull || theTarget.get(i)) ? idx : (MASK_ON | idx);
+			if (theTarget.get(i))
+				c++;
 		}
+		System.out.println("buildSorted: positive count = " + c);
+//		System.out.println("itsSortIndex");
+//		for (int i=0; i<itsSortIndex.length; i++)
+//			System.out.println("   " + i + ": " + (itsSortIndex[i] & MASK_OFF) + ", " + ((itsSortIndex[i] >= 0) ? "true" : "false"));
 	}
-	// should not be called during mining, could use Lock obtained and released
-	// by SubgroupDiscovery.mine(), but for now trust that everything goes well
-	final void removeSorted() { SORTED = null; SORT_INDEX = null; }
-	public final float getSortedValue(int index) { return SORTED[index]; }
-	final float[] getSortedValuesCopy() { return Arrays.copyOf(SORTED, SORTED.length); }
+
+	final void removeSorted() { itsSortedFloats = null; itsSortIndex = null; }
+
+	public final float getSortedValue(int index) { return itsSortedFloats[index]; }
+
+	public final int getSortedIndex(float theFloat) { return Arrays.binarySearch(itsSortedFloats, theFloat); }
+
+	final float[] getSortedValuesCopy() { return Arrays.copyOf(itsSortedFloats, itsSortedFloats.length); }
 
 	// a more generic version of this type of classes will follow later
 	public static final class ValueCount
@@ -2163,7 +2169,7 @@ public class Column implements XMLNodeInterface
 
 		private ValueCount(int[] theCounts)
 		{
-			itsCounts        = theCounts;
+			itsCounts = theCounts;
 		}
 	}
 
@@ -2211,11 +2217,11 @@ public class Column implements XMLNodeInterface
 		if (!isValidCall("getValueCount", theBitSet))
 			return new ValueCount(new int[0]);
 
-		// NOTE (SORTED.length == itsCardinality)
-		int[] aCnt = new int[SORTED.length];
+		// NOTE (itsSortedFloats.length == itsCardinality)
+		int[] aCnt = new int[itsSortedFloats.length];
 
 		for (int i = theBitSet.nextSetBit(0); i >= 0; i = theBitSet.nextSetBit(i + 1))
-			++aCnt[SORT_INDEX[i]];
+			++aCnt[itsSortIndex[i]];
 
 		return new ValueCount(aCnt);
 	}
@@ -2225,20 +2231,31 @@ public class Column implements XMLNodeInterface
 		if (!isValidCall("getUniqueNumericDomainMap", theBitSet))
 			return new ValueCountTP(new int[0], new int[0]);
 
-		// NOTE (SORTED.length == itsCardinality)
-		int[] aCnt = new int[SORTED.length];
-		int[] aPos = new int[SORTED.length];
+		int[] aCnt = new int[itsSortedFloats.length];
+		int[] aPos = new int[itsSortedFloats.length];
 
+		System.out.println("count: " + theBitSet.cardinality());
+		int c = 0;
 		for (int i = theBitSet.nextSetBit(0); i >= 0; i = theBitSet.nextSetBit(i + 1))
 		{
-			int idx = SORT_INDEX[i];
-			if (idx >= 0)
+			int idx = itsSortIndex[i];
+			if (idx >= 0) // it's a positive example
 			{
 				++aCnt[idx];
 				++aPos[idx];
+				c++;
 			}
 			else
 				++aCnt[(MASK_OFF & idx)];
+		}
+		System.out.println("pos count: " + c);
+		int aC = 0;
+		int aP = 0;
+		for (int i=0; i<aCnt.length; i++)
+		{
+			aC += aCnt[i];
+			aP += aPos[i];
+			System.out.println("---" + i + ", " + itsSortedFloats[i] + ", " + aCnt[i] + ", " + aPos[i] + ", " + aC + ", " + aP);
 		}
 
 		return new ValueCountTP(aCnt, aPos);
@@ -2249,13 +2266,13 @@ public class Column implements XMLNodeInterface
 		if (!isValidCall("getUniqueNumericDomainMap", theBitSet))
 			return new ValueCountSum(new int[0], new double[0]);
 
-		// NOTE (SORTED.length == itsCardinality)
-		int[]    aCnt = new int[SORTED.length];
-		double[] aSum = new double[SORTED.length];
+		// NOTE (itsSortedFloats.length == itsCardinality)
+		int[]    aCnt = new int[itsSortedFloats.length];
+		double[] aSum = new double[itsSortedFloats.length];
 
 		for (int i = theBitSet.nextSetBit(0); i >= 0; i = theBitSet.nextSetBit(i + 1))
 		{
-			int idx = SORT_INDEX[i];
+			int idx = itsSortIndex[i];
 			++aCnt[idx];
 			aSum[idx] += theTarget.itsFloatz[i];
 		}
@@ -2269,14 +2286,14 @@ public class Column implements XMLNodeInterface
 		if (!isValidCall("getUniqueNumericDomainMap", theBitSet))
 			return new ValueCountSumSquaresSum(new int[0], new double[0], new double[0]);
 
-		// NOTE (SORTED.length == itsCardinality)
-		int[]    aCnt        = new int[SORTED.length];
-		double[] aSum        = new double[SORTED.length];
-		double[] aSquaresSum = new double[SORTED.length];
+		// NOTE (itsSortedFloats.length == itsCardinality)
+		int[]    aCnt        = new int[itsSortedFloats.length];
+		double[] aSum        = new double[itsSortedFloats.length];
+		double[] aSquaresSum = new double[itsSortedFloats.length];
 
 		for (int i = theBitSet.nextSetBit(0); i >= 0; i = theBitSet.nextSetBit(i + 1))
 		{
-			int idx = SORT_INDEX[i];
+			int idx = itsSortIndex[i];
 			++aCnt[idx];
 			double d          = theTarget.itsFloatz[i];
 			aSum[idx]        += d;
@@ -2467,16 +2484,25 @@ public class Column implements XMLNodeInterface
 	 *
 	 * @see #getStatistics(BitSet, boolean)
 	 */
-	public float getAverage()
+	public float getAverage(BitSet theSelection)
 	{
 		if (itsType != AttributeType.NUMERIC)
-			throw new IllegalArgumentException("Invalid call for AttriuteType: " + itsType);
+			throw new IllegalArgumentException("Invalid call for AttributeType: " + itsType);
 
 		float aSum = 0.0f;
-		for (float f : itsFloatz)
-			aSum += f;
-
-		return aSum / itsSize;
+		if (theSelection == null)
+		{
+			for (float f : itsFloatz)
+				aSum += f;
+			return aSum / itsSize;
+		}
+		else
+		{
+			for (int i=0; i<itsFloatz.length; i++)
+				if (theSelection.get(i))
+					aSum += itsFloatz[i];
+			return aSum / theSelection.cardinality();
+		}
 	}
 
 	/**
@@ -2665,7 +2691,7 @@ public class Column implements XMLNodeInterface
 	 * @see #getCardinality()
 	 * @see AttributeType
 	 */
-	public int countValues(String theValue)
+	public int countValues(String theValue, BitSet theSelection)
 	{
 		switch (itsType)
 		{
@@ -2681,16 +2707,36 @@ public class Column implements XMLNodeInterface
 				}
 
 				int value = v;
-				for (int i = 0, j = itsNominalz.length; i < j; ++i)
-					if (itsNominalz[i] == value)
-						++aResult;
+				int l = itsNominalz.length;
+				if (theSelection == null)
+				{
+					for (int i=0; i<l; ++i)
+						if (itsNominalz[i] == value)
+							++aResult;
+				}
+				else
+					for (int i=0; i<l; ++i)
+						if (itsNominalz[i] == value && theSelection.get(i))
+							++aResult;
 				return aResult;
 			}
 			case BINARY :
 			{
-				return AttributeType.DEFAULT_BINARY_TRUE_STRING.equals(theValue) ?
-					itsBinaries.cardinality() :
-					itsSize - itsBinaries.cardinality();
+				if (theSelection == null)
+					return AttributeType.DEFAULT_BINARY_TRUE_STRING.equals(theValue) ? itsBinaries.cardinality() : itsSize - itsBinaries.cardinality();
+				else
+					if (AttributeType.DEFAULT_BINARY_TRUE_STRING.equals(theValue))
+					{
+						BitSet aSet = (BitSet) theSelection.clone();
+						aSet.and(itsBinaries);
+						return aSet.cardinality();
+					}
+					else
+					{
+						BitSet aSet = (BitSet) theSelection.clone();
+						aSet.andNot(itsBinaries);
+						return aSet.cardinality();
+					}
 			}
 			default :
 			{

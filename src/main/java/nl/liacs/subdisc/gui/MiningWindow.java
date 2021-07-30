@@ -34,7 +34,9 @@ public class MiningWindow extends JFrame implements ActionListener
 
 	// target info
 	private int itsPositiveCount; // nominal target
+	private int itsPositiveCountSelection;
 	private float itsTargetAverage; // numeric target
+	private float itsTargetAverageSelection;
 
 	// TODO MM there should be at most 1 MiningWindow();
 	private final MiningWindow masterWindow = this;
@@ -217,7 +219,7 @@ public class MiningWindow extends JFrame implements ActionListener
 		initTitle();
 		setIconImage(ICON);
 		setLocation(100, 100);
-		setSize(800, 600);
+		setSize(900, 600);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		initJMenuGui(); // for GUI debugging only, DO NOT REMOVE
 		setVisible(true);
@@ -706,7 +708,7 @@ public class MiningWindow extends JFrame implements ActionListener
 		{
 			jLabelTargetTableName.setText(itsTable.getName());
 			if (itsSelection == null) // no selection specified
-				jLabelNrExamplesNr.setText(String.valueOf(itsTable.getNrRows()) + "\t(no selection specified)");
+				jLabelNrExamplesNr.setText(String.valueOf(itsTable.getNrRows()));
 			else
 				jLabelNrExamplesNr.setText(String.valueOf(itsTable.getNrRows()) + "\t(" + itsSelection.cardinality() + " in selection)");
 			int[][] aCounts = itsTable.getTypeCounts();
@@ -972,13 +974,23 @@ public class MiningWindow extends JFrame implements ActionListener
 				//initTargetInfo might be called before item is actually selected
 				if (aTarget == null || aMiscFieldName == null)
 					return;
-				itsPositiveCount =
-					itsTable.getColumn(aTarget).countValues(aMiscFieldName);
+				itsPositiveCount = itsTable.getColumn(aTarget).countValues(aMiscFieldName, null);
+				if (itsSelection != null) // a selection is specified
+					itsPositiveCountSelection = itsTable.getColumn(aTarget).countValues(aMiscFieldName, itsSelection);
+				else
+					itsPositiveCountSelection = itsPositiveCount;
 				float aPercentage = (itsPositiveCount * 100) / (float) itsTable.getNrRows();
 				NumberFormat aFormatter = NumberFormat.getNumberInstance();
 				aFormatter.setMaximumFractionDigits(2);
 				jLabelTargetInfo.setText(" # positive");
-				jLabelTargetInfoText.setText(itsPositiveCount + " (" + aFormatter.format(aPercentage) + " %)");
+				if (itsSelection == null)
+					jLabelTargetInfoText.setText(itsPositiveCount + " (" + aFormatter.format(aPercentage) + "%)");
+				else
+				{
+					float aPercentageSelection = (itsPositiveCountSelection * 100) / (float) itsSelection.cardinality();
+					jLabelTargetInfoText.setText(itsPositiveCount + " (" + aFormatter.format(aPercentage) + "%), " + 
+								     itsPositiveCountSelection + " (" + aFormatter.format(aPercentageSelection) + " %) in selection");
+				}
 				break;
 			}
 			case SINGLE_NUMERIC :
@@ -987,8 +999,14 @@ public class MiningWindow extends JFrame implements ActionListener
 				if (aTarget != null) //initTargetInfo might be called before item is actually selected
 				{
 					jLabelTargetInfo.setText(" average");
-					itsTargetAverage = itsTable.getColumn(aTarget).getAverage();
-					jLabelTargetInfoText.setText(String.valueOf(itsTargetAverage));
+					itsTargetAverage = itsTable.getColumn(aTarget).getAverage(null);
+					if (itsSelection == null)
+						jLabelTargetInfoText.setText(String.valueOf(itsTargetAverage));
+					else
+					{
+						itsTargetAverageSelection = itsTable.getColumn(aTarget).getAverage(itsSelection);
+						jLabelTargetInfoText.setText(String.valueOf(itsTargetAverage) + ", " + itsTargetAverageSelection + " in selection");
+					}
 				}
 				break;
 			}
@@ -1374,22 +1392,22 @@ public class MiningWindow extends JFrame implements ActionListener
 	//not on Event Dispatching Thread, may take a long time to load
 	private void selectSubsetActionPerformed()
 	{
-		SwingUtilities.invokeLater(new Runnable()
+		System.out.println("========Select Subset=======");
+		ConditionWindow aCW = new ConditionWindow(this, itsTable.getColumns()); //modal dialog
+		if (aCW.getResult() == null) //window was closed with 'Delete'
 		{
-			public void run()
-			{
-				System.out.println("========Select Subset=======");
-//				ConditionBase aCB = new ConditionBase(itsTable.getColumns().get(0), Operator.GREATER_THAN_OR_EQUAL);
-//				Condition aCondition = new Condition(aCB, 18f, 0);
-//				System.out.println(aCondition.toString());
-//				ConditionListA aCL = ConditionListBuilder.createList(aCondition);
-
-				new ConditionWindow(itsTable.getColumns());
-
-//				BitSet aMembers = itsTable.evaluate(aCL);
-//				System.out.println("size: " + aMembers.cardinality());
-			}
-		});
+			itsSelection = null;
+			System.out.println("selection removed");
+		}
+		else
+		{
+			ConditionListA aConditionList = ConditionListBuilder.createList(aCW.getResult());
+			itsSelection = itsTable.evaluate(aConditionList);
+			System.out.println("size: " + itsSelection.cardinality());
+		}
+		//update selection counts
+		initGuiComponentsDataSet();
+		initTargetInfo();
 	}
 
 	/*
@@ -1810,7 +1828,7 @@ public class MiningWindow extends JFrame implements ActionListener
 	private void subgroupDiscoveryActionPerformed()
 	{
 		setBusy(true);
-		runSubgroupDiscovery(itsTable, 0, null);
+		runSubgroupDiscovery(itsTable, 0, itsSelection);
 		setBusy(false);
 		initTitle(); // reset the window's title
 	}
@@ -1848,7 +1866,7 @@ public class MiningWindow extends JFrame implements ActionListener
 	// hack to get this information to SubgroupDiscovery
 	private boolean isCancelled = false;
 	public boolean isCancelled() { return isCancelled; }
-	private void runSubgroupDiscovery(final Table theTable, final int theFold, final BitSet theBitSet)
+	private void runSubgroupDiscovery(final Table theTable, final int theFold, final BitSet theSelection)
 	{
 		isCancelled = false;
 		setupSearchParameters();
@@ -1871,7 +1889,7 @@ public class MiningWindow extends JFrame implements ActionListener
 					}
 				});
 
-				Process.runSubgroupDiscovery(theTable, theFold, theBitSet, itsSearchParameters, true, getNrThreads(), masterWindow);
+				Process.runSubgroupDiscovery(theTable, theFold, theSelection, itsSearchParameters, true, getNrThreads(), masterWindow);
 
 				if (itsStopDialog != null)
 					itsStopDialog.dispose();
@@ -1985,19 +2003,20 @@ public class MiningWindow extends JFrame implements ActionListener
 				aQualityMeasure = null;
 				break;
 			}
-            case DOUBLE_CORRELATION :
-            {
-                aQualityMeasure = null;
-                break;
-            }
-            case DOUBLE_BINARY :
-            {
-                aQualityMeasure = null;
-                break;
-            }
-            case SCAPE :
+			case DOUBLE_CORRELATION :
 			{
-				aQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), itsTable.getNrRows(), itsPositiveCount, itsTargetConcept.getPrimaryTarget(), itsTargetConcept.getSecondaryTarget());
+				aQualityMeasure = null;
+				break;
+			}
+			case DOUBLE_BINARY :
+			{
+				aQualityMeasure = null;
+				break;
+			}
+			case SCAPE :
+			{
+				aQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), itsTable.getNrRows(), itsPositiveCount, 
+								     itsTargetConcept.getPrimaryTarget(), itsTargetConcept.getSecondaryTarget());
 				break;
 			}
 			case MULTI_LABEL :
@@ -2024,7 +2043,7 @@ public class MiningWindow extends JFrame implements ActionListener
 			}
 		}
 
-		Validation aValidation = new Validation(itsSearchParameters, itsTable, aQualityMeasure);
+		Validation aValidation = new Validation(itsSearchParameters, itsTable, itsSelection, aQualityMeasure);
 		double[] aQualities = aValidation.getQualities(aSetup);
 		if (aQualities == null)
 			return;

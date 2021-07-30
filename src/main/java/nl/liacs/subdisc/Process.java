@@ -15,7 +15,8 @@ public class Process
 	private static final boolean CAUC_HEAVY_CONVEX = false; // select subgroups on convex hull if true, select top-1 if false
 	static final boolean ROC_BEAM_TEST = false;
 
-	public static SubgroupDiscovery runSubgroupDiscovery(Table theTable, int theFold, BitSet theBitSet, SearchParameters theSearchParameters, boolean showWindows, int theNrThreads, JFrame theMainWindow)
+	public static SubgroupDiscovery runSubgroupDiscovery(Table theTable, int theFold, BitSet theSelection, SearchParameters theSearchParameters, 
+							     boolean showWindows, int theNrThreads, JFrame theMainWindow)
 	{
 		TargetType aTargetType = theSearchParameters.getTargetConcept().getTargetType();
 
@@ -28,12 +29,13 @@ public class Process
 		{
 			case SINGLE_NOMINAL :
 			{
-				//recompute itsPositiveCount, as we may be dealing with cross-validation here, and hence a smaller number
+				//recompute itsPositiveCount, as we may be dealing with cross-validation or a selection here, and hence a smaller number
 				TargetConcept aTargetConcept = theSearchParameters.getTargetConcept();
 				String aTargetValue = aTargetConcept.getTargetValue();
-				int itsPositiveCount = aTargetConcept.getPrimaryTarget().countValues(aTargetValue);
+				int aPositiveCount = aTargetConcept.getPrimaryTarget().countValues(aTargetValue, theSelection);
+				Log.logCommandLine("Process.runSubgroupDiscovery: positive count: " + aPositiveCount);
 
-				aSubgroupDiscovery = new SubgroupDiscovery(theSearchParameters, theTable, itsPositiveCount, theMainWindow);
+				aSubgroupDiscovery = new SubgroupDiscovery(theSearchParameters, theTable, theSelection, aPositiveCount, theMainWindow);
 				break;
 			}
 			case SINGLE_NUMERIC :
@@ -42,65 +44,62 @@ public class Process
 				// not fully implemented yet
 				if (CAUC_HEAVY)
 				{
-					caucHeavy(theTable, theFold, theBitSet, theSearchParameters, showWindows, theNrThreads);
+					caucHeavy(theTable, theFold, theSelection, theSearchParameters, showWindows, theNrThreads);
 					return null;
 				}
 				else if (SubgroupDiscovery.TEMPORARY_CODE)
 				{
-					temporaryCode(theTable, theSearchParameters);
+					temporaryCode(theTable, theSelection, theSearchParameters);
 					return null;
 				}
 				else
 				{
 					//recompute this number, as we may be dealing with cross-validation here, and hence a different value
-					float itsTargetAverage = theSearchParameters.getTargetConcept().getPrimaryTarget().getAverage();
-					Log.logCommandLine("average: " + itsTargetAverage);
-					aSubgroupDiscovery = new SubgroupDiscovery(theSearchParameters, theTable, itsTargetAverage, theMainWindow);
+					float aTargetAverage = theSearchParameters.getTargetConcept().getPrimaryTarget().getAverage(theSelection);
+					Log.logCommandLine("average: " + aTargetAverage);
+					aSubgroupDiscovery = new SubgroupDiscovery(theSearchParameters, theTable, theSelection, aTargetAverage, theMainWindow);
 				}
 				break;
 			}
 			case MULTI_NUMERIC :
 			{
-				aSubgroupDiscovery = new SubgroupDiscovery(theTable, theMainWindow, theSearchParameters);
+				aSubgroupDiscovery = new SubgroupDiscovery(theTable, theSelection, theMainWindow, theSearchParameters);
 				break;
 			}
 			case MULTI_LABEL :
 			{
-				aSubgroupDiscovery = new SubgroupDiscovery(theSearchParameters, theTable, theMainWindow);
+				aSubgroupDiscovery = new SubgroupDiscovery(theSearchParameters, theTable, theSelection, theMainWindow);
 				break;
 			}
 			case DOUBLE_REGRESSION :
 			{
-				aSubgroupDiscovery = new SubgroupDiscovery(theSearchParameters, theTable, true, theMainWindow);
+				aSubgroupDiscovery = new SubgroupDiscovery(theSearchParameters, theTable, theSelection, true, theMainWindow);
 				break;
 			}
-            case DOUBLE_CORRELATION :
-            {
-                aSubgroupDiscovery = new SubgroupDiscovery(theSearchParameters, theTable, false, theMainWindow);
-                break;
-            }
-            case DOUBLE_BINARY :
-            {
-                // pass as if correlation
-                aSubgroupDiscovery = new SubgroupDiscovery(theSearchParameters, theTable, false, theMainWindow);
-                break;
-            }
+			case DOUBLE_CORRELATION :
+			{
+				aSubgroupDiscovery = new SubgroupDiscovery(theSearchParameters, theTable, theSelection, false, theMainWindow);
+				break;
+			}
+			case DOUBLE_BINARY :
+			{
+				// pass as if correlation
+				aSubgroupDiscovery = new SubgroupDiscovery(theSearchParameters, theTable, theSelection, false, theMainWindow);
+				break;
+			}
 			case SCAPE :
 			{
-				aSubgroupDiscovery = new SubgroupDiscovery(theMainWindow, theSearchParameters, theTable);
+				aSubgroupDiscovery = new SubgroupDiscovery(theMainWindow, theSearchParameters, theTable, theSelection);
 				break;
 			}
 			case LABEL_RANKING :
 			{
-				aSubgroupDiscovery = new SubgroupDiscovery(theSearchParameters, theMainWindow, theTable);
+				aSubgroupDiscovery = new SubgroupDiscovery(theSearchParameters, theMainWindow, theTable, theSelection);
 				break;
 			}
 			default :
 			{
-				throw new AssertionError(String.format("%s: %s '%s' not implemented",
-									Process.class.getName(),
-									TargetType.class.getName(),
-									aTargetType));
+				throw new AssertionError(String.format("%s: %s '%s' not implemented", Process.class.getName(), TargetType.class.getName(), aTargetType));
 			}
 		}
 
@@ -141,11 +140,11 @@ public class Process
 			 */
 			for (Subgroup s : aSubgroupDiscovery.getResult())
 				s.reviveMembers();
-			new ResultWindow(theTable, aSubgroupDiscovery, theFold, theBitSet);
+			new ResultWindow(theTable, theSelection, aSubgroupDiscovery);
 		}
 
 		if (CAUC_LIGHT)
-			caucLight(aSubgroupDiscovery, theBitSet);
+			caucLight(aSubgroupDiscovery, theSelection);
 
 /*		// temporary bonus results for CAUC experimentation
 		SubgroupSet aSDResult = aSubgroupDiscovery.getResult();
@@ -431,7 +430,7 @@ public class Process
 		new CAUCWindow(theTarget, theStatistics);
 	}
 
-	private static final void temporaryCode(Table theTable, SearchParameters theSearchParameters)
+	private static final void temporaryCode(Table theTable, BitSet theSelection, SearchParameters theSearchParameters)
 	{
 		TargetConcept aTargetConcept = theSearchParameters.getTargetConcept();
 		assert aTargetConcept.getTargetType() == TargetType.SINGLE_NUMERIC;
@@ -455,19 +454,19 @@ public class Process
 		String aPath = String.format("%s_%d", theTable.getName(), aTime);
 
 		// XXX aTargetAverage could be a dummy value
-		float aTargetAverage = aTarget.getAverage();
+		float aTargetAverage = aTarget.getAverage(theSelection);
 
 //		aMaxNrSplitPoints = 75;
 		// run everything for Equal Height and Equal Width
 		for (int i = 1; i <= aMaxNrSplitPoints; ++i)
 		{
-			temporaryCodeHelper(theTable, theSearchParameters, aTargetAverage, i, false, aPath);
-			temporaryCodeHelper(theTable, theSearchParameters, aTargetAverage, i, true, aPath);
+			temporaryCodeHelper(theTable, theSelection, theSearchParameters, aTargetAverage, i, false, aPath);
+			temporaryCodeHelper(theTable, theSelection, theSearchParameters, aTargetAverage, i, true, aPath);
 		}
 
 		// also run the original code once
 		SubgroupDiscovery.TEMPORARY_CODE = false;
-		SubgroupDiscovery aSubgroupDiscovery = new SubgroupDiscovery(theSearchParameters, theTable, aTargetAverage, null);
+		SubgroupDiscovery aSubgroupDiscovery = new SubgroupDiscovery(theSearchParameters, theTable, theSelection, aTargetAverage, null);
 		aSubgroupDiscovery.mine(System.currentTimeMillis(), 1);
 
 		String aFileName = String.format("%s_%s.txt", aPath, "ORIG");
@@ -479,7 +478,8 @@ public class Process
 		System.out.println("Done");
 	}
 
-	private static final void temporaryCodeHelper(Table theTable, SearchParameters theSearchParameters, float theTargetAverage, int theNrSplitPoints, boolean useEqualWidth, String thePath)
+	private static final void temporaryCodeHelper(Table theTable, BitSet theSelection, SearchParameters theSearchParameters, 
+						      float theTargetAverage, int theNrSplitPoints, boolean useEqualWidth, String thePath)
 	{
 		SubgroupDiscovery.TEMPORARY_CODE = true;
 		SubgroupDiscovery.TEMPORARY_CODE_NR_SPLIT_POINTS = theNrSplitPoints;
@@ -488,7 +488,7 @@ public class Process
 		String aDiscretisationType = useEqualWidth ? "EW" : "EH";
 		System.out.format("%nrunning: %s %d%n", aDiscretisationType, theNrSplitPoints);
 
-		SubgroupDiscovery aSubgroupDiscovery = new SubgroupDiscovery(theSearchParameters, theTable, theTargetAverage, null);
+		SubgroupDiscovery aSubgroupDiscovery = new SubgroupDiscovery(theSearchParameters, theTable, theSelection, theTargetAverage, null);
 		aSubgroupDiscovery.mine(System.currentTimeMillis(), 1);
 
 		String aFileName = String.format("%s_%s_%05d.txt", thePath, aDiscretisationType, theNrSplitPoints);
