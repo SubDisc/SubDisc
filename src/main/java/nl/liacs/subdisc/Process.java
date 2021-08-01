@@ -33,7 +33,6 @@ public class Process
 				TargetConcept aTargetConcept = theSearchParameters.getTargetConcept();
 				String aTargetValue = aTargetConcept.getTargetValue();
 				int aPositiveCount = aTargetConcept.getPrimaryTarget().countValues(aTargetValue, theSelection);
-				Log.logCommandLine("Process.runSubgroupDiscovery: positive count: " + aPositiveCount);
 
 				aSubgroupDiscovery = new SubgroupDiscovery(theSearchParameters, theTable, theSelection, aPositiveCount, theMainWindow);
 				break;

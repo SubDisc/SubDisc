@@ -2148,7 +2148,7 @@ public class Column implements XMLNodeInterface
 			if (theTarget.get(i))
 				c++;
 		}
-		System.out.println("buildSorted: positive count = " + c);
+//		System.out.println("buildSorted: positive count = " + c);
 //		System.out.println("itsSortIndex");
 //		for (int i=0; i<itsSortIndex.length; i++)
 //			System.out.println("   " + i + ": " + (itsSortIndex[i] & MASK_OFF) + ", " + ((itsSortIndex[i] >= 0) ? "true" : "false"));
@@ -2234,7 +2234,7 @@ public class Column implements XMLNodeInterface
 		int[] aCnt = new int[itsSortedFloats.length];
 		int[] aPos = new int[itsSortedFloats.length];
 
-		System.out.println("count: " + theBitSet.cardinality());
+//		System.out.println("count: " + theBitSet.cardinality());
 		int c = 0;
 		for (int i = theBitSet.nextSetBit(0); i >= 0; i = theBitSet.nextSetBit(i + 1))
 		{
@@ -2248,15 +2248,15 @@ public class Column implements XMLNodeInterface
 			else
 				++aCnt[(MASK_OFF & idx)];
 		}
-		System.out.println("pos count: " + c);
-		int aC = 0;
-		int aP = 0;
-		for (int i=0; i<aCnt.length; i++)
-		{
-			aC += aCnt[i];
-			aP += aPos[i];
-			System.out.println("---" + i + ", " + itsSortedFloats[i] + ", " + aCnt[i] + ", " + aPos[i] + ", " + aC + ", " + aP);
-		}
+//		System.out.println("pos count: " + c);
+//		int aC = 0;
+//		int aP = 0;
+//		for (int i=0; i<aCnt.length; i++)
+//		{
+//			aC += aCnt[i];
+//			aP += aPos[i];
+//			System.out.println("---" + i + ", " + itsSortedFloats[i] + ", " + aCnt[i] + ", " + aPos[i] + ", " + aC + ", " + aP);
+//		}
 
 		return new ValueCountTP(aCnt, aPos);
 	}
