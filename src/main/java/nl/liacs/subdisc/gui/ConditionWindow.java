@@ -34,7 +34,7 @@ public class ConditionWindow extends JDialog implements ActionListener, ChangeLi
 
 		setIconImage(MiningWindow.ICON);
 		setLocation(200, 200);
-		setSize(new Dimension(300, 200));
+		setSize(new Dimension(300, 170));
 		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		setVisible(true);
 	}
@@ -71,9 +71,6 @@ public class ConditionWindow extends JDialog implements ActionListener, ChangeLi
 		itsComboBoxOperator = GUI.buildComboBox(new String[0], OPERATOR_BOX, this);
 		aSpecificsLabels.add(itsComboBoxOperator);
 		Column aColumn = itsColumnList.get(0);
-		for (Operator anOperator : Operator.getOperators(aColumn.getType()))
-			if (anOperator.isSimple())
-				itsComboBoxOperator.addItem(anOperator.toString());
 
 		//value (numeric)
 		itsTextFieldValue = GUI.buildTextField("0");
@@ -81,8 +78,8 @@ public class ConditionWindow extends JDialog implements ActionListener, ChangeLi
 		//value (nominal)
 		itsComboBoxValue = GUI.buildComboBox(new String[0], OPERATOR_BOX, this);
 		aSpecificsLabels.add(itsComboBoxValue);
-		for (String aValue : aColumn.getDomain())
-			itsComboBoxValue.addItem(aValue); 
+
+		updateOperatorValue();
 
 		aNorthPanel.add(aPanelLabels, BorderLayout.WEST);
 		aNorthPanel.add(aSpecificsLabels, BorderLayout.EAST);
@@ -96,6 +93,35 @@ public class ConditionWindow extends JDialog implements ActionListener, ChangeLi
 		JButton aDelete = GUI.buildButton("Delete", 'D', "delete", this);
 		aPanelButtons.add(aDelete, BorderLayout.SOUTH);
 		add(aPanelButtons, BorderLayout.SOUTH);
+	}
+
+	//set the operator and values according to the currently selected column
+	private void updateOperatorValue()
+	{
+		itsComboBoxOperator.removeAllItems();
+		itsComboBoxValue.removeAllItems();		//set operator
+
+		//find selected Column
+		Column aColumn = itsColumnList.get(0);
+		String anAttribute = (String) itsComboBoxAttribute.getSelectedItem();
+		for (Column aC : itsColumnList)
+			if (aC.getName().equals(anAttribute))
+				aColumn = aC;
+		for (Operator anOperator : Operator.getOperators(aColumn.getType()))
+			if (anOperator.isSimple())
+				itsComboBoxOperator.addItem(anOperator.toString());
+		if (aColumn.getType() == AttributeType.NOMINAL)
+		{
+			for (String aValue : aColumn.getDomain())
+				itsComboBoxValue.addItem(aValue); 
+			itsComboBoxValue.setVisible(true);
+			itsTextFieldValue.setVisible(false);
+		}
+		else
+		{
+			itsComboBoxValue.setVisible(false);
+			itsTextFieldValue.setVisible(true);
+		}
 	}
 
 	@Override
@@ -146,8 +172,17 @@ public class ConditionWindow extends JDialog implements ActionListener, ChangeLi
 					if (anOperator.isSimple())
 						itsComboBoxOperator.addItem(anOperator.toString());
 				if (aColumn.getType() == AttributeType.NOMINAL)
+				{
 					for (String aValue : aColumn.getDomain())
 						itsComboBoxValue.addItem(aValue); 
+					itsComboBoxValue.setVisible(true);
+					itsTextFieldValue.setVisible(false);
+				}
+				else
+				{
+					itsComboBoxValue.setVisible(false);
+					itsTextFieldValue.setVisible(true);
+				}
 
 			}
 
