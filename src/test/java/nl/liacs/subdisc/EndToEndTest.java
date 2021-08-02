@@ -22,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class EndToEndTest 
 {
 	@Test
-	@DisplayName("Check end-to-end run on Adult.txt")
+	@DisplayName("Check end-to-end run on Adult.txt using SINGLE_NOMINAL")
 	public void testAdult1()
 	{
 		//SINGLE_NOMINAL
@@ -36,13 +36,14 @@ public class EndToEndTest
 	        assertEquals(aTable.getNrRows(), 1000);
         	assertEquals(aTable.getNrColumns(), 15);
 
-		//set selection
+		//set target concept
 		Column aTarget = aTable.getColumns().get(14); //get target
 		TargetConcept aTC = new TargetConcept();
-		aTC.setTargetType("single nominal");
+		aTC.setTargetType(TargetType.SINGLE_NOMINAL);
 		aTC.setPrimaryTarget(aTarget);
 		aTC.setTargetValue("gr50K");
 
+		//set search parameters
 		SearchParameters anSP = new SearchParameters();
 		anSP.setTargetConcept(aTC);
 		anSP.setQualityMeasure(QM.CORTANA_QUALITY);
@@ -52,10 +53,10 @@ public class EndToEndTest
 		anSP.setMaximumCoverageFraction(1f);
 		anSP.setMaximumSubgroups(1000);
 		anSP.setMaximumTime(1000); //1000 seconds
-		anSP.setSearchStrategy("beam");
+		anSP.setSearchStrategy(SearchStrategy.BEAM);
 		anSP.setNominalSets(false);
-		anSP.setNumericOperators("<html>&#8804;, &#8805;</html>");
-		anSP.setNumericStrategy("best");
+		anSP.setNumericOperators(NumericOperatorSetting.NORMAL);
+		anSP.setNumericStrategy(NumericStrategy.NUMERIC_BEST);
 		anSP.setSearchStrategyWidth(10);
 		anSP.setNrBins(8);
 		anSP.setNrThreads(1);
@@ -63,7 +64,6 @@ public class EndToEndTest
 
 		//actual tests
 		assertEquals(aTarget.countValues("gr50K", null), 232); //how many positives in dataset
-
 		assertEquals(anSD.getNumberOfSubgroups(), 10);
 		SubgroupSet aResult = anSD.getResult();
 		Iterator<Subgroup> anIterator = aResult.iterator();
@@ -129,6 +129,62 @@ public class EndToEndTest
 		assertEquals(roundToFive(aSubgroup.getMeasureValue()), 0,12477f);
 		assertEquals(roundToFive(aSubgroup.getSecondaryStatistic()), 0,41129f);
 		assertEquals(aSubgroup.getTertiaryStatistic(), 51.0f);
+	}
+
+	@Test
+	@DisplayName("Check end-to-end run on Adult.txt using SINGLE_NUMERIC")
+	public void testAdult2()
+	{
+		//SINGLE_NUMERIC
+		//d=1
+		//numeric strategy = best
+
+		DataLoaderTXT aLoader = new DataLoaderTXT(new File("src/test/resources/adult.txt"));
+        	Table aTable = aLoader.getTable();
+
+		//sanity check
+	        assertEquals(aTable.getNrRows(), 1000);
+        	assertEquals(aTable.getNrColumns(), 15);
+
+		//set target concept
+		Column aTarget = aTable.getColumns().get(0); //get target (age)
+		TargetConcept aTC = new TargetConcept();
+		aTC.setTargetType(TargetType.SINGLE_NUMERIC);
+		aTC.setPrimaryTarget(aTarget);
+
+		//set search parameters
+		SearchParameters anSP = new SearchParameters();
+		anSP.setTargetConcept(aTC);
+		anSP.setQualityMeasure(QM.EXPLAINED_VARIANCE);
+		anSP.setQualityMeasureMinimum(0f);
+		anSP.setSearchDepth(1);
+		anSP.setMinimumCoverage(2);
+		anSP.setMaximumCoverageFraction(1f);
+		anSP.setMaximumSubgroups(1000);
+		anSP.setMaximumTime(1000); //1000 seconds
+		anSP.setSearchStrategy(SearchStrategy.BEAM);
+		anSP.setNominalSets(false);
+		anSP.setNumericOperators(NumericOperatorSetting.NORMAL);
+		anSP.setNumericStrategy(NumericStrategy.NUMERIC_BEST);
+		anSP.setSearchStrategyWidth(10);
+		anSP.setNrBins(8);
+		anSP.setNrThreads(1);
+//		SubgroupDiscovery anSD = Process.runSubgroupDiscovery(aTable, 0, null, anSP, true, 1, null);
+
+		//actual tests
+		assertEquals(aTarget.getAverage(null), 38.051f); //how many positives in dataset
+//		assertEquals(anSD.getNumberOfSubgroups(), 10);
+//		SubgroupSet aResult = anSD.getResult();
+//		Iterator<Subgroup> anIterator = aResult.iterator();
+
+		//subgroup 1
+//		Subgroup aSubgroup  = anIterator.next();
+//		assertEquals(aSubgroup.toString(), "marital-status = 'Married-civ-spouse'");
+//		assertEquals(aSubgroup.getCoverage(), 443);
+//		assertEquals(roundToFive(aSubgroup.getMeasureValue()), 0.51760f);
+//		assertEquals(roundToFive(aSubgroup.getSecondaryStatistic()), 0.44018f);
+//		assertEquals(aSubgroup.getTertiaryStatistic(), 195.0f);
+
 	}
 
 	private float roundToFive(double f) { return (float) Math.round(f*100000)/100000; }

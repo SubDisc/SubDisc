@@ -31,7 +31,7 @@ public enum ColumnConditionBasesBuilder
 		assert (!useSets || (tc.getTargetType() == TargetType.SINGLE_NOMINAL));
 
 		NumericOperatorSetting n = theSearchParameters.getNumericOperatorSetting();
-		boolean isInterval = (n == NumericOperatorSetting.NUMERIC_INTERVALS);
+		boolean isInterval = (n == NumericOperatorSetting.INTERVALS);
 		// BestInterval only allowed for SINGLE_NOMINAL
 		assert (!isInterval || (tc.getTargetType() == TargetType.SINGLE_NOMINAL));
 
@@ -110,23 +110,15 @@ public enum ColumnConditionBasesBuilder
 	private static final boolean isOperatorCodeCheckRequired()
 	{
 		EnumSet<Operator> a = EnumSet.allOf(Operator.class);
-		EnumSet<Operator> b = EnumSet.of(Operator.ELEMENT_OF,
-											Operator.EQUALS,
-											Operator.LESS_THAN_OR_EQUAL,
-											Operator.GREATER_THAN_OR_EQUAL,
-											Operator.BETWEEN);
+		EnumSet<Operator> b = EnumSet.of(Operator.ELEMENT_OF, Operator.EQUALS, Operator.LESS_THAN_OR_EQUAL, Operator.GREATER_THAN_OR_EQUAL, Operator.BETWEEN);
 		return (!a.equals(b));
 	}
 
 	private static final boolean isNumericOperatorSettingCodeCheckRequired()
 	{
 		EnumSet<NumericOperatorSetting> a = EnumSet.allOf(NumericOperatorSetting.class);
-		EnumSet<NumericOperatorSetting> b = EnumSet.of(NumericOperatorSetting.NUMERIC_NORMAL,
-														NumericOperatorSetting.NUMERIC_LEQ,
-														NumericOperatorSetting.NUMERIC_GEQ,
-														NumericOperatorSetting.NUMERIC_ALL,
-														NumericOperatorSetting.NUMERIC_EQ,
-														NumericOperatorSetting.NUMERIC_INTERVALS);
+		EnumSet<NumericOperatorSetting> b = EnumSet.of(NumericOperatorSetting.NORMAL, NumericOperatorSetting.LEQ, NumericOperatorSetting.GEQ, NumericOperatorSetting.ALL,
+							       NumericOperatorSetting.EQ, NumericOperatorSetting.INTERVALS);
 		return (!a.equals(b));
 	}
 
@@ -208,7 +200,7 @@ public enum ColumnConditionBasesBuilder
 	{
 		EnumSet<Operator> e = EnumSet.noneOf(Operator.class);
 		EnumSet<NumericOperatorSetting> nos = EnumSet.allOf(NumericOperatorSetting.class);
-		nos.remove(NumericOperatorSetting.NUMERIC_INTERVALS);
+		nos.remove(NumericOperatorSetting.INTERVALS);
 
 		for (NumericOperatorSetting n : nos)
 			e.addAll(n.getOperators());
@@ -240,7 +232,7 @@ public enum ColumnConditionBasesBuilder
 		}
 	}
 
-	static { assert (NumericOperatorSetting.NUMERIC_INTERVALS.getOperators().equals(EnumSet.of(Operator.BETWEEN))); }
+	static { assert (NumericOperatorSetting.INTERVALS.getOperators().equals(EnumSet.of(Operator.BETWEEN))); }
 	final class ColumnConditionBasesNumericIntervals extends ColumnConditionBases
 	{
 		private final ConditionBase itsConditionBase;

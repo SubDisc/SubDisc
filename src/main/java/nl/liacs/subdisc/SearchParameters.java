@@ -97,6 +97,11 @@ public class SearchParameters implements XMLNodeInterface
 		itsSearchStrategy = SearchStrategy.fromString(theSearchStrategyName);
 	}
 
+	public void setSearchStrategy(SearchStrategy theSearchStrategy)
+	{
+		itsSearchStrategy = theSearchStrategy;
+	}
+
 	public boolean getNominalSets()
 	{
 		if (itsTargetConcept.getTargetType() != TargetType.SINGLE_NOMINAL) //other than SINGLE_NOMINAL?
@@ -112,17 +117,27 @@ public class SearchParameters implements XMLNodeInterface
 		if (itsNumericStrategy.isForHalfInterval())
 			return itsNumericOperatorSetting;
 		else
-			return NumericOperatorSetting.NUMERIC_INTERVALS;
+			return NumericOperatorSetting.INTERVALS;
 	}
+
 	public void setNumericOperators(String theNumericOperatorsName)
 	{
 		itsNumericOperatorSetting = NumericOperatorSetting.fromString(theNumericOperatorsName);
+	}
+
+	public void setNumericOperators(NumericOperatorSetting theNumericOperators)
+	{
+		itsNumericOperatorSetting = theNumericOperators;
 	}
 
 	public NumericStrategy getNumericStrategy() { return itsNumericStrategy; }
 	public void setNumericStrategy(String theNumericStrategyName)
 	{
 		itsNumericStrategy = NumericStrategy.fromString(theNumericStrategyName);
+	}
+	public void setNumericStrategy(NumericStrategy theNumericStrategy)
+	{
+		itsNumericStrategy = theNumericStrategy;
 	}
 
 	public int getSearchStrategyWidth()			{ return itsSearchStrategyWidth; }

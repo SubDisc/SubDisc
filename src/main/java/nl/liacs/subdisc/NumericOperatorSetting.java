@@ -4,7 +4,7 @@ import java.util.*;
 
 public enum NumericOperatorSetting implements EnumInterface
 {
-	NUMERIC_NORMAL("<html>&#8804;, &#8805;</html>")
+	NORMAL("<html>&#8804;, &#8805;</html>")
 	{
 		@Override
 		EnumSet<Operator> getOperators()
@@ -19,7 +19,7 @@ public enum NumericOperatorSetting implements EnumInterface
 			return false;
 		}
 	},
-	NUMERIC_LEQ("<html>&#8804;</html>")
+	LEQ("<html>&#8804;</html>")
 	{
 		@Override
 		EnumSet<Operator> getOperators()
@@ -33,7 +33,7 @@ public enum NumericOperatorSetting implements EnumInterface
 			return false;
 		}
 	},
-	NUMERIC_GEQ("<html>&#8805;</html>")
+	GEQ("<html>&#8805;</html>")
 	{
 		@Override
 		EnumSet<Operator> getOperators()
@@ -47,7 +47,7 @@ public enum NumericOperatorSetting implements EnumInterface
 			return false;
 		}
 	},
-	NUMERIC_ALL("<html>&#8804;, &#8805;, =</html>")
+	ALL("<html>&#8804;, &#8805;, =</html>")
 	{
 		@Override
 		EnumSet<Operator> getOperators()
@@ -65,7 +65,7 @@ public enum NumericOperatorSetting implements EnumInterface
 			return true;
 		}
 	},
-	NUMERIC_EQ("=")
+	EQ("=")
 	{
 		@Override
 		EnumSet<Operator> getOperators()
@@ -79,7 +79,7 @@ public enum NumericOperatorSetting implements EnumInterface
 			return true;
 		}
 	},
-	NUMERIC_INTERVALS("in")
+	INTERVALS("in")
 	{
 		@Override
 		EnumSet<Operator> getOperators()
@@ -153,11 +153,11 @@ public enum NumericOperatorSetting implements EnumInterface
 	public static List<NumericOperatorSetting> getNormalValues()
 	{
 		List<NumericOperatorSetting> aResult = new ArrayList<NumericOperatorSetting>(5);
-		aResult.add(NUMERIC_NORMAL);
-		aResult.add(NUMERIC_LEQ);
-		aResult.add(NUMERIC_GEQ);
-		aResult.add(NUMERIC_ALL);
-		aResult.add(NUMERIC_EQ);
+		aResult.add(NORMAL);
+		aResult.add(LEQ);
+		aResult.add(GEQ);
+		aResult.add(ALL);
+		aResult.add(EQ);
 		//no intervals!
 		return aResult;
 	}
@@ -169,7 +169,7 @@ public enum NumericOperatorSetting implements EnumInterface
 	 */
 	public static NumericOperatorSetting getDefault()
 	{
-		return NumericOperatorSetting.NUMERIC_NORMAL;
+		return NumericOperatorSetting.NORMAL;
 	}
 
 	/*
@@ -179,17 +179,17 @@ public enum NumericOperatorSetting implements EnumInterface
 	@Deprecated
 	static boolean check(NumericOperatorSetting theNO, Operator theOperator)
 	{
-		if (theNO == NUMERIC_NORMAL && (theOperator == Operator.LESS_THAN_OR_EQUAL || theOperator == Operator.GREATER_THAN_OR_EQUAL))
+		if (theNO == NORMAL && (theOperator == Operator.LESS_THAN_OR_EQUAL || theOperator == Operator.GREATER_THAN_OR_EQUAL))
 			return true;
-		if (theNO == NUMERIC_LEQ && theOperator == Operator.LESS_THAN_OR_EQUAL)
+		if (theNO == LEQ && theOperator == Operator.LESS_THAN_OR_EQUAL)
 			return true;
-		if (theNO == NUMERIC_GEQ && theOperator == Operator.GREATER_THAN_OR_EQUAL)
+		if (theNO == GEQ && theOperator == Operator.GREATER_THAN_OR_EQUAL)
 			return true;
-		if (theNO == NUMERIC_EQ && theOperator == Operator.EQUALS)
+		if (theNO == EQ && theOperator == Operator.EQUALS)
 			return true;
-		if (theNO == NUMERIC_ALL && (theOperator == Operator.LESS_THAN_OR_EQUAL || theOperator == Operator.GREATER_THAN_OR_EQUAL || theOperator == Operator.EQUALS))
+		if (theNO == ALL && (theOperator == Operator.LESS_THAN_OR_EQUAL || theOperator == Operator.GREATER_THAN_OR_EQUAL || theOperator == Operator.EQUALS))
 			return true;
-		if (theNO == NUMERIC_INTERVALS && theOperator == Operator.BETWEEN)
+		if (theNO ==INTERVALS && theOperator == Operator.BETWEEN)
 			return true;
 
 		return false;

@@ -1081,7 +1081,7 @@ System.out.println("parent coverage: " + aParentCoverage);
 								// no Refinement possible for this Column
 								if (sgOperator == Operator.EQUALS)
 								{
-									assert (EnumSet.of(NumericOperatorSetting.NUMERIC_ALL, NumericOperatorSetting.NUMERIC_EQ).contains(itsSearchParameters.getNumericOperatorSetting()));
+									assert (EnumSet.of(NumericOperatorSetting.ALL, NumericOperatorSetting.EQ).contains(itsSearchParameters.getNumericOperatorSetting()));
 									skipThisCB = true;
 									itsSkipCount.incrementAndGet();
 									if (DEBUG_PRINTS_FOR_SKIP)
@@ -1106,7 +1106,7 @@ System.out.println("parent coverage: " + aParentCoverage);
 									// but setting up the warning and performing
 									// the if-checks all the time costs more
 									// than it saves
-									assert (EnumSet.of(Operator.LESS_THAN_OR_EQUAL, Operator.GREATER_THAN_OR_EQUAL).contains(sgOperator) && EnumSet.of(NumericOperatorSetting.NUMERIC_NORMAL, NumericOperatorSetting.NUMERIC_LEQ, NumericOperatorSetting.NUMERIC_GEQ, NumericOperatorSetting.NUMERIC_ALL).contains(itsSearchParameters.getNumericOperatorSetting()));
+									assert (EnumSet.of(Operator.LESS_THAN_OR_EQUAL, Operator.GREATER_THAN_OR_EQUAL).contains(sgOperator) && EnumSet.of(NumericOperatorSetting.NORMAL, NumericOperatorSetting.LEQ, NumericOperatorSetting.GEQ, NumericOperatorSetting.ALL).contains(itsSearchParameters.getNumericOperatorSetting()));
 									eq_WarningAtIndex = l;
 									if (DEBUG_PRINTS_FOR_WARN)
 										Log.logCommandLine(String.format("EQWARN%d\t%s AND %s%n", l, itsSubgroup, cb));
@@ -1118,7 +1118,7 @@ System.out.println("parent coverage: " + aParentCoverage);
 							if ((sgColumnType == AttributeType.NUMERIC) && !useBestIntervals && isBestBinsBins)
 							{
 								// warn, never skip
-								assert (!isCBOEquals && (EnumSet.of(Operator.BETWEEN, Operator.LESS_THAN_OR_EQUAL, Operator.GREATER_THAN_OR_EQUAL).contains(sgOperator) && EnumSet.of(NumericOperatorSetting.NUMERIC_NORMAL, NumericOperatorSetting.NUMERIC_LEQ, NumericOperatorSetting.NUMERIC_GEQ, NumericOperatorSetting.NUMERIC_ALL).contains(itsSearchParameters.getNumericOperatorSetting())));
+								assert (!isCBOEquals && (EnumSet.of(Operator.BETWEEN, Operator.LESS_THAN_OR_EQUAL, Operator.GREATER_THAN_OR_EQUAL).contains(sgOperator) && EnumSet.of(NumericOperatorSetting.NORMAL, NumericOperatorSetting.LEQ, NumericOperatorSetting.GEQ, NumericOperatorSetting.ALL).contains(itsSearchParameters.getNumericOperatorSetting())));
 								eq_WarningAtIndex = l;
 								if (DEBUG_PRINTS_FOR_WARN)
 									Log.logCommandLine(String.format("INWARN%d\t%s AND %s%n", l, itsSubgroup, cb));
@@ -2524,7 +2524,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		assert (itsSearchParameters.getTargetType() == TargetType.SINGLE_NOMINAL);
 		assert (isDirectSingleBinary());
 		assert (theColumnConditionBases.get(0).getOperator() == Operator.BETWEEN);
-		assert (itsSearchParameters.getNumericOperatorSetting() == NumericOperatorSetting.NUMERIC_INTERVALS);
+		assert (itsSearchParameters.getNumericOperatorSetting() == NumericOperatorSetting.INTERVALS);
 		// when last added Condition is 'Column_x in Interval', ConditionBase
 		// for Column_x should be skipped, as no useful Refinement is possible
 		// assumes only one Operator for Columns in BestInterval-scenario
@@ -4292,9 +4292,9 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			if (!useBestIntervals) // assumes mutual-exclusivity
 			{
 				// only ALL|BEST use Operator.EQUALS, BEST_BINS|BINS use BETWEEN
-				// but all use NumericOperatorSetting NUMERIC_ALL|NUMERIC_EQ
+				// but all use NumericOperatorSetting ALL|EQ
 				// so latter check is required
-				boolean includesEquals = EnumSet.of(NumericOperatorSetting.NUMERIC_ALL, NumericOperatorSetting.NUMERIC_EQ).contains(theSearchParameters.getNumericOperatorSetting());
+				boolean includesEquals = EnumSet.of(NumericOperatorSetting.ALL, NumericOperatorSetting.EQ).contains(theSearchParameters.getNumericOperatorSetting());
 				boolean isAllBest      = EnumSet.of(NumericStrategy.NUMERIC_ALL, NumericStrategy.NUMERIC_BEST).contains(ns);
 				useNumericEquals = (includesEquals && isAllBest);
 			}
@@ -4403,12 +4403,12 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			isBreadthFirstNumericAllStrategyNumericAllOperator =
 				s == SearchStrategy.BREADTH_FIRST &&
 				n == NumericStrategy.NUMERIC_ALL &&
-				o == NumericOperatorSetting.NUMERIC_ALL;
+				o == NumericOperatorSetting.ALL;
 
 			// [ (C >= x)  ^ ... ^ (C <= x) ] ^ (C.op.v) is useless
 			isNumericNormalOrNumericAll =
-				o == NumericOperatorSetting.NUMERIC_NORMAL ||
-				o == NumericOperatorSetting.NUMERIC_ALL;
+				o == NumericOperatorSetting.NORMAL ||
+				o == NumericOperatorSetting.ALL;
 		}
 
 		// tests on existing ConditionList and 'value-free' Refinement
@@ -4560,7 +4560,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		return (ops.size() == 1) && (ops.contains(Operator.EQUALS));
 	}
 	/*
-	 * test assumption that NUMERIC_ALL is the only NumericOperatorSetting
+	 * test assumption that ALL is the only NumericOperatorSetting
 	 * that may cause redundancy of the form:
 	 * [ (C >= x)  ^ (C <= x) ^ ... ] -> which selects [ (C = x)  ^ ... ]
 	 * for DEPTH_FIRST-NUMERIC_ALL (C = x) is created on depth=1
@@ -4575,7 +4575,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 				set.contains(Operator.GREATER_THAN_OR_EQUAL) &&
 				set.contains(Operator.EQUALS))
 			{
-				if (s != NumericOperatorSetting.NUMERIC_ALL)
+				if (s != NumericOperatorSetting.ALL)
 					// assumption fails
 					return false;
 			}
@@ -4584,8 +4584,9 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		// assumption holds
 		return true;
 	}
+
 	/*
-	 * test assumption that NUMERIC_NORMAL and NUMERIC_ALL are the only
+	 * test assumption that NORMAL and ALL are the only
 	 * NumericOperatorSettings that contain both '>=' and '<='
 	 * for any ConditionList of size > 2
 	 * if it contains [ (C >= x)  ^ (C <= x) ^ ... ], there is no use in
@@ -4599,8 +4600,8 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			if (set.contains(Operator.LESS_THAN_OR_EQUAL) &&
 				set.contains(Operator.GREATER_THAN_OR_EQUAL))
 			{
-				if (s != NumericOperatorSetting.NUMERIC_NORMAL &&
-					s != NumericOperatorSetting.NUMERIC_ALL)
+				if (s != NumericOperatorSetting.NORMAL &&
+					s != NumericOperatorSetting.ALL)
 					// assumption fails
 					return false;
 			}
@@ -5366,7 +5367,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	private final void evaluateNumericIntervals(Subgroup theParent, BitSet theParentMembers, ColumnConditionBasesNumericIntervals theColumnConditionBases)
 	{
 		assert (Operator.BETWEEN == theColumnConditionBases.get(0).getOperator());
-		assert (NumericOperatorSetting.NUMERIC_INTERVALS == itsSearchParameters.getNumericOperatorSetting());
+		assert (NumericOperatorSetting.INTERVALS == itsSearchParameters.getNumericOperatorSetting());
 		assert (EnumSet.of(NumericStrategy.NUMERIC_INTERVALS,
 				NumericStrategy.NUMERIC_VIKAMINE_CONSECUTIVE_ALL,
 				NumericStrategy.NUMERIC_VIKAMINE_CONSECUTIVE_BEST).contains(itsSearchParameters.getNumericStrategy()));

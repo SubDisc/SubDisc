@@ -86,6 +86,7 @@ public class TargetConcept implements XMLNodeInterface
 	public void setNrTargetAttributes(int theNr) { itsNrTargetAttributes = theNr; }
 	public TargetType getTargetType() { return itsTargetType; }
 	public void setTargetType(String theTargetTypeName) { itsTargetType = TargetType.fromString(theTargetTypeName); }
+	public void setTargetType(TargetType theTargetType) { itsTargetType = theTargetType; }
 
 	public Column getPrimaryTarget() { return itsPrimaryTarget; }
 	public void setPrimaryTarget(Column thePrimaryTarget) { itsPrimaryTarget = thePrimaryTarget; }
