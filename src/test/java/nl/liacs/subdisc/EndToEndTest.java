@@ -60,7 +60,7 @@ public class EndToEndTest
 		anSP.setSearchStrategyWidth(10);
 		anSP.setNrBins(8);
 		anSP.setNrThreads(1);
-		SubgroupDiscovery anSD = Process.runSubgroupDiscovery(aTable, 0, null, anSP, true, 1, null);
+		SubgroupDiscovery anSD = Process.runSubgroupDiscovery(aTable, 0, null, anSP, false, 1, null);
 
 		//actual tests
 		assertEquals(aTarget.countValues("gr50K", null), 232); //how many positives in dataset
@@ -169,7 +169,7 @@ public class EndToEndTest
 		anSP.setSearchStrategyWidth(10);
 		anSP.setNrBins(8);
 		anSP.setNrThreads(1);
-		SubgroupDiscovery anSD = Process.runSubgroupDiscovery(aTable, 0, null, anSP, true, 1, null);
+		SubgroupDiscovery anSD = Process.runSubgroupDiscovery(aTable, 0, null, anSP, false, 1, null);
 
 		//actual tests
 		assertEquals(aTarget.getAverage(null), 38.051f); //how many positives in dataset
