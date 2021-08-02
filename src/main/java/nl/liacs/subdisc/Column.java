@@ -2134,24 +2134,14 @@ public class Column implements XMLNodeInterface
 		boolean isTargetNull = (theTarget == null);
 
 		itsSortedFloats = Function.getUniqueValues(itsFloatz);
-//		System.out.println("itsSortedFloats");
-//		for (int i=0; i<itsSortedFloats.length; i++)
-//			System.out.println("   " + i + ": " + itsSortedFloats[i]);
 		
 		// determine sort-index for each value in Column.itsFloatz
 		itsSortIndex = new int[itsFloatz.length];
-		int c = 0;
 		for (int i = 0; i < itsFloatz.length; ++i)
 		{
 			int idx = Arrays.binarySearch(itsSortedFloats, itsFloatz[i]);
 			itsSortIndex[i] = (isTargetNull || theTarget.get(i)) ? idx : (MASK_ON | idx);
-			if (theTarget.get(i))
-				c++;
 		}
-//		System.out.println("buildSorted: positive count = " + c);
-//		System.out.println("itsSortIndex");
-//		for (int i=0; i<itsSortIndex.length; i++)
-//			System.out.println("   " + i + ": " + (itsSortIndex[i] & MASK_OFF) + ", " + ((itsSortIndex[i] >= 0) ? "true" : "false"));
 	}
 
 	final void removeSorted() { itsSortedFloats = null; itsSortIndex = null; }

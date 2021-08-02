@@ -169,22 +169,40 @@ public class EndToEndTest
 		anSP.setSearchStrategyWidth(10);
 		anSP.setNrBins(8);
 		anSP.setNrThreads(1);
-//		SubgroupDiscovery anSD = Process.runSubgroupDiscovery(aTable, 0, null, anSP, true, 1, null);
+		SubgroupDiscovery anSD = Process.runSubgroupDiscovery(aTable, 0, null, anSP, true, 1, null);
 
 		//actual tests
 		assertEquals(aTarget.getAverage(null), 38.051f); //how many positives in dataset
-//		assertEquals(anSD.getNumberOfSubgroups(), 10);
-//		SubgroupSet aResult = anSD.getResult();
-//		Iterator<Subgroup> anIterator = aResult.iterator();
+		assertEquals(anSD.getNumberOfSubgroups(), 90);
+		SubgroupSet aResult = anSD.getResult();
+		Iterator<Subgroup> anIterator = aResult.iterator();
 
 		//subgroup 1
-//		Subgroup aSubgroup  = anIterator.next();
-//		assertEquals(aSubgroup.toString(), "marital-status = 'Married-civ-spouse'");
-//		assertEquals(aSubgroup.getCoverage(), 443);
-//		assertEquals(roundToFive(aSubgroup.getMeasureValue()), 0.51760f);
-//		assertEquals(roundToFive(aSubgroup.getSecondaryStatistic()), 0.44018f);
-//		assertEquals(aSubgroup.getTertiaryStatistic(), 195.0f);
+		Subgroup aSubgroup  = anIterator.next();
+		assertEquals(aSubgroup.toString(), "marital-status = 'Never-married'");
+		assertEquals(aSubgroup.getCoverage(), 344);
+		assertEquals(roundToFive(aSubgroup.getMeasureValue()), 0.25513f);
+		assertEquals(roundToFive(aSubgroup.getSecondaryStatistic()), 28.74419f);
+		assertEquals(roundToFive(aSubgroup.getTertiaryStatistic()), 10.95279f);
 
+		//subgroup 2
+		aSubgroup  = anIterator.next();
+		assertEquals(aSubgroup.toString(), "relationship = 'Own-child'");
+		assertEquals(aSubgroup.getCoverage(), 151f);
+		assertEquals(roundToFive(aSubgroup.getMeasureValue()), 0.19836f);
+		assertEquals(roundToFive(aSubgroup.getSecondaryStatistic()), 23.96026f);
+		assertEquals(roundToFive(aSubgroup.getTertiaryStatistic()), 7.10763f);
+
+		//subgroup 3
+		aSubgroup  = anIterator.next();
+		assertEquals(aSubgroup.toString(), "relationship = 'Husband'");
+		assertEquals(aSubgroup.getCoverage(), 376f);
+
+		//subgroup 90
+		for (int i=0; i<87; i++)
+			aSubgroup  = anIterator.next();
+		assertEquals(aSubgroup.toString(), "marital-status = 'Married-spouse-absent'");
+		assertEquals(aSubgroup.getCoverage(), 15f);
 	}
 
 	private float roundToFive(double f) { return (float) Math.round(f*100000)/100000; }

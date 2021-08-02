@@ -853,7 +853,6 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 			// Subgroup.getMembers() creates expensive clone, reuse
 			BitSet aParentMembers = itsSubgroup.getMembers();
 			int aParentCoverage   = itsSubgroup.getCoverage();
-System.out.println("parent coverage: " + aParentCoverage);
 			assert (aParentMembers.cardinality() == aParentCoverage);
 
 			ConditionListA aConditionList = itsSubgroup.getConditions();
