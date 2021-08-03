@@ -14,7 +14,6 @@ import org.w3c.dom.*;
  */
 public class TargetConcept implements XMLNodeInterface
 {
-
 	// when adding/removing members be sure to update addNodeTo() and loadNode()
 	// itsMembers
 // FIXME MM
