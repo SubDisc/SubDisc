@@ -69,7 +69,7 @@ public class SelectionTest
 		anSP.setSearchStrategyWidth(10);
 		anSP.setNrBins(8);
 		anSP.setNrThreads(1);
-		SubgroupDiscovery anSD = Process.runSubgroupDiscovery(aTable, 0, aSelection, anSP, true, 1, null);
+		SubgroupDiscovery anSD = Process.runSubgroupDiscovery(aTable, 0, aSelection, anSP, false, 1, null);
 
 		//actual tests
 		assertEquals(aTarget.countValues("t", null), 5); //how many positives in dataset
