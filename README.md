@@ -17,6 +17,12 @@ mvn package
 java -jar target/cortana-1.x.x.jar
 ```
 
+## To test
+The tests are not run by default. To run the tests use
+```bash
+mvn test -DskipTests
+```
+
 ## TODO
 
 * Set version number
