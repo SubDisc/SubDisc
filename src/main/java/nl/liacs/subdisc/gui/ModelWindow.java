@@ -179,7 +179,7 @@ public class ModelWindow extends JFrame implements ActionListener
 			aPlot.getRenderer().setSeriesStroke(0, new BasicStroke(aSubgroupWidth));
 		}
 
-		itsJScrollPaneCenter.setViewportView(new ChartPanel(aChart));
+		itsJScrollPaneCenter.setViewportView(new ChartPanel(aChart, 400, 200, 400, 200, 1000, 800, true, true, true, true, true, true));
 
 		setTitle(theTitle + ": Numeric Distribution");
 		setIconImage(MiningWindow.ICON);
@@ -261,7 +261,7 @@ public class ModelWindow extends JFrame implements ActionListener
 			aLineRenderer.setSeriesStroke(0, new BasicStroke(2.0f));
 		}
 
-		itsJScrollPaneCenter.setViewportView(new ChartPanel(itsChart));
+		itsJScrollPaneCenter.setViewportView(new ChartPanel(itsChart, 400, 200, 400, 200, 1000, 800, true, true, true, true, true, true));
 
 		String aWho = forSubgroup ? ResultWindow.createTitle(theSubgroup) : BASE_MODEL_TEXT;
 		String aType = isRegression ? "Regression" : "Correlation";
