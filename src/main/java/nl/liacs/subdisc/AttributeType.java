@@ -13,10 +13,8 @@ public enum AttributeType implements EnumInterface
 	BINARY("0");
 
 	// used for FileLoading/Column setMissingValue
-	private static final Set<String> BOOLEAN_POSITIVES =
-		new HashSet<String>(Arrays.asList(new String[] { "1", "true" }));
-	private static final Set<String> BOOLEAN_NEGATIVES =
-		new HashSet<String>(Arrays.asList(new String[] { "0", "false" }));
+	private static final Set<String> BOOLEAN_POSITIVES = new HashSet<String>(Arrays.asList(new String[] { "1", "true" }));
+	private static final Set<String> BOOLEAN_NEGATIVES = new HashSet<String>(Arrays.asList(new String[] { "0", "false" }));
 	static final String DEFAULT_BINARY_TRUE_STRING = "1";
 	static final String DEFAULT_BINARY_FALSE_STRING = "0";
 
@@ -38,17 +36,12 @@ public enum AttributeType implements EnumInterface
 	}
 
 	/**
-	 * Returns the AttributeType corresponding to the <code>String</code>
-	 * parameter. If the corresponding AttributeType can not be found, the
-	 * default AttributeType NOMINAL is returned. This method is case
-	 * insensitive.
+	 * Returns the AttributeType corresponding to the <code>String</code> parameter. If the corresponding AttributeType can not be found, the
+	 * default AttributeType NOMINAL is returned. This method is case insensitive.
 	 * 
-	 * @param theText the <code>String</code> corresponding to an
-	 * AtrtibuteType.
+	 * @param theText the <code>String</code> corresponding to an AtrtibuteType.
 	 * 
-	 * @return the AttributeType corresponding to the <code>String</code>
-	 * parameter, or AttributeType NOMINAL if no corresponding AttributeType
-	 * is found.
+	 * @return the AttributeType corresponding to the <code>String</code> parameter, or AttributeType NOMINAL if no corresponding AttributeType is found.
 	 */
 	public static AttributeType fromString(String theText)
 	{
@@ -56,14 +49,7 @@ public enum AttributeType implements EnumInterface
 			if (at.toString().equalsIgnoreCase(theText))
 				return at;
 
-		/*
-		 * theType cannot be resolved to an AttibuteType. Log error and
-		 * return default.
-		 */
-		Log.logCommandLine(
-			String.format("'%s' is not a valid AttributeType. Returning '%s'.",
-					theText,
-					AttributeType.getDefault()));
+		Log.logCommandLine(String.format("'%s' is not a valid AttributeType. Returning '%s'.", theText,	AttributeType.getDefault()));
 		return AttributeType.getDefault();
 	}
 

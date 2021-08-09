@@ -10,7 +10,7 @@ public class DataLoaderTXT implements FileLoaderInterface
 {
 	// should be made available to all loaders (through FileLoaderInterface)
 //	private static final String[] DELIMITERS = { "\\s*\t\\s*", "\\s*,\\s*", "\\s*;\\s*" }; //not sure why the whitespace should be part of the delimiter. Works fine (better actually) without.
-	private static final String[] DELIMITERS = { "\t", ",", ";" };
+	private static final char[] DELIMITERS = { '\t', ',', ';' };
 //	private static final String[] CLEAN_DELIMITERS = { "\t", ",", ";" };
 
 	private Table itsTable = null;
@@ -134,7 +134,7 @@ public class DataLoaderTXT implements FileLoaderInterface
 			String[] aTrueBinaryValues = new String[aNrColumns];
 			String[] aFalseBinaryValues = new String[aNrColumns];
 			// Scanner is faster for long lines, but it is harder to identify faulty lines. Using .split() this would be trivial.
-			Scanner aScanner = new Scanner(aLine).useDelimiter(getDelimiter());
+			Scanner aScanner = new Scanner(aLine).useDelimiter(getDelimiterString());
 			//initialise the true and false binary values for the columns that appear to be binary
 			int aColumn = 0;
 			while (aScanner.hasNext() && aColumn < aNrColumns)
@@ -169,7 +169,11 @@ public class DataLoaderTXT implements FileLoaderInterface
 				aLineNr++;
 				if (aLine.isEmpty())
 					continue;
-				aScanner = new Scanner(aLine).useDelimiter(getDelimiter());
+				if (aLine.charAt(0) == getDelimiter())		//is the first field missing?
+					aLine = " " + aLine;
+				if (aLine.charAt(aLine.length()-1) == getDelimiter())	//is the last field missing?
+					aLine = aLine + " ";
+				aScanner = new Scanner(aLine).useDelimiter(getDelimiterString());
 
 				//read fields
 				aColumn = -1;
@@ -182,7 +186,7 @@ public class DataLoaderTXT implements FileLoaderInterface
 						while (aScanner.hasNext())
 						{
 							String aNext = aScanner.next();
-							s = s + getDelimiter() + aNext;
+							s = s + getDelimiterString() + aNext;
 							if (closesQuotes(aNext))
 								break;
 						}
@@ -219,7 +223,7 @@ public class DataLoaderTXT implements FileLoaderInterface
 							aColumns.get(aColumn).add(f);
 							Log.logCommandLine(aColumns.get(aColumn).getName() + " was binary, is numeric (line " + aLineNr + ")");
 						}
-						catch (NumberFormatException e) // guess it's a nominal then
+						catch (NumberFormatException e) //guess it's a nominal then
 						{
 							aColumns.get(aColumn).toNominalType(aTrueBinaryValues[aColumn], aFalseBinaryValues[aColumn]);
 							Log.logCommandLine(aColumns.get(aColumn).getName() + " was binary, is nominal (line " + aLineNr + ")");
@@ -365,7 +369,7 @@ public class DataLoaderTXT implements FileLoaderInterface
 
 		for (int i = 0, j = aNrDelimiters; i < j; ++i)
 		{
-			aCounts[i] = theFirstLine.split(DELIMITERS[i], -1).length;
+			aCounts[i] = theFirstLine.split(Character.toString(DELIMITERS[i]), -1).length;
 			if (aCounts[i] > 1)
 				++aNrOptions;
 		}
@@ -388,7 +392,7 @@ public class DataLoaderTXT implements FileLoaderInterface
 				if (aCounts[i] > 1)
 				{
 					// just pick the first one
-					if (aCounts[i] == theSecondLine.split(DELIMITERS[i], -1).length)
+					if (aCounts[i] == theSecondLine.split(Character.toString(DELIMITERS[i]), -1).length)
 					{
 						itsDelimiter = i;
 						aMessage = "unsure about delimiter, using \'" + DELIMITERS[i] + "\'";
@@ -406,7 +410,7 @@ public class DataLoaderTXT implements FileLoaderInterface
 	// the returned array contains the ColumnTypes as declared in XML
 	private AttributeType[] checkXMLTable(String theHeaderLine, File theFile)
 	{
-		final String[] aHeaders = theHeaderLine.split(getDelimiter(), -1);
+		final String[] aHeaders = theHeaderLine.split(getDelimiterString(), -1);
 		final int aNrColumns = aHeaders.length;
 		boolean returnNull = false;
 
@@ -452,8 +456,8 @@ public class DataLoaderTXT implements FileLoaderInterface
 	private void createTable(File theFile, String aHeaderLine, String aDataLine)
 	{
 		message("createTable", "creating Table");
-		String[] aHeaders = aHeaderLine.split(getDelimiter());
-		String[] aData = aDataLine.split(getDelimiter());
+		String[] aHeaders = aHeaderLine.split(getDelimiterString());
+		String[] aData = aDataLine.split(getDelimiterString());
 
 		for (int i=0; i<aHeaders.length; i++)
 			aHeaders[i] = removeQuotes(aHeaders[i].trim());
@@ -526,6 +530,8 @@ public class DataLoaderTXT implements FileLoaderInterface
 
 	private boolean opensQuotes(String theString) //only opens it, without closing?
 	{
+		if (theString.isEmpty())
+			return false;
 		char aStart = theString.charAt(0);
 		char anEnd = theString.charAt(theString.length()-1);
 
@@ -540,6 +546,8 @@ public class DataLoaderTXT implements FileLoaderInterface
 
 	private boolean closesQuotes(String theString) //only closes it, without opening?
 	{
+		if (theString.isEmpty())
+			return false;
 		char aStart = theString.charAt(0);
 		char anEnd = theString.charAt(theString.length()-1);
 
@@ -576,10 +584,16 @@ public class DataLoaderTXT implements FileLoaderInterface
 		return itsTable;
 	}
 	
-	public String getDelimiter()
+	public char getDelimiter()
 	{
 		return DELIMITERS[itsDelimiter];
 	}
+
+	public String getDelimiterString()
+	{
+		return Character.toString(DELIMITERS[itsDelimiter]);
+	}
+
 	
 //	public String getCleanDelimiter()
 //	{
