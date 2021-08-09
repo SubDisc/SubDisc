@@ -39,7 +39,7 @@ public enum AttributeType implements EnumInterface
 	 * Returns the AttributeType corresponding to the <code>String</code> parameter. If the corresponding AttributeType can not be found, the
 	 * default AttributeType NOMINAL is returned. This method is case insensitive.
 	 * 
-	 * @param theText the <code>String</code> corresponding to an AtrtibuteType.
+	 * @param theText the <code>String</code> corresponding to an AttributeType.
 	 * 
 	 * @return the AttributeType corresponding to the <code>String</code> parameter, or AttributeType NOMINAL if no corresponding AttributeType is found.
 	 */

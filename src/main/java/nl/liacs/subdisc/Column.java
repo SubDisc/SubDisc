@@ -351,7 +351,7 @@ public class Column implements XMLNodeInterface
 	 *
 	 * @param theNominal the value to append to this Column.
 	 */
-	public void add(String theNominal)
+	public void add(String theNominal, boolean isMissing)
 	{
 		if (theNominal == null)
 			throw new NullPointerException();
@@ -373,7 +373,14 @@ public class Column implements XMLNodeInterface
 		else
 			itsNominalz[itsSize] = i;
 
-		++itsSize;
+		if (isMissing)
+			setMissing(itsSize);
+		itsSize++;
+	}
+
+	public void add(String theNominal)
+	{
+		add(theNominal, false);
 	}
 
 	/**
@@ -384,13 +391,21 @@ public class Column implements XMLNodeInterface
 	 *
 	 * @param theFloat the value to append to this Column.
 	 */
-	public void add(float theFloat)
+	public void add(float theFloat, boolean isMissing)
 	{
 		if (itsSize == itsFloatz.length)
 			itsFloatz = Arrays.copyOf(itsFloatz, itsSize*2);
 
 		itsFloatz[itsSize] = theFloat;
-		++itsSize;
+		if (isMissing)
+			setMissing(itsSize);
+		itsSize++;
+	}
+
+	//add, not missing
+	public void add(float theFloat)
+	{
+		add(theFloat, false);
 	}
 
 	/**
@@ -401,11 +416,18 @@ public class Column implements XMLNodeInterface
 	 *
 	 * @param theBinary the value to append to this Column.
 	 */
-	public void add(boolean theBinary)
+	public void add(boolean theBinary, boolean isMissing)
 	{
 		if (theBinary)
 			itsBinaries.set(itsSize);
-		++itsSize;
+		if (isMissing)
+			setMissing(itsSize);
+		itsSize++;
+	}
+
+	public void add(boolean theBinary)
+	{
+		add(theBinary, false);
 	}
 
 	/**
@@ -790,13 +812,11 @@ public class Column implements XMLNodeInterface
 					itsMissingValueIsUnique = true;
 					float aMissingValue = Float.parseFloat(itsMissingValue);
 					for (float f : itsFloatz)
-					{
 						if (f == aMissingValue)
 						{
 							itsMissingValueIsUnique = false;
 							break;
 						}
-					}
 				}
 				/*
 				 * else old ArrayList<?> contained only valid
@@ -870,49 +890,6 @@ public class Column implements XMLNodeInterface
 		{
 			case NOMINAL :
 			{
-//				itsBinaries = new BitSet(itsSize);
-//
-//				if (itsSize > 0)
-//				{
-//					String aValue = itsNominals.get(0);
-//
-//					if (AttributeType.isValidBinaryTrueValue(aValue))
-//					{
-//						// All false initially, only set 'true' bits.
-//						for (int i = 0; i < itsSize; i++)
-//							if (aValue.equals(itsNominals.get(i)))
-//								itsBinaries.set(i);
-//					}
-//					else if (AttributeType.isValidBinaryFalseValue(aValue))
-//					{
-//						// All false initially, only set 'true' bits.
-//						for (int i = 0; i < itsSize; i++)
-//							if (!aValue.equals(itsNominals.get(i)))
-//								itsBinaries.set(i);
-//					}
-//					// TODO ask user which value to use as 'true'
-//					// now sets all non-missing to 'true'
-//					else if (AttributeType.NOMINAL.DEFAULT_MISSING_VALUE.equals(aValue))
-//					{
-//						if ((itsMissing.cardinality() < itsSize) && AttributeType.isValidBinaryTrueValue(itsNominals.get(itsMissing.nextClearBit(0))))
-//							// All false initially, only set non-missing values to 'true'.
-//							for (int i = itsMissing.nextClearBit(0); i >= 0 && i < itsSize; i = itsMissing.nextClearBit(i + 1))
-//								itsBinaries.set(i);
-//					}
-//					// TODO ask user which value to use as 'true'
-//					// now sets all itsNominals.get(0) values to 'true'
-//					else
-//					{
-//						// All false initially, only set 'true' bits.
-//						for (int i = 0; i < itsSize; i++)
-//							if (aValue.equals(itsNominals.get(i)))
-//								itsBinaries.set(i);
-//					}
-//				}
-//				itsDistinctValues = null;
-//				itsDistinctValuesMap = null;
-//				itsNominals = null;
-//				break;
 				itsBinaries = new BitSet(itsSize);
 
 				if (itsSize > 0)
@@ -923,32 +900,26 @@ public class Column implements XMLNodeInterface
 
 					if (AttributeType.isValidBinaryTrueValue(aValue))
 					{
-						// All false initially, only set 'true' bits.
 						for (int i = 0; i < itsSize; ++i)
 							if (v == itsNominalz[i])
 								itsBinaries.set(i);
 					}
 					else if (AttributeType.isValidBinaryFalseValue(aValue))
 					{
-						// All false initially, only set 'true' bits.
 						for (int i = 0; i < itsSize; ++i)
 							if (v != itsNominalz[i])
 								itsBinaries.set(i);
 					}
-					// TODO ask user which value to use as 'true'
-					// now sets all non-missing to 'true'
+					//sets all non-missing to 'true'
 					else if (AttributeType.NOMINAL.DEFAULT_MISSING_VALUE.equals(aValue))
 					{
-						if ((itsMissing.cardinality() < itsSize) && AttributeType.isValidBinaryTrueValue(itsDistinctValues.get(itsNominalz[itsMissing.nextClearBit(0)])))
-							// All false initially, only set non-missing values to 'true'.
-							for (int i = itsMissing.nextClearBit(0); i >= 0 && i < itsSize; i = itsMissing.nextClearBit(i + 1))
+						if (itsMissing.cardinality() < itsSize && AttributeType.isValidBinaryTrueValue(itsDistinctValues.get(itsNominalz[itsMissing.nextClearBit(0)])))
+							for (int i = itsMissing.nextClearBit(0); i >= 0 && i < itsSize; i = itsMissing.nextClearBit(i+1))
 								itsBinaries.set(i);
 					}
-					// TODO ask user which value to use as 'true'
-					// now sets all itsNominals.get(0) values to 'true'
+					//sets all itsNominals.get(0) values to 'true'
 					else
 					{
-						// All false initially, only set 'true' bits.
 						for (int i = 0; i < itsSize; ++i)
 							if (v == itsNominalz[i])
 								itsBinaries.set(i);
@@ -975,30 +946,24 @@ public class Column implements XMLNodeInterface
 
 					if (aValue == 1.0f)
 					{
-						// All false initially, only set 'true' bits.
 						for (int i = 0; i < itsSize; i++)
 							if (itsFloatz[i] == 1.0f)
 								itsBinaries.set(i);
 					}
 					else if (aValue == 0.0f)
 					{
-						// All false initially, only set 'true' bits.
 						for (int i = 0; i < itsSize; i++)
 							if (itsFloatz[i] != 0.0f)
 								itsBinaries.set(i);
 					}
-					// TODO ask user which value to use as 'true'
-					// now sets all non-missing to 'true'
-					else if ((Float.parseFloat(itsMissingValue) == aValue) &&
-							(itsMissing.cardinality() < itsSize) &&
-							(Float.toString(itsFloatz[itsMissing.nextClearBit(0)]).matches(trueFloat)))
+					//set all non-missing to 'true'
+					else if (Float.parseFloat(itsMissingValue) == aValue &&	itsMissing.cardinality() < itsSize && 
+						 Float.toString(itsFloatz[itsMissing.nextClearBit(0)]).matches(trueFloat))
 					{
-						// All false initially, only set non-missing values to 'true'.
 						for (int i = itsMissing.nextClearBit(0); i >= 0 && i < itsSize; i = itsMissing.nextClearBit(i + 1))
 							itsBinaries.set(i);
 					}
-					// TODO ask user which value to use as 'true'
-					// now sets NaN to 'false'
+					//set NaN to 'false'
 					else if (Float.isNaN(aValue))
 					{
 						// All false initially, only set 'true' bits.
@@ -1006,11 +971,9 @@ public class Column implements XMLNodeInterface
 							if (!Float.isNaN(itsFloatz[i]))
 									itsBinaries.set(i);
 					}
-					// TODO ask user which value to use as 'true'
-					// now sets all itsFloatz[0] values to 'true'
+					//set all itsFloatz[0] values to 'true'
 					else
 					{
-						// All false initially, only set 'true' bits.
 						for (int i = 0; i < itsSize; i++)
 							if (itsFloatz[i] == aValue)
 								itsBinaries.set(i);
@@ -1052,24 +1015,20 @@ public class Column implements XMLNodeInterface
 			if ("0".equals(itsMissingValue))
 			{
 				for (int i = itsBinaries.nextClearBit(0); i >= 0 && i < itsSize; i = itsBinaries.nextClearBit(i + 1))
-				{
 					if (!itsMissing.get(i))
 					{
 						itsMissingValueIsUnique = false;
 						break;
 					}
-				}
 			}
 			else
 			{
 				for (int i = itsBinaries.nextSetBit(0); i >= 0; i = itsBinaries.nextSetBit(i + 1))
-				{
 					if (!itsMissing.get(i))
 					{
 						itsMissingValueIsUnique = false;
 						break;
 					}
-				}
 			}
 		}
 

@@ -169,7 +169,7 @@ public class DataLoaderTXT implements FileLoaderInterface
 				aLineNr++;
 				if (aLine.isEmpty())
 					continue;
-				if (aLine.charAt(0) == getDelimiter())		//is the first field missing?
+				if (aLine.charAt(0) == getDelimiter())			//is the first field missing?
 					aLine = " " + aLine;
 				if (aLine.charAt(aLine.length()-1) == getDelimiter())	//is the last field missing?
 					aLine = aLine + " ";
@@ -198,7 +198,7 @@ public class DataLoaderTXT implements FileLoaderInterface
 						// check if it is a missing value or a known binary value
 						if (isEmptyString(s))
 						{
-							aColumns.get(aColumn).add(aMissingBinary);
+							aColumns.get(aColumn).add(aMissingBinary, true);
 							continue;
 						}
 						else if (AttributeType.isValidBinaryValue(s))
@@ -235,7 +235,7 @@ public class DataLoaderTXT implements FileLoaderInterface
 						try //if it is a float
 						{
 							if (isEmptyString(s))
-								aColumns.get(aColumn).add(aMissingNumeric);
+								aColumns.get(aColumn).add(aMissingNumeric, true);
 							else
 							{
 								float f = Float.parseFloat(s);
@@ -253,7 +253,7 @@ public class DataLoaderTXT implements FileLoaderInterface
 					else //it was nominal
 					{
 						if (isEmptyString(s))
-							aColumns.get(aColumn).add(AttributeType.NOMINAL.DEFAULT_MISSING_VALUE);
+							aColumns.get(aColumn).add(AttributeType.NOMINAL.DEFAULT_MISSING_VALUE, true);
 						else
 							aColumns.get(aColumn).add(s);
 					}
@@ -472,14 +472,9 @@ public class DataLoaderTXT implements FileLoaderInterface
 			removeQuotes(s);
 
 			// is it binary (or empty String)
-			// TODO set itsMissing
 			if (AttributeType.isValidBinaryValue(s) || isEmptyString(s))
 			{
-				aColumns.add(new Column(aHeaders[i],
-							null,
-							AttributeType.BINARY,
-							i,
-							itsNrLines));
+				aColumns.add(new Column(aHeaders[i], null, AttributeType.BINARY, i, itsNrLines));
 				if (isEmptyString(s))
 					aColumns.get(i).add(Boolean.parseBoolean(AttributeType.BINARY.DEFAULT_MISSING_VALUE));
 				else
@@ -492,11 +487,7 @@ public class DataLoaderTXT implements FileLoaderInterface
 			{
 				// empty String is handled by BINARY case
 				float f = Float.parseFloat(s);
-				aColumns.add(new Column(aHeaders[i],
-							null,
-							AttributeType.NUMERIC,
-							i,
-							itsNrLines));
+				aColumns.add(new Column(aHeaders[i], null, AttributeType.NUMERIC, i, itsNrLines));
 				aColumns.get(i).add(f);
 				continue;
 			}
@@ -506,11 +497,7 @@ public class DataLoaderTXT implements FileLoaderInterface
 			// NO USE CASE YET
 
 			// it is nominal
-			aColumns.add(new Column(aHeaders[i],
-						null,
-						AttributeType.NOMINAL,
-						i,
-						itsNrLines));
+			aColumns.add(new Column(aHeaders[i], null, AttributeType.NOMINAL, i, itsNrLines));
 			aColumns.get(i).add(s);
 		}
 	}
