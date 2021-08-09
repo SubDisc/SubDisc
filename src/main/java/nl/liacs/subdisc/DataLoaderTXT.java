@@ -9,8 +9,9 @@ import java.util.*;
 public class DataLoaderTXT implements FileLoaderInterface
 {
 	// should be made available to all loaders (through FileLoaderInterface)
-	private static final String[] DELIMITERS = { "\\s*\t\\s*", "\\s*,\\s*", "\\s*;\\s*" };
-	private static final String[] CLEAN_DELIMITERS = { "\t", ",", ";" };
+//	private static final String[] DELIMITERS = { "\\s*\t\\s*", "\\s*,\\s*", "\\s*;\\s*" }; //not sure why the whitespace should be part of the delimiter. Works fine (better actually) without.
+	private static final String[] DELIMITERS = { "\t", ",", ";" };
+//	private static final String[] CLEAN_DELIMITERS = { "\t", ",", ";" };
 
 	private Table itsTable = null;
 	private int itsDelimiter = 0;
@@ -181,7 +182,7 @@ public class DataLoaderTXT implements FileLoaderInterface
 						while (aScanner.hasNext())
 						{
 							String aNext = aScanner.next();
-							s = s + getCleanDelimiter() + aNext;
+							s = s + getDelimiter() + aNext;
 							if (closesQuotes(aNext))
 								break;
 						}
@@ -370,14 +371,14 @@ public class DataLoaderTXT implements FileLoaderInterface
 		}
 
 		if (aNrOptions == 0)
-			aMessage = "unable to determine delimiter, using \'" + CLEAN_DELIMITERS[0] + "\'";
+			aMessage = "unable to determine delimiter, using \'" + DELIMITERS[0] + "\'";
 		else if (aNrOptions == 1)
 		{
 			for (int i = 0, j = aNrDelimiters; i < j; ++i)
 				if (aCounts[i] > 1)
 				{
 					itsDelimiter = i;
-					aMessage = "successfully established delimiter, using \'" + CLEAN_DELIMITERS[i] + "\'";
+					aMessage = "successfully established delimiter, using \'" + DELIMITERS[i] + "\'";
 				}
 		}
 		else // (aNrOptions > 1)
@@ -390,13 +391,13 @@ public class DataLoaderTXT implements FileLoaderInterface
 					if (aCounts[i] == theSecondLine.split(DELIMITERS[i], -1).length)
 					{
 						itsDelimiter = i;
-						aMessage = "unsure about delimiter, using \'" + CLEAN_DELIMITERS[i] + "\'";
+						aMessage = "unsure about delimiter, using \'" + DELIMITERS[i] + "\'";
 						break;
 					}
 				}
 			}
 
-			aMessage = "unable to determine delimiter, using \'" + CLEAN_DELIMITERS[0] + "\'";
+			aMessage = "unable to determine delimiter, using \'" + DELIMITERS[0] + "\'";
 		}
 		message("establishDelimiter", aMessage);
 	}
@@ -452,11 +453,10 @@ public class DataLoaderTXT implements FileLoaderInterface
 	{
 		message("createTable", "creating Table");
 		String[] aHeaders = aHeaderLine.split(getDelimiter());
-		String[] aData = aDataLine.split(getCleanDelimiter());
+		String[] aData = aDataLine.split(getDelimiter());
 
-		// for-each loop might not work for data changes
-		for (String s : aHeaders)
-			removeQuotes(s);
+		for (int i=0; i<aHeaders.length; i++)
+			aHeaders[i] = removeQuotes(aHeaders[i].trim());
 
 		// create Table and Columns
 		itsTable = new Table(theFile, itsNrLines, aHeaders.length);
@@ -581,8 +581,8 @@ public class DataLoaderTXT implements FileLoaderInterface
 		return DELIMITERS[itsDelimiter];
 	}
 	
-	public String getCleanDelimiter()
-	{
-		return CLEAN_DELIMITERS[itsDelimiter];
-	}
+//	public String getCleanDelimiter()
+//	{
+//		return CLEAN_DELIMITERS[itsDelimiter];
+//	}
 }
