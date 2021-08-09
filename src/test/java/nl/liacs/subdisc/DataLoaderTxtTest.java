@@ -20,15 +20,15 @@ public class DataLoaderTxtTest {
 
     @ParameterizedTest
     @ValueSource(strings = {
-        "src/test/resources/adult.txt", 
-        "src/test/resources/dataloader no missing.txt",
-        "src/test/resources/long10k.txt",
+//        "src/test/resources/adult.txt", 
+//        "src/test/resources/dataloader no missing.txt",
+//        "src/test/resources/long10k.txt",
 //        "src/test/resources/long1m.txt",		//quite a large dataset. Primarily meant for scalability testing
-//        "src/test/resources/commas in fields.txt",
-        "src/test/resources/discretisation.txt",
-        "src/test/resources/long100k.txt",
-        "src/test/resources/long10.txt",
-        "src/test/resources/long with unique nums.txt"
+        "src/test/resources/commas in fields.txt",
+//        "src/test/resources/discretisation.txt",
+//        "src/test/resources/long100k.txt",
+//        "src/test/resources/long10.txt",
+//        "src/test/resources/long with unique nums.txt"
     })
     public void validtxt(String filename) 
     {
@@ -39,7 +39,7 @@ public class DataLoaderTxtTest {
 
     }
 
-	@Test
+//	@Test
 	@DisplayName("Check dimensions of long100k.txt")
 	public void sizeof100k()
 	{
