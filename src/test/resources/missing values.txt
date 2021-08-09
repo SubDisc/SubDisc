@@ -1,0 +1,7 @@
+A-num,B-nom,C-nom,D-nom
+1,a,A,AA
+2,,B,BB
+,c,C,CC
+4,d,,DD
+5,e,E,
+,,,
