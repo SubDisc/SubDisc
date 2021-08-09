@@ -142,7 +142,7 @@ public class DataLoaderTXT implements FileLoaderInterface
 				if (aColumns.get(aColumn).getType() == AttributeType.BINARY)
 				{
 					String s = aScanner.next();
-					removeQuotes(s);
+					s = removeQuotes(s);
 					if (AttributeType.isValidBinaryValue(s))
 					{
 						boolean aValue = AttributeType.isValidBinaryTrueValue(s);
@@ -176,8 +176,17 @@ public class DataLoaderTXT implements FileLoaderInterface
 				{
 					aColumn++;
 					String s = aScanner.next();
-					removeQuotes(s);
-
+					if (opensQuotes(s)) //the delimiter came before the quote was closed
+					{
+						while (aScanner.hasNext())
+						{
+							String aNext = aScanner.next();
+							s = s + getCleanDelimiter() + aNext;
+							if (closesQuotes(aNext))
+								break;
+						}
+					}
+					s = removeQuotes(s.trim());
 
 					if (aBinaries.get(aColumn)) // is it currently set to binary? (this may change as more lines are read)
 					{
@@ -502,21 +511,43 @@ public class DataLoaderTXT implements FileLoaderInterface
 		}
 	}
 
-	// NOTE null is never passed as input parameter
-	private void removeQuotes(String theString)
+	//remove quotes under the assumption that they appear at the start and end of theString. Works best in combination with trim()
+	private String removeQuotes(String theString)
 	{
-		// avoid references to arrays/ CharSequences, create new String
-		theString = new String(theString);
-
 		// fail fast
-		if (theString.isEmpty() || ((theString.charAt(0) != '\"') && (theString.charAt(0) != '\'')))
-			return;
+		if (theString.isEmpty() || (theString.charAt(0) != '\"' && theString.charAt(0) != '\''))
+			return theString;
 
 		int aLength = theString.length();
-		if (	(((theString.charAt(0) == '\"') && (theString.charAt(aLength-1) == '\"')) ||
-			((theString.charAt(0) == '\'') && (theString.charAt(aLength -1) == '\''))) &&
-			(aLength > 2))
-				theString = theString.substring(1, theString.length()-1);
+		if (((theString.charAt(0) == '\"' && theString.charAt(aLength-1) == '\"') || (theString.charAt(0) == '\'' && theString.charAt(aLength-1) == '\'')) &&  aLength > 2)
+			theString = theString.substring(1, theString.length()-1);
+		return theString;
+	}
+
+	private boolean opensQuotes(String theString) //only opens it, without closing?
+	{
+		char aStart = theString.charAt(0);
+		char anEnd = theString.charAt(theString.length()-1);
+
+		if (aStart != '\'' && aStart != '\"')	//doesn't open with a quote
+			return false;
+		if (aStart == '\"' && anEnd == '\"')	//opens and closes with a double quote
+			return false;
+		if (aStart == '\'' && anEnd == '\'')	//opens and closes with a single quote
+			return false;
+		return true;				//only opens with a quote
+	}
+
+	private boolean closesQuotes(String theString) //only closes it, without opening?
+	{
+		char aStart = theString.charAt(0);
+		char anEnd = theString.charAt(theString.length()-1);
+
+		if (aStart == '\"' && theString.length() > 1)	//opens with a double quote (and it's not the last part of the string)
+			return false;
+		if (aStart == '\'' && theString.length() > 1)	//opens with a single quote (and it's not the last part of the string)
+			return false;
+		return (anEnd == '\'' || anEnd == '\"');
 	}
 
 	// NOTE null is never passed as input parameter
