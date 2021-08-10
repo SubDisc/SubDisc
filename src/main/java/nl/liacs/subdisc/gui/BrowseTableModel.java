@@ -54,9 +54,7 @@ public class BrowseTableModel extends AbstractTableModel
 		else
 		{
 			Column aColumn = itsTable.getColumn(theColumnIndex);
-			return String.format("<html><center>%s<br>(%d distinct)</html>",
-									aColumn.getName(),
-									aColumn.getCardinality());
+			return String.format("<html><center>%s<br>(%d distinct)</html>", aColumn.getName(), aColumn.getCardinality());
 		}
 	}
 
@@ -95,13 +93,7 @@ public class BrowseTableModel extends AbstractTableModel
 				case BINARY : 
 					return aColumn.getBinary(theRow);
 				default : {
-					Log.logCommandLine(
-						String.format(
-							"%s.getValueAt(%d, %d), Unknown AttributeType: %s",
-							getClass().getSimpleName(),
-							theRow,
-							theColumn,
-							aColumn.getType()));
+					Log.logCommandLine(String.format("%s.getValueAt(%d, %d), Unknown AttributeType: %s", getClass().getSimpleName(), theRow, theColumn, aColumn.getType()));
 					return null;
 				}
 			}
@@ -110,7 +102,8 @@ public class BrowseTableModel extends AbstractTableModel
 
 	// for sorting
 	@Override
-	public Class<?> getColumnClass(int theColumn) {
+	public Class<?> getColumnClass(int theColumn) 
+	{
 		if (itsTable == null || itsTable.getNrRows() == 0)
 			return null;
 		else
@@ -119,7 +112,6 @@ public class BrowseTableModel extends AbstractTableModel
 
 	private void LogError(String theMethod)
 	{
-		Log.logCommandLine(
-			"Error in BrowseTableWindow" + theMethod + ": Table is 'null'.");
+		Log.logCommandLine("Error in BrowseTableWindow" + theMethod + ": Table is 'null'.");
 	}
 }

@@ -167,7 +167,7 @@ public class Condition implements Comparable<Condition>
 	}
 
 	// Column.evaluate(BitSet, Condition): only 1 NUMERIC Constructor must exist
-	/** Condition for NUMERIC Column, single value, NaN is not allowed. */
+	/** Condition for NUMERIC Column, single value, NaN is not allowed as a condition (it is allowed as a value to check the condition on). */
 	public Condition(ConditionBase theConditionBase, float theValue, int theIndex)
 	{
 		// check Column

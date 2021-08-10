@@ -2176,7 +2176,8 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		// ways, keeping them together for now aids interpretation
 		if (anOperator == Operator.EQUALS)
 		{
-			for (int i = 0, j = aCounts.length; i < j && !isTimeToStop(); ++i)
+			int aSize = aCounts.length;
+			for (int i = 0; i < aSize && !isTimeToStop(); i++)
 			{
 				int aCount =  aCounts[i];
 
@@ -2185,17 +2186,22 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 				if (aCount < itsMinimumCoverage)
 					continue;
 
-				// no useful refinement possible, counts are 0 for other values
 				if (aCount == aParentCoverage)
 					break;
 
-				Condition anAddedCondition = new Condition(theConditionBase, aColumn.getSortedValue(i), i);
-				evaluateCandidate(theParent, anAddedCondition, aCount, aTPs[i], isAllStrategy, aBestSubgroups);
+				if (!Float.isNaN(aColumn.getSortedValue(i))) //not a missing value
+				{
+					Condition anAddedCondition = new Condition(theConditionBase, aColumn.getSortedValue(i), i);
+					evaluateCandidate(theParent, anAddedCondition, aCount, aTPs[i], isAllStrategy, aBestSubgroups);
+				}
 			}
 		}
 		else if (anOperator == Operator.LESS_THAN_OR_EQUAL)
 		{
-			for (int i = 0, j = aCounts.length, cover = 0, tp = 0; i < j && !isTimeToStop(); ++i)
+			int aSize = aCounts.length;
+			int cover = 0;
+			int tp = 0;
+			for (int i=0; i<aSize && !isTimeToStop(); i++)
 			{
 				int aCount = aCounts[i];
 				if (aCount == 0)
@@ -2206,24 +2212,23 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 				if (cover == aParentCoverage)
 					break;
 
-				// count true positives up to this value
 				tp += aTPs[i];
-				// generally, when tp does not increase, AND last Subgroup was
-				// >= minimum coverage, the loop should ignore this Candidate
-				// but this requires a check on all (convex) quality measures
-				// FIXME (but profile and test current code first)
-
 				if (cover < itsMinimumCoverage)
 					continue;
 
-				Condition aCondition = new Condition(theConditionBase, aColumn.getSortedValue(i), i);
-				evaluateCandidate(theParent, aCondition, cover, tp, isAllStrategy, aBestSubgroups);
+				if (!Float.isNaN(aColumn.getSortedValue(i))) //not a missing value
+				{
+					Condition aCondition = new Condition(theConditionBase, aColumn.getSortedValue(i), i);
+					evaluateCandidate(theParent, aCondition, cover, tp, isAllStrategy, aBestSubgroups);
+				}
 			}
 		}
 		else if (anOperator == Operator.GREATER_THAN_OR_EQUAL)
 		{
-			// NOTE getTertiaryStatistic() only works for SINGLE_NOMINAL
-			for (int i = 0, j = aCounts.length, cover = aParentCoverage, tp = (int) theParent.getTertiaryStatistic(); i < j && !isTimeToStop(); ++i)
+			int aSize = aCounts.length;
+			int cover = aParentCoverage - theValueInfo.itsMissingCount;
+			int tp = (int) theParent.getTertiaryStatistic() - theValueInfo.itsMissingPositiveCount; // NOTE getTertiaryStatistic() only works for SINGLE_NOMINAL
+			for (int i=0; i<aSize && !isTimeToStop(); i++)
 			{
 				if (cover < itsMinimumCoverage)
 					break;
@@ -2233,8 +2238,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 					continue;
 
 				// >= with the first value select the same subset as the parent
-				// old tp and cover, as counts for this value should be included
-				if (cover != aParentCoverage)
+				if (cover != aParentCoverage && !Float.isNaN(aColumn.getSortedValue(i))) //and check whether this is not the missing value NaN
 				{
 					Condition aCondition = new Condition(theConditionBase, aColumn.getSortedValue(i), i);
 					evaluateCandidate(theParent, aCondition, cover, tp, isAllStrategy, aBestSubgroups);

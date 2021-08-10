@@ -14,12 +14,10 @@ public class FileLoaderARFF implements FileLoaderInterface
 	private boolean checkDataWithXMLTable = false; // if loaded from XML
 	private int itsNrDataRows = 0;
 	// used to check data declarations
-	private List<NominalAttribute> itsNominalAttributes =
-					new ArrayList<NominalAttribute>();
+	private List<NominalAttribute> itsNominalAttributes = new ArrayList<NominalAttribute>();
 	private int itsNrBadRows = 0;
 
-	private static float MISSING_NUMERIC =
-		Float.parseFloat(AttributeType.NUMERIC.DEFAULT_MISSING_VALUE);
+	private static float MISSING_NUMERIC = Float.NaN;
 	private static enum Keyword
 	{
 		COMMENT("%"),
@@ -32,8 +30,7 @@ public class FileLoaderARFF implements FileLoaderInterface
 
 		Keyword(String theKeyword)
 		{
-			text = Pattern.compile("^\\s*" + theKeyword + "\\s*",
-						Pattern.CASE_INSENSITIVE);
+			text = Pattern.compile("^\\s*" + theKeyword + "\\s*", Pattern.CASE_INSENSITIVE);
 		}
 
 		// FIXME MM - returns true if KEYWORD occurs anywhere in String
@@ -63,9 +60,7 @@ public class FileLoaderARFF implements FileLoaderInterface
 		if (theFile == null || !theFile.exists())
 		{
 			// TODO new ErrorDialog(e, ErrorDialog.noSuchFileError);
-			Log.logCommandLine(
-				String.format("FileLoaderARFF: can not open File '%s'",
-						theFile.getAbsolutePath()));
+			Log.logCommandLine(String.format("FileLoaderARFF: can not open File '%s'", theFile.getAbsolutePath()));
 			return;
 		}
 		else
@@ -77,9 +72,7 @@ public class FileLoaderARFF implements FileLoaderInterface
 		if (theFile == null || !theFile.exists())
 		{
 			// TODO new ErrorDialog(e, ErrorDialog.noSuchFileError);
-			Log.logCommandLine(
-				String.format("FileLoaderARFF: can not open File '%s'",
-						theFile.getAbsolutePath()));
+			Log.logCommandLine(String.format("FileLoaderARFF: can not open File '%s'", theFile.getAbsolutePath()));
 			return;
 		}
 		else if (theTable == null)
@@ -259,17 +252,7 @@ public class FileLoaderARFF implements FileLoaderInterface
 			}
 		}
 	}
-/*
-	private static boolean prematureEOF(File theFile, String theLine, String theSectionToFind)
-	{
-		if (theLine == null || theLine.equalsIgnoreCase(Keyword.END.toString()))
-		{
-			Log.logCommandLine("Error while parsing: " + theFile + ", " + theSectionToFind + " declaration missing.");
-			return true;
-		}
-		return false;
-	}
-*/
+
 	/*
 	 * @attribute <name> numeric/real/integer - Numeric attributes can be real or integer numbers.
 	 * @attribute <name> {<nominal-name1>, <nominal-name2>, <nominal-name3>, ...} - Nominal values are defined by providing a <nominal-specification> listing the possible values.
@@ -295,10 +278,10 @@ public class FileLoaderARFF implements FileLoaderInterface
 		else
 			aName = theLine.split("\\s", 2)[0];
 
-// FIXME MM
-// REGEX fails when attribute name contains special characters like '*' or '+'
-// quick hack, remove aName (not quotes), then find first space (BOL has none)
-//		theLine = theLine.replaceFirst("\\'?" + aName + "\\'?", "").trim();
+		// FIXME MM
+		// REGEX fails when attribute name contains special characters like '*' or '+'
+		// quick hack, remove aName (not quotes), then find first space (BOL has none)
+		//		theLine = theLine.replaceFirst("\\'?" + aName + "\\'?", "").trim();
 		theLine = theLine.trim().replace(aName, "").split("\\s", 2)[1].trim();
 
 		// (aName, theLine) HACK for NominalAttribute
@@ -331,7 +314,7 @@ public class FileLoaderARFF implements FileLoaderInterface
 	// TODO checking of declared nominal classes for @attributes { class1, class2, ..} declarations
 	private void loadData(String theLine, int theLineNr)
 	{
-String s = new String(theLine);
+		String s = new String(theLine);
 
 		// String argument should not start with whitespace
 		assert (!Character.isWhitespace(theLine.charAt(0)));
@@ -376,10 +359,7 @@ String s = new String(theLine);
 			}
 
 			if (aCell.equals("?"))
-			{
-				c.setMissing(itsNrDataRows);
-				addMissingToColumn(c);
-			}
+				c.addMissing();
 			else
 				isBad |= !addValueToColumn(c, aCell, theLineNr);
 		}
@@ -430,10 +410,7 @@ String s = new String(theLine);
 				}
 				break;
 			}
-			case ORDINAL :
-			{
-				throw new AssertionError(theColumn.getType());
-			}
+
 			case BINARY :
 			{
 				// TODO this will fail on AutoRun loading files where
@@ -458,46 +435,6 @@ String s = new String(theLine);
 		Log.logCommandLine(
 			String.format("FileLoaderARFF: line %d, %s in numeric column '%s', inserting %.0f.",
 					theLine, theCause, theColumn.getName(), MISSING_NUMERIC));
-	}
-
-	private void addMissingToColumn(Column theColumn)
-	{
-		switch (theColumn.getType())
-		{
-			case NOMINAL :
-			{
-				if (checkDataWithXMLTable)
-					theColumn.add(theColumn.getMissingValue());
-				else
-					theColumn.add(AttributeType.NOMINAL.DEFAULT_MISSING_VALUE);
-				break;
-			}
-			case NUMERIC :
-			{
-				if (checkDataWithXMLTable)
-					theColumn.add(Float.parseFloat(theColumn.getMissingValue()));
-				else
-					theColumn.add(MISSING_NUMERIC);
-				break;
-			}
-			case ORDINAL :
-			{
-				throw new AssertionError(theColumn.getType());
-			}
-			case BINARY :
-			{
-				if (checkDataWithXMLTable)
-					theColumn.add(AttributeType.isValidBinaryTrueValue(theColumn.getMissingValue()));
-				else
-					theColumn.add(AttributeType.isValidBinaryTrueValue(AttributeType.BINARY.DEFAULT_MISSING_VALUE));
-				break;
-			}
-			default :
-			{
-				String.format(getClass().getSimpleName() + ": unknown AttributeType '%s'", theColumn.getType());
-				throw new AssertionError(theColumn.getType());
-			}
-		}
 	}
 
 	// determine attribute type(s), only NUMERIC/NOMINAL for now, not ORDINAL/BINARY

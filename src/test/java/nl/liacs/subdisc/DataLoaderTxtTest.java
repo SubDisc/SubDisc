@@ -28,7 +28,8 @@ public class DataLoaderTxtTest
 		"src/test/resources/discretisation.txt",
 		"src/test/resources/long100k.txt",
 		"src/test/resources/long10.txt",
-		"src/test/resources/long with unique nums.txt"
+		"src/test/resources/long with unique nums.txt",
+		"src/test/resources/missing values.txt"
 	})
 	public void validtxt(String filename) 
 	{

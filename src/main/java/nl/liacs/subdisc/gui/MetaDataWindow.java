@@ -20,8 +20,7 @@ public class MetaDataWindow extends JFrame implements ActionListener
 	private final Table itsTable;
 	private JTable itsJTable;
 	private ButtonGroup aNewType = new ButtonGroup();
-	private JTextField aNewMissingValue =
-		new JTextField(AttributeType.getDefault().DEFAULT_MISSING_VALUE);
+	private JTextField aNewMissingValue = new JTextField("?");
 	private JLabel itsFeedBackLabel;
 
 	public MetaDataWindow(MiningWindow theMiningWindow, Table theTable)
@@ -62,7 +61,6 @@ public class MetaDataWindow extends JFrame implements ActionListener
 		itsJTable.getColumnModel().getColumn(MetaDataTableHeader.TYPE.columnNr).setPreferredWidth(anOtherWidth);
 		itsJTable.getColumnModel().getColumn(MetaDataTableHeader.ENABLED.columnNr).setPreferredWidth(anOtherWidth);
 		itsJTable.getColumnModel().getColumn(MetaDataTableHeader.HAS_MISSING.columnNr).setPreferredWidth(anOtherWidth);
-		itsJTable.getColumnModel().getColumn(MetaDataTableHeader.MISSING_VALUE.columnNr).setPreferredWidth(anOtherWidth);
 	}
 
 	private void initComponents()
@@ -73,7 +71,6 @@ public class MetaDataWindow extends JFrame implements ActionListener
 		JPanel aDisablePanel = new JPanel();
 		JPanel aRadioButtonPanel = new JPanel();
 		JPanel aChangeTypePanel = new JPanel();
-		JPanel aSetMissingPanel = new JPanel();
 
 		JScrollPane jScrollPane = new JScrollPane(itsJTable);
 
@@ -132,18 +129,6 @@ public class MetaDataWindow extends JFrame implements ActionListener
 		addCentered(aDisablePanel, GUI.buildButton("Toggle Selected", 'T', "toggle", this));
 //		aDisablePanel.add(Box.createVerticalGlue());
 		anActionPanel.add(aDisablePanel);
-
-		// set missing
-		aSetMissingPanel.setBorder(GUI.buildBorder("Set Value for Missing"));
-		aSetMissingPanel.setLayout(new BoxLayout(aSetMissingPanel, BoxLayout.PAGE_AXIS));
-
-		aSetMissingPanel.add(Box.createVerticalGlue());
-		aNewMissingValue.setMaximumSize(GUI.BUTTON_MAXIMUM_SIZE);
-		addCentered(aSetMissingPanel, aNewMissingValue);
-		aSetMissingPanel.add(Box.createVerticalGlue());
-		addCentered(aSetMissingPanel, GUI.buildButton("Change Value", 'M', "missing", this));
-//		aSetMissingPanel.add(Box.createVerticalGlue());
-		anActionPanel.add(aSetMissingPanel);
 
 		anActionPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
 
@@ -239,43 +224,6 @@ public class MetaDataWindow extends JFrame implements ActionListener
 					// TODO show messageDialog asking to treat first value as
 					// 'true' or 'false' (see Column.toBinary())
 					// TODO failed to change type warning
-			}
-			else if ("missing".equals(aCommand))
-			{
-				String aNewValue = aNewMissingValue.getText().trim();
-				aNewMissingValue.setText(aNewValue);
-				ArrayList<Integer> aWrongType = new ArrayList<Integer>(itsJTable.getSelectedRows().length);
-				for (int i : itsJTable.getSelectedRows())
-				{
-					if (itsTable.getColumn(i).getHasMissingValues() &&
-						!itsTable.getColumn(i).setNewMissingValue(aNewValue))
-						aWrongType.add(i);
-				}
-
-				if (aWrongType.size() > 0)
-				{
-					itsJTable.getSelectionModel().clearSelection();
-					for (int i : aWrongType)
-						itsJTable.addRowSelectionInterval(i, i);
-
-					String anIndicator;
-					if (aWrongType.size() == 1)
-					{
-						Column aColumn = itsTable.getColumn(aWrongType.get(0));
-						anIndicator = String.format("attribute '%s', which is of type '%s'.%n",
-										aColumn.getName(),
-										aColumn.getType());
-					}
-					else
-						anIndicator = "some attributes. \nThey are of an incompatible type. See selection.";
-					JOptionPane.showMessageDialog(null,
-										String.format(
-											"'%s' is not a valid value for %s",
-											aNewValue,
-											anIndicator),
-										"alert",
-										JOptionPane.ERROR_MESSAGE);
-				}
 			}
 			itsJTable.repaint();
 			itsMiningWindow.update();

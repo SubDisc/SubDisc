@@ -98,6 +98,7 @@ public class MissingValuesTest
 		assertEquals(aSubgroup.toString(), "age >= 37.0");
 		assertEquals(aSubgroup.getCoverage(), 498);
 		assertEquals(roundToFive(aSubgroup.getMeasureValue()), 0.33374f);
+		assertEquals(aSubgroup.getTertiaryStatistic(), 175.0f);
 
 		aSubgroup  = anIterator.next();
 		aSubgroup  = anIterator.next();

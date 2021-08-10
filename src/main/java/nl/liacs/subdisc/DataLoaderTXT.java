@@ -3,9 +3,6 @@ package nl.liacs.subdisc;
 import java.io.*;
 import java.util.*;
 
-// TODO
-// set MissingValues
-// DELIMITERs should be available to all Loaders
 public class DataLoaderTXT implements FileLoaderInterface
 {
 	// should be made available to all loaders (through FileLoaderInterface)
@@ -86,8 +83,6 @@ public class DataLoaderTXT implements FileLoaderInterface
 			String aHeaderLine = null;
 			String aLine;
 			int aLineNr = 0;
-			final boolean aMissingBinary = Boolean.parseBoolean(AttributeType.BINARY.DEFAULT_MISSING_VALUE);
-			final float aMissingNumeric = Float.parseFloat(AttributeType.NUMERIC.DEFAULT_MISSING_VALUE);
 			// print progress every once in a while
 			int aPrintTrigger = 1000;
 			int aPrintUpdate = 1000;
@@ -198,7 +193,7 @@ public class DataLoaderTXT implements FileLoaderInterface
 						// check if it is a missing value or a known binary value
 						if (isEmptyString(s))
 						{
-							aColumns.get(aColumn).add(aMissingBinary, true);
+							aColumns.get(aColumn).addMissing();
 							continue;
 						}
 						else if (AttributeType.isValidBinaryValue(s))
@@ -235,7 +230,7 @@ public class DataLoaderTXT implements FileLoaderInterface
 						try //if it is a float
 						{
 							if (isEmptyString(s))
-								aColumns.get(aColumn).add(aMissingNumeric, true);
+								aColumns.get(aColumn).addMissing();
 							else
 							{
 								float f = Float.parseFloat(s);
@@ -253,7 +248,7 @@ public class DataLoaderTXT implements FileLoaderInterface
 					else //it was nominal
 					{
 						if (isEmptyString(s))
-							aColumns.get(aColumn).add(AttributeType.NOMINAL.DEFAULT_MISSING_VALUE, true);
+							aColumns.get(aColumn).addMissing();
 						else
 							aColumns.get(aColumn).add(s);
 					}
@@ -476,7 +471,7 @@ public class DataLoaderTXT implements FileLoaderInterface
 			{
 				aColumns.add(new Column(aHeaders[i], null, AttributeType.BINARY, i, itsNrLines));
 				if (isEmptyString(s))
-					aColumns.get(i).add(Boolean.parseBoolean(AttributeType.BINARY.DEFAULT_MISSING_VALUE));
+					aColumns.get(i).addMissing();
 				else
 					aColumns.get(i).add(AttributeType.isValidBinaryTrueValue(s));
 				continue;

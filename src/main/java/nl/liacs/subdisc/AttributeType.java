@@ -7,10 +7,10 @@ import java.util.*;
  */
 public enum AttributeType implements EnumInterface
 {
-	NOMINAL("?"),
-	NUMERIC("0.0"),
-	ORDINAL("0.0"),
-	BINARY("0");
+	NOMINAL(),
+	NUMERIC(),
+	ORDINAL(),
+	BINARY();
 
 	// used for FileLoading/Column setMissingValue
 	private static final Set<String> BOOLEAN_POSITIVES = new HashSet<String>(Arrays.asList(new String[] { "1", "true" }));
@@ -18,21 +18,8 @@ public enum AttributeType implements EnumInterface
 	static final String DEFAULT_BINARY_TRUE_STRING = "1";
 	static final String DEFAULT_BINARY_FALSE_STRING = "0";
 
-	/*
-	 * NOTE if DEFAULT_MISSING_VALUE is changed for NUMERIC/ORDINAL, check
-	 * the switch() code for the Column constructor:
-	 * public Column(Attribute theAttribute, int theNrRows)
-	 */
-	/**
-	 * The default missing value for each AttributeType. To set a different
-	 * missing value use {@link Column#setNewMissingValue(String theNewValue)
-	 * Column.setNewMissingValue()}.
-	 */
-	public final String DEFAULT_MISSING_VALUE;
-
-	private AttributeType(String theDefaultMissingValue)
+	private AttributeType()
 	{
-		DEFAULT_MISSING_VALUE = theDefaultMissingValue;
 	}
 
 	/**
