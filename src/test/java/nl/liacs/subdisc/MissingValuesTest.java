@@ -101,5 +101,29 @@ public class MissingValuesTest
 		assertEquals(aSubgroup.getTertiaryStatistic(), 175.0f);
 	}
 
+	@Test
+	@DisplayName("Check current outcome on adult with missing.txt using SINGLE_NUMERIC")
+	public void testAdult2()
+	{
+		//SINGLE_NOMINAL
+		//d=1
+		//numeric strategy = best
+
+		DataLoaderTXT aLoader = new DataLoaderTXT(new File("src/test/resources/adult with missing.txt"));
+        	Table aTable = aLoader.getTable();
+
+		//sanity check
+	        assertEquals(aTable.getNrRows(), 1000);
+        	assertEquals(aTable.getNrColumns(), 15);
+
+		//set target concept
+		Column aTarget = aTable.getColumns().get(14); //get target
+		TargetConcept aTC = new TargetConcept();
+		aTC.setTargetType(TargetType.SINGLE_NUMERIC);
+		aTC.setPrimaryTarget(aTarget);
+
+		assertEquals(45.70549f, roundToFive(aTable.getColumns().get(0).getAverage(null)));
+	}
+
 	private float roundToFive(double f) { return (float) Math.round(f*100000)/100000; }
 }

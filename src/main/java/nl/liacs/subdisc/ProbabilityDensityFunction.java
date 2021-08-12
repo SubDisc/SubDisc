@@ -29,16 +29,17 @@ public class ProbabilityDensityFunction
 		itsMax = itsData.getMax();
 		itsBinWidth = (itsMax-itsMin)/itsNrBins;
 
-		//Log.logCommandLine("Min = " + itsMin);
-		//Log.logCommandLine("Max = " + itsMax);
-		//Log.logCommandLine("BinWidth = " + itsBinWidth);
+		Log.logCommandLine("Min = " + itsMin);
+		Log.logCommandLine("Max = " + itsMax);
+		Log.logCommandLine("BinWidth = " + itsBinWidth);
 		itsAbsoluteCount = itsData.size();
 		float anIncrement = 1.0f / itsAbsoluteCount;
 		for (int i=0; i<itsAbsoluteCount; i++)
-		{
-			float aValue = itsData.getFloat(i);
-			add(aValue, anIncrement);
-		}
+			if (!itsData.getMissing(i))
+			{
+				float aValue = itsData.getFloat(i);
+				add(aValue, anIncrement);
+			}
 	}
 
 	//create for subgroup, relative to existing PDF (use same Column data)
@@ -55,11 +56,6 @@ public class ProbabilityDensityFunction
 		for (int i = theMembers.nextSetBit(0); i >= 0; i = theMembers.nextSetBit(i + 1))
 			add(thePDF.itsData.getFloat(i), anIncrement);
 	}
-
-//	public float getDensity(float theValue)
-//	{
-//		return getDensity(getIndex(theValue));
-//	}
 
 	public float getDensity(int theIndex)
 	{
@@ -136,7 +132,7 @@ public class ProbabilityDensityFunction
 		// NOTE rounding errors may still prevent this
 		for (int i = 0, j = aWidth; i < j; ++i)
 			aKernel[i] /= aCorrection;
-System.out.format("##### theSigma = %f\tKERNEL SIZE = %d%n", theSigma, aKernel.length);
+		System.out.format("##### theSigma = %f\tKERNEL SIZE = %d%n", theSigma, aKernel.length);
 		return aKernel;
 	}
 

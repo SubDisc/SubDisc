@@ -1541,7 +1541,8 @@ public class Column implements XMLNodeInterface
 	{
 		float aSum = 0.0f;
 		for (int i = theBitSet.nextSetBit(0); i >= 0; i = theBitSet.nextSetBit(i + 1))
-			aSum += theFloats[i];
+			if (!Float.isNaN(theFloats[i]))
+				aSum += theFloats[i];
 		return aSum;
 	}
 
@@ -1552,8 +1553,17 @@ public class Column implements XMLNodeInterface
 	{
 		assert (theNrMembers == theBitSet.cardinality());
 
-		float aMean = theSum / theNrMembers;
-		float aSum = 0.0f;
+		int aCount = 0;
+		float aSum = 0f;
+		for (int i = theBitSet.nextSetBit(0); i >= 0; i = theBitSet.nextSetBit(i + 1))
+			if (!Float.isNaN(theFloats[i]))
+			{
+				aSum += theFloats[i];
+				aCount++;
+			}
+		float aMean = aSum / aCount;
+
+		aSum = 0.0f;
 		for (int i = theBitSet.nextSetBit(0); i >= 0; i = theBitSet.nextSetBit(i + 1))
 			aSum += squared(theFloats[i] - aMean);
 		return aSum;
@@ -2131,16 +2141,11 @@ public class Column implements XMLNodeInterface
 	}
 
 	/**
-	 * Returns the average of all values for Columns of
-	 * {@link AttributeType} {@link AttributeType#NUMERIC} and
-	 * {@link AttributeType#ORDINAL}.
+	 * Returns the average of all values for Columns of {@link AttributeType} {@link AttributeType#NUMERIC} and {@link AttributeType#ORDINAL}.
 	 * <p>
-	 * Note, this method has the risk of overflow, in which case
-	 * {@link Float#NaN} is returned.
+	 * Note, this method has the risk of overflow, in which case {@link Float#NaN} is returned.
 	 *
-	 * @return the average, or {@link Float#NaN} if this Column
-	 * is not of type {@link AttributeType#NUMERIC} or
-	 * {@link AttributeType#ORDINAL}.
+	 * @return the average, or {@link Float#NaN} if this Column is not of type {@link AttributeType#NUMERIC} or {@link AttributeType#ORDINAL}.
 	 *
 	 * @see #getStatistics(BitSet, boolean)
 	 */
@@ -2152,16 +2157,25 @@ public class Column implements XMLNodeInterface
 		float aSum = 0.0f;
 		if (theSelection == null)
 		{
-			for (float f : itsFloatz)
-				aSum += f;
-			return aSum / itsSize;
+			int aCount = 0;
+			for (int i=0; i<itsFloatz.length; i++)
+				if (!getMissing(i))
+				{
+					aSum += itsFloatz[i];
+					aCount++;
+				}
+			return aSum / aCount;
 		}
 		else
 		{
+			int aCount = 0;
 			for (int i=0; i<itsFloatz.length; i++)
-				if (theSelection.get(i))
+				if (theSelection.get(i) && !getMissing(i))
+				{
 					aSum += itsFloatz[i];
-			return aSum / theSelection.cardinality();
+					aCount++;
+				}
+			return aSum / aCount;
 		}
 	}
 
