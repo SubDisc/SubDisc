@@ -277,8 +277,7 @@ public class Subgroup implements Comparable<Subgroup>
 		// not a public method, assert is enough
 		assert (theAddedCondition != null);
 		assert (theChildCoverage > 0);
-System.out.println("getRefinedSubgroup: " + theAddedCondition.getColumn().evaluate(getMembersUnsafe(), theAddedCondition).cardinality() + ", " + theChildCoverage);
-//		assert (theAddedCondition.getColumn().evaluate(getMembersUnsafe(), theAddedCondition).cardinality() == theChildCoverage);
+		assert (theAddedCondition.getColumn().evaluate(getMembersUnsafe(), theAddedCondition).cardinality() == theChildCoverage);
 
 		return new Subgroup(this, theAddedCondition, theQuality, theSecondaryStatistic, theTertiaryStatistic, theChildCoverage);
 	}

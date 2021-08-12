@@ -1359,7 +1359,7 @@ public class Column implements XMLNodeInterface
 		// TODO set index in Condition: not even the HashMap lookup is required
 		int v = itsDistinctValuesMap.get(theValue);
 		for (int i = theMembers.nextSetBit(0); i >= 0; i = theMembers.nextSetBit(i + 1))
-			if (itsNominalz[i] == v)
+			if (itsNominalz[i] == v && !getMissing(i))					//note that this removes X = '?' from the results, intentionally
 				theResult.set(i);
 
 		return theResult;
@@ -1368,7 +1368,7 @@ public class Column implements XMLNodeInterface
 	private BitSet numericEquals(BitSet theMembers, float theValue, BitSet theResult)
 	{
 		for (int i = theMembers.nextSetBit(0); i >= 0; i = theMembers.nextSetBit(i + 1))
-			if (itsFloatz[i] == theValue)
+			if (itsFloatz[i] == theValue && !getMissing(i))
 				theResult.set(i);
 
 		return theResult;
@@ -1380,13 +1380,13 @@ public class Column implements XMLNodeInterface
 		if ((itsSortIndex != null) && (theValueSortIndex != Condition.UNINITIALISED_SORT_INDEX))
 		{
 			for (int i = theMembers.nextSetBit(0); i >= 0; i = theMembers.nextSetBit(i + 1))
-				if ((MASK_OFF & itsSortIndex[i]) == theValueSortIndex)
+				if ((MASK_OFF & itsSortIndex[i]) == theValueSortIndex && !getMissing(i))
 					theResult.set(i);
 		}
 		else
 		{
 			for (int i = theMembers.nextSetBit(0); i >= 0; i = theMembers.nextSetBit(i + 1))
-				if (itsFloatz[i] == theValue)
+				if (itsFloatz[i] == theValue && !getMissing(i))
 					theResult.set(i);
 		}
 
@@ -1398,16 +1398,14 @@ public class Column implements XMLNodeInterface
 		if ((itsSortIndex != null) && (theValueSortIndex != Condition.UNINITIALISED_SORT_INDEX))
 		{
 			for (int i = theMembers.nextSetBit(0); i >= 0; i = theMembers.nextSetBit(i + 1))
-				if ((MASK_OFF & itsSortIndex[i]) <= theValueSortIndex)
+				if ((MASK_OFF & itsSortIndex[i]) <= theValueSortIndex && !getMissing(i))
 					theResult.set(i);
 		}
 		else
 		{
 			for (int i = theMembers.nextSetBit(0); i >= 0; i = theMembers.nextSetBit(i + 1))
 			{
-				if (itsFloatz[i] <= theValue && getMissing(i))
-					System.out.println("evaluating a missing value in " + getName() + ": " + i + ", " + itsFloatz[i]);
-				if (itsFloatz[i] <= theValue)
+				if (itsFloatz[i] <= theValue && !getMissing(i))
 					theResult.set(i);
 			}
 		}
@@ -1417,18 +1415,16 @@ public class Column implements XMLNodeInterface
 
 	private BitSet numericGEQ(BitSet theMembers, float theValue, int theValueSortIndex, BitSet theResult)
 	{
-		// others use itsSortIndex, NUM5A/NUM5B/NUM6/NUM7 set index in Conditions
-		// when SubgroupDiscovery.mine() ends itsSortIndex is always set to null
 		if ((itsSortIndex != null) && (theValueSortIndex != Condition.UNINITIALISED_SORT_INDEX))
 		{
 			for (int i = theMembers.nextSetBit(0); i >= 0; i = theMembers.nextSetBit(i + 1))
-				if ((MASK_OFF & itsSortIndex[i]) >= theValueSortIndex)
+				if ((MASK_OFF & itsSortIndex[i]) >= theValueSortIndex && !getMissing(i))
 					theResult.set(i);
 		}
 		else
 		{
 			for (int i = theMembers.nextSetBit(0); i >= 0; i = theMembers.nextSetBit(i + 1))
-				if (itsFloatz[i] >= theValue)
+				if (itsFloatz[i] >= theValue && !getMissing(i))
 					theResult.set(i);
 		}
 		return theResult;
@@ -1437,7 +1433,7 @@ public class Column implements XMLNodeInterface
 	private BitSet numericBetween(BitSet theMembers, Interval theInterval, BitSet theResult)
 	{
 		for (int i = theMembers.nextSetBit(0); i >= 0; i = theMembers.nextSetBit(i + 1))
-			if (theInterval.between(itsFloatz[i]))
+			if (theInterval.between(itsFloatz[i]) && !getMissing(i))
 				theResult.set(i);
 
 		return theResult;
@@ -1888,7 +1884,7 @@ public class Column implements XMLNodeInterface
 		int aMissingCount = 0;
 		int aMissingPositiveCount = 0;
 
-		System.out.println("count: " + theBitSet.cardinality());
+//		System.out.println("count: " + theBitSet.cardinality());
 		int c = 0;
 		for (int i = theBitSet.nextSetBit(0); i >= 0; i = theBitSet.nextSetBit(i + 1))
 			if (!getMissing(i))
@@ -1910,16 +1906,16 @@ public class Column implements XMLNodeInterface
 				if (itsSortIndex[i] >= 0) //it's a positive example
 					aMissingPositiveCount++;
 			}
-		System.out.println("pos count: " + c);
-		int aC = 0;
-		int aP = 0;
-		for (int i=0; i<aCnt.length; i++)
-		{
-			aC += aCnt[i];
-			aP += aPos[i];
-			System.out.println("---" + i + ", " + itsSortedFloats[i] + ", " + aCnt[i] + ", " + aPos[i] + ", " + aC + ", " + aP);
-		}
-		System.out.println("Missing: " + aMissingCount + ", positive: " + aMissingPositiveCount);
+//		System.out.println("pos count: " + c);
+//		int aC = 0;
+//		int aP = 0;
+//		for (int i=0; i<aCnt.length; i++)
+//		{
+//			aC += aCnt[i];
+//			aP += aPos[i];
+//			System.out.println("---" + i + ", " + itsSortedFloats[i] + ", " + aCnt[i] + ", " + aPos[i] + ", " + aC + ", " + aP);
+//		}
+//		System.out.println("Missing: " + aMissingCount + ", positive: " + aMissingPositiveCount);
 
 		return new ValueCountTP(aCnt, aPos, aMissingCount, aMissingPositiveCount);
 	}

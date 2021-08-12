@@ -81,7 +81,7 @@ public class MissingValuesTest
 
 		//actual tests
 		assertEquals(aTarget.countValues("gr50K", null), 232); //how many positives in dataset
-		assertEquals(anSD.getNumberOfSubgroups(), 8);
+		assertEquals(anSD.getNumberOfSubgroups(), 7);
 		SubgroupSet aResult = anSD.getResult();
 		Iterator<Subgroup> anIterator = aResult.iterator();
 
@@ -99,18 +99,6 @@ public class MissingValuesTest
 		assertEquals(aSubgroup.getCoverage(), 498);
 		assertEquals(roundToFive(aSubgroup.getMeasureValue()), 0.33374f);
 		assertEquals(aSubgroup.getTertiaryStatistic(), 175.0f);
-
-		aSubgroup  = anIterator.next();
-		aSubgroup  = anIterator.next();
-		aSubgroup  = anIterator.next();
-		aSubgroup  = anIterator.next();
-		aSubgroup  = anIterator.next();
-		aSubgroup  = anIterator.next();
-		assertEquals(aSubgroup.toString(), "marital-status = '?'");
-		assertEquals(aSubgroup.getCoverage(), 343);
-		assertEquals(roundToFive(aSubgroup.getMeasureValue()), -0.35682f);
-		assertEquals(roundToFive(aSubgroup.getSecondaryStatistic()), 0.04665f);
-		assertEquals(aSubgroup.getTertiaryStatistic(), 16.0f);
 	}
 
 	private float roundToFive(double f) { return (float) Math.round(f*100000)/100000; }
