@@ -41,7 +41,7 @@ public class Validation
 	// FIXME MM - this method should not be separate from the constructor
 	//            the data can be changed in between, causing bugs
 	//            also, the whole class should consist of just static methods
-	//            of split constructor (not all TargetTypes use QuailtyMeasure)
+	//            of split constructor (not all TargetTypes use QualityMeasure)
 	public double[] getQualities(String[] theSetup)
 	{
 		if (!RandomQualitiesWindow.isValidRandomQualitiesSetup(theSetup))
@@ -72,7 +72,7 @@ public class Validation
 			theTargetType == TargetType.LABEL_RANKING;
 	}
 
-	private double[] getRandomQualities(boolean forSubgroups, int theNrRepetitions)
+	public double[] getRandomQualities(boolean forSubgroups, int theNrRepetitions)
 	{
 		final int aMinimumCoverage = itsSearchParameters.getMinimumCoverage();
 		//final Random aRandom = new Random(System.currentTimeMillis());
@@ -625,6 +625,14 @@ public class Validation
 
 		Log.COMMANDLINELOG = aCOMMANDLINELOGmem;
 		return aQualities;
+	}
+
+	//returns the 5% significance of swap randomisation.
+	public float getSignWithSwapRand(int theNrRepetitions)
+	{
+		double[] aQualities = swapRandomization(theNrRepetitions);
+		NormalDistribution aDistro = new NormalDistribution(aQualities);
+		return aDistro.getFivePercentSignificance();
 	}
 
 	/*
