@@ -9,8 +9,8 @@ import nl.liacs.subdisc.gui.*;
 
 public class Parser
 {
-	// parameters related to ResultFile created by Cortana
-	// could come from Cortana code - but this fine for now
+	// parameters related to ResultFile created by SubDisc
+	// could come from SubDisc code - but this fine for now
 	private static final int COLUMN_COUNT = ResultTableModel.COLUMN_COUNT;
 	private static final String DELIMITER = XMLAutoRun.RESULT_SET_DELIMITER;
 	private static final Pattern LINE_SPLITTER = Pattern.compile(DELIMITER);

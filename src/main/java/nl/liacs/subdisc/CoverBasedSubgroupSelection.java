@@ -138,7 +138,7 @@ public class CoverBasedSubgroupSelection
 				// implementation, as either [x AND y] or [y AND x] might arrive
 				// first, based on Operating System-controlled scheduling of
 				// Thread execution and time-slicing
-				// these are out of the control of the algorithm/Cortana/JVM
+				// these are out of the control of the algorithm/SubDisc/JVM
 				// TODO check: the new algorithm should be invocation-invariant
 				if ((aBestIndex == unset) || (aScore > aMaxScore))
 				{

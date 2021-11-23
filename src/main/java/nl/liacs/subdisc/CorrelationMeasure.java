@@ -333,7 +333,7 @@ public class CorrelationMeasure
 	
 	/**
 	 * For the Cost-based Quality measures, we assume X to be the cost target and Y to be the binary target
-	 * In the input boxes from cortana X is the SECOND BOX and Y the FIRST box
+	 * In the input boxes from SubDisc X is the SECOND BOX and Y the FIRST box
 	 * the Base object contains the information about the global data set.
 	 * Y contains information about the binary crosstable
 	 * X contains information about the total cost cross table

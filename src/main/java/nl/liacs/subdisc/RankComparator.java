@@ -14,7 +14,7 @@ public class RankComparator
 	private static BufferedWriter OUT;
 
 	/**
-	 * Parses standard Cortana result files, listing the rank for each
+	 * Parses standard SubDisc result files, listing the rank for each
 	 * subgroup description in each of the result files.
 	 *
 	 * @param args The paths of the files to compare.
