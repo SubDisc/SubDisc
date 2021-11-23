@@ -42,13 +42,6 @@
     <scope>test</scope>
   </dependency>
 
-  <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-math3 -->
-  <dependency>
-    <groupId>org.apache.commons</groupId>
-    <artifactId>commons-math3</artifactId>
-    <version>3.6.1</version>
-  </dependency>
-
   <!-- https://mvnrepository.com/artifact/gov.nist.math/jama -->
   <dependency>
     <groupId>gov.nist.math</groupId>
@@ -143,6 +136,13 @@
           <goals>
             <goal>shade</goal>
           </goals>
+          <configuration>
+            <artifactSet>
+              <excludes>
+                <exclude>net.sf.squirrel-sql.thirdparty-non-maven:java-cup</exclude>
+              </excludes>
+            </artifactSet>
+          </configuration>
         </execution>
       </executions>
     </plugin>
@@ -172,5 +172,46 @@
   </plugins>
 </build>
 
+<profiles>
+  <profile>
+    <id>lib</id>
+    <build>
+      <plugins>
+        <plugin>
+          <artifactId>maven-jar-plugin</artifactId>
+          <configuration>
+            <excludes>
+              <exclude>**/gui/*</exclude>
+              <exclude>**/nl/liacs/histo/*</exclude>
+            </excludes>
+            <finalName>${project.artifactId}-lib-${project.version}.${git.total.commit.count}</finalName>
+          </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-shade-plugin</artifactId>
+          <version>3.2.4</version>
+          <executions>
+            <execution>
+              <phase>package</phase>
+              <goals>
+                <goal>shade</goal>
+              </goals>
+              <configuration>
+                <artifactSet>
+                  <excludes>
+                    <exclude>org.jfree</exclude>
+                    <exclude>nz.ac.waikato.cms.weka</exclude>
+                    <exclude>net.sf.squirrel-sql.thirdparty-non-maven:java-cup</exclude>
+                  </excludes>
+                </artifactSet>
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>
+      </plugins>
+    </build>
+  </profile>
+</profiles>
 
 </project>
