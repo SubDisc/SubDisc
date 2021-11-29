@@ -71,7 +71,7 @@ public class CrossValidation
 	 * Produces a BitSet based on the different folds computed.
 	 * @param theInvert determines whether you want the (small) test-set
 	 * (false), or the inverse (large) training-set (true).
-	 * Typical value in Cortana is "false".
+	 * Typical value in SubDisc is "false".
 	 */
 	public BitSet getSet(int theTestSet, boolean theInvert)
 	{

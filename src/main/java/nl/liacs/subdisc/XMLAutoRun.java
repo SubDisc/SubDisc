@@ -275,7 +275,7 @@ public class XMLAutoRun
 	private static void showHelp()
 	{
 		Log.logCommandLine("");
-		Log.logCommandLine("Usage: java -jar cortana.jar /path/to/file.xml [showWindows] [nrThreads]");
+		Log.logCommandLine("Usage: java -jar subdisc-gui-2.xxxx.jar /path/to/file.xml [showWindows] [nrThreads]");
 		Log.logCommandLine("");
 		Log.logCommandLine("filepath can be relative");
 		Log.logCommandLine("filename must end with '.xml'");

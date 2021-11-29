@@ -77,7 +77,7 @@ public class Subgroup implements Comparable<Subgroup>
 	 * operations
 	 * BBC, (E/PL)WAH and other compression schemes exist that offer both
 	 * compression and fast modification, as decompression is not needed
-	 * additionally, for Cortana's Subgroup Discovery algorithm Refinements
+	 * additionally, for SubDisc's Subgroup Discovery algorithm Refinements
 	 * are guaranteed to not increase the number of Subgroup members
 	 */
 //	private byte[] itsCompressedMembers;

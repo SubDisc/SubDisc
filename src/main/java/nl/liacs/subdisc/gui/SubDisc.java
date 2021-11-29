@@ -52,7 +52,7 @@ public class SubDisc
 	 *
 	 * The first is a java Toolkit option, and suppresses all GUI elements.
 	 *
-	 * The second is a Cortana option, and works only in a GraphicsEnvironment.
+	 * The second is a SubDisc option, and works only in a GraphicsEnvironment.
 	 * When an experiment is run from XML, the default is to write the result to
 	 * a file, and shutdown the program.
 	 * When showWindows is set to a 'true' value, the result is written to file,
@@ -121,7 +121,7 @@ public class SubDisc
 				break;
 			}
 		}
-		System.out.println("Starting Cortana from:");
+		System.out.println("Starting SubDisc from:");
 		System.out.println("\t" + dir.getAbsolutePath());
 		System.out.println("Looking for /libs/ directory...");
 		System.out.format("/libs/ directory %sfound:%n", libs == null ? "not " : "");
@@ -158,7 +158,7 @@ public class SubDisc
 	 * Newer version may have removed deprecated methods, older version may
 	 * not have implemented some of the required methods.
 	 * 
-	 * TODO cortana.mf's Class-Path attribute defines the required jars,
+	 * TODO subdisc.mf's Class-Path attribute defines the required jars,
 	 * other libraries will not be loaded automatically, could be done here.
 	 */
 	private static void tryHarder(List<String> jars, String[] files) {

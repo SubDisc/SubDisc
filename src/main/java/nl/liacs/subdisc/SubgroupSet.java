@@ -110,7 +110,7 @@ public class SubgroupSet extends TreeSet<Subgroup>
 		itsMaximumSize = Integer.MAX_VALUE;
 		itsNrRows = -1;
 		itsBinaryTarget = null;
-		// FIXME this class has the worst programming available in Cortana FIXME
+		// FIXME this class has the worst programming available in SubDisc FIXME
 		itsAllDataBitSet = null;
 	}
 
