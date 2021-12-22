@@ -182,7 +182,7 @@
           <configuration>
             <excludes>
               <exclude>**/gui/*</exclude>
-              <exclude>**/nl/liacs/histo/*</exclude>
+              <!-- <exclude>**/nl/liacs/histo/*</exclude> -->
             </excludes>
             <finalName>${project.artifactId}-lib-${project.version}.${git.total.commit.count}</finalName>
           </configuration>
