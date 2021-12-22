@@ -394,6 +394,18 @@ public class Column implements XMLNodeInterface
 	}
 
 	/**
+	 * Set the current column data.
+	 *
+	 * @param theNominals the values of the columns
+	 */
+	public void setData(String[] theNominals)
+	{
+		for (String s : theNominals)
+			add(s);
+		close();
+	}
+
+	/**
 	 * Appends the specified element to the end of this Column.
 	 *
 	 * Always call {@link #close()} after the last element is added to this
@@ -411,6 +423,18 @@ public class Column implements XMLNodeInterface
 	}
 
 	/**
+	 * Set the current column data.
+	 * 
+	 * @param theFloats the values of the columns
+	 */
+	public void setData(float[] theFloats)
+	{
+		itsFloatz = theFloats.clone();
+		itsSize = itsFloatz.length;
+		close();
+	}
+
+	/**
 	 * Appends the specified element to the end of this Column.
 	 *
 	 * Always call {@link #close()} after the last element is added to this
@@ -423,6 +447,21 @@ public class Column implements XMLNodeInterface
 		if (theBinary)
 			itsBinaries.set(itsSize);
 		itsSize++;
+	}
+	
+	/**
+	 * Set the current column data.
+	 *
+	 * @param theBinaries the values of the columns
+	 */
+	public void setData(boolean[] theBinaries)
+	{
+		for (int i = 0 ; i < theBinaries.length ; i++)
+		{
+			itsBinaries.set(i, theBinaries[i]);
+		}
+		itsSize = theBinaries.length;
+		close();
 	}
 
 	/**
