@@ -484,7 +484,7 @@ public class Vec
 	// new alternative suggestion: 0.9 * min(sd_s, IQR/1.34) * n^{-0.2}
 	public static final double h_silverman(int n, double std_dev_sample, double iqr)
 	{
-System.out.println("std_dev=" + std_dev_sample + " iqr=" + iqr);
+		System.out.println("std_dev=" + std_dev_sample + " iqr=" + iqr);
 		return 0.9 * Math.min(std_dev_sample, (iqr/1.34)) * Math.pow(n, -0.2);
 	}
 
