@@ -76,7 +76,7 @@ public class ProbabilityDensityFunction_ND
 	{
 		double min = theColumn.getMin();
 		double max = theColumn.getMax();
-		double ssd = theColumn.getStatistics(theBitSet, false, false).getSubgroupSumSquaredDeviations();
+		double ssd = theColumn.getStatistics(null, theBitSet, false, false).getSubgroupSumSquaredDeviations();
 		double var = ssd / theColumn.size();
 		double sigma = Math.sqrt(var);
 

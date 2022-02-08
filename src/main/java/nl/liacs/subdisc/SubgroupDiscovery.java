@@ -24,44 +24,48 @@ import nl.liacs.subdisc.gui.*;
 
 public class SubgroupDiscovery
 {
-	// log slows down mining a lot, but leave NO_CANDIDATE_LOG at false in git
-	private static final boolean NO_CANDIDATE_LOG = false;
-	// old algorithm creates many useless Refinements, set these to true to
-	// avoid this for various scenarios, leave at false in git
+	private static final boolean NO_CANDIDATE_LOG = false;				// log slows down mining a lot, but leave NO_CANDIDATE_LOG at false in git
+
+	// old algorithm creates many useless Refinements, set these to true to avoid this for various scenarios, leave at false in git
 	private static final boolean BEST_VALUESET_AT_LAST_POSITION_SKIP = false;
 	private static final boolean BEST_INTERVAL_AT_LAST_POSITION_SKIP = false;
+
 	// these two have been extensively tested, leave at true (gather statistics)
-	private static final boolean BEST_VALUESET_NO_REFINEMENT_SKIP    = true;
+	private static final boolean BEST_VALUESET_NO_REFINEMENT_SKIP    = true;	
 	private static final boolean BEST_INTERVAL_NO_REFINEMENT_SKIP    = true;
-	// for nominal class labels only, irrelevant for ValueSet-scenario
-	private static final boolean BINARY_NOMINAL_EQUALS_SKIP          = false;
+
+	private static final boolean BINARY_NOMINAL_EQUALS_SKIP          = false;	// for nominal class labels only, irrelevant for ValueSet-scenario
+
 	// for numeric ALL|BEST + only EQUALS (not LEQ/GEQ), not for (Best)Intervals
 	private static final boolean NUMERIC_EQ_SKIP                     = false;
+
 	// data set/search parameter specific filter will replace all of the above
 	// SET just tests/reports redundant refinements, USE actually skips them
 	private static final boolean SET_SKIP_FILTER                     = false;
 	private static final boolean USE_SKIP_FILTER                     = false;
 	private static final boolean DEBUG_PRINTS_FOR_SKIP               = false;
 	private static final boolean DEBUG_PRINTS_FOR_WARN               = false;
-	// print how often Best Candidate differs from Best Result, see checkBest()
-	private static final boolean DEBUG_PRINTS_FOR_BEST               = false;
-	// when false: both BestForResultSet and BestForCandidateSet are used
-	private static final boolean USE_SINGLE_BEST_RESULT_LIKE_BEFORE  = false;
-	// not used anymore, but will be again when debugging linear algorithm
-	private static final boolean DEBUG_PRINTS_FOR_BEST_INTERVAL      = false;
-	// beam fill (not equal to nr. results at same level; for cbss includes -tmp
-	private static final boolean DEBUG_PRINTS_NEXT_LEVEL_CANDIDATES  = false;
-	// print CoverRedundancy and JointEntropy for topK for For Real paper
-	private static final int[] FOR_REAL_PRINTS = { 10, 100 };
+
+	private static final boolean DEBUG_PRINTS_FOR_BEST               = false;	// print how often Best Candidate differs from Best Result, see checkBest()
+
+	private static final boolean USE_SINGLE_BEST_RESULT_LIKE_BEFORE  = false;	// when false: both BestForResultSet and BestForCandidateSet are used
+
+	private static final boolean DEBUG_PRINTS_FOR_BEST_INTERVAL      = false;	// not used anymore, but will be again when debugging linear algorithm
+
+	private static final boolean DEBUG_PRINTS_NEXT_LEVEL_CANDIDATES  = false;	// beam fill (not equal to nr. results at same level; for cbss includes -tmp
+
+	private static final int[] FOR_REAL_PRINTS = { 10, 100 };			// print CoverRedundancy and JointEntropy for topK for For Real paper
 
 	// statistics for debugging - related to booleans above
 	private AtomicLong itsBestPairsCount  = new AtomicLong(0);
 	private AtomicLong itsBestPairsDiffer = new AtomicLong(0);
 	private AtomicLong itsSkipCount       = new AtomicLong(0);
+
 	// BestInterval debugging - abuses BestSubgroupsForCandidateSetAndResultSet
 	private AtomicLong itsBestIntervalsCount  = new AtomicLong(0);
 	private AtomicLong itsBestIntervalsDiffer = new AtomicLong(0);
 	private Queue<BestSubgroupsForCandidateSetAndResultSet> itsBestIntervalsErrors = new ConcurrentLinkedQueue<>();
+
 	// only ever called by a single Thread, but make Thread-safe anyway
 	private Queue<Integer> itsCandidateQueueSizes = new ConcurrentLinkedQueue<>();
 
@@ -181,23 +185,15 @@ public class SubgroupDiscovery
 		TargetConcept aTC = itsSearchParameters.getTargetConcept();
 		itsNumericTarget = aTC.getPrimaryTarget();
 
-		BitSet aBitSet = new BitSet(itsNrRows);
-		aBitSet.set(0, itsNrRows);
-		Statistics aStatistics = itsNumericTarget.getStatistics(aBitSet, false, QM.requiredStats(itsSearchParameters.getQualityMeasure()).contains(Stat.COMPL));
-		ProbabilityDensityFunction aPDF;
-if (!TEMPORARY_CODE)
-{
-		// DEBUG
-		if (!ProbabilityDensityFunction.USE_ProbabilityDensityFunction2)
-			aPDF = new ProbabilityDensityFunction(itsNumericTarget);
-		else
-			aPDF = new ProbabilityDensityFunction2(itsNumericTarget);
+System.out.println("\ncomputing Statistics");
+		Statistics aStatistics = itsNumericTarget.getStatistics(theSelection, theSelection, false, QM.requiredStats(itsSearchParameters.getQualityMeasure()).contains(Stat.COMPL));
+		aStatistics.print();
+		ProbabilityDensityFunction2 aPDF = new ProbabilityDensityFunction2(itsNumericTarget);
 		aPDF.smooth();
-}
-else
-{
-aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_POINTS, TEMPORARY_CODE_USE_EQUAL_WIDTH);
-}
+
+		System.out.println("itsNrRows " + itsNrRows);
+		System.out.println("aStatistics.getSubgroupSum() " + aStatistics.getSubgroupSum());
+		System.out.println("aStatistics.getSubgroupSumSquaredDeviations() " + aStatistics.getSubgroupSumSquaredDeviations());
 
 		itsQualityMeasure = new QualityMeasure(
 			itsSearchParameters.getQualityMeasure(),
@@ -207,6 +203,7 @@ aPDF = new ProbabilityMassFunction_ND(itsNumericTarget, TEMPORARY_CODE_NR_SPLIT_
 			aPDF);
 		itsQualityMeasureMinimum = itsSearchParameters.getQualityMeasureMinimum();
 
+System.out.println("after creating a quality measure");
 		itsResult = new SubgroupSet(itsSearchParameters.getMaximumSubgroups(), theSelection, itsTable.getNrRows());
 	}
 
@@ -3226,8 +3223,8 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			case SINGLE_NUMERIC     : return evaluateCandidateSingleNumeric(theChild);
 			case MULTI_NUMERIC      : return evaluateCandidateMultiNumeric(theChild);
 			case DOUBLE_REGRESSION  : return evaluateCandidateDoubleRegression(theChild);
-            case DOUBLE_CORRELATION : return evaluateCandidateDoubleCorrelation(theChild);
-            case DOUBLE_BINARY      : return evaluateCandidateDoubleBinary(theChild);
+			case DOUBLE_CORRELATION : return evaluateCandidateDoubleCorrelation(theChild);
+			case DOUBLE_BINARY      : return evaluateCandidateDoubleBinary(theChild);
 			case SCAPE              : return evaluateCandidateScape(theChild);
 			case MULTI_LABEL        : return evaluateCandidateMultiLabel(theChild);
 			case LABEL_RANKING      : return evaluateCandidateLabelRanking(theChild);
@@ -3272,13 +3269,9 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 
 		if (!TEMPORARY_CODE)
 		{
-			// what needs to be calculated for this QM
-			// NOTE requiredStats could be a final SubgroupDiscovery.class member
 			QM aQM = itsSearchParameters.getQualityMeasure();
 			Set<Stat> aRequiredStats = QM.requiredStats(aQM);
-			//Statistics aStatistics = itsNumericTarget.getStatistics(aMembers, aRequiredStats);
-			// TODO MM - implement better solution than below two checks
-			Statistics aStatistics = itsNumericTarget.getStatistics(aChildMembers, aQM == QM.MMAD, aRequiredStats.contains(Stat.COMPL));
+			Statistics aStatistics = itsNumericTarget.getStatistics(itsSelection, aChildMembers, aQM == QM.MMAD, aRequiredStats.contains(Stat.COMPL));
 
 			ProbabilityDensityFunction aPDF = null;
 			if (aRequiredStats.contains(Stat.PDF))

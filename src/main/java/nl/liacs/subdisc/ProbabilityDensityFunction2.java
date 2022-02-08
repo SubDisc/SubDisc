@@ -25,15 +25,18 @@ public class ProbabilityDensityFunction2 extends ProbabilityDensityFunction
 	private final Column itsData;
 	private final double itsMin;
 	private final double itsMax;
+
 	// related to density function
 	private final double itsLo;
 	private final double itsHi;
 	private double itsH; // h
 	private final double dx;
+
 	// do not not cache (large) x-grid, re-computation is fast enough
 	// private final float[] x_grid;
 	private final float[] itsDensity;
 
+	//TODO: check for selection
 	public ProbabilityDensityFunction2(Column theData)
 	{
 		super(theData);
@@ -41,15 +44,19 @@ public class ProbabilityDensityFunction2 extends ProbabilityDensityFunction
 		itsData = theData;
 		itsMin = itsData.getMin();
 		itsMax = itsData.getMax();
-		int data_size = itsData.size();
+
 		// TODO MM create Vec.h_silverman(Column)
-		double[] data = new double[data_size];
-		for (int i = 0, j = data.length; i < j; ++i)
-			data[i] = itsData.getFloat(i);
+		//pull out relevant data (ignoring the missing data (NaN) and respecting the selection)
+		ArrayList<Float> aList = new ArrayList<Float>(itsData.size());
+		for (int i = 0, j = itsData.size(); i < j; ++i)
+			if (!itsData.getMissing(i)) //skip NaN values
+				aList.add(itsData.getFloat(i));
+		int aSize = aList.size();
+		double[] data = new double[aSize];
+		for (int i=0; i<aSize; i++)
+			data[i] = (double) aList.get(i);
 		Arrays.sort(data);
 
-		// NOTE Silverman tends to oversmooth
-		// plug-in or cross-validation bandwidth selectors are preferred
 		itsH = Vec.h_silverman(data);
 
 		itsLo = itsMin-(CUTOFF*itsH);
@@ -63,11 +70,11 @@ public class ProbabilityDensityFunction2 extends ProbabilityDensityFunction
 		int k = (int) ((Math.ceil(s) * SAMPLES) / (2.0 * CUTOFF));
 		k = Math.min(k, 1000); // k could grow unlimited, producing a negative array size
 		dx = range/k;
-System.out.format("h=%f lo=%f hi=%f range=%f s=%f k=%d dx=%f%n", itsH, itsLo, itsHi, range, s, k, dx);
+		System.out.format("h=%f lo=%f hi=%f range=%f s=%f k=%d dx=%f%n", itsH, itsLo, itsHi, range, s, k, dx);
 
 		// hack
-		BitSet b = new BitSet(data_size);
-		b.set(0, data_size);
+		BitSet b = new BitSet(aSize);
+		b.set(0, aSize);
 
 		itsDensity = getDensity(itsData, b, k+1);
 	}

@@ -394,18 +394,6 @@ public class Column implements XMLNodeInterface
 	}
 
 	/**
-	 * Set the current column data.
-	 *
-	 * @param theNominals the values of the columns
-	 */
-	public void setData(String[] theNominals)
-	{
-		for (String s : theNominals)
-			add(s);
-		close();
-	}
-
-	/**
 	 * Appends the specified element to the end of this Column.
 	 *
 	 * Always call {@link #close()} after the last element is added to this
@@ -423,18 +411,6 @@ public class Column implements XMLNodeInterface
 	}
 
 	/**
-	 * Set the current column data.
-	 * 
-	 * @param theFloats the values of the columns
-	 */
-	public void setData(float[] theFloats)
-	{
-		itsFloatz = theFloats.clone();
-		itsSize = itsFloatz.length;
-		close();
-	}
-
-	/**
 	 * Appends the specified element to the end of this Column.
 	 *
 	 * Always call {@link #close()} after the last element is added to this
@@ -447,21 +423,6 @@ public class Column implements XMLNodeInterface
 		if (theBinary)
 			itsBinaries.set(itsSize);
 		itsSize++;
-	}
-	
-	/**
-	 * Set the current column data.
-	 *
-	 * @param theBinaries the values of the columns
-	 */
-	public void setData(boolean[] theBinaries)
-	{
-		for (int i = 0 ; i < theBinaries.length ; i++)
-		{
-			itsBinaries.set(i, theBinaries[i]);
-		}
-		itsSize = theBinaries.length;
-		close();
 	}
 
 	/**
@@ -1479,44 +1440,26 @@ public class Column implements XMLNodeInterface
 	}
 
 	/**
-	 * Returns the statistics needed in the computation of quality measures
-	 * for Columns of {@link AttributeType} {@link AttributeType#NUMERIC}
-	 * and {@link AttributeType#ORDINAL}.
+	 * Returns the statistics needed in the computation of quality measures for Columns of {@link AttributeType} {@link AttributeType#NUMERIC} and {@link AttributeType#ORDINAL}.
 	 * <p>
-	 * The bits set in the BitSet supplied as argument indicate which values
-	 * of the Column should be used for the calculation.
-	 * When the BitSet represents the members of a {@link Subgroup}, this
-	 * method calculates the relevant arguments to determine the quality of
-	 * that Subgroup.
+	 * The bits set in the BitSet supplied as argument indicate which values of the Column should be used for the calculation. When the BitSet represents the members of a {@link Subgroup}, this
+	 * method calculates the relevant arguments to determine the quality of that Subgroup.
 	 * <p>
-	 * The {@code getMedianAndMedianAD} parameter controls what statistics
-	 * are to be computed. {@code getMedianAndMedianAD} needs only be
-	 * {@code true} in case of
-	 * {@link QualityMeasure#calculate(int, float, float, float, float,
-	 * int[], ProbabilityDensityFunction)}
-	 * for the Median MAD metric ({@link QM#MMAD}).
+	 * The {@code getMedianAndMedianAD} parameter controls what statistics are to be computed. {@code getMedianAndMedianAD} needs only be {@code true} in case of
+	 * {@link QualityMeasure#calculate(int, float, float, float, float, * int[], ProbabilityDensityFunction)} for the Median MAD metric ({@link QM#MMAD}).
 	 * <p>
-	 * The resulting {@code float[]} is always of length {@code 4}, and, in
-	 * order, holds the following values: sum, sum of squared deviation,
-	 * median and median absolute deviation. Of these, the last two are only
-	 * computed for the quality measure MMAD, and set to {@code Float.NaN}
-	 * otherwise.
+	 * The resulting {@code float[]} is always of length {@code 4}, and, in order, holds the following values: sum, sum of squared deviation,
+	 * median and median absolute deviation. Of these, the last two are only computed for the quality measure MMAD, and set to {@code Float.NaN} otherwise.
 	 * <p>
-	 * When the {@link java.util.BitSet#cardinality()} is {@code 0}, no
-	 * meaningful statistics can be computed, and a {@code float[4]}
-	 * containing {@code 4} {@code Float.NaN}s will be returned.
+	 * When the {@link java.util.BitSet#cardinality()} is {@code 0}, no meaningful statistics can be computed, and a {@code float[4]} containing {@code 4} {@code Float.NaN}s will be returned.
 	 * <p>
-	 * When the Column is not of type NUMERIC or ORDINAL a {@code float[4]}
-	 * containing {@code 4} {@code Float.NaN}s will be returned.
+	 * When the Column is not of type NUMERIC or ORDINAL a {@code float[4]} containing {@code 4} {@code Float.NaN}s will be returned.
 	 *
-	 * @param theBitSet the BitSet indicating what values of this Column to
-	 * use in the calculations.
+	 * @param theBitSet the BitSet indicating what values of this Column to use in the calculations.
 	 *
-	 * @param getMedianAndMedianAD the {@code boolean} indicating whether
-	 * the median and median absolute deviation should be calculated.
+	 * @param getMedianAndMedianAD the {@code boolean} indicating whether the median and median absolute deviation should be calculated.
 	 *
-	 * @return a {@code float[4]}, holding the arguments relevant for the
-	 * setting supplied as argument.
+	 * @return a {@code float[4]}, holding the arguments relevant for the setting supplied as argument.
 	 *
 	 * @see AttributeType
 	 * @see QualityMeasure
@@ -1524,49 +1467,43 @@ public class Column implements XMLNodeInterface
 	 * @see Subgroup
 	 * @see java.util.BitSet
 	 */
-	public Statistics getStatistics(BitSet theBitSet, boolean getMedianAndMedianAD, boolean addComplement)
+	public Statistics getStatistics(BitSet theSelection, BitSet theBitSet, boolean getMedianAndMedianAD, boolean addComplement)
 	{
-		if (!isValidCall("getStatistics", theBitSet))
-			return new Statistics();
-		// not all methods below are safe for divide by 0
-		int aNrMembers = theBitSet.cardinality();
-		if (aNrMembers == 0)
-			return new Statistics();
+		//this code assumes that a potentially present selection (theSelection) is implicitly present in theBitSet
+		int aSize;
+		if (theBitSet == null) //for the entire dataset?
+			aSize = itsSize;
+		else
+			aSize = theBitSet.cardinality();
 
 		final Statistics aResult;
-		// if (!MMAD) do not store and sort the values, else do
-		if (!getMedianAndMedianAD)
+		if (!getMedianAndMedianAD) //if (!MMAD) do not store and sort the values
 		{
 			float aSum = computeSum(theBitSet, itsFloatz);
-			aResult = new Statistics(aNrMembers, aSum, computeSumSquaredDeviations(aSum, aNrMembers, theBitSet, itsFloatz));
+			aResult = new Statistics(aSize, aSum, computeSumSquaredDeviations(aSum, theBitSet, itsFloatz));
 		}
-		else
+		else		//TODO this block still needs to be checked for theSelection. Probably not working correctly
 		{
 			// this code path needs a copy of the data for median
 			// get relevant values and do summing in single loop
 			float aSum = 0.0f;
-			float[] aValues = new float[aNrMembers];
+			float[] aValues = new float[aSize];
 			for (int i = theBitSet.nextSetBit(0), j = -1; i >= 0; i = theBitSet.nextSetBit(i + 1))
 				aSum += (aValues[++j] = itsFloatz[i]);
 			Arrays.sort(aValues);
 			float aMedian = computeMedian(aValues);
-
-			aResult = new Statistics(aNrMembers,
-				aSum,
-				computeSumSquaredDeviations(aSum, aValues),
-				aMedian,
-				computeMedianAbsoluteDeviations(aMedian, aValues));
+			aResult = new Statistics(aSize, aSum, computeSumSquaredDeviations(aSum, aValues), aMedian, computeMedianAbsoluteDeviations(aMedian, aValues));
 		}
 
-		if (addComplement)
+		if (addComplement) //is the complement relevant for computation of the QM
 		{
 			// XXX MM - do not clone(), use clear bits in theBitSet
 			BitSet aComplement = (BitSet) theBitSet.clone();
 			aComplement.flip(0, itsSize);
-			int aNrComplementMembers = (itsSize - aNrMembers);
+			int aNrComplementMembers = (itsSize - aSize);
 			assert (aNrComplementMembers == aComplement.cardinality());
 			float aComplementSum = computeSum(aComplement, itsFloatz);
-			aResult.addComplement(aNrComplementMembers, aComplementSum, computeSumSquaredDeviations(aComplementSum, aNrComplementMembers, aComplement, itsFloatz));
+			aResult.addComplement(aNrComplementMembers, aComplementSum, computeSumSquaredDeviations(aComplementSum, aComplement, itsFloatz));
 
 			aResult.addDatasetSSD(computeSumSquaredDeviations(aResult.getAverage()));
 			// XXX MM - computeSumSquaredDeviations(sum, float[])
@@ -1576,35 +1513,59 @@ public class Column implements XMLNodeInterface
 		return aResult;
 	}
 
-	private static final float computeSum(BitSet theBitSet, float[] theFloats)
+	private static final float computeSum(BitSet theSelection, float[] theFloats)
 	{
-		float aSum = 0.0f;
-		for (int i = theBitSet.nextSetBit(0); i >= 0; i = theBitSet.nextSetBit(i + 1))
-			if (!Float.isNaN(theFloats[i]))
-				aSum += theFloats[i];
+		float aSum = 0f;
+		if (theSelection == null) //all data
+		{
+			for (float aFloat : theFloats)
+				if (!Float.isNaN(aFloat))
+					aSum += aFloat;
+		}
+		else
+			for (int i = theSelection.nextSetBit(0); i >= 0; i = theSelection.nextSetBit(i + 1))
+				if (!Float.isNaN(theFloats[i]))
+					aSum += theFloats[i];
 		return aSum;
 	}
 
 	// always called after computeSum for !MMAD
 	// not safe for divide by 0 (theBitSet.cardinality() == 0)
 	// uses theNrMembers, as theBitSet.cardinality() is expensive
-	private static final float computeSumSquaredDeviations(float theSum, int theNrMembers, BitSet theBitSet, float[] theFloats)
+	private static final float computeSumSquaredDeviations(float theSum, BitSet theSelection, float[] theFloats)
 	{
-		assert (theNrMembers == theBitSet.cardinality());
-
 		int aCount = 0;
 		float aSum = 0f;
-		for (int i = theBitSet.nextSetBit(0); i >= 0; i = theBitSet.nextSetBit(i + 1))
-			if (!Float.isNaN(theFloats[i]))
-			{
-				aSum += theFloats[i];
-				aCount++;
-			}
-		float aMean = aSum / aCount;
+		float aMean;
+		if (theSelection == null) //all of the data
+		{
+			for (float aFloat : theFloats)
+				if (!Float.isNaN(aFloat))
+				{
+					aSum += aFloat;
+					aCount++;
+				}
+			aMean = aSum/aCount;
+			aSum = 0f;
+			for (float aFloat : theFloats)
+				if (!Float.isNaN(aFloat))
+					aSum += squared(aFloat - aMean);
+		}
+		else
+		{
+			for (int i = theSelection.nextSetBit(0); i >= 0; i = theSelection.nextSetBit(i + 1))
+				if (!Float.isNaN(theFloats[i]))
+				{
+					aSum += theFloats[i];
+					aCount++;
+				}
+			aMean = aSum/aCount;
 
-		aSum = 0.0f;
-		for (int i = theBitSet.nextSetBit(0); i >= 0; i = theBitSet.nextSetBit(i + 1))
-			aSum += squared(theFloats[i] - aMean);
+			aSum = 0f;
+			for (int i = theSelection.nextSetBit(0); i >= 0; i = theSelection.nextSetBit(i + 1))
+				if (!Float.isNaN(theFloats[i]))
+					aSum += squared(theFloats[i] - aMean);
+		}
 		return aSum;
 	}
 
@@ -2464,10 +2425,6 @@ public class Column implements XMLNodeInterface
 		String anError = null;
 		if (!(itsType == AttributeType.NUMERIC || itsType == AttributeType.ORDINAL))
 			anError = getTypeError("NUMERIC or ORDINAL");
-		else if (theBitSet == null)
-			anError = "Argument can not be 'null'";
-		else if (theBitSet.length() > itsSize)
-			anError = String.format("BitSet can not be bigger then: %s", itsSize);
 
 		if (anError != null)
 			logMessage(theSource, anError);

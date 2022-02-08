@@ -9,6 +9,7 @@ public class Statistics
 	// FIXME replace all floats, they produce incorrect results
 	private int itsCoverage;
 	private int itsComplementCoverage;
+	private boolean hasComplement = false;
 	private float itsSubgroupSum = Float.NaN;
 	private float itsSubgroupSumSquaredDeviations = Float.NaN;
 	private float itsMedian = Float.NaN;
@@ -45,6 +46,7 @@ public class Statistics
 
 	public void addComplement(int theComplementCoverage, float theSum, float theSumSquaredDeviations)
 	{
+		hasComplement = true;
 		itsComplementCoverage = theComplementCoverage;
 		itsComplementSum = theSum;
 		itsComplementSumSquaredDeviations = theSumSquaredDeviations;
@@ -69,14 +71,18 @@ public class Statistics
 	public float getComplementSumSquaredDeviations() { return itsComplementSumSquaredDeviations; }
 	public float getComplementStandardDeviation() { return (float) Math.sqrt(itsComplementSumSquaredDeviations/(double)itsComplementCoverage); }
 
-	//entire data
-	//average of all data
-	public float getAverage() { return (itsSubgroupSum+itsComplementSum)/(itsCoverage+itsComplementCoverage); }
-	public float getSumSquaredDeviations() { return itsSumSquaredDeviations; }
+	//average of all data (Note that this may not be *all* data, if only a selection was provided during creation of this)
+	public float getAverage() 
+	{
+		if (hasComplement)
+			return (itsSubgroupSum+itsComplementSum)/(itsCoverage+itsComplementCoverage);
+		else
+			return itsSubgroupSum/itsCoverage; 
+	}
 
 	public void print()
 	{
-		String t = String.format("total: %f, %f%n", getAverage(), Math.sqrt(itsSumSquaredDeviations / (double) (itsCoverage + itsComplementCoverage)));
+		String t = String.format("total: %f%n", getAverage());
 		String s = String.format("subgroup (%d): %f, %f%n", getCoverage(), getSubgroupAverage(), Math.sqrt(itsSubgroupSumSquaredDeviations / (double) itsCoverage));
 		String c = String.format("complement (%d): %f, %f%n", getComplementCoverage(), getComplementAverage(), Math.sqrt(itsComplementSumSquaredDeviations / (double) itsComplementCoverage));
 
