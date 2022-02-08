@@ -131,8 +131,8 @@ public class EndToEndTest
 		assertEquals(aSubgroup.getTertiaryStatistic(), 51.0f);
 	}
 
-	@Test
-	@DisplayName("Check end-to-end run on Adult.txt using SINGLE_NUMERIC")
+//	@Test
+//	@DisplayName("Check end-to-end run on Adult.txt using SINGLE_NUMERIC")
 	public void testAdult2()
 	{
 		//SINGLE_NUMERIC
