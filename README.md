@@ -10,7 +10,7 @@ and number of target attributes. Where regular SD algorithms only consider a sin
 sometimes numeric, Cortana is able to deal with targets consisting of multiple attributes, in a setting called 
 Exceptional Model Mining.
 
-SubDisc was previously developped under the name Cortana.
+SubDisc was previously developed under the name Cortana.
 
 ![screenshots](manual/cortana-screenshots.png)
 
@@ -31,7 +31,7 @@ The code is compatible with Java 15.
 ## To use
 
 1. Either download the last released version jar file (https://github.com/SubDisc/SubDisc/releases/) or build it yourself (below).
-2. Double-click on the .jar file or use java cli (ex.: `java --jar subdisc-gui-2.1094.jar`).
+2. Double-click on the .jar file or use java cli (ex.: `java -jar target/subdisc-gui.jar`).
 
 The interface should appear, and you are ready to open a data file and discover subgroups!
 
