@@ -131,9 +131,70 @@ public class EndToEndTest
 		assertEquals(aSubgroup.getTertiaryStatistic(), 51.0f);
 	}
 
-//	@Test
-//	@DisplayName("Check end-to-end run on Adult.txt using SINGLE_NUMERIC")
+	@Test
+	@DisplayName("Check end-to-end run on Adult.txt using SINGLE_NUMERIC (Z-Score)")
 	public void testAdult2()
+	{
+		//SINGLE_NUMERIC
+		//d=1
+		//numeric strategy = best
+
+		DataLoaderTXT aLoader = new DataLoaderTXT(new File("src/test/resources/adult.txt"));
+		Table aTable = aLoader.getTable();
+
+		//sanity check
+		assertEquals(aTable.getNrRows(), 1000);
+		assertEquals(aTable.getNrColumns(), 15);
+
+		//set target concept
+		Column aTarget = aTable.getColumns().get(0); //get target (age)
+		TargetConcept aTC = new TargetConcept();
+		aTC.setTargetType(TargetType.SINGLE_NUMERIC);
+		aTC.setPrimaryTarget(aTarget);
+
+		//set search parameters
+		SearchParameters anSP = new SearchParameters();
+		anSP.setTargetConcept(aTC);
+		anSP.setQualityMeasure(QM.Z_SCORE);
+		anSP.setQualityMeasureMinimum(1f);
+		anSP.setSearchDepth(1);
+		anSP.setMinimumCoverage(2);
+		anSP.setMaximumCoverageFraction(1f);
+		anSP.setMaximumSubgroups(1000);
+		anSP.setMaximumTime(1000); //1000 seconds
+		anSP.setSearchStrategy(SearchStrategy.BEAM);
+		anSP.setNominalSets(false);
+		anSP.setNumericOperators(NumericOperatorSetting.NORMAL);
+		anSP.setNumericStrategy(NumericStrategy.NUMERIC_BEST);
+		anSP.setSearchStrategyWidth(10);
+		anSP.setNrBins(8);
+		anSP.setNrThreads(1);
+		SubgroupDiscovery anSD = Process.runSubgroupDiscovery(aTable, 0, null, anSP, false, 1, null);
+
+		//actual tests
+		assertEquals(aTarget.getAverage(null), 38.051f); //how many positives in dataset
+		assertEquals(31, anSD.getNumberOfSubgroups());
+		SubgroupSet aResult = anSD.getResult();
+		Iterator<Subgroup> anIterator = aResult.iterator();
+
+		//subgroup 1
+		Subgroup aSubgroup = anIterator.next();
+		assertEquals(aSubgroup.toString(), "marital-status = 'Widowed'");
+		assertEquals(aSubgroup.getCoverage(), 33);
+		assertEquals(roundToFive(aSubgroup.getMeasureValue()), 8.10605f);
+		assertEquals(roundToFive(aSubgroup.getSecondaryStatistic()), 56.87879f);
+		assertEquals(roundToFive(aSubgroup.getTertiaryStatistic()), 13.05220f);
+
+		//subgroup 2
+		aSubgroup = anIterator.next();
+		assertEquals(aSubgroup.toString(), "relationship = 'Husband'");
+		assertEquals(376f, aSubgroup.getCoverage());
+		assertEquals(7.90342f, roundToFive(aSubgroup.getMeasureValue()));
+	}
+
+	@Test
+	@DisplayName("Check end-to-end run on Adult.txt using SINGLE_NUMERIC (Explained Variance)")
+	public void testAdult3()
 	{
 		//SINGLE_NUMERIC
 		//d=1
@@ -207,7 +268,7 @@ public class EndToEndTest
 
 	@Test
 	@DisplayName("Check end-to-end run on Adult.txt using SINGLE_NOMINAL, with DFD computation added")
-	public void testAdult3()
+	public void testAdult4()
 	{
 		//SINGLE_NOMINAL
 		//d=1

@@ -1497,11 +1497,23 @@ public class Column implements XMLNodeInterface
 
 		if (addComplement) //is the complement relevant for computation of the QM
 		{
-			// XXX MM - do not clone(), use clear bits in theBitSet
-			BitSet aComplement = (BitSet) theBitSet.clone();
-			aComplement.flip(0, itsSize);
-			int aNrComplementMembers = (itsSize - aSize);
-			assert (aNrComplementMembers == aComplement.cardinality());
+			BitSet aComplement;
+			//check for entire dataset or subgroup
+			if (theBitSet == null)
+				aComplement = new BitSet(itsSize);
+			else
+			{
+				aComplement = (BitSet) theBitSet.clone();
+				aComplement.flip(0, itsSize);
+			}
+
+			//check for dataset selection
+			if (theSelection != null)
+				aComplement.and(theSelection); //only count the ones within the complement AND the selection
+
+			int aNrComplementMembers = aComplement.cardinality();
+			System.out.println("\nsize of complement: " + aNrComplementMembers);
+
 			float aComplementSum = computeSum(aComplement, itsFloatz);
 			aResult.addComplement(aNrComplementMembers, aComplementSum, computeSumSquaredDeviations(aComplementSum, aComplement, itsFloatz));
 
