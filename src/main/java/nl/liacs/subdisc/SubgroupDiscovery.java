@@ -186,7 +186,7 @@ public class SubgroupDiscovery
 		itsNumericTarget = aTC.getPrimaryTarget();
 
 System.out.println("\ncomputing Statistics");
-		Statistics aStatistics = itsNumericTarget.getStatistics(theSelection, theSelection, false, QM.requiredStats(itsSearchParameters.getQualityMeasure()).contains(Stat.COMPL));
+		Statistics aStatistics = itsNumericTarget.getStatistics(theSelection, null, false, QM.requiredStats(itsSearchParameters.getQualityMeasure()).contains(Stat.COMPL));
 		aStatistics.print();
 		ProbabilityDensityFunction2 aPDF = new ProbabilityDensityFunction2(itsNumericTarget);
 		aPDF.smooth();

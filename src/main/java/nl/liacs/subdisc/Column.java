@@ -1472,14 +1472,19 @@ public class Column implements XMLNodeInterface
 		//this code assumes that a potentially present selection (theSelection) is implicitly present in theBitSet
 		int aSize;
 		if (theBitSet == null) //for the entire dataset?
-			aSize = itsSize;
+		{
+			if (theSelection == null)
+				aSize = itsSize;
+			else
+				aSize = theSelection.cardinality();
+		}
 		else
 			aSize = theBitSet.cardinality();
 
 		final Statistics aResult;
 		if (!getMedianAndMedianAD) //if (!MMAD) do not store and sort the values
 		{
-			float aSum = computeSum(theBitSet, itsFloatz);
+			float aSum = (theBitSet == null) ? computeSum(theSelection, itsFloatz) : computeSum(theBitSet, itsFloatz);
 			aResult = new Statistics(aSize, aSum, computeSumSquaredDeviations(aSum, theBitSet, itsFloatz));
 		}
 		else		//TODO this block still needs to be checked for theSelection. Probably not working correctly
@@ -1525,17 +1530,17 @@ public class Column implements XMLNodeInterface
 		return aResult;
 	}
 
-	private static final float computeSum(BitSet theSelection, float[] theFloats)
+	private static final float computeSum(BitSet theBitSet, float[] theFloats)
 	{
 		float aSum = 0f;
-		if (theSelection == null) //all data
+		if (theBitSet == null) //all data
 		{
 			for (float aFloat : theFloats)
 				if (!Float.isNaN(aFloat))
 					aSum += aFloat;
 		}
 		else
-			for (int i = theSelection.nextSetBit(0); i >= 0; i = theSelection.nextSetBit(i + 1))
+			for (int i = theBitSet.nextSetBit(0); i >= 0; i = theBitSet.nextSetBit(i + 1))
 				if (!Float.isNaN(theFloats[i]))
 					aSum += theFloats[i];
 		return aSum;
