@@ -80,9 +80,9 @@ public class EndToEndTest
 		aSubgroup = anIterator.next();
 		assertEquals(aSubgroup.toString(), "relationship = 'Husband'");
 		assertEquals(aSubgroup.getCoverage(), 376);
-		assertEquals(roundToFive(aSubgroup.getMeasureValue()), 0,45330f);
-		assertEquals(roundToFive(aSubgroup.getSecondaryStatistic()), 0,44680f);
-		assertEquals(aSubgroup.getTertiaryStatistic(), 168.0f);
+		assertEquals(0.4533f, roundToFive(aSubgroup.getMeasureValue()));
+		assertEquals(0.44681f, roundToFive(aSubgroup.getSecondaryStatistic()));
+		assertEquals(aSubgroup.getTertiaryStatistic(), 168f);
 
 		//subgroup 3
 		aSubgroup = anIterator.next();
@@ -332,10 +332,297 @@ public class EndToEndTest
 		//subgroup 2
 		aSubgroup = anIterator.next();
 		assertEquals(aSubgroup.toString(), "relationship = 'Husband'");
-		assertEquals(aSubgroup.getCoverage(), 376);
-		assertEquals(roundToFive(aSubgroup.getMeasureValue()), 0,45330f);
-		assertEquals(roundToFive(aSubgroup.getSecondaryStatistic()), 0,44680f);
-		assertEquals(aSubgroup.getTertiaryStatistic(), 168.0f);
+		assertEquals(376, aSubgroup.getCoverage());
+		assertEquals(0.4533f, roundToFive(aSubgroup.getMeasureValue()));
+		assertEquals(0.44681f, roundToFive(aSubgroup.getSecondaryStatistic()));
+		assertEquals(aSubgroup.getTertiaryStatistic(), 168f);
+	}
+
+	@Test
+	@DisplayName("Check end-to-end run on Adult.txt using SINGLE_NOMINAL. Subset selection on Sex = Male")
+	public void testAdult5()
+	{
+		//SINGLE_NOMINAL
+		//d=1
+		//numeric strategy = best
+
+		System.out.println("\n\n----------- testAdult5---------");
+		//loading two tables for comparison of results
+		DataLoaderTXT aLoader = new DataLoaderTXT(new File("src/test/resources/adult.txt"));
+		Table aLargeTable = aLoader.getTable();
+		aLoader = new DataLoaderTXT(new File("src/test/resources/adult_male.txt"));
+		Table aSmallTable = aLoader.getTable();
+
+		//Subset selection
+		Column aSex = aLargeTable.getColumns().get(9); //get "sex" attribute
+		Operator anOperator = Operator.EQUALS;
+		ConditionBase aCB = new ConditionBase(aSex, anOperator);
+		Condition aCondition = new Condition(aCB, "Male");
+		ConditionListA aConditionList = ConditionListBuilder.createList(aCondition);
+		BitSet aSelection = aLargeTable.evaluate(aConditionList);
+		assertEquals(671, aSelection.cardinality());
+
+		//set target concept (large table)
+		Column aTarget = aLargeTable.getColumns().get(14); //get target
+		TargetConcept aTCLarge = new TargetConcept();
+		aTCLarge.setTargetType(TargetType.SINGLE_NOMINAL);
+		aTCLarge.setPrimaryTarget(aTarget);
+		aTCLarge.setTargetValue("gr50K");
+
+		//set target concept (small table)
+		aTarget = aSmallTable.getColumns().get(14); //get target
+		TargetConcept aTCSmall = new TargetConcept();
+		aTCSmall.setTargetType(TargetType.SINGLE_NOMINAL);
+		aTCSmall.setPrimaryTarget(aTarget);
+		aTCSmall.setTargetValue("gr50K");
+
+		//set search parameters (large table)
+		SearchParameters anSP = new SearchParameters();
+		anSP.setTargetConcept(aTCLarge);
+		anSP.setQualityMeasure(QM.CORTANA_QUALITY);
+		anSP.setQualityMeasureMinimum(0.1f);
+		anSP.setSearchDepth(1);
+		anSP.setMinimumCoverage(2);
+		anSP.setMaximumCoverageFraction(1f);
+		anSP.setMaximumSubgroups(1000);
+		anSP.setMaximumTime(1000); //1000 seconds
+		anSP.setSearchStrategy(SearchStrategy.BEAM);
+		anSP.setNominalSets(false);
+		anSP.setNumericOperators(NumericOperatorSetting.NORMAL);
+		anSP.setNumericStrategy(NumericStrategy.NUMERIC_BEST);
+		anSP.setSearchStrategyWidth(10);
+		anSP.setNrBins(8);
+		anSP.setNrThreads(1);
+
+		//set search parameters (small table)
+		SearchParameters anSPSmall = new SearchParameters();
+		anSPSmall.setTargetConcept(aTCSmall);
+		anSPSmall.setQualityMeasure(QM.CORTANA_QUALITY);
+		anSPSmall.setQualityMeasureMinimum(0.1f);
+		anSPSmall.setSearchDepth(1);
+		anSPSmall.setMinimumCoverage(2);
+		anSPSmall.setMaximumCoverageFraction(1f);
+		anSPSmall.setMaximumSubgroups(1000);
+		anSPSmall.setMaximumTime(1000); //1000 seconds
+		anSPSmall.setSearchStrategy(SearchStrategy.BEAM);
+		anSPSmall.setNominalSets(false);
+		anSPSmall.setNumericOperators(NumericOperatorSetting.NORMAL);
+		anSPSmall.setNumericStrategy(NumericStrategy.NUMERIC_BEST);
+		anSPSmall.setSearchStrategyWidth(10);
+		anSPSmall.setNrBins(8);
+		anSPSmall.setNrThreads(1);
+
+		//SD run on entire table with selection (sex = Male) specified
+		SubgroupDiscovery anSDLarge = Process.runSubgroupDiscovery(aLargeTable, 0, aSelection, anSP, false, 1, null);
+		SubgroupSet aResultLarge = anSDLarge.getResult();
+		Iterator<Subgroup> anIteratorLarge = aResultLarge.iterator();
+
+		//for comparison, SD run on separate table with only males
+		SubgroupDiscovery anSDSmall = Process.runSubgroupDiscovery(aSmallTable, 0, null, anSPSmall, false, 1, null);
+		SubgroupSet aResultSmall = anSDSmall.getResult();
+		Iterator<Subgroup> anIteratorSmall = aResultSmall.iterator();
+
+		assertEquals(anSDLarge.getNumberOfSubgroups(), anSDSmall.getNumberOfSubgroups());
+		while (anIteratorLarge.hasNext() && anIteratorSmall.hasNext())
+		{
+			Subgroup aSubgroupA = anIteratorLarge.next();
+			Subgroup aSubgroupB = anIteratorSmall.next();
+			assertEquals(aSubgroupA.toString(), aSubgroupB.toString());
+			assertEquals(aSubgroupB.getCoverage() , aSubgroupB.getCoverage());
+			assertEquals(roundToFive(aSubgroupA.getMeasureValue()), roundToFive(aSubgroupB.getMeasureValue()));
+			assertEquals(roundToFive(aSubgroupA.getSecondaryStatistic()), roundToFive(aSubgroupB.getSecondaryStatistic()));
+			assertEquals(aSubgroupA.getTertiaryStatistic(), aSubgroupB.getTertiaryStatistic());
+		}
+	}
+
+//	@Test
+//	@DisplayName("Check end-to-end run on Adult.txt using SINGLE_NUMERIC, Z-SCORE. Subset selection on Sex = Male")
+	public void testAdult6()
+	{
+		//SINGLE_NOMINAL
+		//d=1
+		//numeric strategy = best
+
+		System.out.println("\n\n----------- testAdult6---------");
+		//loading two tables for comparison of results
+		DataLoaderTXT aLoader = new DataLoaderTXT(new File("src/test/resources/adult.txt"));
+		Table aLargeTable = aLoader.getTable();
+		aLoader = new DataLoaderTXT(new File("src/test/resources/adult_male.txt"));
+		Table aSmallTable = aLoader.getTable();
+
+		//Subset selection
+		Column aSex = aLargeTable.getColumns().get(9); //get "sex" attribute
+		Operator anOperator = Operator.EQUALS;
+		ConditionBase aCB = new ConditionBase(aSex, anOperator);
+		Condition aCondition = new Condition(aCB, "Male");
+		ConditionListA aConditionList = ConditionListBuilder.createList(aCondition);
+		BitSet aSelection = aLargeTable.evaluate(aConditionList);
+		assertEquals(671, aSelection.cardinality());
+
+		//set target concept (large table)
+		Column aTarget = aLargeTable.getColumns().get(0); //get target (age)
+		TargetConcept aTCLarge = new TargetConcept();
+		aTCLarge.setTargetType(TargetType.SINGLE_NUMERIC);
+		aTCLarge.setPrimaryTarget(aTarget);
+
+		//set target concept (small table)
+		aTarget = aSmallTable.getColumns().get(0); //get target (age)
+		TargetConcept aTCSmall = new TargetConcept();
+		aTCSmall.setTargetType(TargetType.SINGLE_NUMERIC);
+		aTCSmall.setPrimaryTarget(aTarget);
+
+		//set search parameters (large table)
+		SearchParameters anSP = new SearchParameters();
+		anSP.setTargetConcept(aTCLarge);
+		anSP.setQualityMeasure(QM.Z_SCORE);
+		anSP.setQualityMeasureMinimum(1f);
+		anSP.setSearchDepth(1);
+		anSP.setMinimumCoverage(2);
+		anSP.setMaximumCoverageFraction(1f);
+		anSP.setMaximumSubgroups(1000);
+		anSP.setMaximumTime(1000); //1000 seconds
+		anSP.setSearchStrategy(SearchStrategy.BEAM);
+		anSP.setNominalSets(false);
+		anSP.setNumericOperators(NumericOperatorSetting.NORMAL);
+		anSP.setNumericStrategy(NumericStrategy.NUMERIC_BEST);
+		anSP.setSearchStrategyWidth(10);
+		anSP.setNrBins(8);
+		anSP.setNrThreads(1);
+
+		//set search parameters (small table)
+		SearchParameters anSPSmall = new SearchParameters();
+		anSPSmall.setTargetConcept(aTCSmall);
+		anSPSmall.setQualityMeasure(QM.Z_SCORE);
+		anSPSmall.setQualityMeasureMinimum(1f);
+		anSPSmall.setSearchDepth(1);
+		anSPSmall.setMinimumCoverage(2);
+		anSPSmall.setMaximumCoverageFraction(1f);
+		anSPSmall.setMaximumSubgroups(1000);
+		anSPSmall.setMaximumTime(1000); //1000 seconds
+		anSPSmall.setSearchStrategy(SearchStrategy.BEAM);
+		anSPSmall.setNominalSets(false);
+		anSPSmall.setNumericOperators(NumericOperatorSetting.NORMAL);
+		anSPSmall.setNumericStrategy(NumericStrategy.NUMERIC_BEST);
+		anSPSmall.setSearchStrategyWidth(10);
+		anSPSmall.setNrBins(8);
+		anSPSmall.setNrThreads(1);
+
+		//SD run on entire table with selection (sex = Male) specified
+		SubgroupDiscovery anSDLarge = Process.runSubgroupDiscovery(aLargeTable, 0, aSelection, anSP, false, 1, null);
+		SubgroupSet aResultLarge = anSDLarge.getResult();
+		Iterator<Subgroup> anIteratorLarge = aResultLarge.iterator();
+
+		//for comparison, SD run on separate table with only males
+		SubgroupDiscovery anSDSmall = Process.runSubgroupDiscovery(aSmallTable, 0, null, anSPSmall, false, 1, null);
+		SubgroupSet aResultSmall = anSDSmall.getResult();
+		Iterator<Subgroup> anIteratorSmall = aResultSmall.iterator();
+
+		assertEquals(anSDLarge.getNumberOfSubgroups(), anSDSmall.getNumberOfSubgroups());
+		while (anIteratorLarge.hasNext() && anIteratorSmall.hasNext())
+		{
+			Subgroup aSubgroupA = anIteratorLarge.next();
+			Subgroup aSubgroupB = anIteratorSmall.next();
+			assertEquals(aSubgroupA.toString(), aSubgroupB.toString());
+			assertEquals(aSubgroupB.getCoverage() , aSubgroupB.getCoverage());
+			assertEquals(roundToFive(aSubgroupA.getMeasureValue()), roundToFive(aSubgroupB.getMeasureValue()));
+			assertEquals(roundToFive(aSubgroupA.getSecondaryStatistic()), roundToFive(aSubgroupB.getSecondaryStatistic()));
+			assertEquals(aSubgroupA.getTertiaryStatistic(), aSubgroupB.getTertiaryStatistic());
+		}
+	}
+
+//	@Test
+//	@DisplayName("Check end-to-end run on Adult.txt using SINGLE_NUMERIC, EXPLAINED_VARIANCE. Subset selection on Sex = Male")
+	public void testAdult7()
+	{
+		//SINGLE_NUMERIC
+		//d=1
+		//numeric strategy = best
+
+		System.out.println("\n\n----------- testAdult7---------");
+		//loading two tables for comparison of results
+		DataLoaderTXT aLoader = new DataLoaderTXT(new File("src/test/resources/adult.txt"));
+		Table aLargeTable = aLoader.getTable();
+		aLoader = new DataLoaderTXT(new File("src/test/resources/adult_male.txt"));
+		Table aSmallTable = aLoader.getTable();
+
+		//Subset selection
+		Column aSex = aLargeTable.getColumns().get(9); //get "sex" attribute
+		Operator anOperator = Operator.EQUALS;
+		ConditionBase aCB = new ConditionBase(aSex, anOperator);
+		Condition aCondition = new Condition(aCB, "Male");
+		ConditionListA aConditionList = ConditionListBuilder.createList(aCondition);
+		BitSet aSelection = aLargeTable.evaluate(aConditionList);
+		assertEquals(671, aSelection.cardinality());
+
+		//set target concept (large table)
+		Column aTarget = aLargeTable.getColumns().get(0); //get target (age)
+		TargetConcept aTCLarge = new TargetConcept();
+		aTCLarge.setTargetType(TargetType.SINGLE_NUMERIC);
+		aTCLarge.setPrimaryTarget(aTarget);
+
+		//set target concept (small table)
+		aTarget = aSmallTable.getColumns().get(0); //get target (age)
+		TargetConcept aTCSmall = new TargetConcept();
+		aTCSmall.setTargetType(TargetType.SINGLE_NUMERIC);
+		aTCSmall.setPrimaryTarget(aTarget);
+
+		//set search parameters (large table)
+		SearchParameters anSP = new SearchParameters();
+		anSP.setTargetConcept(aTCLarge);
+		anSP.setQualityMeasure(QM.EXPLAINED_VARIANCE);
+		anSP.setQualityMeasureMinimum(0f);
+		anSP.setSearchDepth(1);
+		anSP.setMinimumCoverage(2);
+		anSP.setMaximumCoverageFraction(1f);
+		anSP.setMaximumSubgroups(1000);
+		anSP.setMaximumTime(1000); //1000 seconds
+		anSP.setSearchStrategy(SearchStrategy.BEAM);
+		anSP.setNominalSets(false);
+		anSP.setNumericOperators(NumericOperatorSetting.NORMAL);
+		anSP.setNumericStrategy(NumericStrategy.NUMERIC_BEST);
+		anSP.setSearchStrategyWidth(10);
+		anSP.setNrBins(8);
+		anSP.setNrThreads(1);
+
+		//set search parameters (small table)
+		SearchParameters anSPSmall = new SearchParameters();
+		anSPSmall.setTargetConcept(aTCSmall);
+		anSPSmall.setQualityMeasure(QM.EXPLAINED_VARIANCE);
+		anSPSmall.setQualityMeasureMinimum(0f);
+		anSPSmall.setSearchDepth(1);
+		anSPSmall.setMinimumCoverage(2);
+		anSPSmall.setMaximumCoverageFraction(1f);
+		anSPSmall.setMaximumSubgroups(1000);
+		anSPSmall.setMaximumTime(1000); //1000 seconds
+		anSPSmall.setSearchStrategy(SearchStrategy.BEAM);
+		anSPSmall.setNominalSets(false);
+		anSPSmall.setNumericOperators(NumericOperatorSetting.NORMAL);
+		anSPSmall.setNumericStrategy(NumericStrategy.NUMERIC_BEST);
+		anSPSmall.setSearchStrategyWidth(10);
+		anSPSmall.setNrBins(8);
+		anSPSmall.setNrThreads(1);
+
+		//SD run on entire table with selection (sex = Male) specified
+		SubgroupDiscovery anSDLarge = Process.runSubgroupDiscovery(aLargeTable, 0, aSelection, anSP, false, 1, null);
+		SubgroupSet aResultLarge = anSDLarge.getResult();
+		Iterator<Subgroup> anIteratorLarge = aResultLarge.iterator();
+
+		//for comparison, SD run on separate table with only males
+		SubgroupDiscovery anSDSmall = Process.runSubgroupDiscovery(aSmallTable, 0, null, anSPSmall, false, 1, null);
+		SubgroupSet aResultSmall = anSDSmall.getResult();
+		Iterator<Subgroup> anIteratorSmall = aResultSmall.iterator();
+
+		assertEquals(anSDLarge.getNumberOfSubgroups(), anSDSmall.getNumberOfSubgroups());
+		while (anIteratorLarge.hasNext() && anIteratorSmall.hasNext())
+		{
+			Subgroup aSubgroupA = anIteratorLarge.next();
+			Subgroup aSubgroupB = anIteratorSmall.next();
+			assertEquals(aSubgroupA.toString(), aSubgroupB.toString());
+			assertEquals(aSubgroupB.getCoverage() , aSubgroupB.getCoverage());
+			assertEquals(roundToFive(aSubgroupA.getMeasureValue()), roundToFive(aSubgroupB.getMeasureValue()));
+			assertEquals(roundToFive(aSubgroupA.getSecondaryStatistic()), roundToFive(aSubgroupB.getSecondaryStatistic()));
+			assertEquals(aSubgroupA.getTertiaryStatistic(), aSubgroupB.getTertiaryStatistic());
+		}
 	}
 
 	private float roundToFive(double f) { return (float) Math.round(f*100000)/100000; }
