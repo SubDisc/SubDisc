@@ -435,8 +435,8 @@ public class EndToEndTest
 		}
 	}
 
-//	@Test
-//	@DisplayName("Check end-to-end run on Adult.txt using SINGLE_NUMERIC, Z-SCORE. Subset selection on Sex = Male")
+	@Test
+	@DisplayName("Check end-to-end run on Adult.txt using SINGLE_NUMERIC, Z-SCORE. Subset selection on Sex = Male")
 	public void testAdult6()
 	{
 		//SINGLE_NOMINAL
@@ -530,8 +530,8 @@ public class EndToEndTest
 		}
 	}
 
-//	@Test
-//	@DisplayName("Check end-to-end run on Adult.txt using SINGLE_NUMERIC, EXPLAINED_VARIANCE. Subset selection on Sex = Male")
+	@Test
+	@DisplayName("Check end-to-end run on Adult.txt using SINGLE_NUMERIC, EXPLAINED_VARIANCE. Subset selection on Sex = Male")
 	public void testAdult7()
 	{
 		//SINGLE_NUMERIC
