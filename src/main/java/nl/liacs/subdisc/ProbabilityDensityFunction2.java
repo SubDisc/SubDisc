@@ -23,8 +23,8 @@ public class ProbabilityDensityFunction2 extends ProbabilityDensityFunction
 
 	// related to original domain
 	private final Column itsData;
-	private final double itsMin;
-	private final double itsMax;
+	private double itsMin = Float.POSITIVE_INFINITY;
+	private double itsMax = Float.NEGATIVE_INFINITY;
 
 	// related to density function
 	private final double itsLo;
@@ -32,29 +32,42 @@ public class ProbabilityDensityFunction2 extends ProbabilityDensityFunction
 	private double itsH; // h
 	private final double dx;
 
-	// do not not cache (large) x-grid, re-computation is fast enough
+	// do not cache (large) x-grid, re-computation is fast enough
 	// private final float[] x_grid;
 	private final float[] itsDensity;
 
 	//TODO: check for selection
-	public ProbabilityDensityFunction2(Column theData)
+	public ProbabilityDensityFunction2(Column theData, BitSet theSelection)
 	{
 		super(theData);
 
 		itsData = theData;
-		itsMin = itsData.getMin();
-		itsMax = itsData.getMax();
 
 		// TODO MM create Vec.h_silverman(Column)
 		//pull out relevant data (ignoring the missing data (NaN) and respecting the selection)
 		ArrayList<Float> aList = new ArrayList<Float>(itsData.size());
-		for (int i = 0, j = itsData.size(); i < j; ++i)
-			if (!itsData.getMissing(i)) //skip NaN values
-				aList.add(itsData.getFloat(i));
+		if (theSelection == null)
+		{
+			for (int i = 0, j = itsData.size(); i < j; ++i)
+				if (!itsData.getMissing(i)) //skip NaN values
+					aList.add(itsData.getFloat(i));
+		}
+		else
+		{
+			for (int i = 0, j = itsData.size(); i < j; ++i)
+				if (!itsData.getMissing(i) && theSelection.get(i))
+					aList.add(itsData.getFloat(i));
+		}
 		int aSize = aList.size();
 		double[] data = new double[aSize];
 		for (int i=0; i<aSize; i++)
+		{
 			data[i] = (double) aList.get(i);
+			if (data[i] > itsMax)
+				itsMax = data[i];
+			if (data[i] < itsMin)
+				itsMin = data[i];
+		}
 		Arrays.sort(data);
 
 		itsH = Vec.h_silverman(data);
@@ -62,7 +75,7 @@ public class ProbabilityDensityFunction2 extends ProbabilityDensityFunction
 		itsLo = itsMin-(CUTOFF*itsH);
 		itsHi = itsMax+(CUTOFF*itsH);
 		double range = itsHi-itsLo;
-		itsH = Math.max(itsH, range/1000.0); //to avoid problem with Silverman returning 0
+		itsH = Math.max(itsH, range/1000); //to avoid problem with Silverman returning 0
 
 		// s = sigmas covered by range
 		double s = range/itsH;
@@ -72,11 +85,14 @@ public class ProbabilityDensityFunction2 extends ProbabilityDensityFunction
 		dx = range/k;
 		System.out.format("h=%f lo=%f hi=%f range=%f s=%f k=%d dx=%f%n", itsH, itsLo, itsHi, range, s, k, dx);
 
-		// hack
-		BitSet b = new BitSet(aSize);
-		b.set(0, aSize);
-
-		itsDensity = getDensity(itsData, b, k+1);
+		if (theSelection == null)
+		{
+			BitSet anAllData = new BitSet(aSize);
+			anAllData.set(0, aSize);
+			itsDensity = getDensity(itsData, anAllData, k+1);
+		}
+		else
+			itsDensity = getDensity(itsData, theSelection, k+1);
 	}
 
 	private float[] itsComplementDensity; // FIXME MM --- HACK
@@ -99,16 +115,6 @@ public class ProbabilityDensityFunction2 extends ProbabilityDensityFunction
 		// DO NOT USE theMembers.size()
 		aComplement.flip(0, itsData.size());
 		itsComplementDensity = aPDF.getDensity(aPDF.itsData, aComplement, aPDF.itsDensity.length);
-
-// FIXME MM TEMP - USED TO PRINT SUBGROUP VERSUS DATASET/COMPLEMENT FOR GNUPLOT
-boolean vsData = false;
-System.out.println("#PDFs for: " + itsData.getName());
-System.out.println("#X\tSUBGROUP\t" + (vsData ? "DATASET" : "COMPLEMENT"));
-float[] anOther = vsData ? aPDF.itsDensity : itsComplementDensity;
-for (int i = 0; i < itsDensity.length; ++i)
-	System.out.println(itsLo + (i * dx)  + "\t" + itsDensity[i] + "\t" + anOther[i]);
-System.out.println();
-
 	}
 
 	// TODO MM rounding error might cause: itsLo+(n*dx) < itsHi
@@ -158,16 +164,7 @@ System.out.println();
 		double nh = d_h.length*itsH;
 		for (int i = 0; i < density.length; ++i)
 			density[i] /= nh;
-/*
-double[] density_d = new double[density.length];
-for (int i = 0; i < density_d.length; ++i)
-	density_d[i] = density[i];
-double[] bins = new double[density.length];
-for (int i = 0; i < bins.length; ++i)
-	bins[i] = itsLo + (i * dx);
-System.out.format("integral(bins, density)=%.16f%n", Vec.integral(bins, density_d));
-System.out.println("E[bins, density]="+Vec.expected_value(bins, density_d));
-*/
+
 		return density;
 	}
 

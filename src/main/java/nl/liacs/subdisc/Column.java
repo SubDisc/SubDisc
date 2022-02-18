@@ -1485,7 +1485,8 @@ public class Column implements XMLNodeInterface
 		if (!getMedianAndMedianAD) //if (!MMAD) do not store and sort the values
 		{
 			float aSum = (theBitSet == null) ? computeSum(theSelection, itsFloatz) : computeSum(theBitSet, itsFloatz);
-			aResult = new Statistics(aSize, aSum, computeSumSquaredDeviations(aSum, theBitSet, itsFloatz));
+			float anSSD = (theBitSet == null) ? computeSumSquaredDeviations(aSum, theSelection, itsFloatz) : computeSumSquaredDeviations(aSum, theBitSet, itsFloatz);
+			aResult = new Statistics(aSize, aSum, anSSD);
 		}
 		else		//TODO this block still needs to be checked for theSelection. Probably not working correctly
 		{
@@ -1517,8 +1518,6 @@ public class Column implements XMLNodeInterface
 				aComplement.and(theSelection); //only count the ones within the complement AND the selection
 
 			int aNrComplementMembers = aComplement.cardinality();
-			System.out.println("\nsize of complement: " + aNrComplementMembers);
-
 			float aComplementSum = computeSum(aComplement, itsFloatz);
 			aResult.addComplement(aNrComplementMembers, aComplementSum, computeSumSquaredDeviations(aComplementSum, aComplement, itsFloatz));
 

@@ -334,7 +334,7 @@ public class ResultWindow extends JFrame implements ActionListener
 		if (!ProbabilityDensityFunction.USE_ProbabilityDensityFunction2)
 			aPDF = new ProbabilityDensityFunction(aTarget);
 		else
-			aPDF = new ProbabilityDensityFunction2(aTarget);
+			aPDF = new ProbabilityDensityFunction2(aTarget, itsSelection);
 		aPDF.smooth();
 
 		for (Subgroup s : theSelectedSubgroups)
@@ -600,7 +600,7 @@ public class ResultWindow extends JFrame implements ActionListener
 		if (!ProbabilityDensityFunction.USE_ProbabilityDensityFunction2)
 			aPDF = new ProbabilityDensityFunction(aNumericTarget);
 		else
-			aPDF = new ProbabilityDensityFunction2(aNumericTarget);
+			aPDF = new ProbabilityDensityFunction2(aNumericTarget, itsSelection);
 		aPDF.smooth();
 
 		for (Subgroup s : theSelectedSubgroups)

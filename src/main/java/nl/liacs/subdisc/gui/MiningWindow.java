@@ -1711,7 +1711,7 @@ public class MiningWindow extends JFrame implements ActionListener
 				if (!ProbabilityDensityFunction.USE_ProbabilityDensityFunction2)
 					aPDF = new ProbabilityDensityFunction(aTarget);
 				else
-					aPDF = new ProbabilityDensityFunction2(aTarget);
+					aPDF = new ProbabilityDensityFunction2(aTarget, itsSelection);
 				aPDF.smooth();
 				new ModelWindow(aTarget, aPDF, null, ModelWindow.BASE_MODEL_TEXT, false);
 				break;
@@ -1763,7 +1763,7 @@ public class MiningWindow extends JFrame implements ActionListener
 				if (!ProbabilityDensityFunction.USE_ProbabilityDensityFunction2)
 					aPDF = new ProbabilityDensityFunction(aNumericTarget);
 				else
-					aPDF = new ProbabilityDensityFunction2(aNumericTarget);
+					aPDF = new ProbabilityDensityFunction2(aNumericTarget, itsSelection);
 				aPDF.smooth();
 
 				BitSet aNegativeBinaries = (BitSet) aBinaries.clone();
@@ -1981,7 +1981,7 @@ public class MiningWindow extends JFrame implements ActionListener
 				if (!ProbabilityDensityFunction.USE_ProbabilityDensityFunction2)
 					aPDF = new ProbabilityDensityFunction(aTarget);
 				else
-					aPDF = new ProbabilityDensityFunction2(aTarget);
+					aPDF = new ProbabilityDensityFunction2(aTarget, itsSelection);
 				aPDF.smooth();
 
 				aQualityMeasure = new QualityMeasure(

@@ -185,25 +185,14 @@ public class SubgroupDiscovery
 		TargetConcept aTC = itsSearchParameters.getTargetConcept();
 		itsNumericTarget = aTC.getPrimaryTarget();
 
-System.out.println("\ncomputing Statistics");
 		Statistics aStatistics = itsNumericTarget.getStatistics(theSelection, null, false, QM.requiredStats(itsSearchParameters.getQualityMeasure()).contains(Stat.COMPL));
 		aStatistics.print();
-		ProbabilityDensityFunction2 aPDF = new ProbabilityDensityFunction2(itsNumericTarget);
+		ProbabilityDensityFunction2 aPDF = new ProbabilityDensityFunction2(itsNumericTarget, theSelection);
 		aPDF.smooth();
 
-		System.out.println("itsNrRows " + itsNrRows);
-		System.out.println("aStatistics.getSubgroupSum() " + aStatistics.getSubgroupSum());
-		System.out.println("aStatistics.getSubgroupSumSquaredDeviations() " + aStatistics.getSubgroupSumSquaredDeviations());
-
-		itsQualityMeasure = new QualityMeasure(
-			itsSearchParameters.getQualityMeasure(),
-			itsNrRows,
-			aStatistics.getSubgroupSum(),
-			aStatistics.getSubgroupSumSquaredDeviations(),
-			aPDF);
+		itsQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), itsNrRows, aStatistics.getSubgroupSum(), aStatistics.getSubgroupSumSquaredDeviations(), aPDF);
 		itsQualityMeasureMinimum = itsSearchParameters.getQualityMeasureMinimum();
 
-System.out.println("after creating a quality measure");
 		itsResult = new SubgroupSet(itsSearchParameters.getMaximumSubgroups(), theSelection, itsTable.getNrRows());
 	}
 
