@@ -625,5 +625,119 @@ public class EndToEndTest
 		}
 	}
 
+	@Test
+	@DisplayName("Check end-to-end run on Adult.txt using SINGLE_NOMINAL. Subset selection on Sex = Male")
+	public void testAdult8()
+	{
+		//SINGLE_NOMINAL
+		//d=1
+		//numeric strategy = best
+
+		System.out.println("\n\n----------- testAdult8 ---------");
+		//loading two tables for comparison of results
+		DataLoaderTXT aLoader = new DataLoaderTXT(new File("src/test/resources/adult.txt"));
+		Table aTable = aLoader.getTable();
+
+
+//%%%%% This block of text is the functionality that should be added to the R-wrapper
+		//Subset selection
+		Column aSex = aTable.getColumns().get(9); //get "sex" attribute
+		Operator anOperator = Operator.EQUALS;
+		ConditionBase aCB = new ConditionBase(aSex, anOperator);
+		Condition aCondition = new Condition(aCB, "Male");
+		ConditionListA aConditionList = ConditionListBuilder.createList(aCondition);
+		BitSet aSelection = aTable.evaluate(aConditionList);
+		assertEquals(671, aSelection.cardinality());
+//%%%%% There is one more line below that also needs attention
+
+		//set target concept
+		Column aTarget = aTable.getColumns().get(14); //get target
+		TargetConcept aTC = new TargetConcept();
+		aTC.setTargetType(TargetType.SINGLE_NOMINAL);
+		aTC.setPrimaryTarget(aTarget);
+		aTC.setTargetValue("gr50K");
+
+		//set search parameters
+		SearchParameters anSP = new SearchParameters();
+		anSP.setTargetConcept(aTC);
+		anSP.setQualityMeasure(QM.CORTANA_QUALITY);
+		anSP.setQualityMeasureMinimum(0.1f);
+		anSP.setSearchDepth(1);
+		anSP.setMinimumCoverage(2);
+		anSP.setMaximumCoverageFraction(1f);
+		anSP.setMaximumSubgroups(1000);
+		anSP.setMaximumTime(1000); //1000 seconds
+		anSP.setSearchStrategy(SearchStrategy.BEAM);
+		anSP.setNominalSets(false);
+		anSP.setNumericOperators(NumericOperatorSetting.NORMAL);
+		anSP.setNumericStrategy(NumericStrategy.NUMERIC_BEST);
+		anSP.setSearchStrategyWidth(10);
+		anSP.setNrBins(8);
+		anSP.setNrThreads(1);
+
+		//SD run on entire table with selection (sex = Male) specified
+//%%%%% note that aSelection is added iso null
+		SubgroupDiscovery anSDLarge = Process.runSubgroupDiscovery(aTable, 0, aSelection, anSP, false, 1, null);
+	}
+
+	@Test
+	@DisplayName("Check end-to-end run on Adult.txt using SINGLE_NOMINAL. Subset selection on Sex = Male")
+	public void testAdult9()
+	{
+		//SINGLE_NOMINAL
+		//d=1
+		//numeric strategy = best
+
+		System.out.println("\n\n----------- testAdult8 ---------");
+		//loading two tables for comparison of results
+		DataLoaderTXT aLoader = new DataLoaderTXT(new File("src/test/resources/adult.txt"));
+		Table aTable = aLoader.getTable();
+
+
+//%%%%% This block of text is the functionality that should be added to the R-wrapper
+		//Subset selection
+		Column anEducationNum = aTable.getColumns().get(4); //get "education-num" attribute
+		Operator anOperator = Operator.GREATER_THAN_OR_EQUAL;
+		ConditionBase aCB = new ConditionBase(anEducationNum, anOperator);
+		float aValue = 10f;
+		anEducationNum.buildSorted(new BitSet()); //provide empty BitSet as target. Irrelevant at the moment
+		int i = anEducationNum.getSortedIndex(aValue); //look up sort index
+		System.out.println("EducationNum: " + aValue + ", index: " + i);
+		Condition aCondition = new Condition(aCB, aValue, i);
+		ConditionListA aConditionList = ConditionListBuilder.createList(aCondition);
+		BitSet aSelection = aTable.evaluate(aConditionList);
+		assertEquals(552, aSelection.cardinality());
+//%%%%% There is one more line below that also needs attention
+
+		//set target concept
+		Column aTarget = aTable.getColumns().get(14); //get target
+		TargetConcept aTC = new TargetConcept();
+		aTC.setTargetType(TargetType.SINGLE_NOMINAL);
+		aTC.setPrimaryTarget(aTarget);
+		aTC.setTargetValue("gr50K");
+
+		//set search parameters
+		SearchParameters anSP = new SearchParameters();
+		anSP.setTargetConcept(aTC);
+		anSP.setQualityMeasure(QM.CORTANA_QUALITY);
+		anSP.setQualityMeasureMinimum(0.1f);
+		anSP.setSearchDepth(1);
+		anSP.setMinimumCoverage(2);
+		anSP.setMaximumCoverageFraction(1f);
+		anSP.setMaximumSubgroups(1000);
+		anSP.setMaximumTime(1000); //1000 seconds
+		anSP.setSearchStrategy(SearchStrategy.BEAM);
+		anSP.setNominalSets(false);
+		anSP.setNumericOperators(NumericOperatorSetting.NORMAL);
+		anSP.setNumericStrategy(NumericStrategy.NUMERIC_BEST);
+		anSP.setSearchStrategyWidth(10);
+		anSP.setNrBins(8);
+		anSP.setNrThreads(1);
+
+		//SD run on entire table with selection (sex = Male) specified
+//%%%%% note that aSelection is added iso null
+		SubgroupDiscovery anSDLarge = Process.runSubgroupDiscovery(aTable, 0, aSelection, anSP, false, 1, null);
+	}
+
 	private float roundToFive(double f) { return (float) Math.round(f*100000)/100000; }
 }
