@@ -688,7 +688,7 @@ public class EndToEndTest
 		//d=1
 		//numeric strategy = best
 
-		System.out.println("\n\n----------- testAdult8 ---------");
+		System.out.println("\n\n----------- testAdult9 ---------");
 		//loading two tables for comparison of results
 		DataLoaderTXT aLoader = new DataLoaderTXT(new File("src/test/resources/adult.txt"));
 		Table aTable = aLoader.getTable();

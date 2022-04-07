@@ -1,11 +1,7 @@
 package nl.liacs.subdisc;
 
 /**
- * A SubgroupROCPoint of a {@link Subgroup} is nothing more than a 
- * {@link PointDouble} with that Subgroups' {@link Subgroup#getID() getID()} as
- * identifier, {@link Subgroup#getFalsePositiveRate() getFalsePositiveRate()}
- * for {@link PointDouble.x x} and {@link Subgroup#getTruePositiveRate()} for
- * {@link PointDouble.y y}.
+ * A SubgroupROCPoint of a {@link Subgroup} is nothing more than a {@link PointDouble} with that Subgroups' {@link Subgroup#getID() getID()} as identifier, {@link Subgroup#getFalsePositiveRate() getFalsePositiveRate()} for {@link PointDouble.x x} and {@link Subgroup#getTruePositiveRate()} for {@link PointDouble.y y}.
  */
 /*
  * FIXME MM
@@ -37,11 +33,9 @@ public class SubgroupROCPoint extends ROCPoint
 	}
 
 	/**
-	 * Overrides <code>Object</code>s' <code>toString()</code> method to to
-	 * get detailed information about this SubgroupROCPoint.
+	 * Overrides <code>Object</code>s' <code>toString()</code> method to get detailed information about this SubgroupROCPoint.
 	 * 
-	 * @return a <code>String</code> representation of this
-	 * SubgroupROCPoint.
+	 * @return a <code>String</code> representation of this SubgroupROCPoint.
 	 */
 	@Override
 	public String toString()

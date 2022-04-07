@@ -1214,6 +1214,7 @@ public class MiningWindow extends JFrame implements ActionListener
 			removeAllMultiRegressionTargetsItems();
 
 			itsTable = aTable;
+			itsSelection = null;
 			enableTableDependentComponents(true);
 
 			// loaded from regular file

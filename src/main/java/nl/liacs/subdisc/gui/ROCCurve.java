@@ -39,8 +39,11 @@ public class ROCCurve extends JPanel
 		itsAreaUnderCurve = aFormatter.format(aROCList.getAreaUnderCurve());
 
 		List<SubgroupROCPoint> aPoints = new ArrayList<SubgroupROCPoint>(theSubgroupSet.size());
-		for(Subgroup s : theSubgroupSet)
-			aPoints.add(new SubgroupROCPoint(s));
+		for(Subgroup aSubgroup: theSubgroupSet)
+		{
+			SubgroupROCPoint aPoint = new SubgroupROCPoint(aSubgroup);
+			aPoints.add(aPoint);
+		}
 
 		itsCurve = new GeneralPath();
 		itsCurve.moveTo(0, 0);

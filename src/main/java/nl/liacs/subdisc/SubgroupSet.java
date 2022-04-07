@@ -34,6 +34,7 @@ public class SubgroupSet extends TreeSet<Subgroup>
 	// for SubgroupSet in nominal target setting (used for TPR/FPR in ROCList)
 	private final boolean nominalTargetSetting;
 	private final int itsNrRows; //size of the original table, regardless of selection
+	private int itsTotalCoverage; //size of the dataset used to produce this SS, either the original table or a selection
 	private final BitSet itsAllDataBitSet; // for SubgroupDiscovery and Subgroup
 	private BitSet itsBinaryTarget;        // no longer final for CAUC
 	private int itsMaximumSize;
@@ -43,12 +44,9 @@ public class SubgroupSet extends TreeSet<Subgroup>
 	private double itsLowestScore = Double.NaN;
 	private double itsJointEntropy = Double.NaN; //initially not set
 
-	// this is the long way around, new Subgroups are added to QUEUE
-	// when QUEUE.size() >= itsMaximumSize all Subgroups in QUEUE
-	// are added to this SubgroupSet, much better for concurrency
+	// this is the long way around, new Subgroups are added to QUEUE when QUEUE.size() >= itsMaximumSize all Subgroups in QUEUE are added to this SubgroupSet, much better for concurrency
 	private final int MAX_QUEUE_SIZE = 1; // arbitrarily chosen
-	private final BlockingQueue<Subgroup> QUEUE =
-			new ArrayBlockingQueue<Subgroup>(MAX_QUEUE_SIZE);
+	private final BlockingQueue<Subgroup> QUEUE = new ArrayBlockingQueue<Subgroup>(MAX_QUEUE_SIZE);
 
 	/* private, meant to be used within this class only */
 	private SubgroupSet(int theSize, BitSet theSelection, int theNrRows, BitSet theBinaryTarget, boolean theNominalTargetSetting)
@@ -63,40 +61,36 @@ public class SubgroupSet extends TreeSet<Subgroup>
 			BitSet aBitSet = new BitSet(itsNrRows);
 			aBitSet.set(0, itsNrRows);
 			itsAllDataBitSet = aBitSet;
+			itsTotalCoverage = itsNrRows;
 		}
 		else
+		{
 			itsAllDataBitSet = theSelection;
+			if (itsBinaryTarget != null)
+				itsBinaryTarget.and(theSelection); 
+			itsTotalCoverage = theSelection.cardinality();
+		}
 	}
 
 	/**
-	 * Creates a SubgroupSet of a certain size, but in a nominal target
-	 * setting theTotalCoverage and theBinaryTarget should also be set.
+	 * Creates a SubgroupSet of a certain size, but in a nominal target setting theTotalCoverage and theBinaryTarget should also be set.
 	 *
-	 * @param theSize the size of this SubgroupSet, use theSize <= 0 for no
-	 * maximum size (technically it is limited to Integer.MAX_VALUE).
-	 * @param theTotalCoverage the total number of instances in the data
-	 * (number of rows in the {@link Table}).
-	 * @param theBinaryTarget a {@code BitSet} with {@code bit}s set for the
-	 * instances covered by the target value.
+	 * @param theSize the size of this SubgroupSet, use theSize <= 0 for no maximum size (technically it is limited to Integer.MAX_VALUE).
+	 * @param theTotalCoverage the total number of instances in the data (number of rows in the {@link Table}).
+	 * @param theBinaryTarget a {@code BitSet} with {@code bit}s set for the instances covered by the target value.
 	 */
-	// TODO optionally this class could take a MINSCORE threshold parameter
 	public SubgroupSet(int theSize, BitSet theSelection, int theTotalCoverage)
 	{
 		this(theSize, theSelection, theTotalCoverage, null, false);
 	}
 
 	/**
-	 * Creates a SubgroupSet of a certain size, but in a nominal target
-	 * setting theTotalCoverage and theBinaryTarget should also be set.
+	 * Creates a SubgroupSet of a certain size, but in a nominal target setting theTotalCoverage and theBinaryTarget should also be set.
 	 *
-	 * @param theSize the size of this SubgroupSet, use theSize <= 0 for no
-	 * maximum size (technically it is limited to Integer.MAX_VALUE).
-	 * @param theTotalCoverage the total number of instances in the data
-	 * (number of rows in the {@link Table}).
-	 * @param theBinaryTarget a {@code BitSet} with {@code bit}s set for the
-	 * instances covered by the target value.
+	 * @param theSize the size of this SubgroupSet, use theSize <= 0 for no maximum size (technically it is limited to Integer.MAX_VALUE).
+	 * @param theTotalCoverage the total number of instances in the data (number of rows in the {@link Table}).
+	 * @param theBinaryTarget a {@code BitSet} with {@code bit}s set for the instances covered by the target value.
 	 */
-	// TODO optionally this class could take a MINSCORE threshold parameter
 	public SubgroupSet(int theSize, BitSet theSelection, int theTotalCoverage, BitSet theBinaryTarget)
 	{
 		this(theSize, theSelection, theTotalCoverage, theBinaryTarget, true);
@@ -127,33 +121,25 @@ public class SubgroupSet extends TreeSet<Subgroup>
 	/*
 	 * FIXME MM some code comment mention something like:
 	 * 'create SubgroupSet like this one but empty'
-	 * it seems strange to use this method for that purpose, as the ROCList
-	 * is copied, and it may very well not be empty
-	 * and worse, if not, it is irrelevant to the 'clone' SubgroupSet
-	 * it holds no subgroups, so its ROCList based on the Subgroups should
-	 * be in line with that, meaning it should be empty
+	 * it seems strange to use this method for that purpose, as the ROCList is copied, and it may very well not be empty and worse, if not, it is irrelevant to the 'clone' SubgroupSet
+	 * it holds no subgroups, so its ROCList based on the Subgroups should be in line with that, meaning it should be empty
 	 * 
 	 * to create a clone, use a copy-through-constructor pattern
-	 * to create an empty SubgroupSet, create a new one, with arguments
-	 * taken from the original if it should be similar to that it
+	 * to create an empty SubgroupSet, create a new one, with arguments taken from the original if it should be similar to that it
 	 * DO NOT mix the two strategies
-	 * some of the SubgroupSets that are currently create make no sense
-	 * as they are internally inconsistent
+	 * some of the SubgroupSets that are currently create make no sense as they are internally inconsistent
 	 */
 	private SubgroupSet(SubgroupSet theOriginal)
 	{
 		this(theOriginal.itsMaximumSize, null, theOriginal.itsNrRows, theOriginal.itsBinaryTarget, theOriginal.nominalTargetSetting);
 		itsROCList = theOriginal.itsROCList;
+		itsTotalCoverage = theOriginal.itsTotalCoverage;
 	}
 
 	/*
-	 * Only the top result is needed in this setting. Setting maximum size
-	 * to 1 saves memory and insertion lookup time (Olog(n) for Java's
-	 * red-black tree implementation of TreeSet).
+	 * Only the top result is needed in this setting. Setting maximum size to 1 saves memory and insertion lookup time (Olog(n) for Java's red-black tree implementation of TreeSet).
 	 *
-	 * NOTE this is a failed attempt to speedup calculation in the
-	 * swap-randomise setting. Storing just the top-1 result is only
-	 * sufficient for the last depth.
+	 * NOTE this is a failed attempt to speedup calculation in the swap-randomise setting. Storing just the top-1 result is only sufficient for the last depth.
 	 * It may be enabled again in the future.
 	 *
 	 * LEAVE THIS IN.
@@ -276,17 +262,20 @@ public class SubgroupSet extends TreeSet<Subgroup>
 	////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////
 
-	public int getTotalCoverage()
+	//@return the total number of rows in the tabel, regardless of any selection
+	public int getNrRows()
 	{
 		return itsNrRows;
 	}
 
-	// FIXME remove if-check, just call itsBinaryTarget.cardinality (causes NPE)
-	/** Throws NullPointerException when not in a nominal setting. */
+	//@return the total number of examples involved in the mining process, either all examples in the tabel, or those in the specified selection
+	public int getTotalCoverage()
+	{
+		return itsTotalCoverage;
+	}
+
 	public int getTotalTargetCoverage()
 	{
-		if (!nominalTargetSetting)
-			throw new NullPointerException("only available in nominal setting");
 		return itsBinaryTarget.cardinality();
 	}
 
@@ -302,9 +291,7 @@ public class SubgroupSet extends TreeSet<Subgroup>
 	}
 
 	/**
-	 * Destructive method. When called always reset the binary target to its
-	 * original state, else all ROC related functionalities break down, and
-	 * and probably much more.
+	 * Destructive method. When called always reset the binary target to its original state, else all ROC related functionalities break down, and and probably much more.
 	 *
 	 * @param theBinaryTarget the new binary target members.
 	 */
@@ -315,8 +302,7 @@ public class SubgroupSet extends TreeSet<Subgroup>
 
 	// FIXME this is why a SubgroupSet should NOT extend a TreeSet: encapsulate
 	/*
-	 * NOTE since the copy-through-constructor creates a shallow copy of
-	 * itsROCList, calling this method may have side effects.
+	 * NOTE since the copy-through-constructor creates a shallow copy of itsROCList, calling this method may have side effects.
 	 * All clones of this SubgroupSet will be affected.
 	 */
 	@Override

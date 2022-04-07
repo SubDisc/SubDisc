@@ -34,12 +34,14 @@ public class Subgroup implements Comparable<Subgroup>
 	// required fields
 	private ConditionListA itsConditions;
 	private int itsCoverage; // crucial to keep it in sync with itsMembers
+
 	// not strictly required - used for itsParentSet.getAllDataBitSetClone()
 	private final SubgroupSet itsParentSet;
-	// added to simplify SubgroupDiscovery.checkAndLog(), currently can not rely
-	// on (hasQuality = !isNaN(itsMeasureValue)) as most model classes/quality
+
+	// added to simplify SubgroupDiscovery.checkAndLog(), currently can not rely on (hasQuality = !isNaN(itsMeasureValue)) as most model classes/quality
 	// measures do not check the validity of their result
 	private boolean hasQuality           = false;
+
 	// FIXME the defaults for these three statistics are wrong
 	// required - but in many settings the quality is not set upon construction
 	private double itsMeasureValue       = 0.0;
@@ -47,44 +49,28 @@ public class Subgroup implements Comparable<Subgroup>
 	private double itsSecondaryStatistic = 0.0;
 	// required - as above, and used directly by single binary during mining
 	private double itsTertiaryStatistic  = 0.0;
+
 	// not strictly required - but easier in current setup, might change one day
 	private BitSet itsMembers;
 	// required for members (can be null at any moment, so not a ReadWriteLock)
 	private final Lock itsMembersLock = new ReentrantLock();
+
 	// not strictly required - but easier in current setup, might change one day
 	private int itsID = 0;
+
 	// optional - to be replaced by Double itsPValue (1 pointer, mostly null)
 	// note such a setup allows: isPValueComputed() { return PValue != null; }
-	// also, when not used, this will often use _less_ memory, as the pointer
-	// will be 32-bits for heap spaces < 32 GB, when used, Double uses 16 or 24
-	// bytes (compared to the 12 or 16 in the current setup)
+	// also, when not used, this will often use _less_ memory, as the pointer will be 32-bits for heap spaces < 32 GB, when used, Double uses 16 or 24 bytes (compared to the 12 or 16 in the current setup)
 	// XXX not strictly needed when setting itsPValue to NaN
 	private boolean isPValueComputed;
 	private double itsPValue;
+
 	// optional - not used for most settings, to be replaced by single ModelInfo
 	private DAG itsDAG;
 	private LabelRanking itsLabelRanking; // LabelRanking* always comes together
 	private LabelRankingMatrix itsLabelRankingMatrix;
 	private String itsRegressionModel;
 
-	/*
-	 * member BitSet compressed using (G)ZIP (LZ77)
-	 * NOTE logical operations on this Object require it to be unpacked
-	 * so it should not be used for that
-	 * however, for large (sparse) BitSets that remain unchanged, it saves
-	 * a lot of space (true for Subgroups shown in ResultWindow)
-	 * during search, the member BitSets are modified, and used in logical
-	 * operations
-	 * BBC, (E/PL)WAH and other compression schemes exist that offer both
-	 * compression and fast modification, as decompression is not needed
-	 * additionally, for SubDisc's Subgroup Discovery algorithm Refinements
-	 * are guaranteed to not increase the number of Subgroup members
-	 */
-//	private byte[] itsCompressedMembers;
-//	ObjectOutputStream os = new ObjectOutputStream(new GZIPOutputStream(new ByteArrayOutputStream(), itsMembers.length())));
-//	os.writeObject(itsMembers);
-//	os.close();
-//	itsCompressedMembers = os.toByteArray();
 
 	/**
 	 * Creates a Subgroup with initial measureValue of 0.0 and a depth of 0.
@@ -489,8 +475,6 @@ public class Subgroup implements Comparable<Subgroup>
 		}
 
 		return itsMembers.equals(s.itsMembers);
-		//getTruePositiveRate().equals(s.getTruePositiveRate()) &&
-			//	getFalsePositiveRate().equals(s.getFalsePositiveRate());
 	}
 */
 	/*
@@ -554,67 +538,58 @@ public class Subgroup implements Comparable<Subgroup>
 
 	/**
 	 * Returns the TruePositiveRate for this Subgroup.
-	 * If no itsParentSet was set for this SubGroup, or no itsBinaryTarget
-	 * was set for this SubGroups' itsParentSet this function returns 0.0.
+	 * If no itsParentSet was set for this SubGroup, or no itsBinaryTarget was set for this SubGroups' itsParentSet this function returns 0.0.
 	 *
 	 * @return the TruePositiveRate, also known as TPR.
 	 */
 	/* FIXME MM need only cardinality(), obtain without expensive clone */
 	public double getTruePositiveRate()
 	{
-		BitSet tmp = itsParentSet.getBinaryTargetClone();
+		BitSet aTempBitSet = itsParentSet.getBinaryTargetClone();
 
-		if (tmp == null)
+		if (aTempBitSet == null)
 			return 0.0;
 
-		// TODO MM - USE countCommon(tmp, getMembersUnsafe())
-		tmp.and(getMembersUnsafe());
-		// NOTE now tmp.cardinality() = aHeadBody
+		// TODO MM - USE countCommon(aTempBitSet, getMembersUnsafe())
+		aTempBitSet.and(getMembersUnsafe());
+		// NOTE now aTempBitSet.cardinality() = aHeadBody
 
 		int aTotalTargetCoverage = itsParentSet.getTotalTargetCoverage();
 
-		// aTotalTargetCoverage can not be 0, as the target value used
-		// should not have been allowed to be selected
 		if (aTotalTargetCoverage <= 0)
 			throw new AssertionError();
 
-		return ((double)tmp.cardinality()) / aTotalTargetCoverage;
+		return ((double)aTempBitSet.cardinality()) / aTotalTargetCoverage;
 	}
 
 	/**
 	 * Returns the FalsePositiveRate for this Subgroup.
-	 * If no itsParentSet was set for this subgroup, or no itsBinaryTarget
-	 * was set for this subgroups' itsParentSet this function returns 0.0f.
+	 * If no itsParentSet was set for this subgroup, or no itsBinaryTarget was set for this subgroups' itsParentSet this function returns 0.0f.
 	 *
 	 * @return the FalsePositiveRate, also known as FPR.
 	 */
-	/* FIXME MM need only cardinality(), obtain without expensive clone */
 	public double getFalsePositiveRate()
 	{
-		BitSet tmp = itsParentSet.getBinaryTargetClone();
+		BitSet aTempBitSet = itsParentSet.getBinaryTargetClone();
 
-		if (tmp == null)
+		if (aTempBitSet == null)
 			return 0.0;
 
-		// TODO MM - USE countCommon(tmp, getMembersUnsafe())
-		tmp.and(getMembersUnsafe());
-		// NOTE now tmp.cardinality() = aHeadBody
+		// TODO MM - USE countCommon(aTempBitSet, getMembersUnsafe())
+		aTempBitSet.and(getMembersUnsafe());
+		// NOTE now aTempBitSet.cardinality() = aHeadBody
 
 		int aTotalCoverage = itsParentSet.getTotalCoverage();
 		int aTotalTargetCoverage = itsParentSet.getTotalTargetCoverage();
 		int aNotHead = (aTotalCoverage - aTotalTargetCoverage);
 
-		// aTotalTargetCoverage can not be 0, as the target value used
-		// should not have been allowed to be selected
-		// aNotHead can be 0 for a target concept that contains just 1
-		// target value, this is awkward, but not incorrect and this is
-		// not the location to check for this
-		if (aTotalCoverage <= 0 || aTotalTargetCoverage < 0 ||
-			aTotalCoverage < aTotalTargetCoverage || aNotHead < 0)
+		// aTotalTargetCoverage can not be 0, as the target value used should not have been allowed to be selected.
+		// aNotHead can be 0 for a target concept that contains just 1 target value, this is awkward, but not incorrect and this is not the location to check for this
+		if (aTotalCoverage <= 0 || aTotalTargetCoverage < 0 || aTotalCoverage < aTotalTargetCoverage || aNotHead < 0)
 			throw new AssertionError();
 
 		// (FP / !H)
-		return ((double)(itsCoverage - tmp.cardinality())) / aNotHead;
+		return ((double)(itsCoverage - aTempBitSet.cardinality())) / aNotHead;
 	}
 
 	/*
