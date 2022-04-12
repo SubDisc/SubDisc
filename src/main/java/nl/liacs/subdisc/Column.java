@@ -1639,8 +1639,7 @@ public class Column implements XMLNodeInterface
 	}
 
 	/**
-	 * Returns a {@code java.util.TreeSet} with all distinct values for this
-	 * Column, with values ordered according to their natural ordering.
+	 * Returns a {@code java.util.TreeSet} with all distinct values for this Column, with values ordered according to their natural ordering.
 	 *
 	 * @return the domain for this Column.
 	 *
@@ -1710,10 +1709,8 @@ public class Column implements XMLNodeInterface
 		}
 	}
 
-	// callers obtain an int[] with counts for each value for this Column
-	// counts can be zero, the index of non-zero counts should be used get the
-	// corresponding value from column.itsDistinctValuesU(non_zero_count_index)
-	// this uses aCollection.unmodifiableList<String> for the domain to avoids
+	// callers obtain an int[] with counts for each value for this Column counts can be zero, the index of non-zero counts should be used get the
+	// corresponding value from column.itsDistinctValuesU(non_zero_count_index) this uses aCollection.unmodifiableList<String> for the domain to avoid
 	// creating Objects, sharing is safe, and the JVM knows it will not change
 	List<String> itsDistinctValuesU = null;
 	void buildSharedDomain() { itsDistinctValuesU = Collections.unmodifiableList(itsDistinctValues); }
@@ -2460,14 +2457,13 @@ public class Column implements XMLNodeInterface
 	/*
 	 * NOTE No checks on (itsType == AttributeType.NOMINAL), use with care.
 	 *
-	 * Avoids recreation of TreeSet aDomain in
-	 * SubgroupDiscovery.evaluateNominalBinaryRefinement().
+	 * Avoids recreation of TreeSet aDomain in SubgroupDiscovery.evaluateNominalBinaryRefinement().
 	 * Memory usage is minimal.
 	 *
-	 * Bits set in i represent value-indices go retrieve from
-	 * itsDistinctValues. This just works.
+	 * Bits set in i represent value-indices go retrieve from itsDistinctValues. This just works.
 	 */
-	public String[] getSubset(int i) {
+	public String[] getSubset(int i) 
+	{
 		// Don Clugston approves
 		// count bits set in integer type (12 ops instead of naive 32)
 		// http://graphics.stanford.edu/~seander/bithacks.html#CountBitsSetParallel
@@ -2540,9 +2536,6 @@ public class Column implements XMLNodeInterface
 						if (aUniqueValues.size() == itsCardinality)
 							break;
 				break;
-
-// TODO MM - profile, could use the same strategy as getUniqueNumericDomain
-//return getUniqueNominalDomain(theBitSet);
 			}
 			case BINARY :
 			{
@@ -2552,13 +2545,10 @@ public class Column implements XMLNodeInterface
 						if (aUniqueValues.size() == itsCardinality)
 							break;
 				break;
-// TODO MM - profile, could use the same strategy as getUniqueNumericDomain
-//return getUniqueBinaryDomain(theBitSet, itsCardinality, itsBinaries);
 			}
 			default :
 			{
-				logMessage("getUniqueNominalBinaryDomain",
-						getTypeError("NOMINAL or BINARY"));
+				logMessage("getUniqueNominalBinaryDomain", getTypeError("NOMINAL or BINARY"));
 			}
 		}
 
