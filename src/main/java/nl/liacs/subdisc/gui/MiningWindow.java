@@ -2460,6 +2460,7 @@ boundsList.add(new Interval(f, Float.POSITIVE_INFINITY));
 		itsSearchParameters.setSearchDepth(getSearchDepthMaximum());
 		itsSearchParameters.setMinimumCoverage(getSearchCoverageMinimum());
 		itsSearchParameters.setMaximumCoverageFraction(getSearchCoverageMaximum());
+		itsSearchParameters.setMinimumSupport(getSearchMinimumSupport());
 		itsSearchParameters.setMaximumSubgroups(getSubgroupsMaximum());
 		itsSearchParameters.setMaximumTime(getSearchTimeMaximum());
 
@@ -2538,7 +2539,7 @@ boundsList.add(new Interval(f, Float.POSITIVE_INFINITY));
 	private void setSearchCoverageMaximum(String aValue) { jTextFieldSearchCoverageMaximum.setText(aValue); }
 
 	// search conditions - minimum support
-	private float getSearchMinimumSupport() { return getValue(1.0f, jTextFieldSearchMinimumSupport.getText()); }
+	private int getSearchMinimumSupport() { return getValue(0, jTextFieldSearchMinimumSupport.getText()); }
 	private void setSearchMinimumSupport(String aValue) { jTextFieldSearchMinimumSupport.setText(aValue); }
 
 	// search conditions - maximum subgroups

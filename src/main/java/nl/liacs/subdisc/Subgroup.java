@@ -10,11 +10,8 @@ import nl.liacs.subdisc.ConditionListBuilder.ConditionListA;
 /**
  * A Subgroup contains a number of instances from the original data.
  * 
- * Subgroups are formed by, a number of, {@link Condition}s. Its members include
- * : a {@link ConditionListA}, a BitSet representing the instances included in
- * this Subgroup, the number of instances in this Subgroup (its coverage),
- * an identifier and a {@link SubgroupSet}.
- * It may also contain a {@link DAG}.
+ * Subgroups are formed by, a number of, {@link Condition}s. Its members include : a {@link ConditionListA}, a BitSet representing the instances included in
+ * this Subgroup, the number of instances in this Subgroup (its coverage), an identifier and a {@link SubgroupSet}. It may also contain a {@link DAG}.
  * 
  * Note this class is not thread safe.
  * 

@@ -59,8 +59,8 @@ public class ResultTableModel extends AbstractTableModel
 					case MULTI_NUMERIC : return "|Subgroup|";
 					case SINGLE_ORDINAL : throw new AssertionError(theTargetType);
 					case DOUBLE_REGRESSION : return "Slope";
-                    case DOUBLE_CORRELATION : return "Correlation";
-                    case DOUBLE_BINARY : return "Sign";
+					case DOUBLE_CORRELATION : return "Correlation";
+					case DOUBLE_BINARY : return "Sign";
 					case SCAPE : return "Positives";
 					case MULTI_LABEL : return "Edit Distance";
 					case MULTI_BINARY_CLASSIFICATION : throw new AssertionError(theTargetType);
@@ -77,8 +77,8 @@ public class ResultTableModel extends AbstractTableModel
 					case MULTI_NUMERIC : return "|!Subgroup|";
 					case SINGLE_ORDINAL : throw new AssertionError(theTargetType);
 					case DOUBLE_REGRESSION : return "Intercept";
-                    case DOUBLE_CORRELATION : return "Distance";
-                    case DOUBLE_BINARY : return "Target share dataset";
+					case DOUBLE_CORRELATION : return "Distance";
+ 					case DOUBLE_BINARY : return "Target share dataset";
 					case SCAPE : return "Negatives";
 					case MULTI_LABEL : return "Entropy";
 					case MULTI_BINARY_CLASSIFICATION : throw new AssertionError(theTargetType);
