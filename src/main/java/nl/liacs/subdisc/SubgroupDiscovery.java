@@ -2189,12 +2189,12 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 					continue;
 
 				aCover += aCount;
+				aTruePositiveCount += aTPs[i];
 
 				if (aCover == aParentCoverage)
 					break;
 
-				aTruePositiveCount += aTPs[i];
-				if (aCover < itsMinimumCoverage)
+				if (aCover < itsMinimumCoverage || aTruePositiveCount < itsMinimumSupport)
 					continue;
 
 				if (!Float.isNaN(aColumn.getSortedValue(i))) //not a missing value
@@ -2211,7 +2211,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			int aTruePositiveCount = (int) theParent.getTertiaryStatistic() - theValueInfo.itsMissingPositiveCount; // NOTE getTertiaryStatistic() only works for SINGLE_NOMINAL
 			for (int i=0; i<aSize && !isTimeToStop(); i++)
 			{
-				if (aCover < itsMinimumCoverage)
+				if (aCover < itsMinimumCoverage || aTruePositiveCount < itsMinimumSupport)
 					break;
 
 				int aCount = aCounts[i];
@@ -3114,8 +3114,6 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			}
 
 			//check for minimum support threshold
-System.out.println("================== checking minsup============== " + itsMinimumSupport);
-
 			if (itsSearchParameters.getTargetType() == TargetType.SINGLE_NOMINAL &&
 			    theChild.getTertiaryStatistic() < itsMinimumSupport)			//in SINGLE_NOMINAL the tertiary statistic is the number of positives
 			{
