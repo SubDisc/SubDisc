@@ -24,6 +24,7 @@ public class SearchParameters implements XMLNodeInterface
 	private int		itsSearchDepth;
 	private int		itsMinimumCoverage;
 	private float		itsMaximumCoverageFraction;
+	private int		itsMinimumSupport;
 	private int		itsMaximumSubgroups;
 	private float		itsMaximumTime;
 
@@ -84,6 +85,8 @@ public class SearchParameters implements XMLNodeInterface
 	public void setMinimumCoverage(int theMinimumCoverage) { if (theMinimumCoverage < 1) throw new IllegalArgumentException("theMinimumCoverage must be >= 1"); itsMinimumCoverage = theMinimumCoverage; }
 	public float getMaximumCoverageFraction() { return itsMaximumCoverageFraction; }
 	public void setMaximumCoverageFraction(float theMaximumCoverageFraction) { itsMaximumCoverageFraction = theMaximumCoverageFraction; }
+	public int getMinimumSupport() { return itsMinimumSupport; }
+	public void setMinimumSupport(int theMinimumSupport) { if (theMinimumSupport < 0) throw new IllegalArgumentException("theMinimumSupport must be >= 0"); itsMinimumSupport = theMinimumSupport; }
 	public int getMaximumSubgroups() { return itsMaximumSubgroups; }
 	public void setMaximumSubgroups(int theMaximumSubgroups) { itsMaximumSubgroups  = theMaximumSubgroups; }
 	public float getMaximumTime() { return itsMaximumTime; }
@@ -177,6 +180,7 @@ public class SearchParameters implements XMLNodeInterface
 		XMLNode.addNodeTo(aNode, "search_depth", getSearchDepth());
 		XMLNode.addNodeTo(aNode, "minimum_coverage", getMinimumCoverage());
 		XMLNode.addNodeTo(aNode, "maximum_coverage_fraction", getMaximumCoverageFraction());
+		XMLNode.addNodeTo(aNode, "minimum_support", getMinimumSupport());
 		XMLNode.addNodeTo(aNode, "maximum_subgroups", getMaximumSubgroups());
 		XMLNode.addNodeTo(aNode, "maximum_time", getMaximumTime());
 		XMLNode.addNodeTo(aNode, "search_strategy", getSearchStrategy().GUI_TEXT);
@@ -211,6 +215,8 @@ public class SearchParameters implements XMLNodeInterface
 				itsMinimumCoverage = Integer.parseInt(aSetting.getTextContent());
 			else if("maximum_coverage_fraction".equalsIgnoreCase(aNodeName))
 				itsMaximumCoverageFraction = Float.parseFloat(aSetting.getTextContent());
+			else if("minimum_support".equalsIgnoreCase(aNodeName))
+				itsMinimumSupport = Integer.parseInt(aSetting.getTextContent());
 			else if("maximum_subgroups".equalsIgnoreCase(aNodeName))
 				itsMaximumSubgroups = Integer.parseInt(aSetting.getTextContent());
 			else if("maximum_time".equalsIgnoreCase(aNodeName))
@@ -264,6 +270,7 @@ public class SearchParameters implements XMLNodeInterface
 		addLine(sb, "search_depth", Integer.toString(getSearchDepth()));
 		addLine(sb, "minimum_coverage", Integer.toString(getMinimumCoverage()));
 		addLine(sb, "maximum_coverage_fraction", Float.toString(getMaximumCoverageFraction()));
+		addLine(sb, "minimum_support", Integer.toString(getMinimumSupport()));
 		addLine(sb, "maximum_subgroups", Integer.toString(getMaximumSubgroups()));
 		addLine(sb, "maximum_time", Float.toString(getMaximumTime()));
 		addLine(sb, "search_strategy", getSearchStrategy().GUI_TEXT);

@@ -135,6 +135,7 @@ public class MiningWindow extends JFrame implements ActionListener
 	private JLabel jLabelSearchDepth;
 	private JLabel jLabelSearchCoverageMinimum;
 	private JLabel jLabelSearchCoverageMaximum;
+	private JLabel jLabelSearchMinimumSupport;
 	private JLabel jLabelSubgroupsMaximum;
 	private JLabel jLabelSearchTimeMaximum;
 	// SEARCH CONDITIONS - fields
@@ -142,6 +143,7 @@ public class MiningWindow extends JFrame implements ActionListener
 	private JTextField jTextFieldSearchDepth;
 	private JTextField jTextFieldSearchCoverageMinimum;
 	private JTextField jTextFieldSearchCoverageMaximum;
+	private JTextField jTextFieldSearchMinimumSupport;
 	private JTextField jTextFieldSubgroupsMaximum;
 	private JTextField jTextFieldSearchTimeMaximum;
 
@@ -459,6 +461,8 @@ public class MiningWindow extends JFrame implements ActionListener
 		jPanelSearchConditionsLabels.add(jLabelSearchCoverageMinimum);
 		jLabelSearchCoverageMaximum = initJLabel("maximum coverage (fraction)");
 		jPanelSearchConditionsLabels.add(jLabelSearchCoverageMaximum);
+		jLabelSearchMinimumSupport = initJLabel("minimum support");
+		jPanelSearchConditionsLabels.add(jLabelSearchMinimumSupport);
 		jLabelSubgroupsMaximum = initJLabel("<html> maximum subgroups (0 = &#8734;)</html>)");
 		jPanelSearchConditionsLabels.add(jLabelSubgroupsMaximum);
 		jLabelSearchTimeMaximum = initJLabel("<html> maximum time (min) (0 = &#8734;)</html>)");
@@ -475,6 +479,8 @@ public class MiningWindow extends JFrame implements ActionListener
 		jPanelSearchParameterFields.add(jTextFieldSearchCoverageMinimum);
 		jTextFieldSearchCoverageMaximum = GUI.buildTextField("0");
 		jPanelSearchParameterFields.add(jTextFieldSearchCoverageMaximum);
+		jTextFieldSearchMinimumSupport = GUI.buildTextField("0");
+		jPanelSearchParameterFields.add(jTextFieldSearchMinimumSupport);
 		jTextFieldSubgroupsMaximum = GUI.buildTextField("0");
 		jPanelSearchParameterFields.add(jTextFieldSubgroupsMaximum);
 		jTextFieldSearchTimeMaximum = GUI.buildTextField("0");
@@ -775,10 +781,7 @@ public class MiningWindow extends JFrame implements ActionListener
 			a.setEnabled(theSetting);
 
 		// do the same for combo boxes (asList allows type check, [] does not)
-		List<JComboBox<String>> aComboBoxList = Arrays.asList(jComboBoxTargetType,
-																jComboBoxStrategyType,
-																jComboBoxNumericStrategy,
-																jComboBoxNumericOperators);
+		List<JComboBox<String>> aComboBoxList = Arrays.asList(jComboBoxTargetType, jComboBoxStrategyType, jComboBoxNumericStrategy, jComboBoxNumericOperators);
 		for (JComboBox<String> c : aComboBoxList)
 			c.setEnabled(theSetting);
 	}
@@ -964,11 +967,14 @@ public class MiningWindow extends JFrame implements ActionListener
 	// see jComboBoxTargetTypeActionPerformed
 	private void initTargetInfo()
 	{
+		jTextFieldSearchMinimumSupport.setEnabled(false); // in all but one case, disable it. Then enable it again in case of SINGLE_NOMINAL
+
 		TargetType aTargetType = itsTargetConcept.getTargetType();
 		switch (aTargetType)
 		{
 			case SINGLE_NOMINAL :
 			{
+				jTextFieldSearchMinimumSupport.setEnabled(true);
 				String aTarget = getTargetAttributeName();
 				String aMiscFieldName = getMiscFieldName();
 				//initTargetInfo might be called before item is actually selected
@@ -1049,9 +1055,7 @@ public class MiningWindow extends JFrame implements ActionListener
 				NumberFormat aFormatter = NumberFormat.getNumberInstance();
 				aFormatter.setMaximumFractionDigits(2);
 				jLabelTargetInfo.setText(" regression");
-				jLabelTargetInfoText.setText(String.format("s = %s + %s * p",
-											aFormatter.format(aRM.getIntercept()),
-											aFormatter.format(aRM.getSlope())));
+				jLabelTargetInfoText.setText(String.format("s = %s + %s * p", aFormatter.format(aRM.getIntercept()), aFormatter.format(aRM.getSlope())));
 				break;
 			}
             case DOUBLE_CORRELATION :
@@ -2532,6 +2536,10 @@ boundsList.add(new Interval(f, Float.POSITIVE_INFINITY));
 	// search conditions - maximum coverage (fraction)
 	private float getSearchCoverageMaximum() { return getValue(1.0f, jTextFieldSearchCoverageMaximum.getText()); }
 	private void setSearchCoverageMaximum(String aValue) { jTextFieldSearchCoverageMaximum.setText(aValue); }
+
+	// search conditions - minimum support
+	private float getSearchMinimumSupport() { return getValue(1.0f, jTextFieldSearchMinimumSupport.getText()); }
+	private void setSearchMinimumSupport(String aValue) { jTextFieldSearchMinimumSupport.setText(aValue); }
 
 	// search conditions - maximum subgroups
 	private int getSubgroupsMaximum() { return getValue(50, jTextFieldSubgroupsMaximum.getText());}
