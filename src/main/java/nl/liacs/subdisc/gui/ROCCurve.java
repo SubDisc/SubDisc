@@ -22,6 +22,8 @@ public class ROCCurve extends JPanel
 	private float itsXMin, itsXMax, itsYMin, itsYMax;
 	private float itsXStart, itsYStart, itsXEnd, itsYEnd;
 	private int itsMin, itsMax;
+	private int itsMinSupport;
+	private float itsTotalTargetCoverage;
 	private QualityMeasure itsQualityMeasure;
 
 	public ROCCurve(SubgroupSet theSubgroupSet, SearchParameters theSearchParameters, QualityMeasure theQualityMeasure)
@@ -56,19 +58,20 @@ public class ROCCurve extends JPanel
 			itsPoints.add(new Arc2D.Double(p.getFPR(), -p.getTPR(), 0.0, 0.0, -180.0, 180.0, Arc2D.OPEN));
 
 		int aTotalCoverage = theSubgroupSet.getTotalCoverage();
-		float aTotalTargetCoverage = theSubgroupSet.getTotalTargetCoverage();
+		itsTotalTargetCoverage = theSubgroupSet.getTotalTargetCoverage();
 		int aMinCoverage = theSearchParameters.getMinimumCoverage();
 		int aMaxCoverage = (int) (aTotalCoverage * theSearchParameters.getMaximumCoverageFraction());
-		float aFalseCoverage = aTotalCoverage - aTotalTargetCoverage;
+		float aFalseCoverage = aTotalCoverage - itsTotalTargetCoverage;
 		itsMin = aMinCoverage;
 		itsMax = aMaxCoverage;
 
 		itsQualityMeasure = theQualityMeasure;
 
+		//compute start and end points of min/max coverage lines
 		itsXMin = aMinCoverage/aFalseCoverage;
-		itsYMin = aMinCoverage/aTotalTargetCoverage;
+		itsYMin = aMinCoverage/itsTotalTargetCoverage;
 		itsXMax = aMaxCoverage/aFalseCoverage;
-		itsYMax = aMaxCoverage/aTotalTargetCoverage;
+		itsYMax = aMaxCoverage/itsTotalTargetCoverage;
 		itsXStart = (itsYMax-1f)*(itsXMax/itsYMax);
 		itsYStart = 1f;
 		if (itsYMax < 1f) // crosses left boundary, rather than top boundary
@@ -85,10 +88,17 @@ public class ROCCurve extends JPanel
 		}
 
 		itsLines = new GeneralPath();
-		itsLines.moveTo(itsXMin, 0);		//min cov
-		itsLines.lineTo(0, -itsYMin);		//min cov
-		itsLines.moveTo(itsXStart, -itsYStart);	//max cov
-		itsLines.lineTo(itsXEnd, -itsYEnd);	//max cov
+		itsLines.moveTo(itsXMin, 0);								//min cov
+		itsLines.lineTo(0, -itsYMin);								//min cov
+		itsLines.moveTo(itsXStart, -itsYStart);							//max cov
+		itsLines.lineTo(itsXEnd, -itsYEnd);							//max cov
+		//min support
+		itsMinSupport = theSearchParameters.getMinimumSupport();	
+		if (itsMinSupport > 0)									
+		{
+			itsLines.moveTo(0, -itsMinSupport/itsTotalTargetCoverage);
+			itsLines.lineTo(1, -itsMinSupport/itsTotalTargetCoverage);
+		}
 		itsLines.moveTo(0, 0);
 		itsLines.lineTo(0, -1);
 		itsLines.lineTo(1, -1);
@@ -191,5 +201,9 @@ public class ROCCurve extends JPanel
 		//min and max support
 		aGraphic.drawString(Integer.toString(itsMin), (itsXMin+0.15f)*itsSize, (-0.03f+1.05f)*itsSize);
 		aGraphic.drawString(Integer.toString(itsMax), (itsXEnd+0.01f+0.15f)*itsSize, (-Math.max(itsYEnd, 0.03f)+1.05f)*itsSize);
+		//min support
+		if (itsMinSupport > 0)
+			aGraphic.drawString(Integer.toString(itsMinSupport), (1+0.16f)*itsSize, (-itsMinSupport/(float)itsTotalTargetCoverage +1.05f)*itsSize);
+
 	}
 }

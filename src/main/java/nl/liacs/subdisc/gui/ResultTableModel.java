@@ -54,7 +54,7 @@ public class ResultTableModel extends AbstractTableModel
 			{
 
 				switch (theTargetType) {
-					case SINGLE_NOMINAL : return "Probability";
+					case SINGLE_NOMINAL : return "Target Share";
 					case SINGLE_NUMERIC : return "Average";
 					case MULTI_NUMERIC : return "|Subgroup|";
 					case SINGLE_ORDINAL : throw new AssertionError(theTargetType);

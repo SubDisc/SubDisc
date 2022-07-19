@@ -364,8 +364,8 @@ public class QualityMeasure
 			}
 			// XXX this is generally called PRECISION
 			// PRECISION = TP / (TP+FP)            = HB / B
-			// ACCURACY  = (TP+TN) / (TP+FP+FN+TN) = (HB+nHnB) / N
-			case ACCURACY:
+			// TARGET_SHARE  = (TP+TN) / (TP+FP+FN+TN) = (HB+nHnB) / N
+			case TARGET_SHARE:
 			{
 				if (B == 0)
 					returnValue = 0.0;
@@ -377,14 +377,11 @@ public class QualityMeasure
 			{
 				returnValue = nHnB / (N - H);
 				// handle divide by zero when (N==H)
-				// this case is not checked for by the
-				// SINGLE NOMINAL constructor
-				// as it would be a valid setting (but useless)
+				// this case is not checked for by the SINGLE NOMINAL constructor as it would be a valid setting (but useless)
 				if (Double.isNaN(returnValue))
 					returnValue = 0.0; // by definition?
 				break;
 			}
-			// XXX also called RECALL
 			case SENSITIVITY:
 			{
 				returnValue = HB / H;
@@ -410,9 +407,7 @@ public class QualityMeasure
 				double nH = N-H;
 				returnValue = (HB*nH - H*nHB) / Math.sqrt(H*nH*B*(N-B));
 				// handle divide by zero when (N==H) or (N==B)
-				// this case is not checked for by the
-				// SINGLE NOMINAL constructor
-				// as it would be a valid setting (but useless)
+				// this case is not checked for by the SINGLE NOMINAL constructor as it would be a valid setting (but useless)
 				if (Double.isNaN(returnValue))
 					returnValue = 0.0; // by definition?
 				break;
@@ -442,7 +437,7 @@ public class QualityMeasure
 				// returnValue = (theCountHeadBody / theCoverage) / (theTotalTargetCoverage / theTotalCoverage);
 				break;
 			}
-				case RELATIVE_LIFT:
+			case RELATIVE_LIFT:
 			{
 				if (B == 0)
 					returnValue = 0.0;

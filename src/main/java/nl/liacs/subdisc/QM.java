@@ -9,46 +9,46 @@ public enum QM implements EnumInterface
 
 	// SINGLE_NOMINAL quality measures
 	// NOTE when adding a new SINGLE_NOMINAL QM -> add it to getDefinition()
-	CORTANA_QUALITY		("Cortana Quality",	"0.1",	TargetType.SINGLE_NOMINAL),
-	WRACC			("WRAcc",		"0.02",	TargetType.SINGLE_NOMINAL),
-	MUTUAL_INFORMATION	("Mutual Information",	"0.01",	TargetType.SINGLE_NOMINAL),
-	ABSWRACC		("Abs WRAcc",		"0.02",	TargetType.SINGLE_NOMINAL),
-	CHI_SQUARED		("Chi-squared",		"50",	TargetType.SINGLE_NOMINAL),
-	INFORMATION_GAIN	("Information gain",	"0.02",	TargetType.SINGLE_NOMINAL),
-	BINOMIAL		("Binomial test",	"0.05",	TargetType.SINGLE_NOMINAL),
-	ACCURACY		("Accuracy",		"0.0",	TargetType.SINGLE_NOMINAL),
-	PURITY			("Purity",		"0.5",	TargetType.SINGLE_NOMINAL),
-	JACCARD			("Jaccard",		"0.2",	TargetType.SINGLE_NOMINAL),
-	COVERAGE		("Coverage",		"10",	TargetType.SINGLE_NOMINAL),
-	SPECIFICITY		("Specificity",		"0.5",	TargetType.SINGLE_NOMINAL),
-	SENSITIVITY		("Sensitivity",		"0.5",	TargetType.SINGLE_NOMINAL),
-	LAPLACE			("Laplace",		"0.2",	TargetType.SINGLE_NOMINAL),
-	F_MEASURE		("F-measure",		"0.2",	TargetType.SINGLE_NOMINAL),
-	G_MEASURE		("G-measure",		"0.2",	TargetType.SINGLE_NOMINAL),
-	CORRELATION		("Correlation",		"0.1",	TargetType.SINGLE_NOMINAL),
-	PROP_SCORE_WRACC	("Propensity score wracc",	"-0.25",	TargetType.SINGLE_NOMINAL),
-	PROP_SCORE_RATIO	("Propensity score ratio",	"1.0",		TargetType.SINGLE_NOMINAL),
-	BAYESIAN_SCORE		("Bayesian Score",	"0.0",	TargetType.SINGLE_NOMINAL),
-    LIFT            ("Lift",        "1.0",    TargetType.SINGLE_NOMINAL),
-    RELATIVE_LIFT   ("Relative Lift",        "1.0",    TargetType.SINGLE_NOMINAL),
+	CORTANA_QUALITY		("Cortana Quality",		"0.1",	TargetType.SINGLE_NOMINAL),
+	WRACC			("WRAcc",			"0.02",	TargetType.SINGLE_NOMINAL),
+	BINOMIAL		("Binomial Test",		"0.05",	TargetType.SINGLE_NOMINAL),
+	RELATIVE_LIFT		("Relative Lift",		"0.0",  TargetType.SINGLE_NOMINAL),
+	ABSWRACC		("Abs WRAcc",			"0.02",	TargetType.SINGLE_NOMINAL),
+	CHI_SQUARED		("Chi-squared",			"50",	TargetType.SINGLE_NOMINAL),
+	INFORMATION_GAIN	("Information Gain",		"0.02",	TargetType.SINGLE_NOMINAL),
+	MUTUAL_INFORMATION	("Mutual Information",		"0.01",	TargetType.SINGLE_NOMINAL),
+	TARGET_SHARE		("Target Share",		"0.0",	TargetType.SINGLE_NOMINAL),
+	PURITY			("Purity",			"0.5",	TargetType.SINGLE_NOMINAL),
+	JACCARD			("Jaccard",			"0.2",	TargetType.SINGLE_NOMINAL),
+	COVERAGE		("Coverage",			"10",	TargetType.SINGLE_NOMINAL),
+	SPECIFICITY		("Specificity",			"0.5",	TargetType.SINGLE_NOMINAL),
+	SENSITIVITY		("Sensitivity",			"0.5",	TargetType.SINGLE_NOMINAL),
+	LAPLACE			("Laplace",			"0.2",	TargetType.SINGLE_NOMINAL),
+	F_MEASURE		("F-measure",			"0.2",	TargetType.SINGLE_NOMINAL),
+	G_MEASURE		("G-measure",			"0.2",	TargetType.SINGLE_NOMINAL),
+	CORRELATION		("Correlation",			"0.1",	TargetType.SINGLE_NOMINAL),
+	PROP_SCORE_WRACC	("Propensity Score WRacc",	"-0.25",TargetType.SINGLE_NOMINAL),
+	PROP_SCORE_RATIO	("Propensity Score Ratio",	"1.0",	TargetType.SINGLE_NOMINAL),
+	BAYESIAN_SCORE		("Bayesian Score",		"0.0",	TargetType.SINGLE_NOMINAL),
+	LIFT			("Lift",			"1.0",  TargetType.SINGLE_NOMINAL),
 
 	// SINGLE_NUMERIC quality measures
 	// NOTE when adding a new SINGLE_NUMERIC QM -> add it to requiredStats()
-	Z_SCORE			("Z-Score",		"1.0",	TargetType.SINGLE_NUMERIC),
-	INVERSE_Z_SCORE		("Inverse Z-Score",	"1.0",	TargetType.SINGLE_NUMERIC),
-	ABS_Z_SCORE		("Abs Z-Score",		"1.0",	TargetType.SINGLE_NUMERIC),
-	AVERAGE			("Average",		"0.0",	TargetType.SINGLE_NUMERIC),	// bogus minimum value, should come from data
-	INVERSE_AVERAGE		("Inverse Average",	"0.0",	TargetType.SINGLE_NUMERIC),	// bogus minimum value, should come from data
-	QM_SUM			("Sum",			"0.0",	TargetType.SINGLE_NUMERIC),	// bogus minimum value, should come from data, note the irregular name, to avoid conflict with SUM
-	INVERSE_SUM		("Inverse Sum",		"0.0",	TargetType.SINGLE_NUMERIC),	// bogus minimum value, should come from data
-	ABS_DEVIATION	("Abs Deviation",	"0.0",	TargetType.SINGLE_NUMERIC),
-	MEAN_TEST		("Mean Test",		"0.01",	TargetType.SINGLE_NUMERIC),
-	INVERSE_MEAN_TEST	("Inverse Mean Test",	"0.01",	TargetType.SINGLE_NUMERIC),
-	ABS_MEAN_TEST		("Abs Mean Test",	"0.01",	TargetType.SINGLE_NUMERIC),
-	T_TEST			("t-Test",		"1.0",	TargetType.SINGLE_NUMERIC),
-	INVERSE_T_TEST		("Inverse t-Test",	"1.0",	TargetType.SINGLE_NUMERIC),
-	ABS_T_TEST		("Abs t-Test",		"1.0",	TargetType.SINGLE_NUMERIC),
-	EXPLAINED_VARIANCE	("Explained Variance",	"0.0",	TargetType.SINGLE_NUMERIC),
+	Z_SCORE					("Z-Score",		"1.0",	TargetType.SINGLE_NUMERIC),
+	EXPLAINED_VARIANCE			("Explained Variance",	"0.0",	TargetType.SINGLE_NUMERIC),
+	INVERSE_Z_SCORE				("Inverse Z-Score",	"1.0",	TargetType.SINGLE_NUMERIC),
+	ABS_Z_SCORE				("Abs Z-Score",		"1.0",	TargetType.SINGLE_NUMERIC),
+	AVERAGE					("Average",		"0.0",	TargetType.SINGLE_NUMERIC),	// bogus minimum value, should come from data
+	INVERSE_AVERAGE				("Inverse Average",	"0.0",	TargetType.SINGLE_NUMERIC),	// bogus minimum value, should come from data
+	QM_SUM					("Sum",			"0.0",	TargetType.SINGLE_NUMERIC),	// bogus minimum value, should come from data
+	INVERSE_SUM				("Inverse Sum",		"0.0",	TargetType.SINGLE_NUMERIC),	// bogus minimum value, should come from data
+	ABS_DEVIATION				("Abs Deviation",	"0.0",	TargetType.SINGLE_NUMERIC),
+	MEAN_TEST				("Mean Test",		"0.01",	TargetType.SINGLE_NUMERIC),
+	INVERSE_MEAN_TEST			("Inverse Mean Test",	"0.01",	TargetType.SINGLE_NUMERIC),
+	ABS_MEAN_TEST				("Abs Mean Test",	"0.01",	TargetType.SINGLE_NUMERIC),
+	T_TEST					("t-Test",		"1.0",	TargetType.SINGLE_NUMERIC),
+	INVERSE_T_TEST				("Inverse t-Test",	"1.0",	TargetType.SINGLE_NUMERIC),
+	ABS_T_TEST				("Abs t-Test",		"1.0",	TargetType.SINGLE_NUMERIC),
 	SQUARED_HELLINGER			("Squared Hellinger distance",		"0.0",	TargetType.SINGLE_NUMERIC),
 	SQUARED_HELLINGER_WEIGHTED		("Weighted Squared Hellinger distance",	"0.0",	TargetType.SINGLE_NUMERIC),
 	SQUARED_HELLINGER_WEIGHTED_ADJUSTED	("Adjusted Squared Hellinger distance",	"0.0",	TargetType.SINGLE_NUMERIC),
@@ -97,18 +97,18 @@ public enum QM implements EnumInterface
 	CORRELATION_P		("p-Value Distance",	"0.0",	TargetType.DOUBLE_CORRELATION),
 	CORRELATION_ENTROPY	("Wtd Ent Distance",	"0.0",	TargetType.DOUBLE_CORRELATION),
 	ADAPTED_WRACC		("Adapted WRAcc",	"0.0",	TargetType.DOUBLE_CORRELATION),
-	COSTS_WRACC		    ("Costs WRAcc",		"0.0",	TargetType.DOUBLE_CORRELATION),
-	CWTPD			    ("CWTPD",		"0.0",	TargetType.DOUBLE_CORRELATION),
-	TMCC			    ("TMCC",		"0.0",	TargetType.DOUBLE_CORRELATION),
-	MCC			        ("MCC",			"0.0",	TargetType.DOUBLE_CORRELATION),
-	PDC			        ("PDC",			"0.0",	TargetType.DOUBLE_CORRELATION),
-	MVPDC			    ("MVPDC",		"0.0",	TargetType.DOUBLE_CORRELATION),
+	COSTS_WRACC		("Costs WRAcc",		"0.0",	TargetType.DOUBLE_CORRELATION),
+	CWTPD			("CWTPD",		"0.0",	TargetType.DOUBLE_CORRELATION),
+	TMCC			("TMCC",		"0.0",	TargetType.DOUBLE_CORRELATION),
+	MCC			("MCC",			"0.0",	TargetType.DOUBLE_CORRELATION),
+	PDC			("PDC",			"0.0",	TargetType.DOUBLE_CORRELATION),
+	MVPDC			("MVPDC",		"0.0",	TargetType.DOUBLE_CORRELATION),
 
 	// DOUBLE_BINARY
-	RELATIVE_WRACC      ("Relative WRAcc", "0.0", TargetType.DOUBLE_BINARY),
-	ABSOLUTE_WRACC      ("Absolute WRAcc", "0.0", TargetType.DOUBLE_BINARY),
-	RELATIVE_RISK       ("Relative Risk", "0.0", TargetType.DOUBLE_BINARY),
-	ABSOLUTE_RISK       ("Absolute Risk", "0.0", TargetType.DOUBLE_BINARY),
+	RELATIVE_WRACC		("Relative WRAcc", "0.0", TargetType.DOUBLE_BINARY),
+	ABSOLUTE_WRACC		("Absolute WRAcc", "0.0", TargetType.DOUBLE_BINARY),
+	RELATIVE_RISK		("Relative Risk", "0.0", TargetType.DOUBLE_BINARY),
+	ABSOLUTE_RISK		("Absolute Risk", "0.0", TargetType.DOUBLE_BINARY),
 
 	// DOUBLE_REGRESSION quality measures
 	REGRESSION_SSD_COMPLEMENT	("Sign. of Slope Diff. (complement)",	"0.0",	TargetType.DOUBLE_REGRESSION),
@@ -212,7 +212,7 @@ public enum QM implements EnumInterface
 							" sqr(N - p - aCountBody(x,y) + pos(y) - e00(N,aCountBody(x,y),p)) / e00(N,aCountBody(x,y),p)";
 			case INFORMATION_GAIN	: return s + "1 - 0.5*(x+y)*H(x/(x+y)) - 0.5*(2-x-y)*H((1-x)/(2-x-y))";
 			case BINOMIAL		: return s + "sqrt(aCountBody(x,y)/N) * (pos(y)/aCountBody(x,y) - p/N)";
-			case ACCURACY		: return s + "pos(y)/aCountBody(x,y)";
+			case TARGET_SHARE	: return s + "pos(y)/aCountBody(x,y)";
 			case PURITY		: return s + "max(pos(y)/aCountBody(x,y), 1.0-pos(y)/aCountBody(x,y))";
 			case JACCARD		: return s + "pos(y)/(aCountBody(x,y) + aTotalTargetCoverageNotBody(y))";
 			case COVERAGE		: return s + "aCountBody(x,y)";
@@ -226,8 +226,8 @@ public enum QM implements EnumInterface
 			case PROP_SCORE_WRACC	: return s + "1/0 # TODO";
 			case PROP_SCORE_RATIO	: return s + "1/0 # TODO";
 			case BAYESIAN_SCORE	: return s + "1/0 # TODO";
-            case LIFT           : return s + "(pos(y) * N) / (aCountBody(x,y) * p)";
-            case RELATIVE_LIFT  : return s + "(pos(y) * N) / (aCountBody(x,y) * p)"; //FIXME, currently lift
+			case LIFT		: return s + "(pos(y) * N) / (aCountBody(x,y) * p)";
+			case RELATIVE_LIFT	: return s + "(pos(y) * N) / (aCountBody(x,y) * p) - 1";
 			default :
 			{
 				// throws NullPointerException if theQM == null
@@ -261,19 +261,13 @@ public enum QM implements EnumInterface
 	private static final Set<Stat> PDF = Collections.unmodifiableSet(EnumSet.of(Stat.PDF));
 
 	/*
-	 * In general, the splitting of an Enum declaration and its logic is a
-	 * bad practice. However, the file structure would suffer greatly by
-	 * adding a getRequiredStats() method to each Enum declaration.
-	 * Also, only SINGLE_NUMERIC QMs require such a method.
-	 * But, when a new SINGLE_NUMERIC QM declaration is added, it should
-	 * also be added here.
+	 * In general, the splitting of an Enum declaration and its logic is a bad practice. However, the file structure would suffer greatly by adding a getRequiredStats() method 
+	 * to each Enum declaration. Also, only SINGLE_NUMERIC QMs require such a method. But, when a new SINGLE_NUMERIC QM declaration is added, it should also be added here.
 	 */
 	/**
-	 * Returns a set with the {@link Stat} enums that are required for
-	 * computations using the supplied QM parameter.
+	 * Returns a set with the {@link Stat} enums that are required for computations using the supplied QM parameter.
 	 *
-	 * @param theQM the {@link TargetType#SINGLE_NUMERIC} QM for which to
-	 * obtain the Set<Stat> enums.
+	 * @param theQM the {@link TargetType#SINGLE_NUMERIC} QM for which to obtain the Set<Stat> enums.
 	 *
 	 * @return a Set<Stat>
 	 *
@@ -286,33 +280,33 @@ public enum QM implements EnumInterface
 		{
 			// SINGLE_NUMERIC
 			case Z_SCORE :				return SUM;
-			case INVERSE_Z_SCORE :		return SUM;
+			case INVERSE_Z_SCORE :			return SUM;
 			case ABS_Z_SCORE :			return SUM;
 			case AVERAGE :				return SUM;
-			case INVERSE_AVERAGE :		return SUM;
+			case INVERSE_AVERAGE :			return SUM;
 			case QM_SUM :				return SUM;
 			case INVERSE_SUM :			return SUM;
-			case ABS_DEVIATION :		return SUM;
+			case ABS_DEVIATION :			return SUM;
 			case MEAN_TEST :			return SUM;
-			case INVERSE_MEAN_TEST :	return SUM;
-			case ABS_MEAN_TEST :		return SUM;
+			case INVERSE_MEAN_TEST :		return SUM;
+			case ABS_MEAN_TEST :			return SUM;
 			case T_TEST :				return SUM_SSD;
-			case INVERSE_T_TEST :		return SUM_SSD;
+			case INVERSE_T_TEST :			return SUM_SSD;
 			case ABS_T_TEST :			return SUM_SSD;
-			case EXPLAINED_VARIANCE :	return SUM_SSD_COMPL;
-			case SQUARED_HELLINGER :					return PDF;
-			case SQUARED_HELLINGER_WEIGHTED :			return PDF;
+			case EXPLAINED_VARIANCE :		return SUM_SSD_COMPL;
+			case SQUARED_HELLINGER :		return PDF;
+			case SQUARED_HELLINGER_WEIGHTED :	return PDF;
 			case SQUARED_HELLINGER_WEIGHTED_ADJUSTED :	return PDF;
-			case KULLBACK_LEIBLER :						return PDF;
-			case KULLBACK_LEIBLER_WEIGHTED :			return PDF;
-			case CWRACC :								return PDF;
-			case CWRACC_UNWEIGHTED : 					return PDF;
+			case KULLBACK_LEIBLER :			return PDF;
+			case KULLBACK_LEIBLER_WEIGHTED :	return PDF;
+			case CWRACC :				return PDF;
+			case CWRACC_UNWEIGHTED : 		return PDF;
 			// SINGLE_ORDINAL
-			case AUC :					return SUM;
+			case AUC :				return SUM;
 			case WMW_RANKS :			return SUM;
-			case INVERSE_WMW_RANKS :	return SUM;
-			case ABS_WMW_RANKS :		return SUM;
-			case MMAD :					return MEDIAN_MAD;
+			case INVERSE_WMW_RANKS :		return SUM;
+			case ABS_WMW_RANKS :			return SUM;
+			case MMAD :				return MEDIAN_MAD;
 			default :
 			{
 				// throws NullPointerException if theQM == null
@@ -337,8 +331,7 @@ public enum QM implements EnumInterface
 	private static void requiredStatsTest()
 	{
 		for (QM qm : QM.values())
-			if (qm.TARGET_TYPE == TargetType.SINGLE_NUMERIC ||
-				qm.TARGET_TYPE == TargetType.SINGLE_ORDINAL)
+			if (qm.TARGET_TYPE == TargetType.SINGLE_NUMERIC || qm.TARGET_TYPE == TargetType.SINGLE_ORDINAL)
 				requiredStats(qm);
 	}
 
