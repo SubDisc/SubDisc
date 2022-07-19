@@ -3,7 +3,7 @@ package nl.liacs.subdisc;
 import java.io.*;
 import java.util.*;
 
-import nl.liacs.subdisc.ConditionListBuilder.ConditionListA;
+import nl.liacs.subdisc.ConditionListBuilder.ConditionList;
 
 public class ExternalKnowledgeFileLoader
 {
@@ -21,192 +21,9 @@ public class ExternalKnowledgeFileLoader
 		OPERATORS = Collections.unmodifiableSet(s);
 	}
 
-/*
-	private final List<ConditionList> externalInfoLocal;
-	private final List<ConditionList> externalInfoGlobal;
-	private final List<String> linesLocal;
-	private final List<String> linesGlobal;
-
-
-	public ExternalKnowledgeFileLoader(String theStringF)
-	{
-		externalInfoLocal = new ArrayList<ConditionList>();
-		externalInfoGlobal = new ArrayList<ConditionList>();
-		linesGlobal = new ArrayList<String>();
-		linesLocal = new ArrayList<String>();
-
-		File f = new File(theStringF);
-
-		// load global knowledge file
-		readFiles(f.listFiles(new OnlyExt("gkf")), linesGlobal);
-
-		// load local knowledge file
-		readFiles(f.listFiles(new OnlyExt("lkf")), linesLocal);
-
-		print();
-	}
-
-	private static void readFiles(File[] theFiles, List<String> theLines)
-	{
-		if (theFiles.length == 0)
-			return;
-
-		// only one file is loaded for each type of knowledge
-		// change to (File f : theFiles) or (i < j)
-		for (int i = 0, j = theFiles.length; i < 1; ++i)
-			addLinesFromFile(theFiles[i], theLines);
-	}
-
-	private static void addLinesFromFile(File theFile, List<String> theLines)
-	{
-		BufferedReader br = null;
-
-		try
-		{
-			br = new BufferedReader(new FileReader(theFile));
-
-			String aLine;
-			while ((aLine = br.readLine()) != null)
-				theLines.add(aLine);
-		}
-		catch (IOException e)
-		{
-			Log.logCommandLine("Error while reading File: " + theFile);
-			if (br != null)
-			{
-				try
-				{
-					br.close();
-				}
-				catch (IOException e1)
-				{
-					Log.logCommandLine("Error while closing File: " + theFile);
-				}
-			}
-		}
-	}
-
-	private void print()
-	{
-		Log.logCommandLine("\nGlobal External Knowledge:");
-		for (String s : linesGlobal)
-			Log.logCommandLine(s);
-
-		Log.logCommandLine("\nLocal External Knowledge:");
-		for (String s : linesLocal)
-			Log.logCommandLine(s);
-
-		Log.logCommandLine("");
-	}
-
-	public void createConditionListLocal(Table theTable)
-	{
-		if (externalInfoLocal.size() == 0)
-			knowledgeToConditions(linesLocal, externalInfoLocal, theTable);
-	}
-
-	public void createConditionListGlobal(Table theTable)
-	{
-		if (externalInfoGlobal.size() == 0)
-			knowledgeToConditions(linesGlobal, externalInfoGlobal, theTable);
-	}
-
-	public static List<ConditionList> knowledgeToConditions(Table theTable, List<String> theKnowledge) 
-	{
-		// JvR: Function used in OpenML Evaluation engine :)
-		List<ConditionList> result = new ArrayList<ConditionList>();
-		knowledgeToConditions(theKnowledge, result, theTable);
-		return result;
-	}
-
-	private static void knowledgeToConditions(List<String> theKnowledge, List<ConditionList> theConditionLists, Table theTable)
-	{
-		for (String aLine : theKnowledge)
-		{
-			String[] aConjuncts = getConjuncts(aLine);
-			ConditionList aConditionList = new ConditionList(aConjuncts.length);
-
-			// add every conjunct to the ConditionList
-			for (String conjunct : aConjuncts)
-			{
-				String[] sa = disect(conjunct);
-				Column col = theTable.getColumn(sa[0]);
-				Operator op = Operator.fromString(sa[1]);
-
-				ConditionBase b = new ConditionBase(col, op);
-				String aValue = sa[2];
-				Condition aCondition;
-				switch (col.getType())
-				{
-					case NOMINAL :
-						aCondition = new Condition(b, aValue);
-						break;
-					case NUMERIC :
-						// Column data unknown, so can not set sort index
-						aCondition = new Condition(b, Float.parseFloat(aValue), Condition.UNINITIALISED_SORT_INDEX);
-						break;
-					case ORDINAL :
-						throw new AssertionError(AttributeType.ORDINAL);
-					case BINARY :
-						if (!AttributeType.isValidBinaryValue(aValue))
-							throw new IllegalArgumentException(aValue + " is not a valid BINARY value");
-						aCondition = new Condition(b, AttributeType.isValidBinaryTrueValue(aValue));
-						break;
-					default :
-						throw new AssertionError(col.getType());
-				}
-
-				aConditionList.add(aCondition);
-			}
-
-			theConditionLists.add(aConditionList);
-			Log.logCommandLine(aConditionList.toString());
-		}
-	}
-
-	private static String[] getConjuncts(String theConjunction)
-	{
-		// assume ' AND ' does not appear in column names
-		return theConjunction.split(" AND ", -1);
-	}
-
-	// TODO mapping a Condition back to its constituents should be made a
-	// Condition.method().
-	private static String[] disect(String theCondition)
-	{
-		// assume OPERATORS do not appear in column name
-		for (String s : OPERATORS)
-		{
-			if (theCondition.contains(s))
-			{
-				final String[] tmp = theCondition.split(s);
-				// remove outer quotes from column name
-//				tmp[0] = tmp[0].substring(1, tmp[0].length()-1);
-				if (tmp[1].startsWith("'") && tmp[1].endsWith("'"))
-					tmp[1] = tmp[1].substring(1, tmp[1].length()-1);
-				return new String[] { tmp[0] , s.trim(), tmp[1] };
-			}
-		}
-
-		throw new IllegalArgumentException(ExternalKnowledgeFileLoader.class.getSimpleName() + " can not parse: " + theCondition);
-	}
-
-	public List<ConditionList> getLocal()
-	{
-		return externalInfoLocal;
-	}
-
-	public List<ConditionList> getGlobal()
-	{
-		return externalInfoGlobal;
-	}
-*/
-	////////////////////////////////////////////////////////////////////////////
-	///// NEW VERSION - CLEAN AND USING ConditionListA /////////////////////////
-	////////////////////////////////////////////////////////////////////////////
 	// FIXME make final after testing
-	private List<ConditionListA> itsExternalKnowledgeGlobal;
-	private List<ConditionListA> itsExternalKnowledgeLocal;
+	private List<ConditionList> itsExternalKnowledgeGlobal;
+	private List<ConditionList> itsExternalKnowledgeLocal;
 
 	public ExternalKnowledgeFileLoader(Table theTable, ConditionBaseSet theConsitionBases)
 	{
@@ -218,12 +35,6 @@ public class ExternalKnowledgeFileLoader
 
 		itsExternalKnowledgeGlobal = knowledgeToConditions(theTable, theConsitionBases, g);
 		itsExternalKnowledgeLocal  = knowledgeToConditions(theTable, theConsitionBases, l);
-
-//		// FIXME - to be removed, for testing only
-//		externalInfoLocal  = null;
-//		externalInfoGlobal = null;
-//		linesLocal         = null;
-//		linesGlobal        = null;
 	}
 
 	private static final List<String> addLinesFromFile(final String theExtention)
@@ -263,13 +74,13 @@ public class ExternalKnowledgeFileLoader
 	}
 
 	// TODO merge with KNIME and LoaderFraunHofer code
-	private static List<ConditionListA> knowledgeToConditions(Table theTable, ConditionBaseSet theConditionBases, List<String> theKnowledge)
+	private static List<ConditionList> knowledgeToConditions(Table theTable, ConditionBaseSet theConditionBases, List<String> theKnowledge)
 	{
 		if (theKnowledge.isEmpty())
 			return Collections.emptyList();
 
 		List<ConditionBase> cbl = theConditionBases.getConditionBases();
-		List<ConditionListA> cll = new ArrayList<>();
+		List<ConditionList> cll = new ArrayList<>();
 
 		for (String aLine : theKnowledge)
 		{
@@ -277,7 +88,7 @@ public class ExternalKnowledgeFileLoader
 
 			// assume ' AND ' does not appear in column names
 			String[] aConjuncts = aLine.split(" AND ", -1);
-			ConditionListA cl   = ConditionListBuilder.emptyList();
+			ConditionList cl   = ConditionListBuilder.emptyList();
 
 			// add every conjunct to the ConditionList
 			for (String s : aConjuncts)
@@ -361,7 +172,7 @@ public class ExternalKnowledgeFileLoader
 		return null;
 	}
 
-	public List<ConditionListA> getKnowledge(boolean isGlobal)
+	public List<ConditionList> getKnowledge(boolean isGlobal)
 	{
 		return isGlobal ? itsExternalKnowledgeGlobal : itsExternalKnowledgeLocal;
 	}

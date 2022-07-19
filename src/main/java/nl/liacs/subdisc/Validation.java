@@ -6,7 +6,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
 
-import nl.liacs.subdisc.ConditionListBuilder.ConditionListA;
+import nl.liacs.subdisc.ConditionListBuilder.ConditionList;
 import nl.liacs.subdisc.gui.*;
 
 /**
@@ -433,7 +433,7 @@ public class Validation
 		int aSubgroupSize;
 
 		//ConditionList aCL;
-		ConditionListA aCL;
+		ConditionList aCL;
 		BitSet aMembers;
 
 		do
@@ -663,11 +663,11 @@ public class Validation
 	}
 
 	//private ConditionList getRandomConditionList(int theDepth, Random theRandom)
-	private ConditionListA getRandomConditionList(int theDepth, Random theRandom)
+	private ConditionList getRandomConditionList(int theDepth, Random theRandom)
 	{
 		int aDepth = 1+theRandom.nextInt(theDepth); //random nr between 1 and theDepth (incl)
 		//ConditionList aCL = new ConditionList(aDepth);
-		ConditionListA aCL = ConditionListBuilder.emptyList();
+		ConditionList aCL = ConditionListBuilder.emptyList();
 		int aNrColumns = itsTable.getNrColumns();
 
 		for (int j = 0; j < aDepth; j++) // j conditions

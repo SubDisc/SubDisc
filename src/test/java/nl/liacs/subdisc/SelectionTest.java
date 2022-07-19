@@ -6,7 +6,7 @@ import java.util.*;
 //import java.util.Map.Entry;
 
 import nl.liacs.subdisc.*;
-import nl.liacs.subdisc.ConditionListBuilder.ConditionListA;
+import nl.liacs.subdisc.ConditionListBuilder.ConditionList;
 
 // Testing lib
 import org.junit.jupiter.api.DisplayName;
@@ -39,7 +39,7 @@ public class SelectionTest
 		Operator anOperator = Operator.EQUALS;
 		ConditionBase aCB = new ConditionBase(aColumn, anOperator);
 		Condition aCondition = new Condition(aCB, "A");
-		ConditionListA aConditionList = ConditionListBuilder.createList(aCondition);
+		ConditionList aConditionList = ConditionListBuilder.createList(aCondition);
 		BitSet aSelection = aTable.evaluate(aConditionList);
 
 		//create a subgroup on selection

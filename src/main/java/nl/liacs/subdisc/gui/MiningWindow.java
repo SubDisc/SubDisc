@@ -13,7 +13,7 @@ import javax.swing.*;
 import javax.swing.UIManager.LookAndFeelInfo;
 
 import nl.liacs.subdisc.*;
-import nl.liacs.subdisc.ConditionListBuilder.ConditionListA;
+import nl.liacs.subdisc.ConditionListBuilder.ConditionList;
 import nl.liacs.subdisc.FileHandler.Action;
 import nl.liacs.subdisc.XMLAutoRun.AutoRun;
 import nl.liacs.subdisc.Process;
@@ -1406,7 +1406,7 @@ public class MiningWindow extends JFrame implements ActionListener
 		}
 		else
 		{
-			ConditionListA aConditionList = ConditionListBuilder.createList(aCW.getResult());
+			ConditionList aConditionList = ConditionListBuilder.createList(aCW.getResult());
 			itsSelection = itsTable.evaluate(aConditionList);
 			System.out.println("size: " + itsSelection.cardinality());
 		}
@@ -2718,7 +2718,7 @@ boundsList.add(new Interval(f, Float.POSITIVE_INFINITY));
 		KeyStroke keyStroke()
 		{
 			if (HAS_ACCELERATOR)
-				return KeyStroke.getKeyStroke(MNEMONIC, InputEvent.CTRL_MASK);
+				return KeyStroke.getKeyStroke(MNEMONIC, InputEvent.CTRL_DOWN_MASK);
 			else
 				return null;
 		}

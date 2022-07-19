@@ -6,7 +6,7 @@ import java.util.*;
 //import java.util.Map.Entry;
 
 import nl.liacs.subdisc.*;
-import nl.liacs.subdisc.ConditionListBuilder.ConditionListA;
+import nl.liacs.subdisc.ConditionListBuilder.ConditionList;
 
 // Testing lib
 import org.junit.jupiter.api.DisplayName;
@@ -358,7 +358,7 @@ public class EndToEndTest
 		Operator anOperator = Operator.EQUALS;
 		ConditionBase aCB = new ConditionBase(aSex, anOperator);
 		Condition aCondition = new Condition(aCB, "Male");
-		ConditionListA aConditionList = ConditionListBuilder.createList(aCondition);
+		ConditionList aConditionList = ConditionListBuilder.createList(aCondition);
 		BitSet aSelection = aLargeTable.evaluate(aConditionList);
 		assertEquals(671, aSelection.cardinality());
 
@@ -455,7 +455,7 @@ public class EndToEndTest
 		Operator anOperator = Operator.EQUALS;
 		ConditionBase aCB = new ConditionBase(aSex, anOperator);
 		Condition aCondition = new Condition(aCB, "Male");
-		ConditionListA aConditionList = ConditionListBuilder.createList(aCondition);
+		ConditionList aConditionList = ConditionListBuilder.createList(aCondition);
 		BitSet aSelection = aLargeTable.evaluate(aConditionList);
 		assertEquals(671, aSelection.cardinality());
 
@@ -550,7 +550,7 @@ public class EndToEndTest
 		Operator anOperator = Operator.EQUALS;
 		ConditionBase aCB = new ConditionBase(aSex, anOperator);
 		Condition aCondition = new Condition(aCB, "Male");
-		ConditionListA aConditionList = ConditionListBuilder.createList(aCondition);
+		ConditionList aConditionList = ConditionListBuilder.createList(aCondition);
 		BitSet aSelection = aLargeTable.evaluate(aConditionList);
 		assertEquals(671, aSelection.cardinality());
 
@@ -645,7 +645,7 @@ public class EndToEndTest
 		Operator anOperator = Operator.EQUALS;
 		ConditionBase aCB = new ConditionBase(aSex, anOperator);
 		Condition aCondition = new Condition(aCB, "Male");
-		ConditionListA aConditionList = ConditionListBuilder.createList(aCondition);
+		ConditionList aConditionList = ConditionListBuilder.createList(aCondition);
 		BitSet aSelection = aTable.evaluate(aConditionList);
 		assertEquals(671, aSelection.cardinality());
 //%%%%% There is one more line below that also needs attention
@@ -704,7 +704,7 @@ public class EndToEndTest
 		int i = anEducationNum.getSortedIndex(aValue); //look up sort index
 		System.out.println("EducationNum: " + aValue + ", index: " + i);
 		Condition aCondition = new Condition(aCB, aValue, i);
-		ConditionListA aConditionList = ConditionListBuilder.createList(aCondition);
+		ConditionList aConditionList = ConditionListBuilder.createList(aCondition);
 		BitSet aSelection = aTable.evaluate(aConditionList);
 		assertEquals(552, aSelection.cardinality());
 //%%%%% There is one more line below that also needs attention

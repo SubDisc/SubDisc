@@ -18,7 +18,7 @@ import nl.liacs.subdisc.ColumnConditionBasesBuilder.ColumnConditionBasesNominalE
 import nl.liacs.subdisc.ColumnConditionBasesBuilder.ColumnConditionBasesNominalEquals;
 import nl.liacs.subdisc.ColumnConditionBasesBuilder.ColumnConditionBasesNumericIntervals;
 import nl.liacs.subdisc.ColumnConditionBasesBuilder.ColumnConditionBasesNumericRegular;
-import nl.liacs.subdisc.ConditionListBuilder.ConditionListA;
+import nl.liacs.subdisc.ConditionListBuilder.ConditionList;
 import nl.liacs.subdisc.ConvexHull.HullPoint;
 import nl.liacs.subdisc.gui.*;
 
@@ -730,9 +730,9 @@ public class SubgroupDiscovery
 	private final CandidateQueue getCandidateQueueFromBeamSeed()
 	{
 		//List<ConditionList> aBeamSeed = itsSearchParameters.getBeamSeed();
-		List<ConditionListA> aBeamSeed = itsSearchParameters.getBeamSeed();
+		List<ConditionList> aBeamSeed = itsSearchParameters.getBeamSeed();
 		//ConditionList aFirstConditionList = aBeamSeed.get(0);
-		ConditionListA aFirstConditionList = aBeamSeed.get(0);
+		ConditionList aFirstConditionList = aBeamSeed.get(0);
 		//TODO there may be no members, in which case the following statement crashes
 		BitSet aFirstMembers = itsTable.evaluate(aFirstConditionList);
 		Subgroup aFirstSubgroup = new Subgroup(aFirstConditionList, aFirstMembers, itsResult);
@@ -743,7 +743,7 @@ public class SubgroupDiscovery
 
 		int aNrEmptySeeds = 0;
 		//for (ConditionList aConditionList : aBeamSeed)
-		for (ConditionListA aConditionList : aBeamSeed)
+		for (ConditionList aConditionList : aBeamSeed)
 		//for (int i = 1, j = aBeamSeed.size(); i < j; ++i)
 		{
 			//ConditionList aConditionList = aBeamSeed.get(i);
@@ -843,7 +843,7 @@ public class SubgroupDiscovery
 			int aParentCoverage   = itsSubgroup.getCoverage();
 			assert (aParentMembers.cardinality() == aParentCoverage);
 
-			ConditionListA aConditionList = itsSubgroup.getConditions();
+			ConditionList aConditionList = itsSubgroup.getConditions();
 			int nextSkipSG = itsFilter.nextSkip(aConditionList, 0);
 			assert ((nextSkipSG == Fltr.NOTHING_TO_SKIP) || ((nextSkipSG >= 0) && (nextSkipSG < aConditionList.size())));
 			Column toSkip = (nextSkipSG != Fltr.NOTHING_TO_SKIP ?  aConditionList.getCanonical(nextSkipSG).getColumn() : null);
@@ -924,7 +924,7 @@ public class SubgroupDiscovery
 			assert (aParentMembers.cardinality() == aParentCoverage);
 
 			// NOTE toCanonicalOrder() would be replaced by getCanonical(index)
-			ConditionListA aParentConditions = itsSubgroup.getConditions();
+			ConditionList aParentConditions = itsSubgroup.getConditions();
 			Condition[] ca = ConditionListBuilder.toCanonicalOrder(aParentConditions);
 			int size = ca.length;
 			Condition last = ((size == 0) ? null : aParentConditions.get(size-1));
@@ -1529,7 +1529,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		// members-based domain, no empty Subgroups will occur
 		ConditionBase aConditionBase = theColumnConditionBases.get(0);
 		Column aColumn = aConditionBase.getColumn();
-		ConditionListA aParentConditions = (isFilterNull ? null : theParent.getConditions());
+		ConditionList aParentConditions = (isFilterNull ? null : theParent.getConditions());
 		////////////////////////////////////////////////////////////////////////
 
 		int[] aCounts = aColumn.getUniqueNominalDomainCounts(theParentMembers, aParentCoverage);
@@ -3031,7 +3031,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	 * FIXME MM
 	 * this is probably no longer true for beam strategies, that move from
 	 * one level to the next, when all candidates on the first are evaluated
-	 * the new ConditionListA compares Conditions in canonical, so
+	 * the new ConditionList compares Conditions in canonical, so
 	 * regardless of the order in which they are inserted in to 
 	 * itsResult / itsCandidateQueue, these constructs will always be
 	 * ordered in the same way before moving to the next level / when an
@@ -3693,7 +3693,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		NOBIN__NONOM__NONUMEQBI
 		{
 			@Override
-			int nextSkip(ConditionListA theConditionList, int fromIndex)
+			int nextSkip(ConditionList theConditionList, int fromIndex)
 			{
 				// omit assert that verifies that all Columns are NUMERIC
 				return NOTHING_TO_SKIP;
@@ -3703,7 +3703,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		NOBIN__NONOM__NUMEQ
 		{
 			@Override
-			int nextSkip(ConditionListA theConditionList, int fromIndex)
+			int nextSkip(ConditionList theConditionList, int fromIndex)
 			{
 				for (int i = fromIndex, j = theConditionList.size(); i < j; ++i)
 				{
@@ -3724,7 +3724,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		NOBIN__NONOM__NUMBI
 		{
 			@Override
-			int nextSkip(ConditionListA theConditionList, int fromIndex)
+			int nextSkip(ConditionList theConditionList, int fromIndex)
 			{
 				int size = theConditionList.size();
 
@@ -3739,7 +3739,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		NOBIN__NOMCL__NONUMEQBI
 		{
 			@Override
-			int nextSkip(ConditionListA theConditionList, int fromIndex)
+			int nextSkip(ConditionList theConditionList, int fromIndex)
 			{
 				for (int i = fromIndex, j = theConditionList.size(); i < j; ++i)
 				{
@@ -3761,7 +3761,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		NOBIN__NOMCL__NUMEQ
 		{
 			@Override
-			int nextSkip(ConditionListA theConditionList, int fromIndex)
+			int nextSkip(ConditionList theConditionList, int fromIndex)
 			{
 				for (int i = fromIndex, j = theConditionList.size(); i < j; ++i)
 				{
@@ -3780,7 +3780,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		NOBIN__NOMCL__NUMBI
 		{
 			@Override
-			int nextSkip(ConditionListA theConditionList, int fromIndex)
+			int nextSkip(ConditionList theConditionList, int fromIndex)
 			{
 				// avoid IndexOutOfBoundsException() for EMPTY_LIST
 				int size = theConditionList.size();
@@ -3822,7 +3822,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		NOBIN__NOMVS__NONUMEQBI
 		{
 			@Override
-			int nextSkip(ConditionListA theConditionList, int fromIndex)
+			int nextSkip(ConditionList theConditionList, int fromIndex)
 			{
 				// avoid IndexOutOfBoundsException for EMPTY_LIST
 				int size = theConditionList.size();
@@ -3846,7 +3846,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		NOBIN__NOMVS__NUMEQ
 		{
 			@Override
-			int nextSkip(ConditionListA theConditionList, int fromIndex)
+			int nextSkip(ConditionList theConditionList, int fromIndex)
 			{
 				// avoid IndexOutOfBoundsException() for EMPTY_LIST
 				int size = theConditionList.size();
@@ -3889,7 +3889,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		NOBIN__NOMVS__NUMBI
 		{
 			@Override
-			int nextSkip(ConditionListA theConditionList, int fromIndex)
+			int nextSkip(ConditionList theConditionList, int fromIndex)
 			{
 				int size = theConditionList.size();
 
@@ -3905,7 +3905,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		BIN__NONOM__NONUMEQBI
 		{
 			@Override
-			int nextSkip(ConditionListA theConditionList, int fromIndex)
+			int nextSkip(ConditionList theConditionList, int fromIndex)
 			{
 				for (int i = fromIndex, j = theConditionList.size(); i < j; ++i)
 				{
@@ -3927,7 +3927,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		BIN__NONOM__NUMEQ
 		{
 			@Override
-			int nextSkip(ConditionListA theConditionList, int fromIndex)
+			int nextSkip(ConditionList theConditionList, int fromIndex)
 			{
 				for (int i = fromIndex, j = theConditionList.size(); i < j; ++i)
 				{
@@ -3946,7 +3946,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		BIN__NONOM__NUMBI
 		{
 			@Override
-			int nextSkip(ConditionListA theConditionList, int fromIndex)
+			int nextSkip(ConditionList theConditionList, int fromIndex)
 			{
 				// avoid IndexOutOfBoundsException() for EMPTY_LIST
 				int size = theConditionList.size();
@@ -3987,7 +3987,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		BIN__NOMCL__NONUMEQBI
 		{
 			@Override
-			int nextSkip(ConditionListA theConditionList, int fromIndex)
+			int nextSkip(ConditionList theConditionList, int fromIndex)
 			{
 				for (int i = fromIndex, j = theConditionList.size(); i < j; ++i)
 				{
@@ -4009,7 +4009,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		BIN__NOMCL__NUMEQ
 		{
 			@Override
-			int nextSkip(ConditionListA theConditionList, int fromIndex)
+			int nextSkip(ConditionList theConditionList, int fromIndex)
 			{
 				for (int i = fromIndex, j = theConditionList.size(); i < j; ++i)
 				{
@@ -4028,7 +4028,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		BIN__NOMCL__NUMBI
 		{
 			@Override
-			int nextSkip(ConditionListA theConditionList, int fromIndex)
+			int nextSkip(ConditionList theConditionList, int fromIndex)
 			{
 				// avoid IndexOutOfBoundsException() for EMPTY_LIST
 				int size = theConditionList.size();
@@ -4070,7 +4070,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		BIN__NOMVS__NONUMEQBI
 		{
 			@Override
-			int nextSkip(ConditionListA theConditionList, int fromIndex)
+			int nextSkip(ConditionList theConditionList, int fromIndex)
 			{
 				// avoid IndexOutOfBoundsException() for EMPTY_LIST
 				int size = theConditionList.size();
@@ -4113,7 +4113,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		BIN__NOMVS__NUMEQ
 		{
 			@Override
-			int nextSkip(ConditionListA theConditionList, int fromIndex)
+			int nextSkip(ConditionList theConditionList, int fromIndex)
 			{
 				// avoid IndexOutOfBoundsException() for EMPTY_LIST
 				int size = theConditionList.size();
@@ -4157,7 +4157,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		BIN__NOMVS__NUMBI
 		{
 			@Override
-			int nextSkip(ConditionListA theConditionList, int fromIndex)
+			int nextSkip(ConditionList theConditionList, int fromIndex)
 			{
 				// avoid IndexOutOfBoundsException for EMPTY_LIST.get(0)
 				int size = theConditionList.size();
@@ -4200,14 +4200,14 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		NEVER_SKIP
 		{
 			@Override
-			int nextSkip(ConditionListA theConditionList, int fromIndex)
+			int nextSkip(ConditionList theConditionList, int fromIndex)
 			{
 				return NOTHING_TO_SKIP;
 			}
 		};
 
 		// fromIndex = canonicalFromIndex, for SG.CanonicalConditions order
-		abstract int nextSkip(ConditionListA theConditionList, int fromIndex);
+		abstract int nextSkip(ConditionList theConditionList, int fromIndex);
 
 		// must be out of valid fromIndex range, and smaller than 0
 		private static final int NOTHING_TO_SKIP = -1;
@@ -4380,7 +4380,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			// to indicate that Refinement is about a Column that
 			// already occurs in the ConditionList for its Subgroup
 			//ConditionList aConditionList = theRefinement.getSubgroup().getConditions();
-			ConditionListA aConditionList = theRefinement.getSubgroup().getConditions();
+			ConditionList aConditionList = theRefinement.getSubgroup().getConditions();
 
 			if (aConditionList.size() == 0)
 				return true;
@@ -4446,7 +4446,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		// tests on existing ConditionList and Condition with value
 		// NOTE requires Condition to be formed first, even when useless
 		//boolean isUseful(ConditionList theConditionList, Condition theCondition)
-		boolean isUseful(ConditionListA theConditionList, Condition theCondition)
+		boolean isUseful(ConditionList theConditionList, Condition theCondition)
 		{
 			int aSize = theConditionList.size();
 			if (aSize == 0)
@@ -4590,7 +4590,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	 * method returns false most of the time
 	 */
 	//private static final boolean isOverlap(ConditionList theConditionList, Column theColumn)
-	private static final boolean isOverlap(ConditionListA theConditionList, Column theColumn)
+	private static final boolean isOverlap(ConditionList theConditionList, Column theColumn)
 	{
 		for (int i = 0, j = theConditionList.size(); i < j; ++i)
 		{
@@ -4622,12 +4622,12 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	 * This is true for BEAM and non-BEAM SearchSettings.
 	 */
 	//private static final boolean hasOverridingEquals(ConditionList theConditionList, Column theColumn)
-	private static final boolean hasOverridingEquals(ConditionListA theConditionList, Column theColumn)
+	private static final boolean hasOverridingEquals(ConditionList theConditionList, Column theColumn)
 	{
 		return hasEquals(theConditionList) && hasRelevantEquals(theConditionList, theColumn);
 	}
 	//private static final boolean hasEquals(ConditionList theConditionList)
-	private static final boolean hasEquals(ConditionListA theConditionList)
+	private static final boolean hasEquals(ConditionList theConditionList)
 	{
 		for (int i = 0, j = theConditionList.size(); i < j; ++i)
 		{
@@ -4640,7 +4640,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		return false;
 	}
 	//private static final boolean hasRelevantEquals(ConditionList theConditionList, Column theColumn)
-	private static final boolean hasRelevantEquals(ConditionListA theConditionList, Column theColumn)
+	private static final boolean hasRelevantEquals(ConditionList theConditionList, Column theColumn)
 	{
 		for (int i = 0, j = theConditionList.size(); i < j; ++i)
 		{
@@ -4667,7 +4667,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	 * TODO MM solve this issue, it has been around forever
 	 */
 	//private static final boolean contains(ConditionList theConditionList, Condition theCondition)
-	private static final boolean contains(ConditionListA theConditionList, Condition theCondition)
+	private static final boolean contains(ConditionList theConditionList, Condition theCondition)
 	{
 		for (int i = 0, j = theConditionList.size(); i < j; ++i)
 		{
@@ -4708,7 +4708,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	 * because of the EQUALS check
 	 */
 	//private static final boolean createsRedundantEquals(ConditionList theConditionList, Condition theCondition)
-	private static final boolean createsRedundantEquals(ConditionListA theConditionList, Condition theCondition)
+	private static final boolean createsRedundantEquals(ConditionList theConditionList, Condition theCondition)
 	{
 		Column aColumn = theCondition.getColumn();
 		Operator anOperator = theCondition.getOperator();
@@ -4756,7 +4756,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 	 * FIXME MM this should be a PRE check, does not use new Condition.value
 	 */
 	//private static final boolean hasRelevantEqualsThroughLeqGeq(ConditionList theConditionList, Column theColumn)
-	private static final boolean hasRelevantEqualsThroughLeqGeq(ConditionListA theConditionList, Column theColumn)
+	private static final boolean hasRelevantEqualsThroughLeqGeq(ConditionList theConditionList, Column theColumn)
 	{
 		// FIXME MM assertions go here
 
@@ -4809,7 +4809,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 
 		@Override
 		//boolean isUseful(ConditionList theConditionList, Condition theCondition)
-		boolean isUseful(ConditionListA theConditionList, Condition theCondition)
+		boolean isUseful(ConditionList theConditionList, Condition theCondition)
 		{
 			boolean b = super.isUseful(theConditionList, theCondition);
 			//if (!b) // uncomment to only print refused Refinements
@@ -4819,7 +4819,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 
 		// could be faster in calling method - but debug only anyway
 		//private final void print(boolean useful, String phase, ConditionList conditionList, String value)
-		private final void print(boolean useful, String phase, ConditionListA conditionList, String value)
+		private final void print(boolean useful, String phase, ConditionList conditionList, String value)
 		{
 			Log.logCommandLine(new StringBuilder(256)
 						.append(useful ? "USEFUL\t" : "USELESS\t")
@@ -4922,7 +4922,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		// members-based domain, no empty Subgroups will occur
 		ConditionBase aConditionBase = theColumnConditionBases.get(0);
 		Column aColumn = aConditionBase.getColumn();
-		ConditionListA aParentConditions = (isFilterNull ? null : theParent.getConditions());
+		ConditionList aParentConditions = (isFilterNull ? null : theParent.getConditions());
 		// might require update when more strategies are added
 		boolean isAllStrategy = (aNumericStrategy == NumericStrategy.NUMERIC_VIKAMINE_CONSECUTIVE_ALL);
 		Subgroup aBestSubgroup = null;

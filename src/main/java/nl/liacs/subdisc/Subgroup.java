@@ -4,19 +4,19 @@ import java.nio.*;
 import java.util.*;
 import java.util.concurrent.locks.*;
 
-import nl.liacs.subdisc.ConditionListBuilder.ConditionListA;
+import nl.liacs.subdisc.ConditionListBuilder.ConditionList;
 
 // TODO update
 /**
  * A Subgroup contains a number of instances from the original data.
  * 
- * Subgroups are formed by, a number of, {@link Condition}s. Its members include : a {@link ConditionListA}, a BitSet representing the instances included in
+ * Subgroups are formed by, a number of, {@link Condition}s. Its members include : a {@link ConditionList}, a BitSet representing the instances included in
  * this Subgroup, the number of instances in this Subgroup (its coverage), an identifier and a {@link SubgroupSet}. It may also contain a {@link DAG}.
  * 
  * Note this class is not thread safe.
  * 
  * @see Condition
- * @see ConditionListA
+ * @see ConditionList
  * @see DAG
  * @see nl.liacs.subdisc.gui.MiningWindow
  * @see SubgroupDiscovery
@@ -29,7 +29,7 @@ public class Subgroup implements Comparable<Subgroup>
 
 	// FIXME make these fields final where possible
 	// required fields
-	private ConditionListA itsConditions;
+	private ConditionList itsConditions;
 	private int itsCoverage; // crucial to keep it in sync with itsMembers
 
 	// not strictly required - used for itsParentSet.getAllDataBitSetClone()
@@ -72,21 +72,17 @@ public class Subgroup implements Comparable<Subgroup>
 	/**
 	 * Creates a Subgroup with initial measureValue of 0.0 and a depth of 0.
 	 * <p>
-	 * The {@link BitSet} can not be {@code null} and at least 1 bit must be
-	 * set, each set bit represents a member of this Subgroup.
+	 * The {@link BitSet} can not be {@code null} and at least 1 bit must be set, each set bit represents a member of this Subgroup.
 	 * <p>
-	 * the {@link ConditionListA} and {@link SubgroupSet} argument can not
-	 * be {@code null}.
+	 * the {@link ConditionList} and {@link SubgroupSet} argument can not be {@code null}.
 	 *
 	 * @param theConditions the ConditionList for this Subgroup.
 	 * @param theMembers the BitSet representing members of this Subgroup.
 	 * @param theSubgroupSet the SubgroupSet this Subgroup is contained in.
 	 *
-	 * @throws IllegalArgumentException if any of the arguments is
-	 * {@code null} and when (theMembers.cardinality() == 0).
+	 * @throws IllegalArgumentException if any of the arguments is {@code null} and when (theMembers.cardinality() == 0).
 	 */
-	//public Subgroup(ConditionList theConditions, BitSet theMembers, SubgroupSet theSubgroupSet) throws IllegalArgumentException
-	public Subgroup(ConditionListA theConditions, BitSet theMembers, SubgroupSet theSubgroupSet) throws IllegalArgumentException
+	public Subgroup(ConditionList theConditions, BitSet theMembers, SubgroupSet theSubgroupSet) throws IllegalArgumentException
 	{
 		if (theConditions == null || theMembers == null || theSubgroupSet == null)
 			throw new IllegalArgumentException("arguments can not be null");
@@ -113,8 +109,7 @@ public class Subgroup implements Comparable<Subgroup>
 	/*
 	 * package private
 	 * used only by Validation.getValidSubgroup((int,) int, Random)
-	 * most Subgroup methods will not work when using this Constructor
-	 * but Validation is only interested in:
+	 * most Subgroup methods will not work when using this Constructor but Validation is only interested in:
 	 * getMembers() (they should never be null in the Validation setting)
 	 * getCoverage()
 	 * getDAG() (multi-label only)
@@ -144,10 +139,8 @@ public class Subgroup implements Comparable<Subgroup>
 	}
 
 	// XXX MM - NOTE
-	// in the original Subgroup.copy() code itsMeasureValue,
-	// itsSecondaryStatistic and itsTertiaryStatistic were copied
-	// however, right after obtaining a new Subgroup through copy(), a
-	// Condition was added to it
+	// in the original Subgroup.copy() code itsMeasureValue, itsSecondaryStatistic and itsTertiaryStatistic were copied.
+	// however, right after obtaining a new Subgroup through copy(), a Condition was added to it
 	// from that point on, these measures, plus itsMembers and itsCoverage
 	// become invalid, and should be re-evaluated
 	// TODO inspect code if copying is needed
@@ -298,7 +291,7 @@ public class Subgroup implements Comparable<Subgroup>
 				// the default Constructor ensures SubgroupSet
 				BitSet b = itsParentSet.getAllDataBitSetClone();
 
-				// does nothing when ConditionListA is empty
+				// does nothing when ConditionList is empty
 				for (int i = 0, j = itsConditions.size(); i < j; ++i)
 				{
 					Condition c = itsConditions.get(i);
@@ -309,9 +302,7 @@ public class Subgroup implements Comparable<Subgroup>
 //					} else { c.getColumn().doNotUse(b, c, true); }
 				}
 
-				// only assign to itsMembers when aBitSet is in
-				// its final state, avoid intermediate non-null
-				// state of itsMembers
+				// only assign to itsMembers when aBitSet is in its final state, avoid intermediate non-null state of itsMembers
 				itsMembers = b;
 				// coverage should not have changed
 				assert (itsCoverage == itsMembers.cardinality());
@@ -326,7 +317,7 @@ public class Subgroup implements Comparable<Subgroup>
 		}
 	}
 
-	public ConditionListA getConditions() { return itsConditions; }
+	public ConditionList getConditions() { return itsConditions; }
 	public int getDepth()                 { return itsConditions.size(); }
 	// could be out of sync with itsMembers in between addCondition() update
 	public int getCoverage()              { return itsCoverage; }
@@ -334,8 +325,8 @@ public class Subgroup implements Comparable<Subgroup>
 	public SubgroupSet getParentSet()     { return itsParentSet; }
 
 	boolean hasQuality()                                            { return hasQuality; }
-	public double getMeasureValue()                                 { return itsMeasureValue; }                               // FIXME IllegalArgumentException when !hasQuality
-	public void setMeasureValue(double theMeasureValue)             { itsMeasureValue = theMeasureValue; hasQuality = true; } // FIXME check (NaN) input
+	public double getMeasureValue()                                 { return itsMeasureValue; }
+	public void setMeasureValue(double theMeasureValue)             { itsMeasureValue = theMeasureValue; hasQuality = true; }
 	public double getSecondaryStatistic()                           { return itsSecondaryStatistic; }
 	public void setSecondaryStatistic(double theSecondaryStatistic) { itsSecondaryStatistic = theSecondaryStatistic; }
 	public double getTertiaryStatistic()                            { return itsTertiaryStatistic; }
@@ -355,8 +346,7 @@ public class Subgroup implements Comparable<Subgroup>
 	 * @return a BitSet representing this Subgroups members.
 	 */
 	public BitSet getMembers() { return (BitSet) getMembersUnsafe().clone(); }
-	// MM: a lot of code calls this method, but the returned BitSet should never
-	//     be changed by any as it 'removes' the Subgroup members from the clone
+	// MM: a lot of code calls this method, but the returned BitSet should never be changed by any as it 'removes' the Subgroup members from the clone
 	//     check callers, as BitSetI purposefully crashes BiSet modifying calls
 	// BinaryTable                 DONE get(i)                (nextSetBit(i) only for new Miki code, which is replaced by Miki.java)
 	// Bayesian                    DONE get(i)                (via BinaryTable.getColumn())
@@ -386,18 +376,12 @@ public class Subgroup implements Comparable<Subgroup>
 	/*
 	 * package private, called by CandidateQueue to reduce memory load
 	 * the rationale is as follows:
-	 * (depending on the search strategy) many Candidates go into the Queue
-	 * but most will be purged from it, as they will not have a high enough
-	 * score (priority)
-	 * for those that do remain, the members BitSet is generally not needed
-	 * straight away, but would claim large amounts of memory (especially
-	 * for long data sets (many rows))
-	 * only when the BitSet is needed, it will be re-instantiated
-	 * the cost for this is re-evaluation every Condition in the
-	 * ConditionList itsConditions (generally few)
-	 * and the few evaluations this takes is far less than the number of
-	 * Refinements that is evaluated for the Subgroup
-	 * so the re-evaluation does not substantially impact performance
+	 * (depending on the search strategy) many Candidates go into the Queue but most will be purged from it, as they will not have a high enough score (priority)
+	 * For those that do remain, the members BitSet is generally not needed straight away, but would claim large amounts of memory (especially for long data sets (many rows))
+	 * Only when the BitSet is needed, it will be re-instantiated
+	 * The cost for this is re-evaluation every Condition in the ConditionList itsConditions (generally few) and the few evaluations this takes is far less than the number of
+	 * Refinements that is evaluated for the Subgroup.
+	 * So the re-evaluation does not substantially impact performance
 	 */
 	void killMembers()                { itsMembersLock.lock(); try { itsMembers = null; } finally { itsMembersLock.unlock(); }}
 	void reviveMembers()              { getMembersUnsafe(); }
@@ -407,23 +391,19 @@ public class Subgroup implements Comparable<Subgroup>
 	public void setID(int theID)      { itsID = theID; }
 
 	public double getPValue()                           { return (isPValueComputed ? itsPValue : Double.NaN); }
-	// FIXME MM find better solution for this
 	void setPValue(double theFakePValue)                { isPValueComputed = true; itsPValue = theFakePValue; }
 	public void setPValue(NormalDistribution theDistro) { isPValueComputed = true; itsPValue = 1.0 - theDistro.calcCDF(itsMeasureValue); } // FIXME IllegalArgumentException when !hasQuality
-	// TODO this should not perform any computation, only set value
-	public void setEmpiricalPValue(double[] theQualities) // FIXME IllegalArgumentException when !hasQuality
+	public void setEmpiricalPValue(double[] theQualities)
 	{
 		isPValueComputed = true;
 		int aLength = theQualities.length;
 		double aP = 0.0;
 		for (int i=0; i<aLength; i++)
-		{
 			if (theQualities[i]>=itsMeasureValue)
 				aP++;
-		}
 		itsPValue = aP/aLength;
 	}
-	public void renouncePValue()                        { isPValueComputed = false; }
+	public void renouncePValue()	{ isPValueComputed = false; }
 
 	// model specific information
 	public void setDAG(DAG theDAG)                                              { itsDAG = theDAG; }
@@ -590,14 +570,12 @@ public class Subgroup implements Comparable<Subgroup>
 	}
 
 	/*
-	 * Compare two Subgroups based on (in order) measureValue, coverage,
-	 * ConditionList.
+	 * Compare two Subgroups based on (in order) measureValue, coverage, ConditionList.
 	 * 
 	 * Per Comparable Javadoc compareTo(null) throws a NullPointerException.
 	 * 
 	 * Do not use this compareTo() for the CAUC(Heavy) setting of Process.
-	 * itsMeasureValue will vary for Subgroups with the same ConditionList
-	 * (because the target for each run is different).
+	 * itsMeasureValue will vary for Subgroups with the same ConditionList (because the target for each run is different).
 	 * 
 	 * NOTE Map interface expects compareTo and equals to be consistent.
 	 * (non-Javadoc)
@@ -617,9 +595,7 @@ public class Subgroup implements Comparable<Subgroup>
 			return -cmp;
 
 		// Subgroups that are larger come first
-		// this implies that when all of the conditions of a Subgroup s1 are
-		// contained in the set of Conditions for s2 (a proper subset), s1 ranks
-		// before s2
+		// this implies that when all of the conditions of a Subgroup s1 are contained in the set of Conditions for s2 (a proper subset), s1 ranks before s2
 		cmp = this.itsCoverage - theSubgroup.itsCoverage;
 		if (cmp != 0)
 			return -cmp;

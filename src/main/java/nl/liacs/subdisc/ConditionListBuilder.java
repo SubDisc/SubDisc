@@ -17,7 +17,7 @@ public enum ConditionListBuilder
 	FACTORY;
 
 	// there is only one canonical empty list, it is a member of FACTORY
-	private final ConditionListA EMPTY_LIST = new ConditionList0();
+	private final ConditionList EMPTY_LIST = new ConditionList0();
 
 	/**
 	 * Returns the canonical instance of the empty ConditionList, there is
@@ -27,7 +27,7 @@ public enum ConditionListBuilder
 	 * 
 	 * @see Condition
 	 */
-	static final ConditionListA emptyList()
+	static final ConditionList emptyList()
 	{
 		return FACTORY.EMPTY_LIST;
 	}
@@ -39,7 +39,7 @@ public enum ConditionListBuilder
 	 * 
 	 * @see Condition
 	 */
-	static final public ConditionListA createList(Condition theCondition)
+	static final public ConditionList createList(Condition theCondition)
 	{
 		return FACTORY.new ConditionList1(theCondition);
 	}
@@ -55,7 +55,7 @@ public enum ConditionListBuilder
 	 * 
 	 * @see Condition
 	 */
-	static final ConditionListA createList(ConditionListA theConditionList, Condition theCondition)
+	static final ConditionList createList(ConditionList theConditionList, Condition theCondition)
 	{
 		if (theConditionList instanceof ConditionList0)
 			return FACTORY.new ConditionList1(theCondition);
@@ -108,11 +108,11 @@ public enum ConditionListBuilder
 
 	// all implementation classes should extend this abstract class
 	// this ensures that they implement all necessary methods
-	public abstract class ConditionListA implements Comparable<ConditionListA>
+	public abstract class ConditionList implements Comparable<ConditionList>
 	{
 		static final String CONJUNCT_SIGN = " AND ";
 
-		private ConditionListA(){};
+		private ConditionList(){};
 
 		public abstract int size();
 
@@ -122,13 +122,25 @@ public enum ConditionListBuilder
 		public abstract Condition getCanonical(int index);
 
 		@Override
-		public abstract int compareTo(ConditionListA theConditionList);
+		public abstract int compareTo(ConditionList theConditionList);
 
 		@Override
 		public abstract String toString();
+
+		/*
+		 * A ConditionList strictlySpecialises another ConditionList if the subgroup of the former is a logical subset of the subgroup of the latter.
+		 * The following are some examples:
+		 * (A^B) strictlySpecialises (A)
+		 * (A^B) strictlySpecialises (B)
+		 * (A^B^C) strictlySpecialises (A^B) etc.
+		 * (A^B^C) strictlySpecialises (A) etc.
+		 * but also the following:
+		 * (a > 10) strictlySpecialises (a > 5), but not the inverse
+		 */
+		public abstract boolean strictlySpecialises(ConditionList theOtherSubgroup);
 	}
 
-	private final class ConditionList0 extends ConditionListA
+	private final class ConditionList0 extends ConditionList
 	{
 		// can not be instantiated
 		private ConditionList0() {}
@@ -155,7 +167,7 @@ public enum ConditionListBuilder
 		 * throws NullPointerException if supplied argument is null
 		 */
 		@Override
-		public final int compareTo(ConditionListA theConditionList)
+		public final int compareTo(ConditionList theConditionList)
 		{
 			// per Comparable contract
 			if (theConditionList == null)
@@ -169,10 +181,16 @@ public enum ConditionListBuilder
 		{
 			return "(empty)";
 		}
+
+		@Override
+		public boolean strictlySpecialises(ConditionList theOtherCL)
+		{
+			return false; //the empty ConditionList is not a specialisation of anything
+		}
 	}
 
 	// ConditionList1 holds just one Condition, it is always ordered
-	private final class ConditionList1 extends ConditionListA
+	private final class ConditionList1 extends ConditionList
 	{
 		// the only Condition in this list
 		private final Condition itsCondition;
@@ -209,7 +227,7 @@ public enum ConditionListBuilder
 
 		// throws NullPointerException if supplied argument is null
 		@Override
-		public final int compareTo(ConditionListA theConditionList)
+		public final int compareTo(ConditionList theConditionList)
 		{
 			if (this == theConditionList)
 				return 0;
@@ -227,13 +245,46 @@ public enum ConditionListBuilder
 		{
 			return itsCondition.toString();
 		}
+
+		@Override
+		public boolean strictlySpecialises(ConditionList theOtherCL)
+		{
+			if (theOtherCL.size() > size()) //a shorter CL cannot specialise a longer CL
+				return false;
+			if (theOtherCL.size() == 0) //any non-empty CL specialises the empty CL
+				return true;
+			//only ConditionList1 remains as an option
+			if (theOtherCL instanceof ConditionList1)
+			{
+				ConditionList1 anOtherCL = (ConditionList1) theOtherCL;
+				if (itsCondition.getColumn() != anOtherCL.itsCondition.getColumn())
+					return false;
+
+				if (itsCondition.getOperator() != anOtherCL.itsCondition.getOperator())
+					return false;
+
+				if (itsCondition.getValue() == anOtherCL.itsCondition.getValue()) //essentially the same conditions, so not a specialisation
+					return false;
+				
+				if (itsCondition.getColumn().getType() != AttributeType.NUMERIC || anOtherCL.itsCondition.getColumn().getType() != AttributeType.NUMERIC)
+					return false;
+
+				float aValue = Float.parseFloat(itsCondition.getValue());
+				float anOtherValue = Float.parseFloat(anOtherCL.itsCondition.getValue());
+				if (itsCondition.getOperator() == Operator.LESS_THAN_OR_EQUAL && aValue >= anOtherValue)
+					return false;
+				if (itsCondition.getOperator() == Operator.GREATER_THAN_OR_EQUAL && aValue <= anOtherValue)
+					return false;
+			}
+			return true;
+		}
 	}
 
 	/*
 	 * ConditionList2 holds two distinct Conditions
 	 * isSearchOrder indicates whether (canonical order equals search order)
 	 */
-	private final class ConditionList2 extends ConditionListA
+	private final class ConditionList2 extends ConditionList
 	{
 		// internally Conditions are always in canonical order
 		private final Condition itsFirst;
@@ -250,9 +301,7 @@ public enum ConditionListBuilder
 			// conjunctions of identical Conditions make no sense
 			int cmp = c.compareTo(theCondition);
 			if (cmp == 0)
-				//throw new IllegalArgumentException();
-// FIXME MM throw exception when SubgroupDiscovery.Filter is enabled
-System.out.format("ERROR ConditionList2: duplicate conjuncts%n\t%s%n\t%s%n", theConditionList.toString(), theCondition.toString());
+				System.out.format("ERROR ConditionList2: duplicate conjuncts%n\t%s%n\t%s%n", theConditionList.toString(), theCondition.toString());
 
 			isInSearchOrder = (cmp < 0);
 			itsFirst = isInSearchOrder ? c : theCondition;
@@ -285,7 +334,7 @@ System.out.format("ERROR ConditionList2: duplicate conjuncts%n\t%s%n\t%s%n", the
 
 		// throws NullPointerException if supplied argument is null
 		@Override
-		public final int compareTo(ConditionListA theConditionList)
+		public final int compareTo(ConditionList theConditionList)
 		{
 			if (this == theConditionList)
 				return 0;
@@ -307,13 +356,19 @@ System.out.format("ERROR ConditionList2: duplicate conjuncts%n\t%s%n\t%s%n", the
 				return ConditionListBuilder.toString(itsFirst, itsSecond);
 			return ConditionListBuilder.toString(itsSecond, itsFirst);
 		}
+
+		@Override
+		public boolean strictlySpecialises(ConditionList theOtherCL)
+		{
+			return false; //implement
+		}
 	}
 
 	/*
 	 * ConditionList3 holds three distinct Conditions
 	 * isSearchOrder indicates the search order
 	 */
-	private final class ConditionList3 extends ConditionListA
+	private final class ConditionList3 extends ConditionList
 	{
 		// internally Conditions are always in canonical order
 		private final Condition itsFirst;
@@ -338,9 +393,7 @@ System.out.format("ERROR ConditionList2: duplicate conjuncts%n\t%s%n\t%s%n", the
 
 			// conjunctions of identical Conditions make no sense
 			if (i == 0 || j == 0)
-//				throw new IllegalArgumentException();
-// FIXME MM throw exception when SubgroupDiscovery.Filter is enabled
-System.out.format("ERROR ConditionList3: duplicate conjuncts%n\t%s%n\t%s%n", theConditionList.toString(), theCondition.toString());
+				System.out.format("ERROR ConditionList3: duplicate conjuncts%n\t%s%n\t%s%n", theConditionList.toString(), theCondition.toString());
 			if (i < 0)
 			{
 				itsFirst = theCondition;
@@ -443,7 +496,7 @@ System.out.format("ERROR ConditionList3: duplicate conjuncts%n\t%s%n\t%s%n", the
 
 		// throws NullPointerException if supplied argument is null
 		@Override
-		public final int compareTo(ConditionListA theConditionList)
+		public final int compareTo(ConditionList theConditionList)
 		{
 			if (this == theConditionList)
 				return 0;
@@ -481,6 +534,12 @@ System.out.format("ERROR ConditionList3: duplicate conjuncts%n\t%s%n\t%s%n", the
 					throw new AssertionError();
 			}
 		}
+
+		@Override
+		public boolean strictlySpecialises(ConditionList theOtherCL)
+		{
+			return false; //implement
+		}
 	}
 
 	/*
@@ -493,7 +552,7 @@ System.out.format("ERROR ConditionList3: duplicate conjuncts%n\t%s%n\t%s%n", the
 	 * pointers and (32-bit) int indices
 	 * this difference is small, and ConditionListN will not be used much
 	 */
-	private final class ConditionListN extends ConditionListA
+	private final class ConditionListN extends ConditionList
 	{
 		private final Condition[] itsCanonicalOrder;
 		private final Condition[] itsSearchOrder;
@@ -526,9 +585,7 @@ System.out.format("ERROR ConditionList3: duplicate conjuncts%n\t%s%n\t%s%n", the
 				}
 				// conjunctions of identical Conditions make no sense
 				else if (cmp == 0)
-//					throw new IllegalArgumentException();
-// FIXME MM throw exception when SubgroupDiscovery.Filter is enabled
-System.out.format("ERROR ConditionListN-N: duplicate conjuncts%n\t%s%n\t%s%n", theConditionList.toString(), theCondition.toString());
+					System.out.format("ERROR ConditionListN-N: duplicate conjuncts%n\t%s%n\t%s%n", theConditionList.toString(), theCondition.toString());
 				else // (cmp > 0)
 				{
 					itsCanonicalOrder[i] = c;
@@ -564,9 +621,7 @@ System.out.format("ERROR ConditionListN-N: duplicate conjuncts%n\t%s%n\t%s%n", t
 
 			// conjunctions of identical Conditions make no sense
 			if (i == 0 || j == 0 || k == 0)
-//				throw new IllegalArgumentException();
-// FIXME MM throw exception when SubgroupDiscovery.Filter is enabled
-System.out.format("ERROR ConditionListN-3: duplicate conjuncts%n\t%s%n\t%s%n", theConditionList.toString(), theCondition.toString());
+				System.out.format("ERROR ConditionListN-3: duplicate conjuncts%n\t%s%n\t%s%n", theConditionList.toString(), theCondition.toString());
 
 			if (i < 0)
 				itsCanonicalOrder = new Condition[] {c, x, y, z};
@@ -604,7 +659,7 @@ System.out.format("ERROR ConditionListN-3: duplicate conjuncts%n\t%s%n\t%s%n", t
 
 		// throws NullPointerException if supplied argument is null
 		@Override
-		public final int compareTo(ConditionListA theConditionList)
+		public final int compareTo(ConditionList theConditionList)
 		{
 			if (this == theConditionList)
 				return 0;
@@ -630,6 +685,12 @@ System.out.format("ERROR ConditionListN-3: duplicate conjuncts%n\t%s%n\t%s%n", t
 		{
 			return ConditionListBuilder.toString(itsSearchOrder);
 		}
+
+		@Override
+		public boolean strictlySpecialises(ConditionList theOtherCL)
+		{
+			return false; //implement
+		}
 	}
 
 	/* toString() methods for special ConditionList classes ***************/
@@ -639,7 +700,7 @@ System.out.format("ERROR ConditionListN-3: duplicate conjuncts%n\t%s%n\t%s%n", t
 	{
 		return new StringBuilder(64)
 					.append(theFirst.toString())
-					.append(ConditionListA.CONJUNCT_SIGN)
+					.append(ConditionList.CONJUNCT_SIGN)
 					.append(theSecond.toString())
 					.toString();
 	}
@@ -649,9 +710,9 @@ System.out.format("ERROR ConditionListN-3: duplicate conjuncts%n\t%s%n\t%s%n", t
 	{
 		return new StringBuilder(128)
 					.append(theFirst.toString())
-					.append(ConditionListA.CONJUNCT_SIGN)
+					.append(ConditionList.CONJUNCT_SIGN)
 					.append(theSecond.toString())
-					.append(ConditionListA.CONJUNCT_SIGN)
+					.append(ConditionList.CONJUNCT_SIGN)
 					.append(theThird.toString())
 					.toString();
 	}
@@ -665,7 +726,7 @@ System.out.format("ERROR ConditionListN-3: duplicate conjuncts%n\t%s%n\t%s%n", t
 		sb.append(theSearchOrder[0].toString());
 		for (int i = 1; i < size; ++i)
 		{
-			sb.append(ConditionListA.CONJUNCT_SIGN);
+			sb.append(ConditionList.CONJUNCT_SIGN);
 			sb.append(theSearchOrder[i].toString());
 		}
 
@@ -673,15 +734,15 @@ System.out.format("ERROR ConditionListN-3: duplicate conjuncts%n\t%s%n\t%s%n", t
 	}
 
 	// used for testing results obtained in multi-threaded experiments
-	static final String toCanonicalOrderString(ConditionListA theConditionList)
+	static final String toCanonicalOrderString(ConditionList theConditionList)
 	{
 		// abuses method for simple implementation
 		return toString(toCanonicalOrder(theConditionList));
 	}
 
 	// test (ConditionList order == ConditionBaseSet order) - should change soon
-	// for more information, refer to isInConditionBaseOrder(ConditionListA)
-	static final Condition[] toCanonicalOrder(ConditionListA theConditionList)
+	// for more information, refer to isInConditionBaseOrder(ConditionList)
+	static final Condition[] toCanonicalOrder(ConditionList theConditionList)
 	{
 		int aSize = theConditionList.size();
 		Condition[] aConditions = new Condition[aSize];
@@ -697,7 +758,7 @@ System.out.format("ERROR ConditionListN-3: duplicate conjuncts%n\t%s%n\t%s%n", t
 	}
 
 	// FIXME MM static method for now, might change later (for each sub-class)
-	static final boolean isCanonicalisedProperSubSetOf(ConditionListA theFormer, ConditionListA theLatter)
+	static final boolean isCanonicalisedProperSubSetOf(ConditionList theFormer, ConditionList theLatter)
 	{
 		if (theFormer.size() >= theLatter.size())
 			return false;
@@ -733,7 +794,7 @@ System.out.format("ERROR ConditionListN-3: duplicate conjuncts%n\t%s%n\t%s%n", t
 	}
 
 	// FIXME MM  lazy implementation for now
-	private static final Condition[] canonicalise(ConditionListA theConditionList)
+	private static final Condition[] canonicalise(ConditionList theConditionList)
 	{
 		int aSize = theConditionList.size();
 

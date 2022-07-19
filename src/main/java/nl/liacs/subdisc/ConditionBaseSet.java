@@ -2,7 +2,7 @@ package nl.liacs.subdisc;
 
 import java.util.*;
 
-import nl.liacs.subdisc.ConditionListBuilder.ConditionListA;
+import nl.liacs.subdisc.ConditionListBuilder.ConditionList;
 
 /*
  * Class that creates the base conditions just once.
@@ -172,13 +172,13 @@ class ConditionBaseSet
 	}
 
 	// there is no logical equivalence between the order of ConditionsBases in a
-	// ConditionBaseSet, and those in a ConditionListA, although both use
+	// ConditionBaseSet, and those in a ConditionList, although both use
 	// Column.getIndex() and Operator.ordinal(), such behaviour not guaranteed,
 	// so SubgroupDiscovery.mine() and Test() use this method in an assert
 	//
 	// FIXME functionality this class will be replaced by ColumnConditionBases
 	//       in which case this method should be implemented elsewhere
-	static final boolean isInConditionBaseOrder(ConditionBaseSet theConditionBases, ConditionListA theConditionList)
+	static final boolean isInConditionBaseOrder(ConditionBaseSet theConditionBases, ConditionList theConditionList)
 	{
 		if (theConditionList.size() <= 1)
 			return true;
@@ -217,7 +217,7 @@ class ConditionBaseSet
 		if (aCanonicalOrder.length <= aSize)
 			return true;
 
-		// unlikely case where ConditionListA is larger than ConditionBaseSet
+		// unlikely case where ConditionList is larger than ConditionBaseSet
 		ConditionBase aLast = aList.get(aSize - 1);
 		int aLastColumnIndex = aLast.getColumn().getIndex();
 		int aLastOperatorOrdinal = aLast.getOperator().ordinal();

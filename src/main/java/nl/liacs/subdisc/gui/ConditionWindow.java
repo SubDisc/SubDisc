@@ -9,7 +9,7 @@ import javax.swing.*;
 import javax.swing.event.*;
 
 import nl.liacs.subdisc.*;
-import nl.liacs.subdisc.ConditionListBuilder.ConditionListA;
+import nl.liacs.subdisc.ConditionListBuilder.ConditionList;
 
 public class ConditionWindow extends JDialog implements ActionListener, ChangeListener
 {

@@ -224,7 +224,7 @@ public class Condition implements Comparable<Condition>
 	public boolean getBinaryValue()      { return itsBinaryValue; }
 
 	/* Assumes values are set in constructor, and per Column/Operator type*/
-	private String getValue()
+	public String getValue()
 	{
 		switch (itsColumn.getType())
 		{
@@ -271,11 +271,7 @@ public class Condition implements Comparable<Condition>
 	@Override
 	public String toString()
 	{
-		return new StringBuilder(32)
-					.append(itsColumn.getName()).append(" ")
-					.append(itsOperator).append(" ")
-					.append(getValue())
-					.toString();
+		return new StringBuilder(32).append(itsColumn.getName()).append(" ").append(itsOperator).append(" ").append(getValue()).toString();
 	}
 
 	// throws NullPointerException if theCondition is null
@@ -334,101 +330,8 @@ public class Condition implements Comparable<Condition>
 			// should never happen
 			default :
 			{
-				throw new AssertionError(String.format("ERROR: compareTo()\n%s\n%s",
-									this.toString(),
-									theCondition.toString()));
+				throw new AssertionError(String.format("ERROR: compareTo()\n%s\n%s", this.toString(), theCondition.toString()));
 			}
 		}
 	}
-
-	////////////////////////////////////////////////////////////////////////////
-	////////////////////////////////////////////////////////////////////////////
-	///// start of obsolete code - will be removed soon                    /////
-	////////////////////////////////////////////////////////////////////////////
-	////////////////////////////////////////////////////////////////////////////
-
-	/**
-	 * Evaluate Condition for {@link Column Column} of type
-	 * {@link AttributeType#NOMINAL AttributeType.NOMINAL}.
-	 * <p>
-	 * The evaluation is performed using the operator and value set for this
-	 * Condition, and {@link String#equals(Object) String.equals()}.
-	 *
-	 * @param theValue the value to compare to the value of this Condition.
-	 *
-	 * @return <code>true</code> if the evaluation yields <code>true</code>,
-	 * <code>false</code> otherwise.
-	 */
-	@Deprecated
-	boolean evaluate(String theValue)
-	{
-		if (itsColumn.getType() != AttributeType.NOMINAL)
-			throw new IllegalArgumentException();
-
-		switch (itsOperator)
-		{
-			case ELEMENT_OF :
-				return itsNominalValueSet.contains(theValue);
-			case EQUALS :
-				return theValue.equals(itsNominalValue);
-			default :
-				throw new AssertionError();
-		}
-	}
-
-	/**
-	 * Evaluate Condition for {@link Column Column} of type
-	 * {@link AttributeType#NUMERIC AttributeType.NUMERIC}.
-	 * <p>
-	 * The evaluation is performed using the operator and value set for this
-	 * Condition.
-	 *
-	 * @param theValue the value to compare to the value of this Condition.
-	 *
-	 * @return <code>true</code> if the evaluation yields <code>true</code>,
-	 * <code>false</code> otherwise.
-	 */
-	@Deprecated
-	boolean evaluate(float theValue)
-	{
-		if (itsColumn.getType() != AttributeType.NUMERIC)
-			throw new IllegalArgumentException();
-
-		switch (itsOperator)
-		{
-			case EQUALS :
-				return theValue == itsNumericValue;
-			case LESS_THAN_OR_EQUAL :
-				return theValue <= itsNumericValue;
-			case GREATER_THAN_OR_EQUAL :
-				return theValue >= itsNumericValue;
-			case BETWEEN:
-				return itsInterval.between(theValue);
-			default :
-				throw new AssertionError();
-		}
-	}
-
-	/**
-	 * Evaluate Condition for {@link Column Column} of type
-	 * {@link AttributeType#BINARY AttributeType.BINARY}.
-	 * <p>
-	 * The evaluation is performed using the operator and value set for this
-	 * Condition.
-	 *
-	 * @param theValue the value to compare to the value of this Condition.
-	 *
-	 * @return <code>true</code> if the evaluation yields <code>true</code>,
-	 * <code>false</code> otherwise.
-	 */
-	@Deprecated
-	boolean evaluate(boolean theValue)
-	{
-		if (itsColumn.getType() != AttributeType.BINARY)
-			throw new IllegalArgumentException();
-
-		return itsBinaryValue == theValue;
-	}
-	// this justifies the '==' check above, '!=' is not a valid operator
-	static { assert(SubgroupDiscovery.equalsIsOnlyBinaryOperator()); }
 }

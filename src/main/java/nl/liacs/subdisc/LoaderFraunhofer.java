@@ -4,21 +4,18 @@ package nl.liacs.subdisc;
 import java.io.*;
 import java.util.*;
 
-import nl.liacs.subdisc.ConditionListBuilder.ConditionListA;
+import nl.liacs.subdisc.ConditionListBuilder.ConditionList;
 
 public class LoaderFraunhofer
 {
-	//private List<ConditionList> itsBeamSeed;
-	private List<ConditionListA> itsBeamSeed;
+	private List<ConditionList> itsBeamSeed;
 	private Table itsTable;
 	private SearchParameters itsSearchParameters;
 
 	// default file loader
 	public LoaderFraunhofer(File theFile, Table theTable, SearchParameters theSearchParameters)
 	{
-//		beamseed = new CandidateQueue(theSearchParameters, new Candidate(aStart));
-		//itsBeamSeed = new ArrayList<ConditionList>();
-		itsBeamSeed = new ArrayList<ConditionListA>();
+		itsBeamSeed = new ArrayList<ConditionList>();
 		itsTable = theTable;
 		itsSearchParameters = theSearchParameters;
 		BufferedReader aReader = null;
@@ -34,7 +31,7 @@ public class LoaderFraunhofer
 
 				//Log.logCommandLine(aLine);
 				//ConditionList aConditionList = convertToConditionList(aLine);
-				ConditionListA aConditionList = convertToConditionList(aLine);
+				ConditionList aConditionList = convertToConditionList(aLine);
 				itsBeamSeed.add(aConditionList);
 				//Subgroup aSubgroup = convertToSubgroup(aConditionList);
 
@@ -75,11 +72,11 @@ public class LoaderFraunhofer
 	 * 'age=young contact-lenses=soft spectacle-prescrip=hypermetrope '
 	 */
 	//private ConditionList convertToConditionList(String theString)
-	private ConditionListA convertToConditionList(String theString)
+	private ConditionList convertToConditionList(String theString)
 	{
 		String[] aConditions = theString.split(" ");
 		//ConditionList aConditionList = new ConditionList(aConditions.length);
-		ConditionListA aConditionList = ConditionListBuilder.emptyList();
+		ConditionList aConditionList = ConditionListBuilder.emptyList();
 		for (int i=0; i<aConditions.length; i++)
 		{
 			String anAtom = aConditions[i];

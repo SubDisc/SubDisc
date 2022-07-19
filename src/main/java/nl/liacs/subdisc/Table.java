@@ -5,7 +5,7 @@ import java.util.*;
 import java.sql.*;
 import javax.swing.*;
 
-import nl.liacs.subdisc.ConditionListBuilder.ConditionListA;
+import nl.liacs.subdisc.ConditionListBuilder.ConditionList;
 import nl.liacs.subdisc.FileHandler.Action;
 
 import org.w3c.dom.*;
@@ -19,10 +19,7 @@ public class Table implements XMLNodeInterface
 	private int itsNrRows;
 	private int itsNrColumns;
 	private ArrayList<Column> itsColumns = new ArrayList<Column>();
-//	private int itsNrNominals = 0;
-//	private int itsNrNumerics = 0;
-//	private int itsNrOrdinals = 0;
-//	private int itsNrBinaries = 0;
+
 	//private Random itsRandomNumber = new Random(System.currentTimeMillis());
 	private Random itsRandomNumber = new Random(10);
 	private List<String> itsDomains;  // TODO better never null, but empty list
@@ -322,7 +319,7 @@ public class Table implements XMLNodeInterface
 
 	// TODO merge various evaluate methods in Table/Column/Subgroup/Validation..
 	/** @throws NullPointerException when theList is null. */
-	public BitSet evaluate(ConditionListA theList)
+	public BitSet evaluate(ConditionList theList)
 	{
 		if (theList.size() == 0)
 			return new BitSet(0);

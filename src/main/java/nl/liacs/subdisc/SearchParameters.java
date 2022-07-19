@@ -2,7 +2,7 @@ package nl.liacs.subdisc;
 
 import java.util.*;
 
-import nl.liacs.subdisc.ConditionListBuilder.ConditionListA;
+import nl.liacs.subdisc.ConditionListBuilder.ConditionList;
 
 import org.w3c.dom.*;
 
@@ -44,8 +44,7 @@ public class SearchParameters implements XMLNodeInterface
 	private float		itsOverallRankingLoss;
 
 	// TODO MM add to loadData() + autorun.dtd
-	//private List<ConditionList> itsBeamSeed;
-	private List<ConditionListA> itsBeamSeed;
+	private List<ConditionList> itsBeamSeed;
 
 	public SearchParameters(Node theSearchParametersNode)
 	{
@@ -159,8 +158,8 @@ public class SearchParameters implements XMLNodeInterface
 	public void setPostProcessingCount(int theNr)		{ itsPostProcessingCount = theNr; }
 //	public List<ConditionList> getBeamSeed()		{ return itsBeamSeed; }
 //	public void setBeamSeed(List<ConditionList> theBeamSeed) { itsBeamSeed = theBeamSeed; }
-	public List<ConditionListA> getBeamSeed()			{ return itsBeamSeed; }
-	public void setBeamSeed(List<ConditionListA> theBeamSeed)	{ itsBeamSeed = theBeamSeed; }
+	public List<ConditionList> getBeamSeed()			{ return itsBeamSeed; }
+	public void setBeamSeed(List<ConditionList> theBeamSeed)	{ itsBeamSeed = theBeamSeed; }
 	public float getOverallRankingLoss()				{ return itsOverallRankingLoss; }
 	public void setOverallRankingLoss(float theOverallRankingLoss)	{ itsOverallRankingLoss = theOverallRankingLoss; }
 

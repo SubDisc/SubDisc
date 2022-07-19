@@ -6,7 +6,6 @@ import java.util.*;
 //import java.util.Map.Entry;
 
 import nl.liacs.subdisc.*;
-import nl.liacs.subdisc.ConditionListBuilder.ConditionListA;
 
 // Testing lib
 import org.junit.jupiter.api.DisplayName;
