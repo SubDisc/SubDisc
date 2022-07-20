@@ -2,7 +2,7 @@ package nl.liacs.subdisc;
 
 import java.util.*;
 
-import nl.liacs.histo.*;
+import nl.liacs.subdisc.histo.*;
 import nl.liacs.subdisc.Jama.*;
 
 import org.jfree.data.xy.*;

@@ -1,4 +1,4 @@
-package nl.liacs.histo;
+package nl.liacs.subdisc.histo;
 
 import java.util.Arrays;
 

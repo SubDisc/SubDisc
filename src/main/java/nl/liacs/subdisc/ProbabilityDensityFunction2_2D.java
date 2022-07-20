@@ -2,7 +2,7 @@ package nl.liacs.subdisc;
 
 import java.util.*;
 
-import nl.liacs.histo.*;
+import nl.liacs.subdisc.histo.Vec;
 import Jama.*;
 
 // for 2D now - should be extended to higher dimensions
