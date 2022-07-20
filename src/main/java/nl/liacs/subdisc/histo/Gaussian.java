@@ -1,6 +1,8 @@
-package nl.liacs.histo;
+package nl.liacs.subdisc.histo;
 
 import java.util.Arrays;
+
+import nl.liacs.histo.Vec;
 
 public final class Gaussian
 {

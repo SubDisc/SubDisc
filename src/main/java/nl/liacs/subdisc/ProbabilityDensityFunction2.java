@@ -2,7 +2,8 @@ package nl.liacs.subdisc;
 
 import java.util.*;
 
-import nl.liacs.histo.*;
+import nl.liacs.subdisc.histo.Gaussian;
+import nl.liacs.histo.Vec;
 
 // drop-in replacement for ProbabilityDensityFunction
 // class does not store whole density f, only N samples from it
