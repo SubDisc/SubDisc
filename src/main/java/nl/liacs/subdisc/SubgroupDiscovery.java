@@ -1193,8 +1193,8 @@ public class SubgroupDiscovery
 
 	private void postMining(long theBeginTime)
 	{
-		System.out.println("\npostMining\n");
-		itsResult.filterSubgroups();
+		if (itsSearchParameters.getFilterSubgroups())
+			itsResult.filterSubgroups();
 
 		int aNrSubgroups = getNumberOfSubgroups();
 

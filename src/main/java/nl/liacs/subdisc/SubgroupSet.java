@@ -553,18 +553,28 @@ public class SubgroupSet extends TreeSet<Subgroup>
 
 	public double getJointEntropy() { return itsJointEntropy; }
 
+	//Determines for each Subgroup in the result whether it should remain there. If the Subgroup is a specialisation of another Subgroup, and it has lower quality, it will be removed.
+	//This is a quadratic process (in the size of the result), so could be slow for very large result sets.
 	public void filterSubgroups()
 	{
-		for (Subgroup aFirstSubgroup : this)
+		int aSize = size();
+		Iterator<Subgroup> anIterator = iterator();
+
+		while (anIterator.hasNext())
+		{
+			Subgroup aFirstSubgroup = anIterator.next();
 			for (Subgroup aSecondSubgroup : this)
 				if (aFirstSubgroup != aSecondSubgroup)
 				{
-					if (aSecondSubgroup.strictlySpecialises(aFirstSubgroup) && aSecondSubgroup.getMeasureValue() <= aFirstSubgroup.getMeasureValue())
+					if (aFirstSubgroup.strictlySpecialises(aSecondSubgroup) && aFirstSubgroup.getMeasureValue() <= aSecondSubgroup.getMeasureValue())
 					{
-						System.out.println("comparing subgroups: " + aFirstSubgroup + " => " + aSecondSubgroup);
-						System.out.println("                   : " + aFirstSubgroup.getMeasureValue() + ",   " + aSecondSubgroup.getMeasureValue());
+						anIterator.remove();
+						break;
 					}
 				}
+		}
+		System.out.println("Raw result set size: " + aSize);
+		System.out.println("Filtered result set size: " + size());
 	}
 
 	public void saveExtent(BufferedWriter theWriter, Table theTable, BitSet theSubset, TargetConcept theTargetConcept)

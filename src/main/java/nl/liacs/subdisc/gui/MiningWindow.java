@@ -157,6 +157,7 @@ public class MiningWindow extends JFrame implements ActionListener
 	private JLabel jLabelNumericStrategy;
 	private JLabel jLabelNumericOperators;
 	private JLabel jLabelNumberOfBins;
+	private JLabel jLabelFilterSubgroups;
 	private JLabel jLabelNumberOfThreads;
 	// SEARCH STRATEGY - fields
 	private JPanel jPanelSearchStrategyFields;
@@ -166,6 +167,7 @@ public class MiningWindow extends JFrame implements ActionListener
 	private JComboBox<String> jComboBoxNumericStrategy;
 	private JComboBox <String> jComboBoxNumericOperators;
 	private JTextField jTextFieldNumberOfBins;
+	private JCheckBox jCheckBoxFilterSubgroups;
 	private JTextField jTextFieldNumberOfThreads;
 
 	// SOUTH PANEL - MINING BUTTONS
@@ -498,7 +500,7 @@ public class MiningWindow extends JFrame implements ActionListener
 		jPanelSearchStrategy.setBorder(GUI.buildBorder("Search Strategy"));
 
 		// SEACH STRATEGY - labels
-		jPanelSearchStrategyLabels.setLayout(new GridLayout(7, 1));
+		jPanelSearchStrategyLabels.setLayout(new GridLayout(8, 1));
 
 		jLabelStrategyType = initJLabel("strategy type");
 		jPanelSearchStrategyLabels.add(jLabelStrategyType);
@@ -512,13 +514,15 @@ public class MiningWindow extends JFrame implements ActionListener
 		jPanelSearchStrategyLabels.add(jLabelNumericOperators);
 		jLabelNumberOfBins = initJLabel("number of bins");
 		jPanelSearchStrategyLabels.add(jLabelNumberOfBins);
+		jLabelFilterSubgroups = initJLabel("filter subgroups");
+		jPanelSearchStrategyLabels.add(jLabelFilterSubgroups);
 		jLabelNumberOfThreads = initJLabel("threads (0 = all available)");
 		jPanelSearchStrategyLabels.add(jLabelNumberOfThreads);
 
 		jPanelSearchStrategy.add(jPanelSearchStrategyLabels);
 
 		// SEARCH STRATEGY - fields
-		jPanelSearchStrategyFields.setLayout(new GridLayout(7, 1));
+		jPanelSearchStrategyFields.setLayout(new GridLayout(8, 1));
 
 		jComboBoxStrategyType = GUI.buildComboBox(new String[0], SEARCH_TYPE_BOX, this);
 		jPanelSearchStrategyFields.add(jComboBoxStrategyType);
@@ -532,6 +536,9 @@ public class MiningWindow extends JFrame implements ActionListener
 		jPanelSearchStrategyFields.add(jComboBoxNumericOperators);
 		jTextFieldNumberOfBins = GUI.buildTextField("0");
 		jPanelSearchStrategyFields.add(jTextFieldNumberOfBins);
+		jCheckBoxFilterSubgroups = new JCheckBox();
+		jCheckBoxFilterSubgroups.setSelected(true);
+		jPanelSearchStrategyFields.add(jCheckBoxFilterSubgroups);
 		jTextFieldNumberOfThreads = GUI.buildTextField(Integer.toString(Runtime.getRuntime().availableProcessors()));
 		jPanelSearchStrategyFields.add(jTextFieldNumberOfThreads);
 
@@ -2472,6 +2479,7 @@ boundsList.add(new Interval(f, Float.POSITIVE_INFINITY));
 		itsSearchParameters.setNumericOperators(getNumericOperators());
 		// set to last known value even for NumericStrategy.NUMERIC_BINS
 		itsSearchParameters.setNrBins(getNrBins());
+		itsSearchParameters.setFilterSubgroups(getFilterSubgroups());
 		itsSearchParameters.setNrThreads(getNrThreads());
 /*
  * These values are no longer 'static', but can be changed in MultiTargetsWindow
@@ -2573,6 +2581,10 @@ boundsList.add(new Interval(f, Float.POSITIVE_INFINITY));
 	// search strategy - number of bins
 	private int getNrBins() { return getValue(8, jTextFieldNumberOfBins.getText()); }
 	private void setNrBins(String aValue) { jTextFieldNumberOfBins.setText(aValue); }
+
+	// search strategy - filter subgroups
+	private boolean getFilterSubgroups() { return jCheckBoxFilterSubgroups.isSelected(); }
+	private void setFilterSubgroups(String aValue) { jCheckBoxFilterSubgroups.setSelected(Boolean.parseBoolean(aValue)); }
 
 	// search strategy - number of threads
 	private int getNrThreads() { return getValue(Runtime.getRuntime().availableProcessors(), jTextFieldNumberOfThreads.getText()); }

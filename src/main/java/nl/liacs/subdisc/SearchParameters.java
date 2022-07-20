@@ -34,6 +34,7 @@ public class SearchParameters implements XMLNodeInterface
 	private NumericOperatorSetting itsNumericOperatorSetting;
 	private NumericStrategy	itsNumericStrategy;
 	private int		itsNrBins;
+	private boolean		itsFilterSubgroups;
 	private int		itsNrThreads;
 
 	private float		itsAlpha;
@@ -142,22 +143,24 @@ public class SearchParameters implements XMLNodeInterface
 		itsNumericStrategy = theNumericStrategy;
 	}
 
-	public int getSearchStrategyWidth()			{ return itsSearchStrategyWidth; }
-	public void setSearchStrategyWidth(int theWidth)	{ itsSearchStrategyWidth = theWidth; }
-	public int getNrBins()					{ return itsNrBins; }
-	public void setNrBins(int theNrBins)			{ itsNrBins = theNrBins; }
-	public int getNrThreads()				{ return itsNrThreads; }
-	public void setNrThreads(int theNrThreads)		{ itsNrThreads = theNrThreads; }
-	public float getAlpha()					{ return itsAlpha; }
-	public void setAlpha(float theAlpha)			{ itsAlpha = theAlpha; }
-	public float getBeta()					{ return itsBeta; }
-	public void setBeta(float theBeta)			{ itsBeta = theBeta; }
-	public boolean getPostProcessingDoAutoRun()		{ return itsPostProcessingDoAutoRun; }
+	public int getSearchStrategyWidth()				{ return itsSearchStrategyWidth; }
+	public void setSearchStrategyWidth(int theWidth)		{ itsSearchStrategyWidth = theWidth; }
+	public int getNrBins()						{ return itsNrBins; }
+	public void setNrBins(int theNrBins)				{ itsNrBins = theNrBins; }
+	public boolean getFilterSubgroups()				{ return itsFilterSubgroups; }
+	public void setFilterSubgroups(boolean theFilterSubgroups)	{ itsFilterSubgroups = theFilterSubgroups; }
+	public int getNrThreads()					{ return itsNrThreads; }
+	public void setNrThreads(int theNrThreads)			{ itsNrThreads = theNrThreads; }
+	public float getAlpha()						{ return itsAlpha; }
+	public void setAlpha(float theAlpha)				{ itsAlpha = theAlpha; }
+	public float getBeta()						{ return itsBeta; }
+	public void setBeta(float theBeta)				{ itsBeta = theBeta; }
+	public boolean getPostProcessingDoAutoRun()			{ return itsPostProcessingDoAutoRun; }
 	public void setPostProcessingDoAutoRun(boolean theAutoRunSetting)	{ itsPostProcessingDoAutoRun = theAutoRunSetting; }
-	public int getPostProcessingCount()			{ return itsPostProcessingCount; }
-	public void setPostProcessingCount(int theNr)		{ itsPostProcessingCount = theNr; }
-//	public List<ConditionList> getBeamSeed()		{ return itsBeamSeed; }
-//	public void setBeamSeed(List<ConditionList> theBeamSeed) { itsBeamSeed = theBeamSeed; }
+	public int getPostProcessingCount()				{ return itsPostProcessingCount; }
+	public void setPostProcessingCount(int theNr)			{ itsPostProcessingCount = theNr; }
+//	public List<ConditionList> getBeamSeed()			{ return itsBeamSeed; }
+//	public void setBeamSeed(List<ConditionList> theBeamSeed)	{ itsBeamSeed = theBeamSeed; }
 	public List<ConditionList> getBeamSeed()			{ return itsBeamSeed; }
 	public void setBeamSeed(List<ConditionList> theBeamSeed)	{ itsBeamSeed = theBeamSeed; }
 	public float getOverallRankingLoss()				{ return itsOverallRankingLoss; }
@@ -188,6 +191,7 @@ public class SearchParameters implements XMLNodeInterface
 		XMLNode.addNodeTo(aNode, "numeric_operators", getNumericOperatorSetting().GUI_TEXT);
 		XMLNode.addNodeTo(aNode, "numeric_strategy", getNumericStrategy().GUI_TEXT);
 		XMLNode.addNodeTo(aNode, "nr_bins", getNrBins());
+		XMLNode.addNodeTo(aNode, "filter_subgroups", getFilterSubgroups());
 		XMLNode.addNodeTo(aNode, "nr_threads", getNrThreads());
 		XMLNode.addNodeTo(aNode, "alpha", getAlpha());
 		XMLNode.addNodeTo(aNode, "beta", getBeta());
@@ -238,6 +242,8 @@ public class SearchParameters implements XMLNodeInterface
 				itsNumericStrategy = (NumericStrategy.fromString(aSetting.getTextContent()));
 			else if("nr_bins".equalsIgnoreCase(aNodeName))
 				itsNrBins = Integer.parseInt(aSetting.getTextContent());
+			else if("filter_subgroups".equalsIgnoreCase(aNodeName))
+				itsFilterSubgroups = Boolean.parseBoolean(aSetting.getTextContent());
 			else if("nr_threads".equalsIgnoreCase(aNodeName))
 				itsNrThreads = Integer.parseInt(aSetting.getTextContent());
 			else if("alpha".equalsIgnoreCase(aNodeName))
@@ -278,6 +284,7 @@ public class SearchParameters implements XMLNodeInterface
 		addLine(sb, "numeric_operators", getNumericOperatorSetting().getOperators().toString());
 		addLine(sb, "numeric_strategy", getNumericStrategy().GUI_TEXT);
 		addLine(sb, "nr_bins", Integer.toString(getNrBins()));
+		addLine(sb, "filter_subgroups", Boolean.toString(getFilterSubgroups()));
 		addLine(sb, "nr_threads", Integer.toString(getNrThreads()));
 		addLine(sb, "alpha", Float.toString(getAlpha()));
 		addLine(sb, "beta", Float.toString(getBeta()));
