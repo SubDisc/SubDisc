@@ -1193,6 +1193,9 @@ public class SubgroupDiscovery
 
 	private void postMining(long theBeginTime)
 	{
+		System.out.println("\npostMining\n");
+		itsResult.filterSubgroups();
+
 		int aNrSubgroups = getNumberOfSubgroups();
 
 		// before mining end: post-processing must be included in total run time

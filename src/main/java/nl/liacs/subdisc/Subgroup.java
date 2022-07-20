@@ -610,6 +610,11 @@ public class Subgroup implements Comparable<Subgroup>
 		return itsConditions.toString();
 	}
 
+	public boolean strictlySpecialises(Subgroup theSubgroup)
+	{
+		return itsConditions.strictlySpecialises(theSubgroup.itsConditions);
+	}
+
 	static class BitSetI extends BitSet
 	{
 		private final BitSet itsBitSet;

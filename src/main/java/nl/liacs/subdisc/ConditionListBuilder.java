@@ -254,29 +254,9 @@ public enum ConditionListBuilder
 			if (theOtherCL.size() == 0) //any non-empty CL specialises the empty CL
 				return true;
 			//only ConditionList1 remains as an option
-			if (theOtherCL instanceof ConditionList1)
-			{
-				ConditionList1 anOtherCL = (ConditionList1) theOtherCL;
-				if (itsCondition.getColumn() != anOtherCL.itsCondition.getColumn())
-					return false;
 
-				if (itsCondition.getOperator() != anOtherCL.itsCondition.getOperator())
-					return false;
-
-				if (itsCondition.getValue() == anOtherCL.itsCondition.getValue()) //essentially the same conditions, so not a specialisation
-					return false;
-				
-				if (itsCondition.getColumn().getType() != AttributeType.NUMERIC || anOtherCL.itsCondition.getColumn().getType() != AttributeType.NUMERIC)
-					return false;
-
-				float aValue = Float.parseFloat(itsCondition.getValue());
-				float anOtherValue = Float.parseFloat(anOtherCL.itsCondition.getValue());
-				if (itsCondition.getOperator() == Operator.LESS_THAN_OR_EQUAL && aValue >= anOtherValue)
-					return false;
-				if (itsCondition.getOperator() == Operator.GREATER_THAN_OR_EQUAL && aValue <= anOtherValue)
-					return false;
-			}
-			return true;
+			ConditionList1 anOtherCL = (ConditionList1) theOtherCL;
+			return itsCondition.strictlySpecialises(anOtherCL.itsCondition);
 		}
 	}
 
@@ -360,7 +340,41 @@ public enum ConditionListBuilder
 		@Override
 		public boolean strictlySpecialises(ConditionList theOtherCL)
 		{
-			return false; //implement
+			if (theOtherCL.size() > size()) //a shorter CL cannot specialise a longer CL
+				return false;
+			if (theOtherCL.size() == 0) //any non-empty CL specialises the empty CL
+				return true;
+
+			//at this point theOtherCL is sizes 1 or 2 (and this is of size 2)
+			if (theOtherCL instanceof ConditionList1) //size 1
+			{
+				Condition anOtherCondition = ((ConditionList1) theOtherCL).itsCondition;
+
+				if (itsFirst.logicallyEquivalent(anOtherCondition) || itsSecond.logicallyEquivalent(anOtherCondition)) //this implies theOtherCl is contained in this 
+					return true;
+				if (itsFirst.strictlySpecialises(anOtherCondition) || itsSecond.strictlySpecialises(anOtherCondition))
+					return true;
+			}
+			if (theOtherCL instanceof ConditionList2) //size 2
+			{
+				ConditionList2 anOtherCL = (ConditionList2) theOtherCL;
+
+				if (itsFirst.logicallyEquivalent(anOtherCL.itsFirst) && itsSecond.logicallyEquivalent(anOtherCL.itsSecond)) //identical
+					return false;
+				if (itsFirst.logicallyEquivalent(anOtherCL.itsSecond) && itsSecond.logicallyEquivalent(anOtherCL.itsFirst)) //conditions swapped but otherwise identical
+					return false;
+
+				if (itsFirst.logicallyEquivalent(anOtherCL.itsFirst) && itsSecond.strictlySpecialises(anOtherCL.itsSecond)) //firsts identical and seconds strictly spec
+					return true;
+				if (itsFirst.strictlySpecialises(anOtherCL.itsFirst) && itsSecond.logicallyEquivalent(anOtherCL.itsSecond))
+					return true;
+
+				if (itsFirst.logicallyEquivalent(anOtherCL.itsSecond) && itsSecond.strictlySpecialises(anOtherCL.itsFirst))
+					return true;
+				if (itsFirst.strictlySpecialises(anOtherCL.itsSecond) && itsSecond.logicallyEquivalent(anOtherCL.itsFirst))
+					return true;
+			}
+			return false;
 		}
 	}
 

@@ -334,4 +334,41 @@ public class Condition implements Comparable<Condition>
 			}
 		}
 	}
+
+	//the result is true only if everything is similar, and the attribute is numeric, and the value of this is tighter
+	//example: a < 10 specialises a < 20
+	public boolean strictlySpecialises(Condition theCondition)
+	{
+		if (getColumn() != theCondition.getColumn())
+			return false;
+		if (getOperator() != theCondition.getOperator())
+			return false;
+		if (getValue() == theCondition.getValue()) //essentially the same conditions, so not a strict specialisation
+			return false;
+		if (getColumn().getType() != AttributeType.NUMERIC || theCondition.getColumn().getType() != AttributeType.NUMERIC)
+			return false;
+
+		// strictly specialises if attribute and operator are the same, and value of this is tighter
+		float aValue = Float.parseFloat(getValue());
+		float anOtherValue = Float.parseFloat(theCondition.getValue());
+		if (getOperator() == Operator.LESS_THAN_OR_EQUAL && aValue >= anOtherValue)
+			return false;
+		if (getOperator() == Operator.GREATER_THAN_OR_EQUAL && aValue <= anOtherValue)
+			return false;
+
+		return true;
+	}
+
+	//the result is true only if everything is the same
+	public boolean logicallyEquivalent(Condition theCondition)
+	{
+		if (getColumn() != theCondition.getColumn())
+			return false;
+		if (getOperator() != theCondition.getOperator())
+			return false;
+		if (!getValue().equals(theCondition.getValue()))
+			return false;
+		return true;
+	}
+
 }

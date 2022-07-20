@@ -5,24 +5,21 @@ import java.util.*;
 import java.util.concurrent.*;
 
 /**
- * A SubgroupSet is a <code>TreeSet</code> of {@link Subgroup Subgroup}s. If its
- * size is set to <= 0, the SubgroupSet has no maximum size, else the number of
- * Subgroups it can contain is limited by its size. In a nominal target setting
+ * A SubgroupSet is a <code>TreeSet</code> of {@link Subgroup Subgroup}s. If its size is set to <= 0, the SubgroupSet has no maximum size, else the number of Subgroups it can contain is limited by its size. 
+ * In a nominal target setting
  * ({@link TargetType}) a
  * {@link ROCList ROCList} can be obtained from this SubgroupSet to create a
  * {@link nl.liacs.subdisc.gui.ROCCurve} in a
  * {@link nl.liacs.subdisc.gui.ROCCurveWindow}.
  *
- * Note that only the add method is thread safe with respect to concurrent
- * access, and possible additions. None of the other methods of this class
- * currently are.
+ * Note that only the add method is thread safe with respect to concurrent access, and possible additions. None of the other methods of this class currently are.
  *
  * @see ROCList
  * @see nl.liacs.subdisc.gui.ROCCurve
  * @see nl.liacs.subdisc.gui.ROCCurveWindow
  * @see Subgroup
  */
-// FIXME favour encapsulation over extension
+
 public class SubgroupSet extends TreeSet<Subgroup>
 {
 	private static final long serialVersionUID = 1L;
@@ -555,6 +552,20 @@ public class SubgroupSet extends TreeSet<Subgroup>
 	}
 
 	public double getJointEntropy() { return itsJointEntropy; }
+
+	public void filterSubgroups()
+	{
+		for (Subgroup aFirstSubgroup : this)
+			for (Subgroup aSecondSubgroup : this)
+				if (aFirstSubgroup != aSecondSubgroup)
+				{
+					if (aSecondSubgroup.strictlySpecialises(aFirstSubgroup) && aSecondSubgroup.getMeasureValue() <= aFirstSubgroup.getMeasureValue())
+					{
+						System.out.println("comparing subgroups: " + aFirstSubgroup + " => " + aSecondSubgroup);
+						System.out.println("                   : " + aFirstSubgroup.getMeasureValue() + ",   " + aSecondSubgroup.getMeasureValue());
+					}
+				}
+	}
 
 	public void saveExtent(BufferedWriter theWriter, Table theTable, BitSet theSubset, TargetConcept theTargetConcept)
 	{
