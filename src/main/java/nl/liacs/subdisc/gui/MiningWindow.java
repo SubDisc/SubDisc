@@ -823,15 +823,17 @@ public class MiningWindow extends JFrame implements ActionListener
 		removeAllMultiTargetsItems();
 		removeAllMultiRegressionTargetsItems();
 
-		boolean fillMiscField = (aTargetType == TargetType.DOUBLE_REGRESSION) ||
-                    (aTargetType == TargetType.DOUBLE_CORRELATION) ||
-                    (aTargetType == TargetType.DOUBLE_BINARY) ||
-					//(aTargetType == TargetType.MULTI_NUMERIC) ||
-					(aTargetType == TargetType.SCAPE);
+		boolean existsTarget = false;
+		boolean existsClass = false;
+		boolean fillMiscField = (aTargetType == TargetType.DOUBLE_REGRESSION) || aTargetType == TargetType.DOUBLE_CORRELATION || aTargetType == TargetType.DOUBLE_BINARY || aTargetType == TargetType.SCAPE;
 		// primary target and (optional) MiscField
 		for (Column c : itsTable.getColumns())
 		{
 			AttributeType anAttributeType = c.getType();
+			if (c.getName().equals("target"))
+				existsTarget = true;
+			if (c.getName().equals("class"))
+				existsClass = true;
 			if ((aTargetType == TargetType.SINGLE_NOMINAL && anAttributeType == AttributeType.NOMINAL) ||
 				(aTargetType == TargetType.SINGLE_NOMINAL && anAttributeType == AttributeType.BINARY) ||
 				(aTargetType == TargetType.SINGLE_NUMERIC && anAttributeType == AttributeType.NUMERIC) ||
@@ -878,6 +880,11 @@ public class MiningWindow extends JFrame implements ActionListener
 		 */
 		if (aTargetType == TargetType.MULTI_LABEL || aTargetType == TargetType.MULTI_NUMERIC)
 			setMultiTargets(aTargetType);
+
+		if (existsTarget)
+			jComboBoxTargetAttribute.setSelectedItem("target");
+		else if (existsClass)
+			jComboBoxTargetAttribute.setSelectedItem("class");
 
 		// Re-enable ActionEvents from these two ComboBoxes.
 		jComboBoxTargetAttribute.addActionListener(this);
@@ -1561,11 +1568,7 @@ public class MiningWindow extends JFrame implements ActionListener
 		 * see initTargetAttributeItems() and initTargetValueItems()
 		 */
 		TargetType aTargetType = itsTargetConcept.getTargetType();
-		if (aTargetType != TargetType.DOUBLE_REGRESSION &&
-            aTargetType != TargetType.DOUBLE_CORRELATION &&
-            aTargetType != TargetType.DOUBLE_BINARY &&
-			//aTargetType != TargetType.MULTI_NUMERIC &&
-			aTargetType != TargetType.SCAPE)
+		if (aTargetType != TargetType.DOUBLE_REGRESSION && aTargetType != TargetType.DOUBLE_CORRELATION && aTargetType != TargetType.DOUBLE_BINARY && aTargetType != TargetType.SCAPE)
 			initTargetValues();
 
 		/*
