@@ -691,6 +691,11 @@ public class ResultWindow extends JFrame implements ActionListener
 			int aValue = Integer.valueOf(anInputString).intValue();
 			SubgroupSet aPatternTeam = itsSubgroupSet.getPatternTeam(itsTable, aValue);
 			new ResultWindow(this, aPatternTeam);
+
+			//test tab window
+			ArrayList<SubgroupSet> aGrouping = itsSubgroupSet.getGrouping(aPatternTeam);
+			PatternTeamTabWindow aPatternTeamTabWindow = new PatternTeamTabWindow(aGrouping, itsSearchParameters);
+			aPatternTeamTabWindow.createWindow();
 		}
 		catch (Exception e)
 		{

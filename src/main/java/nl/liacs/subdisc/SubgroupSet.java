@@ -41,6 +41,8 @@ public class SubgroupSet extends TreeSet<Subgroup>
 	private double itsLowestScore = Double.NaN;
 	private double itsJointEntropy = Double.NaN; //initially not set
 
+	private BinaryTable itsBinaryTable = null;
+
 	// this is the long way around, new Subgroups are added to QUEUE when QUEUE.size() >= itsMaximumSize all Subgroups in QUEUE are added to this SubgroupSet, much better for concurrency
 	private final int MAX_QUEUE_SIZE = 1; // arbitrarily chosen
 	private final BlockingQueue<Subgroup> QUEUE = new ArrayBlockingQueue<Subgroup>(MAX_QUEUE_SIZE);
@@ -525,10 +527,10 @@ public class SubgroupSet extends TreeSet<Subgroup>
 	{
 		update();
 
-		BinaryTable aBinaryTable = new BinaryTable(theTable, this);
-		ItemSet aSubset = aBinaryTable.getApproximateMiki(k);
-		// FIXME MM see constructor comment, it is not truly empty
-		SubgroupSet aResult = new SubgroupSet(this); //make empty copy
+		itsBinaryTable = new BinaryTable(theTable, this);
+		ItemSet aSubset = itsBinaryTable.getApproximateMiki(k);
+
+		SubgroupSet aResult = new SubgroupSet(this);
 		int index = 0;
 
 		Iterator<Subgroup> anIterator = this.iterator();
@@ -542,13 +544,42 @@ public class SubgroupSet extends TreeSet<Subgroup>
 
 		aResult.itsJointEntropy = aSubset.getJointEntropy();
 		aResult.update();
-
-// first call prints entropy of top-10 (of the ranking, not best PatternTeam)
-//postProcessGetCoverRedundancyAndJointEntropy(10);
-//Miki.getMiki(this, k);
-//System.out.println(aResult.itsJointEntropy);
-
 		return aResult;
+	}
+
+	public ArrayList<SubgroupSet> getGrouping(SubgroupSet aPatternTeam)
+	{
+		ArrayList<SubgroupSet> aGrouping = new ArrayList<SubgroupSet>();
+		for (Subgroup aDummy : aPatternTeam)
+			aGrouping.add(new SubgroupSet(this));
+		if (itsBinaryTable == null)
+			return aGrouping; //empty grouping. This only happens if getPatternTeam() is not called before this function
+
+		//compute grouping
+		int i = 0;
+		for (Subgroup aSubgroup : this) //a pattern is a subgroup that is a member of a pattern team
+		{
+			Subgroup aClosestPattern = null;
+			int aClosestID = -1;
+			float aBest = Float.NEGATIVE_INFINITY;
+			int j = 0;
+
+			for (Subgroup aPattern : aPatternTeam)
+			{
+				float aCorrelation = Math.abs(itsBinaryTable.computeCorrelation(i, j));
+				if (aClosestPattern == null || aCorrelation > aBest)
+				{
+					aClosestPattern = aPattern;
+					aClosestID = j;
+					aBest = aCorrelation;
+				}
+				j++;
+			}
+			aGrouping.get(aClosestID).add(aSubgroup);
+			i++;
+		}
+
+		return aGrouping;
 	}
 
 	public double getJointEntropy() { return itsJointEntropy; }

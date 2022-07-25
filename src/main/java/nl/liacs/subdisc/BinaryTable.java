@@ -159,9 +159,6 @@ public class BinaryTable
 
 	public ItemSet getApproximateMiki(int k)
 	{
-if (MIKI_TEST) mikiPrint("NEW: " + getApproximateMiki(itsColumns, itsNrRecords, k));
-Timer t = new Timer();
-
 		long aCount = 0;
 		ItemSet aMaximallyInformativeItemSet = new ItemSet(getNrColumns(), 0);
 		double aMaximalEntropy = 0.0;
@@ -197,9 +194,32 @@ Timer t = new Timer();
 
 		Log.logCommandLine("nr of column scans: " + aCount);
 
-if (MIKI_TEST) mikiPrint("OLD: " + t.getElapsedTimeString() + "\nOLD: " + aMaximalEntropy);
-
 		return aMaximallyInformativeItemSet;
+	}
+
+	// computes the phi coefficient, which is the Pearson's coefficient between two binary variables.
+	public float computeCorrelation(int k, int l)
+	{
+		long anA = 0;
+		long aB = 0;
+		long anAB = 0;
+		for (int i = 0; i < itsNrRecords ; i++)
+		{
+			boolean a = itsColumns.get(k).get(i);
+			boolean b = itsColumns.get(l).get(i);
+
+			if (a)
+				anA++;
+			if (b)
+				aB++;			
+			if (a && b)
+				anAB++;
+		}
+
+		if (anA*aB*(itsNrRecords - anA)*(itsNrRecords - aB) == 0)
+			return 0f;
+		else
+			return (itsNrRecords*anAB - anA*aB) / (float) Math.sqrt(anA*aB*(itsNrRecords - anA)*(itsNrRecords - aB));
 	}
 
 	private final CrossCube countCrossCube()
