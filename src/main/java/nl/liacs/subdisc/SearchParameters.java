@@ -26,6 +26,8 @@ public class SearchParameters implements XMLNodeInterface
 	private float		itsMaximumCoverageFraction;
 	private int		itsMinimumSupport;
 	private int		itsMaximumSubgroups;
+	private boolean		itsFilterSubgroups;
+	private float		itsMinimumImprovement;
 	private float		itsMaximumTime;
 
 	private SearchStrategy	itsSearchStrategy;
@@ -34,7 +36,6 @@ public class SearchParameters implements XMLNodeInterface
 	private NumericOperatorSetting itsNumericOperatorSetting;
 	private NumericStrategy	itsNumericStrategy;
 	private int		itsNrBins;
-	private boolean		itsFilterSubgroups;
 	private int		itsNrThreads;
 
 	private float		itsAlpha;
@@ -89,6 +90,10 @@ public class SearchParameters implements XMLNodeInterface
 	public void setMinimumSupport(int theMinimumSupport) { if (theMinimumSupport < 0) throw new IllegalArgumentException("theMinimumSupport must be >= 0"); itsMinimumSupport = theMinimumSupport; }
 	public int getMaximumSubgroups() { return itsMaximumSubgroups; }
 	public void setMaximumSubgroups(int theMaximumSubgroups) { itsMaximumSubgroups  = theMaximumSubgroups; }
+	public boolean getFilterSubgroups()				{ return itsFilterSubgroups; }
+	public void setFilterSubgroups(boolean theFilterSubgroups)	{ itsFilterSubgroups = theFilterSubgroups; }
+	public float getMinimumImprovement() { return itsMinimumImprovement; }
+	public void setMinimumImprovement(float theMinimumImprovement) { itsMinimumImprovement = theMinimumImprovement; }
 	public float getMaximumTime() { return itsMaximumTime; }
 	public void setMaximumTime(float theMaximumTime) { itsMaximumTime = theMaximumTime; }
 
@@ -147,8 +152,6 @@ public class SearchParameters implements XMLNodeInterface
 	public void setSearchStrategyWidth(int theWidth)		{ itsSearchStrategyWidth = theWidth; }
 	public int getNrBins()						{ return itsNrBins; }
 	public void setNrBins(int theNrBins)				{ itsNrBins = theNrBins; }
-	public boolean getFilterSubgroups()				{ return itsFilterSubgroups; }
-	public void setFilterSubgroups(boolean theFilterSubgroups)	{ itsFilterSubgroups = theFilterSubgroups; }
 	public int getNrThreads()					{ return itsNrThreads; }
 	public void setNrThreads(int theNrThreads)			{ itsNrThreads = theNrThreads; }
 	public float getAlpha()						{ return itsAlpha; }
@@ -184,6 +187,8 @@ public class SearchParameters implements XMLNodeInterface
 		XMLNode.addNodeTo(aNode, "maximum_coverage_fraction", getMaximumCoverageFraction());
 		XMLNode.addNodeTo(aNode, "minimum_support", getMinimumSupport());
 		XMLNode.addNodeTo(aNode, "maximum_subgroups", getMaximumSubgroups());
+		XMLNode.addNodeTo(aNode, "filter_subgroups", getFilterSubgroups());
+		XMLNode.addNodeTo(aNode, "minimum_improvement", getMinimumImprovement());
 		XMLNode.addNodeTo(aNode, "maximum_time", getMaximumTime());
 		XMLNode.addNodeTo(aNode, "search_strategy", getSearchStrategy().GUI_TEXT);
 		XMLNode.addNodeTo(aNode, "use_nominal_sets", getNominalSets());
@@ -191,7 +196,6 @@ public class SearchParameters implements XMLNodeInterface
 		XMLNode.addNodeTo(aNode, "numeric_operators", getNumericOperatorSetting().GUI_TEXT);
 		XMLNode.addNodeTo(aNode, "numeric_strategy", getNumericStrategy().GUI_TEXT);
 		XMLNode.addNodeTo(aNode, "nr_bins", getNrBins());
-		XMLNode.addNodeTo(aNode, "filter_subgroups", getFilterSubgroups());
 		XMLNode.addNodeTo(aNode, "nr_threads", getNrThreads());
 		XMLNode.addNodeTo(aNode, "alpha", getAlpha());
 		XMLNode.addNodeTo(aNode, "beta", getBeta());
@@ -222,6 +226,10 @@ public class SearchParameters implements XMLNodeInterface
 				itsMinimumSupport = Integer.parseInt(aSetting.getTextContent());
 			else if("maximum_subgroups".equalsIgnoreCase(aNodeName))
 				itsMaximumSubgroups = Integer.parseInt(aSetting.getTextContent());
+			else if("filter_subgroups".equalsIgnoreCase(aNodeName))
+				itsFilterSubgroups = Boolean.parseBoolean(aSetting.getTextContent());
+			else if("minimum_improvement".equalsIgnoreCase(aNodeName))
+				itsMinimumImprovement = Float.parseFloat(aSetting.getTextContent());
 			else if("maximum_time".equalsIgnoreCase(aNodeName))
 				itsMaximumTime = Float.parseFloat(aSetting.getTextContent());
 			else if("search_strategy".equalsIgnoreCase(aNodeName))
@@ -242,8 +250,6 @@ public class SearchParameters implements XMLNodeInterface
 				itsNumericStrategy = (NumericStrategy.fromString(aSetting.getTextContent()));
 			else if("nr_bins".equalsIgnoreCase(aNodeName))
 				itsNrBins = Integer.parseInt(aSetting.getTextContent());
-			else if("filter_subgroups".equalsIgnoreCase(aNodeName))
-				itsFilterSubgroups = Boolean.parseBoolean(aSetting.getTextContent());
 			else if("nr_threads".equalsIgnoreCase(aNodeName))
 				itsNrThreads = Integer.parseInt(aSetting.getTextContent());
 			else if("alpha".equalsIgnoreCase(aNodeName))
@@ -277,6 +283,8 @@ public class SearchParameters implements XMLNodeInterface
 		addLine(sb, "maximum_coverage_fraction", Float.toString(getMaximumCoverageFraction()));
 		addLine(sb, "minimum_support", Integer.toString(getMinimumSupport()));
 		addLine(sb, "maximum_subgroups", Integer.toString(getMaximumSubgroups()));
+		addLine(sb, "minimum_improvement", Float.toString(getMinimumImprovement()));
+		addLine(sb, "filter_subgroups", Boolean.toString(getFilterSubgroups()));
 		addLine(sb, "maximum_time", Float.toString(getMaximumTime()));
 		addLine(sb, "search_strategy", getSearchStrategy().GUI_TEXT);
 		addLine(sb, "use_nominal_sets", Boolean.toString(getNominalSets()));
@@ -284,7 +292,6 @@ public class SearchParameters implements XMLNodeInterface
 		addLine(sb, "numeric_operators", getNumericOperatorSetting().getOperators().toString());
 		addLine(sb, "numeric_strategy", getNumericStrategy().GUI_TEXT);
 		addLine(sb, "nr_bins", Integer.toString(getNrBins()));
-		addLine(sb, "filter_subgroups", Boolean.toString(getFilterSubgroups()));
 		addLine(sb, "nr_threads", Integer.toString(getNrThreads()));
 		addLine(sb, "alpha", Float.toString(getAlpha()));
 		addLine(sb, "beta", Float.toString(getBeta()));

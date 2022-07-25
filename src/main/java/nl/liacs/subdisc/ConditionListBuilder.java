@@ -549,10 +549,104 @@ public enum ConditionListBuilder
 			}
 		}
 
+		//clearly, this is getting a bit ridiculous, as a result of the choice to split the ConditionList into four different classes. Not much that can be done about this at this stage.
 		@Override
 		public boolean strictlySpecialises(ConditionList theOtherCL)
 		{
-			return false; //implement
+			if (theOtherCL.size() > size()) //a shorter CL cannot specialise a longer CL
+				return false;
+			if (theOtherCL.size() == 0) //any non-empty CL specialises the empty CL
+				return true;
+
+			//at this point theOtherCL is sizes 1, 2 or 3 (and this is of size 3)
+			if (theOtherCL instanceof ConditionList1) //size 1
+			{
+				Condition anOtherCondition = ((ConditionList1) theOtherCL).itsCondition;
+
+				if (itsFirst.logicallyEquivalent(anOtherCondition) || itsSecond.logicallyEquivalent(anOtherCondition) || itsThird.logicallyEquivalent(anOtherCondition)) 
+					return true;
+				if (itsFirst.strictlySpecialises(anOtherCondition) || itsSecond.strictlySpecialises(anOtherCondition) || itsThird.strictlySpecialises(anOtherCondition))
+					return true;
+			}
+			if (theOtherCL instanceof ConditionList2) //size 2
+			{
+				ConditionList2 anOtherCL = (ConditionList2) theOtherCL;
+
+				//six permutations
+				// f s (t)
+				// f t (s)
+				// s f (t)
+				// s t (f)
+				// t f (s)
+				// t s (f)
+
+				//is anOtherCL contained in this?
+				if (itsFirst.logicallyEquivalent(anOtherCL.itsFirst) && itsSecond.logicallyEquivalent(anOtherCL.itsSecond))
+					return true;
+				if (itsFirst.logicallyEquivalent(anOtherCL.itsFirst) && itsThird.logicallyEquivalent(anOtherCL.itsSecond))
+					return true;
+				if (itsSecond.logicallyEquivalent(anOtherCL.itsFirst) && itsFirst.logicallyEquivalent(anOtherCL.itsSecond))
+					return true;
+				if (itsSecond.logicallyEquivalent(anOtherCL.itsFirst) && itsThird.logicallyEquivalent(anOtherCL.itsSecond))
+					return true;
+				if (itsThird.logicallyEquivalent(anOtherCL.itsFirst) && itsFirst.logicallyEquivalent(anOtherCL.itsSecond))
+					return true;
+				if (itsThird.logicallyEquivalent(anOtherCL.itsFirst) && itsSecond.logicallyEquivalent(anOtherCL.itsSecond))
+					return true;
+			}
+			if (theOtherCL instanceof ConditionList3) //size 3
+			{
+				ConditionList3 anOtherCL = (ConditionList3) theOtherCL;
+
+				//six permutations
+				// f s t
+				// f t s
+				// s f t
+				// s t f
+				// t f s
+				// t s f
+
+				//type 1
+				if (itsFirst.strictlySpecialises(anOtherCL.itsFirst) && itsSecond.logicallyEquivalent(anOtherCL.itsSecond) && itsThird.logicallyEquivalent(anOtherCL.itsThird))
+					return true;
+				if (itsFirst.strictlySpecialises(anOtherCL.itsFirst) && itsThird.logicallyEquivalent(anOtherCL.itsSecond) && itsSecond.logicallyEquivalent(anOtherCL.itsThird))
+					return true;
+				if (itsSecond.strictlySpecialises(anOtherCL.itsFirst) && itsFirst.logicallyEquivalent(anOtherCL.itsSecond) && itsThird.logicallyEquivalent(anOtherCL.itsThird))
+					return true;
+				if (itsSecond.strictlySpecialises(anOtherCL.itsFirst) && itsThird.logicallyEquivalent(anOtherCL.itsSecond) && itsFirst.logicallyEquivalent(anOtherCL.itsThird))
+					return true;
+				if (itsThird.strictlySpecialises(anOtherCL.itsFirst) && itsFirst.logicallyEquivalent(anOtherCL.itsSecond) && itsSecond.logicallyEquivalent(anOtherCL.itsThird))
+					return true;
+				if (itsThird.strictlySpecialises(anOtherCL.itsFirst) && itsSecond.logicallyEquivalent(anOtherCL.itsSecond) && itsFirst.logicallyEquivalent(anOtherCL.itsThird))
+					return true;
+				//type 2
+				if (itsFirst.logicallyEquivalent(anOtherCL.itsFirst) && itsSecond.strictlySpecialises(anOtherCL.itsSecond) && itsThird.logicallyEquivalent(anOtherCL.itsThird))
+					return true;
+				if (itsFirst.logicallyEquivalent(anOtherCL.itsFirst) && itsThird.strictlySpecialises(anOtherCL.itsSecond) && itsSecond.logicallyEquivalent(anOtherCL.itsThird))
+					return true;
+				if (itsSecond.logicallyEquivalent(anOtherCL.itsFirst) && itsFirst.strictlySpecialises(anOtherCL.itsSecond) && itsThird.logicallyEquivalent(anOtherCL.itsThird))
+					return true;
+				if (itsSecond.logicallyEquivalent(anOtherCL.itsFirst) && itsThird.strictlySpecialises(anOtherCL.itsSecond) && itsFirst.logicallyEquivalent(anOtherCL.itsThird))
+					return true;
+				if (itsThird.logicallyEquivalent(anOtherCL.itsFirst) && itsFirst.strictlySpecialises(anOtherCL.itsSecond) && itsSecond.logicallyEquivalent(anOtherCL.itsThird))
+					return true;
+				if (itsThird.logicallyEquivalent(anOtherCL.itsFirst) && itsSecond.strictlySpecialises(anOtherCL.itsSecond) && itsFirst.logicallyEquivalent(anOtherCL.itsThird))
+					return true;
+				//type 3
+				if (itsFirst.logicallyEquivalent(anOtherCL.itsFirst) && itsSecond.logicallyEquivalent(anOtherCL.itsSecond) && itsThird.strictlySpecialises(anOtherCL.itsThird))
+					return true;
+				if (itsFirst.logicallyEquivalent(anOtherCL.itsFirst) && itsThird.logicallyEquivalent(anOtherCL.itsSecond) && itsSecond.strictlySpecialises(anOtherCL.itsThird))
+					return true;
+				if (itsSecond.logicallyEquivalent(anOtherCL.itsFirst) && itsFirst.logicallyEquivalent(anOtherCL.itsSecond) && itsThird.strictlySpecialises(anOtherCL.itsThird))
+					return true;
+				if (itsSecond.logicallyEquivalent(anOtherCL.itsFirst) && itsThird.logicallyEquivalent(anOtherCL.itsSecond) && itsFirst.strictlySpecialises(anOtherCL.itsThird))
+					return true;
+				if (itsThird.logicallyEquivalent(anOtherCL.itsFirst) && itsFirst.logicallyEquivalent(anOtherCL.itsSecond) && itsSecond.strictlySpecialises(anOtherCL.itsThird))
+					return true;
+				if (itsThird.logicallyEquivalent(anOtherCL.itsFirst) && itsSecond.logicallyEquivalent(anOtherCL.itsSecond) && itsFirst.strictlySpecialises(anOtherCL.itsThird))
+					return true;
+			}
+			return false;
 		}
 	}
 

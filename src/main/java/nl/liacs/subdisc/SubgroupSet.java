@@ -555,7 +555,7 @@ public class SubgroupSet extends TreeSet<Subgroup>
 
 	//Determines for each Subgroup in the result whether it should remain there. If the Subgroup is a specialisation of another Subgroup, and it has lower quality, it will be removed.
 	//This is a quadratic process (in the size of the result), so could be slow for very large result sets.
-	public void filterSubgroups()
+	public void filterSubgroups(float theMinimumImprovement)
 	{
 		int aSize = size();
 		Iterator<Subgroup> anIterator = iterator();
@@ -566,7 +566,7 @@ public class SubgroupSet extends TreeSet<Subgroup>
 			for (Subgroup aSecondSubgroup : this)
 				if (aFirstSubgroup != aSecondSubgroup)
 				{
-					if (aFirstSubgroup.strictlySpecialises(aSecondSubgroup) && aFirstSubgroup.getMeasureValue() <= aSecondSubgroup.getMeasureValue())
+					if (aFirstSubgroup.strictlySpecialises(aSecondSubgroup) && aFirstSubgroup.getMeasureValue() <= aSecondSubgroup.getMeasureValue() + theMinimumImprovement)
 					{
 						anIterator.remove();
 						break;

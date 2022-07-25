@@ -1193,8 +1193,9 @@ public class SubgroupDiscovery
 
 	private void postMining(long theBeginTime)
 	{
+System.out.println("Minimum improvement " + itsSearchParameters.getMinimumImprovement());
 		if (itsSearchParameters.getFilterSubgroups())
-			itsResult.filterSubgroups();
+			itsResult.filterSubgroups(itsSearchParameters.getMinimumImprovement());
 
 		int aNrSubgroups = getNumberOfSubgroups();
 

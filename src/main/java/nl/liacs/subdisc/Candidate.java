@@ -69,9 +69,9 @@ public class Candidate implements Comparable<Candidate>
 		// NOTE to ensure proper functioning code, the compareTo() call is
 		// required first, as at a return of 0, one of the the Candidates needs
 		// to be removed from the CandidateSet or SubgroupSet (= ResultSet)
-		System.out.format("WARNING REDUNDANCY: Candidate.compareTo()%n\t%s%n\t%s%n",
-					itsSubgroup.toString(),
-					theCandidate.getSubgroup().toString());
+//		System.out.format("WARNING REDUNDANCY: Candidate.compareTo()%n\t%s%n\t%s%n",
+//					itsSubgroup.toString(),
+//					theCandidate.getSubgroup().toString());
 		return 0;
 	}
 

@@ -137,6 +137,8 @@ public class MiningWindow extends JFrame implements ActionListener
 	private JLabel jLabelSearchCoverageMaximum;
 	private JLabel jLabelSearchMinimumSupport;
 	private JLabel jLabelSubgroupsMaximum;
+	private JLabel jLabelFilterSubgroups;
+	private JLabel jLabelMinimumImprovement;
 	private JLabel jLabelSearchTimeMaximum;
 	// SEARCH CONDITIONS - fields
 	private JPanel jPanelSearchParameterFields;
@@ -145,6 +147,8 @@ public class MiningWindow extends JFrame implements ActionListener
 	private JTextField jTextFieldSearchCoverageMaximum;
 	private JTextField jTextFieldSearchMinimumSupport;
 	private JTextField jTextFieldSubgroupsMaximum;
+	private JCheckBox jCheckBoxFilterSubgroups;
+	private JTextField jTextFieldMinimumImprovement;
 	private JTextField jTextFieldSearchTimeMaximum;
 
 	// SEARCH STRATEGY
@@ -157,7 +161,6 @@ public class MiningWindow extends JFrame implements ActionListener
 	private JLabel jLabelNumericStrategy;
 	private JLabel jLabelNumericOperators;
 	private JLabel jLabelNumberOfBins;
-	private JLabel jLabelFilterSubgroups;
 	private JLabel jLabelNumberOfThreads;
 	// SEARCH STRATEGY - fields
 	private JPanel jPanelSearchStrategyFields;
@@ -167,7 +170,6 @@ public class MiningWindow extends JFrame implements ActionListener
 	private JComboBox<String> jComboBoxNumericStrategy;
 	private JComboBox <String> jComboBoxNumericOperators;
 	private JTextField jTextFieldNumberOfBins;
-	private JCheckBox jCheckBoxFilterSubgroups;
 	private JTextField jTextFieldNumberOfThreads;
 
 	// SOUTH PANEL - MINING BUTTONS
@@ -455,7 +457,7 @@ public class MiningWindow extends JFrame implements ActionListener
 		jPanelSearchConditions.setBorder(GUI.buildBorder("Search Conditions"));
 
 		// SEARCH CONDITIONS - labels
-		jPanelSearchConditionsLabels.setLayout(new GridLayout(7, 1));
+		jPanelSearchConditionsLabels.setLayout(new GridLayout(8, 1));
 
 		jLabelSearchDepth = initJLabel("refinement depth");
 		jPanelSearchConditionsLabels.add(jLabelSearchDepth);
@@ -467,13 +469,17 @@ public class MiningWindow extends JFrame implements ActionListener
 		jPanelSearchConditionsLabels.add(jLabelSearchMinimumSupport);
 		jLabelSubgroupsMaximum = initJLabel("<html> maximum subgroups (0 = &#8734;)</html>)");
 		jPanelSearchConditionsLabels.add(jLabelSubgroupsMaximum);
+		jLabelFilterSubgroups = initJLabel("filter subgroups");
+		jPanelSearchConditionsLabels.add(jLabelFilterSubgroups);
+		jLabelMinimumImprovement = initJLabel("miminum absolute improvement");
+		jPanelSearchConditionsLabels.add(jLabelMinimumImprovement);
 		jLabelSearchTimeMaximum = initJLabel("<html> maximum time (min) (0 = &#8734;)</html>)");
 		jPanelSearchConditionsLabels.add(jLabelSearchTimeMaximum);
 
 		jPanelSearchConditions.add(jPanelSearchConditionsLabels);
 
 		// SEARCH CONDITIONS - fields
-		jPanelSearchParameterFields.setLayout(new GridLayout(7, 1));
+		jPanelSearchParameterFields.setLayout(new GridLayout(8, 1));
 
 		jTextFieldSearchDepth = GUI.buildTextField("0");
 		jPanelSearchParameterFields.add(jTextFieldSearchDepth);
@@ -485,6 +491,11 @@ public class MiningWindow extends JFrame implements ActionListener
 		jPanelSearchParameterFields.add(jTextFieldSearchMinimumSupport);
 		jTextFieldSubgroupsMaximum = GUI.buildTextField("0");
 		jPanelSearchParameterFields.add(jTextFieldSubgroupsMaximum);
+		jCheckBoxFilterSubgroups = new JCheckBox();
+		jCheckBoxFilterSubgroups.setSelected(true);
+		jPanelSearchParameterFields.add(jCheckBoxFilterSubgroups);
+		jTextFieldMinimumImprovement = GUI.buildTextField("0");
+		jPanelSearchParameterFields.add(jTextFieldMinimumImprovement);
 		jTextFieldSearchTimeMaximum = GUI.buildTextField("0");
 		jPanelSearchParameterFields.add(jTextFieldSearchTimeMaximum);
 
@@ -514,8 +525,7 @@ public class MiningWindow extends JFrame implements ActionListener
 		jPanelSearchStrategyLabels.add(jLabelNumericOperators);
 		jLabelNumberOfBins = initJLabel("number of bins");
 		jPanelSearchStrategyLabels.add(jLabelNumberOfBins);
-		jLabelFilterSubgroups = initJLabel("filter subgroups");
-		jPanelSearchStrategyLabels.add(jLabelFilterSubgroups);
+
 		jLabelNumberOfThreads = initJLabel("threads (0 = all available)");
 		jPanelSearchStrategyLabels.add(jLabelNumberOfThreads);
 
@@ -536,9 +546,7 @@ public class MiningWindow extends JFrame implements ActionListener
 		jPanelSearchStrategyFields.add(jComboBoxNumericOperators);
 		jTextFieldNumberOfBins = GUI.buildTextField("0");
 		jPanelSearchStrategyFields.add(jTextFieldNumberOfBins);
-		jCheckBoxFilterSubgroups = new JCheckBox();
-		jCheckBoxFilterSubgroups.setSelected(true);
-		jPanelSearchStrategyFields.add(jCheckBoxFilterSubgroups);
+
 		jTextFieldNumberOfThreads = GUI.buildTextField(Integer.toString(Runtime.getRuntime().availableProcessors()));
 		jPanelSearchStrategyFields.add(jTextFieldNumberOfThreads);
 
@@ -2480,20 +2488,8 @@ boundsList.add(new Interval(f, Float.POSITIVE_INFINITY));
 		// set to last known value even for NumericStrategy.NUMERIC_BINS
 		itsSearchParameters.setNrBins(getNrBins());
 		itsSearchParameters.setFilterSubgroups(getFilterSubgroups());
+		itsSearchParameters.setMinimumImprovement(getMinimumImprovement());
 		itsSearchParameters.setNrThreads(getNrThreads());
-/*
- * These values are no longer 'static', but can be changed in MultiTargetsWindow
-		itsSearchParameters.setPostProcessingCount(SearchParameters.POST_PROCESSING_COUNT_DEFAULT);
-//		itsSearchParameters.setMaximumPostProcessingSubgroups(100); // TODO not used
-
-		// Bayesian stuff
-		 // TODO This will overwrite values set in RandomQualitiesWindow
-		if (QualityMeasure.getMeasureString(QualityMeasure.EDIT_DISTANCE).equals(getQualityMeasureName()))
-			itsSearchParameters.setAlpha(SearchParameters.ALPHA_EDIT_DISTANCE);
-		else
-			itsSearchParameters.setAlpha(SearchParameters.ALPHA_DEFAULT);
-		itsSearchParameters.setBeta(SearchParameters.BETA_DEFAULT);
-*/
 	}
 
 	/* FIELD METHODS OF CORTANA COMPONENTS */
@@ -2585,6 +2581,10 @@ boundsList.add(new Interval(f, Float.POSITIVE_INFINITY));
 	// search strategy - filter subgroups
 	private boolean getFilterSubgroups() { return jCheckBoxFilterSubgroups.isSelected(); }
 	private void setFilterSubgroups(String aValue) { jCheckBoxFilterSubgroups.setSelected(Boolean.parseBoolean(aValue)); }
+
+	// search conditions - minimum improvement
+	private float getMinimumImprovement() { return getValue(0f, jTextFieldMinimumImprovement.getText()); }
+	private void setMinimumImprovement(String aValue) { jTextFieldMinimumImprovement.setText(aValue); }
 
 	// search strategy - number of threads
 	private int getNrThreads() { return getValue(Runtime.getRuntime().availableProcessors(), jTextFieldNumberOfThreads.getText()); }
