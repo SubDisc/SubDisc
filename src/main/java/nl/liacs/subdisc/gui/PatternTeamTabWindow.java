@@ -20,19 +20,16 @@ public class PatternTeamTabWindow
 	
 	public void createWindow() 
 	{
-		System.out.println("=============");
-
- 		final JFrame frame = new JFrame("Split Pane Example");
+ 		final JFrame aFrame = new JFrame("Grouping of Subgroups According to Pattern Teams");
+ 		aFrame.setIconImage(MiningWindow.ICON);
+		aFrame.setSize(GUI.WINDOW_DEFAULT_SIZE);
+		aFrame.setLocation(300, 300);
+		aFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		aFrame.setVisible(true);
  
- 		// Display the window.
-		frame.setSize(GUI.WINDOW_DEFAULT_SIZE.width, GUI.WINDOW_DEFAULT_SIZE.height);
-		frame.setVisible(true);
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
- 
-		// set grid layout for the frame
-		frame.getContentPane().setLayout(new GridLayout(1, 1));
-
 		JTabbedPane aTabbedPane = new JTabbedPane(JTabbedPane.TOP);
+		aTabbedPane.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
+		aFrame.getContentPane().add(aTabbedPane);
 
 		int i = 1;
 		for (SubgroupSet anSS : itsGrouping)
@@ -52,23 +49,13 @@ public class PatternTeamTabWindow
 			aSubgroupsTable.getColumnModel().getColumn(6).setPreferredWidth(2 * aUnitWidth);
 			aSubgroupsTable.getColumnModel().getColumn(7).setPreferredWidth(9 * aUnitWidth);
 
-
 			aSubgroupsTable.setRowSelectionAllowed(true);
 			aSubgroupsTable.setColumnSelectionAllowed(false);
 			aSubgroupsTable.getSelectionModel().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
-			aTabbedPane.addTab("Group " + i + " (" + anSS.size() + ")", aSubgroupsTable);
-			aTabbedPane.setMnemonicAt(0, KeyEvent.VK_1);
+			JScrollPane aScrollPane = new JScrollPane(aSubgroupsTable);
+			aTabbedPane.addTab("Group " + i + " (" + anSS.size() + ")", aScrollPane);
 			i++;
 		}
-
-		aTabbedPane.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
-
-		frame.getContentPane().add(aTabbedPane);
-
-		frame.setIconImage(MiningWindow.ICON);
-		frame.setLocation(250, 250);
-		frame.setSize(GUI.WINDOW_DEFAULT_SIZE);
-		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 	}
 }
