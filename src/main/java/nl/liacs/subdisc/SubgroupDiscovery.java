@@ -2259,11 +2259,22 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			return;
 
 		// long to prevent overflow for multiplication
-		long aParentCoverage  = theParent.getCoverage();
 		long b                = 1L;
 		Column aColumn        = theConditionBase.getColumn();
 		int[] aCounts         = theValueInfo.itsCounts;
 		int[] aTPs            = theValueInfo.itsTruePositives;
+		
+		long aParentCoverage  = 0;
+		int aCum = 0;
+		for (int i=0; i<aCounts.length; i++)
+		{
+			aParentCoverage += aCounts[i];
+			aCum += aTPs[i];
+			System.out.println("  : " + aParentCoverage + ", " + aCum);
+		}
+		System.out.println("  aParentCoverage: " + aParentCoverage);
+
+
 		boolean isAllStrategy = (ns == NumericStrategy.NUMERIC_BINS);
 		BestSubgroupsForCandidateSetAndResultSet aBestSubgroups = (isAllStrategy ? null : new BestSubgroupsForCandidateSetAndResultSet());
 
@@ -2355,6 +2366,12 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 				int tp = 0;
 				for (int i=0; b < aNrBins && !isTimeToStop(); i++)
 				{
+System.out.println("  next, b, i: " + next + "," + b + "," + i);
+					if (i>=aCounts.length)
+					{
+						System.out.println("i is too big");
+						break;
+					}
 					int aCount = aCounts[i];
 					if (aCount == 0)
 						continue;
