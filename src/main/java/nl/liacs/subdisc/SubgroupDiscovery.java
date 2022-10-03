@@ -1193,7 +1193,6 @@ public class SubgroupDiscovery
 
 	private void postMining(long theBeginTime)
 	{
-System.out.println("Minimum improvement " + itsSearchParameters.getMinimumImprovement());
 		if (itsSearchParameters.getFilterSubgroups())
 			itsResult.filterSubgroups(itsSearchParameters.getMinimumImprovement());
 
@@ -2019,7 +2018,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			// last cover used for evaluation, and last lower bound
 			int last_cover = 0;
 			float f = Float.NEGATIVE_INFINITY;
-			for (int i = 0, next = next(aParentCoverage, b, aNrBins), cover = 0; i < aCounts.length && b < aNrBins && !isTimeToStop(); ++i)
+			for (int i = 0, next = getNextBinBoundary(aParentCoverage, b, aNrBins), cover = 0; i < aCounts.length && b < aNrBins && !isTimeToStop(); ++i)
 			{
 				int aCount = aCounts[i];
 				if (aCount == 0)
@@ -2040,7 +2039,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 				last_cover = cover;
 				f = n;
 
-				while ((next = next(aParentCoverage, ++b, aNrBins)) <= cover-1)
+				while ((next = getNextBinBoundary(aParentCoverage, ++b, aNrBins)) <= cover-1)
 					; // deliberately empty
 			}
 			// POSITIVE_INFINITY should never be present, as this type of value
@@ -2067,7 +2066,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		}
 		else if (anOperator == Operator.LESS_THAN_OR_EQUAL)
 		{
-			for (int i = 0, next = next(aParentCoverage, b, aNrBins), cover = 0; b < aNrBins && !isTimeToStop(); ++i)
+			for (int i = 0, next = getNextBinBoundary(aParentCoverage, b, aNrBins), cover = 0; b < aNrBins && !isTimeToStop(); ++i)
 			{
 				int aCount = aCounts[i];
 				if (aCount == 0)
@@ -2084,7 +2083,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 				Condition aCondition = new Condition(theConditionBase, aColumn.getSortedValue(i), i);
 				evaluateCandidate(theParent, aCondition, cover, isAllStrategy, aBestSubgroups);
 
-				while ((next = next(aParentCoverage, ++b, aNrBins)) <= cover-1)
+				while ((next = getNextBinBoundary(aParentCoverage, ++b, aNrBins)) <= cover-1)
 					; // deliberately empty
 			}
 		}
@@ -2126,11 +2125,12 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			debugBest(theParent, null, aBestSubgroups);
 		}
 	}
-	public static final int next(long n, long b, long B) // public: MiningWidnow
+
+	public static final int getNextBinBoundary(long theTotalCoverage, long theCurrentBin, long theNrBins) // public: MiningWidnow
 	{
-		long nb = (n * b);                 // original n, b are int: no overflow
-		int i = (int) (nb / B);
-		return ((nb % B) == 0L) ? i-1 : i; // get same behaviour as data.reverse
+		long nb = (theTotalCoverage * theCurrentBin);                 // original theTotalCoverage, b are int: no overflow
+		int i = (int) (nb / theNrBins);
+		return ((nb % theNrBins) == 0L) ? i-1 : i; // get same behaviour as data.reverse
 	}
 
 	// this version includes true positive counts, and direct computation
@@ -2265,14 +2265,16 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 		int[] aTPs            = theValueInfo.itsTruePositives;
 		
 		long aParentCoverage  = 0;
-		int aCum = 0;
+		int aParentPositives = 0;
+		//System.out.println("=====================================================================");
 		for (int i=0; i<aCounts.length; i++)
 		{
 			aParentCoverage += aCounts[i];
-			aCum += aTPs[i];
-			System.out.println("  : " + aParentCoverage + ", " + aCum);
+			aParentPositives += aTPs[i];
+			//System.out.println("> " + i + ": " + aParentCoverage + ", " + aParentPositives);
 		}
-		System.out.println("  aParentCoverage: " + aParentCoverage);
+		//System.out.println("  aParentCoverage: " + aParentCoverage);
+		//System.out.println("  aParentPositives: " + aParentPositives);
 
 
 		boolean isAllStrategy = (ns == NumericStrategy.NUMERIC_BINS);
@@ -2285,7 +2287,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			int last_cover = 0;
 			int last_tp = 0;
 			float f = Float.NEGATIVE_INFINITY;
-			for (int i = 0, next = next(aParentCoverage, b, aNrBins), cover = 0, tp = 0; i < aCounts.length && b < aNrBins && !isTimeToStop(); ++i)
+			for (int i = 0, next = getNextBinBoundary(aParentCoverage, b, aNrBins), cover = 0, tp = 0; i < aCounts.length && b < aNrBins && !isTimeToStop(); ++i)
 			{
 				int aCount = aCounts[i];
 				if (aCount == 0)
@@ -2308,7 +2310,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 				last_tp = tp;
 				f = n;
 
-				while ((next = next(aParentCoverage, ++b, aNrBins)) <= cover-1)
+				while ((next = getNextBinBoundary(aParentCoverage, ++b, aNrBins)) <= cover-1)
 					; // deliberately empty
 			}
 			// POSITIVE_INFINITY should never be present, as this type of value
@@ -2361,15 +2363,14 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 			}
 			else
 			{
-				int next = next(aParentCoverage, b, aNrBins);
+				int next = getNextBinBoundary(aParentCoverage, b, aNrBins);
 				int cover = 0;
 				int tp = 0;
 				for (int i=0; b < aNrBins && !isTimeToStop(); i++)
 				{
-System.out.println("  next, b, i: " + next + "," + b + "," + i);
 					if (i>=aCounts.length)
 					{
-						System.out.println("i is too big");
+						System.out.println("************************i is too big");
 						break;
 					}
 					int aCount = aCounts[i];
@@ -2388,7 +2389,7 @@ System.out.println("  next, b, i: " + next + "," + b + "," + i);
 					Condition aCondition = new Condition(theConditionBase, aColumn.getSortedValue(i), i);
 					evaluateCandidate(theParent, aCondition, cover, tp, isAllStrategy, aBestSubgroups);
 
-					while ((next = next(aParentCoverage, ++b, aNrBins)) <= cover-1)
+					while ((next = getNextBinBoundary(aParentCoverage, ++b, aNrBins)) <= cover-1)
 						; // deliberately empty
 				}
 			}
@@ -2398,7 +2399,7 @@ System.out.println("  next, b, i: " + next + "," + b + "," + i);
 			if (aCounts.length <= aNrBins) //fewer unique values than bins?
 			{
 				int cover = (int) aParentCoverage;
-				int tp = (int) theParent.getTertiaryStatistic();
+				int tp = aParentPositives;
 				for (int i=0; i<aCounts.length && !isTimeToStop(); i++) //use all available cut points
 				{
 					if (cover < itsMinimumCoverage)
@@ -2421,30 +2422,31 @@ System.out.println("  next, b, i: " + next + "," + b + "," + i);
 			}
 			else
 			{
-				int next = (int) (aParentCoverage - (aParentCoverage / aNrBins));
+				float aBinSize = aParentCoverage / (float) aNrBins;
+				int next = (int) (aParentCoverage - aBinSize); //place pointer at last bin boundary
 				int cover = (int) aParentCoverage;
-				int tp = (int) theParent.getTertiaryStatistic();
-				for (int i=0; b<aNrBins && !isTimeToStop(); i++)
+				int tp = aParentPositives;
+				for (int i=0; i<aCounts.length; i++) //loop over all bins
 				{
+					if (isTimeToStop())
+						break;
 					if (cover < itsMinimumCoverage)
 						break;
-
 					int aCount = aCounts[i];
 					if (aCount == 0)
 						continue;
 
-					// last value with required cover, use old cover and tp
-					if (cover != aParentCoverage && (cover-aCount < next || aNrBins-b < aCounts.length-i-1))
+					if (cover <= next) //passed a new bin boundary
 					{
 						Condition aCondition = new Condition(theConditionBase, aColumn.getSortedValue(i), i);
 						evaluateCandidate(theParent, aCondition, cover, tp, isAllStrategy, aBestSubgroups);
-
-						while ((next = (int) (aParentCoverage - ((++b * aParentCoverage) / aNrBins))) > (cover-aCount))
-							; // deliberately empty
+						b++;
+						if (b == aNrBins)
+							break;
+						next = (int) (aParentCoverage - b*aBinSize); // move next boundary one down
 					}
 
-					// before moving to next, subtract counts related to this value
-					cover -= aCount;
+					cover -= aCounts[i];
 					tp -= aTPs[i];
 				}
 			}
@@ -3140,7 +3142,6 @@ System.out.println("  next, b, i: " + next + "," + b + "," + i);
 			{
 				isUsefulForResultSet = false;		// is below minsup
 				isUsefulForCandidateSet = false;	// and no refinement will ever be above minsup again
-System.out.println("================== discarded because below minsup==============");
 			}
 
 			// FIXME to avoid excessive locking, itsCandidateQueue should also have a (dirty) hasPotential() method, such that if there is

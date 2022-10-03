@@ -2314,7 +2314,8 @@ boundsList.add(c.getSortedValue(i));
 
 		System.out.println(file.getAbsolutePath());
 	}
-	private static final int next(long n, long b, long B) { return SubgroupDiscovery.next(n, b, B); }
+
+	private static final int next(long n, long b, long B) { return SubgroupDiscovery.getNextBinBoundary(n, b, B); }
 
 	private void jButtonDiscretiseActionPerformed2(int theNrBins)
 	{

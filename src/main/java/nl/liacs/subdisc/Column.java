@@ -1907,9 +1907,10 @@ public class Column implements XMLNodeInterface
 		int aMissingCount = 0;
 		int aMissingPositiveCount = 0;
 
-//		System.out.println("count: " + theBitSet.cardinality());
+		//System.out.println("count: " + theBitSet.cardinality());
 		int c = 0;
 		for (int i = theBitSet.nextSetBit(0); i >= 0; i = theBitSet.nextSetBit(i + 1))
+		{
 			if (!getMissing(i))
 			{
 				int idx = itsSortIndex[i];
@@ -1929,21 +1930,22 @@ public class Column implements XMLNodeInterface
 				if (itsSortIndex[i] >= 0) //it's a positive example
 					aMissingPositiveCount++;
 			}
-//		System.out.println("pos count: " + c);
-//		int aC = 0;
-//		int aP = 0;
-//		for (int i=0; i<aCnt.length; i++)
-//		{
-//			aC += aCnt[i];
-//			aP += aPos[i];
-//			System.out.println("---" + i + ", " + itsSortedFloats[i] + ", " + aCnt[i] + ", " + aPos[i] + ", " + aC + ", " + aP);
-//		}
-//		System.out.println("Missing: " + aMissingCount + ", positive: " + aMissingPositiveCount);
+		}
+		//System.out.println("pos count: " + c);
+		//int aC = 0;
+		//int aP = 0;
+		//for (int i=0; i<aCnt.length; i++)
+		//{
+		//	aC += aCnt[i];
+		//	aP += aPos[i];
+		//	System.out.println("---" + i + ", " + itsSortedFloats[i] + ", " + aCnt[i] + ", " + aPos[i] + ", " + aC + ", " + aP);
+		//}
+		//System.out.println("Missing: " + aMissingCount + ", positive: " + aMissingPositiveCount);
 
 		return new ValueCountTP(aCnt, aPos, aMissingCount, aMissingPositiveCount);
 	}
 
-	//TOD fix this for missing values
+	//TODO fix this for missing values
 	ValueCountSum getUniqueNumericDomainMap(BitSet theBitSet, Column theTarget)
 	{
 		if (!isValidCall("getUniqueNumericDomainMap", theBitSet))
