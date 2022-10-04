@@ -127,7 +127,8 @@ public class HistogramWindow extends JFrame implements ActionListener, ChangeLis
 		add(new JScrollPane(itsChartPanel), BorderLayout.CENTER);
 	}
 
-	private void setupSlider(JSlider theSlider) {
+	private void setupSlider(JSlider theSlider) 
+	{
 		theSlider.setMinimum(MIN_NR_BINS);
 		theSlider.setMaximum(MAX_NR_BINS);
 		theSlider.setValue(DEFAULT_NR_BINS);
@@ -187,11 +188,13 @@ public class HistogramWindow extends JFrame implements ActionListener, ChangeLis
 		Column aColumn = itsTable.getColumn(aBox.getSelectedIndex());
 		AttributeType aType = aColumn.getType();
 
-		if (isAttributeChanged) {
+		if (isAttributeChanged) 
+		{
 			itsAttributeBinsSlider.setEnabled(aType == AttributeType.NUMERIC);
 			itsAttributePlotButton.setEnabled(aType == AttributeType.NUMERIC);
 
-			switch (aType) {
+			switch (aType) 
+			{
 				case NOMINAL : itsAMap = new LinkedHashMap<String, Integer>(); break;
 				case ORDINAL : break;	// no use case yet
 				case NUMERIC : itsAMap = new LinkedHashMap<Float, Integer>(); break;
@@ -202,11 +205,13 @@ public class HistogramWindow extends JFrame implements ActionListener, ChangeLis
 				}
 			}
 		}
-		else {
+		else 
+		{
 			itsTargetBinsSlider.setEnabled(aType == AttributeType.NUMERIC);
 			itsTargetPlotButton.setEnabled(aType == AttributeType.NUMERIC);
 
-			switch (aType) {
+			switch (aType) 
+			{
 				case NOMINAL : itsTMap = new LinkedHashMap<String, Integer>(); break;
 				case ORDINAL : break;	// no use case yet
 				case NUMERIC : itsTMap = new LinkedHashMap<Float, Integer>(); break;
@@ -219,10 +224,10 @@ public class HistogramWindow extends JFrame implements ActionListener, ChangeLis
 		}
 
 		@SuppressWarnings("unchecked")
-		Map<? super Object, Integer> aMap =
-			(Map<? super Object, Integer>) (isAttributeChanged ? itsAMap : itsTMap);
+		Map<? super Object, Integer> aMap = (Map<? super Object, Integer>) (isAttributeChanged ? itsAMap : itsTMap);
 
-		switch (aType) {
+		switch (aType) 
+		{
 			case NOMINAL : {
 				// all possible attribute values are stored in an (ordered) Map
 				Iterator<String> anIterator = aColumn.getDomain().iterator();
@@ -260,15 +265,10 @@ public class HistogramWindow extends JFrame implements ActionListener, ChangeLis
 		// TODO create GUI toggle
 		boolean showLegend = aDataset.getRowCount() < TARGET_VALUES_MAX;
 
-		final JFreeChart aChart =
-			ChartFactory.createStackedBarChart(null, // no title
-												null, // no x-axis label
-												"", // no y-axis label
-												aDataset,
-												PlotOrientation.VERTICAL,
-												showLegend,
-												true,
-												false);
+		final JFreeChart aChart = ChartFactory.createStackedBarChart(null, // no title
+										null, // no x-axis label
+										"", // no y-axis label
+										aDataset, PlotOrientation.VERTICAL, showLegend,	true, false);
 
 		final CategoryPlot aPlot = aChart.getCategoryPlot();
 		aPlot.setBackgroundPaint(Color.WHITE);
@@ -295,7 +295,7 @@ public class HistogramWindow extends JFrame implements ActionListener, ChangeLis
 			aPlot.getDomainAxis().setTickLabelsVisible(false);
 			//aDomainAxis.setCategoryLabelPositions(CategoryLabelPositions.UP_90);
 			aPlot.getRangeAxis().setTickLabelFont(SMALL_FONT);
-	}
+		}
 
 		itsChartPanel.setPreferredSize(new Dimension(aNrColumns*20, 450));
 		itsChartPanel.setChart(aChart);
@@ -311,10 +311,13 @@ public class HistogramWindow extends JFrame implements ActionListener, ChangeLis
 		int[][] counts = new int[itsAMap.size()][itsTMap.size()];
 
 		// 16 possibilities (NOMINAL, ORDINAL, NUMERIC, BINARY)^2
-		switch (a.getType()) {
+		switch (a.getType()) 
+		{
 			// Attribute NOMINAL
-			case NOMINAL : {
-				switch (t.getType()) {
+			case NOMINAL : 
+			{
+				switch (t.getType()) 
+				{
 					case NOMINAL : {
 						// loops over all values in Attribute Column
 						// for each possible Attribute value the corresponding Target value
@@ -329,14 +332,17 @@ public class HistogramWindow extends JFrame implements ActionListener, ChangeLis
 						unknownAttributeType("createDataset", t.getType());
 						break;
 					}
-					case NUMERIC : {
+					case NUMERIC : 
+					{
 						Float[] tBins = itsTMap.keySet().toArray(new Float[0]);
 
-						for (int i = 0, j = a.size(); i < j; ++i) {
-							// binarySearch could be more efficient
-							int ti = Arrays.binarySearch(tBins, t.getFloat(i));
-							++counts[itsAMap.get(a.getNominal(i))][ti < 0 ? -ti-1: ti];
-						}
+						for (int i = 0, j = a.size(); i < j; ++i)
+							if (!a.getMissing(i) && !t.getMissing(i))
+							{
+								// binarySearch could be more efficient
+								int ti = Arrays.binarySearch(tBins, t.getFloat(i));
+								++counts[itsAMap.get(a.getNominal(i))][ti < 0 ? -ti-1: ti];
+							}
 						break;
 					}
 					case BINARY : {
@@ -353,34 +359,43 @@ public class HistogramWindow extends JFrame implements ActionListener, ChangeLis
 				break;
 			}
 			// Attribute ORDINAL
-			case ORDINAL : {
+			case ORDINAL : 
+			{
 				unknownAttributeType("createDataset", a.getType());
 				break;
 			}
 			// Attribute NUMERIC
-			case NUMERIC : {
+			case NUMERIC : 
+			{
 				Float[] aBins = itsAMap.keySet().toArray(new Float[0]);
 
-				switch (t.getType()) {
-					case NOMINAL : {
-						for (int i = 0, j = a.size(); i < j; ++i) {
-							int ai = Arrays.binarySearch(aBins, a.getFloat(i));
-							++counts[ai < 0 ? -ai-1: ai][itsTMap.get(t.getNominal(i))];
-						}
+				switch (t.getType()) 
+				{
+					case NOMINAL : 
+					{
+						for (int i = 0, j = a.size(); i < j; ++i) 
+							if (!a.getMissing(i) && !t.getMissing(i))
+							{
+								int ai = Arrays.binarySearch(aBins, a.getFloat(i));
+								++counts[ai < 0 ? -ai-1: ai][itsTMap.get(t.getNominal(i))];
+							}
 						break;
 					}
 					case ORDINAL : {
 						unknownAttributeType("createDataset", t.getType());
 						break;
 					}
-					case NUMERIC : {
+					case NUMERIC : 
+					{
 						Float[] tBins = itsTMap.keySet().toArray(new Float[0]);
 
-						for (int i = 0, j = a.size(); i < j; ++i) {
-							int ai = Arrays.binarySearch(aBins, a.getFloat(i));
-							int ti = Arrays.binarySearch(tBins, t.getFloat(i));
-							++counts[ai < 0 ? -ai-1: ai][ti < 0 ? -ti-1: ti];
-						}
+						for (int i = 0, j = a.size(); i < j; ++i)
+							if (!a.getMissing(i) && !t.getMissing(i))
+							{
+								int ai = Arrays.binarySearch(aBins, a.getFloat(i));
+								int ti = Arrays.binarySearch(tBins, t.getFloat(i));
+								++counts[ai < 0 ? -ai-1: ai][ti < 0 ? -ti-1: ti];
+							}
 						break;
 					}
 					case BINARY : {
@@ -398,8 +413,10 @@ public class HistogramWindow extends JFrame implements ActionListener, ChangeLis
 				break;
 			}
 			// Attribute BINARY
-			case BINARY : {
-				switch (t.getType()) {
+			case BINARY : 
+			{
+				switch (t.getType()) 
+				{
 					case NOMINAL : {
 						for (int i = 0, j = a.size(); i < j; ++i)
 							++counts[a.getBinary(i) ? 1 : 0][itsTMap.get(t.getNominal(i))];
@@ -444,157 +461,55 @@ public class HistogramWindow extends JFrame implements ActionListener, ChangeLis
 				if (ae.getValue() < itsAMap.size() && te.getValue() < itsTMap.size())
 					dataset.addValue(counts[ae.getValue()][te.getValue()], te.getKey().toString(), ae.getKey().toString());
 				else
-					System.out.println("data outside matrix! ignoring");
+				{
+					System.out.println("data outside matrix! " + ae.getValue());
+					System.out.println("data outside matrix! " + te.getValue());
+					Thread.dumpStack();
+				}
 			}
 
 		return dataset;
 	}
 
-	private void unknownAttributeType(String theSource, AttributeType theType) {
-		Log.logCommandLine(String.format("%s.%s(), unknown AttributeType: '%s'",
-											getClass().getSimpleName(),
-											theSource,
-											theType));
+	private void unknownAttributeType(String theSource, AttributeType theType) 
+	{
+		Log.logCommandLine(String.format("%s.%s(), unknown AttributeType: '%s'", getClass().getSimpleName(), theSource,	theType));
 	}
 
 	// NOTE not save for overflow/ NaN
 	private void safariiHisto(Column theColumn, Map<? super Object, Integer> theMap)
 	{
 		// assumes only 2 maps exist (Attribute and Target map)
-		int aNrBins = (theMap == itsAMap ? itsAttributeBinsSlider.getValue() :
-											itsTargetBinsSlider.getValue());
+		int aNrBins = (theMap == itsAMap ? itsAttributeBinsSlider.getValue() : itsTargetBinsSlider.getValue());
 
 		float aSum = 0.0f;
+		int aCount = 0;
 		for (int i = 0, j = theColumn.size(); i < j; ++i)
-			aSum += theColumn.getFloat(i);
+			if (!theColumn. getMissing(i))
+			{
+				aSum += theColumn.getFloat(i);
+				aCount++;
+			}
+		float anAvg = (aCount > 0) ? aSum/aCount : 0;
 
-		float anAvg = aSum / theColumn.size();
 		float aStDev = 0.0f;
 		for (int i = 0, j = theColumn.size(); i < j; ++i)
-			aStDev += Math.pow(anAvg-theColumn.getFloat(i), 2.0);
+			if (!theColumn. getMissing(i))
+				aStDev += Math.pow(anAvg-theColumn.getFloat(i), 2.0);
 		aStDev = (float) Math.sqrt(aStDev);
 
 		float aStart = Math.max(anAvg - 2.3f * aStDev, theColumn.getMin());
 		float aStop = Math.min(anAvg + 2.3f * aStDev, theColumn.getMax());
+
 		if (aStart == aStop)
 		{
 			aStart--;
 			aStop++;
 		}
-		float aValue = aStart;
 		float aStep = aNrBins > 2 ? (aStop - aStart)/(aNrBins-2) : 0.0f;
 
 		for(int i = 0; i < aNrBins-1; ++i)
-			theMap.put(aValue + i*aStep, i);
+			theMap.put(aStart + i*aStep, i);
 		theMap.put(Float.POSITIVE_INFINITY, aNrBins-1);
-	}
-
-	/*
-	 * CODE BELOW IS OBSOLETE NOW
-	 */
-
-	// TODO binarySearch also works on Object[], change aBins/tBins to Float[]
-	@Deprecated
-	private Float[] createBins(Map<?, Integer> theMap)
-	{
-		return theMap.keySet().toArray(new Float[0]);
-/*
-		float[] aBins = new float[theMap.size()];
-		Iterator<? super Object> iter = (Iterator<? super Object>) theMap.keySet().iterator();
-		for (int i = 0, j = theMap.size(); i < j; ++i)
-			aBins[i] = (Float) iter.next();
-
-		return aBins;
- */
-	}
-
-	// alternative could be a targetValues Map for each attributeValue
-	// Map<AttributeValues, Map<TargetValues, index>> but it would be bigger
-	//
-	// TODO for numeric attributes all values are now used as separate value
-	// should use bins
-	@Deprecated
-	private CategoryDataset createDatasetObsolete()
-	{
-		Column a = itsTable.getColumn(itsAttributeColumnsBox.getSelectedIndex());
-		Column t = itsTable.getColumn(itsTargetColumnsBox.getSelectedIndex());
-
-		// although only one map needs to be updated at selection change
-		// it would require permanent storage of both aMap and tMap
-
-		// all possible attribute values are stored in an (ordered) Map
-		Map<String, Integer> aMap = new LinkedHashMap<String, Integer>();
-		Iterator<String> anIterator = a.getDomain().iterator();
-		int idx = -1;
-		while (anIterator.hasNext())
-			aMap.put(anIterator.next(), ++idx);
-
-		// all possible target values are stored in an (ordered) Map
-		Map<String, Integer> tMap = new LinkedHashMap<String, Integer>();
-		anIterator = t.getDomain().iterator();
-		idx = -1;
-		while (anIterator.hasNext())
-			tMap.put(anIterator.next(), ++idx);
-
-		int[][] counts = new int[aMap.size()][tMap.size()];
-		// loops over all values in Attribute Column
-		// for each possible Attribute value the corresponding Target value
-		// count is incremented
-		// uses aMap and tMap for fast indexing (O(1))
-		// (compared to linear array/ TreeSet lookups (O(n)))
-		for (int i = 0, j = a.size(); i < j; ++i)
-			++counts[aMap.get(a.getString(i))][tMap.get(t.getString(i))];
-
-		// TODO for testing only
-		if (a.getType() == AttributeType.NUMERIC && t.getType() == AttributeType.NUMERIC)
-			createDatasetForNumeric();
-		System.out.print(tMap.keySet().toString());
-		System.out.println("\t< target values/ attribute values v");
-		String[] sa = aMap.keySet().toArray(new String[0]);
-		int i = -1;
-		for (int[] ia : counts)
-			System.out.println(Arrays.toString(ia) + "\t" + sa[++i]);
-
-		DefaultCategoryDataset dataset = new DefaultCategoryDataset();
-		for (Entry<String, Integer> ae : aMap.entrySet())
-			for (Entry<String, Integer> te : tMap.entrySet())
-				dataset.addValue(counts[ae.getValue()][te.getValue()], te.getKey(), ae.getKey());
-
-		return dataset;
-	}
-
-	private void createDatasetForNumeric() {
-		Column a = itsTable.getColumn(itsAttributeColumnsBox.getSelectedIndex());
-		Column t = itsTable.getColumn(itsTargetColumnsBox.getSelectedIndex());
-
-		int DEFAULT_NR_BINS = 8;
-		double min = a.getMin();
-		double range = (a.getMax()-min) / (DEFAULT_NR_BINS-1);
-
-		double[] aBins = new double[DEFAULT_NR_BINS];
-		for (int i = 0, j = DEFAULT_NR_BINS; i < j; ++i)
-			aBins[i] = min + (range*i);
-
-		min = t.getMin();
-		range = (t.getMax()-min) / (DEFAULT_NR_BINS-1);
-		double[] tBins = new double[DEFAULT_NR_BINS];
-		for (int i = 0, j = DEFAULT_NR_BINS; i < j; ++i)
-			tBins[i] = min + (range*i);
-
-		int[][] counts = new int[DEFAULT_NR_BINS][DEFAULT_NR_BINS];
-		for (int i = 0, j = a.size(); i < j; ++i) {
-			int ai = Arrays.binarySearch(aBins, a.getFloat(i));
-			int ti = Arrays.binarySearch(tBins, t.getFloat(i));
-			++counts[ai < 0 ? -ai-1: ai][ti < 0 ? -ti-1: ti];
-		}
-
-		// TODO for testing only
-		System.out.println("***** BOTH NUMERIC *****");
-		System.out.print(Arrays.toString(tBins));
-		System.out.println("\t< target values/ attribute values v");
-		int i = -1;
-		for (int[] ia : counts)
-			System.out.println(Arrays.toString(ia) + "\t" + aBins[++i]);
-		System.out.println("***** END BOTH NUMERIC *****");
 	}
 }

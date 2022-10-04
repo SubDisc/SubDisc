@@ -2426,7 +2426,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 				int next = (int) (aParentCoverage - aBinSize); //place pointer at last bin boundary
 				int cover = (int) aParentCoverage;
 				int tp = aParentPositives;
-				for (int i=0; i<aCounts.length; i++) //loop over all bins
+				for (int i=0; i<aCounts.length; i++) //loop over numeric domain
 				{
 					if (isTimeToStop())
 						break;
@@ -2436,7 +2436,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 					if (aCount == 0)
 						continue;
 
-					if (cover <= next) //passed a new bin boundary
+					if (cover <= next) //passed a new bin boundary?
 					{
 						Condition aCondition = new Condition(theConditionBase, aColumn.getSortedValue(i), i);
 						evaluateCandidate(theParent, aCondition, cover, tp, isAllStrategy, aBestSubgroups);
