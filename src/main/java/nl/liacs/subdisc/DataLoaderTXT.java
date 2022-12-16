@@ -5,10 +5,7 @@ import java.util.*;
 
 public class DataLoaderTXT implements FileLoaderInterface
 {
-	// should be made available to all loaders (through FileLoaderInterface)
-//	private static final String[] DELIMITERS = { "\\s*\t\\s*", "\\s*,\\s*", "\\s*;\\s*" }; //not sure why the whitespace should be part of the delimiter. Works fine (better actually) without.
 	private static final char[] DELIMITERS = { '\t', ',', ';' };
-//	private static final String[] CLEAN_DELIMITERS = { "\t", ",", ";" };
 
 	private Table itsTable = null;
 	private int itsDelimiter = 0;
@@ -463,8 +460,7 @@ public class DataLoaderTXT implements FileLoaderInterface
 
 		for (int i = 0, j = aHeaders.length; i < j; ++i)
 		{
-			String s = aData[i];
-			removeQuotes(s);
+			String s = removeQuotes(aData[i]);
 
 			// is it binary (or empty String)
 			if (AttributeType.isValidBinaryValue(s) || isEmptyString(s))
@@ -575,10 +571,4 @@ public class DataLoaderTXT implements FileLoaderInterface
 	{
 		return Character.toString(DELIMITERS[itsDelimiter]);
 	}
-
-	
-//	public String getCleanDelimiter()
-//	{
-//		return CLEAN_DELIMITERS[itsDelimiter];
-//	}
 }
