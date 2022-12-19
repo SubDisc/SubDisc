@@ -144,7 +144,6 @@ public class HistogramWindow extends JFrame implements ActionListener, ChangeLis
 		aTable.put(Integer.valueOf(24), new JLabel(String.valueOf(24)));
 		aTable.put(Integer.valueOf(32), new JLabel(String.valueOf(32)));
 		theSlider.setLabelTable(aTable);
-		theSlider.setFont(GUI.DEFAULT_BUTTON_FONT);
 		theSlider.addChangeListener(this);
 	}
 

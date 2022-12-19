@@ -77,7 +77,6 @@ public class BasicJListWindow extends JDialog implements ActionListener
 		// feedback label
 		Box aFeedBackBox = Box.createHorizontalBox();
 		itsFeedBackLabel.setText(getFeedBackText());
-		itsFeedBackLabel.setFont(GUI.DEFAULT_TEXT_FONT);
 		aFeedBackBox.add(itsFeedBackLabel);
 		aFeedBackBox.add(Box.createHorizontalGlue());
 		getContentPane().add(aFeedBackBox, BorderLayout.SOUTH);

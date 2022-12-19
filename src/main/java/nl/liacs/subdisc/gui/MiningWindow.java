@@ -12,6 +12,8 @@ import java.util.List;
 import javax.swing.*;
 import javax.swing.UIManager.LookAndFeelInfo;
 
+import com.formdev.flatlaf.*;
+
 import nl.liacs.subdisc.*;
 import nl.liacs.subdisc.ConditionListBuilder.ConditionList;
 import nl.liacs.subdisc.FileHandler.Action;
@@ -72,7 +74,7 @@ public class MiningWindow extends JFrame implements ActionListener
 	private JMenuItem jMenuItemRemoveEnrichmentSource;
 	// Menu About
 	private JMenu jMenuAbout;
-	private JMenuItem jMenuItemAboutCortana;
+	private JMenuItem jMenuItemAboutSubDisc;
 	private JMenu jMenuGui;	// for GUI debugging only, DO NOT REMOVE
 	private JMenuItem jMenuItemExit;
 
@@ -182,11 +184,21 @@ public class MiningWindow extends JFrame implements ActionListener
 
 	public MiningWindow()
 	{
+		FlatIntelliJLaf.setup();
+		UIManager.put("TextComponent.arc", 5);
+		UIManager.put("Button.arc", 5);
+		UIManager.put("Component.arrowType", "chevron");
+		System.setProperty("apple.laf.useScreenMenuBar", "true");
 		initMiningWindow();
 	}
 
 	public MiningWindow(Table theTable)
 	{
+		FlatIntelliJLaf.setup();
+		UIManager.put("TextComponent.arc", 5);
+		UIManager.put("Button.arc", 5);
+		UIManager.put("Component.arrowType", "chevron");
+		System.setProperty("apple.laf.useScreenMenuBar", "true");
 		if (theTable != null)
 		{
 			itsTable = theTable;
@@ -202,6 +214,11 @@ public class MiningWindow extends JFrame implements ActionListener
 	// for example when loading depth_first, search_width should be disabled
 	public MiningWindow(Table theTable, SearchParameters theSearchParameters)
 	{
+		FlatIntelliJLaf.setup();
+		UIManager.put("TextComponent.arc", 5);
+		UIManager.put("Button.arc", 5);
+		UIManager.put("Component.arrowType", "chevron");
+		System.setProperty("apple.laf.useScreenMenuBar", "true");
 		if (theTable != null)
 		{
 			itsTable = theTable;
@@ -305,8 +322,8 @@ public class MiningWindow extends JFrame implements ActionListener
 		jMenuAbout = initMenu(STD.ABOUT);
 		jMenuAbout.setMnemonic(STD.ABOUT.MNEMONIC);
 
-		jMenuItemAboutCortana = initMenuItem(STD.ABOUT_CORTANA);
-		jMenuAbout.add(jMenuItemAboutCortana);
+		jMenuItemAboutSubDisc = initMenuItem(STD.ABOUT_SUBDISC);
+		jMenuAbout.add(jMenuItemAboutSubDisc);
 
 		jMiningWindowMenuBar.add(jMenuAbout);
 
@@ -599,7 +616,7 @@ public class MiningWindow extends JFrame implements ActionListener
 
 	public void initTitle()
 	{
-		setTitle("CORTANA: Subgroup Discovery Tool");
+		setTitle("SubDisc: Subgroup Discovery Tool");
 	}
 
 	// only called when Table is present, so using itsTotalCount is safe
@@ -1370,13 +1387,10 @@ public class MiningWindow extends JFrame implements ActionListener
 		});
 	}
 
-	// use "Cortana: Subgroup Discovery Tool r????" to indicate revision
-	private void jMenuItemAboutCortanaActionPerformed()
+	// use "SubDisc: Subgroup Discovery Tool r????" to indicate revision
+	private void jMenuItemAboutActionPerformed()
 	{
-		JOptionPane.showMessageDialog(this,
-						"Cortana: Subgroup Discovery Tool",
-						"About Cortana",
-						JOptionPane.INFORMATION_MESSAGE);
+		JOptionPane.showMessageDialog(this, "SubDisc: Subgroup Discovery Tool r1145\n\n This tool was previously known as Cortana.", "About SubDisc", JOptionPane.INFORMATION_MESSAGE);
 	}
 
 	/* DATASET BUTTONS */
@@ -2193,7 +2207,7 @@ public class MiningWindow extends JFrame implements ActionListener
 		for (int b : half_interval_bins)
 			jButtonDiscretiseActionPerformed(b);
 
-		// Vikamine default is 3 bins, Cortana default is 8 bins
+		// Vikamine default is 3 bins, SubDisc default is 8 bins
 		// NOTE with minimum support = 10%, more than 10 bins is useless
 		int[] full_interval_bins = { 2, 3, 4, 5, 6, 7, 8, 9, 10 };
 		for (int b : full_interval_bins)
@@ -2496,7 +2510,7 @@ boundsList.add(new Interval(f, Float.POSITIVE_INFINITY));
 		itsSearchParameters.setNrThreads(getNrThreads());
 	}
 
-	/* FIELD METHODS OF CORTANA COMPONENTS */
+	/* FIELD METHODS OF SubDisc COMPONENTS */
 	// all setters take a String argument for now
 	// FIXME remove all (String) casts, use String.valueOf() or .toString()
 
@@ -2710,7 +2724,7 @@ boundsList.add(new Interval(f, Float.POSITIVE_INFINITY));
 		ADD_CUSTOM_DOMAIN(	"Add Custom Domain",	KeyEvent.VK_U,	false),
 		REMOVE_ENRICHMENT_SOURCE("Remove Enrichment Source", KeyEvent.VK_R, false),
 		ABOUT(			"About",		KeyEvent.VK_A,	false),
-		ABOUT_CORTANA(		"Cortana",		KeyEvent.VK_I,	true),
+		ABOUT_SUBDISC(		"SubDisc",		KeyEvent.VK_I,	true),
 		// TARGET CONCEPT
 		SECONDARY_TERTIARY_TARGETS("Secondary/Tertiary Targets", KeyEvent.VK_Y, false),
 		TARGETS_AND_SETTINGS(	"Targets and Settings",	KeyEvent.VK_T,	false),
@@ -2780,8 +2794,8 @@ boundsList.add(new Interval(f, Float.POSITIVE_INFINITY));
 		else if (STD.REMOVE_ENRICHMENT_SOURCE.GUI_TEXT.equals(aCommand))
 			jMenuItemRemoveEnrichmentSourceActionPerformed();
 
-		else if (STD.ABOUT_CORTANA.GUI_TEXT.equals(aCommand))
-			jMenuItemAboutCortanaActionPerformed();
+		else if (STD.ABOUT_SUBDISC.GUI_TEXT.equals(aCommand))
+			jMenuItemAboutActionPerformed();
 
 		else if (TARGET_TYPE_BOX.equals(aCommand))
 			jComboBoxTargetTypeActionPerformed();

@@ -17,18 +17,13 @@ import javax.swing.border.*;
 public class GUI
 {
 	public static final Color RED = new Color(255, 150, 166);
-	// TODO remove DEFAULT_
-	public static final Font DEFAULT_TEXT_FONT = new Font("Dialog", 0, 11);
-	public static final Font DEFAULT_BUTTON_FONT = new Font("Dialog", 1, 11);
 	public static final Dimension TEXT_FIELD_DEFAULT_SIZE = new Dimension(86, 22);
 	public static final Dimension WINDOW_DEFAULT_SIZE = new Dimension(1000, 600);
 	public static final Dimension ROC_WINDOW_DEFAULT_SIZE = new Dimension(600, 600);
 	public static final Dimension MATRIX_WINDOW_DEFAULT_SIZE = new Dimension(900, 400);
 	// button
-	public static final Dimension BUTTON_DEFAULT_SIZE = new Dimension(120, 25);
-	public static final Dimension BUTTON_MINIMUM_SIZE = new Dimension(75, 25);
+	public static final Dimension BUTTON_DEFAULT_SIZE = new Dimension(160, 25);
 	public static final Dimension BUTTON_MEDIUM_SIZE = new Dimension(100, 25);
-	public static final Dimension BUTTON_MAXIMUM_SIZE = new Dimension(120, 25);
 
 	public enum Event
 	{
@@ -44,10 +39,6 @@ public class GUI
 	{
 		JButton aButton = new JButton();
 		aButton.setPreferredSize(BUTTON_DEFAULT_SIZE);
-		aButton.setMinimumSize(BUTTON_MINIMUM_SIZE);
-		aButton.setMaximumSize(BUTTON_MAXIMUM_SIZE);
-		aButton.setFont(DEFAULT_BUTTON_FONT);
-		aButton.setBorder(new BevelBorder(0));
 		aButton.setText(theName);
 		aButton.setActionCommand(theActionCommand);
 		aButton.addActionListener(theClass);
@@ -74,7 +65,6 @@ public class GUI
 	public static JCheckBox buildCheckBox(String theName, ItemListener theClass)
 	{
 		JCheckBox aCheckBox = new JCheckBox(theName);
-//		aCheckBox.setMnemonic(theMnemonic);
 		aCheckBox.addItemListener(theClass);
 		return aCheckBox;
 	}
@@ -84,7 +74,6 @@ public class GUI
 		JComboBox<String> aComboBox = new JComboBox<>();
 		aComboBox.setPreferredSize(TEXT_FIELD_DEFAULT_SIZE);
 		aComboBox.setMinimumSize(TEXT_FIELD_DEFAULT_SIZE);
-		aComboBox.setFont(DEFAULT_TEXT_FONT);
 
 		for (String s : theItems)
 			aComboBox.addItem(s);
@@ -99,7 +88,6 @@ public class GUI
 		JComboBox<String> aComboBox = new JComboBox<>();
 		aComboBox.setPreferredSize(TEXT_FIELD_DEFAULT_SIZE);
 		aComboBox.setMinimumSize(TEXT_FIELD_DEFAULT_SIZE);
-		aComboBox.setFont(DEFAULT_TEXT_FONT);
 
 		for (String s : theItems)
 			aComboBox.addItem(s);
@@ -111,7 +99,6 @@ public class GUI
 	public static JLabel buildLabel(String theName, Component theComponent)
 	{
 		JLabel aJLable = new JLabel(theName);
-		aJLable.setFont(DEFAULT_TEXT_FONT);
 		aJLable.setLabelFor(theComponent);
 		return aJLable;
 	}
@@ -119,7 +106,6 @@ public class GUI
 	public static JMenuItem buildMenuItem(String theText, int theMnemonic, KeyStroke theAccelerator, ActionListener theClass)
 	{
 		JMenuItem aMenuItem = new JMenuItem(theText, theMnemonic);
-		aMenuItem.setFont(GUI.DEFAULT_TEXT_FONT);
 		aMenuItem.setAccelerator(theAccelerator);
 		aMenuItem.addActionListener(theClass);
 		return aMenuItem;
@@ -130,7 +116,6 @@ public class GUI
 		JTextField aTextField = new JTextField();
 		aTextField.setPreferredSize(TEXT_FIELD_DEFAULT_SIZE);
 		aTextField.setMinimumSize(TEXT_FIELD_DEFAULT_SIZE);
-		aTextField.setFont(GUI.DEFAULT_TEXT_FONT);
 		aTextField.setHorizontalAlignment(SwingConstants.RIGHT);
 		aTextField.setText(theText);
 		return aTextField;
@@ -139,7 +124,7 @@ public class GUI
 	// no need for null check
 	public static Border buildBorder(String theTitle)
 	{
-		return new TitledBorder(new EtchedBorder(), theTitle, 4, 2, DEFAULT_BUTTON_FONT);
+		return new TitledBorder(new EtchedBorder(), theTitle, 4, 2);
 	}
 
 	// on window opening focus on the specified JComponent
