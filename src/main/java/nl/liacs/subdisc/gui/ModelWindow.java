@@ -15,12 +15,13 @@ import org.jfree.chart.renderer.xy.*;
 import org.jfree.chart.title.*;
 import org.jfree.data.xy.*;
 
-public class ModelWindow extends JFrame implements ActionListener
+public class ModelWindow extends JFrame implements ActionListener, ItemListener
 {
 	private static final long serialVersionUID = 1L;
 	static final String BASE_MODEL_TEXT = "Base Model (all data)";
 
 	private JScrollPane itsJScrollPaneCenter = new JScrollPane();
+	private JCheckBox itsRelative;
 	private Table itsTable;
 	private Column itsXColumn;
 	private Column itsYColumn;
@@ -110,6 +111,8 @@ public class ModelWindow extends JFrame implements ActionListener
 //		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 //		setVisible(true);
 //	}
+
+
 	// FIXME MM same as above --- but with temporary histogram hacked in
 	public ModelWindow(Column theDomain, ProbabilityDensityFunction theDatasetPDF, ProbabilityDensityFunction theSubgroupPDF, String theTitle, boolean isScapeSetting)
 	{
@@ -134,8 +137,8 @@ public class ModelWindow extends JFrame implements ActionListener
 			aDatasetSeries.add(theDatasetPDF.getMiddle(i), theDatasetPDF.getDensity(i));
 			if (addSubgroup)
 			{
-//				float aScale = theSubgroupPDF.getAbsoluteCount()/(float)theDatasetPDF.getAbsoluteCount();
-				float aScale = 1;
+				float aScale = theSubgroupPDF.getAbsoluteCount()/(float)theDatasetPDF.getAbsoluteCount();
+//				float aScale = 1;
 				aSubgroupSeries.add(theSubgroupPDF.getMiddle(i), theSubgroupPDF.getDensity(i)*aScale);
 			}
 		}
@@ -335,6 +338,8 @@ public class ModelWindow extends JFrame implements ActionListener
 
 		if (itsSample != null)
 			aPanel.add(GUI.buildButton("Resample", 'R', "resample", this));
+		itsRelative = GUI.buildCheckBox("relative", this);
+		aPanel.add(itsRelative);
 		aPanel.add(GUI.buildButton("Close", 'C', "close", this));
 		getContentPane().add(itsJScrollPaneCenter, BorderLayout.CENTER);
 		getContentPane().add(aPanel, BorderLayout.SOUTH);
@@ -351,5 +356,12 @@ public class ModelWindow extends JFrame implements ActionListener
 			XYSeriesCollection aDataSet = getDataPoints();
 			itsChart.getXYPlot().setDataset(aDataSet);
 		}
+	}
+
+	@Override
+	public void itemStateChanged(ItemEvent e)
+	{
+		if (e.getSource() == itsRelative)
+			System.out.println("Checkbox " + (e.getStateChange()==1?"checked":"unchecked")); 
 	}
 }

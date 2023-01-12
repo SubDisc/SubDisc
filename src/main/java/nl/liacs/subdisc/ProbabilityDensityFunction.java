@@ -33,6 +33,7 @@ public class ProbabilityDensityFunction
 		Log.logCommandLine("Max = " + itsMax);
 		Log.logCommandLine("BinWidth = " + itsBinWidth);
 		itsAbsoluteCount = itsData.size();
+		Log.logCommandLine("AbsoluteCount = " + itsAbsoluteCount);
 		float anIncrement = 1.0f / itsAbsoluteCount;
 		for (int i=0; i<itsAbsoluteCount; i++)
 			if (!itsData.getMissing(i))
@@ -51,6 +52,7 @@ public class ProbabilityDensityFunction
 		itsMax = thePDF.itsMax;
 		itsBinWidth = thePDF.itsBinWidth;
 		itsAbsoluteCount = theMembers.cardinality();
+		Log.logCommandLine("AbsoluteCount = " + itsAbsoluteCount);
 
 		float anIncrement = 1.0f / itsAbsoluteCount;
 		for (int i = theMembers.nextSetBit(0); i >= 0; i = theMembers.nextSetBit(i + 1))
@@ -95,10 +97,8 @@ public class ProbabilityDensityFunction
 		Log.logCommandLine("");
 	}
 
-	public int size()
-	{
-		return itsNrBins;
-	}
+	public int size() { return itsNrBins; }
+	public int getAbsoluteCount() { return itsAbsoluteCount;}
 
 	private static final double CUTOFF = 4.0;	// for now
 	public static double[] getGaussianDistribution(double theSigma)
