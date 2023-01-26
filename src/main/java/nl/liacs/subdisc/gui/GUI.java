@@ -69,6 +69,13 @@ public class GUI
 		return aCheckBox;
 	}
 
+	public static JCheckBox buildCheckBox(String theName, ItemListener theClass, boolean isSelected)
+	{
+		JCheckBox aCheckBox = new JCheckBox(theName, isSelected);
+		aCheckBox.addItemListener(theClass);
+		return aCheckBox;
+	}
+
 	public static JComboBox<String> buildComboBox(String[] theItems, String theActionCommand, ActionListener theClass)
 	{
 		JComboBox<String> aComboBox = new JComboBox<>();

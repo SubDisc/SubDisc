@@ -27,6 +27,8 @@ public class ModelWindow extends JFrame implements ActionListener, ItemListener
 	private Column itsYColumn;
 	private RegressionMeasure itsRM;
 	private Subgroup itsSubgroup;
+	private ProbabilityDensityFunction itsDatasetPDF;
+	private ProbabilityDensityFunction itsSubgroupPDF;
 	private JFreeChart itsChart = null;
 	// FIXME review use - itSample is only used for SINGLE_NUMERIC (sometimes)
 	private BitSet itsSample = null;
@@ -116,9 +118,11 @@ public class ModelWindow extends JFrame implements ActionListener, ItemListener
 	// FIXME MM same as above --- but with temporary histogram hacked in
 	public ModelWindow(Column theDomain, ProbabilityDensityFunction theDatasetPDF, ProbabilityDensityFunction theSubgroupPDF, String theTitle, boolean isScapeSetting)
 	{
-		initComponents();
-
 		final boolean addSubgroup = (theSubgroupPDF != null);
+		initComponents(addSubgroup);
+
+		itsDatasetPDF = theDatasetPDF;
+		itsSubgroupPDF = theSubgroupPDF;
 
 		XYSeries aDatasetSeries;
 		XYSeries aSubgroupSeries;
@@ -151,10 +155,9 @@ public class ModelWindow extends JFrame implements ActionListener, ItemListener
 		else
 			aDataCollection = new XYSeriesCollection(aDatasetSeries);
 
-		JFreeChart aChart =
-			ChartFactory.createXYLineChart("", theDomain.getName(), "density", aDataCollection, PlotOrientation.VERTICAL, false, true, false);
-		aChart.setAntiAlias(true);
-		XYPlot aPlot = aChart.getXYPlot();
+		itsChart = ChartFactory.createXYLineChart("", theDomain.getName(), "density", aDataCollection, PlotOrientation.VERTICAL, false, true, false);
+		itsChart.setAntiAlias(true);
+		XYPlot aPlot = itsChart.getXYPlot();
 		aPlot.setBackgroundPaint(Color.white);
 		aPlot.setDomainGridlinePaint(Color.gray);
 		aPlot.setRangeGridlinePaint(Color.gray);
@@ -174,7 +177,7 @@ public class ModelWindow extends JFrame implements ActionListener, ItemListener
 			aPlot.getRenderer().setSeriesStroke(1, new BasicStroke(aSubgroupWidth));
 			aPlot.getRenderer().setSeriesPaint(0, aDatasetPaint); //subgroup
 			aPlot.getRenderer().setSeriesStroke(0, new BasicStroke(aDatasetWidth)); //subgroup
-			aChart.addLegend(new LegendTitle(aPlot));
+			itsChart.addLegend(new LegendTitle(aPlot));
 		}
 		else
 		{
@@ -182,7 +185,7 @@ public class ModelWindow extends JFrame implements ActionListener, ItemListener
 			aPlot.getRenderer().setSeriesStroke(0, new BasicStroke(aSubgroupWidth));
 		}
 
-		itsJScrollPaneCenter.setViewportView(new ChartPanel(aChart, 400, 200, 400, 200, 1000, 800, true, true, true, true, true, true));
+		itsJScrollPaneCenter.setViewportView(new ChartPanel(itsChart, 400, 200, 400, 200, 1000, 800, true, true, true, true, true, true));
 
 		setTitle(theTitle + ": Numeric Distribution");
 		setIconImage(MiningWindow.ICON);
@@ -208,7 +211,7 @@ public class ModelWindow extends JFrame implements ActionListener, ItemListener
 		if (aSize > SAMPLE_SIZE)
 			itsSample = theTable.getRandomBitSet(SAMPLE_SIZE);
 
-		initComponents();
+		initComponents(false);
 		final boolean isRegression = (theRM != null);
 		final boolean forSubgroup = (theSubgroup != null);
 
@@ -318,7 +321,7 @@ public class ModelWindow extends JFrame implements ActionListener, ItemListener
 
 	public ModelWindow(DAG theDAG, int theDAGWidth, int theDAGHeight)
 	{
-		initComponents();
+		initComponents(false);
 		DAGView aDAGView = new DAGView(theDAG);
 		aDAGView.setDAGArea(theDAGWidth, theDAGHeight);
 		aDAGView.drawDAG();
@@ -332,14 +335,17 @@ public class ModelWindow extends JFrame implements ActionListener, ItemListener
 		setVisible(true);
 	}
 
-	private void initComponents()
+	private void initComponents(boolean hasCheckbox)
 	{
 		JPanel aPanel = new JPanel();
 
 		if (itsSample != null)
 			aPanel.add(GUI.buildButton("Resample", 'R', "resample", this));
-		itsRelative = GUI.buildCheckBox("relative", this);
-		aPanel.add(itsRelative);
+		if (hasCheckbox)
+		{
+			itsRelative = GUI.buildCheckBox("relative", this, true);
+			aPanel.add(itsRelative);
+		}
 		aPanel.add(GUI.buildButton("Close", 'C', "close", this));
 		getContentPane().add(itsJScrollPaneCenter, BorderLayout.CENTER);
 		getContentPane().add(aPanel, BorderLayout.SOUTH);
@@ -361,7 +367,26 @@ public class ModelWindow extends JFrame implements ActionListener, ItemListener
 	@Override
 	public void itemStateChanged(ItemEvent e)
 	{
-		if (e.getSource() == itsRelative)
-			System.out.println("Checkbox " + (e.getStateChange()==1?"checked":"unchecked")); 
+		if (e.getSource() != itsRelative)
+			return;
+
+		XYSeries aDatasetSeries = new XYSeries("data");
+		XYSeries aSubgroupSeries = new XYSeries("subgroup");
+		for (int i = 0, j = itsDatasetPDF.size(); i < j; ++i)
+		{
+			aDatasetSeries.add(itsDatasetPDF.getMiddle(i), itsDatasetPDF.getDensity(i));
+			float aScale = 1;
+			if (e.getStateChange() == 1)
+				aScale = itsSubgroupPDF.getAbsoluteCount()/(float)itsDatasetPDF.getAbsoluteCount();
+			aSubgroupSeries.add(itsSubgroupPDF.getMiddle(i), itsSubgroupPDF.getDensity(i)*aScale);
+		}
+
+		XYPlot aPlot = itsChart.getXYPlot();
+		XYSeriesCollection aDataSet = ((XYSeriesCollection) aPlot.getDataset(0));
+
+		aDataSet.removeSeries(0);
+		aDataSet.removeSeries(0);
+		aDataSet.addSeries(aSubgroupSeries);
+		aDataSet.addSeries(aDatasetSeries);
 	}
 }
