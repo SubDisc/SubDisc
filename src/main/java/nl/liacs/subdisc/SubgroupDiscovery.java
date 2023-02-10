@@ -192,7 +192,7 @@ public class SubgroupDiscovery
 		ProbabilityDensityFunction2 aPDF = new ProbabilityDensityFunction2(itsNumericTarget, theSelection);
 		aPDF.smooth();
 
-		itsQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), itsNrRows, aStatistics.getSubgroupSum(), aStatistics.getSubgroupSumSquaredDeviations(), aPDF);
+		itsQualityMeasure = new QualityMeasure(itsSearchParameters.getQualityMeasure(), aStatistics.getCoverage(), aStatistics.getSubgroupSum(), aStatistics.getSubgroupSumSquaredDeviations(), aPDF);
 		itsQualityMeasureMinimum = itsSearchParameters.getQualityMeasureMinimum();
 
 		itsResult = new SubgroupSet(itsSearchParameters.getMaximumSubgroups(), theSelection, itsTable.getNrRows());
@@ -1969,7 +1969,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 
 				// >= with the first value select the same subset as the parent
 				// old tp and cover, as counts for this value should be included
-				if (cover != aParentCoverage)
+				if (cover != aParentCoverage && !Float.isNaN(aColumn.getSortedValue(i)))
 				{
 					Condition anAddedCondition = new Condition(theConditionBase, aColumn.getSortedValue(i), i);
 					evaluateCandidate(theParent, anAddedCondition, cover, isAllStrategy, aBestSubgroups);
@@ -2102,7 +2102,7 @@ TODO for stable jar, disabled, causes compile errors, reinstate later
 
 
 				// last value with required cover, use old cover and tp
-				if (((cover-aCount) < next) && (cover != aParentCoverage))
+				if (cover-aCount < next && cover != aParentCoverage && !Float.isNaN(aColumn.getSortedValue(i)))
 				{
 					Condition aCondition = new Condition(theConditionBase, aColumn.getSortedValue(i), i);
 					evaluateCandidate(theParent, aCondition, cover, isAllStrategy, aBestSubgroups);

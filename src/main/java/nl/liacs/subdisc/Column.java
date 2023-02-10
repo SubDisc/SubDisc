@@ -426,6 +426,43 @@ public class Column implements XMLNodeInterface
 	}
 
 	/**
+	 * Set the current column data.
+	 *
+	 * @param theNominals the values of the columns
+	 */
+	public void setData(String[] theNominals)
+	{
+		for (String s: theNominals)
+			add(s);
+		close();
+	}
+
+	/**
+	 * Set the current column data.
+	 * 
+	 * @param theFloats the values of the columns
+	 */
+	public void setData(float[] theFloats)
+	{
+		itsFloatz = theFloats.clone();
+		itsSize = itsFloatz.length;
+		close();
+	}
+
+	/**
+	 * Set the current column data.
+	 *
+	 * @param theBinaries the values of the columns
+	 */
+	public void setData(boolean[] theBinaries)
+	{
+		for (int i=0; i<theBinaries.length; i++)
+			itsBinaries.set(i, theBinaries[i]);
+		itsSize = theBinaries.length;
+		close();
+	}
+
+	/**
 	 * Always call this method after creating a Column.
 	 */
 	public void close()
@@ -1484,11 +1521,12 @@ public class Column implements XMLNodeInterface
 		final Statistics aResult;
 		if (!getMedianAndMedianAD) //if (!MMAD) do not store and sort the values
 		{
+			int aCount = (theBitSet == null) ? computeCount(theSelection, itsFloatz) : computeCount(theBitSet, itsFloatz);
 			float aSum = (theBitSet == null) ? computeSum(theSelection, itsFloatz) : computeSum(theBitSet, itsFloatz);
 			float anSSD = (theBitSet == null) ? computeSumSquaredDeviations(aSum, theSelection, itsFloatz) : computeSumSquaredDeviations(aSum, theBitSet, itsFloatz);
-			aResult = new Statistics(aSize, aSum, anSSD);
+			aResult = new Statistics(aCount, aSum, anSSD);
 		}
-		else		//TODO this block still needs to be checked for theSelection. Probably not working correctly
+		else		//TODO this block still needs to be checked for theSelection and missing values. Probably not working correctly
 		{
 			// this code path needs a copy of the data for median
 			// get relevant values and do summing in single loop
@@ -1517,7 +1555,7 @@ public class Column implements XMLNodeInterface
 			if (theSelection != null)
 				aComplement.and(theSelection); //only count the ones within the complement AND the selection
 
-			int aNrComplementMembers = aComplement.cardinality();
+			int aNrComplementMembers = computeCount(aComplement, itsFloatz);
 			float aComplementSum = computeSum(aComplement, itsFloatz);
 			aResult.addComplement(aNrComplementMembers, aComplementSum, computeSumSquaredDeviations(aComplementSum, aComplement, itsFloatz));
 
@@ -1527,6 +1565,23 @@ public class Column implements XMLNodeInterface
 		}
 
 		return aResult;
+	}
+
+	//needed to account for potential missing values (NaN) being present
+	private static final int computeCount(BitSet theBitSet, float[] theFloats)
+	{
+		int aCount = 0;
+		if (theBitSet == null) //all data
+		{
+			for (float aFloat : theFloats)
+				if (!Float.isNaN(aFloat))
+					aCount++;
+		}
+		else
+			for (int i = theBitSet.nextSetBit(0); i >= 0; i = theBitSet.nextSetBit(i + 1))
+				if (!Float.isNaN(theFloats[i]))
+					aCount++;
+		return aCount;
 	}
 
 	private static final float computeSum(BitSet theBitSet, float[] theFloats)
