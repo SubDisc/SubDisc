@@ -218,6 +218,7 @@ public class DataLoaderTXT implements FileLoaderInterface
 						catch (NumberFormatException e) //guess it's a nominal then
 						{
 							aColumns.get(aColumn).toNominalType(aTrueBinaryValues[aColumn], aFalseBinaryValues[aColumn]);
+							aColumns.get(aColumn).add(s);
 							Log.logCommandLine(aColumns.get(aColumn).getName() + " was binary, is nominal (line " + aLineNr + ")");
 						}
 							

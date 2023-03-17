@@ -297,6 +297,7 @@ public class Column implements XMLNodeInterface
 			case NOMINAL :
 			{
 				aColumn.itsNominalz = new int[aColumnSize];
+
 				//preferred way to loop over BitSet (itsSize for safety)
 				for (int i = theSet.nextSetBit(0), j = -1; i >= 0 && i < itsSize; i = theSet.nextSetBit(i + 1))
 					aColumn.itsNominalz[++j] = this.itsNominalz[i];
@@ -375,8 +376,7 @@ public class Column implements XMLNodeInterface
 			throw new NullPointerException();
 
 		if (itsSize == itsNominalz.length)
-			itsNominalz = Arrays.copyOf(itsNominalz, itsSize*2);
-
+			itsNominalz = Arrays.copyOf(itsNominalz, itsSize*2);
 		Integer i = itsDistinctValuesMap.get(theNominal);
 		if (i == null)
 		{
@@ -1791,8 +1791,9 @@ public class Column implements XMLNodeInterface
 		int[] aCounts = new int[itsCardinality + 1];
 
 		for (int i = theBitSet.nextSetBit(0); i >= 0; i = theBitSet.nextSetBit(i + 1))
-			if ((++aCounts[itsNominalz[i]]) == 1)
+		{			if ((++aCounts[itsNominalz[i]]) == 1)
 				++aNrDistinct;
+		}
 
 		// XXX WARNING
 		// add aNrDistinct to aCounts at [itsCardinality+1], the danger is that
