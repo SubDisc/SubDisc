@@ -90,8 +90,11 @@ public class BrowseTableModel extends AbstractTableModel
 				 * NOTE DefaultCellRenderer draws check boxes
 				 * in JTable for Boolean return type.
 				 */
-				case BINARY : 
-					return aColumn.getBinary(theRow);
+				case BINARY :
+					if (aColumn.getMissing(theRow))
+						return ("?");
+					else
+						return aColumn.getBinary(theRow);
 				default : {
 					Log.logCommandLine(String.format("%s.getValueAt(%d, %d), Unknown AttributeType: %s", getClass().getSimpleName(), theRow, theColumn, aColumn.getType()));
 					return null;

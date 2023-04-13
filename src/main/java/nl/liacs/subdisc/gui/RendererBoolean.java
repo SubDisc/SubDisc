@@ -15,6 +15,8 @@ public final class RendererBoolean extends DefaultTableCellRenderer
 	@Override
 	public void setValue(Object aValue)
 	{
+		if (aValue instanceof String)
+			super.setValue(aValue);
 		if (aValue instanceof Boolean)
 			setText(((Boolean)aValue) ? "1" : "0");
 		else	// not a Boolean, or null
