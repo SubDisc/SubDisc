@@ -449,8 +449,8 @@ public class DataLoaderTXT implements FileLoaderInterface
 	private void createTable(File theFile, String aHeaderLine, String aDataLine)
 	{
 		message("createTable", "creating Table");
-		String[] aHeaders = aHeaderLine.split(getDelimiterString());
-		String[] aData = aDataLine.split(getDelimiterString());
+		String[] aHeaders = aHeaderLine.split(getDelimiterString(), -1);
+		String[] aData = aDataLine.split(getDelimiterString(), -1);
 
 		for (int i=0; i<aHeaders.length; i++)
 			aHeaders[i] = removeQuotes(aHeaders[i].trim());
