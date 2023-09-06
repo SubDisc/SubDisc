@@ -19,6 +19,7 @@ public class ConditionWindow extends JDialog implements ActionListener, ChangeLi
 	JComboBox<String> itsComboBoxOperator;
 	JTextField 	  itsTextFieldValue;
 	JComboBox<String> itsComboBoxValue;
+	JPanel     	  itsSpecificsLabels;
 
 	ArrayList<Column> itsColumnList;
 	Condition    	  itsCondition = null;
@@ -49,7 +50,7 @@ public class ConditionWindow extends JDialog implements ActionListener, ChangeLi
 
 		// Labels Panel
 		JPanel aPanelLabels = new JPanel();
-		aPanelLabels.setLayout(new GridLayout(4, 1));
+		aPanelLabels.setLayout(new GridLayout(3, 1));
 		JLabel aLabelAttribute = new JLabel("attribute");
 		aPanelLabels.add(aLabelAttribute);
 		JLabel aLabelOperator = new JLabel("operator");
@@ -58,31 +59,30 @@ public class ConditionWindow extends JDialog implements ActionListener, ChangeLi
 		aPanelLabels.add(aLabelValue);
 
 		// Specifics Panel
-		JPanel aSpecificsLabels = new JPanel();
-		aSpecificsLabels.setLayout(new GridLayout(4, 1));
+		itsSpecificsLabels = new JPanel();
+		itsSpecificsLabels.setLayout(new GridLayout(3, 1));
 
 		//attribute
 		itsComboBoxAttribute = GUI.buildComboBox(new String[0], ATTRIBUTE_BOX, this);
-		aSpecificsLabels.add(itsComboBoxAttribute);
+		itsSpecificsLabels.add(itsComboBoxAttribute);
 		for (Column aColumn : itsColumnList)
 			itsComboBoxAttribute.addItem(aColumn.getName());
 
 		//operator
 		itsComboBoxOperator = GUI.buildComboBox(new String[0], OPERATOR_BOX, this);
-		aSpecificsLabels.add(itsComboBoxOperator);
+		itsSpecificsLabels.add(itsComboBoxOperator);
 		Column aColumn = itsColumnList.get(0);
 
 		//value (numeric)
 		itsTextFieldValue = GUI.buildTextField("0");
-		aSpecificsLabels.add(itsTextFieldValue);
+		itsSpecificsLabels.add(itsTextFieldValue);
 		//value (nominal)
 		itsComboBoxValue = GUI.buildComboBox(new String[0], OPERATOR_BOX, this);
-		aSpecificsLabels.add(itsComboBoxValue);
 
 		updateOperatorValue();
 
 		aNorthPanel.add(aPanelLabels, BorderLayout.WEST);
-		aNorthPanel.add(aSpecificsLabels, BorderLayout.EAST);
+		aNorthPanel.add(itsSpecificsLabels, BorderLayout.EAST);
 		add(aNorthPanel, BorderLayout.NORTH);
 
 		//buttons
@@ -113,14 +113,22 @@ public class ConditionWindow extends JDialog implements ActionListener, ChangeLi
 		if (aColumn.getType() == AttributeType.NOMINAL)
 		{
 			for (String aValue : aColumn.getDomain())
-				itsComboBoxValue.addItem(aValue); 
-			itsComboBoxValue.setVisible(true);
-			itsTextFieldValue.setVisible(false);
+				itsComboBoxValue.addItem(aValue);
+			if (itsTextFieldValue.getParent() == itsSpecificsLabels) {
+				itsTextFieldValue.setVisible(false);
+				itsSpecificsLabels.remove(itsTextFieldValue);
+				itsSpecificsLabels.add(itsComboBoxValue);
+				itsComboBoxValue.setVisible(true);
+			}
 		}
 		else
 		{
-			itsComboBoxValue.setVisible(false);
-			itsTextFieldValue.setVisible(true);
+			if (itsComboBoxValue.getParent() == itsSpecificsLabels) {
+				itsComboBoxValue.setVisible(false);
+				itsSpecificsLabels.remove(itsComboBoxValue);
+				itsSpecificsLabels.add(itsTextFieldValue);
+				itsTextFieldValue.setVisible(true);
+			}
 		}
 	}
 
@@ -175,13 +183,21 @@ public class ConditionWindow extends JDialog implements ActionListener, ChangeLi
 				{
 					for (String aValue : aColumn.getDomain())
 						itsComboBoxValue.addItem(aValue); 
-					itsComboBoxValue.setVisible(true);
-					itsTextFieldValue.setVisible(false);
+					if (itsTextFieldValue.getParent() == itsSpecificsLabels) {
+						itsTextFieldValue.setVisible(false);
+						itsSpecificsLabels.remove(itsTextFieldValue);
+						itsSpecificsLabels.add(itsComboBoxValue);
+						itsComboBoxValue.setVisible(true);
+					}
 				}
 				else
 				{
-					itsComboBoxValue.setVisible(false);
-					itsTextFieldValue.setVisible(true);
+					if (itsComboBoxValue.getParent() == itsSpecificsLabels) {
+						itsComboBoxValue.setVisible(false);
+						itsSpecificsLabels.remove(itsComboBoxValue);
+						itsSpecificsLabels.add(itsTextFieldValue);
+						itsTextFieldValue.setVisible(true);
+					}
 				}
 
 			}
