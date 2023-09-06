@@ -35,7 +35,7 @@ public class ConditionWindow extends JDialog implements ActionListener, ChangeLi
 
 		setIconImage(MiningWindow.ICON);
 		setLocation(200, 200);
-		setSize(new Dimension(300, 170));
+		pack();
 		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		setVisible(true);
 	}
