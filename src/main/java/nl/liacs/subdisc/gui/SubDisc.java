@@ -4,6 +4,7 @@ import java.awt.*;
 import java.io.*;
 import java.util.*;
 import java.util.List;
+import java.net.URISyntaxException;
 
 import nl.liacs.subdisc.*;
 import nl.liacs.subdisc.FileHandler.Action;
@@ -45,6 +46,8 @@ public class SubDisc
 //		"org.knime.core.util_4.1.1.0034734.jar",
 	};
 
+	private static String itsJarRevision;
+
 	/*
 	 * There is a difference between the command line options:
 	 *   -Djava.awt.headless=true; and
@@ -65,6 +68,24 @@ public class SubDisc
 	{
 		// Skipping libs check. Using Maven for dependency management.
 		// checkLibs();
+
+		try 
+		{
+			String aJarPath = SubDisc.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath();
+			//System.out.println("JAR Path : " + aJarPath);
+			String aJarName = aJarPath.substring(aJarPath.lastIndexOf("/") + 1);
+			int aLastDot = aJarName.lastIndexOf(".");
+			int aRevision = aLastDot-1;
+			while (Character.isDigit(aJarName.charAt(aRevision)) && aRevision > 0)
+				aRevision--;
+			itsJarRevision = aJarName.substring(aRevision + 1, aLastDot);
+			
+			System.out.println("JAR revision number: " + itsJarRevision);
+		}
+		catch (URISyntaxException e) 
+		{
+			e.printStackTrace();
+		}
 
 		if (!GraphicsEnvironment.isHeadless() && (SplashScreen.getSplashScreen() != null))
 		{
@@ -175,4 +196,6 @@ public class SubDisc
 				System.out.format("\t'%s' not found, some functions will not work.%n", jar);
 			}
 	}
+
+	String getRevisionNumber() { return itsJarRevision; }
 }
